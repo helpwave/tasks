@@ -1,0 +1,10 @@
+# vscode
+.vscode/
+
+# jetbrains
+.idea
+.fleet
+
+# misc
+.DS_Store
+*.pem

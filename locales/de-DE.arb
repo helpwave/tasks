@@ -1,0 +1,58 @@
+{
+  "nOrganization": "{count, plural, =1{# Organisation} other{# Organisationen}}",
+  "@nOrganization": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "nWard": "{count, plural, =1{# Station} other{# Stationen}}",
+  "@nWard": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "nRoom": "{count, plural, =1{# Zimmer} other{# Zimmer}}",
+  "@nRoom": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "nBed": "{count, plural, =1{# Bett} other{# Betten}}",
+  "@nBed": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "nPatient": "{count, plural, =1{# Patient} other{# Patienten}}",
+  "@nPatient": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "visibility": "Sichtbarkeit",
+  "private": "Privat",
+  "public": "Öffentlich",
+  "publish": "Veröffentlichen",
+  "notes": "Notizen",
+  "status": "Status",
+  "assignee": "Verantwortlich",
+  "dueDate": "Fälligkeitsdatum",
+  "createdAt": "Erstellt am",
+  "homePage": "Startseite",
+  "developmentAndPreviewInstance": "Entwicklungs- und Vorschauinstanz",
+  "stagingModalDisclaimerMarkdown": "Diese öffentliche Instanz von helpwave tasks ist für '\\b{Entwicklungs- und Vorschauzwecke}' gedacht. Bitte stellen Sie sicher, dass Sie '\\b{ausschließlich nicht-vertrauliche Testdaten}' eingeben. Diese Instanz kann '\\negative{\\b{jederzeit gelöscht}}' werden.",
+  "dismiss": "Schließen",
+  "imprint": "Impressum",
+  "privacy": "Datenschutz",
+  "confirm": "Bestätigen"
+}

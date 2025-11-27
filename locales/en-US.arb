@@ -1,0 +1,58 @@
+{
+  "nOrganization": "{count, plural, =1{# Organization} other{# Organizations}}",
+  "@nOrganization": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "nWard": "{count, plural, =1{# Ward} other{# Wards}}",
+  "@nWard": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "nRoom": "{count, plural, =1{# Room} other{# Rooms}}",
+  "@nRoom": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "nBed": "{count, plural, =1{# Bed} other{# Beds}}",
+  "@nBed": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "nPatient": "{count, plural, =1{# Patient} other{# Patients}}",
+  "@nPatient": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "visibility": "Visibility",
+  "private": "private",
+  "public": "public",
+  "publish": "publish",
+  "notes": "notes",
+  "status": "Status",
+  "assignee": "Assignee",
+  "dueDate": "Due Date",
+  "createdAt": "Created at",
+  "homePage": "Home Page",
+  "developmentAndPreviewInstance": "Development and preview instance",
+  "stagingModalDisclaimerMarkdown": "This public instance of helpwave tasks is for '\\b{development and preview purposes}'. Please make sure to '\\b{only}' enter '\\b{non-confidential testing data}'. This instance can be '\\negative{\\b{deleted at any time}}'",
+  "dismiss": "Dismiss",
+  "imprint": "Imprint",
+  "privacy": "Privacy",
+  "confirm": "Confirm"
+}
