@@ -1,8 +1,7 @@
 name: Web build
 
 env:
-  NODE_VERSION: 20.4.0
-  PNPM_VERSION: 8
+  NODE_VERSION: 22.19.0
 
 on:
   push:
