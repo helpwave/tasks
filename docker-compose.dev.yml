@@ -1,0 +1,98 @@
+services:
+  keycloak-postgres:
+    image: postgres
+    volumes:
+      - "keycloak-postgres-data:/var/lib/postgresql"
+    environment:
+      POSTGRES_DB: "keycloak"
+      POSTGRES_USER: "keycloak"
+      POSTGRES_PASSWORD: "password"
+
+  keycloak:
+    image: quay.io/keycloak/keycloak
+    environment:
+      KC_DB: "postgres"
+      KC_DB_URL: "jdbc:postgresql://keycloak-postgres:5432/keycloak"
+      KC_DB_USERNAME: "keycloak"
+      KC_DB_PASSWORD: "password"
+
+      KC_HOSTNAME: "localhost"
+      KC_HOSTNAME_PORT: 8080
+      KC_HOSTNAME_STRICT: false
+      KC_HOSTNAME_STRICT_HTTPS: false
+
+      KC_LOG_LEVEL: "info"
+      KC_METRICS_ENABLED: true
+      KC_HEALTH_ENABLED: true
+      KEYCLOAK_ADMIN: "admin"
+      KEYCLOAK_ADMIN_PASSWORD: "admin"
+    command: start-dev
+    depends_on:
+      - keycloak-postgres
+    ports:
+      - "8080:8080"
+
+  postgres:
+    image: postgres
+    environment:
+      POSTGRES_DB: "postgres"
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "password"
+    volumes:
+      - "postgres-data:/var/lib/postgresql"
+    ports:
+      - "5432:5432"
+
+  pgadmin:
+    image: dpage/pgadmin4
+    restart: always
+    user: "root"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "admin@admin.com"
+      PGADMIN_DEFAULT_PASSWORD: "admin"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "8090:80"
+    volumes:
+      - pgadmin4-data:/var/lib/pgadmin
+    entrypoint: >
+      /bin/sh -c '
+      echo "postgres:5432:*:admin:admin" > /tmp/pgpass;
+      chmod 600 /tmp/pgpass;
+      echo "{\"Servers\":{\"1\":{\"Name\":\"postgres\",\"Group\":\"Servers\",\"Host\":\"postgres\",\"Port\":5432,\"MaintenanceDB\":\"postgres\",\"Username\":\"postgres\",\"PassFile\":\"/tmp/pgpass\",\"SSLMode\":\"prefer\"}}}" > /pgadmin4/servers.json;
+      /entrypoint.sh'
+
+  backend:
+    build: backend
+    restart: always
+    ports:
+      - "8000:80"
+    environment:
+      ENV: "development"
+      EXTERNAL_URL: "http://localhost:8000"
+
+      DATABASE_HOSTNAME: "postgres"
+      DATABASE_NAME: "postgres"
+      DATABASE_USERNAME: "postgres"
+      DATABASE_PASSWORD: "password"
+
+      KEYCLOAK_SERVER_URL: "http://keycloak:8080"
+      KEYCLOAK_REALM: "test"
+      KEYCLOAK_CLIENT_ID: "customer-api-keycloak"
+      KEYCLOAK_CLIENT_SECRET: "customer-api-client-secret"
+    depends_on:
+      - postgres
+
+  web:
+    build: web
+    restart: always
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+volumes:
+  keycloak-postgres-data:
+  postgres-data:
+  pgadmin4-data:
