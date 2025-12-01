@@ -5,3 +5,91 @@
 ---
 
 ## 🚀 Quick Start
+
+If you simply want to test the application without modifying code, use the production compose file. This pulls official images and runs them behind a reverse proxy.
+
+1.  **Run the Stack**
+    ```bash
+    docker-compose up -d
+    ```
+
+2.  **Access the App**
+    * **App URL:** `http://localhost:80`
+    * **User:** `test` / `test`
+
+---
+
+## Development
+
+This section covers setting up the local environment for coding. You need **PostgreSQL**, **Redis**, and **Keycloak** running to support the backend.
+
+### Environment Configuration
+
+The application relies on the following services. Ensure your environment variables are set (or use the provided `.env.example`):
+
+```bash
+export DATABASE_URL="postgresql+asyncpg://postgres:password@localhost:5432/postgres"
+export REDIS_URL="redis://localhost:6379"
+export ENV=development
+```
+
+### Option A: Manual Setup (Docker Compose)
+Use this if you prefer managing your own Python and Node versions.
+
+1.  **Start Infrastructure**
+    Start Postgres, Redis, and Keycloak:
+    ```bash
+    docker-compose -f docker-compose.dev.yml up -d postgres redis keycloak
+    ```
+
+2.  **Run Backend**
+    ```bash
+    cd backend
+    python -m venv venv
+    source venv/bin/activate
+    pip install -r requirements.txt
+    
+    # Run migrations and start server
+    alembic upgrade head
+    uvicorn main:app --reload
+    ```
+
+3.  **Run Frontend**
+    In a new terminal:
+    ```bash
+    cd web
+    npm install
+    npm run dev
+    ```
+
+### Option B: Automated Setup (Nix)
+Use this to let Nix handle dependencies, environment variables, and helper commands automatically.
+
+1.  **Enter Shell**
+    ```bash
+    nix-shell
+    ```
+
+2.  **Start Everything**
+    ```bash
+    run-dev-all
+    # Starts Docker infra, migrates DB, and runs both Backend & Frontend
+    ```
+
+### Access & Credentials
+
+Once the development environment is running:
+
+| Service | URL | Description |
+| :--- | :--- | :--- |
+| **Web Frontend** | `http://localhost:3000` | The user interface (Next.js/React). |
+| **Backend API** | `http://localhost:8000/graphql` | The GraphQL Playground (Strawberry). |
+| **Keycloak** | `http://localhost:8080` | Identity Provider. |
+
+**Keycloak Realms & Users:**
+* **User Realm:** `http://localhost:8080/realms/tasks` (Redirects automatically from app login)
+    * User: `test`
+    * Password: `test`
+* **Admin Console:** `http://localhost:8080/admin`
+    * User: `admin`
+    * Password: `admin`

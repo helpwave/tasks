@@ -1,36 +1,17 @@
 services:
-  keycloak-postgres:
-    image: postgres
-    volumes:
-      - "keycloak-postgres-data:/var/lib/postgresql"
-    environment:
-      POSTGRES_DB: "keycloak"
-      POSTGRES_USER: "keycloak"
-      POSTGRES_PASSWORD: "password"
-
   keycloak:
     image: quay.io/keycloak/keycloak
     environment:
-      KC_DB: "postgres"
-      KC_DB_URL: "jdbc:postgresql://keycloak-postgres:5432/keycloak"
-      KC_DB_USERNAME: "keycloak"
-      KC_DB_PASSWORD: "password"
-
       KC_HOSTNAME: "localhost"
       KC_HOSTNAME_PORT: 8080
       KC_HOSTNAME_STRICT: false
-      KC_HOSTNAME_STRICT_HTTPS: false
 
-      KC_LOG_LEVEL: "info"
-      KC_METRICS_ENABLED: true
-      KC_HEALTH_ENABLED: true
       KEYCLOAK_ADMIN: "admin"
       KEYCLOAK_ADMIN_PASSWORD: "admin"
     command: start-dev --import-realm
     volumes:
-      - ./keycloak:/opt/keycloak/data/import:ro
-    depends_on:
-      - keycloak-postgres
+      - "./keycloak:/opt/keycloak/data/import:ro"
+      - "keycloak-data:/opt/keycloak/data"
     ports:
       - "8080:8080"
 
@@ -45,29 +26,14 @@ services:
     ports:
       - "5432:5432"
 
-  pgadmin:
-    image: dpage/pgadmin4
-    restart: always
-    user: "root"
-    environment:
-      PGADMIN_DEFAULT_EMAIL: "admin@admin.com"
-      PGADMIN_DEFAULT_PASSWORD: "admin"
-      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
-      PGADMIN_CONFIG_SERVER_MODE: 'False'
+  redis:
+    image: redis:8.4
+    command: redis-server --requirepass password
     ports:
-      - "8090:80"
-    volumes:
-      - pgadmin4-data:/var/lib/pgadmin
-    entrypoint: >
-      /bin/sh -c '
-      echo "postgres:5432:*:admin:admin" > /tmp/pgpass;
-      chmod 600 /tmp/pgpass;
-      echo "{\"Servers\":{\"1\":{\"Name\":\"postgres\",\"Group\":\"Servers\",\"Host\":\"postgres\",\"Port\":5432,\"MaintenanceDB\":\"postgres\",\"Username\":\"postgres\",\"PassFile\":\"/tmp/pgpass\",\"SSLMode\":\"prefer\"}}}" > /pgadmin4/servers.json;
-      /entrypoint.sh'
+      - "6379:6379"
 
   backend:
     build: backend
-    restart: always
     ports:
       - "8000:80"
     environment:
@@ -78,16 +44,19 @@ services:
       DATABASE_USERNAME: "postgres"
       DATABASE_PASSWORD: "password"
 
+      REDIS_HOSTNAME: "redis"
+      REDIS_PASSWORD: "password"
+
       ISSUER_URI: "http://keycloak:8080/realms/tasks"
       PUBLIC_ISSUER_URI: "http://localhost:8080/realms/tasks"
       CLIENT_ID: "tasks"
       CLIENT_SECRET: "tasks-secret"
     depends_on:
       - postgres
+      - redis
 
   web:
     build: web
-    restart: always
     ports:
       - "3000:80"
     environment:
@@ -96,9 +65,8 @@ services:
     depends_on:
       - backend
 
-  nginx:
-    build: nginx
-    restart: always
+  proxy:
+    build: proxy
     environment:
       BACKEND_HOST: backend:80
       FRONTEND_HOST: web:80
@@ -109,6 +77,5 @@ services:
       - web
 
 volumes:
-  keycloak-postgres-data:
+  keycloak-data:
   postgres-data:
-  pgadmin4-data:

@@ -11,8 +11,16 @@ DATABASE_URL = os.getenv(
     f"postgresql+asyncpg://{_db_username}:{_db_password}@{_db_hostname}:{_db_port}/{_db_name}",
 )
 
+_redis_host = os.getenv("REDIS_HOST", "localhost")
+_redis_port = int(os.getenv("REDIS_PORT", 6379))
+_redis_password = os.getenv("REDIS_PASSWORD", None)
 
-REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
+if _redis_password:
+    REDIS_URL = f"redis://:{_redis_password}@{_redis_host}:{_redis_port}/"
+else:
+    REDIS_URL = f"redis://{_redis_host}:{_redis_port}/"
+
+REDIS_URL = os.getenv("REDIS_URL", REDIS_URL)
 
 ENV = os.getenv("ENV", "production")
 IS_DEV = ENV == "development"

@@ -1,85 +1,46 @@
+import logging
+
 import requests
+from starlette.status import HTTP_400_BAD_REQUEST
 from api.context import Context
 from api.resolvers import Mutation, Query, Subscription
-from auth import verify_token
-from config import CLIENT_ID, CLIENT_SECRET, IS_DEV, PUBLIC_ISSUER_URI, ISSUER_URI
+from auth import UnauthenticatedRedirect, authenticate_connection, get_token_source, unauthenticated_redirect_handler, verify_token
+from config import (
+    CLIENT_ID,
+    CLIENT_SECRET,
+    IS_DEV,
+    ISSUER_URI,
+    LOGGER,
+)
 from database.models.user import User
 from database.session import get_db_session
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import RedirectResponse
-from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy import select
+from starlette.requests import HTTPConnection
 from strawberry import Schema
 from strawberry.fastapi import GraphQLRouter
 
-oauth2_scheme = OAuth2PasswordBearer(
-    tokenUrl=f"{ISSUER_URI}/protocol/openid-connect/token",
-    auto_error=False,
-)
-
-
-async def get_token_source(
-    request: Request,
-    header_token: str | None = Depends(oauth2_scheme),
-) -> str | None:
-    if header_token:
-        return header_token
-
-    return request.cookies.get("access_token")
-
-
-class UnauthenticatedRedirect(Exception):
-    pass
-
-
-async def unauthenticated_redirect_handler(
-    request: Request,
-    _: UnauthenticatedRedirect,
-):
-    redirect_uri = f"{request.base_url}callback"
-
-    login_url = (
-        f"{PUBLIC_ISSUER_URI}/protocol/openid-connect/auth"
-        f"?client_id={CLIENT_ID}"
-        f"&response_type=code"
-        f"&scope=openid profile email"
-        f"&redirect_uri={redirect_uri}"
-    )
-    return RedirectResponse(url=login_url)
+logger = logging.getLogger(LOGGER)
 
 
 async def get_context(
-    request: Request,
+    connection: HTTPConnection,
     token: str | None = Depends(get_token_source),
     session=Depends(get_db_session),
 ) -> Context:
-    user_payload = None
-
-    if token:
-        try:
-            user_payload = verify_token(token)
-        except Exception as e:
-            raise e
-            user_payload = None
-
-    if not user_payload:
-        accept_header = request.headers.get("accept", "")
-        if "text/html" in accept_header:
-            raise UnauthenticatedRedirect
-        raise HTTPException(
-            status_code=401,
-            detail="Not authenticated",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    user_payload = await authenticate_connection(connection, token)
 
     user_id = user_payload.get("sub")
     username = (
         user_payload.get("preferred_username")
         or user_payload.get("name")
-        or "Unknown"
     )
     firstname = user_payload.get("given_name")
     lastname = user_payload.get("family_name")
+
+    if not (user_id and username and firstname and lastname):
+        raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail="Missing required user details.")
 
     result = await session.execute(select(User).where(User.id == user_id))
     db_user = result.scalars().first()
@@ -93,7 +54,7 @@ async def get_context(
             title="User",
         )
         session.add(db_user)
-    else:
+    elif db_user.name != username or db_user.firstname != firstname:
         db_user.name = username
         db_user.firstname = firstname
         db_user.lastname = lastname

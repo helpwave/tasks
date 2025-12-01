@@ -1,32 +1,61 @@
+import logging
 from typing import Any
 
 import requests
-from config import CLIENT_ID, ISSUER_URI
-from fastapi import HTTPException, status
+from config import CLIENT_ID, ISSUER_URI, LOGGER, PUBLIC_ISSUER_URI
+from fastapi import HTTPException, Request, status
+from fastapi.responses import RedirectResponse
 from jose import jwk, jwt
+from starlette.requests import HTTPConnection
+
+logger = logging.getLogger(LOGGER)
+
+AUTH_COOKIE_NAME = "access_token"
 
 jwks_cache: dict[str, Any] = {}
-openid_config_cache: dict[str, Any] = {}
 
 
-def get_openid_config() -> dict[str, Any]:
-    global openid_config_cache
-    if openid_config_cache:
-        return openid_config_cache
+def delete_auth_cookie(response):
+    response.delete_cookie(
+        AUTH_COOKIE_NAME,
+        path="/",
+        secure=True,
+        httponly=True,
+        samesite="none",
+    )
 
-    config_url = f"{ISSUER_URI.rstrip('/')}/.well-known/openid-configuration"
-    try:
-        response = requests.get(config_url, timeout=5)
-        response.raise_for_status()
-        config = response.json()
-        openid_config_cache = config
-        return config
-    except Exception as e:
-        print(f"OIDC Config Error: {e}")
+
+async def authenticate_connection(connection, token: str | None):
+    user_payload = None
+
+    if token:
+        try:
+            user_payload = verify_token(token)
+        except Exception as e:
+            logger.warning(f"Token validation failed: {e}")
+
+    if user_payload:
+        return user_payload
+
+    if connection.scope["type"] == "http":
+        response = RedirectResponse("/login", status_code=302)
+        delete_auth_cookie(response)
+
+        accept_header = connection.headers.get("accept", "")
+
+        if "text/html" in accept_header:
+            raise UnauthenticatedRedirect(response=response)
+
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Could not fetch OpenID Configuration",
+            status_code=401,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
         )
+
+    if connection.scope["type"] == "websocket":
+        raise HTTPException(status_code=403, detail="Not authenticated")
+
+    raise RuntimeError("Unsupported connection type")
 
 
 def get_public_key(token: str) -> Any:
@@ -100,3 +129,34 @@ def verify_token(token: str) -> dict:
         raise HTTPException(status_code=401, detail=f"Invalid token: {e!s}")
     except Exception:
         raise HTTPException(status_code=401, detail="Authentication failed")
+
+
+async def get_token_source(
+    connection: HTTPConnection,
+) -> str | None:
+    auth_header = connection.headers.get("authorization")
+    if auth_header and auth_header.startswith("Bearer "):
+        return auth_header.split(" ")[1]
+
+    return connection.cookies.get(AUTH_COOKIE_NAME)
+
+
+class UnauthenticatedRedirect(Exception):
+    def __init__(self, response=None):
+        self.response = response
+        super().__init__("Unauthenticated - redirect required")
+
+
+async def unauthenticated_redirect_handler(
+    request: Request,
+    _: UnauthenticatedRedirect,
+):
+    redirect_uri = f"{request.base_url}callback"
+    login_url = (
+        f"{PUBLIC_ISSUER_URI}/protocol/openid-connect/auth"
+        f"?client_id={CLIENT_ID}"
+        f"&response_type=code"
+        f"&scope=openid profile email"
+        f"&redirect_uri={redirect_uri}"
+    )
+    return RedirectResponse(url=login_url)

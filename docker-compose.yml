@@ -1,41 +1,22 @@
 services:
-  keycloak-postgres:
-    image: postgres
-    volumes:
-      - "keycloak-postgres-data:/var/lib/postgresql"
-    environment:
-      POSTGRES_DB: "keycloak"
-      POSTGRES_USER: "keycloak"
-      POSTGRES_PASSWORD: "password"
-
   keycloak:
-    image: quay.io/keycloak/keycloak
+    image: quay.io/keycloak/keycloak:26.4
     environment:
-      KC_DB: "postgres"
-      KC_DB_URL: "jdbc:postgresql://keycloak-postgres:5432/keycloak"
-      KC_DB_USERNAME: "keycloak"
-      KC_DB_PASSWORD: "password"
-
       KC_HOSTNAME: "localhost"
       KC_HOSTNAME_PORT: 8080
       KC_HOSTNAME_STRICT: false
-      KC_HOSTNAME_STRICT_HTTPS: false
 
-      KC_LOG_LEVEL: "info"
-      KC_METRICS_ENABLED: true
-      KC_HEALTH_ENABLED: true
       KEYCLOAK_ADMIN: "admin"
       KEYCLOAK_ADMIN_PASSWORD: "admin"
     command: start-dev --import-realm
     volumes:
-      - ./keycloak:/opt/keycloak/data/import:ro
-    depends_on:
-      - keycloak-postgres
+      - "./keycloak:/opt/keycloak/data/import:ro"
+      - "keycloak-data:/opt/keycloak/data"
     ports:
       - "8080:8080"
 
   postgres:
-    image: postgres
+    image: postgres:15.15
     environment:
       POSTGRES_DB: "postgres"
       POSTGRES_USER: "postgres"
@@ -43,25 +24,33 @@ services:
     volumes:
       - "postgres-data:/var/lib/postgresql"
 
+  redis:
+    image: redis:8.4
+    command: redis-server --requirepass password
+
   backend:
     image: ghcr.io/helpwave/tasks-backend:latest
-    restart: always
     environment:
       DATABASE_HOSTNAME: "postgres"
       DATABASE_NAME: "postgres"
       DATABASE_USERNAME: "postgres"
       DATABASE_PASSWORD: "password"
 
+      REDIS_HOSTNAME: "redis"
+      REDIS_PASSWORD: "password"
+
       ISSUER_URI: "http://keycloak:8080/realms/tasks"
       PUBLIC_ISSUER_URI: "http://localhost:8080/realms/tasks"
       CLIENT_ID: "tasks"
       CLIENT_SECRET: "tasks-secret"
+      
+      ENV: "development"
     depends_on:
       - postgres
+      - redis
 
   web:
     image: ghcr.io/helpwave/tasks-web:latest
-    restart: always
     environment:
       ISSUER_URI: "http://localhost:8080/realms/tasks"
       CLIENT_ID: "tasks"
@@ -70,7 +59,6 @@ services:
 
   proxy:
     image: ghcr.io/helpwave/tasks-proxy:latest
-    restart: always
     environment:
       BACKEND_HOST: backend:80
       FRONTEND_HOST: web:80
@@ -81,5 +69,5 @@ services:
       - web
 
 volumes:
-  keycloak-postgres-data:
+  keycloak-data:
   postgres-data:

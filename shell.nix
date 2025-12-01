@@ -1,133 +1,158 @@
 {
   pkgs ? import <nixpkgs> { },
-  pgUser ? "postgres",
-  pgPassword ? "password",
-  pgDatabase ? "postgres",
-  pgVersion ? 15,
-  redisVersion ? 7,
+  postgresUser ? "postgres",
+  postgresPassword ? "password",
+  postgresDatabase ? "postgres",
+  postgresPort ? 5432,
+  postgresVersion ? 15,
+  redisHost ? "localhost",
+  redisPort ? 6379,
+  redisPassword ? "password",
+  dockerComposeFile ? "docker-compose.dev.yml",
 }:
 
 let
   python = pkgs.python313;
   nodejs = pkgs.nodejs_22;
-  docker = pkgs.docker;
+
+  postgresql = pkgs."postgresql_${toString postgresVersion}";
+  redis = pkgs.redis;
+  dockerCompose = pkgs.docker-compose;
+  netcat = pkgs.netcat-gnu;
+
+  libPath = pkgs.lib.makeLibraryPath [
+    pkgs.stdenv.cc.cc.lib
+    pkgs.zlib
+    pkgs.glib
+  ];
 in
 pkgs.mkShell {
   buildInputs = [
     python
     python.pkgs.pip
     python.pkgs.virtualenv
-    python.pkgs.pip-tools
-    python.pkgs.greenlet
     nodejs
-    docker
+    pkgs.docker
+    dockerCompose
+    postgresql
+    redis
+    netcat
     pkgs.gcc
-    pkgs.stdenv.cc.cc.lib
-    pkgs."postgresql_${toString pgVersion}"
   ];
 
   venvDir = "./backend/venv";
 
   shellHook = ''
+    export PROJECT_ROOT="$(pwd)"
+    export DOCKER_COMPOSE_FILE="$PROJECT_ROOT/${dockerComposeFile}"
+
     export ENV=development
-    export DEBUG=1
-    export DATABASE_URL="postgresql+asyncpg://${pgUser}:${pgPassword}@localhost/${pgDatabase}"
-    export REDIS_URL="redis://localhost:6379"
+    export DATABASE_URL="postgresql+asyncpg://${postgresUser}:${postgresPassword}@localhost:${toString postgresPort}/${postgresDatabase}"
+    export REDIS_URL="redis://:${redisPassword}@${redisHost}:${toString redisPort}"
+    export ISSUER_URI="http://localhost:8080/realms/tasks"
+    export CLIENT_ID="tasks"
+    export CLIENT_SECRET="tasks-secret"
 
-    echo ">>> Activating dev shell…"
+    export LD_LIBRARY_PATH="${libPath}:$LD_LIBRARY_PATH"
 
-    if [ ! -d "$venvDir" ]; then
-      python -m venv $venvDir
+    echo ">>> Activating dev shell..."
+
+    if [ ! -d "$PROJECT_ROOT/$venvDir" ]; then
+      ${python}/bin/python -m venv "$PROJECT_ROOT/$venvDir"
     fi
-    source $venvDir/bin/activate
+    source "$PROJECT_ROOT/$venvDir/bin/activate"
 
-    export LD_LIBRARY_PATH="${pkgs.stdenv.cc.cc.lib}/lib:$LD_LIBRARY_PATH"
-
-    if [ -f backend/requirements.txt ]; then
-      req_hash_file="$venvDir/.requirements_hash"
-      current_hash=$(sha256sum backend/requirements.txt | cut -d " " -f1)
-      if [ ! -f "$req_hash_file" ] || [ "$(cat $req_hash_file)" != "$current_hash" ]; then
+    if [ -f "$PROJECT_ROOT/backend/requirements.txt" ]; then
+      req_file="$PROJECT_ROOT/backend/requirements.txt"
+      req_hash_file="$PROJECT_ROOT/$venvDir/.requirements_hash"
+      current_hash=$(sha256sum "$req_file" | cut -d " " -f1)
+      
+      if [ ! -f "$req_hash_file" ] || [ "$(cat "$req_hash_file")" != "$current_hash" ]; then
+        echo ">>> Requirements changed. Updating pip..."
         pip install --upgrade pip > /dev/null
-        pip install -r backend/requirements.txt
+        pip install -r "$req_file"
         echo "$current_hash" > "$req_hash_file"
       fi
     fi
 
-    if [ -d web ]; then
-      cd web
-      if [ ! -d node_modules ]; then
-        npm install
+    if [ -d "$PROJECT_ROOT/web" ]; then
+      if [ ! -d "$PROJECT_ROOT/web/node_modules" ]; then
+        (cd "$PROJECT_ROOT/web" && ${nodejs}/bin/npm install)
       fi
-      cd ..
     fi
 
-    start-docker-db() {
-      echo ">>> Starting PostgreSQL and Redis via Docker…"
-
-      docker volume inspect dev-postgres-data >/dev/null 2>&1 || \
-        docker volume create dev-postgres-data
-
-      docker run -d --name dev-postgres \
-        -e POSTGRES_USER=${pgUser} \
-        -e POSTGRES_PASSWORD=${pgPassword} \
-        -e POSTGRES_DB=${pgDatabase} \
-        -v dev-postgres-data:/var/lib/postgresql/data \
-        -p 5432:5432 postgres:${toString pgVersion}
-
-      docker run -d --name dev-redis -p 6379:6379 redis:${toString redisVersion}
+    start-docker() {
+      echo ">>> Starting PostgreSQL, Redis and Keycloak via Docker..."
+      (cd "$PROJECT_ROOT" && ${dockerCompose}/bin/docker-compose -f $DOCKER_COMPOSE_FILE up -d postgres redis keycloak)
     }
 
-    stop-docker-db() {
-      echo ">>> Stopping PostgreSQL and Redis…"
-      docker rm -f dev-postgres dev-redis 2>/dev/null || true
-    }
-
-    run-dev-backend() {
-      (cd backend && exec uvicorn main:app --reload)
-    }
-
-    run-dev-web() {
-      (cd web && exec npm run dev)
-    }
-
-    run-dev-all() {
-      start-docker-db
-      trap "echo '>>> Stopping all dev services...'; stop-docker-db; exit" SIGINT
-      sleep 3
-      run-alembic-upgrade
-      bash -c '
-        trap "exit" SIGINT
-        (cd backend && exec uvicorn main:app --reload) &
-        backend_pid=$!
-        (cd web && exec npm run dev) &
-        web_pid=$!
-        wait $backend_pid $web_pid
-      '
-      stop-docker-db
+    stop-docker() {
+      echo ">>> Stopping PostgreSQL, Redis and Keycloak..."
+      (cd "$PROJECT_ROOT" && ${dockerCompose}/bin/docker-compose -f $DOCKER_COMPOSE_FILE down)
     }
 
     clean-dev() {
-      echo ">>> Stopping and removing dev containers and volumes…"
-      docker rm -f dev-postgres dev-redis 2>/dev/null || true
-      docker volume rm dev-postgres-data 2>/dev/null || true
-      echo ">>> Cleaned dev environment."
+      echo ">>> Stopping and removing containers and volumes..."
+      (cd "$PROJECT_ROOT" && ${dockerCompose}/bin/docker-compose -f $DOCKER_COMPOSE_FILE down -v)
+      echo ">>> Cleaned environment."
+    }
+
+    run-dev-backend() {
+      ${dockerCompose}/bin/docker-compose -f $DOCKER_COMPOSE_FILE stop backend
+      (cd "$PROJECT_ROOT/backend" && exec uvicorn main:app --reload)
+    }
+
+    run-dev-web() {
+      ${dockerCompose}/bin/docker-compose -f $DOCKER_COMPOSE_FILE stop web
+      (cd "$PROJECT_ROOT/web" && exec ${nodejs}/bin/npm run dev)
     }
 
     run-alembic() {
-      (cd backend && alembic "$@")
+      (cd "$PROJECT_ROOT/backend" && alembic "$@")
     }
 
     run-alembic-upgrade() {
+      while ! ${netcat}/bin/nc -z localhost ${toString postgresPort}; do
+        echo ">>> Waiting for database on :${toString postgresPort}...";
+        sleep 0.5;
+      done
+      echo ">>> Database is up!"
       run-alembic upgrade head
     }
 
     psql-dev() {
-      PGPASSWORD="${pgPassword}" psql \
+      PGPASSWORD="${postgresPassword}" ${postgresql}/bin/psql \
         -h localhost \
-        -U "${pgUser}" \
-        -d "${pgDatabase}"
+        -U "${postgresUser}" \
+        -d "${postgresDatabase}" \
+        -p ${toString postgresPort}
     }
 
-    echo ">>> Done. Commands available: run-dev-backend, run-dev-web, run-dev-all, run-alembic, run-alembic-upgrade, psql-dev, clean-dev"
+    redis-cli-dev() {
+       ${redis}/bin/redis-cli \
+        -h "${redisHost}" \
+        -p ${toString redisPort}
+    }
+
+    run-dev-all() {
+      ${dockerCompose}/bin/docker-compose -f $DOCKER_COMPOSE_FILE ps --services | grep -vE "keycloak|postgres|redis" | xargs ${dockerCompose}/bin/docker-compose -f $DOCKER_COMPOSE_FILE stop
+      start-docker
+      trap "echo '>>> Stopping all dev services...'; stop-docker; exit" SIGINT
+
+      run-alembic-upgrade
+      
+      bash -c '
+        trap "exit" SIGINT
+        (cd "$PROJECT_ROOT/backend" && exec uvicorn main:app --reload) &
+        backend_pid=$!
+        (cd "$PROJECT_ROOT/web" && exec ${nodejs}/bin/npm run dev) &
+        web_pid=$!
+        wait $backend_pid $web_pid
+      '
+      stop-docker
+    }
+
+    echo ">>> Environment ready."
+    echo "Commands: run-dev-backend, run-dev-web, run-dev-all, run-alembic, psql-dev, redis-cli-dev, clean-dev"
   '';
 }
