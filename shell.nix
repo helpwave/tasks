@@ -50,7 +50,6 @@ pkgs.mkShell {
     export DATABASE_URL="postgresql+asyncpg://${postgresUser}:${postgresPassword}@localhost:${toString postgresPort}/${postgresDatabase}"
     export REDIS_URL="redis://:${redisPassword}@${redisHost}:${toString redisPort}"
     export ISSUER_URI="http://localhost:8080/realms/tasks"
-    export CLIENT_ID="tasks"
     export CLIENT_SECRET="tasks-secret"
 
     export LD_LIBRARY_PATH="${libPath}:$LD_LIBRARY_PATH"

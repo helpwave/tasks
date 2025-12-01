@@ -36,5 +36,5 @@ PUBLIC_ISSUER_URI = os.getenv(
     "PUBLIC_ISSUER_URI",
     ISSUER_URI,
 )
-CLIENT_ID = os.getenv("CLIENT_ID", "tasks")
+CLIENT_ID = os.getenv("CLIENT_ID", "tasks-backend")
 CLIENT_SECRET = os.getenv("CLIENT_SECRET", "tasks-secret")

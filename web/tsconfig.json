@@ -33,10 +33,11 @@
     }
   },
   "include": [
-    "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    "public/ga.js"
+    "next-env.d.ts",
+    "public/ga.js",
+    "build/types/**/*.ts"
   ],
   "exclude": []
 }

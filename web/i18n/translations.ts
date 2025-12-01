@@ -1,7 +1,7 @@
 // AUTO-GENERATED. DO NOT EDIT.
-/* eslint-disable @stylistic/quote-props */
-/* eslint-disable no-useless-escape */
-/* eslint-disable @typescript-eslint/no-unused-vars */
+
+
+
 import type { Translation } from '@helpwave/internationalization'
 import { TranslationGen } from '@helpwave/internationalization'
 
