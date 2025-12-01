@@ -1,5 +1,9 @@
 import os
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 _db_hostname = os.getenv("DATABASE_HOSTNAME", "postgres")
 _db_name = os.getenv("DATABASE_NAME", "postgres")
 _db_username = os.getenv("DATABASE_USERNAME", "postgres")

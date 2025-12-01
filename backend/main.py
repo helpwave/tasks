@@ -1,10 +1,14 @@
 import logging
 
 import requests
-from starlette.status import HTTP_400_BAD_REQUEST
 from api.context import Context
 from api.resolvers import Mutation, Query, Subscription
-from auth import UnauthenticatedRedirect, authenticate_connection, get_token_source, unauthenticated_redirect_handler, verify_token
+from auth import (
+    UnauthenticatedRedirect,
+    authenticate_connection,
+    get_token_source,
+    unauthenticated_redirect_handler,
+)
 from config import (
     CLIENT_ID,
     CLIENT_SECRET,
@@ -18,6 +22,7 @@ from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy import select
 from starlette.requests import HTTPConnection
+from starlette.status import HTTP_400_BAD_REQUEST
 from strawberry import Schema
 from strawberry.fastapi import GraphQLRouter
 
@@ -32,15 +37,17 @@ async def get_context(
     user_payload = await authenticate_connection(connection, token)
 
     user_id = user_payload.get("sub")
-    username = (
-        user_payload.get("preferred_username")
-        or user_payload.get("name")
+    username = user_payload.get("preferred_username") or user_payload.get(
+        "name",
     )
     firstname = user_payload.get("given_name")
     lastname = user_payload.get("family_name")
 
     if not (user_id and username and firstname and lastname):
-        raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail="Missing required user details.")
+        raise HTTPException(
+            status_code=HTTP_400_BAD_REQUEST,
+            detail="Missing required user details.",
+        )
 
     result = await session.execute(select(User).where(User.id == user_id))
     db_user = result.scalars().first()
@@ -73,7 +80,7 @@ schema = Schema(
 graphql_app = GraphQLRouter(
     schema,
     context_getter=get_context,
-    graphiql=IS_DEV,
+    graphql_ide=IS_DEV,
 )
 
 

@@ -14,7 +14,7 @@ If you simply want to test the application without modifying code, use the produ
     ```
 
 2.  **Access the App**
-    * **App URL:** `http://localhost:80`
+    * **App URL:** [`http://localhost:80`](http://localhost:80)
     * **User:** `test` / `test`
 
 ---
@@ -28,9 +28,9 @@ This section covers setting up the local environment for coding. You need **Post
 The application relies on the following services. Ensure your environment variables are set (or use the provided `.env.example`):
 
 ```bash
-export DATABASE_URL="postgresql+asyncpg://postgres:password@localhost:5432/postgres"
-export REDIS_URL="redis://localhost:6379"
-export ENV=development
+DATABASE_URL="postgresql+asyncpg://postgres:password@localhost:5432/postgres"
+REDIS_URL="redis://localhost:6379"
+ENV=development
 ```
 
 ### Option A: Manual Setup (Docker Compose)
@@ -82,14 +82,14 @@ Once the development environment is running:
 
 | Service | URL | Description |
 | :--- | :--- | :--- |
-| **Web Frontend** | `http://localhost:3000` | The user interface (Next.js/React). |
-| **Backend API** | `http://localhost:8000/graphql` | The GraphQL Playground (Strawberry). |
-| **Keycloak** | `http://localhost:8080` | Identity Provider. |
+| **Web Frontend** | [`http://localhost:3000`](http://localhost:3000) | The user interface (Next.js/React). |
+| **Backend API** | [`http://localhost:8000/graphql`](http://localhost:8000/graphql) | The GraphQL Playground (Strawberry). |
+| **Keycloak** | [`http://localhost:8080`](http://localhost:8080) | Identity Provider. |
 
 **Keycloak Realms & Users:**
-* **User Realm:** `http://localhost:8080/realms/tasks` (Redirects automatically from app login)
+* **tasks Realm:** `http://localhost:8080/realms/tasks` (Redirects automatically from app login)
     * User: `test`
     * Password: `test`
-* **Admin Console:** `http://localhost:8080/admin`
+* **master Realm (Admin Console):** [`http://localhost:8080/admin`](http://localhost:8080/admin)
     * User: `admin`
     * Password: `admin`
