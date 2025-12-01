@@ -9,7 +9,7 @@ from alembic import context
 # Importing 'Base' from 'models' triggers the import of all
 # sub-models (User, Patient, etc.) via models/__init__.py,
 # ensuring they are registered in Base.metadata for autogeneration.
-from database.base import Base
+from database.models.base import Base
 from database.session import DATABASE_URL
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection

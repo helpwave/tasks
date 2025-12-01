@@ -18,3 +18,11 @@ ENV = os.getenv("ENV", "production")
 IS_DEV = ENV == "development"
 
 LOGGER = os.getenv("LOGGER", "uvicorn")
+
+ISSUER_URI = os.getenv("ISSUER_URI", "http://localhost:8080/realms/tasks")
+PUBLIC_ISSUER_URI = os.getenv(
+    "PUBLIC_ISSUER_URI",
+    ISSUER_URI,
+)
+CLIENT_ID = os.getenv("CLIENT_ID", "tasks")
+CLIENT_SECRET = os.getenv("CLIENT_SECRET", "tasks-secret")

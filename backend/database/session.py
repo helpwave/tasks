@@ -2,7 +2,7 @@ from collections.abc import AsyncGenerator
 
 import redis.asyncio as redis
 from config import DATABASE_URL, REDIS_URL
-from database.base import Base
+from database.models.base import Base
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     async_sessionmaker,

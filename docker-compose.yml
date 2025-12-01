@@ -42,37 +42,11 @@ services:
       POSTGRES_PASSWORD: "password"
     volumes:
       - "postgres-data:/var/lib/postgresql"
-    ports:
-      - "5432:5432"
-
-  pgadmin:
-    image: dpage/pgadmin4
-    restart: always
-    user: "root"
-    environment:
-      PGADMIN_DEFAULT_EMAIL: "admin@admin.com"
-      PGADMIN_DEFAULT_PASSWORD: "admin"
-      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
-      PGADMIN_CONFIG_SERVER_MODE: 'False'
-    ports:
-      - "8090:80"
-    volumes:
-      - pgadmin4-data:/var/lib/pgadmin
-    entrypoint: >
-      /bin/sh -c '
-      echo "postgres:5432:*:admin:admin" > /tmp/pgpass;
-      chmod 600 /tmp/pgpass;
-      echo "{\"Servers\":{\"1\":{\"Name\":\"postgres\",\"Group\":\"Servers\",\"Host\":\"postgres\",\"Port\":5432,\"MaintenanceDB\":\"postgres\",\"Username\":\"postgres\",\"PassFile\":\"/tmp/pgpass\",\"SSLMode\":\"prefer\"}}}" > /pgadmin4/servers.json;
-      /entrypoint.sh'
 
   backend:
-    build: backend
+    image: ghcr.io/helpwave/tasks-backend:latest
     restart: always
-    ports:
-      - "8000:80"
     environment:
-      ENV: "development"
-
       DATABASE_HOSTNAME: "postgres"
       DATABASE_NAME: "postgres"
       DATABASE_USERNAME: "postgres"
@@ -86,18 +60,16 @@ services:
       - postgres
 
   web:
-    build: web
+    image: ghcr.io/helpwave/tasks-web:latest
     restart: always
-    ports:
-      - "3000:80"
     environment:
       ISSUER_URI: "http://localhost:8080/realms/tasks"
       CLIENT_ID: "tasks"
     depends_on:
       - backend
 
-  nginx:
-    build: nginx
+  proxy:
+    image: ghcr.io/helpwave/tasks-proxy:latest
     restart: always
     environment:
       BACKEND_HOST: backend:80
@@ -111,4 +83,3 @@ services:
 volumes:
   keycloak-postgres-data:
   postgres-data:
-  pgadmin4-data:

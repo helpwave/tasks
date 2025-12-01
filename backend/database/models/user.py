@@ -15,12 +15,18 @@ class User(Base):
     __tablename__ = "users"
 
     id: Mapped[str] = mapped_column(
-        String, primary_key=True, default=lambda: str(uuid.uuid4())
+        String,
+        primary_key=True,
+        default=lambda: str(uuid.uuid4()),
     )
     name: Mapped[str] = mapped_column(String)
     firstname: Mapped[str | None] = mapped_column(String, nullable=True)
     lastname: Mapped[str | None] = mapped_column(String, nullable=True)
     title: Mapped[str | None] = mapped_column(String, nullable=True)
-    avatar_url: Mapped[str | None] = mapped_column(String, nullable=True)
+    avatar_url: Mapped[str | None] = mapped_column(
+        String,
+        nullable=True,
+        default="https://cdn.helpwave.de/boringavatar.svg",
+    )
 
     tasks: Mapped[list[Task]] = relationship("Task", back_populates="assignee")
