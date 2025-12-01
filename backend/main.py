@@ -1,8 +1,8 @@
 import requests
 from api.context import Context
 from api.resolvers import Mutation, Query, Subscription
-from auth import CLIENT_ID, ISSUER_URI, verify_token
-from config import CLIENT_SECRET, IS_DEV
+from auth import verify_token
+from config import CLIENT_ID, CLIENT_SECRET, IS_DEV, PUBLIC_ISSUER_URI, ISSUER_URI
 from database.models.user import User
 from database.session import get_db_session
 from fastapi import Depends, FastAPI, HTTPException, Request
@@ -18,6 +18,16 @@ oauth2_scheme = OAuth2PasswordBearer(
 )
 
 
+async def get_token_source(
+    request: Request,
+    header_token: str | None = Depends(oauth2_scheme),
+) -> str | None:
+    if header_token:
+        return header_token
+
+    return request.cookies.get("access_token")
+
+
 class UnauthenticatedRedirect(Exception):
     pass
 
@@ -29,7 +39,7 @@ async def unauthenticated_redirect_handler(
     redirect_uri = f"{request.base_url}callback"
 
     login_url = (
-        f"{ISSUER_URI}/protocol/openid-connect/auth"
+        f"{PUBLIC_ISSUER_URI}/protocol/openid-connect/auth"
         f"?client_id={CLIENT_ID}"
         f"&response_type=code"
         f"&scope=openid profile email"
@@ -40,7 +50,7 @@ async def unauthenticated_redirect_handler(
 
 async def get_context(
     request: Request,
-    token: str | None = Depends(oauth2_scheme),
+    token: str | None = Depends(get_token_source),
     session=Depends(get_db_session),
 ) -> Context:
     user_payload = None
@@ -48,7 +58,8 @@ async def get_context(
     if token:
         try:
             user_payload = verify_token(token)
-        except Exception:
+        except Exception as e:
+            raise e
             user_payload = None
 
     if not user_payload:
@@ -111,6 +122,7 @@ app = FastAPI(
     redoc_url="/redoc" if IS_DEV else None,
     openapi_url="/openapi.json" if IS_DEV else None,
 )
+
 app.add_exception_handler(
     UnauthenticatedRedirect,
     unauthenticated_redirect_handler,
@@ -132,6 +144,7 @@ def oauth_callback(code: str, request: Request):
 
     try:
         response = requests.post(token_endpoint, data=payload, timeout=10)
+
         response.raise_for_status()
         token_data = response.json()
         access_token = token_data.get("access_token")

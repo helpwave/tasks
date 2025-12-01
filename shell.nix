@@ -1,8 +1,8 @@
 {
   pkgs ? import <nixpkgs> { },
-  pgUser ? "user",
+  pgUser ? "postgres",
   pgPassword ? "password",
-  pgDatabase ? "dbname",
+  pgDatabase ? "postgres",
   pgVersion ? 15,
   redisVersion ? 7,
 }:
@@ -93,7 +93,7 @@ pkgs.mkShell {
     run-dev-all() {
       start-docker-db
       trap "echo '>>> Stopping all dev services...'; stop-docker-db; exit" SIGINT
-      sleep 5
+      sleep 3
       run-alembic-upgrade
       bash -c '
         trap "exit" SIGINT
