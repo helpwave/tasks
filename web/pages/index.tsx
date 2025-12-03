@@ -1,5 +1,3 @@
-'use client'
-
 import type { NextPage } from 'next'
 import { Page } from '@/components/layout/Page'
 import titleWrapper from '@/utils/titleWrapper'
@@ -181,10 +179,6 @@ const Dashboard: NextPage = () => {
       minSize: 200,
       size: 250,
       maxSize: 300,
-      filterFn: 'includesString',
-      meta: {
-        filterType: 'text'
-      }
     },
     {
       id: 'dueDate',
@@ -194,10 +188,6 @@ const Dashboard: NextPage = () => {
       minSize: 150,
       size: 200,
       maxSize: 200,
-      filterFn: 'dateRange',
-      meta: {
-        filterType: 'dateRange'
-      }
     },
     {
       id: 'patient',
@@ -207,10 +197,6 @@ const Dashboard: NextPage = () => {
       minSize: 250,
       size: 250,
       maxSize: 400,
-      filterFn: 'includesString',
-      meta: {
-        filterType: 'text'
-      }
     },
     {
       id: 'room',
@@ -219,10 +205,6 @@ const Dashboard: NextPage = () => {
       minSize: 250,
       size: 250,
       maxSize: 400,
-      filterFn: 'includesString',
-      meta: {
-        filterType: 'text'
-      }
     },
     {
       id: 'status',
