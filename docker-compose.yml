@@ -23,6 +23,8 @@ services:
       KEYCLOAK_ADMIN: "admin"
       KEYCLOAK_ADMIN_PASSWORD: "admin"
     command: start-dev --import-realm
+    depends_on:
+      - keycloak-postgres
     volumes:
       - "./keycloak:/opt/keycloak/data/import:ro"
     ports:

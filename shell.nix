@@ -115,6 +115,7 @@ pkgs.mkShell {
         echo ">>> Waiting for database on :${toString postgresPort}...";
         sleep 0.5;
       done
+      sleep 1;
       echo ">>> Database is up!"
       run-alembic upgrade head
     }
