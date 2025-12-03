@@ -3,7 +3,7 @@ from typing import Any
 
 import requests
 from config import CLIENT_ID, ISSUER_URI, LOGGER, PUBLIC_ISSUER_URI
-from fastapi import HTTPException, Request, status
+from fastapi import Request
 from fastapi.responses import RedirectResponse
 from jose import jwk, jwt
 from starlette.requests import HTTPConnection
@@ -25,37 +25,17 @@ def delete_auth_cookie(response):
     )
 
 
-async def authenticate_connection(connection, token: str | None):
-    user_payload = None
+def get_user_payload(connection: HTTPConnection) -> dict | None:
+    token = get_token_source(connection)
 
-    if token:
-        try:
-            user_payload = verify_token(token)
-        except Exception as e:
-            logger.warning(f"Token validation failed: {e}")
+    if not token:
+        return None
 
-    if user_payload:
-        return user_payload
-
-    if connection.scope["type"] == "http":
-        response = RedirectResponse("/login", status_code=302)
-        delete_auth_cookie(response)
-
-        accept_header = connection.headers.get("accept", "")
-
-        if "text/html" in accept_header:
-            raise UnauthenticatedRedirect(response=response)
-
-        raise HTTPException(
-            status_code=401,
-            detail="Not authenticated",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-    if connection.scope["type"] == "websocket":
-        raise HTTPException(status_code=403, detail="Not authenticated")
-
-    raise RuntimeError("Unsupported connection type")
+    try:
+        return verify_token(token)
+    except Exception as e:
+        logger.warning(f"Token validation failed: {e}")
+        return None
 
 
 def get_public_key(token: str) -> Any:
@@ -71,7 +51,6 @@ def get_public_key(token: str) -> Any:
         if kid in jwks_cache:
             return jwks_cache[kid]
 
-        # TODO use openid config endpoint to obtain well-known endpoints in the future
         jwks_uri = f"{ISSUER_URI}/protocol/openid-connect/certs"
 
         response = requests.get(jwks_uri, timeout=5)
@@ -87,12 +66,8 @@ def get_public_key(token: str) -> Any:
         raise Exception("Public key not found in JWKS")
 
     except Exception as e:
-        print(f"Auth Error: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        logger.error(f"Auth Error: {e}")
+        raise e
 
 
 def verify_token(token: str) -> dict:
@@ -124,16 +99,14 @@ def verify_token(token: str) -> dict:
             f"Invalid audience/azp. Expected {CLIENT_ID}, got azp={azp}, aud={aud}",
         )
     except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Token has expired")
+        raise Exception("Token has expired")
     except jwt.JWTError as e:
-        raise HTTPException(status_code=401, detail=f"Invalid token: {e!s}")
-    except Exception:
-        raise HTTPException(status_code=401, detail="Authentication failed")
+        raise Exception(f"Invalid token: {e!s}")
+    except Exception as e:
+        raise Exception(f"Authentication failed: {e!s}")
 
 
-async def get_token_source(
-    connection: HTTPConnection,
-) -> str | None:
+def get_token_source(connection: HTTPConnection) -> str | None:
     auth_header = connection.headers.get("authorization")
     if auth_header and auth_header.startswith("Bearer "):
         return auth_header.split(" ")[1]
