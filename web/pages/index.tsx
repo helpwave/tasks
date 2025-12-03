@@ -6,6 +6,8 @@ import { ContentPanel } from '@/components/layout/ContentPanel'
 import { Chip, SolidButton, Table } from '@helpwave/hightide'
 import { useMemo } from 'react'
 import type { ColumnDef } from '@tanstack/table-core'
+import { withAuth } from '@/hooks/useAuth'
+import { useMyQueryQuery } from '@/api/gql/generated'
 
 type Patient = {
   name: string,
@@ -227,7 +229,6 @@ const Dashboard: NextPage = () => {
         return (
           <SolidButton
             onClick={() => {
-              // TODO update task here
               console.log(`clicked on finish of task ${task.id}`)
             }}
           >
@@ -243,6 +244,7 @@ const Dashboard: NextPage = () => {
     }
   ], [])
 
+  const { data, isLoading } = useMyQueryQuery()
 
   return (
     <Page pageTitle={titleWrapper(translation('homePage'))}>
@@ -252,9 +254,11 @@ const Dashboard: NextPage = () => {
           data={tasks}
           columns={columns}
         />
+
+        {isLoading ? 'Loading' : data?.patients.toString()}
       </ContentPanel>
     </Page>
   )
 }
 
-export default Dashboard
+export default withAuth(Dashboard)

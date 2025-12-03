@@ -18,6 +18,7 @@ from config import (
 from database.models.user import User
 from database.session import get_db_session
 from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, RedirectResponse
 from graphql import FieldNode
 from sqlalchemy import select
@@ -279,3 +280,12 @@ def oauth_callback(code: str, request: Request):
 
 
 app.include_router(graphql_app, prefix="/graphql")
+
+if IS_DEV:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )

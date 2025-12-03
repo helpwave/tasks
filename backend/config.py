@@ -38,3 +38,4 @@ PUBLIC_ISSUER_URI = os.getenv(
 )
 CLIENT_ID = os.getenv("CLIENT_ID", "tasks-backend")
 CLIENT_SECRET = os.getenv("CLIENT_SECRET", "tasks-secret")
+FRONTEND_CLIENT_ID = os.getenv("FRONTEND_CLIENT_ID", "tasks-web")

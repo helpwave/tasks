@@ -1,8 +1,8 @@
 import logging
-from typing import Any
+from typing import Any, Optional
 
 import requests
-from config import CLIENT_ID, ISSUER_URI, LOGGER, PUBLIC_ISSUER_URI
+from config import CLIENT_ID, FRONTEND_CLIENT_ID, ISSUER_URI, LOGGER, PUBLIC_ISSUER_URI
 from fastapi import Request
 from fastapi.responses import RedirectResponse
 from jose import jwk, jwt
@@ -21,11 +21,11 @@ def delete_auth_cookie(response):
         path="/",
         secure=True,
         httponly=True,
-        samesite="none",
+        samesite="lax",
     )
 
 
-def get_user_payload(connection: HTTPConnection) -> dict | None:
+def get_user_payload(connection: HTTPConnection) -> Optional[dict]:
     token = get_token_source(connection)
 
     if not token:
@@ -34,7 +34,7 @@ def get_user_payload(connection: HTTPConnection) -> dict | None:
     try:
         return verify_token(token)
     except Exception as e:
-        logger.warning(f"Token validation failed: {e}")
+        logger.warning(f"Auth failed for token: {e}")
         return None
 
 
@@ -46,16 +46,22 @@ def get_public_key(token: str) -> Any:
         kid = header.get("kid")
 
         if not kid:
-            raise Exception("Token header missing kid")
+            raise Exception("Token header missing 'kid' field")
 
         if kid in jwks_cache:
             return jwks_cache[kid]
 
         jwks_uri = f"{ISSUER_URI}/protocol/openid-connect/certs"
 
-        response = requests.get(jwks_uri, timeout=5)
-        response.raise_for_status()
-        jwks = response.json()
+        try:
+            response = requests.get(jwks_uri, timeout=5)
+            response.raise_for_status()
+            jwks = response.json()
+        except Exception as net_err:
+            logger.error(f"Failed to fetch JWKS from {jwks_uri}: {net_err}")
+            raise Exception(
+                "Could not reach authentication server to verify token",
+            )
 
         for key_data in jwks.get("keys", []):
             if key_data.get("kid") == kid:
@@ -63,10 +69,10 @@ def get_public_key(token: str) -> Any:
                 jwks_cache[kid] = key
                 return key
 
-        raise Exception("Public key not found in JWKS")
+        raise Exception(f"Public key (kid={kid}) not found in JWKS")
 
     except Exception as e:
-        logger.error(f"Auth Error: {e}")
+        logger.error(f"Key retrieval error: {e}")
         raise e
 
 
@@ -89,27 +95,34 @@ def verify_token(token: str) -> dict:
         elif aud is None:
             aud = []
 
-        if azp and azp == CLIENT_ID:
+        if azp and azp == CLIENT_ID or azp == FRONTEND_CLIENT_ID:
             return payload
 
-        if CLIENT_ID in aud:
+        if CLIENT_ID in aud or FRONTEND_CLIENT_ID in aud:
             return payload
 
-        raise Exception(
-            f"Invalid audience/azp. Expected {CLIENT_ID}, got azp={azp}, aud={aud}",
+        error_msg = (
+            f"Audience/AZP mismatch. "
+            f"Configured CLIENT_ID='{CLIENT_ID}'. "
+            f"Token azp='{azp}', aud='{aud}'."
         )
+        logger.warning(error_msg)
+        raise Exception(error_msg)
+
     except jwt.ExpiredSignatureError:
         raise Exception("Token has expired")
     except jwt.JWTError as e:
-        raise Exception(f"Invalid token: {e!s}")
+        raise Exception(f"Invalid token format or signature: {e!s}")
     except Exception as e:
-        raise Exception(f"Authentication failed: {e!s}")
+        raise Exception(f"{e!s}")
 
 
 def get_token_source(connection: HTTPConnection) -> str | None:
     auth_header = connection.headers.get("authorization")
-    if auth_header and auth_header.startswith("Bearer "):
-        return auth_header.split(" ")[1]
+    if auth_header:
+        parts = auth_header.split()
+        if len(parts) == 2 and parts[0].lower() == "bearer":
+            return parts[1]
 
     return connection.cookies.get(AUTH_COOKIE_NAME)
 

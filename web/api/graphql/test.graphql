@@ -1,15 +1,20 @@
 query MyQuery {
-  tasks(patientId: "") {
-    assignee {
-      avatarUrl
-      id
-      name
-    }
-    creationDate
-    description
-    done
+  patients {
+    age
+    assignedLocationId
+    birthdate
+    firstname
+    gender
     id
-    title
-    updateDate
+    lastname
+    name
+    properties {
+      definition {
+        allowedEntities
+      }
+    }
+    tasks {
+      id
+    }
   }
 }
