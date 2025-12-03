@@ -1,4 +1,4 @@
-import type { PropsWithChildren } from 'react'
+import type { HTMLAttributes, PropsWithChildren } from 'react'
 import { useEffect, useState } from 'react'
 import Head from 'next/head'
 import titleWrapper from '@/utils/titleWrapper'
@@ -57,13 +57,19 @@ export const StagingDisclaimerDialog = () => {
 }
 
 
+type HeaderProps = HTMLAttributes<HTMLHeadElement>
+
 /**
  * The basic header for most pages
  */
-export const Header = () => {
+export const Header = ({ ...props }: HeaderProps) => {
   return (
     <header
-      className="flex-row-8 items-center justify-between w-full h-18 px-8 py-4 bg-header-background text-header-text shadow-md rounded-lg"
+      {...props}
+      className={clsx(
+        'flex-row-8 items-center justify-between grow h-18 px-8 py-4 bg-header-background text-header-text shadow-md rounded-lg',
+        props.className
+      )}
     >
       <Link href="/" className="bg-surface text-on-surface rounded-lg px-6 py-4">
         <HelpwaveLogo className="min-h-12 min-w-12"/>
@@ -87,18 +93,19 @@ export const Page = ({
                        pageTitle,
                      }: PageWithHeaderProps) => {
   return (
-    <div className="flex-col-4 w-screen h-screen overflow-hidden p-4">
+    <div className="flex-col-4 h-screen w-screen overflow-hidden pt-4 pl-4">
       <Head>
         <title>{titleWrapper(pageTitle)}</title>
       </Head>
       <StagingDisclaimerDialog />
-      <Header />
-      <div className="flex-row-4 grow">
-        <aside className="flex-col-4 w-40 rounded-lg bg-surface text-on-surface">
+      <Header className="mr-4" />
+      <div className="flex-row-4 grow overflow-hidden">
+        <aside className="flex-col-2 w-40 min-w-40 rounded-lg bg-surface text-on-surface overflow-auto mb-4">
 
         </aside>
-        <main className="flex-col-2 grow">
+        <main className="flex-col-2 grow overflow-auto">
           {children}
+          <div className="min-h-16"/>
         </main>
       </div>
     </div>

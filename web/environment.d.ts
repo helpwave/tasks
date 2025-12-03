@@ -8,6 +8,7 @@ declare namespace NodeJS {
         NEXT_PUBLIC_FEATURES_FEED_URL?: string,
         NEXT_PUBLIC_IMPRINT_URL?: string,
         NEXT_PUBLIC_PRIVACY_URL?: string,
+        GRAPHQL_TOKEN?: string,
         NEXT_PUBLIC_GRAPHQL_ENDPOINT?: string,
         NEXT_PUBLIC_ISSUER_URI?: string,
         NEXT_PUBLIC_CLIENT_ID?: string,

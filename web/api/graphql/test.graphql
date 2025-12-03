@@ -1,0 +1,15 @@
+query MyQuery {
+  tasks(patientId: "") {
+    assignee {
+      avatarUrl
+      id
+      name
+    }
+    creationDate
+    description
+    done
+    id
+    title
+    updateDate
+  }
+}
