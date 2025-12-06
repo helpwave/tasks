@@ -25,7 +25,7 @@
     "clsx": "2.1.1",
     "dotenv": "^17.2.3",
     "lucide-react": "0.468.0",
-    "next": "15.4.7",
+    "next": "^15.5.7",
     "oidc-client-ts": "3.4.1",
     "postcss": "8.5.3",
     "react": "18.3.1",
