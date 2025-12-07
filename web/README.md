@@ -2,9 +2,9 @@
 
 1. Execute the following commands
 ```
-pnpm install
+npm install
 cd tasks/
-pnpm run dev
+npm run dev
 ```
 2. open http://localhost:3000
 

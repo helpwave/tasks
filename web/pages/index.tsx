@@ -245,7 +245,7 @@ const Dashboard: NextPage = () => {
   ], [])
 
   const { data, isLoading } = useMyQueryQuery()
-
+  console.log(data)
   return (
     <Page pageTitle={titleWrapper(translation('homePage'))}>
       <ContentPanel title={translation('homePage')} description="The beginning of something">

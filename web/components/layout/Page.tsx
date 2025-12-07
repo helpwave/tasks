@@ -78,6 +78,31 @@ export const Header = ({ ...props }: HeaderProps) => {
   )
 }
 
+type NavigationItem = {
+  url: string,
+  name: string,
+}
+
+type SidebarProps = HTMLAttributes<HTMLHeadElement> & {
+  items?: NavigationItem[],
+}
+
+/**
+ * The basic sidebar for most pages
+ */
+export const Sidebar = ({ items, ...props }: SidebarProps) => {
+  return (
+    <aside
+      {...props}
+      className={clsx(
+        'flex-col-2 w-40 min-w-40 rounded-lg bg-surface text-on-surface overflow-auto mb-4',
+        props.className
+      )}
+    >
+    </aside>
+  )
+}
+
 
 type PageWithHeaderProps = PropsWithChildren<{
   pageTitle?: string,
@@ -97,12 +122,10 @@ export const Page = ({
       <Head>
         <title>{titleWrapper(pageTitle)}</title>
       </Head>
-      <StagingDisclaimerDialog />
-      <Header className="mr-4" />
+      <StagingDisclaimerDialog/>
+      <Header className="mr-4"/>
       <div className="flex-row-4 grow overflow-hidden">
-        <aside className="flex-col-2 w-40 min-w-40 rounded-lg bg-surface text-on-surface overflow-auto mb-4">
-
-        </aside>
+        <Sidebar/>
         <main className="flex-col-2 grow overflow-auto">
           {children}
           <div className="min-h-16"/>
