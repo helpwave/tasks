@@ -1,12 +1,23 @@
-import type { HTMLAttributes, PropsWithChildren } from 'react'
+'use client'
+
+import type { AnchorHTMLAttributes, HTMLAttributes, PropsWithChildren } from 'react'
 import { useEffect, useState } from 'react'
 import Head from 'next/head'
 import titleWrapper from '@/utils/titleWrapper'
 import Link from 'next/link'
-import { Dialog, HelpwaveLogo, MarkdownInterpreter, SolidButton, useLocalStorage } from '@helpwave/hightide'
+import {
+  Dialog,
+  ExpansionIcon,
+  HelpwaveLogo,
+  MarkdownInterpreter,
+  SolidButton,
+  useLocalStorage
+} from '@helpwave/hightide'
 import { getConfig } from '@/utils/config'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import clsx from 'clsx'
+import { CircleCheck, Grid2X2PlusIcon, User } from 'lucide-react'
+import { usePathname } from 'next/navigation'
 
 export const StagingDisclaimerDialog = () => {
   const config = getConfig()
@@ -67,38 +78,112 @@ export const Header = ({ ...props }: HeaderProps) => {
     <header
       {...props}
       className={clsx(
-        'flex-row-8 items-center justify-between grow h-18 px-8 py-4 bg-header-background text-header-text shadow-md rounded-lg',
+        'flex-row-8 items-center justify-between grow max-h-18 p-4 bg-header-background text-header-text shadow-md rounded-lg',
         props.className
       )}
     >
-      <Link href="/" className="bg-surface text-on-surface rounded-lg px-6 py-4">
-        <HelpwaveLogo className="min-h-12 min-w-12"/>
-      </Link>
+      <div className="flex grow-1">
+        <Link href="/" className="flex-row-2 bg-surface text-on-surface items-center rounded-lg p-2">
+          <HelpwaveLogo className="min-h-7 min-w-7 p-0.5 bg-header-background rounded-md"/>
+          <span className="typography-title-md whitespace-nowrap">{'helpwave tasks'}</span>
+        </Link>
+      </div>
+      <div className="flex-col-0 grow-1 justify-center items-center">
+        <span className="typography-title-md">{'TK'}</span>
+        <span className="text-description">{'Test Klinkum'}</span>
+      </div>
+      <div className="flex-row-0 grow-1 justify-end">
+        <SolidButton color="neutral">
+          {'User Name'}
+          <ExpansionIcon isExpanded={false}/>
+        </SolidButton>
+      </div>
     </header>
   )
 }
 
-type NavigationItem = {
-  url: string,
-  name: string,
+type SidebarData = {
+  myTasksCount?: number,
+  patientsCount?: number,
+  station?: {
+    name: string,
+    patientCount: number,
+    bedCount: number,
+    rooms: {
+      id: string,
+      name: string,
+    },
+  },
 }
 
-type SidebarProps = HTMLAttributes<HTMLHeadElement> & {
-  items?: NavigationItem[],
+type SidebarLinkProps = AnchorHTMLAttributes<HTMLAnchorElement> & {
+  href: string,
+  route?: string,
 }
+
+const SidebarLink = ({ children, route, ...props }: SidebarLinkProps) => {
+
+  return (
+    <Link
+      {...props}
+      className={clsx(
+        'flex-row-2 w-full px-2.5 py-1.5 rounded-md hover:bg-white/50 dark:hover:bg-black/50',
+        { 'bg-white dark:bg-black': route === props.href }
+      )}
+    >
+      {children}
+    </Link>
+  )
+}
+
+const defaultSidebarData: SidebarData = {}
+
+type SidebarProps = HTMLAttributes<HTMLDivElement>
 
 /**
  * The basic sidebar for most pages
  */
-export const Sidebar = ({ items, ...props }: SidebarProps) => {
+export const Sidebar = ({ ...props }: SidebarProps) => {
+  const translation = useTasksTranslation()
+  const [data, setData] = useState<SidebarData>(defaultSidebarData)
+  const route = usePathname()
+
+  // TODO add context logic
+  useEffect(() => {
+    setTimeout(() => {
+      setData({
+        myTasksCount: 12,
+        patientsCount: 10,
+      })
+    }, 2000)
+  }, [])
+
   return (
     <aside
       {...props}
       className={clsx(
-        'flex-col-2 w-40 min-w-40 rounded-lg bg-surface text-on-surface overflow-auto mb-4',
+        'flex-col-4 w-50 min-w-56 rounded-lg bg-surface text-on-surface overflow-hidden mb-4 p-2.5',
         props.className
       )}
     >
+      <nav className="flex-col-2 overflow-auto">
+        {/* TODO add station swticher here */}
+        <SidebarLink href="/" route={route}>
+          <Grid2X2PlusIcon className="-rotate-90"/>
+          <span className="flex grow">{translation('dashboard')}</span>
+        </SidebarLink>
+        <SidebarLink href="/tasks" route={route}>
+          <CircleCheck/>
+          <span className="flex grow">{translation('myTasks')}</span>
+          {data?.myTasksCount !== undefined && (<span className="text-description">{data.myTasksCount}</span>)}
+        </SidebarLink>
+        <SidebarLink href="/patients" route={route}>
+          <User/>
+          <span className="flex grow">{translation('patients')}</span>
+          {data?.patientsCount !== undefined && (<span className="text-description">{data.patientsCount}</span>)}
+        </SidebarLink>
+        {/* TODO add rooms here */}
+      </nav>
     </aside>
   )
 }

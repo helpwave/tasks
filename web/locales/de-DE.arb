@@ -54,5 +54,12 @@
   "dismiss": "Schließen",
   "imprint": "Impressum",
   "privacy": "Datenschutz",
-  "confirm": "Bestätigen"
+  "confirm": "Bestätigen",
+  "dashboard": "Dashboard",
+  "myTasks": "Meine Aufgaben",
+  "patients": "Patienten",
+  "rooms": "Zimmer",
+  "loginRequired": "Login benötigt",
+  "loginRequiredDescription": "Um diese Seite benutzen zu können musst du eingeloggt sein.",
+  "login": "Login"
 }

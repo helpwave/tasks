@@ -50,12 +50,7 @@
 }
 
 @layer components {
-  #__next, body {
+  body {
     @apply w-screen max-w-screen h-screen max-h-screen overflow-hidden;
-  }
-
-  /* Need for development to move the next portal properly out of the body */
-  nextjs-portal {
-    @apply left-0 bottom-0 ml-16 text-[1.5em] mb-[0.5em];
   }
 }

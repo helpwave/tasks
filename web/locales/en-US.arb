@@ -54,5 +54,12 @@
   "dismiss": "Dismiss",
   "imprint": "Imprint",
   "privacy": "Privacy",
-  "confirm": "Confirm"
+  "confirm": "Confirm",
+  "dashboard": "Dashboard",
+  "myTasks": "My tasks",
+  "patients": "Patients",
+  "rooms": "Rooms",
+  "loginRequired": "Login required",
+  "loginRequiredDescription": "To use this site you need to be logged in.",
+  "login": "Login"
 }
