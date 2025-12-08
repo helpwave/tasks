@@ -2,7 +2,6 @@
 const nextConfig = {
   distDir: 'build',
   reactStrictMode: true,
-  transpilePackages: ['@helpwave/api-services'],
   output: 'standalone',
   images: {
     dangerouslyAllowSVG: true,

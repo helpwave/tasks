@@ -1,10 +1,22 @@
+import { publicEnvSchema } from '@/utils/config'
 import Document, { Html, Head, Main, NextScript } from 'next/document'
 
 class MyDocument extends Document {
   render() {
+    const publicEnv = Object.keys(publicEnvSchema.shape).reduce((acc, key) => {
+      acc[key] = process.env[key]
+      return acc
+    }, {} as Record<string, string | undefined>)
+
     return (
       <Html>
         <Head>
+          <script
+            id="env-vars"
+            dangerouslySetInnerHTML={{
+              __html: `window.__ENV = ${JSON.stringify(publicEnv)}`,
+            }}
+          />
           <meta name="og:title" property="og:title" content="helpwave tasks" />
           <meta name="description" content="The first open-source team management platform for healthcare workers" />
           <meta property="og:description" content="The first open-source team management platform for healthcare workers" />
