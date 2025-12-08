@@ -39,6 +39,14 @@
       }
     }
   },
+  "nTask": "{count, plural, =1{# Aufgabe} other{# Aufgaben}}",
+  "@nTask": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
   "visibility": "Sichtbarkeit",
   "private": "Privat",
   "public": "Öffentlich",
@@ -61,5 +69,6 @@
   "rooms": "Zimmer",
   "loginRequired": "Login benötigt",
   "loginRequiredDescription": "Um diese Seite benutzen zu können musst du eingeloggt sein.",
-  "login": "Login"
+  "login": "Login",
+  "notAssigned": "Nicht zugewiesen"
 }
