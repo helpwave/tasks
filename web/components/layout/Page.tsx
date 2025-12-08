@@ -10,8 +10,10 @@ import {
   Dialog,
   ExpansionIcon,
   HelpwaveLogo, IconButton, Input,
+  LanguageDialog,
   MarkdownInterpreter,
   SolidButton,
+  ThemeDialog,
   useLocalStorage
 } from '@helpwave/hightide'
 import { getConfig } from '@/utils/config'
@@ -76,41 +78,54 @@ type HeaderProps = HTMLAttributes<HTMLHeadElement>
  */
 export const Header = ({ ...props }: HeaderProps) => {
   const translation = useTasksTranslation()
-  const [username, setUsername] = useState<string | undefined>();
+  const [username, setUsername] = useState<string | undefined>()
 
   useEffect(() => {
     const fetchUser = async () => {
-      const user = await getUser();
-      setUsername(user?.profile.name);
+      const user = await getUser()
+      setUsername(user?.profile.name)
     }
 
-    fetchUser();
-  }, []);
+    fetchUser()
+  }, [])
+
+  const [isThemeDialogOpen, setIsThemeDialogOpen] = useState<boolean>(false)
+  const [isLanguageDialogOpen, setIsLanguageDialogOpen] = useState<boolean>(false)
 
   return (
-    <header
-      {...props}
-      className={clsx(
-        'flex-row-8 items-center justify-between',
-        props.className
-      )}
-    >
-      <div className="flex-col-0">
-        <Input placeholder={translation('search')} />
-      </div>
-      <div className="flex-row-4 justify-end">
-        <IconButton color="neutral">
-          <BellIcon />
-        </IconButton>
-        <IconButton color="neutral">
-          <SettingsIcon />
-        </IconButton>
-        <SolidButton color="neutral">
-          {username}
-          <ExpansionIcon isExpanded={false} />
-        </SolidButton>
-      </div>
-    </header>
+    <>
+      <LanguageDialog
+        isOpen={isLanguageDialogOpen}
+        onClose={() => setIsLanguageDialogOpen(false)}
+      />
+      <ThemeDialog
+        isOpen={isThemeDialogOpen}
+        onClose={() => setIsThemeDialogOpen(false)}
+      />
+      <header
+        {...props}
+        className={clsx(
+          'flex-row-8 items-center justify-between',
+          props.className
+        )}
+      >
+        <div className="flex-col-0">
+          <Input placeholder={translation('search')} />
+        </div>
+        <div className="flex-row-4 justify-end">
+          <IconButton color="neutral">
+            <BellIcon />
+          </IconButton>
+          <IconButton color="neutral" onClick={() => setIsThemeDialogOpen(true)}>
+            <SettingsIcon />
+          </IconButton>
+          <SolidButton color="neutral" onClick={() => setIsLanguageDialogOpen(true)}>
+            {username}
+            <ExpansionIcon isExpanded={false} />
+          </SolidButton>
+        </div>
+      </header>
+    </>
   )
 }
 
