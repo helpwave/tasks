@@ -25,9 +25,11 @@ export type TasksTranslationEntries = {
   'myTasks': string,
   'nBed': (values: { count: number }) => string,
   'nOrganization': (values: { count: number }) => string,
+  'notAssigned': string,
   'notes': string,
   'nPatient': (values: { count: number }) => string,
   'nRoom': (values: { count: number }) => string,
+  'nTask': (values: { count: number }) => string,
   'nWard': (values: { count: number }) => string,
   'pages.404.notFound': string,
   'pages.404.notFoundDescription1': string,
@@ -70,6 +72,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
         'other': `${count} Organisationen`,
       })
     },
+    'notAssigned': `Nicht zugewiesen`,
     'notes': `Notizen`,
     'nPatient': ({ count }): string => {
       return TranslationGen.resolvePlural(count, {
@@ -81,6 +84,12 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
       return TranslationGen.resolvePlural(count, {
         '=1': `${count} Zimmer`,
         'other': `${count} Zimmer`,
+      })
+    },
+    'nTask': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} Aufgabe`,
+        'other': `${count} Aufgaben`,
       })
     },
     'nWard': ({ count }): string => {
@@ -128,6 +137,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
         'other': `${count} Organizations`,
       })
     },
+    'notAssigned': `Not assigned`,
     'notes': `notes`,
     'nPatient': ({ count }): string => {
       return TranslationGen.resolvePlural(count, {
@@ -139,6 +149,12 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
       return TranslationGen.resolvePlural(count, {
         '=1': `${count} Room`,
         'other': `${count} Rooms`,
+      })
+    },
+    'nTask': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} Task`,
+        'other': `${count} Tasks`,
       })
     },
     'nWard': ({ count }): string => {

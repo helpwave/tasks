@@ -39,6 +39,14 @@
       }
     }
   },
+  "nTask": "{count, plural, =1{# Task} other{# Tasks}}",
+  "@nTask": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
   "visibility": "Visibility",
   "private": "private",
   "public": "public",
@@ -61,5 +69,6 @@
   "rooms": "Rooms",
   "loginRequired": "Login required",
   "loginRequiredDescription": "To use this site you need to be logged in.",
-  "login": "Login"
+  "login": "Login",
+  "notAssigned": "Not assigned"
 }

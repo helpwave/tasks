@@ -3,11 +3,12 @@ import { Page } from '@/components/layout/Page'
 import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
-import { Chip, SolidButton, Table } from '@helpwave/hightide'
+import { Checkbox, Chip, IconButton, Table } from '@helpwave/hightide'
 import { useMemo } from 'react'
 import type { ColumnDef } from '@tanstack/table-core'
 import { withAuth } from '@/hooks/useAuth'
 import { useMyQueryQuery } from '@/api/gql/generated'
+import { SettingsIcon } from 'lucide-react'
 
 type Patient = {
   name: string,
@@ -173,7 +174,24 @@ const tasks: Task[] = [
 const Dashboard: NextPage = () => {
   const translation = useTasksTranslation()
 
+  // TODO do translations of headers
   const columns = useMemo<ColumnDef<Task>[]>(() => [
+    {
+      id: 'done',
+      header: '',
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.original.done}
+          onChange={(checked) => {
+            console.debug(checked)
+            // TODO change checked state
+          }}
+        />
+      ),
+      minSize: 60,
+      size: 60,
+      enableResizing: false,
+    },
     {
       id: 'description',
       header: 'Description',
@@ -184,7 +202,7 @@ const Dashboard: NextPage = () => {
     },
     {
       id: 'dueDate',
-      header: 'dueDate',
+      header: 'Due Date',
       accessorKey: 'dueDate',
       cell: ({ row }) => row.original.dueDate.toLocaleString(),
       minSize: 150,
@@ -210,7 +228,7 @@ const Dashboard: NextPage = () => {
     },
     {
       id: 'status',
-      header: 'status',
+      header: 'Status',
       accessorKey: 'done',
       cell: ({ row }) => (
         <Chip color={row.original.done ? 'green' : 'yellow'}>
@@ -223,31 +241,32 @@ const Dashboard: NextPage = () => {
     },
     {
       id: 'actions',
-      header: 'Actions',
+      header: '',
       cell: ({ row }) => {
         const task = row.original
         return (
-          <SolidButton
+          <IconButton
+            color="neutral"
             onClick={() => {
               console.log(`clicked on finish of task ${task.id}`)
             }}
           >
-            {'Finish'}
-          </SolidButton>
+            <SettingsIcon/>
+          </IconButton>
         )
       },
       enableSorting: false,
       enableColumnFilter: false,
-      size: 120,
-      minSize: 100,
-      maxSize: 150
+      size: 77,
+      minSize: 77,
+      maxSize: 77
     }
   ], [])
 
   const { data, isLoading } = useMyQueryQuery()
   return (
-    <Page pageTitle={titleWrapper(translation('homePage'))}>
-      <ContentPanel title={translation('homePage')} description="The beginning of something">
+    <Page pageTitle={titleWrapper(translation('myTasks'))}>
+      <ContentPanel title={translation('myTasks')} description={translation('nTask', { count: tasks.length })}>
         <Table
           className="w-full h-full"
           data={tasks}

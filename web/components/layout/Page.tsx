@@ -8,7 +8,7 @@ import Link from 'next/link'
 import {
   Dialog,
   ExpansionIcon,
-  HelpwaveLogo,
+  HelpwaveLogo, IconButton, Input,
   MarkdownInterpreter,
   SolidButton,
   useLocalStorage
@@ -16,7 +16,7 @@ import {
 import { getConfig } from '@/utils/config'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import clsx from 'clsx'
-import { CircleCheck, Grid2X2PlusIcon, User } from 'lucide-react'
+import { BellIcon, CircleCheck, Grid2X2PlusIcon, SettingsIcon, User } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 
 export const StagingDisclaimerDialog = () => {
@@ -74,25 +74,26 @@ type HeaderProps = HTMLAttributes<HTMLHeadElement>
  * The basic header for most pages
  */
 export const Header = ({ ...props }: HeaderProps) => {
+  const translation = useTasksTranslation()
+
   return (
     <header
       {...props}
       className={clsx(
-        'flex-row-8 items-center justify-between grow max-h-18 p-4 bg-header-background text-header-text shadow-md rounded-lg',
+        'flex-row-8 items-center justify-between',
         props.className
       )}
     >
-      <div className="flex grow-1">
-        <Link href="/" className="flex-row-2 bg-surface text-on-surface items-center rounded-lg p-2">
-          <HelpwaveLogo className="min-h-7 min-w-7 p-0.5 bg-header-background rounded-md"/>
-          <span className="typography-title-md whitespace-nowrap">{'helpwave tasks'}</span>
-        </Link>
+      <div className="flex-col-0">
+        <Input placeholder={translation('search')}/>
       </div>
-      <div className="flex-col-0 grow-1 justify-center items-center">
-        <span className="typography-title-md">{'TK'}</span>
-        <span className="text-description">{'Test Klinkum'}</span>
-      </div>
-      <div className="flex-row-0 grow-1 justify-end">
+      <div className="flex-row-4 justify-end">
+        <IconButton color="neutral">
+          <BellIcon />
+        </IconButton>
+        <IconButton color="neutral">
+          <SettingsIcon />
+        </IconButton>
         <SolidButton color="neutral">
           {'User Name'}
           <ExpansionIcon isExpanded={false}/>
@@ -127,8 +128,8 @@ const SidebarLink = ({ children, route, ...props }: SidebarLinkProps) => {
     <Link
       {...props}
       className={clsx(
-        'flex-row-2 w-full px-2.5 py-1.5 rounded-md hover:bg-white/50 dark:hover:bg-black/50',
-        { 'bg-white dark:bg-black': route === props.href }
+        'flex-row-2 w-full px-2.5 py-1.5 rounded-md hover:bg-black/30',
+        { 'text-primary font-bold bg-black/10': route === props.href }
       )}
     >
       {children}
@@ -162,11 +163,15 @@ export const Sidebar = ({ ...props }: SidebarProps) => {
     <aside
       {...props}
       className={clsx(
-        'flex-col-4 w-50 min-w-56 rounded-lg bg-surface text-on-surface overflow-hidden mb-4 p-2.5',
+        'flex-col-4 w-50 min-w-56 rounded-lg bg-surface text-on-surface overflow-hidden p-2.5',
         props.className
       )}
     >
       <nav className="flex-col-2 overflow-auto">
+        <Link href="/" className="flex-row-2 text-primary items-center rounded-lg p-2 mb-8">
+          <HelpwaveLogo className="min-h-7 min-w-7 p-0.5 bg-header-background rounded-md"/>
+          <span className="typography-title-md whitespace-nowrap">{'helpwave tasks'}</span>
+        </Link>
         {/* TODO add station swticher here */}
         <SidebarLink href="/" route={route}>
           <Grid2X2PlusIcon className="-rotate-90"/>
@@ -203,14 +208,14 @@ export const Page = ({
                        pageTitle,
                      }: PageWithHeaderProps) => {
   return (
-    <div className="flex-col-4 h-screen w-screen overflow-hidden pt-4 pl-4">
+    <div className="flex-row-8 h-screen w-screen overflow-hidden">
       <Head>
         <title>{titleWrapper(pageTitle)}</title>
       </Head>
       <StagingDisclaimerDialog/>
-      <Header className="mr-4"/>
-      <div className="flex-row-4 grow overflow-hidden">
-        <Sidebar/>
+      <Sidebar className="my-4 ml-4"/>
+      <div className="flex-col-4 grow overflow-hidden">
+        <Header className="mr-4 mt-4 bg-background text-on-background"/>
         <main className="flex-col-2 grow overflow-auto">
           {children}
           <div className="min-h-16"/>
