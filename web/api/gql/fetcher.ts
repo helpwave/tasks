@@ -17,13 +17,10 @@ export const fetcher = <TData, TVariables extends object | undefined>(
 
     const headers: HeadersInit = {};
 
-    console.log(token, user);
-
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
       document.cookie = `access_token=${token}; path=/; secure; samesite=strict`;
     }
-    console.log(headers);
 
     const hasFile =
       variables &&

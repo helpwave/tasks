@@ -75,8 +75,8 @@ services:
     ports:
       - "3000:80"
     environment:
-      ISSUER_URI: "http://localhost:8080/realms/tasks"
-      CLIENT_ID: "tasks-web"
+      RUNTIME_ISSUER_URI: "http://localhost:8080/realms/tasks"
+      RUNTIME_CLIENT_ID: "tasks-web"
     depends_on:
       - backend
 
