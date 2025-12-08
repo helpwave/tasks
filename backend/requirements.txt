@@ -104,7 +104,7 @@ typing-extensions==4.15.0
     #   typing-inspection
 typing-inspection==0.4.2
     # via pydantic
-urllib3==2.5.0
+urllib3==2.6.0
     # via requests
 uvicorn[standard]==0.38.0
     # via -r requirements.in
