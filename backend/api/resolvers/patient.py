@@ -32,15 +32,32 @@ class PatientQuery:
     ) -> list[PatientType]:
         query = select(models.Patient)
         if location_node_id:
-            query = query.where(
-                models.Patient.assigned_location_id == location_node_id,
+            # Recursive CTE to find the selected node and all its descendants
+            cte = (
+                select(models.LocationNode.id)
+                .where(models.LocationNode.id == location_node_id)
+                .cte(name="location_descendants", recursive=True)
             )
+
+            parent = select(models.LocationNode.id).join(
+                cte,
+                models.LocationNode.parent_id == cte.c.id,
+            )
+            cte = cte.union_all(parent)
+
+            # Filter patients who are assigned to any of these locations
+            query = query.where(
+                models.Patient.assigned_location_id.in_(select(cte.c.id)),
+            )
+
         result = await info.context.db.execute(query)
         return result.scalars().all()
 
     @strawberry.field
     async def recent_patients(
-        self, info: Info, limit: int = 5
+        self,
+        info: Info,
+        limit: int = 5,
     ) -> list[PatientType]:
         query = select(models.Patient).limit(limit)
         result = await info.context.db.execute(query)
@@ -59,7 +76,7 @@ class PatientMutation:
             firstname=data.firstname,
             lastname=data.lastname,
             birthdate=data.birthdate,
-            gender=data.gender.value,
+            sex=data.sex.value,
             assigned_location_id=data.assigned_location_id,
         )
         info.context.db.add(new_patient)
@@ -97,8 +114,8 @@ class PatientMutation:
             patient.lastname = data.lastname
         if data.birthdate is not None:
             patient.birthdate = data.birthdate
-        if data.gender is not None:
-            patient.gender = data.gender.value
+        if data.sex is not None:
+            patient.sex = data.sex.value
         if data.assigned_location_id is not None:
             patient.assigned_location_id = data.assigned_location_id
 

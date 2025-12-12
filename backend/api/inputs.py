@@ -5,7 +5,7 @@ import strawberry
 
 
 @strawberry.enum
-class Gender(Enum):
+class Sex(Enum):
     MALE = "MALE"
     FEMALE = "FEMALE"
     UNKNOWN = "UNKNOWN"
@@ -56,7 +56,7 @@ class CreatePatientInput:
     firstname: str
     lastname: str
     birthdate: date
-    gender: Gender
+    sex: Sex
     assigned_location_id: strawberry.ID | None = None
     properties: list[PropertyValueInput] | None = None
 
@@ -66,7 +66,7 @@ class UpdatePatientInput:
     firstname: str | None = None
     lastname: str | None = None
     birthdate: date | None = None
-    gender: Gender | None = None
+    sex: Sex | None = None
     assigned_location_id: strawberry.ID | None = None
     properties: list[PropertyValueInput] | None = None
 

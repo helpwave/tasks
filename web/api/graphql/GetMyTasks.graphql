@@ -7,6 +7,7 @@ query GetMyTasks {
       description
       done
       creationDate
+      updateDate
       patient {
         id
         name

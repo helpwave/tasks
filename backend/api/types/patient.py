@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Annotated
 
 import strawberry
 from api.context import Info
-from api.inputs import Gender
+from api.inputs import Sex
 from api.types.property import PropertyValueType
 from database import models
 from sqlalchemy import select
@@ -20,7 +20,7 @@ class PatientType:
     firstname: str
     lastname: str
     birthdate: date
-    gender: Gender
+    sex: Sex
     assigned_location_id: strawberry.ID | None
 
     @strawberry.field
