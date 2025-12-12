@@ -12,9 +12,8 @@ import {
   ExpansionIcon,
   IconButton,
   LoadingContainer,
-  MarkdownInterpreter,
+  MarkdownInterpreter, Menu, MenuItem,
   SolidButton,
-  TextButton,
   useLocalStorage
 } from '@helpwave/hightide'
 import { getConfig } from '@/utils/config'
@@ -84,8 +83,6 @@ export const Header = ({ ...props }: HeaderProps) => {
   const translation = useTasksTranslation()
   const { user } = useTasksContext()
   const router = useRouter()
-  // TODO replace with Menu component later
-  const [isOpen, setIsOpen] = useState(false)
   const { logout } = useAuth()
 
   return (
@@ -224,7 +221,7 @@ export const Sidebar = ({ ...props }: SidebarProps) => {
             <LoadingContainer className="w-full h-10"/>
           ) : context.teams.map(ward => (
             <SidebarLink key={ward.id} href={`${teamsRoute}/${ward.id}`} className="pl-9.5">
-              {ward.name}
+              {ward.title}
             </SidebarLink>
           ))}
         </Expandable>
@@ -255,7 +252,7 @@ export const Sidebar = ({ ...props }: SidebarProps) => {
             <LoadingContainer className="w-full h-10"/>
           ) : context.wards.map(ward => (
             <SidebarLink key={ward.id} href={`${wardsRoute}/${ward.id}`} className="pl-9.5">
-              {ward.name}
+              {ward.title}
             </SidebarLink>
           ))}
         </Expandable>

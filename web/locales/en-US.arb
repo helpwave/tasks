@@ -68,7 +68,7 @@
   "@dashboardWelcome": {
     "placeholders": {
       "name": {
-        "type": "String"
+        "type": "string"
       }
     }
   },
@@ -132,23 +132,9 @@
   "totalPatients": "Total Patients",
   "updated": "Updated",
   "visibility": "Visibility",
-  "wards": "Wards",
-  "preferences": "Preferences",
-  "description": "Description",
-  "assignedTo": "Assigned to",
-  "taskStatus": "{status, select, overdue{Overdue} upcoming{Upcoming} done{Done} other{-}}",
-  "@taskStatus": {
-    "placeholders": {
-      "status": {}
-    }
-  },
-  "noPatient": "No Patient",
-  "place": "Place",
   "lastUpdate": "Last Update",
   "wards": "Wards",
   "overview": "Overview",
-  "teams": "Teams",
-  "logout": "Logout",
   "nCurrentlyPatients": "Currently {count, plural, =1{# Patient} other{# Patients}}",
   "@nCurrentlyPatients": {
     "placeholders": {
@@ -157,5 +143,6 @@
       }
     }
   },
-  "tasks": "Tasks"
+  "authenticationFailed": "Authentication Failed",
+  "returnHome": "Return Home"
 }

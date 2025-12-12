@@ -8,7 +8,7 @@ import { useMemo } from 'react'
 import type { ColumnDef } from '@tanstack/table-core'
 import { EditIcon } from 'lucide-react'
 import { useGetPatientsQuery } from '@/api/gql/generated'
-import { useGlobalContext } from '@/context/GlobalContext'
+import { useTasksContext } from '@/hooks/useTasksContext'
 
 type PatientViewModel = {
   id: string,
@@ -32,11 +32,11 @@ const getAge = (birthDate: Date) => {
 
 const PatientsPage: NextPage = () => {
   const translation = useTasksTranslation()
-  const { selectedLocation } = useGlobalContext()
+  const { selectedLocationId } = useTasksContext()
 
-  const { data: queryData } = useGetPatientsQuery(
-    { locationId: selectedLocation }
-  )
+  const { data: queryData } = useGetPatientsQuery({
+    locationId: selectedLocationId
+  })
 
   const patients: PatientViewModel[] = useMemo(() => {
     if (!queryData?.patients) return []
@@ -125,6 +125,20 @@ const PatientsPage: NextPage = () => {
       size: 120,
     },
     {
+      id: 'tasks',
+      header: translation('tasks'),
+      accessorKey: 'openTasksCount',
+      cell: ({ row }) => (
+        <span className={row.original.openTasksCount > 0 ? 'font-bold text-primary' : 'text-description'}>
+          {row.original.openTasksCount}
+        </span>
+      ),
+      minSize: 100,
+      size: 100,
+      maxSize: 200,
+    },
+    /* TODO do query
+    {
       id: 'myTasks',
       header: translation('myTasks'),
       // TODO use correct id
@@ -177,6 +191,7 @@ const PatientsPage: NextPage = () => {
       size: 150,
       maxSize: 200,
     },
+    */
     {
       id: 'actions',
       header: '',

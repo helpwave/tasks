@@ -1,17 +1,17 @@
 import type { Dispatch, SetStateAction } from 'react'
 import { createContext, type PropsWithChildren, useContext, useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
-import type { User } from 'oidc-client-ts'
-import { getUser } from '@/api/auth/authService'
+import { useGetGlobalDataQuery } from '@/api/gql/generated'
 
-export type Team = {
+type User = {
   id: string,
   name: string,
+  avatarUrl?: string | null,
 }
 
-export type Ward = {
+type LocationNode = {
   id: string,
-  name: string,
+  title: string,
 }
 
 type SidebarContextType = {
@@ -21,14 +21,17 @@ type SidebarContextType = {
 
 export type TasksContextState = {
   myTasksCount?: number,
-  teams?: Team[],
-  wards?: Ward[],
+  totalPatientsCount?: number,
+  locationPatientsCount?: number,
+  teams?: LocationNode[],
+  wards?: LocationNode[],
+  selectedLocationId?: string,
   sidebar: SidebarContextType,
+  user?: User,
 }
 
 export type TasksContextType = TasksContextState & {
   route: string,
-  user?: User,
   update: Dispatch<SetStateAction<TasksContextState>>,
 }
 
@@ -62,41 +65,32 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
     }))
   }, [pathName])
 
-  useEffect(() => {
-    setTimeout(() => {
-      setState(prevState => ({
-        ...prevState,
-        myTasksCount: 10,
-        teams: [
-          { id: '1', name: 'Pflegefachkraft ICU' },
-          { id: '2', name: 'Pflegefachkraft Pediatrie' }
-        ],
-        wards: [
-          { id: '1', name: 'Chirugie 1' },
-          { id: '2', name: 'Chirugie 2' },
-          { id: '3', name: 'Chirugie 3' },
-          { id: '4', name: 'Intensiv' },
-        ]
-      }))
-    }, 2000)
-  }, [])
+  const { data } = useGetGlobalDataQuery()
 
-  const [user, setUser] = useState<User>()
-  // TODO use real query here
   useEffect(() => {
-    getUser().then((user) => {
-      if(user) {
-        setUser(user)
-      }
-    })
-  }, [])
+    const totalPatientsCount = data?.patients?.length ?? 0
+    setState(prevState => ({
+      ...prevState,
+      user: data?.me ? {
+        id: data.me.id,
+        name: data.me.name,
+        avatarUrl: data.me.avatarUrl
+      } : undefined,
+      myTasksCount: data?.me?.tasks?.filter(t => !t.done).length ?? 0,
+      totalPatientsCount,
+      locationPatientsCount: prevState.selectedLocationId
+        ? data?.patients?.filter(p => p.assignedLocation?.id === prevState.selectedLocationId).length ?? 0
+        : totalPatientsCount,
+      teams: data?.teams,
+      wards: data?.wards,
+    }))
+  }, [data])
 
   return (
     <TasksContext.Provider
       value={{
         route: pathName,
         update: setState,
-        user,
         ...state
       }}
     >

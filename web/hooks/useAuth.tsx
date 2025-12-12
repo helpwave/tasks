@@ -7,6 +7,7 @@ import { login, logout, onTokenExpiringCallback, removeUser, renewToken, restore
 import type { User } from 'oidc-client-ts'
 import { getConfig } from '@/utils/config'
 import { usePathname } from 'next/navigation'
+import { LoginPage } from '@/components/pages/login'
 
 const config = getConfig()
 
@@ -159,8 +160,5 @@ export const useAuth = () => {
   if (!context) {
     throw new Error('useAuth must be used within an AuthProvider')
   }
-  const authHeader = {
-    Authorization: `Bearer ${context.identity.access_token}`,
-  }
-  return { ...context, authHeader }
+  return context
 }
