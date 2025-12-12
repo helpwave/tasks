@@ -84,5 +84,9 @@
     }
   },
   "noPatient": "Kein Patient",
-  "place": "Ort"
+  "place": "Ort",
+  "lastUpdate": "Letzte Änderung",
+  "wards": "Stationen",
+  "overview": "Übersicht",
+  "teams": "Teams"
 }

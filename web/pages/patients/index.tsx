@@ -3,7 +3,7 @@ import { Page } from '@/components/layout/Page'
 import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
-import { IconButton, Table } from '@helpwave/hightide'
+import { Chip, IconButton, Table } from '@helpwave/hightide'
 import { useEffect, useMemo, useState } from 'react'
 import type { ColumnDef } from '@tanstack/table-core'
 import { useMyQueryQuery } from '@/api/gql/generated'
@@ -22,6 +22,7 @@ type Ward = {
 type Task = {
   id: string,
   assigneeId: string,
+  dueDate?: Date,
   done: boolean,
 }
 
@@ -45,11 +46,13 @@ const patients: Patient[] = [
         id: 't1',
         assigneeId: 'nurse-14',
         done: false,
+        dueDate: new Date(2025)
       },
       {
         id: 't2',
         assigneeId: 'physician-03',
         done: true,
+        dueDate: new Date(2026)
       },
     ],
   },
@@ -64,6 +67,7 @@ const patients: Patient[] = [
         id: 't3',
         assigneeId: 'nurse-08',
         done: false,
+        dueDate: new Date(2025)
       },
     ],
   },
@@ -82,13 +86,14 @@ const patients: Patient[] = [
         id: 't5',
         assigneeId: 'physician-03',
         done: false,
+        dueDate: new Date(2026)
       },
     ],
   },
 ]
 
 
-const Dashboard: NextPage = () => {
+const PatientsPage: NextPage = () => {
   const translation = useTasksTranslation()
   const [user, setUser] = useState<User>()
 
@@ -138,18 +143,47 @@ const Dashboard: NextPage = () => {
     },
     {
       id: 'myTasks',
-      header: 'My Tasks',
+      header: translation('myTasks'),
       // TODO use correct id
       accessorFn: ({ tasks }) => tasks.filter(value => value.assigneeId === user?.profile.sid).length,
+      cell: ({ row }) => {
+        const data = row.original.tasks // .filter(value => value.assigneeId === user?.profile.sid)
+        const done = data.filter(value => value.done)
+        const upcoming = data.filter(value => !value.done && !(value.dueDate && value.dueDate > new Date()))
+        const overdue = data.filter(value => !value.done && (value.dueDate && value.dueDate > new Date()))
+
+        if(done.length === 0 && upcoming.length === 0 && overdue.length === 0) {
+          return (
+            <span className="text-description">{translation('none')}</span>
+          )
+        }
+
+        return (
+          <div className="flex flex-wrap gap-x-2 gap-y-1">
+            {done.length > 0 && (
+              <Chip color="green">{`${translation('taskStatus', { status: 'done' })} ${done.length}`}</Chip>
+            )}
+            {upcoming.length > 0 && (
+              <Chip color="yellow">{`${translation('taskStatus', { status: 'upcoming' })} ${upcoming.length}`}</Chip>
+            )}
+            {overdue.length > 0 && (
+              <Chip color="red">{`${translation('taskStatus', { status: 'overdue' })} ${overdue.length}`}</Chip>
+            )}
+          </div>
+        )
+      },
       minSize: 100,
       size: 100,
       maxSize: 200,
     },
     {
       id: 'lastChange',
-      header: 'Last Change',
+      header: translation('lastUpdate'),
       accessorKey: 'lastUpdate',
       cell: ({ row }) => {
+        if(!row.original.lastUpdate) {
+          return (<span className="text-description">-</span>)
+        }
         return (
           <span className="typography-label-sm font-bold">
             {row.original.lastUpdate?.toLocaleString()}
@@ -203,4 +237,4 @@ const Dashboard: NextPage = () => {
   )
 }
 
-export default Dashboard
+export default PatientsPage

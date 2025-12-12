@@ -1,6 +1,5 @@
 'use client'
 
-import { getUser } from '@/api/auth/authService'
 import type { AnchorHTMLAttributes, HTMLAttributes, PropsWithChildren } from 'react'
 import { useEffect, useState } from 'react'
 import Head from 'next/head'
@@ -9,8 +8,10 @@ import Link from 'next/link'
 import {
   Avatar,
   Dialog,
+  Expandable,
   ExpansionIcon,
   IconButton,
+  LoadingContainer,
   MarkdownInterpreter,
   SolidButton,
   useLocalStorage
@@ -18,10 +19,10 @@ import {
 import { getConfig } from '@/utils/config'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import clsx from 'clsx'
-import { BellIcon, CircleCheck, Grid2X2PlusIcon, SettingsIcon, User } from 'lucide-react'
-import { usePathname } from 'next/navigation'
+import { BellIcon, Building2, CircleCheck, Grid2X2PlusIcon, SettingsIcon, User, Users } from 'lucide-react'
 import { TasksLogo } from '@/components/TasksLogo'
 import { useRouter } from 'next/router'
+import { useTasksContext } from '@/hooks/useTasksContext'
 
 export const StagingDisclaimerDialog = () => {
   const config = getConfig()
@@ -74,22 +75,12 @@ export const StagingDisclaimerDialog = () => {
 
 type HeaderProps = HTMLAttributes<HTMLHeadElement>
 
-// TODO remove the user fetch here and get it from a new global context
 /**
  * The basic header for most pages
  */
 export const Header = ({ ...props }: HeaderProps) => {
-  const [username, setUsername] = useState<string | undefined>()
+  const { user } = useTasksContext()
   const router = useRouter()
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      const user = await getUser()
-      setUsername(user?.profile.name)
-    }
-
-    fetchUser()
-  }, [])
 
   return (
     <header
@@ -113,45 +104,36 @@ export const Header = ({ ...props }: HeaderProps) => {
             <SettingsIcon/>
           </IconButton>
         </div>
-        <SolidButton color="neutral" className="gap-x-1.75">
-          <div className="flex-row-1.5">
-            {username}
-            <ExpansionIcon isExpanded={false}/>
-          </div>
-          <Avatar fullyRounded={true}/>
-        </SolidButton>
+        {user ? (
+          <SolidButton color="neutral" className="gap-x-1.75">
+            <div className="flex-row-1.5">
+              {user?.profile.name}
+              <ExpansionIcon isExpanded={false}/>
+            </div>
+            <Avatar fullyRounded={true}/>
+          </SolidButton>
+        ): (
+          <LoadingContainer className="min-w-56"/>
+        )}
       </div>
     </header>
   )
 }
 
-type SidebarData = {
-  myTasksCount?: number,
-  patientsCount?: number,
-  station?: {
-    name: string,
-    patientCount: number,
-    bedCount: number,
-    rooms: {
-      id: string,
-      name: string,
-    },
-  },
-}
-
 type SidebarLinkProps = AnchorHTMLAttributes<HTMLAnchorElement> & {
   href: string,
-  route?: string,
 }
 
-const SidebarLink = ({ children, route, ...props }: SidebarLinkProps) => {
+const SidebarLink = ({ children, ...props }: SidebarLinkProps) => {
+  const { route } = useTasksContext()
 
   return (
     <Link
       {...props}
       className={clsx(
         'flex-row-1.5 w-full px-2.5 py-1.5 items-center rounded-md hover:bg-black/30',
-        { 'text-primary font-bold bg-black/10': route === props.href }
+        { 'text-primary font-bold': route === props.href },
+        props.className
       )}
     >
       {children}
@@ -159,28 +141,17 @@ const SidebarLink = ({ children, route, ...props }: SidebarLinkProps) => {
   )
 }
 
-const defaultSidebarData: SidebarData = {}
 
 type SidebarProps = HTMLAttributes<HTMLDivElement>
 
-// TODO remove context sidebar data fetch here and get it from a new global context
 /**
  * The basic sidebar for most pages
  */
 export const Sidebar = ({ ...props }: SidebarProps) => {
   const translation = useTasksTranslation()
-  const [data, setData] = useState<SidebarData>(defaultSidebarData)
-  const route = usePathname()
-
-  // TODO add context logic
-  useEffect(() => {
-    setTimeout(() => {
-      setData({
-        myTasksCount: 12,
-        patientsCount: 10,
-      })
-    }, 2000)
-  }, [])
+  const wardsRoute = '/wards'
+  const teamsRoute = '/teams'
+  const context = useTasksContext()
 
   return (
     <aside
@@ -195,22 +166,81 @@ export const Sidebar = ({ ...props }: SidebarProps) => {
           <TasksLogo/>
           <span className="typography-title-md whitespace-nowrap">{'helpwave tasks'}</span>
         </Link>
-        {/* TODO add station swticher here */}
-        <SidebarLink href="/" route={route}>
+        <SidebarLink href="/">
           <Grid2X2PlusIcon className="-rotate-90 size-5"/>
           <span className="flex grow">{translation('dashboard')}</span>
         </SidebarLink>
-        <SidebarLink href="/tasks" route={route}>
+        <SidebarLink href="/tasks">
           <CircleCheck className="size-5"/>
           <span className="flex grow">{translation('myTasks')}</span>
-          {data?.myTasksCount !== undefined && (<span className="text-description">{data.myTasksCount}</span>)}
+          {context?.myTasksCount !== undefined && (<span className="text-description">{context.myTasksCount}</span>)}
         </SidebarLink>
-        <SidebarLink href="/patients" route={route}>
+        <SidebarLink href="/patients">
           <User className="size-5"/>
           <span className="flex grow">{translation('patients')}</span>
-          {data?.patientsCount !== undefined && (<span className="text-description">{data.patientsCount}</span>)}
         </SidebarLink>
-        {/* TODO add rooms here */}
+
+        <Expandable
+          label={(
+            <div className="flex-row-2">
+              <Users className="size-5"/>
+              {translation('teams')}
+            </div>
+          )}
+          headerClassName="!px-2.5 !py-1.5 hover:bg-black/30"
+          contentClassName="!px-0"
+          className="!shadow-none"
+          isExpanded={context.sidebar.isShowingTeams}
+          onChange={isExpanded => context.update(prevState => ({
+            ...prevState,
+            sidebar: {
+              ...prevState.sidebar,
+              isShowingTeams: isExpanded,
+            }
+          }))}
+        >
+          <SidebarLink href={teamsRoute} className="pl-9.5">
+            {translation('overview')}
+          </SidebarLink>
+          {!context?.teams ? (
+            <LoadingContainer className="w-full h-10"/>
+          ) : context.teams.map(ward => (
+            <SidebarLink key={ward.id} href={`${teamsRoute}/${ward.id}`} className="pl-9.5">
+              {ward.name}
+            </SidebarLink>
+          ))}
+        </Expandable>
+
+        <Expandable
+          label={(
+            <div className="flex-row-2">
+              <Building2 className="size-5"/>
+              {translation('wards')}
+            </div>
+          )}
+          headerClassName="!px-2.5 !py-1.5 hover:bg-black/30"
+          contentClassName="!px-0"
+          className="!shadow-none"
+          isExpanded={context.sidebar.isShowingWards}
+          onChange={isExpanded => context.update(prevState => ({
+            ...prevState,
+            sidebar: {
+              ...prevState.sidebar,
+              isShowingWards: isExpanded,
+            }
+          }))}
+        >
+          <SidebarLink href={wardsRoute} className="pl-9.5">
+            {translation('overview')}
+          </SidebarLink>
+          {!context?.wards ? (
+            <LoadingContainer className="w-full h-10"/>
+          ) : context.wards.map(ward => (
+            <SidebarLink key={ward.id} href={`${wardsRoute}/${ward.id}`} className="pl-9.5">
+              {ward.name}
+            </SidebarLink>
+          ))}
+        </Expandable>
       </nav>
     </aside>
   )

@@ -11,6 +11,7 @@ import titleWrapper from '@/utils/titleWrapper'
 import { getConfig } from '@/utils/config'
 import '../globals.css'
 import { AuthProvider } from '@/hooks/useAuth'
+import { TasksContextProvider } from '@/hooks/useTasksContext'
 
 const inter = Inter({
     subsets: ['latin'],
@@ -48,7 +49,9 @@ function MyApp({
                         />
                     </Head>
                     <AuthProvider>
-                      <Component {...pageProps} />
+                      <TasksContextProvider>
+                        <Component {...pageProps} />
+                      </TasksContextProvider>
                     </AuthProvider>
                     {config.env === 'development' && <ReactQueryDevtools position="bottom-left" />}
                 </QueryClientProvider>

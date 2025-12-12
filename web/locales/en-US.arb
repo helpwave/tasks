@@ -83,5 +83,9 @@
     }
   },
   "noPatient": "No Patient",
-  "place": "Place"
+  "place": "Place",
+  "lastUpdate": "Last Update",
+  "wards": "Wards",
+  "overview": "Overview",
+  "teams": "Teams"
 }

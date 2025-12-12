@@ -21,6 +21,7 @@ export type TasksTranslationEntries = {
   'dueDate': string,
   'homePage': string,
   'imprint': string,
+  'lastUpdate': string,
   'login': string,
   'loginRequired': string,
   'loginRequiredDescription': string,
@@ -34,6 +35,7 @@ export type TasksTranslationEntries = {
   'nRoom': (values: { count: number }) => string,
   'nTask': (values: { count: number }) => string,
   'nWard': (values: { count: number }) => string,
+  'overview': string,
   'pages.404.notFound': string,
   'pages.404.notFoundDescription1': string,
   'pages.404.notFoundDescription2': string,
@@ -51,7 +53,9 @@ export type TasksTranslationEntries = {
   'stagingModalDisclaimerMarkdown': string,
   'status': string,
   'taskStatus': (values: { status: string }) => string,
+  'teams': string,
   'visibility': string,
+  'wards': string,
 }
 
 export const tasksTranslation: Translation<TasksTranslationLocales, Partial<TasksTranslationEntries>> = {
@@ -67,6 +71,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'dueDate': `Fälligkeitsdatum`,
     'homePage': `Startseite`,
     'imprint': `Impressum`,
+    'lastUpdate': `Letzte Änderung`,
     'login': `Login`,
     'loginRequired': `Login benötigt`,
     'loginRequiredDescription': `Um diese Seite benutzen zu können musst du eingeloggt sein.`,
@@ -110,6 +115,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
         'other': `${count} Stationen`,
       })
     },
+    'overview': `Übersicht`,
     'pages.404.notFound': `404 - Seite nicht gefunden`,
     'pages.404.notFoundDescription1': `Das ist definitiv nicht die Seite nach der Sie suchen`,
     'pages.404.notFoundDescription2': `Zurück zur`,
@@ -134,7 +140,9 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
         'other': `-`,
       })
     },
-    'visibility': `Sichtbarkeit`
+    'teams': `Teams`,
+    'visibility': `Sichtbarkeit`,
+    'wards': `Stationen`
   },
   'en-US': {
     'assignedTo': `Assigned to`,
@@ -147,6 +155,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'dueDate': `Due Date`,
     'homePage': `Home Page`,
     'imprint': `Imprint`,
+    'lastUpdate': `Last Update`,
     'login': `Login`,
     'loginRequired': `Login required`,
     'loginRequiredDescription': `To use this site you need to be logged in.`,
@@ -190,6 +199,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
         'other': `${count} Wards`,
       })
     },
+    'overview': `Overview`,
     'pages.404.notFound': `404 - Page not found`,
     'pages.404.notFoundDescription1': `This is definitely not the page you're looking for`,
     'pages.404.notFoundDescription2': `Let me take you to the`,
@@ -214,7 +224,9 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
         'other': `-`,
       })
     },
-    'visibility': `Visibility`
+    'teams': `Teams`,
+    'visibility': `Visibility`,
+    'wards': `Wards`
   }
 }
 
