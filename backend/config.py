@@ -39,3 +39,13 @@ PUBLIC_ISSUER_URI = os.getenv(
 CLIENT_ID = os.getenv("CLIENT_ID", "tasks-backend")
 CLIENT_SECRET = os.getenv("CLIENT_SECRET", "tasks-secret")
 FRONTEND_CLIENT_ID = os.getenv("FRONTEND_CLIENT_ID", "tasks-web")
+
+if IS_DEV:
+    ALLOWED_ORIGINS = ["*"]
+else:
+    _allowed_origins_str = os.getenv("ALLOWED_ORIGINS", "")
+    ALLOWED_ORIGINS = [
+        origin.strip()
+        for origin in _allowed_origins_str.split(",")
+        if origin.strip()
+    ]

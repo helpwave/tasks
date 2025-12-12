@@ -18,22 +18,30 @@ class Patient(Base):
     __tablename__ = "patients"
 
     id: Mapped[str] = mapped_column(
-        String, primary_key=True, default=lambda: str(uuid.uuid4())
+        String,
+        primary_key=True,
+        default=lambda: str(uuid.uuid4()),
     )
     firstname: Mapped[str] = mapped_column(String)
     lastname: Mapped[str] = mapped_column(String)
     birthdate: Mapped[date] = mapped_column()
-    gender: Mapped[str] = mapped_column(String)
+    sex: Mapped[str] = mapped_column(String)
     assigned_location_id: Mapped[str | None] = mapped_column(
-        ForeignKey("location_nodes.id"), nullable=True
+        ForeignKey("location_nodes.id"),
+        nullable=True,
     )
 
     assigned_location: Mapped[LocationNode | None] = relationship(
-        "LocationNode", back_populates="patients"
+        "LocationNode",
+        back_populates="patients",
     )
     tasks: Mapped[list[Task]] = relationship(
-        "Task", back_populates="patient", cascade="all, delete-orphan"
+        "Task",
+        back_populates="patient",
+        cascade="all, delete-orphan",
     )
     properties: Mapped[list[PropertyValue]] = relationship(
-        "PropertyValue", back_populates="patient", cascade="all, delete-orphan"
+        "PropertyValue",
+        back_populates="patient",
+        cascade="all, delete-orphan",
     )

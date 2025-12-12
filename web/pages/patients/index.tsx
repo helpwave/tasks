@@ -3,107 +3,56 @@ import { Page } from '@/components/layout/Page'
 import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
-import { Chip, IconButton, Table } from '@helpwave/hightide'
-import { useEffect, useMemo, useState } from 'react'
+import { IconButton, Table, Tooltip, Chip } from '@helpwave/hightide'
+import { useMemo } from 'react'
 import type { ColumnDef } from '@tanstack/table-core'
-import { useMyQueryQuery } from '@/api/gql/generated'
-import type { User } from 'oidc-client-ts'
-import { getUser } from '@/api/auth/authService'
 import { EditIcon } from 'lucide-react'
+import { useGetPatientsQuery } from '@/api/gql/generated'
+import { useGlobalContext } from '@/context/GlobalContext'
 
-type Room = {
-  name: string,
-}
-
-type Ward = {
-  name: string,
-}
-
-type Task = {
-  id: string,
-  assigneeId: string,
-  dueDate?: Date,
-  done: boolean,
-}
-
-type Patient = {
+type PatientViewModel = {
   id: string,
   name: string,
-  tasks: Task[],
-  room?: Room,
-  ward?: Ward,
-  lastUpdate?: Date,
+  location?: string,
+  subLocation?: string,
+  openTasksCount: number,
+  birthdate: Date,
+  sex: string,
 }
 
-const patients: Patient[] = [
-  {
-    id: 'p1',
-    name: 'Ana Lopez',
-    room: { name: '301B' },
-    ward: { name: 'Station 1' },
-    tasks: [
-      {
-        id: 't1',
-        assigneeId: 'nurse-14',
-        done: false,
-        dueDate: new Date(2025)
-      },
-      {
-        id: 't2',
-        assigneeId: 'physician-03',
-        done: true,
-        dueDate: new Date(2026)
-      },
-    ],
-  },
-
-  {
-    id: 'p2',
-    name: 'Michael Chen',
-    room: { name: '207A' },
-    ward: { name: 'Station 2' },
-    tasks: [
-      {
-        id: 't3',
-        assigneeId: 'nurse-08',
-        done: false,
-        dueDate: new Date(2025)
-      },
-    ],
-  },
-
-  {
-    id: 'p3',
-    name: 'Evelyn Hart',
-    ward: { name: 'Station 2' },
-    tasks: [
-      {
-        id: 't4',
-        assigneeId: 'nurse-18',
-        done: true,
-      },
-      {
-        id: 't5',
-        assigneeId: 'physician-03',
-        done: false,
-        dueDate: new Date(2026)
-      },
-    ],
-  },
-]
-
+const getAge = (birthDate: Date) => {
+  const today = new Date()
+  let age = today.getFullYear() - birthDate.getFullYear()
+  const m = today.getMonth() - birthDate.getMonth()
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+    age--
+  }
+  return age
+}
 
 const PatientsPage: NextPage = () => {
   const translation = useTasksTranslation()
-  const [user, setUser] = useState<User>()
+  const { selectedLocation } = useGlobalContext()
 
-  useEffect(() => {
-    getUser().then(
-      value => value && setUser(value)
-    )
-  }, [])
+  const { data: queryData } = useGetPatientsQuery(
+    { locationId: selectedLocation }
+  )
 
-  const columns = useMemo<ColumnDef<Patient>[]>(() => [
+  const patients: PatientViewModel[] = useMemo(() => {
+    if (!queryData?.patients) return []
+
+    return queryData.patients.map(p => ({
+      id: p.id,
+      name: p.name,
+      birthdate: new Date(p.birthdate),
+      sex: p.sex,
+      location: p.assignedLocation?.parent?.title,
+      subLocation: p.assignedLocation?.title,
+      openTasksCount: p.tasks?.filter(t => !t.done).length ?? 0
+    }))
+  }, [queryData])
+
+  const columns = useMemo<ColumnDef<PatientViewModel>[]>(() => [
     {
       id: 'name',
       header: translation('name'),
@@ -113,13 +62,31 @@ const PatientsPage: NextPage = () => {
       maxSize: 300,
     },
     {
+      id: 'sex',
+      header: translation('sex'),
+      accessorKey: 'sex',
+      cell: ({ row }) => {
+        const sex = row.original.sex
+        const color = sex === 'MALE' ? 'blue' : sex === 'FEMALE' ? 'red' : 'default'
+
+        return (
+          <Chip color={color} size="sm">
+            <span className="capitalize">{sex.toLowerCase()}</span>
+          </Chip>
+        )
+      },
+      minSize: 100,
+      size: 100,
+      maxSize: 150,
+    },
+    {
       id: 'place',
       header: translation('place'),
-      accessorFn: ({ ward, room }) => [ward, room].filter(Boolean).join(' - '),
+      accessorFn: ({ location, subLocation }) => [location, subLocation].filter(Boolean).join(' - '),
       cell: ({ row }) => {
         const data = row.original
-        const unassigned = !data.room && !data.ward
-        if(unassigned) {
+        const unassigned = !data.location && !data.subLocation
+        if (unassigned) {
           return (
             <span className="text-description">
               {translation('notAssigned')}
@@ -129,17 +96,33 @@ const PatientsPage: NextPage = () => {
         return (
           <div className="flex-col-0">
             <span className="typography-label-sm font-bold">
-              {data.ward?.name ?? translation('notAssigned')}
+              {data.location ?? translation('notAssigned')}
             </span>
             <span className="text-description">
-                {data.room?.name ?? translation('notAssigned')}
+              {data.subLocation}
             </span>
           </div>
         )
       },
+      minSize: 150,
+      size: 150,
+      maxSize: 250,
+    },
+    {
+      id: 'birthdate',
+      header: translation('birthdate'),
+      accessorKey: 'birthdate',
+      cell: ({ row }) => {
+        const date = row.original.birthdate
+        const age = getAge(date)
+        return (
+          <Tooltip tooltip={translation('nYear', { count: age })}>
+            <span>{date.toLocaleDateString()}</span>
+          </Tooltip>
+        )
+      },
       minSize: 100,
-      size: 100,
-      maxSize: 200,
+      size: 120,
     },
     {
       id: 'myTasks',
@@ -197,28 +180,22 @@ const PatientsPage: NextPage = () => {
     {
       id: 'actions',
       header: '',
-      cell: ({ row }) => {
-        const data = row.original
-        return (
-          <IconButton
-            color="transparent"
-            onClick={() => {
-              console.log(`clicked on settings of ${data.name}`)
-            }}
-          >
-            <EditIcon/>
-          </IconButton>
-        )
-      },
+      cell: ({ row }) => (
+        <IconButton
+          color="transparent"
+          onClick={() => console.log(`clicked on settings of ${row.original.name}`)}
+        >
+          <EditIcon />
+        </IconButton>
+      ),
       enableSorting: false,
       enableColumnFilter: false,
       size: 77,
       minSize: 77,
       maxSize: 77
     }
-  ], [user])
+  ], [translation])
 
-  const { data, isLoading } = useMyQueryQuery()
   return (
     <Page pageTitle={titleWrapper(translation('patients'))}>
       <ContentPanel
@@ -230,8 +207,6 @@ const PatientsPage: NextPage = () => {
           data={patients}
           columns={columns}
         />
-
-        {isLoading ? 'Loading' : data?.patients.toString()}
       </ContentPanel>
     </Page>
   )

@@ -5,7 +5,7 @@ import strawberry
 
 
 @strawberry.enum
-class Gender(Enum):
+class Sex(Enum):
     MALE = "MALE"
     FEMALE = "FEMALE"
     UNKNOWN = "UNKNOWN"
@@ -56,7 +56,7 @@ class CreatePatientInput:
     firstname: str
     lastname: str
     birthdate: date
-    gender: Gender
+    sex: Sex
     assigned_location_id: strawberry.ID | None = None
     properties: list[PropertyValueInput] | None = None
 
@@ -66,7 +66,7 @@ class UpdatePatientInput:
     firstname: str | None = None
     lastname: str | None = None
     birthdate: date | None = None
-    gender: Gender | None = None
+    sex: Sex | None = None
     assigned_location_id: strawberry.ID | None = None
     properties: list[PropertyValueInput] | None = None
 
@@ -76,6 +76,7 @@ class CreateTaskInput:
     title: str
     patient_id: strawberry.ID
     description: str | None = None
+    due_date: datetime | None = None
     assignee_id: strawberry.ID | None = None
     previous_task_ids: list[strawberry.ID] | None = None
     properties: list[PropertyValueInput] | None = None
@@ -86,6 +87,7 @@ class UpdateTaskInput:
     title: str | None = None
     description: str | None = None
     done: bool | None = None
+    due_date: datetime | None = None
     assignee_id: strawberry.ID | None = None
     previous_task_ids: list[strawberry.ID] | None = None
     properties: list[PropertyValueInput] | None = None

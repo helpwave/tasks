@@ -1,4 +1,5 @@
 {
+  "@@locale": "de-DE",
   "nOrganization": "{count, plural, =1{# Organisation} other{# Organisationen}}",
   "@nOrganization": {
     "placeholders": {
@@ -47,33 +48,91 @@
       }
     }
   },
-  "visibility": "Sichtbarkeit",
+  "nTeam": "{count, plural, =1{# Team} other{# Teams}}",
+  "@nTeam": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "nYear": "{count, plural, =1{# Jahr alt} other{# Jahre alt}}",
+  "@nYear": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "dashboardWelcome": "Guten Morgen, {name}",
+  "@dashboardWelcome": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "taskStatus": "{status, select, overdue{Überfällig} upcoming{Anstehend} done{Fertig} other{-}}",
+  "@taskStatus": {
+    "placeholders": {
+      "status": {}
+    }
+  },
+  "age": "Alter",
+  "assignedTo": "Zugewiesen an",
+  "assignee": "Verantwortlich",
+  "birthdate": "Geburtsdatum",
+  "confirm": "Bestätigen",
+  "createdAt": "Erstellt am",
+  "currentTime": "Aktuelle Zeit",
+  "dashboard": "Dashboard",
+  "dashboardWelcomeDescription": "Hier ist, was heute passiert.",
+  "description": "Beschreibung",
+  "developmentAndPreviewInstance": "Entwicklungs- und Vorschauinstanz",
+  "dismiss": "Schließen",
+  "dueDate": "Fälligkeitsdatum",
+  "homePage": "Startseite",
+  "imprint": "Impressum",
+  "itsYou": "Du",
+  "location": "Ort",
+  "login": "Login",
+  "loginRequired": "Login benötigt",
+  "loginRequiredDescription": "Um diese Seite benutzen zu können musst du eingeloggt sein.",
+  "logout": "Abmelden",
+  "myOpenTasks": "Meine offenen Aufgaben",
+  "myTasks": "Meine Aufgaben",
+  "name": "Name",
+  "newestAdmissions": "Neueste Aufnahmen",
+  "noPatient": "Kein Patient",
+  "notAssigned": "Nicht zugewiesen",
+  "notes": "Notizen",
+  "pages.404.notFound": "404 - Seite nicht gefunden",
+  "pages.404.notFoundDescription1": "Das ist definitiv nicht die Seite nach der Sie suchen",
+  "pages.404.notFoundDescription2": "Zurück zur",
+  "patient": "Patient",
+  "patients": "Patienten",
+  "place": "Ort",
+  "preferences": "Präferenzen",
+  "privacy": "Datenschutz",
   "private": "Privat",
   "public": "Öffentlich",
   "publish": "Veröffentlichen",
-  "notes": "Notizen",
-  "status": "Status",
-  "assignee": "Verantwortlich",
-  "dueDate": "Fälligkeitsdatum",
-  "createdAt": "Erstellt am",
-  "homePage": "Startseite",
-  "developmentAndPreviewInstance": "Entwicklungs- und Vorschauinstanz",
-  "stagingModalDisclaimerMarkdown": "Diese öffentliche Instanz von helpwave tasks ist für '\\b{Entwicklungs- und Vorschauzwecke}' gedacht. Bitte stellen Sie sicher, dass Sie '\\b{ausschließlich nicht-vertrauliche Testdaten}' eingeben. Diese Instanz kann '\\negative{\\b{jederzeit gelöscht}}' werden.",
-  "dismiss": "Schließen",
-  "imprint": "Impressum",
-  "privacy": "Datenschutz",
-  "confirm": "Bestätigen",
-  "dashboard": "Dashboard",
-  "myTasks": "Meine Aufgaben",
-  "patient": "Patient",
-  "patients": "Patienten",
+  "recentPatients": "Kürzliche Patienten",
+  "recentTasks": "Kürzliche Aufgaben",
   "rooms": "Zimmer",
-  "loginRequired": "Login benötigt",
-  "loginRequiredDescription": "Um diese Seite benutzen zu können musst du eingeloggt sein.",
-  "login": "Login",
-  "notAssigned": "Nicht zugewiesen",
   "settings": "Einstellungen",
   "settingsDescription": "Hier kannst du die App Konfiguration ändern.",
+  "sex": "Geschlecht",
+  "stagingModalDisclaimerMarkdown": "Diese öffentliche Instanz von helpwave tasks ist für '\\b{Entwicklungs- und Vorschauzwecke}' gedacht. Bitte stellen Sie sicher, dass Sie '\\b{ausschließlich nicht-vertrauliche Testdaten}' eingeben. Diese Instanz kann '\\negative{\\b{jederzeit gelöscht}}' werden.",
+  "status": "Status",
+  "task": "Aufgabe",
+  "tasks": "Aufgaben",
+  "tasksUpdatedRecently": "Kürzlich aktualisierte Aufgaben",
+  "teams": "Teams",
+  "totalPatients": "Gesamtpatienten",
+  "updated": "Aktualisiert",
+  "visibility": "Sichtbarkeit",
+  "wards": "Stationen",
   "preferences": "Präferenzen",
   "description": "Beschreibung",
   "assignedTo": "Zugewiesen an",

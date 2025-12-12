@@ -5,7 +5,7 @@ import { getUser } from '@/api/auth/authService'
 const config = getConfig();
 const url = config.graphqlEndpoint;
 
-const client = new GraphQLClient(url, { credentials: 'include', },);
+const client = new GraphQLClient(url);
 
 export const fetcher = <TData, TVariables extends object | undefined>(
   query: string,
@@ -19,7 +19,6 @@ export const fetcher = <TData, TVariables extends object | undefined>(
 
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
-      document.cookie = `access_token=${token}; path=/; secure; samesite=strict`;
     }
 
     const hasFile =

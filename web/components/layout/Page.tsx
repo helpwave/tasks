@@ -53,7 +53,7 @@ export const StagingDisclaimerDialog = () => {
       isModal={false}
       isOpen={isStagingDisclaimerOpen}
       titleElement={translation('developmentAndPreviewInstance')}
-      description={(<MarkdownInterpreter text={translation('stagingModalDisclaimerMarkdown')}/>)}
+      description={(<MarkdownInterpreter text={translation('stagingModalDisclaimerMarkdown')} />)}
       className={clsx('z-20 w-200')}
       backgroundClassName="z-10"
     >
@@ -97,43 +97,42 @@ export const Header = ({ ...props }: HeaderProps) => {
       )}
     >
       <div className="flex-col-0">
-        {/*
-        <Input placeholder={translation('search')}/>
-        */}
       </div>
       <div className="flex-row-2 justify-end">
         <div className="flex-row-0">
           <IconButton color="transparent">
-            <BellIcon/>
+            <BellIcon />
           </IconButton>
           <IconButton color="transparent" onClick={() => router.push('/settings')}>
-            <SettingsIcon/>
+            <SettingsIcon />
           </IconButton>
         </div>
-        {user ? (
-          <div className="relative">
-            <SolidButton color="neutral" className="gap-x-1.75" onClick={() => setIsOpen(open => !open)}>
+        <Menu<HTMLButtonElement>
+          trigger={(bag, ref) => (
+            <SolidButton
+              ref={ref}
+              color="neutral"
+              className="gap-x-1.75"
+              onClick={bag.toggleOpen}
+            >
               <div className="flex-row-1.5">
-                {user?.profile.name}
-                <ExpansionIcon isExpanded={false}/>
+                {user?.name}
+                <ExpansionIcon isExpanded={bag.isOpen} />
               </div>
-              <Avatar fullyRounded={true}/>
+              <Avatar
+                fullyRounded={true}
+                image={user?.avatarUrl ? {
+                  avatarUrl: user.avatarUrl,
+                  alt: user.name
+                } : undefined}
+              />
             </SolidButton>
-            <ul
-              className={clsx(
-                'absolute mt-1 flex-col-1 p-0 bg-surface text-on-surface shadow-sm rounded-md w-full',
-                { hidden: !isOpen }
-              )}>
-              <li>
-                <TextButton color="negative" className="w-full justify-start" onClick={logout}>
-                  {translation('logout')}
-                </TextButton>
-              </li>
-            </ul>
-          </div>
-        ) : (
-          <LoadingContainer className="min-w-56"/>
-        )}
+          )}
+        >
+          <MenuItem onClick={() => logout()}>
+            {translation('logout') ?? 'Logout'}
+          </MenuItem>
+        </Menu>
       </div>
     </header>
   )
@@ -182,7 +181,7 @@ export const Sidebar = ({ ...props }: SidebarProps) => {
     >
       <nav className="flex-col-2 overflow-auto">
         <Link href="/" className="flex-row-1 text-primary items-center rounded-lg p-2 mb-8">
-          <TasksLogo/>
+          <TasksLogo />
           <span className="typography-title-md whitespace-nowrap">{'helpwave tasks'}</span>
         </Link>
         <SidebarLink href="/">
@@ -265,32 +264,26 @@ export const Sidebar = ({ ...props }: SidebarProps) => {
   )
 }
 
-
 type PageWithHeaderProps = PropsWithChildren<{
   pageTitle?: string,
 }>
 
-/**
- * The base of every page. It creates the configurable header
- *
- * The page content will be passed as the children
- */
 export const Page = ({
-                       children,
-                       pageTitle,
-                     }: PageWithHeaderProps) => {
+  children,
+  pageTitle,
+}: PageWithHeaderProps) => {
   return (
     <div className="flex-row-8 h-screen w-screen overflow-hidden">
       <Head>
         <title>{titleWrapper(pageTitle)}</title>
       </Head>
-      <StagingDisclaimerDialog/>
-      <Sidebar className="my-4 ml-4"/>
+      <StagingDisclaimerDialog />
+      <Sidebar className="my-4 ml-4" />
       <div className="flex-col-4 grow overflow-hidden">
-        <Header className="mr-4 mt-4 bg-background text-on-background"/>
+        <Header className="mr-4 mt-4 bg-background text-on-background" />
         <main className="flex-col-2 grow overflow-auto mr-4">
           {children}
-          <div className="min-h-16"/>
+          <div className="min-h-16" />
         </main>
       </div>
     </div>

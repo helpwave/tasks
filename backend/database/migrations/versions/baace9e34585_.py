@@ -1,8 +1,8 @@
-"""Initial models
+"""empty message
 
-Revision ID: 92aad7cc3186
+Revision ID: baace9e34585
 Revises: 
-Create Date: 2025-12-01 02:36:26.250686
+Create Date: 2025-12-12 21:19:42.928171
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '92aad7cc3186'
+revision: str = 'baace9e34585'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -41,7 +41,7 @@ def upgrade() -> None:
     )
     op.create_table('users',
     sa.Column('id', sa.String(), nullable=False),
-    sa.Column('name', sa.String(), nullable=False),
+    sa.Column('username', sa.String(), nullable=False),
     sa.Column('firstname', sa.String(), nullable=True),
     sa.Column('lastname', sa.String(), nullable=True),
     sa.Column('title', sa.String(), nullable=True),
@@ -53,7 +53,7 @@ def upgrade() -> None:
     sa.Column('firstname', sa.String(), nullable=False),
     sa.Column('lastname', sa.String(), nullable=False),
     sa.Column('birthdate', sa.Date(), nullable=False),
-    sa.Column('gender', sa.String(), nullable=False),
+    sa.Column('sex', sa.String(), nullable=False),
     sa.Column('assigned_location_id', sa.String(), nullable=True),
     sa.ForeignKeyConstraint(['assigned_location_id'], ['location_nodes.id'], ),
     sa.PrimaryKeyConstraint('id')
@@ -63,6 +63,7 @@ def upgrade() -> None:
     sa.Column('title', sa.String(), nullable=False),
     sa.Column('description', sa.String(), nullable=True),
     sa.Column('done', sa.Boolean(), nullable=False),
+    sa.Column('due_date', sa.DateTime(), nullable=True),
     sa.Column('creation_date', sa.DateTime(), nullable=False),
     sa.Column('update_date', sa.DateTime(), nullable=True),
     sa.Column('assignee_id', sa.String(), nullable=True),

@@ -25,26 +25,35 @@ class Task(Base):
     __tablename__ = "tasks"
 
     id: Mapped[str] = mapped_column(
-        String, primary_key=True, default=lambda: str(uuid.uuid4())
+        String,
+        primary_key=True,
+        default=lambda: str(uuid.uuid4()),
     )
     title: Mapped[str] = mapped_column(String)
     description: Mapped[str | None] = mapped_column(String, nullable=True)
     done: Mapped[bool] = mapped_column(Boolean, default=False)
+    due_date: Mapped[datetime | None] = mapped_column(nullable=True)
     creation_date: Mapped[datetime] = mapped_column(default=datetime.now)
     update_date: Mapped[datetime | None] = mapped_column(
-        nullable=True, onupdate=datetime.now
+        nullable=True,
+        default=datetime.now,
+        onupdate=datetime.now,
     )
     assignee_id: Mapped[str | None] = mapped_column(
-        ForeignKey("users.id"), nullable=True
+        ForeignKey("users.id"),
+        nullable=True,
     )
     patient_id: Mapped[str] = mapped_column(ForeignKey("patients.id"))
 
     assignee: Mapped[User | None] = relationship(
-        "User", back_populates="tasks"
+        "User",
+        back_populates="tasks",
     )
     patient: Mapped[Patient] = relationship("Patient", back_populates="tasks")
     properties: Mapped[list[PropertyValue]] = relationship(
-        "PropertyValue", back_populates="task", cascade="all, delete-orphan"
+        "PropertyValue",
+        back_populates="task",
+        cascade="all, delete-orphan",
     )
 
     previous_tasks: Mapped[list[Task]] = relationship(

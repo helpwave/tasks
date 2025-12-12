@@ -1,0 +1,28 @@
+query GetGlobalData {
+  me {
+    id
+    username
+    name
+    firstname
+    lastname
+    avatarUrl
+    tasks {
+      id
+      done
+    }
+  }
+  wards: locationNodes(kind: WARD) {
+    id
+    title
+  }
+  teams: locationNodes(kind: TEAM) {
+    id
+    title
+  }
+  patients {
+    id
+    assignedLocation {
+      id
+    }
+  }
+}

@@ -1,4 +1,4 @@
-import { useQuery, UseQueryOptions } from '@tanstack/react-query';
+import { useQuery, useMutation, UseQueryOptions, UseMutationOptions } from '@tanstack/react-query';
 import { fetcher } from './fetcher';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
@@ -28,9 +28,9 @@ export type CreatePatientInput = {
   assignedLocationId?: InputMaybe<Scalars['ID']['input']>;
   birthdate: Scalars['Date']['input'];
   firstname: Scalars['String']['input'];
-  gender: Gender;
   lastname: Scalars['String']['input'];
   properties?: InputMaybe<Array<PropertyValueInput>>;
+  sex: Sex;
 };
 
 export type CreatePropertyDefinitionInput = {
@@ -45,6 +45,7 @@ export type CreatePropertyDefinitionInput = {
 export type CreateTaskInput = {
   assigneeId?: InputMaybe<Scalars['ID']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
+  dueDate?: InputMaybe<Scalars['DateTime']['input']>;
   patientId: Scalars['ID']['input'];
   previousTaskIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   properties?: InputMaybe<Array<PropertyValueInput>>;
@@ -62,12 +63,6 @@ export enum FieldType {
   FieldTypeUnspecified = 'FIELD_TYPE_UNSPECIFIED'
 }
 
-export enum Gender {
-  Female = 'FEMALE',
-  Male = 'MALE',
-  Unknown = 'UNKNOWN'
-}
-
 export type LocationNodeType = {
   __typename?: 'LocationNodeType';
   children: Array<LocationNodeType>;
@@ -75,6 +70,7 @@ export type LocationNodeType = {
   kind: LocationType;
   parent?: Maybe<LocationNodeType>;
   parentId?: Maybe<Scalars['ID']['output']>;
+  patients: Array<PatientType>;
   title: Scalars['String']['output'];
 };
 
@@ -89,6 +85,7 @@ export enum LocationType {
 
 export type Mutation = {
   __typename?: 'Mutation';
+  completeTask: TaskType;
   createLocationNode: LocationNodeType;
   createPatient: PatientType;
   createPropertyDefinition: PropertyDefinitionType;
@@ -97,10 +94,16 @@ export type Mutation = {
   deletePatient: Scalars['Boolean']['output'];
   deletePropertyDefinition: Scalars['Boolean']['output'];
   deleteTask: Scalars['Boolean']['output'];
+  reopenTask: TaskType;
   updateLocationNode: LocationNodeType;
   updatePatient: PatientType;
   updatePropertyDefinition: PropertyDefinitionType;
   updateTask: TaskType;
+};
+
+
+export type MutationCompleteTaskArgs = {
+  id: Scalars['ID']['input'];
 };
 
 
@@ -144,6 +147,11 @@ export type MutationDeleteTaskArgs = {
 };
 
 
+export type MutationReopenTaskArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
 export type MutationUpdateLocationNodeArgs = {
   data: UpdateLocationNodeInput;
   id: Scalars['ID']['input'];
@@ -174,11 +182,11 @@ export type PatientType = {
   assignedLocationId?: Maybe<Scalars['ID']['output']>;
   birthdate: Scalars['Date']['output'];
   firstname: Scalars['String']['output'];
-  gender: Gender;
   id: Scalars['ID']['output'];
   lastname: Scalars['String']['output'];
   name: Scalars['String']['output'];
   properties: Array<PropertyValueType>;
+  sex: Sex;
   tasks: Array<TaskType>;
 };
 
@@ -229,17 +237,31 @@ export type PropertyValueType = {
 export type Query = {
   __typename?: 'Query';
   locationNode?: Maybe<LocationNodeType>;
+  locationNodes: Array<LocationNodeType>;
   locationRoots: Array<LocationNodeType>;
+  me?: Maybe<UserType>;
   patient?: Maybe<PatientType>;
   patients: Array<PatientType>;
   propertyDefinitions: Array<PropertyDefinitionType>;
+  recentPatients: Array<PatientType>;
+  recentTasks: Array<TaskType>;
   task?: Maybe<TaskType>;
   tasks: Array<TaskType>;
+  user?: Maybe<UserType>;
 };
 
 
 export type QueryLocationNodeArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type QueryLocationNodesArgs = {
+  kind?: InputMaybe<LocationType>;
+  orderByName?: Scalars['Boolean']['input'];
+  parentId?: InputMaybe<Scalars['ID']['input']>;
+  recursive?: Scalars['Boolean']['input'];
+  search?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -253,14 +275,36 @@ export type QueryPatientsArgs = {
 };
 
 
+export type QueryRecentPatientsArgs = {
+  limit?: Scalars['Int']['input'];
+};
+
+
+export type QueryRecentTasksArgs = {
+  limit?: Scalars['Int']['input'];
+};
+
+
 export type QueryTaskArgs = {
   id: Scalars['ID']['input'];
 };
 
 
 export type QueryTasksArgs = {
+  assigneeId?: InputMaybe<Scalars['ID']['input']>;
   patientId?: InputMaybe<Scalars['ID']['input']>;
 };
+
+
+export type QueryUserArgs = {
+  id: Scalars['ID']['input'];
+};
+
+export enum Sex {
+  Female = 'FEMALE',
+  Male = 'MALE',
+  Unknown = 'UNKNOWN'
+}
 
 export type Subscription = {
   __typename?: 'Subscription';
@@ -274,7 +318,10 @@ export type TaskType = {
   creationDate: Scalars['DateTime']['output'];
   description?: Maybe<Scalars['String']['output']>;
   done: Scalars['Boolean']['output'];
+  dueDate?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['ID']['output'];
+  patient: PatientType;
+  patientId: Scalars['ID']['output'];
   properties: Array<PropertyValueType>;
   title: Scalars['String']['output'];
   updateDate?: Maybe<Scalars['DateTime']['output']>;
@@ -290,9 +337,9 @@ export type UpdatePatientInput = {
   assignedLocationId?: InputMaybe<Scalars['ID']['input']>;
   birthdate?: InputMaybe<Scalars['Date']['input']>;
   firstname?: InputMaybe<Scalars['String']['input']>;
-  gender?: InputMaybe<Gender>;
   lastname?: InputMaybe<Scalars['String']['input']>;
   properties?: InputMaybe<Array<PropertyValueInput>>;
+  sex?: InputMaybe<Sex>;
 };
 
 export type UpdatePropertyDefinitionInput = {
@@ -307,6 +354,7 @@ export type UpdateTaskInput = {
   assigneeId?: InputMaybe<Scalars['ID']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
   done?: InputMaybe<Scalars['Boolean']['input']>;
+  dueDate?: InputMaybe<Scalars['DateTime']['input']>;
   previousTaskIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   properties?: InputMaybe<Array<PropertyValueInput>>;
   title?: InputMaybe<Scalars['String']['input']>;
@@ -319,51 +367,289 @@ export type UserType = {
   id: Scalars['ID']['output'];
   lastname?: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
+  tasks: Array<TaskType>;
   title?: Maybe<Scalars['String']['output']>;
+  username: Scalars['String']['output'];
 };
 
-export type MyQueryQueryVariables = Exact<{ [key: string]: never; }>;
+export type GetMyTasksQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type MyQueryQuery = { __typename?: 'Query', patients: Array<{ __typename?: 'PatientType', age: number, assignedLocationId?: string | null, birthdate: any, firstname: string, gender: Gender, id: string, lastname: string, name: string, properties: Array<{ __typename?: 'PropertyValueType', definition: { __typename?: 'PropertyDefinitionType', allowedEntities: Array<PropertyEntity> } }>, tasks: Array<{ __typename?: 'TaskType', id: string }> }> };
+export type GetMyTasksQuery = { __typename?: 'Query', me?: { __typename?: 'UserType', id: string, tasks: Array<{ __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, dueDate?: any | null, creationDate: any, updateDate?: any | null, patient: { __typename?: 'PatientType', id: string, name: string, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null }, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null } | null }> } | null };
+
+export type GetOverviewDataQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetOverviewDataQuery = { __typename?: 'Query', recentPatients: Array<{ __typename?: 'PatientType', id: string, name: string, sex: Sex, birthdate: any, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null }>, recentTasks: Array<{ __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, updateDate?: any | null, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null } | null, patient: { __typename?: 'PatientType', id: string, name: string } }> };
+
+export type GetPatientsQueryVariables = Exact<{
+  locationId?: InputMaybe<Scalars['ID']['input']>;
+}>;
+
+
+export type GetPatientsQuery = { __typename?: 'Query', patients: Array<{ __typename?: 'PatientType', id: string, name: string, firstname: string, lastname: string, birthdate: any, sex: Sex, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null, tasks: Array<{ __typename?: 'TaskType', id: string, done: boolean, assignee?: { __typename?: 'UserType', id: string } | null }>, properties: Array<{ __typename?: 'PropertyValueType', textValue?: string | null, definition: { __typename?: 'PropertyDefinitionType', name: string } }> }> };
+
+export type GetGlobalDataQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetGlobalDataQuery = { __typename?: 'Query', me?: { __typename?: 'UserType', id: string, username: string, name: string, firstname?: string | null, lastname?: string | null, avatarUrl?: string | null, tasks: Array<{ __typename?: 'TaskType', id: string, done: boolean }> } | null, wards: Array<{ __typename?: 'LocationNodeType', id: string, title: string }>, teams: Array<{ __typename?: 'LocationNodeType', id: string, title: string }>, patients: Array<{ __typename?: 'PatientType', id: string, assignedLocation?: { __typename?: 'LocationNodeType', id: string } | null }> };
+
+export type CompleteTaskMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type CompleteTaskMutation = { __typename?: 'Mutation', completeTask: { __typename?: 'TaskType', id: string, done: boolean, updateDate?: any | null } };
+
+export type ReopenTaskMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type ReopenTaskMutation = { __typename?: 'Mutation', reopenTask: { __typename?: 'TaskType', id: string, done: boolean, updateDate?: any | null } };
 
 
 
-export const MyQueryDocument = `
-    query MyQuery {
-  patients {
-    age
-    assignedLocationId
-    birthdate
-    firstname
-    gender
+export const GetMyTasksDocument = `
+    query GetMyTasks {
+  me {
     id
-    lastname
+    tasks {
+      id
+      title
+      description
+      done
+      dueDate
+      creationDate
+      updateDate
+      patient {
+        id
+        name
+        assignedLocation {
+          id
+          title
+          parent {
+            id
+            title
+          }
+        }
+      }
+      assignee {
+        id
+        name
+        avatarUrl
+      }
+    }
+  }
+}
+    `;
+
+export const useGetMyTasksQuery = <
+      TData = GetMyTasksQuery,
+      TError = unknown
+    >(
+      variables?: GetMyTasksQueryVariables,
+      options?: Omit<UseQueryOptions<GetMyTasksQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetMyTasksQuery, TError, TData>['queryKey'] }
+    ) => {
+    
+    return useQuery<GetMyTasksQuery, TError, TData>(
+      {
+    queryKey: variables === undefined ? ['GetMyTasks'] : ['GetMyTasks', variables],
+    queryFn: fetcher<GetMyTasksQuery, GetMyTasksQueryVariables>(GetMyTasksDocument, variables),
+    ...options
+  }
+    )};
+
+export const GetOverviewDataDocument = `
+    query GetOverviewData {
+  recentPatients(limit: 5) {
+    id
     name
-    properties {
-      definition {
-        allowedEntities
+    sex
+    birthdate
+    assignedLocation {
+      id
+      title
+      parent {
+        id
+        title
+      }
+    }
+  }
+  recentTasks(limit: 10) {
+    id
+    title
+    description
+    done
+    updateDate
+    assignee {
+      id
+      name
+      avatarUrl
+    }
+    patient {
+      id
+      name
+    }
+  }
+}
+    `;
+
+export const useGetOverviewDataQuery = <
+      TData = GetOverviewDataQuery,
+      TError = unknown
+    >(
+      variables?: GetOverviewDataQueryVariables,
+      options?: Omit<UseQueryOptions<GetOverviewDataQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetOverviewDataQuery, TError, TData>['queryKey'] }
+    ) => {
+    
+    return useQuery<GetOverviewDataQuery, TError, TData>(
+      {
+    queryKey: variables === undefined ? ['GetOverviewData'] : ['GetOverviewData', variables],
+    queryFn: fetcher<GetOverviewDataQuery, GetOverviewDataQueryVariables>(GetOverviewDataDocument, variables),
+    ...options
+  }
+    )};
+
+export const GetPatientsDocument = `
+    query GetPatients($locationId: ID) {
+  patients(locationNodeId: $locationId) {
+    id
+    name
+    firstname
+    lastname
+    birthdate
+    sex
+    assignedLocation {
+      id
+      title
+      parent {
+        id
+        title
       }
     }
     tasks {
+      id
+      done
+      assignee {
+        id
+      }
+    }
+    properties {
+      definition {
+        name
+      }
+      textValue
+    }
+  }
+}
+    `;
+
+export const useGetPatientsQuery = <
+      TData = GetPatientsQuery,
+      TError = unknown
+    >(
+      variables?: GetPatientsQueryVariables,
+      options?: Omit<UseQueryOptions<GetPatientsQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetPatientsQuery, TError, TData>['queryKey'] }
+    ) => {
+    
+    return useQuery<GetPatientsQuery, TError, TData>(
+      {
+    queryKey: variables === undefined ? ['GetPatients'] : ['GetPatients', variables],
+    queryFn: fetcher<GetPatientsQuery, GetPatientsQueryVariables>(GetPatientsDocument, variables),
+    ...options
+  }
+    )};
+
+export const GetGlobalDataDocument = `
+    query GetGlobalData {
+  me {
+    id
+    username
+    name
+    firstname
+    lastname
+    avatarUrl
+    tasks {
+      id
+      done
+    }
+  }
+  wards: locationNodes(kind: WARD) {
+    id
+    title
+  }
+  teams: locationNodes(kind: TEAM) {
+    id
+    title
+  }
+  patients {
+    id
+    assignedLocation {
       id
     }
   }
 }
     `;
 
-export const useMyQueryQuery = <
-      TData = MyQueryQuery,
+export const useGetGlobalDataQuery = <
+      TData = GetGlobalDataQuery,
       TError = unknown
     >(
-      variables?: MyQueryQueryVariables,
-      options?: Omit<UseQueryOptions<MyQueryQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<MyQueryQuery, TError, TData>['queryKey'] }
+      variables?: GetGlobalDataQueryVariables,
+      options?: Omit<UseQueryOptions<GetGlobalDataQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetGlobalDataQuery, TError, TData>['queryKey'] }
     ) => {
     
-    return useQuery<MyQueryQuery, TError, TData>(
+    return useQuery<GetGlobalDataQuery, TError, TData>(
       {
-    queryKey: variables === undefined ? ['MyQuery'] : ['MyQuery', variables],
-    queryFn: fetcher<MyQueryQuery, MyQueryQueryVariables>(MyQueryDocument, variables),
+    queryKey: variables === undefined ? ['GetGlobalData'] : ['GetGlobalData', variables],
+    queryFn: fetcher<GetGlobalDataQuery, GetGlobalDataQueryVariables>(GetGlobalDataDocument, variables),
+    ...options
+  }
+    )};
+
+export const CompleteTaskDocument = `
+    mutation CompleteTask($id: ID!) {
+  completeTask(id: $id) {
+    id
+    done
+    updateDate
+  }
+}
+    `;
+
+export const useCompleteTaskMutation = <
+      TError = unknown,
+      TContext = unknown
+    >(options?: UseMutationOptions<CompleteTaskMutation, TError, CompleteTaskMutationVariables, TContext>) => {
+    
+    return useMutation<CompleteTaskMutation, TError, CompleteTaskMutationVariables, TContext>(
+      {
+    mutationKey: ['CompleteTask'],
+    mutationFn: (variables?: CompleteTaskMutationVariables) => fetcher<CompleteTaskMutation, CompleteTaskMutationVariables>(CompleteTaskDocument, variables)(),
+    ...options
+  }
+    )};
+
+export const ReopenTaskDocument = `
+    mutation ReopenTask($id: ID!) {
+  reopenTask(id: $id) {
+    id
+    done
+    updateDate
+  }
+}
+    `;
+
+export const useReopenTaskMutation = <
+      TError = unknown,
+      TContext = unknown
+    >(options?: UseMutationOptions<ReopenTaskMutation, TError, ReopenTaskMutationVariables, TContext>) => {
+    
+    return useMutation<ReopenTaskMutation, TError, ReopenTaskMutationVariables, TContext>(
+      {
+    mutationKey: ['ReopenTask'],
+    mutationFn: (variables?: ReopenTaskMutationVariables) => fetcher<ReopenTaskMutation, ReopenTaskMutationVariables>(ReopenTaskDocument, variables)(),
     ...options
   }
     )};

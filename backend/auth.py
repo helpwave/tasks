@@ -2,7 +2,13 @@ import logging
 from typing import Any, Optional
 
 import requests
-from config import CLIENT_ID, FRONTEND_CLIENT_ID, ISSUER_URI, LOGGER, PUBLIC_ISSUER_URI
+from config import (
+    CLIENT_ID,
+    FRONTEND_CLIENT_ID,
+    ISSUER_URI,
+    LOGGER,
+    PUBLIC_ISSUER_URI,
+)
 from fastapi import Request
 from fastapi.responses import RedirectResponse
 from jose import jwk, jwt
@@ -95,7 +101,7 @@ def verify_token(token: str) -> dict:
         elif aud is None:
             aud = []
 
-        if azp and azp == CLIENT_ID or azp == FRONTEND_CLIENT_ID:
+        if (azp and azp == CLIENT_ID) or azp == FRONTEND_CLIENT_ID:
             return payload
 
         if CLIENT_ID in aud or FRONTEND_CLIENT_ID in aud:

@@ -3,7 +3,6 @@
 import type { ComponentType, PropsWithChildren, ReactNode } from 'react'
 import { createContext, useCallback, useContext, useEffect, useState } from 'react'
 import { LoadingAnimation } from '@helpwave/hightide'
-import { LoginPage } from '@/components/pages/login'
 import { login, logout, onTokenExpiringCallback, removeUser, renewToken, restoreSession } from '@/api/auth/authService'
 import type { User } from 'oidc-client-ts'
 import { getConfig } from '@/utils/config'
@@ -31,6 +30,7 @@ type AuthProviderProps = PropsWithChildren & {
   /** These URLs ignore authentication completely */
   ignoredURLs?: string[],
 }
+
 
 export const AuthProvider = ({
                                children,
@@ -154,11 +154,13 @@ export const withAuth = <P extends object>(Component: ComponentType<P>) => {
   return WrappedComponent
 }
 
-
 export const useAuth = () => {
   const context = useContext(AuthContext)
   if (!context) {
     throw new Error('useAuth must be used within an AuthProvider')
   }
-  return context
+  const authHeader = {
+    Authorization: `Bearer ${context.identity.access_token}`,
+  }
+  return { ...context, authHeader }
 }

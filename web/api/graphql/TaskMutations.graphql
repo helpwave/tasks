@@ -1,0 +1,15 @@
+mutation CompleteTask($id: ID!) {
+  completeTask(id: $id) {
+    id
+    done
+    updateDate
+  }
+}
+
+mutation ReopenTask($id: ID!) {
+  reopenTask(id: $id) {
+    id
+    done
+    updateDate
+  }
+}

@@ -36,8 +36,8 @@ const getConfig = () => {
     })
   }
 
-
   const result = publicEnvSchema.safeParse(process.env)
+
   return configSchema.parse(result.data)
 }
 

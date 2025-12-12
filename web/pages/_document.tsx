@@ -18,9 +18,10 @@ class MyDocument extends Document {
               dangerouslySetInnerHTML={{
                 __html: `window.__ENV = ${JSON.stringify(devEnv)}`,
               }}
+              defer
             />
           ) : (
-            <script src="/env-config.js" />
+            <script src="/env-config.js" defer />
           )}
           <meta name="og:title" property="og:title" content="helpwave tasks" />
           <meta name="description" content="The first open-source team management platform for healthcare workers" />

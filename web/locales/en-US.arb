@@ -1,4 +1,5 @@
 {
+  "@@locale": "en-US",
   "nOrganization": "{count, plural, =1{# Organization} other{# Organizations}}",
   "@nOrganization": {
     "placeholders": {
@@ -47,33 +48,91 @@
       }
     }
   },
-  "visibility": "Visibility",
+  "nTeam": "{count, plural, =1{# Team} other{# Teams}}",
+  "@nTeam": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "nYear": "{count, plural, =1{# year old} other{# years old}}",
+  "@nYear": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "dashboardWelcome": "Good Morning, {name}",
+  "@dashboardWelcome": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "taskStatus": "{status, select, overdue{Overdue} upcoming{Upcoming} done{Done} other{-}}",
+  "@taskStatus": {
+    "placeholders": {
+      "status": {}
+    }
+  },
+  "age": "Age",
+  "assignedTo": "Assigned to",
+  "assignee": "Assignee",
+  "birthdate": "Birthdate",
+  "confirm": "Confirm",
+  "createdAt": "Created at",
+  "currentTime": "Current Time",
+  "dashboard": "Dashboard",
+  "dashboardWelcomeDescription": "Here is what is happening today.",
+  "description": "Description",
+  "developmentAndPreviewInstance": "Development and preview instance",
+  "dismiss": "Dismiss",
+  "dueDate": "Due Date",
+  "homePage": "Home Page",
+  "imprint": "Imprint",
+  "itsYou": "You",
+  "location": "Location",
+  "login": "Login",
+  "loginRequired": "Login required",
+  "loginRequiredDescription": "To use this site you need to be logged in.",
+  "logout": "Logout",
+  "myOpenTasks": "My Open Tasks",
+  "myTasks": "My tasks",
+  "name": "Name",
+  "newestAdmissions": "Newest admissions",
+  "noPatient": "No Patient",
+  "notAssigned": "Not assigned",
+  "notes": "notes",
+  "pages.404.notFound": "404 - Page not found",
+  "pages.404.notFoundDescription1": "This is definitely not the page you're looking for",
+  "pages.404.notFoundDescription2": "Let me take you to the",
+  "patient": "Patient",
+  "patients": "Patients",
+  "place": "Place",
+  "preferences": "Preferences",
+  "privacy": "Privacy",
   "private": "private",
   "public": "public",
   "publish": "publish",
-  "notes": "notes",
-  "status": "Status",
-  "assignee": "Assignee",
-  "dueDate": "Due Date",
-  "createdAt": "Created at",
-  "homePage": "Home Page",
-  "developmentAndPreviewInstance": "Development and preview instance",
-  "stagingModalDisclaimerMarkdown": "This public instance of helpwave tasks is for '\\b{development and preview purposes}'. Please make sure to '\\b{only}' enter '\\b{non-confidential testing data}'. This instance can be '\\negative{\\b{deleted at any time}}'",
-  "dismiss": "Dismiss",
-  "imprint": "Imprint",
-  "privacy": "Privacy",
-  "confirm": "Confirm",
-  "dashboard": "Dashboard",
-  "myTasks": "My tasks",
-  "patients": "Patients",
-  "patient": "Patient",
+  "recentPatients": "Recent Patients",
+  "recentTasks": "Recent Tasks",
   "rooms": "Rooms",
-  "loginRequired": "Login required",
-  "loginRequiredDescription": "To use this site you need to be logged in.",
-  "login": "Login",
-  "notAssigned": "Not assigned",
   "settings": "Settings",
   "settingsDescription": "Here you can change the app configuration.",
+  "sex": "Sex",
+  "stagingModalDisclaimerMarkdown": "This public instance of helpwave tasks is for '\\b{development and preview purposes}'. Please make sure to '\\b{only}' enter '\\b{non-confidential testing data}'. This instance can be '\\negative{\\b{deleted at any time}}'",
+  "status": "Status",
+  "task": "Task",
+  "tasks": "Tasks",
+  "tasksUpdatedRecently": "Tasks updated recently",
+  "teams": "Teams",
+  "totalPatients": "Total Patients",
+  "updated": "Updated",
+  "visibility": "Visibility",
+  "wards": "Wards",
   "preferences": "Preferences",
   "description": "Description",
   "assignedTo": "Assigned to",

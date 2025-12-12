@@ -21,14 +21,11 @@ export type TasksTranslationEntries = {
   'dueDate': string,
   'homePage': string,
   'imprint': string,
-  'lastUpdate': string,
   'login': string,
   'loginRequired': string,
   'loginRequiredDescription': string,
-  'logout': string,
   'myTasks': string,
   'nBed': (values: { count: number }) => string,
-  'nCurrentlyPatients': (values: { count: number }) => string,
   'noPatient': string,
   'nOrganization': (values: { count: number }) => string,
   'notAssigned': string,
@@ -37,7 +34,6 @@ export type TasksTranslationEntries = {
   'nRoom': (values: { count: number }) => string,
   'nTask': (values: { count: number }) => string,
   'nWard': (values: { count: number }) => string,
-  'overview': string,
   'pages.404.notFound': string,
   'pages.404.notFoundDescription1': string,
   'pages.404.notFoundDescription2': string,
@@ -54,11 +50,8 @@ export type TasksTranslationEntries = {
   'settingsDescription': string,
   'stagingModalDisclaimerMarkdown': string,
   'status': string,
-  'tasks': string,
   'taskStatus': (values: { status: string }) => string,
-  'teams': string,
   'visibility': string,
-  'wards': string,
 }
 
 export const tasksTranslation: Translation<TasksTranslationLocales, Partial<TasksTranslationEntries>> = {
@@ -74,26 +67,15 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'dueDate': `Fälligkeitsdatum`,
     'homePage': `Startseite`,
     'imprint': `Impressum`,
-    'lastUpdate': `Letzte Änderung`,
     'login': `Login`,
     'loginRequired': `Login benötigt`,
     'loginRequiredDescription': `Um diese Seite benutzen zu können musst du eingeloggt sein.`,
-    'logout': `Logout`,
     'myTasks': `Meine Aufgaben`,
     'nBed': ({ count }): string => {
       return TranslationGen.resolvePlural(count, {
         '=1': `${count} Bett`,
         'other': `${count} Betten`,
       })
-    },
-    'nCurrentlyPatients': ({ count }): string => {
-      let _out: string = ''
-      _out += `Aktuell `
-      _out += TranslationGen.resolvePlural(count, {
-        '=1': `${count} Patient`,
-        'other': `${count} Patienten`,
-      })
-      return _out
     },
     'noPatient': `Kein Patient`,
     'nOrganization': ({ count }): string => {
@@ -128,7 +110,6 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
         'other': `${count} Stationen`,
       })
     },
-    'overview': `Übersicht`,
     'pages.404.notFound': `404 - Seite nicht gefunden`,
     'pages.404.notFoundDescription1': `Das ist definitiv nicht die Seite nach der Sie suchen`,
     'pages.404.notFoundDescription2': `Zurück zur`,
@@ -145,7 +126,6 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'settingsDescription': `Hier kannst du die App Konfiguration ändern.`,
     'stagingModalDisclaimerMarkdown': `Diese öffentliche Instanz von helpwave tasks ist für \\b{Entwicklungs- und Vorschauzwecke} gedacht. Bitte stellen Sie sicher, dass Sie \\b{ausschließlich nicht-vertrauliche Testdaten} eingeben. Diese Instanz kann \\negative{\\b{jederzeit gelöscht}} werden.`,
     'status': `Status`,
-    'tasks': `Aufgaben`,
     'taskStatus': ({ status }): string => {
       return TranslationGen.resolveSelect(status, {
         'overdue': `Überfällig`,
@@ -154,9 +134,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
         'other': `-`,
       })
     },
-    'teams': `Teams`,
-    'visibility': `Sichtbarkeit`,
-    'wards': `Stationen`
+    'visibility': `Sichtbarkeit`
   },
   'en-US': {
     'assignedTo': `Assigned to`,
@@ -164,32 +142,20 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'confirm': `Confirm`,
     'createdAt': `Created at`,
     'dashboard': `Dashboard`,
-    'description': `Description`,
     'developmentAndPreviewInstance': `Development and preview instance`,
     'dismiss': `Dismiss`,
     'dueDate': `Due Date`,
     'homePage': `Home Page`,
     'imprint': `Imprint`,
-    'lastUpdate': `Last Update`,
     'login': `Login`,
     'loginRequired': `Login required`,
     'loginRequiredDescription': `To use this site you need to be logged in.`,
-    'logout': `Logout`,
     'myTasks': `My tasks`,
     'nBed': ({ count }): string => {
       return TranslationGen.resolvePlural(count, {
         '=1': `${count} Bed`,
         'other': `${count} Beds`,
       })
-    },
-    'nCurrentlyPatients': ({ count }): string => {
-      let _out: string = ''
-      _out += `Currently `
-      _out += TranslationGen.resolvePlural(count, {
-        '=1': `${count} Patient`,
-        'other': `${count} Patients`,
-      })
-      return _out
     },
     'noPatient': `No Patient`,
     'nOrganization': ({ count }): string => {
@@ -224,7 +190,6 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
         'other': `${count} Wards`,
       })
     },
-    'overview': `Overview`,
     'pages.404.notFound': `404 - Page not found`,
     'pages.404.notFoundDescription1': `This is definitely not the page you're looking for`,
     'pages.404.notFoundDescription2': `Let me take you to the`,
@@ -241,7 +206,6 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'settingsDescription': `Here you can change the app configuration.`,
     'stagingModalDisclaimerMarkdown': `This public instance of helpwave tasks is for \\b{development and preview purposes}. Please make sure to \\b{only} enter \\b{non-confidential testing data}. This instance can be \\negative{\\b{deleted at any time}}`,
     'status': `Status`,
-    'tasks': `Tasks`,
     'taskStatus': ({ status }): string => {
       return TranslationGen.resolveSelect(status, {
         'overdue': `Overdue`,
@@ -250,9 +214,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
         'other': `-`,
       })
     },
-    'teams': `Teams`,
-    'visibility': `Visibility`,
-    'wards': `Wards`
+    'visibility': `Visibility`
   }
 }
 
