@@ -5,10 +5,8 @@
 
 @theme {
   /* Default Color Overwrites */
-  --color-background: #FFFFFF;
+  --color-background: #EEEEEE;
   --color-foreground: #000000;
-
-  --color-surface: #EEEEEE;
 
   /* Header */
   --color-header-background: #E7E7E7;

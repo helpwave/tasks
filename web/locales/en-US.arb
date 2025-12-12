@@ -66,9 +66,22 @@
   "dashboard": "Dashboard",
   "myTasks": "My tasks",
   "patients": "Patients",
+  "patient": "Patient",
   "rooms": "Rooms",
   "loginRequired": "Login required",
   "loginRequiredDescription": "To use this site you need to be logged in.",
   "login": "Login",
-  "notAssigned": "Not assigned"
+  "notAssigned": "Not assigned",
+  "settings": "Settings",
+  "settingsDescription": "Here you can change the app configuration.",
+  "preferences": "Preferences",
+  "assignedTo": "Assigned to",
+  "taskStatus": "{status, select, overdue{Overdue} upcoming{Upcoming} done{Done} other{-}}",
+  "@taskStatus": {
+    "placeholders": {
+      "status": {}
+    }
+  },
+  "noPatient": "No Patient",
+  "place": "Place"
 }

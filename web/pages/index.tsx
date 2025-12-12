@@ -3,7 +3,6 @@ import { Page } from '@/components/layout/Page'
 import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
-import { withAuth } from '@/hooks/useAuth'
 import { useMyQueryQuery } from '@/api/gql/generated'
 
 
@@ -21,4 +20,4 @@ const Dashboard: NextPage = () => {
   )
 }
 
-export default withAuth(Dashboard)
+export default Dashboard
