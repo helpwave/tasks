@@ -87,5 +87,6 @@
   "lastUpdate": "Last Update",
   "wards": "Wards",
   "overview": "Overview",
-  "teams": "Teams"
+  "teams": "Teams",
+  "logout": "Logout"
 }

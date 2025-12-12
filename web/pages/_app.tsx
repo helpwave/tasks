@@ -48,7 +48,11 @@ function MyApp({
                             }}
                         />
                     </Head>
-                    <AuthProvider>
+                    <AuthProvider
+                      ignoredURLs={[
+                        '/auth/callback',
+                      ]}
+                    >
                       <TasksContextProvider>
                         <Component {...pageProps} />
                       </TasksContextProvider>

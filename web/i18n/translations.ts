@@ -25,6 +25,7 @@ export type TasksTranslationEntries = {
   'login': string,
   'loginRequired': string,
   'loginRequiredDescription': string,
+  'logout': string,
   'myTasks': string,
   'nBed': (values: { count: number }) => string,
   'noPatient': string,
@@ -75,6 +76,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'login': `Login`,
     'loginRequired': `Login benötigt`,
     'loginRequiredDescription': `Um diese Seite benutzen zu können musst du eingeloggt sein.`,
+    'logout': `Logout`,
     'myTasks': `Meine Aufgaben`,
     'nBed': ({ count }): string => {
       return TranslationGen.resolvePlural(count, {
@@ -159,6 +161,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'login': `Login`,
     'loginRequired': `Login required`,
     'loginRequiredDescription': `To use this site you need to be logged in.`,
+    'logout': `Logout`,
     'myTasks': `My tasks`,
     'nBed': ({ count }): string => {
       return TranslationGen.resolvePlural(count, {

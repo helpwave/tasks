@@ -88,5 +88,6 @@
   "lastUpdate": "Letzte Änderung",
   "wards": "Stationen",
   "overview": "Übersicht",
-  "teams": "Teams"
+  "teams": "Teams",
+  "logout": "Logout"
 }

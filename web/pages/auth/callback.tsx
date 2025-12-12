@@ -15,10 +15,15 @@ const AuthCallback: NextPage<AuthCallbackServerSideProps> = () => {
   const searchParams = useSearchParams()
   const router = useRouter()
   const [hasError, setHasError] = useState<boolean>(false)
+  const [hasProcessed, setHasProcessed] = useState<boolean>(false)
 
   useEffect(() => {
+    if(hasProcessed) {
+      return
+    }
     const checkAuthCallback = async () => {
       if (searchParams.get('code') && searchParams.get('state')) {
+        setHasProcessed(true)
         console.debug('Processing OIDC callback...')
         try {
           await handleCallback()
@@ -43,11 +48,14 @@ const AuthCallback: NextPage<AuthCallbackServerSideProps> = () => {
   }, [searchParams]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div>
-      {hasError && (
-        <span className="text-negative">Auth failed</span>
-      )}
-      <SolidButton onClick={() => router.push('/')}>Take me home.</SolidButton>
+    <div className="flex-col-0 justify-center items-center w-screen h-screen">
+      <div className="flex-col-2 max-w-64">
+        {hasError && (
+          <span className="text-negative">Authentication failed</span>
+          // TODO add more descriptive text here
+        )}
+        <SolidButton onClick={() => router.push('/')}>Take me home.</SolidButton>
+      </div>
     </div>
   )
 }

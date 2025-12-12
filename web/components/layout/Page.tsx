@@ -14,6 +14,7 @@ import {
   LoadingContainer,
   MarkdownInterpreter,
   SolidButton,
+  TextButton,
   useLocalStorage
 } from '@helpwave/hightide'
 import { getConfig } from '@/utils/config'
@@ -23,6 +24,7 @@ import { BellIcon, Building2, CircleCheck, Grid2X2PlusIcon, SettingsIcon, User, 
 import { TasksLogo } from '@/components/TasksLogo'
 import { useRouter } from 'next/router'
 import { useTasksContext } from '@/hooks/useTasksContext'
+import { useAuth } from '@/hooks/useAuth'
 
 export const StagingDisclaimerDialog = () => {
   const config = getConfig()
@@ -79,8 +81,12 @@ type HeaderProps = HTMLAttributes<HTMLHeadElement>
  * The basic header for most pages
  */
 export const Header = ({ ...props }: HeaderProps) => {
+  const translation = useTasksTranslation()
   const { user } = useTasksContext()
   const router = useRouter()
+  // TODO replace with Menu component later
+  const [isOpen, setIsOpen] = useState(false)
+  const { logout } = useAuth()
 
   return (
     <header
@@ -105,14 +111,27 @@ export const Header = ({ ...props }: HeaderProps) => {
           </IconButton>
         </div>
         {user ? (
-          <SolidButton color="neutral" className="gap-x-1.75">
-            <div className="flex-row-1.5">
-              {user?.profile.name}
-              <ExpansionIcon isExpanded={false}/>
-            </div>
-            <Avatar fullyRounded={true}/>
-          </SolidButton>
-        ): (
+          <div className="relative">
+            <SolidButton color="neutral" className="gap-x-1.75" onClick={() => setIsOpen(open => !open)}>
+              <div className="flex-row-1.5">
+                {user?.profile.name}
+                <ExpansionIcon isExpanded={false}/>
+              </div>
+              <Avatar fullyRounded={true}/>
+            </SolidButton>
+            <ul
+              className={clsx(
+                'absolute mt-1 flex-col-1 p-0 bg-surface text-on-surface shadow-sm rounded-md w-full',
+                { hidden: !isOpen }
+              )}>
+              <li>
+                <TextButton color="negative" className="w-full justify-start" onClick={logout}>
+                  {translation('logout')}
+                </TextButton>
+              </li>
+            </ul>
+          </div>
+        ) : (
           <LoadingContainer className="min-w-56"/>
         )}
       </div>

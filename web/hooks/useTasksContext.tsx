@@ -84,12 +84,11 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
   const [user, setUser] = useState<User>()
   // TODO use real query here
   useEffect(() => {
-    const fetchUser = async () => {
-      const user = (await getUser()) ?? undefined
-      setUser(user)
-    }
-
-    fetchUser()
+    getUser().then((user) => {
+      if(user) {
+        setUser(user)
+      }
+    })
   }, [])
 
   return (
