@@ -2,7 +2,7 @@ query GetOverviewData {
   recentPatients(limit: 5) {
     id
     name
-    gender
+    sex
     birthdate
     assignedLocation {
       id

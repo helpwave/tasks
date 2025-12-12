@@ -5,7 +5,7 @@ query GetPatients($locationId: ID) {
     firstname
     lastname
     birthdate
-    gender
+    sex
     assignedLocation {
       id
       title

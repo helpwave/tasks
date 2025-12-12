@@ -28,9 +28,9 @@ export type CreatePatientInput = {
   assignedLocationId?: InputMaybe<Scalars['ID']['input']>;
   birthdate: Scalars['Date']['input'];
   firstname: Scalars['String']['input'];
-  gender: Gender;
   lastname: Scalars['String']['input'];
   properties?: InputMaybe<Array<PropertyValueInput>>;
+  sex: Sex;
 };
 
 export type CreatePropertyDefinitionInput = {
@@ -60,12 +60,6 @@ export enum FieldType {
   FieldTypeSelect = 'FIELD_TYPE_SELECT',
   FieldTypeText = 'FIELD_TYPE_TEXT',
   FieldTypeUnspecified = 'FIELD_TYPE_UNSPECIFIED'
-}
-
-export enum Gender {
-  Female = 'FEMALE',
-  Male = 'MALE',
-  Unknown = 'UNKNOWN'
 }
 
 export type LocationNodeType = {
@@ -187,11 +181,11 @@ export type PatientType = {
   assignedLocationId?: Maybe<Scalars['ID']['output']>;
   birthdate: Scalars['Date']['output'];
   firstname: Scalars['String']['output'];
-  gender: Gender;
   id: Scalars['ID']['output'];
   lastname: Scalars['String']['output'];
   name: Scalars['String']['output'];
   properties: Array<PropertyValueType>;
+  sex: Sex;
   tasks: Array<TaskType>;
 };
 
@@ -305,6 +299,12 @@ export type QueryUserArgs = {
   id: Scalars['ID']['input'];
 };
 
+export enum Sex {
+  Female = 'FEMALE',
+  Male = 'MALE',
+  Unknown = 'UNKNOWN'
+}
+
 export type Subscription = {
   __typename?: 'Subscription';
   patientCreated: Scalars['ID']['output'];
@@ -335,9 +335,9 @@ export type UpdatePatientInput = {
   assignedLocationId?: InputMaybe<Scalars['ID']['input']>;
   birthdate?: InputMaybe<Scalars['Date']['input']>;
   firstname?: InputMaybe<Scalars['String']['input']>;
-  gender?: InputMaybe<Gender>;
   lastname?: InputMaybe<Scalars['String']['input']>;
   properties?: InputMaybe<Array<PropertyValueInput>>;
+  sex?: InputMaybe<Sex>;
 };
 
 export type UpdatePropertyDefinitionInput = {
@@ -377,14 +377,14 @@ export type GetMyTasksQuery = { __typename?: 'Query', me?: { __typename?: 'UserT
 export type GetOverviewDataQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetOverviewDataQuery = { __typename?: 'Query', recentPatients: Array<{ __typename?: 'PatientType', id: string, name: string, gender: Gender, birthdate: any, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null }>, recentTasks: Array<{ __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, updateDate?: any | null, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null } | null, patient: { __typename?: 'PatientType', id: string, name: string } }> };
+export type GetOverviewDataQuery = { __typename?: 'Query', recentPatients: Array<{ __typename?: 'PatientType', id: string, name: string, sex: Sex, birthdate: any, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null }>, recentTasks: Array<{ __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, updateDate?: any | null, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null } | null, patient: { __typename?: 'PatientType', id: string, name: string } }> };
 
 export type GetPatientsQueryVariables = Exact<{
   locationId?: InputMaybe<Scalars['ID']['input']>;
 }>;
 
 
-export type GetPatientsQuery = { __typename?: 'Query', patients: Array<{ __typename?: 'PatientType', id: string, name: string, firstname: string, lastname: string, birthdate: any, gender: Gender, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null, tasks: Array<{ __typename?: 'TaskType', id: string, done: boolean, assignee?: { __typename?: 'UserType', id: string } | null }>, properties: Array<{ __typename?: 'PropertyValueType', textValue?: string | null, definition: { __typename?: 'PropertyDefinitionType', name: string } }> }> };
+export type GetPatientsQuery = { __typename?: 'Query', patients: Array<{ __typename?: 'PatientType', id: string, name: string, firstname: string, lastname: string, birthdate: any, sex: Sex, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null, tasks: Array<{ __typename?: 'TaskType', id: string, done: boolean, assignee?: { __typename?: 'UserType', id: string } | null }>, properties: Array<{ __typename?: 'PropertyValueType', textValue?: string | null, definition: { __typename?: 'PropertyDefinitionType', name: string } }> }> };
 
 export type GetGlobalDataQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -461,7 +461,7 @@ export const GetOverviewDataDocument = `
   recentPatients(limit: 5) {
     id
     name
-    gender
+    sex
     birthdate
     assignedLocation {
       id
@@ -515,7 +515,7 @@ export const GetPatientsDocument = `
     firstname
     lastname
     birthdate
-    gender
+    sex
     assignedLocation {
       id
       title

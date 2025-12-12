@@ -19,42 +19,41 @@ const Dashboard: NextPage = () => {
   const recentPatients = useMemo(() => data?.recentPatients ?? [], [data])
   const recentTasks = useMemo(() => data?.recentTasks ?? [], [data])
 
-  // Added minSize to all columns to prevent Table component crash
   const taskColumns = useMemo<ColumnDef<typeof recentTasks[0]>[]>(() => [
     {
       id: 'title',
-      header: 'Task',
+      header: translation('task'),
       accessorKey: 'title',
-      minSize: 200, // Required by Table component
+      minSize: 200,
     },
     {
       id: 'patient',
-      header: 'Patient',
+      header: translation('patient'),
       accessorFn: (row) => row.patient?.name ?? '-',
-      minSize: 150, // Required by Table component
+      minSize: 150,
     },
     {
       id: 'date',
-      header: 'Updated',
+      header: translation('updated'),
       cell: ({ row }) => <SmartDate date={row.original.updateDate ? new Date(row.original.updateDate) : new Date()} />,
-      minSize: 100, // Required by Table component
+      minSize: 100,
     }
-  ], [])
+  ], [translation])
 
   const patientColumns = useMemo<ColumnDef<typeof recentPatients[0]>[]>(() => [
     {
       id: 'name',
-      header: 'Name',
+      header: translation('name'),
       accessorKey: 'name',
-      minSize: 150, // Required by Table component
+      minSize: 150,
     },
     {
       id: 'location',
-      header: 'Location',
+      header: translation('location'),
       accessorFn: (row) => row.assignedLocation?.parent?.title ?? '-',
-      minSize: 150, // Required by Table component
+      minSize: 150,
     }
-  ], [])
+  ], [translation])
 
   return (
     <Page pageTitle={titleWrapper(translation('homePage'))}>
@@ -68,8 +67,8 @@ const Dashboard: NextPage = () => {
             image={user?.avatarUrl ? { avatarUrl: user.avatarUrl, alt: user.name } : undefined}
           />
           <div className="flex-col-1">
-            <h1 className="typography-title-lg">Good Morning, {user?.name}</h1>
-            <p className="typography-body text-description">Here is what is happening today.</p>
+            <h1 className="typography-title-lg">{translation('dashboardWelcome', { name: user?.name ?? '' })}</h1>
+            <p className="typography-body text-description">{translation('dashboardWelcomeDescription')}</p>
           </div>
         </div>
 
@@ -80,7 +79,7 @@ const Dashboard: NextPage = () => {
               <ListCheckIcon size={24} />
             </div>
             <div className="flex-col-0">
-              <span className="typography-label-sm text-description">My Open Tasks</span>
+              <span className="typography-label-sm text-description">{translation('myOpenTasks')}</span>
               <span className="typography-title-lg">{stats.myOpenTasksCount}</span>
             </div>
           </div>
@@ -90,7 +89,7 @@ const Dashboard: NextPage = () => {
               <UsersIcon size={24} />
             </div>
             <div className="flex-col-0">
-              <span className="typography-label-sm text-description">Total Patients</span>
+              <span className="typography-label-sm text-description">{translation('totalPatients')}</span>
               <span className="typography-title-lg">{stats.totalPatientsCount}</span>
             </div>
           </div>
@@ -100,7 +99,7 @@ const Dashboard: NextPage = () => {
               <ClockIcon size={24} />
             </div>
             <div className="flex-col-0">
-              <span className="typography-label-sm text-description">Current Time</span>
+              <span className="typography-label-sm text-description">{translation('currentTime')}</span>
               <span className="typography-title-lg">
                 {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </span>
@@ -110,11 +109,11 @@ const Dashboard: NextPage = () => {
 
         {/* Content Row */}
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mt-4">
-          <ContentPanel title="Recent Tasks" description="Tasks updated recently">
+          <ContentPanel title={translation('recentTasks')} description={translation('tasksUpdatedRecently')}>
             <Table data={recentTasks} columns={taskColumns} />
           </ContentPanel>
 
-          <ContentPanel title="Recent Patients" description="Newest admissions">
+          <ContentPanel title={translation('recentPatients')} description={translation('newestAdmissions')}>
             <Table data={recentPatients} columns={patientColumns} />
           </ContentPanel>
         </div>

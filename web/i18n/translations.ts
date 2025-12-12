@@ -1,7 +1,7 @@
 // AUTO-GENERATED. DO NOT EDIT.
 /* eslint-disable @stylistic/quote-props */
-/* eslint-disable no-useless-escape */
-/* eslint-disable @typescript-eslint/no-unused-vars */
+
+
 import type { Translation } from '@helpwave/internationalization'
 import { TranslationGen } from '@helpwave/internationalization'
 
@@ -16,7 +16,10 @@ export type TasksTranslationEntries = {
   'birthdate': string,
   'confirm': string,
   'createdAt': string,
+  'currentTime': string,
   'dashboard': string,
+  'dashboardWelcome': (values: { name: string }) => string,
+  'dashboardWelcomeDescription': string,
   'description': string,
   'developmentAndPreviewInstance': string,
   'dismiss': string,
@@ -24,11 +27,15 @@ export type TasksTranslationEntries = {
   'homePage': string,
   'imprint': string,
   'itsYou': string,
+  'location': string,
   'login': string,
   'loginRequired': string,
   'loginRequiredDescription': string,
+  'myOpenTasks': string,
   'myTasks': string,
+  'name': string,
   'nBed': (values: { count: number }) => string,
+  'newestAdmissions': string,
   'noPatient': string,
   'nOrganization': (values: { count: number }) => string,
   'notAssigned': string,
@@ -50,15 +57,21 @@ export type TasksTranslationEntries = {
   'private': string,
   'public': string,
   'publish': string,
+  'recentPatients': string,
+  'recentTasks': string,
   'rooms': string,
   'settings': string,
   'settingsDescription': string,
   'sex': string,
   'stagingModalDisclaimerMarkdown': string,
   'status': string,
+  'task': string,
   'tasks': string,
+  'tasksUpdatedRecently': string,
   'taskStatus': (values: { status: string }) => string,
   'teams': string,
+  'totalPatients': string,
+  'updated': string,
   'visibility': string,
   'wards': string,
 }
@@ -71,7 +84,10 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'birthdate': `Geburtsdatum`,
     'confirm': `Bestätigen`,
     'createdAt': `Erstellt am`,
+    'currentTime': `Aktuelle Zeit`,
     'dashboard': `Dashboard`,
+    'dashboardWelcome': ({ name }): string => `Guten Morgen, ${name}`,
+    'dashboardWelcomeDescription': `Hier ist, was heute passiert.`,
     'description': `Beschreibung`,
     'developmentAndPreviewInstance': `Entwicklungs- und Vorschauinstanz`,
     'dismiss': `Schließen`,
@@ -79,16 +95,20 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'homePage': `Startseite`,
     'imprint': `Impressum`,
     'itsYou': `Du`,
+    'location': `Ort`,
     'login': `Login`,
     'loginRequired': `Login benötigt`,
     'loginRequiredDescription': `Um diese Seite benutzen zu können musst du eingeloggt sein.`,
+    'myOpenTasks': `Meine offenen Aufgaben`,
     'myTasks': `Meine Aufgaben`,
+    'name': `Name`,
     'nBed': ({ count }): string => {
       return TranslationGen.resolvePlural(count, {
         '=1': `${count} Bett`,
         'other': `${count} Betten`,
       })
     },
+    'newestAdmissions': `Neueste Aufnahmen`,
     'noPatient': `Kein Patient`,
     'nOrganization': ({ count }): string => {
       return TranslationGen.resolvePlural(count, {
@@ -145,13 +165,17 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'private': `Privat`,
     'public': `Öffentlich`,
     'publish': `Veröffentlichen`,
+    'recentPatients': `Kürzliche Patienten`,
+    'recentTasks': `Kürzliche Aufgaben`,
     'rooms': `Zimmer`,
     'settings': `Einstellungen`,
     'settingsDescription': `Hier kannst du die App Konfiguration ändern.`,
     'sex': `Geschlecht`,
     'stagingModalDisclaimerMarkdown': `Diese öffentliche Instanz von helpwave tasks ist für \\b{Entwicklungs- und Vorschauzwecke} gedacht. Bitte stellen Sie sicher, dass Sie \\b{ausschließlich nicht-vertrauliche Testdaten} eingeben. Diese Instanz kann \\negative{\\b{jederzeit gelöscht}} werden.`,
     'status': `Status`,
+    'task': `Aufgabe`,
     'tasks': `Aufgaben`,
+    'tasksUpdatedRecently': `Kürzlich aktualisierte Aufgaben`,
     'taskStatus': ({ status }): string => {
       return TranslationGen.resolveSelect(status, {
         'overdue': `Überfällig`,
@@ -161,6 +185,8 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
       })
     },
     'teams': `Teams`,
+    'totalPatients': `Gesamtpatienten`,
+    'updated': `Aktualisiert`,
     'visibility': `Sichtbarkeit`,
     'wards': `Stationen`,
   },
@@ -171,7 +197,10 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'birthdate': `Birthdate`,
     'confirm': `Confirm`,
     'createdAt': `Created at`,
+    'currentTime': `Current Time`,
     'dashboard': `Dashboard`,
+    'dashboardWelcome': ({ name }): string => `Good Morning, ${name}`,
+    'dashboardWelcomeDescription': `Here is what is happening today.`,
     'description': `Description`,
     'developmentAndPreviewInstance': `Development and preview instance`,
     'dismiss': `Dismiss`,
@@ -179,16 +208,20 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'homePage': `Home Page`,
     'imprint': `Imprint`,
     'itsYou': `You`,
+    'location': `Location`,
     'login': `Login`,
     'loginRequired': `Login required`,
     'loginRequiredDescription': `To use this site you need to be logged in.`,
+    'myOpenTasks': `My Open Tasks`,
     'myTasks': `My tasks`,
+    'name': `Name`,
     'nBed': ({ count }): string => {
       return TranslationGen.resolvePlural(count, {
         '=1': `${count} Bed`,
         'other': `${count} Beds`,
       })
     },
+    'newestAdmissions': `Newest admissions`,
     'noPatient': `No Patient`,
     'nOrganization': ({ count }): string => {
       return TranslationGen.resolvePlural(count, {
@@ -245,13 +278,17 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'private': `private`,
     'public': `public`,
     'publish': `publish`,
+    'recentPatients': `Recent Patients`,
+    'recentTasks': `Recent Tasks`,
     'rooms': `Rooms`,
     'settings': `Settings`,
     'settingsDescription': `Here you can change the app configuration.`,
     'sex': `Sex`,
     'stagingModalDisclaimerMarkdown': `This public instance of helpwave tasks is for \\b{development and preview purposes}. Please make sure to \\b{only} enter \\b{non-confidential testing data}. This instance can be \\negative{\\b{deleted at any time}}`,
     'status': `Status`,
+    'task': `Task`,
     'tasks': `Tasks`,
+    'tasksUpdatedRecently': `Tasks updated recently`,
     'taskStatus': ({ status }): string => {
       return TranslationGen.resolveSelect(status, {
         'overdue': `Overdue`,
@@ -261,6 +298,8 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
       })
     },
     'teams': `Teams`,
+    'totalPatients': `Total Patients`,
+    'updated': `Updated`,
     'visibility': `Visibility`,
     'wards': `Wards`,
   }

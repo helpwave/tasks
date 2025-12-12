@@ -11,13 +11,13 @@ import { useGetPatientsQuery } from '@/api/gql/generated'
 import { useGlobalContext } from '@/context/GlobalContext'
 
 type PatientViewModel = {
-  id: string
-  name: string
-  location?: string
-  subLocation?: string
-  openTasksCount: number
-  birthdate: Date
-  gender: string
+  id: string,
+  name: string,
+  location?: string,
+  subLocation?: string,
+  openTasksCount: number,
+  birthdate: Date,
+  sex: string,
 }
 
 const getAge = (birthDate: Date) => {
@@ -33,7 +33,7 @@ const getAge = (birthDate: Date) => {
 const PatientsPage: NextPage = () => {
   const translation = useTasksTranslation()
   const { selectedLocation } = useGlobalContext()
-  
+
   const { data: queryData } = useGetPatientsQuery(
     { locationId: selectedLocation }
   )
@@ -45,7 +45,7 @@ const PatientsPage: NextPage = () => {
       id: p.id,
       name: p.name,
       birthdate: new Date(p.birthdate),
-      gender: p.gender,
+      sex: p.sex,
       location: p.assignedLocation?.parent?.title,
       subLocation: p.assignedLocation?.title,
       openTasksCount: p.tasks?.filter(t => !t.done).length ?? 0
@@ -64,14 +64,14 @@ const PatientsPage: NextPage = () => {
     {
       id: 'sex',
       header: translation('sex'),
-      accessorKey: 'gender',
+      accessorKey: 'sex',
       cell: ({ row }) => {
-        const gender = row.original.gender
-        const color = gender === 'MALE' ? 'blue' : gender === 'FEMALE' ? 'red' : 'default'
-        
+        const sex = row.original.sex
+        const color = sex === 'MALE' ? 'blue' : sex === 'FEMALE' ? 'red' : 'default'
+
         return (
           <Chip color={color} size="sm">
-            <span className="capitalize">{gender.toLowerCase()}</span>
+            <span className="capitalize">{sex.toLowerCase()}</span>
           </Chip>
         )
       },
@@ -116,9 +116,9 @@ const PatientsPage: NextPage = () => {
         const date = row.original.birthdate
         const age = getAge(date)
         return (
-            <Tooltip label={translation('nYear', { count: age })}>
-                <span>{date.toLocaleDateString()}</span>
-            </Tooltip>
+          <Tooltip tooltip={translation('nYear', { count: age })}>
+            <span>{date.toLocaleDateString()}</span>
+          </Tooltip>
         )
       },
       minSize: 100,
@@ -129,9 +129,9 @@ const PatientsPage: NextPage = () => {
       header: translation('tasks'),
       accessorKey: 'openTasksCount',
       cell: ({ row }) => (
-         <span className={row.original.openTasksCount > 0 ? 'font-bold text-primary' : 'text-description'}>
-            {row.original.openTasksCount}
-         </span>
+        <span className={row.original.openTasksCount > 0 ? 'font-bold text-primary' : 'text-description'}>
+          {row.original.openTasksCount}
+        </span>
       ),
       minSize: 100,
       size: 100,

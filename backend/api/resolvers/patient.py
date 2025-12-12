@@ -76,7 +76,7 @@ class PatientMutation:
             firstname=data.firstname,
             lastname=data.lastname,
             birthdate=data.birthdate,
-            gender=data.gender.value,
+            sex=data.sex.value,
             assigned_location_id=data.assigned_location_id,
         )
         info.context.db.add(new_patient)
@@ -114,8 +114,8 @@ class PatientMutation:
             patient.lastname = data.lastname
         if data.birthdate is not None:
             patient.birthdate = data.birthdate
-        if data.gender is not None:
-            patient.gender = data.gender.value
+        if data.sex is not None:
+            patient.sex = data.sex.value
         if data.assigned_location_id is not None:
             patient.assigned_location_id = data.assigned_location_id
 

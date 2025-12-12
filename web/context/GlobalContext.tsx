@@ -2,26 +2,26 @@ import React, { createContext, useContext, useMemo, useState } from 'react'
 import { useGetGlobalDataQuery } from '@/api/gql/generated'
 
 type LocationNode = {
-  id: string
-  title: string
+  id: string,
+  title: string,
 }
 
 type GlobalContextType = {
   user: {
-    id: string
-    name: string
-    avatarUrl?: string | null
-  } | null
-  selectedLocation: string | null
-  setSelectedLocation: (id: string | null) => void
-  wards: LocationNode[]
-  teams: LocationNode[]
+    id: string,
+    name: string,
+    avatarUrl?: string | null,
+  } | null,
+  selectedLocation: string | null,
+  setSelectedLocation: (id: string | null) => void,
+  wards: LocationNode[],
+  teams: LocationNode[],
   stats: {
-    myOpenTasksCount: number
-    totalPatientsCount: number
-    locationPatientsCount: number
-  }
-  isLoading: boolean
+    myOpenTasksCount: number,
+    totalPatientsCount: number,
+    locationPatientsCount: number,
+  },
+  isLoading: boolean,
 }
 
 const GlobalContext = createContext<GlobalContextType>({

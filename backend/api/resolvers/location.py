@@ -16,7 +16,7 @@ class LocationQuery:
     async def location_roots(self, info: Info) -> list[LocationNodeType]:
         result = await info.context.db.execute(
             select(models.LocationNode).where(
-                models.LocationNode.parent_id == None,  # noqa: E711
+                models.LocationNode.parent_id == None,
             ),
         )
         return result.scalars().all()

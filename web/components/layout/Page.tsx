@@ -138,10 +138,10 @@ const SidebarLink = ({ children, route, isActive, className, ...props }: Sidebar
 }
 
 type SidebarGroupProps = {
-  title: string
-  icon: React.ReactNode
-  children: React.ReactNode
-  initiallyExpanded?: boolean
+  title: string,
+  icon: React.ReactNode,
+  children: React.ReactNode,
+  initiallyExpanded?: boolean,
 }
 
 const SidebarGroup = ({ title, icon, children, initiallyExpanded = false }: SidebarGroupProps) => {
