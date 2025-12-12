@@ -324,7 +324,7 @@ const Dashboard: NextPage = () => {
   const { data, isLoading } = useMyQueryQuery()
   return (
     <Page pageTitle={titleWrapper(translation('myTasks'))}>
-      <ContentPanel title={translation('myTasks')} description={translation('nTask', { count: tasks.length })}>
+      <ContentPanel titleElement={translation('myTasks')} description={translation('nTask', { count: tasks.length })}>
         <Table
           className="w-full h-full"
           data={tasks}

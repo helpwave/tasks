@@ -10,7 +10,7 @@ const NotFound: NextPage = () => {
   const translation = useTasksTranslation()
   return (
     <Page pageTitle={titleWrapper(translation('pages.404.notFound'))}>
-      <ContentPanel title={translation('pages.404.notFound')}>
+      <ContentPanel titleElement={translation('pages.404.notFound')}>
         <div className="flex-col-2 items-center justify-center h-full">
           <HelpwaveLogo className="w-64 h-64" animate="bounce"/>
           <p className="text-lg font-inter">{translation('pages.404.notFoundDescription1')}...</p>

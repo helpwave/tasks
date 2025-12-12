@@ -41,15 +41,11 @@ export const AuthProvider = ({
   const { isLoading, identity } = authState
 
   const pathname = usePathname()
-  const isUnprotected = unprotectedURLs.some(pattern =>
+  const isUnprotected = !!pathname && unprotectedURLs.some(pattern =>
     pathname.startsWith(pattern))
-  const isIgnored = ignoredURLs.some(pattern =>
+  const isIgnored = !!pathname && ignoredURLs.some(pattern =>
     pathname.startsWith(pattern))
 
-  console.log(pathname, {
-    isUnprotected,
-    isIgnored,
-  })
   useEffect(() => {
     if(isIgnored) {
       return

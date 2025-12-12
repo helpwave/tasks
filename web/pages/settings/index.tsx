@@ -32,7 +32,7 @@ const SettingsPage: NextPage = () => {
         onClose={() => setIsThemeDialogOpen(false)}
       />
       <ContentPanel
-        title={translation('settings')}
+        titleElement={translation('settings')}
         description={translation('settingsDescription')}
       >
         <h2 className="typography-title-md">{translation('preferences')}</h2>

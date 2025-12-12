@@ -10,7 +10,7 @@ const WardsOverviewPage: NextPage = () => {
   return (
     <Page pageTitle={titleWrapper(translation('wards'))}>
       <ContentPanel
-        title={translation('wards')}
+        titleElement={translation('wards')}
       >
       </ContentPanel>
     </Page>

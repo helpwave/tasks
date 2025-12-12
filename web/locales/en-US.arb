@@ -88,5 +88,14 @@
   "wards": "Wards",
   "overview": "Overview",
   "teams": "Teams",
-  "logout": "Logout"
+  "logout": "Logout",
+  "nCurrentlyPatients": "Currently {count, plural, =1{# Patient} other{# Patients}}",
+  "@nCurrentlyPatients": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "tasks": "Tasks"
 }

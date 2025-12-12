@@ -56,8 +56,8 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
     setState(prevState => ({
       ...prevState,
       sidebar: {
-        isShowingWards: pathName.startsWith('/wards') || prevState.sidebar.isShowingWards,
-        isShowingTeams: pathName.startsWith('/teams') || prevState.sidebar.isShowingTeams,
+        isShowingWards: !!pathName && (pathName.startsWith('/wards') || prevState.sidebar.isShowingWards),
+        isShowingTeams: !!pathName && (pathName.startsWith('/teams') || prevState.sidebar.isShowingTeams),
       },
     }))
   }, [pathName])

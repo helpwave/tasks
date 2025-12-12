@@ -222,7 +222,7 @@ const PatientsPage: NextPage = () => {
   return (
     <Page pageTitle={titleWrapper(translation('patients'))}>
       <ContentPanel
-        title={translation('patients')}
+        titleElement={translation('patients')}
         description={translation('nPatient', { count: patients.length })}
       >
         <Table

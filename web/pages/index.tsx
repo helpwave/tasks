@@ -12,7 +12,7 @@ const Dashboard: NextPage = () => {
   const { data, isLoading } = useMyQueryQuery()
   return (
     <Page pageTitle={titleWrapper(translation('homePage'))}>
-      <ContentPanel title={translation('homePage')} description="The beginning of something">
+      <ContentPanel titleElement={translation('homePage')} description="The beginning of something">
         {isLoading ? 'Loading' : data?.patients.toString()}
         <div className="h-3000"></div>
       </ContentPanel>

@@ -1,9 +1,9 @@
-import type { HTMLAttributes } from 'react'
+import type { HTMLAttributes, ReactNode } from 'react'
 import clsx from 'clsx'
 
 type ContentPanelProps = HTMLAttributes<HTMLDivElement> & {
-  title?: string,
-  description?: string,
+  titleElement?: ReactNode,
+  description?: ReactNode,
 }
 
 /**
@@ -11,17 +11,17 @@ type ContentPanelProps = HTMLAttributes<HTMLDivElement> & {
  */
 export const ContentPanel = ({
                                children,
-                               title,
+                               titleElement,
                                description,
                                ...props
                              }: ContentPanelProps) => {
   return (
     <div {...props} className={clsx('flex-col-2 w-full h-full pt-6', props.className)}>
       <div className="flex-col-0">
-        <h1 className="typography-title-lg">{title}</h1>
-        <p className="typography-label-md text-description">
+        <h1 className="typography-title-lg">{titleElement}</h1>
+        <div className="typography-label-md text-description">
           {description ?? <span className="invisible">placeholder</span>}
-        </p>
+        </div>
       </div>
       {children}
     </div>

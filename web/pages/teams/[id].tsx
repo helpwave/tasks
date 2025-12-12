@@ -10,7 +10,7 @@ const TeamsPage: NextPage = () => {
   return (
     <Page pageTitle={titleWrapper(translation('teams'))}>
       <ContentPanel
-        title={translation('teams')}
+        titleElement={translation('teams')}
       >
       </ContentPanel>
     </Page>

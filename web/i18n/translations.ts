@@ -28,6 +28,7 @@ export type TasksTranslationEntries = {
   'logout': string,
   'myTasks': string,
   'nBed': (values: { count: number }) => string,
+  'nCurrentlyPatients': (values: { count: number }) => string,
   'noPatient': string,
   'nOrganization': (values: { count: number }) => string,
   'notAssigned': string,
@@ -53,6 +54,7 @@ export type TasksTranslationEntries = {
   'settingsDescription': string,
   'stagingModalDisclaimerMarkdown': string,
   'status': string,
+  'tasks': string,
   'taskStatus': (values: { status: string }) => string,
   'teams': string,
   'visibility': string,
@@ -83,6 +85,15 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
         '=1': `${count} Bett`,
         'other': `${count} Betten`,
       })
+    },
+    'nCurrentlyPatients': ({ count }): string => {
+      let _out: string = ''
+      _out += `Aktuell `
+      _out += TranslationGen.resolvePlural(count, {
+        '=1': `${count} Patient`,
+        'other': `${count} Patienten`,
+      })
+      return _out
     },
     'noPatient': `Kein Patient`,
     'nOrganization': ({ count }): string => {
@@ -134,6 +145,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'settingsDescription': `Hier kannst du die App Konfiguration ändern.`,
     'stagingModalDisclaimerMarkdown': `Diese öffentliche Instanz von helpwave tasks ist für \\b{Entwicklungs- und Vorschauzwecke} gedacht. Bitte stellen Sie sicher, dass Sie \\b{ausschließlich nicht-vertrauliche Testdaten} eingeben. Diese Instanz kann \\negative{\\b{jederzeit gelöscht}} werden.`,
     'status': `Status`,
+    'tasks': `Aufgaben`,
     'taskStatus': ({ status }): string => {
       return TranslationGen.resolveSelect(status, {
         'overdue': `Überfällig`,
@@ -168,6 +180,15 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
         '=1': `${count} Bed`,
         'other': `${count} Beds`,
       })
+    },
+    'nCurrentlyPatients': ({ count }): string => {
+      let _out: string = ''
+      _out += `Currently `
+      _out += TranslationGen.resolvePlural(count, {
+        '=1': `${count} Patient`,
+        'other': `${count} Patients`,
+      })
+      return _out
     },
     'noPatient': `No Patient`,
     'nOrganization': ({ count }): string => {
@@ -219,6 +240,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'settingsDescription': `Here you can change the app configuration.`,
     'stagingModalDisclaimerMarkdown': `This public instance of helpwave tasks is for \\b{development and preview purposes}. Please make sure to \\b{only} enter \\b{non-confidential testing data}. This instance can be \\negative{\\b{deleted at any time}}`,
     'status': `Status`,
+    'tasks': `Tasks`,
     'taskStatus': ({ status }): string => {
       return TranslationGen.resolveSelect(status, {
         'overdue': `Overdue`,
