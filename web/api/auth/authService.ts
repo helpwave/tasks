@@ -1,8 +1,7 @@
 'use client'
 
 import { getConfig } from '@/utils/config'
-import type { User } from 'oidc-client-ts'
-import { UserManager, WebStorageStateStore } from 'oidc-client-ts'
+import { User, UserManager, WebStorageStateStore } from 'oidc-client-ts'
 
 const config = getConfig()
 
@@ -42,8 +41,13 @@ export const getUser = async (): Promise<User | null> => {
   return await userManager.getUser()
 }
 
-export const renewToken = async () => {
-  return await userManager.signinSilent()
+export const renewToken = async (): Promise<User | null> => {
+  try {
+    return await userManager.signinSilent()
+  } catch (error) {
+    console.warn('Silent token renewal failed:', error)
+    return null
+  }
 }
 
 export const removeUser = async () => {
@@ -57,7 +61,7 @@ export const restoreSession = async (): Promise<User | undefined> => {
     if (!user) return undefined
 
     if (user.expired) {
-      console.debug('Access token expired, refreshing...')
+      console.debug('Access token expired, attempting silent refresh...')
       const refreshedUser = await renewToken()
       return refreshedUser ?? undefined
     }

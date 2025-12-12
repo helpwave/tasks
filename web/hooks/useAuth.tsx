@@ -8,15 +8,15 @@ import type { User } from 'oidc-client-ts'
 import { usePathname } from 'next/navigation'
 
 type AuthContextType = {
-  identity: User,
-  logout: () => void,
+  identity: User
+  logout: () => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 type AuthState = {
-  identity?: User,
-  isLoading: boolean,
+  identity?: User
+  isLoading: boolean
 }
 
 export const AuthProvider = ({ children }: PropsWithChildren) => {
@@ -40,17 +40,26 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
             setAuthState({ identity, isLoading: false })
 
             onTokenExpiringCallback(async () => {
+              console.debug('Token expiring, refreshing...')
               const refreshedIdentity = await renewToken()
-              setAuthState({
-                identity: refreshedIdentity ?? undefined,
-                isLoading: false,
-              })
+
+              if (isMounted) {
+                if (refreshedIdentity) {
+                  setAuthState({
+                    identity: refreshedIdentity,
+                    isLoading: false,
+                  })
+                } else {
+                  console.warn('Refresh failed, redirecting to login...')
+                  await login()
+                }
+              }
             })
           } else {
             await login()
           }
         }
-      } catch {
+      } catch (error) {
         if (isMounted) {
           await removeUser()
           await login()
