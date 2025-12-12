@@ -68,7 +68,7 @@
   "@dashboardWelcome": {
     "placeholders": {
       "name": {
-        "type": "String"
+        "type": "string"
       }
     }
   },
@@ -132,5 +132,17 @@
   "totalPatients": "Total Patients",
   "updated": "Updated",
   "visibility": "Visibility",
-  "wards": "Wards"
+  "lastUpdate": "Last Update",
+  "wards": "Wards",
+  "overview": "Overview",
+  "nCurrentlyPatients": "Currently {count, plural, =1{# Patient} other{# Patients}}",
+  "@nCurrentlyPatients": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "authenticationFailed": "Authentication Failed",
+  "returnHome": "Return Home"
 }

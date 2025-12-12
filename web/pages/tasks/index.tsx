@@ -200,10 +200,14 @@ const TasksPage: NextPage = () => {
   return (
     <Page pageTitle={titleWrapper(translation('myTasks'))}>
       <ContentPanel
-        title={translation('myTasks')}
+        titleElement={translation('myTasks')}
         description={translation('nTask', { count: tasks.length })}
       >
-        <Table className="w-full h-full" data={tasks} columns={columns} />
+        <Table
+          className="w-full h-full"
+          data={tasks}
+          columns={columns}
+        />
       </ContentPanel>
     </Page>
   )

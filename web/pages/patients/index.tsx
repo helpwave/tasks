@@ -8,7 +8,7 @@ import { useMemo } from 'react'
 import type { ColumnDef } from '@tanstack/table-core'
 import { EditIcon } from 'lucide-react'
 import { useGetPatientsQuery } from '@/api/gql/generated'
-import { useGlobalContext } from '@/context/GlobalContext'
+import { useTasksContext } from '@/hooks/useTasksContext'
 
 type PatientViewModel = {
   id: string,
@@ -32,11 +32,11 @@ const getAge = (birthDate: Date) => {
 
 const PatientsPage: NextPage = () => {
   const translation = useTasksTranslation()
-  const { selectedLocation } = useGlobalContext()
+  const { selectedLocationId } = useTasksContext()
 
-  const { data: queryData } = useGetPatientsQuery(
-    { locationId: selectedLocation }
-  )
+  const { data: queryData } = useGetPatientsQuery({
+    locationId: selectedLocationId
+  })
 
   const patients: PatientViewModel[] = useMemo(() => {
     if (!queryData?.patients) return []
@@ -137,6 +137,61 @@ const PatientsPage: NextPage = () => {
       size: 100,
       maxSize: 200,
     },
+    /* TODO do query
+    {
+      id: 'myTasks',
+      header: translation('myTasks'),
+      // TODO use correct id
+      accessorFn: ({ tasks }) => tasks.filter(value => value.assigneeId === user?.profile.sid).length,
+      cell: ({ row }) => {
+        const data = row.original.tasks // .filter(value => value.assigneeId === user?.profile.sid)
+        const done = data.filter(value => value.done)
+        const upcoming = data.filter(value => !value.done && !(value.dueDate && value.dueDate > new Date()))
+        const overdue = data.filter(value => !value.done && (value.dueDate && value.dueDate > new Date()))
+
+        if(done.length === 0 && upcoming.length === 0 && overdue.length === 0) {
+          return (
+            <span className="text-description">{translation('none')}</span>
+          )
+        }
+
+        return (
+          <div className="flex flex-wrap gap-x-2 gap-y-1">
+            {done.length > 0 && (
+              <Chip color="green">{`${translation('taskStatus', { status: 'done' })} ${done.length}`}</Chip>
+            )}
+            {upcoming.length > 0 && (
+              <Chip color="yellow">{`${translation('taskStatus', { status: 'upcoming' })} ${upcoming.length}`}</Chip>
+            )}
+            {overdue.length > 0 && (
+              <Chip color="red">{`${translation('taskStatus', { status: 'overdue' })} ${overdue.length}`}</Chip>
+            )}
+          </div>
+        )
+      },
+      minSize: 100,
+      size: 100,
+      maxSize: 200,
+    },
+    {
+      id: 'lastChange',
+      header: translation('lastUpdate'),
+      accessorKey: 'lastUpdate',
+      cell: ({ row }) => {
+        if(!row.original.lastUpdate) {
+          return (<span className="text-description">-</span>)
+        }
+        return (
+          <span className="typography-label-sm font-bold">
+            {row.original.lastUpdate?.toLocaleString()}
+          </span>
+        )
+      },
+      minSize: 100,
+      size: 150,
+      maxSize: 200,
+    },
+    */
     {
       id: 'actions',
       header: '',
@@ -159,7 +214,7 @@ const PatientsPage: NextPage = () => {
   return (
     <Page pageTitle={titleWrapper(translation('patients'))}>
       <ContentPanel
-        title={translation('patients')}
+        titleElement={translation('patients')}
         description={translation('nPatient', { count: patients.length })}
       >
         <Table

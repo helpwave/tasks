@@ -4,16 +4,16 @@ import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
 import { useGetOverviewDataQuery } from '@/api/gql/generated'
-import { useGlobalContext } from '@/context/GlobalContext'
 import { Avatar, Table } from '@helpwave/hightide'
 import { SmartDate } from '@/utils/date'
 import { ClockIcon, ListCheckIcon, UsersIcon } from 'lucide-react'
 import { useMemo } from 'react'
 import type { ColumnDef } from '@tanstack/table-core'
+import { useTasksContext } from '@/hooks/useTasksContext'
 
 const Dashboard: NextPage = () => {
   const translation = useTasksTranslation()
-  const { user, stats } = useGlobalContext()
+  const { user, myTasksCount, totalPatientsCount } = useTasksContext()
   const { data } = useGetOverviewDataQuery()
 
   const recentPatients = useMemo(() => data?.recentPatients ?? [], [data])
@@ -80,7 +80,7 @@ const Dashboard: NextPage = () => {
             </div>
             <div className="flex-col-0">
               <span className="typography-label-sm text-description">{translation('myOpenTasks')}</span>
-              <span className="typography-title-lg">{stats.myOpenTasksCount}</span>
+              <span className="typography-title-lg">{myTasksCount}</span>
             </div>
           </div>
 
@@ -90,7 +90,7 @@ const Dashboard: NextPage = () => {
             </div>
             <div className="flex-col-0">
               <span className="typography-label-sm text-description">{translation('totalPatients')}</span>
-              <span className="typography-title-lg">{stats.totalPatientsCount}</span>
+              <span className="typography-title-lg">{totalPatientsCount}</span>
             </div>
           </div>
 

@@ -1,92 +1,145 @@
 'use client'
 
-import type { ComponentType, PropsWithChildren } from 'react'
-import { useEffect, createContext, useContext, useState } from 'react'
+import type { ComponentType, PropsWithChildren, ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useState } from 'react'
 import { LoadingAnimation } from '@helpwave/hightide'
 import { login, logout, onTokenExpiringCallback, removeUser, renewToken, restoreSession } from '@/api/auth/authService'
 import type { User } from 'oidc-client-ts'
+import { getConfig } from '@/utils/config'
 import { usePathname } from 'next/navigation'
+import { LoginPage } from '@/components/pages/login'
 
-type AuthContextType = {
-  identity: User,
-  logout: () => void,
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined)
+const config = getConfig()
 
 type AuthState = {
   identity?: User,
   isLoading: boolean,
 }
 
-export const AuthProvider = ({ children }: PropsWithChildren) => {
+type AuthContextType = AuthState & {
+  authHeader?: {
+    Authorization: string,
+  },
+  logout: () => void,
+}
+
+const AuthContext = createContext<AuthContextType | null>(null)
+
+type AuthProviderProps = PropsWithChildren & {
+  /** These URLs try to log in, but ignore failures */
+  unprotectedURLs?: string[],
+  /** These URLs ignore authentication completely */
+  ignoredURLs?: string[],
+}
+
+
+export const AuthProvider = ({
+                               children,
+                               unprotectedURLs = [],
+                               ignoredURLs = []
+                             }: AuthProviderProps) => {
   const [authState, setAuthState] = useState<AuthState>({ isLoading: true })
+  const { isLoading, identity } = authState
+
   const pathname = usePathname()
+  const isUnprotected = !!pathname && unprotectedURLs.some(pattern =>
+    pathname.startsWith(pattern))
+  const isIgnored = !!pathname && ignoredURLs.some(pattern =>
+    pathname.startsWith(pattern))
 
   useEffect(() => {
-    if (pathname === '/auth/callback') {
-      setAuthState({ isLoading: false, identity: undefined })
+    if(isIgnored) {
       return
     }
 
-    let isMounted = true
-
-    const initAuth = async () => {
-      try {
-        const identity = await restoreSession()
-
-        if (isMounted) {
-          if (identity) {
-            setAuthState({ identity, isLoading: false })
-
-            onTokenExpiringCallback(async () => {
-              console.debug('Token expiring, refreshing...')
-              const refreshedIdentity = await renewToken()
-
-              if (isMounted) {
-                if (refreshedIdentity) {
-                  setAuthState({
-                    identity: refreshedIdentity,
-                    isLoading: false,
-                  })
-                } else {
-                  console.warn('Refresh failed, redirecting to login...')
-                  await login()
-                }
-              }
+    restoreSession()
+      .then((identity) => {
+        if (identity) {
+          console.debug('Loaded identity')
+          setAuthState({ identity, isLoading: false })
+          onTokenExpiringCallback(async () => {
+            console.debug('Token expiring, refreshing...')
+            const renewed = await renewToken()
+            setAuthState({
+              identity: renewed ?? undefined,
+              isLoading: false,
             })
+          })
+        } else {
+          if (!isUnprotected) {
+            console.debug('Trying to login...')
+            login(
+              config.auth.redirect_uri +
+              `?redirect_uri=${encodeURIComponent(window.location.href)}`
+            ).catch(console.error)
           } else {
-            await login()
+            console.debug('Logging out...')
+            removeUser()
+              .then(() => {
+                setAuthState({ isLoading: false })
+              })
+              .catch(console.error)
           }
         }
-      } catch {
-        if (isMounted) {
-          await removeUser()
-          await login()
+      })
+      .catch(async () => {
+        if (!isUnprotected) {
+          console.debug('Login error, Trying to login...')
+          login(
+            config.auth.redirect_uri +
+            `?redirect_uri=${encodeURIComponent(window.location.href)}`
+          ).catch(console.error)
+        } else {
+          console.debug('Login error, logging out...')
+          removeUser()
+            .then(() => {
+              setAuthState({ isLoading: false })
+            })
+            .catch(console.error)
         }
-      }
+      })
+  }, [isIgnored, isUnprotected])
+
+  const logoutAndReset = useCallback(() => {
+    logout()
+      .then(() => removeUser().then(() => setAuthState({ isLoading: true, identity: undefined })))
+      .catch(console.error)
+  }, [])
+
+  let content: ReactNode = children
+  if (!isUnprotected && !isIgnored && !identity) {
+    if (isLoading) {
+      content = (
+        <div className="flex-col-0 items-center justify-center w-screen h-screen">
+          <LoadingAnimation loadingText="Logging in..."/>
+        </div>
+      )
+    } else {
+      content = (
+        <LoginPage
+          login={async () => {
+            await login(
+              config.auth.redirect_uri +
+              `?redirect_uri=${encodeURIComponent(window.location.href)}`
+            )
+            return true
+          }}
+        />
+      )
     }
-
-    initAuth()
-
-    return () => { isMounted = false }
-  }, [pathname])
-
-  if (pathname === '/auth/callback') {
-    return <>{children}</>
-  }
-
-  if (authState.isLoading || !authState.identity) {
-    return (
-      <div className="flex flex-col items-center justify-center w-screen h-screen">
-        <LoadingAnimation loadingText="Redirecting to login..." />
-      </div>
-    )
   }
 
   return (
-    <AuthContext.Provider value={{ identity: authState.identity, logout }}>
-      {children}
+    <AuthContext.Provider
+      value={{
+        ...authState,
+        logout: logoutAndReset,
+        authHeader: authState.identity ? {
+          Authorization: `Bearer ${authState.identity?.access_token}`,
+        } : undefined
+      }}
+    >
+      {content}
     </AuthContext.Provider>
   )
 }
@@ -107,8 +160,5 @@ export const useAuth = () => {
   if (!context) {
     throw new Error('useAuth must be used within an AuthProvider')
   }
-  const authHeader = {
-    Authorization: `Bearer ${context.identity.access_token}`,
-  }
-  return { ...context, authHeader }
+  return context
 }

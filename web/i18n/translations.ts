@@ -13,12 +13,13 @@ export type TasksTranslationEntries = {
   'age': string,
   'assignedTo': string,
   'assignee': string,
+  'authenticationFailed': string,
   'birthdate': string,
   'confirm': string,
   'createdAt': string,
   'currentTime': string,
   'dashboard': string,
-  'dashboardWelcome': (values: { name: String }) => string,
+  'dashboardWelcome': (values: { name: string }) => string,
   'dashboardWelcomeDescription': string,
   'description': string,
   'developmentAndPreviewInstance': string,
@@ -27,6 +28,7 @@ export type TasksTranslationEntries = {
   'homePage': string,
   'imprint': string,
   'itsYou': string,
+  'lastUpdate': string,
   'location': string,
   'login': string,
   'loginRequired': string,
@@ -36,6 +38,7 @@ export type TasksTranslationEntries = {
   'myTasks': string,
   'name': string,
   'nBed': (values: { count: number }) => string,
+  'nCurrentlyPatients': (values: { count: number }) => string,
   'newestAdmissions': string,
   'noPatient': string,
   'nOrganization': (values: { count: number }) => string,
@@ -47,6 +50,7 @@ export type TasksTranslationEntries = {
   'nTeam': (values: { count: number }) => string,
   'nWard': (values: { count: number }) => string,
   'nYear': (values: { count: number }) => string,
+  'overview': string,
   'pages.404.notFound': string,
   'pages.404.notFoundDescription1': string,
   'pages.404.notFoundDescription2': string,
@@ -60,6 +64,7 @@ export type TasksTranslationEntries = {
   'publish': string,
   'recentPatients': string,
   'recentTasks': string,
+  'returnHome': string,
   'rooms': string,
   'settings': string,
   'settingsDescription': string,
@@ -82,6 +87,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'age': `Alter`,
     'assignedTo': `Zugewiesen an`,
     'assignee': `Verantwortlich`,
+    'authenticationFailed': `Authentifizierung fehlgeschlagen`,
     'birthdate': `Geburtsdatum`,
     'confirm': `Bestätigen`,
     'createdAt': `Erstellt am`,
@@ -98,6 +104,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'homePage': `Startseite`,
     'imprint': `Impressum`,
     'itsYou': `Du`,
+    'lastUpdate': `Letzte Änderung`,
     'location': `Ort`,
     'login': `Login`,
     'loginRequired': `Login benötigt`,
@@ -111,6 +118,15 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
         '=1': `${count} Bett`,
         'other': `${count} Betten`,
       })
+    },
+    'nCurrentlyPatients': ({ count }): string => {
+      let _out: string = ''
+      _out += `Aktuell `
+      _out += TranslationGen.resolvePlural(count, {
+        '=1': `${count} Patient`,
+        'other': `${count} Patienten`,
+      })
+      return _out
     },
     'newestAdmissions': `Neueste Aufnahmen`,
     'noPatient': `Kein Patient`,
@@ -158,6 +174,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
         'other': `${count} Jahre alt`,
       })
     },
+    'overview': `Übersicht`,
     'pages.404.notFound': `404 - Seite nicht gefunden`,
     'pages.404.notFoundDescription1': `Das ist definitiv nicht die Seite nach der Sie suchen`,
     'pages.404.notFoundDescription2': `Zurück zur`,
@@ -171,6 +188,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'publish': `Veröffentlichen`,
     'recentPatients': `Kürzliche Patienten`,
     'recentTasks': `Kürzliche Aufgaben`,
+    'returnHome': `Zur Homepage`,
     'rooms': `Zimmer`,
     'settings': `Einstellungen`,
     'settingsDescription': `Hier kannst du die App Konfiguration ändern.`,
@@ -198,6 +216,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'age': `Age`,
     'assignedTo': `Assigned to`,
     'assignee': `Assignee`,
+    'authenticationFailed': `Authentication Failed`,
     'birthdate': `Birthdate`,
     'confirm': `Confirm`,
     'createdAt': `Created at`,
@@ -214,6 +233,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'homePage': `Home Page`,
     'imprint': `Imprint`,
     'itsYou': `You`,
+    'lastUpdate': `Last Update`,
     'location': `Location`,
     'login': `Login`,
     'loginRequired': `Login required`,
@@ -227,6 +247,15 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
         '=1': `${count} Bed`,
         'other': `${count} Beds`,
       })
+    },
+    'nCurrentlyPatients': ({ count }): string => {
+      let _out: string = ''
+      _out += `Currently `
+      _out += TranslationGen.resolvePlural(count, {
+        '=1': `${count} Patient`,
+        'other': `${count} Patients`,
+      })
+      return _out
     },
     'newestAdmissions': `Newest admissions`,
     'noPatient': `No Patient`,
@@ -274,6 +303,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
         'other': `${count} years old`,
       })
     },
+    'overview': `Overview`,
     'pages.404.notFound': `404 - Page not found`,
     'pages.404.notFoundDescription1': `This is definitely not the page you're looking for`,
     'pages.404.notFoundDescription2': `Let me take you to the`,
@@ -287,6 +317,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'publish': `publish`,
     'recentPatients': `Recent Patients`,
     'recentTasks': `Recent Tasks`,
+    'returnHome': `Return Home`,
     'rooms': `Rooms`,
     'settings': `Settings`,
     'settingsDescription': `Here you can change the app configuration.`,

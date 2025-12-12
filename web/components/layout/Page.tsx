@@ -8,23 +8,22 @@ import Link from 'next/link'
 import {
   Avatar,
   Dialog,
+  Expandable,
   ExpansionIcon,
   IconButton,
-  MarkdownInterpreter,
-  Menu,
-  MenuItem,
+  LoadingContainer,
+  MarkdownInterpreter, Menu, MenuItem,
   SolidButton,
   useLocalStorage
 } from '@helpwave/hightide'
 import { getConfig } from '@/utils/config'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import clsx from 'clsx'
-import { BellIcon, CircleCheck, Grid2X2PlusIcon, SettingsIcon, User, Building2, Users } from 'lucide-react'
-import { usePathname } from 'next/navigation'
+import { BellIcon, Building2, CircleCheck, Grid2X2PlusIcon, SettingsIcon, User, Users } from 'lucide-react'
 import { TasksLogo } from '@/components/TasksLogo'
 import { useRouter } from 'next/router'
-import { useGlobalContext } from '@/context/GlobalContext'
-import { logout } from '@/api/auth/authService'
+import { useTasksContext } from '@/hooks/useTasksContext'
+import { useAuth } from '@/hooks/useAuth'
 
 export const StagingDisclaimerDialog = () => {
   const config = getConfig()
@@ -77,10 +76,14 @@ export const StagingDisclaimerDialog = () => {
 
 type HeaderProps = HTMLAttributes<HTMLHeadElement>
 
+/**
+ * The basic header for most pages
+ */
 export const Header = ({ ...props }: HeaderProps) => {
-  const router = useRouter()
-  const { user } = useGlobalContext()
   const translation = useTasksTranslation()
+  const { user } = useTasksContext()
+  const router = useRouter()
+  const { logout } = useAuth()
 
   return (
     <header
@@ -134,19 +137,18 @@ export const Header = ({ ...props }: HeaderProps) => {
 
 type SidebarLinkProps = AnchorHTMLAttributes<HTMLAnchorElement> & {
   href: string,
-  route?: string,
-  isActive?: boolean,
 }
 
-const SidebarLink = ({ children, route, isActive, className, ...props }: SidebarLinkProps) => {
-  const active = isActive !== undefined ? isActive : (route === props.href)
+const SidebarLink = ({ children, ...props }: SidebarLinkProps) => {
+  const { route } = useTasksContext()
+
   return (
     <Link
       {...props}
       className={clsx(
         'flex-row-1.5 w-full px-2.5 py-1.5 items-center rounded-md hover:bg-black/30',
-        { 'text-primary font-bold bg-black/10': active },
-        className
+        { 'text-primary font-bold': route === props.href },
+        props.className
       )}
     >
       {children}
@@ -154,52 +156,17 @@ const SidebarLink = ({ children, route, isActive, className, ...props }: Sidebar
   )
 }
 
-type SidebarGroupProps = {
-  title: string,
-  icon: React.ReactNode,
-  children: React.ReactNode,
-  initiallyExpanded?: boolean,
-}
-
-const SidebarGroup = ({ title, icon, children, initiallyExpanded = false }: SidebarGroupProps) => {
-  const [isExpanded, setIsExpanded] = useState(initiallyExpanded)
-
-  return (
-    <div className="flex-col-1">
-      <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        className={clsx(
-          'flex-row-1.5 w-full px-2.5 py-1.5 items-center rounded-md hover:bg-black/30 text-left transition-colors',
-          { 'text-primary font-bold bg-black/10': isExpanded }
-        )}
-      >
-        {icon}
-        <span className="flex grow">{title}</span>
-        <ExpansionIcon isExpanded={isExpanded} />
-      </button>
-      {isExpanded && (
-        <div className="flex-col-1 animate-in fade-in slide-in-from-top-1 duration-200">
-          {children}
-        </div>
-      )}
-    </div>
-  )
-}
 
 type SidebarProps = HTMLAttributes<HTMLDivElement>
 
+/**
+ * The basic sidebar for most pages
+ */
 export const Sidebar = ({ ...props }: SidebarProps) => {
   const translation = useTasksTranslation()
-  const route = usePathname()
-  const {
-    wards,
-    teams,
-    selectedLocation,
-    setSelectedLocation,
-    stats
-  } = useGlobalContext()
-
-  const isPatientsRoute = route === '/patients'
+  const wardsRoute = '/wards'
+  const teamsRoute = '/teams'
+  const context = useTasksContext()
 
   return (
     <aside
@@ -214,71 +181,81 @@ export const Sidebar = ({ ...props }: SidebarProps) => {
           <TasksLogo />
           <span className="typography-title-md whitespace-nowrap">{'helpwave tasks'}</span>
         </Link>
-
-        <SidebarLink href="/" route={route}>
-          <Grid2X2PlusIcon className="-rotate-90 size-5" />
+        <SidebarLink href="/">
+          <Grid2X2PlusIcon className="-rotate-90 size-5"/>
           <span className="flex grow">{translation('dashboard')}</span>
         </SidebarLink>
-
-        <SidebarLink href="/tasks" route={route}>
-          <CircleCheck className="size-5" />
+        <SidebarLink href="/tasks">
+          <CircleCheck className="size-5"/>
           <span className="flex grow">{translation('myTasks')}</span>
-          {stats.myOpenTasksCount > 0 && (<span className="text-description">{stats.myOpenTasksCount}</span>)}
+          {context?.myTasksCount !== undefined && (<span className="text-description">{context.myTasksCount}</span>)}
         </SidebarLink>
-
-        <SidebarLink
-          href="/patients"
-          isActive={isPatientsRoute && selectedLocation === null}
-          onClick={() => setSelectedLocation(null)}
-        >
-          <User className="size-5" />
+        <SidebarLink href="/patients">
+          <User className="size-5"/>
           <span className="flex grow">{translation('patients')}</span>
-          <span className="text-description">{stats.totalPatientsCount}</span>
         </SidebarLink>
 
-        {/* Teams Group */}
-        {teams.length > 0 && (
-          <SidebarGroup
-            title={translation('teams')}
-            icon={<Users className="size-5" />}
-            initiallyExpanded={isPatientsRoute && teams.some(t => t.id === selectedLocation)}
-          >
-            {teams.map(team => (
-              <SidebarLink
-                key={team.id}
-                href="/patients"
-                className="pl-9"
-                isActive={isPatientsRoute && selectedLocation === team.id}
-                onClick={() => setSelectedLocation(team.id)}
-              >
-                <span className="flex grow truncate">{team.title}</span>
-              </SidebarLink>
-            ))}
-          </SidebarGroup>
-        )}
+        <Expandable
+          label={(
+            <div className="flex-row-2">
+              <Users className="size-5"/>
+              {translation('teams')}
+            </div>
+          )}
+          headerClassName="!px-2.5 !py-1.5 hover:bg-black/30"
+          contentClassName="!px-0"
+          className="!shadow-none"
+          isExpanded={context.sidebar.isShowingTeams}
+          onChange={isExpanded => context.update(prevState => ({
+            ...prevState,
+            sidebar: {
+              ...prevState.sidebar,
+              isShowingTeams: isExpanded,
+            }
+          }))}
+        >
+          <SidebarLink href={teamsRoute} className="pl-9.5">
+            {translation('overview')}
+          </SidebarLink>
+          {!context?.teams ? (
+            <LoadingContainer className="w-full h-10"/>
+          ) : context.teams.map(ward => (
+            <SidebarLink key={ward.id} href={`${teamsRoute}/${ward.id}`} className="pl-9.5">
+              {ward.title}
+            </SidebarLink>
+          ))}
+        </Expandable>
 
-        {/* Wards Group */}
-        {wards.length > 0 && (
-          <SidebarGroup
-            title={translation('wards')}
-            icon={<Building2 className="size-5" />}
-            initiallyExpanded={isPatientsRoute && wards.some(w => w.id === selectedLocation)}
-          >
-            {wards.map(ward => (
-              <SidebarLink
-                key={ward.id}
-                href="/patients"
-                className="pl-9"
-                isActive={isPatientsRoute && selectedLocation === ward.id}
-                onClick={() => setSelectedLocation(ward.id)}
-              >
-                <span className="flex grow truncate">{ward.title}</span>
-              </SidebarLink>
-            ))}
-          </SidebarGroup>
-        )}
-
-
+        <Expandable
+          label={(
+            <div className="flex-row-2">
+              <Building2 className="size-5"/>
+              {translation('wards')}
+            </div>
+          )}
+          headerClassName="!px-2.5 !py-1.5 hover:bg-black/30"
+          contentClassName="!px-0"
+          className="!shadow-none"
+          isExpanded={context.sidebar.isShowingWards}
+          onChange={isExpanded => context.update(prevState => ({
+            ...prevState,
+            sidebar: {
+              ...prevState.sidebar,
+              isShowingWards: isExpanded,
+            }
+          }))}
+        >
+          <SidebarLink href={wardsRoute} className="pl-9.5">
+            {translation('overview')}
+          </SidebarLink>
+          {!context?.wards ? (
+            <LoadingContainer className="w-full h-10"/>
+          ) : context.wards.map(ward => (
+            <SidebarLink key={ward.id} href={`${wardsRoute}/${ward.id}`} className="pl-9.5">
+              {ward.title}
+            </SidebarLink>
+          ))}
+        </Expandable>
       </nav>
     </aside>
   )

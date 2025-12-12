@@ -11,7 +11,7 @@ import titleWrapper from '@/utils/titleWrapper'
 import { getConfig } from '@/utils/config'
 import '../globals.css'
 import { AuthProvider } from '@/hooks/useAuth'
-import { GlobalProvider } from '@/context/GlobalContext'
+import { TasksContextProvider } from '@/hooks/useTasksContext'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -45,19 +45,23 @@ function MyApp({
                     --font-space: ${spaceGrotesk.style.fontFamily};
                   }
                 `,
-              }}
-            />
-          </Head>
-          <AuthProvider>
-            <GlobalProvider>
-              <Component {...pageProps} />
-            </GlobalProvider>
-          </AuthProvider>
-          {config.env === 'development' && <ReactQueryDevtools position="bottom-left" />}
-        </QueryClientProvider>
-      </ThemeProvider>
-    </LocaleProvider>
-  )
+                            }}
+                        />
+                    </Head>
+                    <AuthProvider
+                      ignoredURLs={[
+                        '/auth/callback',
+                      ]}
+                    >
+                      <TasksContextProvider>
+                        <Component {...pageProps} />
+                      </TasksContextProvider>
+                    </AuthProvider>
+                    {config.env === 'development' && <ReactQueryDevtools position="bottom-left" />}
+                </QueryClientProvider>
+            </ThemeProvider>
+        </LocaleProvider>
+    )
 }
 
 export default MyApp
