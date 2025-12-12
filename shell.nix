@@ -31,6 +31,7 @@ pkgs.mkShell {
     python
     python.pkgs.pip
     python.pkgs.virtualenv
+    python.pkgs.requests
     nodejs
     pkgs.docker
     dockerCompose
@@ -79,6 +80,11 @@ pkgs.mkShell {
         (cd "$PROJECT_ROOT/web" && ${nodejs}/bin/npm install)
       fi
     fi
+
+    run-simulator() {
+      echo ">>> Running simulator"
+      (cd "$PROJECT_ROOT/simulator" && ${pkgs.python313}/bin/python3 main.py)
+    }
 
     start-docker() {
       echo ">>> Starting PostgreSQL, Redis and Keycloak via Docker..."
@@ -153,6 +159,6 @@ pkgs.mkShell {
     }
 
     echo ">>> Environment ready."
-    echo "Commands: run-dev-backend, run-dev-web, run-dev-all, run-alembic, psql-dev, redis-cli-dev, clean-dev"
+    echo "Commands: run-dev-backend, run-dev-web, run-dev-all, run-alembic, psql-dev, redis-cli-dev, clean-dev, start-docker, stop-docker, run-simulator"
   '';
 }
