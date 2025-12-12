@@ -8,15 +8,15 @@ import type { User } from 'oidc-client-ts'
 import { usePathname } from 'next/navigation'
 
 type AuthContextType = {
-  identity: User
-  logout: () => void
+  identity: User,
+  logout: () => void,
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 type AuthState = {
-  identity?: User
-  isLoading: boolean
+  identity?: User,
+  isLoading: boolean,
 }
 
 export const AuthProvider = ({ children }: PropsWithChildren) => {
@@ -59,7 +59,7 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
             await login()
           }
         }
-      } catch (error) {
+      } catch {
         if (isMounted) {
           await removeUser()
           await login()

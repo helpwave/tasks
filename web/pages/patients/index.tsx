@@ -6,7 +6,6 @@ import { ContentPanel } from '@/components/layout/ContentPanel'
 import { IconButton, Table } from '@helpwave/hightide'
 import { useEffect, useMemo, useState } from 'react'
 import type { ColumnDef } from '@tanstack/table-core'
-import { useMyQueryQuery } from '@/api/gql/generated'
 import type { User } from 'oidc-client-ts'
 import { getUser } from '@/api/auth/authService'
 import { EditIcon } from 'lucide-react'
@@ -114,7 +113,7 @@ const Dashboard: NextPage = () => {
       cell: ({ row }) => {
         const data = row.original
         const unassigned = !data.room && !data.ward
-        if(unassigned) {
+        if (unassigned) {
           return (
             <span className="text-description">
               {translation('notAssigned')}
@@ -127,7 +126,7 @@ const Dashboard: NextPage = () => {
               {data.ward?.name ?? translation('notAssigned')}
             </span>
             <span className="text-description">
-                {data.room?.name ?? translation('notAssigned')}
+              {data.room?.name ?? translation('notAssigned')}
             </span>
           </div>
         )
@@ -172,7 +171,7 @@ const Dashboard: NextPage = () => {
               console.log(`clicked on settings of ${data.name}`)
             }}
           >
-            <EditIcon/>
+            <EditIcon />
           </IconButton>
         )
       },
@@ -182,9 +181,8 @@ const Dashboard: NextPage = () => {
       minSize: 77,
       maxSize: 77
     }
-  ], [user])
+  ], [user, translation])
 
-  const { data, isLoading } = useMyQueryQuery()
   return (
     <Page pageTitle={titleWrapper(translation('patients'))}>
       <ContentPanel
@@ -196,8 +194,6 @@ const Dashboard: NextPage = () => {
           data={patients}
           columns={columns}
         />
-
-        {isLoading ? 'Loading' : data?.patients.toString()}
       </ContentPanel>
     </Page>
   )

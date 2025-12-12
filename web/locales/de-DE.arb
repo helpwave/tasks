@@ -53,6 +53,7 @@
   "publish": "Veröffentlichen",
   "notes": "Notizen",
   "status": "Status",
+  "itsYou": "Du",
   "assignee": "Verantwortlich",
   "dueDate": "Fälligkeitsdatum",
   "createdAt": "Erstellt am",

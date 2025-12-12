@@ -1,4 +1,4 @@
-import { useQuery, UseQueryOptions } from '@tanstack/react-query';
+import { useQuery, useMutation, UseQueryOptions, UseMutationOptions } from '@tanstack/react-query';
 import { fetcher } from './fetcher';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
@@ -75,6 +75,7 @@ export type LocationNodeType = {
   kind: LocationType;
   parent?: Maybe<LocationNodeType>;
   parentId?: Maybe<Scalars['ID']['output']>;
+  patients: Array<PatientType>;
   title: Scalars['String']['output'];
 };
 
@@ -89,6 +90,7 @@ export enum LocationType {
 
 export type Mutation = {
   __typename?: 'Mutation';
+  completeTask: TaskType;
   createLocationNode: LocationNodeType;
   createPatient: PatientType;
   createPropertyDefinition: PropertyDefinitionType;
@@ -97,10 +99,16 @@ export type Mutation = {
   deletePatient: Scalars['Boolean']['output'];
   deletePropertyDefinition: Scalars['Boolean']['output'];
   deleteTask: Scalars['Boolean']['output'];
+  reopenTask: TaskType;
   updateLocationNode: LocationNodeType;
   updatePatient: PatientType;
   updatePropertyDefinition: PropertyDefinitionType;
   updateTask: TaskType;
+};
+
+
+export type MutationCompleteTaskArgs = {
+  id: Scalars['ID']['input'];
 };
 
 
@@ -140,6 +148,11 @@ export type MutationDeletePropertyDefinitionArgs = {
 
 
 export type MutationDeleteTaskArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type MutationReopenTaskArgs = {
   id: Scalars['ID']['input'];
 };
 
@@ -229,17 +242,31 @@ export type PropertyValueType = {
 export type Query = {
   __typename?: 'Query';
   locationNode?: Maybe<LocationNodeType>;
+  locationNodes: Array<LocationNodeType>;
   locationRoots: Array<LocationNodeType>;
+  me?: Maybe<UserType>;
   patient?: Maybe<PatientType>;
   patients: Array<PatientType>;
   propertyDefinitions: Array<PropertyDefinitionType>;
+  recentPatients: Array<PatientType>;
+  recentTasks: Array<TaskType>;
   task?: Maybe<TaskType>;
   tasks: Array<TaskType>;
+  user?: Maybe<UserType>;
 };
 
 
 export type QueryLocationNodeArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type QueryLocationNodesArgs = {
+  kind?: InputMaybe<LocationType>;
+  orderByName?: Scalars['Boolean']['input'];
+  parentId?: InputMaybe<Scalars['ID']['input']>;
+  recursive?: Scalars['Boolean']['input'];
+  search?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -253,13 +280,29 @@ export type QueryPatientsArgs = {
 };
 
 
+export type QueryRecentPatientsArgs = {
+  limit?: Scalars['Int']['input'];
+};
+
+
+export type QueryRecentTasksArgs = {
+  limit?: Scalars['Int']['input'];
+};
+
+
 export type QueryTaskArgs = {
   id: Scalars['ID']['input'];
 };
 
 
 export type QueryTasksArgs = {
+  assigneeId?: InputMaybe<Scalars['ID']['input']>;
   patientId?: InputMaybe<Scalars['ID']['input']>;
+};
+
+
+export type QueryUserArgs = {
+  id: Scalars['ID']['input'];
 };
 
 export type Subscription = {
@@ -275,6 +318,8 @@ export type TaskType = {
   description?: Maybe<Scalars['String']['output']>;
   done: Scalars['Boolean']['output'];
   id: Scalars['ID']['output'];
+  patient: PatientType;
+  patientId: Scalars['ID']['output'];
   properties: Array<PropertyValueType>;
   title: Scalars['String']['output'];
   updateDate?: Maybe<Scalars['DateTime']['output']>;
@@ -319,51 +364,122 @@ export type UserType = {
   id: Scalars['ID']['output'];
   lastname?: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
+  tasks: Array<TaskType>;
   title?: Maybe<Scalars['String']['output']>;
+  username: Scalars['String']['output'];
 };
 
-export type MyQueryQueryVariables = Exact<{ [key: string]: never; }>;
+export type GetMyTasksQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type MyQueryQuery = { __typename?: 'Query', patients: Array<{ __typename?: 'PatientType', age: number, assignedLocationId?: string | null, birthdate: any, firstname: string, gender: Gender, id: string, lastname: string, name: string, properties: Array<{ __typename?: 'PropertyValueType', definition: { __typename?: 'PropertyDefinitionType', allowedEntities: Array<PropertyEntity> } }>, tasks: Array<{ __typename?: 'TaskType', id: string }> }> };
+export type GetMyTasksQuery = { __typename?: 'Query', me?: { __typename?: 'UserType', id: string, tasks: Array<{ __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, creationDate: any, patient: { __typename?: 'PatientType', id: string, name: string, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null }, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null } | null }> } | null };
+
+export type CompleteTaskMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type CompleteTaskMutation = { __typename?: 'Mutation', completeTask: { __typename?: 'TaskType', id: string, done: boolean, updateDate?: any | null } };
+
+export type ReopenTaskMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type ReopenTaskMutation = { __typename?: 'Mutation', reopenTask: { __typename?: 'TaskType', id: string, done: boolean, updateDate?: any | null } };
 
 
 
-export const MyQueryDocument = `
-    query MyQuery {
-  patients {
-    age
-    assignedLocationId
-    birthdate
-    firstname
-    gender
+export const GetMyTasksDocument = `
+    query GetMyTasks {
+  me {
     id
-    lastname
-    name
-    properties {
-      definition {
-        allowedEntities
-      }
-    }
     tasks {
       id
+      title
+      description
+      done
+      creationDate
+      patient {
+        id
+        name
+        assignedLocation {
+          id
+          title
+          parent {
+            id
+            title
+          }
+        }
+      }
+      assignee {
+        id
+        name
+        avatarUrl
+      }
     }
   }
 }
     `;
 
-export const useMyQueryQuery = <
-      TData = MyQueryQuery,
+export const useGetMyTasksQuery = <
+      TData = GetMyTasksQuery,
       TError = unknown
     >(
-      variables?: MyQueryQueryVariables,
-      options?: Omit<UseQueryOptions<MyQueryQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<MyQueryQuery, TError, TData>['queryKey'] }
+      variables?: GetMyTasksQueryVariables,
+      options?: Omit<UseQueryOptions<GetMyTasksQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetMyTasksQuery, TError, TData>['queryKey'] }
     ) => {
     
-    return useQuery<MyQueryQuery, TError, TData>(
+    return useQuery<GetMyTasksQuery, TError, TData>(
       {
-    queryKey: variables === undefined ? ['MyQuery'] : ['MyQuery', variables],
-    queryFn: fetcher<MyQueryQuery, MyQueryQueryVariables>(MyQueryDocument, variables),
+    queryKey: variables === undefined ? ['GetMyTasks'] : ['GetMyTasks', variables],
+    queryFn: fetcher<GetMyTasksQuery, GetMyTasksQueryVariables>(GetMyTasksDocument, variables),
+    ...options
+  }
+    )};
+
+export const CompleteTaskDocument = `
+    mutation CompleteTask($id: ID!) {
+  completeTask(id: $id) {
+    id
+    done
+    updateDate
+  }
+}
+    `;
+
+export const useCompleteTaskMutation = <
+      TError = unknown,
+      TContext = unknown
+    >(options?: UseMutationOptions<CompleteTaskMutation, TError, CompleteTaskMutationVariables, TContext>) => {
+    
+    return useMutation<CompleteTaskMutation, TError, CompleteTaskMutationVariables, TContext>(
+      {
+    mutationKey: ['CompleteTask'],
+    mutationFn: (variables?: CompleteTaskMutationVariables) => fetcher<CompleteTaskMutation, CompleteTaskMutationVariables>(CompleteTaskDocument, variables)(),
+    ...options
+  }
+    )};
+
+export const ReopenTaskDocument = `
+    mutation ReopenTask($id: ID!) {
+  reopenTask(id: $id) {
+    id
+    done
+    updateDate
+  }
+}
+    `;
+
+export const useReopenTaskMutation = <
+      TError = unknown,
+      TContext = unknown
+    >(options?: UseMutationOptions<ReopenTaskMutation, TError, ReopenTaskMutationVariables, TContext>) => {
+    
+    return useMutation<ReopenTaskMutation, TError, ReopenTaskMutationVariables, TContext>(
+      {
+    mutationKey: ['ReopenTask'],
+    mutationFn: (variables?: ReopenTaskMutationVariables) => fetcher<ReopenTaskMutation, ReopenTaskMutationVariables>(ReopenTaskDocument, variables)(),
     ...options
   }
     )};

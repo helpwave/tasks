@@ -53,6 +53,7 @@
   "publish": "publish",
   "notes": "notes",
   "status": "Status",
+  "itsYou": "You",
   "assignee": "Assignee",
   "dueDate": "Due Date",
   "createdAt": "Created at",

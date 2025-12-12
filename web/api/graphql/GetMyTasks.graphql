@@ -1,0 +1,29 @@
+query GetMyTasks {
+  me {
+    id
+    tasks {
+      id
+      title
+      description
+      done
+      creationDate
+      patient {
+        id
+        name
+        assignedLocation {
+          id
+          title
+          parent {
+            id
+            title
+          }
+        }
+      }
+      assignee {
+        id
+        name
+        avatarUrl
+      }
+    }
+  }
+}

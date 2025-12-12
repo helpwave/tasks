@@ -1,7 +1,8 @@
 'use client'
 
 import { getConfig } from '@/utils/config'
-import { User, UserManager, WebStorageStateStore } from 'oidc-client-ts'
+import type { User } from 'oidc-client-ts'
+import { UserManager, WebStorageStateStore } from 'oidc-client-ts'
 
 const config = getConfig()
 
