@@ -32,6 +32,7 @@ pkgs.mkShell {
     python.pkgs.pip
     python.pkgs.virtualenv
     python.pkgs.requests
+    python.pkgs.python-dotenv
     nodejs
     pkgs.docker
     dockerCompose

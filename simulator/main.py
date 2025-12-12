@@ -11,11 +11,14 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import parse_qs, urlparse
 
 import requests
+from dotenv import load_dotenv
+
+load_dotenv()
 
 KEYCLOAK_URL = os.getenv("KEYCLOAK_URL", "http://localhost:8080")
 API_URL = os.getenv("API_URL", "http://localhost:8000/graphql")
-REALM = "tasks"
-CLIENT_ID = "tasks-web"
+REALM = os.getenv("REALM", "tasks")
+CLIENT_ID = os.getenv("CLIENT_ID", "tasks-web")
 
 CALLBACK_PORT = 8999
 REDIRECT_URI = f"http://localhost:{CALLBACK_PORT}/callback"
