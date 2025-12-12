@@ -164,6 +164,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'confirm': `Confirm`,
     'createdAt': `Created at`,
     'dashboard': `Dashboard`,
+    'description': `Description`,
     'developmentAndPreviewInstance': `Development and preview instance`,
     'dismiss': `Dismiss`,
     'dueDate': `Due Date`,

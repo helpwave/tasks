@@ -75,6 +75,7 @@
   "settings": "Settings",
   "settingsDescription": "Here you can change the app configuration.",
   "preferences": "Preferences",
+  "description": "Description",
   "assignedTo": "Assigned to",
   "taskStatus": "{status, select, overdue{Overdue} upcoming{Upcoming} done{Done} other{-}}",
   "@taskStatus": {
