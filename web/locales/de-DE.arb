@@ -65,10 +65,24 @@
   "confirm": "Bestätigen",
   "dashboard": "Dashboard",
   "myTasks": "Meine Aufgaben",
+  "patient": "Patient",
   "patients": "Patienten",
   "rooms": "Zimmer",
   "loginRequired": "Login benötigt",
   "loginRequiredDescription": "Um diese Seite benutzen zu können musst du eingeloggt sein.",
   "login": "Login",
-  "notAssigned": "Nicht zugewiesen"
+  "notAssigned": "Nicht zugewiesen",
+  "settings": "Einstellungen",
+  "settingsDescription": "Hier kannst du die App Konfiguration ändern.",
+  "preferences": "Präferenzen",
+  "description": "Beschreibung",
+  "assignedTo": "Zugewiesen an",
+  "taskStatus": "{status, select, overdue{Überfällig} upcoming{Anstehend} done{Fertig} other{-}}",
+  "@taskStatus": {
+    "placeholders": {
+      "status": {}
+    }
+  },
+  "noPatient": "Kein Patient",
+  "place": "Ort"
 }

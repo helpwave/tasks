@@ -7,13 +7,12 @@ import Head from 'next/head'
 import titleWrapper from '@/utils/titleWrapper'
 import Link from 'next/link'
 import {
+  Avatar,
   Dialog,
   ExpansionIcon,
-  HelpwaveLogo, IconButton, Input,
-  LanguageDialog,
+  IconButton,
   MarkdownInterpreter,
   SolidButton,
-  ThemeDialog,
   useLocalStorage
 } from '@helpwave/hightide'
 import { getConfig } from '@/utils/config'
@@ -21,6 +20,8 @@ import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import clsx from 'clsx'
 import { BellIcon, CircleCheck, Grid2X2PlusIcon, SettingsIcon, User } from 'lucide-react'
 import { usePathname } from 'next/navigation'
+import { TasksLogo } from '@/components/TasksLogo'
+import { useRouter } from 'next/router'
 
 export const StagingDisclaimerDialog = () => {
   const config = getConfig()
@@ -49,7 +50,7 @@ export const StagingDisclaimerDialog = () => {
       isModal={false}
       isOpen={isStagingDisclaimerOpen}
       titleElement={translation('developmentAndPreviewInstance')}
-      description={(<MarkdownInterpreter text={translation('stagingModalDisclaimerMarkdown')} />)}
+      description={(<MarkdownInterpreter text={translation('stagingModalDisclaimerMarkdown')}/>)}
       className={clsx('z-20 w-200')}
       backgroundClassName="z-10"
     >
@@ -73,12 +74,13 @@ export const StagingDisclaimerDialog = () => {
 
 type HeaderProps = HTMLAttributes<HTMLHeadElement>
 
+// TODO remove the user fetch here and get it from a new global context
 /**
  * The basic header for most pages
  */
 export const Header = ({ ...props }: HeaderProps) => {
-  const translation = useTasksTranslation()
   const [username, setUsername] = useState<string | undefined>()
+  const router = useRouter()
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -89,43 +91,37 @@ export const Header = ({ ...props }: HeaderProps) => {
     fetchUser()
   }, [])
 
-  const [isThemeDialogOpen, setIsThemeDialogOpen] = useState<boolean>(false)
-  const [isLanguageDialogOpen, setIsLanguageDialogOpen] = useState<boolean>(false)
-
   return (
-    <>
-      <LanguageDialog
-        isOpen={isLanguageDialogOpen}
-        onClose={() => setIsLanguageDialogOpen(false)}
-      />
-      <ThemeDialog
-        isOpen={isThemeDialogOpen}
-        onClose={() => setIsThemeDialogOpen(false)}
-      />
-      <header
-        {...props}
-        className={clsx(
-          'flex-row-8 items-center justify-between',
-          props.className
-        )}
-      >
-        <div className="flex-col-0">
-          <Input placeholder={translation('search')} />
+    <header
+      {...props}
+      className={clsx(
+        'flex-row-8 items-center justify-between',
+        props.className
+      )}
+    >
+      <div className="flex-col-0">
+        {/*
+        <Input placeholder={translation('search')}/>
+        */}
+      </div>
+      <div className="flex-row-2 justify-end">
+        <div className="flex-row-0">
+          <IconButton color="transparent">
+            <BellIcon/>
+          </IconButton>
+          <IconButton color="transparent" onClick={() => router.push('/settings')}>
+            <SettingsIcon/>
+          </IconButton>
         </div>
-        <div className="flex-row-4 justify-end">
-          <IconButton color="neutral">
-            <BellIcon />
-          </IconButton>
-          <IconButton color="neutral" onClick={() => setIsThemeDialogOpen(true)}>
-            <SettingsIcon />
-          </IconButton>
-          <SolidButton color="neutral" onClick={() => setIsLanguageDialogOpen(true)}>
+        <SolidButton color="neutral" className="gap-x-1.75">
+          <div className="flex-row-1.5">
             {username}
-            <ExpansionIcon isExpanded={false} />
-          </SolidButton>
-        </div>
-      </header>
-    </>
+            <ExpansionIcon isExpanded={false}/>
+          </div>
+          <Avatar fullyRounded={true}/>
+        </SolidButton>
+      </div>
+    </header>
   )
 }
 
@@ -154,7 +150,7 @@ const SidebarLink = ({ children, route, ...props }: SidebarLinkProps) => {
     <Link
       {...props}
       className={clsx(
-        'flex-row-2 w-full px-2.5 py-1.5 rounded-md hover:bg-black/30',
+        'flex-row-1.5 w-full px-2.5 py-1.5 items-center rounded-md hover:bg-black/30',
         { 'text-primary font-bold bg-black/10': route === props.href }
       )}
     >
@@ -167,6 +163,7 @@ const defaultSidebarData: SidebarData = {}
 
 type SidebarProps = HTMLAttributes<HTMLDivElement>
 
+// TODO remove context sidebar data fetch here and get it from a new global context
 /**
  * The basic sidebar for most pages
  */
@@ -189,27 +186,27 @@ export const Sidebar = ({ ...props }: SidebarProps) => {
     <aside
       {...props}
       className={clsx(
-        'flex-col-4 w-50 min-w-56 rounded-lg bg-surface text-on-surface overflow-hidden p-2.5',
+        'flex-col-4 w-50 min-w-56 rounded-lg bg-surface text-on-surface overflow-hidden p-2.5 shadow-md',
         props.className
       )}
     >
       <nav className="flex-col-2 overflow-auto">
-        <Link href="/" className="flex-row-2 text-primary items-center rounded-lg p-2 mb-8">
-          <HelpwaveLogo className="min-h-7 min-w-7 p-0.5 bg-header-background rounded-md" />
+        <Link href="/" className="flex-row-1 text-primary items-center rounded-lg p-2 mb-8">
+          <TasksLogo/>
           <span className="typography-title-md whitespace-nowrap">{'helpwave tasks'}</span>
         </Link>
         {/* TODO add station swticher here */}
         <SidebarLink href="/" route={route}>
-          <Grid2X2PlusIcon className="-rotate-90" />
+          <Grid2X2PlusIcon className="-rotate-90 size-5"/>
           <span className="flex grow">{translation('dashboard')}</span>
         </SidebarLink>
         <SidebarLink href="/tasks" route={route}>
-          <CircleCheck />
+          <CircleCheck className="size-5"/>
           <span className="flex grow">{translation('myTasks')}</span>
           {data?.myTasksCount !== undefined && (<span className="text-description">{data.myTasksCount}</span>)}
         </SidebarLink>
         <SidebarLink href="/patients" route={route}>
-          <User />
+          <User className="size-5"/>
           <span className="flex grow">{translation('patients')}</span>
           {data?.patientsCount !== undefined && (<span className="text-description">{data.patientsCount}</span>)}
         </SidebarLink>
@@ -230,21 +227,21 @@ type PageWithHeaderProps = PropsWithChildren<{
  * The page content will be passed as the children
  */
 export const Page = ({
-  children,
-  pageTitle,
-}: PageWithHeaderProps) => {
+                       children,
+                       pageTitle,
+                     }: PageWithHeaderProps) => {
   return (
     <div className="flex-row-8 h-screen w-screen overflow-hidden">
       <Head>
         <title>{titleWrapper(pageTitle)}</title>
       </Head>
-      <StagingDisclaimerDialog />
-      <Sidebar className="my-4 ml-4" />
+      <StagingDisclaimerDialog/>
+      <Sidebar className="my-4 ml-4"/>
       <div className="flex-col-4 grow overflow-hidden">
-        <Header className="mr-4 mt-4 bg-background text-on-background" />
-        <main className="flex-col-2 grow overflow-auto">
+        <Header className="mr-4 mt-4 bg-background text-on-background"/>
+        <main className="flex-col-2 grow overflow-auto mr-4">
           {children}
-          <div className="min-h-16" />
+          <div className="min-h-16"/>
         </main>
       </div>
     </div>

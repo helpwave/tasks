@@ -23,6 +23,8 @@ type AuthState = {
   isLoading: boolean,
 }
 
+
+// TODO add option for unprotected routes
 export const AuthProvider = ({ children }: PropsWithChildren) => {
   const [{ isLoading, identity }, setAuthState] = useState<AuthState>({ isLoading: true })
 

@@ -10,6 +10,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools/production'
 import titleWrapper from '@/utils/titleWrapper'
 import { getConfig } from '@/utils/config'
 import '../globals.css'
+import { AuthProvider } from '@/hooks/useAuth'
 
 const inter = Inter({
     subsets: ['latin'],
@@ -46,7 +47,9 @@ function MyApp({
                             }}
                         />
                     </Head>
-                    <Component {...pageProps} />
+                    <AuthProvider>
+                      <Component {...pageProps} />
+                    </AuthProvider>
                     {config.env === 'development' && <ReactQueryDevtools position="bottom-left" />}
                 </QueryClientProvider>
             </ThemeProvider>

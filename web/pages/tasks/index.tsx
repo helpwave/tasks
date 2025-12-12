@@ -3,18 +3,27 @@ import { Page } from '@/components/layout/Page'
 import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
-import { Checkbox, Chip, IconButton, Table } from '@helpwave/hightide'
+import { Avatar, Checkbox, Chip, IconButton, Table } from '@helpwave/hightide'
 import { useMemo } from 'react'
 import type { ColumnDef } from '@tanstack/table-core'
-import { withAuth } from '@/hooks/useAuth'
 import { useMyQueryQuery } from '@/api/gql/generated'
-import { SettingsIcon } from 'lucide-react'
+import { EditIcon } from 'lucide-react'
+import clsx from 'clsx'
 
 type Patient = {
   name: string,
 }
 
+type Assignee = {
+  name: string,
+  avatarURL?: string,
+}
+
 type Room = {
+  name: string,
+}
+
+type Ward = {
   name: string,
 }
 
@@ -23,6 +32,8 @@ type Task = {
   name: string,
   dueDate: Date,
   patient?: Patient,
+  assignee?: Assignee,
+  ward?: Ward,
   room?: Room,
   done: boolean,
 }
@@ -33,7 +44,8 @@ const tasks: Task[] = [
     name: 'Check vitals',
     dueDate: new Date('2025-01-10T08:00'),
     patient: { name: 'Alice Kim' },
-    done: false
+    done: false,
+    assignee: { name: 'Max Mustermann' },
   },
   {
     id: 't2',
@@ -194,7 +206,7 @@ const Dashboard: NextPage = () => {
     },
     {
       id: 'description',
-      header: 'Description',
+      header: translation('description'),
       accessorKey: 'name',
       minSize: 200,
       size: 250,
@@ -202,39 +214,85 @@ const Dashboard: NextPage = () => {
     },
     {
       id: 'dueDate',
-      header: 'Due Date',
+      header: translation('dueDate'),
       accessorKey: 'dueDate',
-      cell: ({ row }) => row.original.dueDate.toLocaleString(),
+      cell: ({ row }) => {
+        const dueDate = row.original.dueDate
+        return (
+          <span className={clsx({ 'text-warning': dueDate < new Date() })}>{dueDate.toLocaleString()}</span>
+        )
+      },
       minSize: 150,
       size: 200,
       maxSize: 200,
     },
     {
       id: 'patient',
-      header: 'Patient',
+      header: translation('patient'),
       accessorFn: ({ patient }) => patient?.name,
+      cell: ({ row }) => {
+        const data = row.original
+        const hasAssignmentInfo = data.room || data.ward
+        if (!data.patient) {
+          return (
+            <span className="text-description">
+              {translation('noPatient')}
+            </span>
+          )
+        }
+        return (
+          <div className="flex-col-0">
+            <span>{data.patient?.name}</span>
+            <span className="text-description">
+              {hasAssignmentInfo ?
+                [data.ward?.name, data.room?.name].filter(Boolean).join(' - ')
+                : translation('notAssigned')
+              }
+            </span>
+          </div>
+        )
+      },
       sortingFn: 'text',
       minSize: 250,
       size: 250,
       maxSize: 400,
     },
     {
-      id: 'room',
-      header: 'Room',
-      accessorFn: ({ room }) => room?.name,
+      id: 'status',
+      header: translation('status'),
+      accessorFn: ({ done, dueDate }) => done ? 'done' : dueDate < new Date() ? 'overdue' : 'upcoming',
+      cell: ({ getValue }) => {
+        const status = getValue() as 'done' | 'overdue' | 'upcoming'
+        return (
+          <Chip color={status === 'done' ? 'green' : status === 'overdue' ? 'red' : 'yellow'}>
+            {translation('taskStatus', { status })}
+          </Chip>
+        )
+      },
       minSize: 250,
       size: 250,
       maxSize: 400,
     },
     {
-      id: 'status',
-      header: 'Status',
-      accessorKey: 'done',
-      cell: ({ row }) => (
-        <Chip color={row.original.done ? 'green' : 'yellow'}>
-          {row.original.done ? 'done' : 'todo'}
-        </Chip>
-      ),
+      id: 'assignee',
+      header: translation('assignedTo'),
+      accessorFn: ({ assignee }) => assignee?.name,
+      cell: ({ row }) => {
+        const assignee = row.original.assignee
+        if(!assignee) {
+          return (
+            <span className="text-description">
+              {translation('notAssigned')}
+            </span>
+          )
+        }
+        return (
+          <div className="flex-row-2">
+            <Avatar fullyRounded={true}/>
+            {assignee.name}
+          </div>
+        )
+      },
       minSize: 250,
       size: 250,
       maxSize: 400,
@@ -246,12 +304,12 @@ const Dashboard: NextPage = () => {
         const task = row.original
         return (
           <IconButton
-            color="neutral"
+            color="transparent"
             onClick={() => {
               console.log(`clicked on finish of task ${task.id}`)
             }}
           >
-            <SettingsIcon/>
+            <EditIcon/>
           </IconButton>
         )
       },
@@ -279,4 +337,4 @@ const Dashboard: NextPage = () => {
   )
 }
 
-export default withAuth(Dashboard)
+export default Dashboard

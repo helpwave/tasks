@@ -6,17 +6,16 @@ import { ContentPanel } from '@/components/layout/ContentPanel'
 import { IconButton, Table } from '@helpwave/hightide'
 import { useEffect, useMemo, useState } from 'react'
 import type { ColumnDef } from '@tanstack/table-core'
-import { withAuth } from '@/hooks/useAuth'
 import { useMyQueryQuery } from '@/api/gql/generated'
 import type { User } from 'oidc-client-ts'
 import { getUser } from '@/api/auth/authService'
-import { SettingsIcon } from 'lucide-react'
+import { EditIcon } from 'lucide-react'
 
 type Room = {
   name: string,
 }
 
-type Bed = {
+type Ward = {
   name: string,
 }
 
@@ -31,7 +30,7 @@ type Patient = {
   name: string,
   tasks: Task[],
   room?: Room,
-  bed?: Bed,
+  ward?: Ward,
   lastUpdate?: Date,
 }
 
@@ -40,7 +39,7 @@ const patients: Patient[] = [
     id: 'p1',
     name: 'Ana Lopez',
     room: { name: '301B' },
-    bed: { name: 'Fenster' },
+    ward: { name: 'Station 1' },
     tasks: [
       {
         id: 't1',
@@ -59,7 +58,7 @@ const patients: Patient[] = [
     id: 'p2',
     name: 'Michael Chen',
     room: { name: '207A' },
-    bed: { name: 'Tür' },
+    ward: { name: 'Station 2' },
     tasks: [
       {
         id: 't3',
@@ -72,6 +71,7 @@ const patients: Patient[] = [
   {
     id: 'p3',
     name: 'Evelyn Hart',
+    ward: { name: 'Station 2' },
     tasks: [
       {
         id: 't4',
@@ -101,30 +101,37 @@ const Dashboard: NextPage = () => {
   const columns = useMemo<ColumnDef<Patient>[]>(() => [
     {
       id: 'name',
-      header: 'Name',
-      cell: ({ row }) => {
-        const data = row.original
-        const unassigned = !data.room && !data.bed
-        return (
-          <div className="flex-col-0">
-            {data.name}
-            <span className="text-description">
-              {unassigned ?
-                translation('notAssigned') :
-                [data.room?.name, data.bed?.name].filter(Boolean).join(' ')
-              }
-            </span>
-          </div>
-        )
-      },
+      header: translation('name'),
+      accessorKey: 'name',
       minSize: 200,
       size: 250,
       maxSize: 300,
     },
     {
-      id: 'openTasks',
-      header: 'Open Tasks',
-      accessorFn: ({ tasks }) => tasks.filter(value => !value.done).length,
+      id: 'place',
+      header: translation('place'),
+      accessorFn: ({ ward, room }) => [ward, room].filter(Boolean).join(' - '),
+      cell: ({ row }) => {
+        const data = row.original
+        const unassigned = !data.room && !data.ward
+        if(unassigned) {
+          return (
+            <span className="text-description">
+              {translation('notAssigned')}
+            </span>
+          )
+        }
+        return (
+          <div className="flex-col-0">
+            <span className="typography-label-sm font-bold">
+              {data.ward?.name ?? translation('notAssigned')}
+            </span>
+            <span className="text-description">
+                {data.room?.name ?? translation('notAssigned')}
+            </span>
+          </div>
+        )
+      },
       minSize: 100,
       size: 100,
       maxSize: 200,
@@ -144,7 +151,9 @@ const Dashboard: NextPage = () => {
       accessorKey: 'lastUpdate',
       cell: ({ row }) => {
         return (
-          row.original.lastUpdate?.toLocaleString()
+          <span className="typography-label-sm font-bold">
+            {row.original.lastUpdate?.toLocaleString()}
+          </span>
         )
       },
       minSize: 100,
@@ -158,12 +167,12 @@ const Dashboard: NextPage = () => {
         const data = row.original
         return (
           <IconButton
-            color="neutral"
+            color="transparent"
             onClick={() => {
               console.log(`clicked on settings of ${data.name}`)
             }}
           >
-            <SettingsIcon/>
+            <EditIcon/>
           </IconButton>
         )
       },
@@ -194,4 +203,4 @@ const Dashboard: NextPage = () => {
   )
 }
 
-export default withAuth(Dashboard)
+export default Dashboard
