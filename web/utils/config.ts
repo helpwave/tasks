@@ -6,11 +6,11 @@ export const publicEnvSchema = z.object({
   RUNTIME_FEATURES_FEED_URL: z.string().url().default('https://cdn.helpwave.de/feed.json'),
   RUNTIME_IMPRINT_URL: z.string().url().default('https://cdn.helpwave.de/imprint.html'),
   RUNTIME_PRIVACY_URL: z.string().url().default('https://cdn.helpwave.de/privacy.html'),
-  RUNTIME_GRAPHQL_ENDPOINT: z.string().url().default('http://localhost/graphql'),
+  RUNTIME_GRAPHQL_ENDPOINT: z.string().url().default('http://localhost:8000/graphql'),
   RUNTIME_ISSUER_URI: z.string().url().default('http://localhost:8080/realms/tasks'),
   RUNTIME_CLIENT_ID: z.string().min(1).default('tasks-web'),
-  RUNTIME_REDIRECT_URI: z.string().min(1).default('http://localhost/auth/callback'),
-  RUNTIME_POST_LOGOUT_REDIRECT_URI: z.string().min(1).default('http://localhost/'),
+  RUNTIME_REDIRECT_URI: z.string().min(1).default('http://localhost:3000/auth/callback'),
+  RUNTIME_POST_LOGOUT_REDIRECT_URI: z.string().min(1).default('http://localhost:3000/'),
 })
 
 const configSchema = publicEnvSchema.transform(obj => ({
