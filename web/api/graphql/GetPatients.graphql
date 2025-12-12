@@ -1,0 +1,31 @@
+query GetPatients($locationId: ID) {
+  patients(locationNodeId: $locationId) {
+    id
+    name
+    firstname
+    lastname
+    birthdate
+    gender
+    assignedLocation {
+      id
+      title
+      parent {
+        id
+        title
+      }
+    }
+    tasks {
+      id
+      done
+      assignee {
+        id
+      }
+    }
+    properties {
+      definition {
+        name
+      }
+      textValue
+    }
+  }
+}

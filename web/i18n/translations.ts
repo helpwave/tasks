@@ -10,8 +10,10 @@ export const tasksTranslationLocales = ['de-DE', 'en-US'] as const
 export type TasksTranslationLocales = typeof tasksTranslationLocales[number]
 
 export type TasksTranslationEntries = {
+  'age': string,
   'assignedTo': string,
   'assignee': string,
+  'birthdate': string,
   'confirm': string,
   'createdAt': string,
   'dashboard': string,
@@ -34,7 +36,9 @@ export type TasksTranslationEntries = {
   'nPatient': (values: { count: number }) => string,
   'nRoom': (values: { count: number }) => string,
   'nTask': (values: { count: number }) => string,
+  'nTeam': (values: { count: number }) => string,
   'nWard': (values: { count: number }) => string,
+  'nYear': (values: { count: number }) => string,
   'pages.404.notFound': string,
   'pages.404.notFoundDescription1': string,
   'pages.404.notFoundDescription2': string,
@@ -49,16 +53,22 @@ export type TasksTranslationEntries = {
   'rooms': string,
   'settings': string,
   'settingsDescription': string,
+  'sex': string,
   'stagingModalDisclaimerMarkdown': string,
   'status': string,
+  'tasks': string,
   'taskStatus': (values: { status: string }) => string,
+  'teams': string,
   'visibility': string,
+  'wards': string,
 }
 
 export const tasksTranslation: Translation<TasksTranslationLocales, Partial<TasksTranslationEntries>> = {
   'de-DE': {
+    'age': `Alter`,
     'assignedTo': `Zugewiesen an`,
     'assignee': `Verantwortlich`,
+    'birthdate': `Geburtsdatum`,
     'confirm': `Bestätigen`,
     'createdAt': `Erstellt am`,
     'dashboard': `Dashboard`,
@@ -106,10 +116,22 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
         'other': `${count} Aufgaben`,
       })
     },
+    'nTeam': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} Team`,
+        'other': `${count} Teams`,
+      })
+    },
     'nWard': ({ count }): string => {
       return TranslationGen.resolvePlural(count, {
         '=1': `${count} Station`,
         'other': `${count} Stationen`,
+      })
+    },
+    'nYear': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} Jahr alt`,
+        'other': `${count} Jahre alt`,
       })
     },
     'pages.404.notFound': `404 - Seite nicht gefunden`,
@@ -126,8 +148,10 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'rooms': `Zimmer`,
     'settings': `Einstellungen`,
     'settingsDescription': `Hier kannst du die App Konfiguration ändern.`,
+    'sex': `Geschlecht`,
     'stagingModalDisclaimerMarkdown': `Diese öffentliche Instanz von helpwave tasks ist für \\b{Entwicklungs- und Vorschauzwecke} gedacht. Bitte stellen Sie sicher, dass Sie \\b{ausschließlich nicht-vertrauliche Testdaten} eingeben. Diese Instanz kann \\negative{\\b{jederzeit gelöscht}} werden.`,
     'status': `Status`,
+    'tasks': `Aufgaben`,
     'taskStatus': ({ status }): string => {
       return TranslationGen.resolveSelect(status, {
         'overdue': `Überfällig`,
@@ -136,14 +160,19 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
         'other': `-`,
       })
     },
-    'visibility': `Sichtbarkeit`
+    'teams': `Teams`,
+    'visibility': `Sichtbarkeit`,
+    'wards': `Stationen`,
   },
   'en-US': {
+    'age': `Age`,
     'assignedTo': `Assigned to`,
     'assignee': `Assignee`,
+    'birthdate': `Birthdate`,
     'confirm': `Confirm`,
     'createdAt': `Created at`,
     'dashboard': `Dashboard`,
+    'description': `Description`,
     'developmentAndPreviewInstance': `Development and preview instance`,
     'dismiss': `Dismiss`,
     'dueDate': `Due Date`,
@@ -187,10 +216,22 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
         'other': `${count} Tasks`,
       })
     },
+    'nTeam': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} Team`,
+        'other': `${count} Teams`,
+      })
+    },
     'nWard': ({ count }): string => {
       return TranslationGen.resolvePlural(count, {
         '=1': `${count} Ward`,
         'other': `${count} Wards`,
+      })
+    },
+    'nYear': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} year old`,
+        'other': `${count} years old`,
       })
     },
     'pages.404.notFound': `404 - Page not found`,
@@ -207,8 +248,10 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'rooms': `Rooms`,
     'settings': `Settings`,
     'settingsDescription': `Here you can change the app configuration.`,
+    'sex': `Sex`,
     'stagingModalDisclaimerMarkdown': `This public instance of helpwave tasks is for \\b{development and preview purposes}. Please make sure to \\b{only} enter \\b{non-confidential testing data}. This instance can be \\negative{\\b{deleted at any time}}`,
     'status': `Status`,
+    'tasks': `Tasks`,
     'taskStatus': ({ status }): string => {
       return TranslationGen.resolveSelect(status, {
         'overdue': `Overdue`,
@@ -217,7 +260,8 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
         'other': `-`,
       })
     },
-    'visibility': `Visibility`
+    'teams': `Teams`,
+    'visibility': `Visibility`,
+    'wards': `Wards`,
   }
 }
-

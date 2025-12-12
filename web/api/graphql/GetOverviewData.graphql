@@ -1,0 +1,32 @@
+query GetOverviewData {
+  recentPatients(limit: 5) {
+    id
+    name
+    gender
+    birthdate
+    assignedLocation {
+      id
+      title
+      parent {
+        id
+        title
+      }
+    }
+  }
+  recentTasks(limit: 10) {
+    id
+    title
+    description
+    done
+    updateDate
+    assignee {
+      id
+      name
+      avatarUrl
+    }
+    patient {
+      id
+      name
+    }
+  }
+}

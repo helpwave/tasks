@@ -372,7 +372,24 @@ export type UserType = {
 export type GetMyTasksQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetMyTasksQuery = { __typename?: 'Query', me?: { __typename?: 'UserType', id: string, tasks: Array<{ __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, creationDate: any, patient: { __typename?: 'PatientType', id: string, name: string, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null }, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null } | null }> } | null };
+export type GetMyTasksQuery = { __typename?: 'Query', me?: { __typename?: 'UserType', id: string, tasks: Array<{ __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, creationDate: any, updateDate?: any | null, patient: { __typename?: 'PatientType', id: string, name: string, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null }, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null } | null }> } | null };
+
+export type GetOverviewDataQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetOverviewDataQuery = { __typename?: 'Query', recentPatients: Array<{ __typename?: 'PatientType', id: string, name: string, gender: Gender, birthdate: any, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null }>, recentTasks: Array<{ __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, updateDate?: any | null, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null } | null, patient: { __typename?: 'PatientType', id: string, name: string } }> };
+
+export type GetPatientsQueryVariables = Exact<{
+  locationId?: InputMaybe<Scalars['ID']['input']>;
+}>;
+
+
+export type GetPatientsQuery = { __typename?: 'Query', patients: Array<{ __typename?: 'PatientType', id: string, name: string, firstname: string, lastname: string, birthdate: any, gender: Gender, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null, tasks: Array<{ __typename?: 'TaskType', id: string, done: boolean, assignee?: { __typename?: 'UserType', id: string } | null }>, properties: Array<{ __typename?: 'PropertyValueType', textValue?: string | null, definition: { __typename?: 'PropertyDefinitionType', name: string } }> }> };
+
+export type GetGlobalDataQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetGlobalDataQuery = { __typename?: 'Query', me?: { __typename?: 'UserType', id: string, username: string, name: string, firstname?: string | null, lastname?: string | null, avatarUrl?: string | null, tasks: Array<{ __typename?: 'TaskType', id: string, done: boolean }> } | null, wards: Array<{ __typename?: 'LocationNodeType', id: string, title: string }>, teams: Array<{ __typename?: 'LocationNodeType', id: string, title: string }>, patients: Array<{ __typename?: 'PatientType', id: string, assignedLocation?: { __typename?: 'LocationNodeType', id: string } | null }> };
 
 export type CompleteTaskMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -400,6 +417,7 @@ export const GetMyTasksDocument = `
       description
       done
       creationDate
+      updateDate
       patient {
         id
         name
@@ -434,6 +452,154 @@ export const useGetMyTasksQuery = <
       {
     queryKey: variables === undefined ? ['GetMyTasks'] : ['GetMyTasks', variables],
     queryFn: fetcher<GetMyTasksQuery, GetMyTasksQueryVariables>(GetMyTasksDocument, variables),
+    ...options
+  }
+    )};
+
+export const GetOverviewDataDocument = `
+    query GetOverviewData {
+  recentPatients(limit: 5) {
+    id
+    name
+    gender
+    birthdate
+    assignedLocation {
+      id
+      title
+      parent {
+        id
+        title
+      }
+    }
+  }
+  recentTasks(limit: 10) {
+    id
+    title
+    description
+    done
+    updateDate
+    assignee {
+      id
+      name
+      avatarUrl
+    }
+    patient {
+      id
+      name
+    }
+  }
+}
+    `;
+
+export const useGetOverviewDataQuery = <
+      TData = GetOverviewDataQuery,
+      TError = unknown
+    >(
+      variables?: GetOverviewDataQueryVariables,
+      options?: Omit<UseQueryOptions<GetOverviewDataQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetOverviewDataQuery, TError, TData>['queryKey'] }
+    ) => {
+    
+    return useQuery<GetOverviewDataQuery, TError, TData>(
+      {
+    queryKey: variables === undefined ? ['GetOverviewData'] : ['GetOverviewData', variables],
+    queryFn: fetcher<GetOverviewDataQuery, GetOverviewDataQueryVariables>(GetOverviewDataDocument, variables),
+    ...options
+  }
+    )};
+
+export const GetPatientsDocument = `
+    query GetPatients($locationId: ID) {
+  patients(locationNodeId: $locationId) {
+    id
+    name
+    firstname
+    lastname
+    birthdate
+    gender
+    assignedLocation {
+      id
+      title
+      parent {
+        id
+        title
+      }
+    }
+    tasks {
+      id
+      done
+      assignee {
+        id
+      }
+    }
+    properties {
+      definition {
+        name
+      }
+      textValue
+    }
+  }
+}
+    `;
+
+export const useGetPatientsQuery = <
+      TData = GetPatientsQuery,
+      TError = unknown
+    >(
+      variables?: GetPatientsQueryVariables,
+      options?: Omit<UseQueryOptions<GetPatientsQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetPatientsQuery, TError, TData>['queryKey'] }
+    ) => {
+    
+    return useQuery<GetPatientsQuery, TError, TData>(
+      {
+    queryKey: variables === undefined ? ['GetPatients'] : ['GetPatients', variables],
+    queryFn: fetcher<GetPatientsQuery, GetPatientsQueryVariables>(GetPatientsDocument, variables),
+    ...options
+  }
+    )};
+
+export const GetGlobalDataDocument = `
+    query GetGlobalData {
+  me {
+    id
+    username
+    name
+    firstname
+    lastname
+    avatarUrl
+    tasks {
+      id
+      done
+    }
+  }
+  wards: locationNodes(kind: WARD) {
+    id
+    title
+  }
+  teams: locationNodes(kind: TEAM) {
+    id
+    title
+  }
+  patients {
+    id
+    assignedLocation {
+      id
+    }
+  }
+}
+    `;
+
+export const useGetGlobalDataQuery = <
+      TData = GetGlobalDataQuery,
+      TError = unknown
+    >(
+      variables?: GetGlobalDataQueryVariables,
+      options?: Omit<UseQueryOptions<GetGlobalDataQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetGlobalDataQuery, TError, TData>['queryKey'] }
+    ) => {
+    
+    return useQuery<GetGlobalDataQuery, TError, TData>(
+      {
+    queryKey: variables === undefined ? ['GetGlobalData'] : ['GetGlobalData', variables],
+    queryFn: fetcher<GetGlobalDataQuery, GetGlobalDataQueryVariables>(GetGlobalDataDocument, variables),
     ...options
   }
     )};

@@ -3,7 +3,7 @@ import { Page } from '@/components/layout/Page'
 import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
-import { Avatar, Checkbox, Chip, IconButton, Table } from '@helpwave/hightide'
+import { Avatar, Checkbox, IconButton, Table } from '@helpwave/hightide'
 import { useMemo } from 'react'
 import type { ColumnDef } from '@tanstack/table-core'
 import {
@@ -18,7 +18,7 @@ import { SmartDate } from '@/utils/date'
 type TaskViewModel = {
   id: string,
   name: string,
-  dueDate: Date,
+  updateDate: Date,
   patient?: { name: string },
   assignee?: { id: string, name: string, avatarURL?: string | null },
   ward?: { name: string },
@@ -26,7 +26,7 @@ type TaskViewModel = {
   done: boolean,
 }
 
-const Dashboard: NextPage = () => {
+const TasksPage: NextPage = () => {
   const translation = useTasksTranslation()
   const { data: queryData, refetch } = useGetMyTasksQuery()
   const { mutate: completeTask } = useCompleteTaskMutation({ onSuccess: () => refetch() })
@@ -40,7 +40,8 @@ const Dashboard: NextPage = () => {
     return queryData.me.tasks.map((task) => ({
       id: task.id,
       name: task.title,
-      dueDate: new Date(task.creationDate),
+      // Renamed from dueDate/creationDate to updateDate based on requirements
+      updateDate: task.updateDate ? new Date(task.updateDate) : new Date(task.creationDate),
       done: task.done,
       patient: task.patient
         ? { name: task.patient.name }
@@ -87,18 +88,12 @@ const Dashboard: NextPage = () => {
         maxSize: 300,
       },
       {
-        id: 'dueDate',
-        header: translation('dueDate'),
-        accessorKey: 'dueDate',
-        cell: ({ row }) => {
-          const dueDate = row.original.dueDate
-          return (
-            <SmartDate
-              date={dueDate}
-              className={clsx({ 'text-warning': dueDate < new Date() && !row.original.done })}
-            />
-          )
-        },
+        id: 'updateDate',
+        header: 'Update Date', // Renamed header
+        accessorKey: 'updateDate',
+        cell: ({ row }) => (
+          <SmartDate date={row.original.updateDate} />
+        ),
         minSize: 150,
         size: 200,
         maxSize: 200,
@@ -133,31 +128,7 @@ const Dashboard: NextPage = () => {
         size: 250,
         maxSize: 400,
       },
-      {
-        id: 'status',
-        header: translation('status'),
-        accessorFn: ({ done, dueDate }) =>
-          done ? 'done' : dueDate < new Date() ? 'overdue' : 'upcoming',
-        cell: ({ getValue }) => {
-          const status = getValue() as 'done' | 'overdue' | 'upcoming'
-          return (
-            <Chip
-              color={
-                status === 'done'
-                  ? 'green'
-                  : status === 'overdue'
-                    ? 'red'
-                    : 'yellow'
-              }
-            >
-              {translation('taskStatus', { status })}
-            </Chip>
-          )
-        },
-        minSize: 250,
-        size: 250,
-        maxSize: 400,
-      },
+      // Removed status column
       {
         id: 'assignee',
         header: translation('assignedTo'),
@@ -196,19 +167,14 @@ const Dashboard: NextPage = () => {
       {
         id: 'actions',
         header: '',
-        cell: ({ row }) => {
-          const task = row.original
-          return (
-            <IconButton
-              color="transparent"
-              onClick={() => {
-                console.log(task)
-              }}
-            >
-              <EditIcon />
-            </IconButton>
-          )
-        },
+        cell: ({ row }) => (
+          <IconButton
+            color="transparent"
+            onClick={() => console.log(row.original)}
+          >
+            <EditIcon />
+          </IconButton>
+        ),
         enableSorting: false,
         enableColumnFilter: false,
         size: 77,
@@ -231,4 +197,4 @@ const Dashboard: NextPage = () => {
   )
 }
 
-export default Dashboard
+export default TasksPage
