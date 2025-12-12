@@ -1,7 +1,7 @@
 // AUTO-GENERATED. DO NOT EDIT.
 /* eslint-disable @stylistic/quote-props */
-
-
+/* eslint-disable no-useless-escape */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import type { Translation } from '@helpwave/internationalization'
 import { TranslationGen } from '@helpwave/internationalization'
 
@@ -18,7 +18,7 @@ export type TasksTranslationEntries = {
   'createdAt': string,
   'currentTime': string,
   'dashboard': string,
-  'dashboardWelcome': (values: { name: string }) => string,
+  'dashboardWelcome': (values: { name: String }) => string,
   'dashboardWelcomeDescription': string,
   'description': string,
   'developmentAndPreviewInstance': string,
@@ -67,8 +67,8 @@ export type TasksTranslationEntries = {
   'status': string,
   'task': string,
   'tasks': string,
-  'tasksUpdatedRecently': string,
   'taskStatus': (values: { status: string }) => string,
+  'tasksUpdatedRecently': string,
   'teams': string,
   'totalPatients': string,
   'updated': string,
@@ -86,7 +86,9 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'createdAt': `Erstellt am`,
     'currentTime': `Aktuelle Zeit`,
     'dashboard': `Dashboard`,
-    'dashboardWelcome': ({ name }): string => `Guten Morgen, ${name}`,
+    'dashboardWelcome': ({ name }): string => {
+      return `Guten Morgen, ${name}`
+    },
     'dashboardWelcomeDescription': `Hier ist, was heute passiert.`,
     'description': `Beschreibung`,
     'developmentAndPreviewInstance': `Entwicklungs- und Vorschauinstanz`,
@@ -175,7 +177,6 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'status': `Status`,
     'task': `Aufgabe`,
     'tasks': `Aufgaben`,
-    'tasksUpdatedRecently': `Kürzlich aktualisierte Aufgaben`,
     'taskStatus': ({ status }): string => {
       return TranslationGen.resolveSelect(status, {
         'overdue': `Überfällig`,
@@ -184,11 +185,12 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
         'other': `-`,
       })
     },
+    'tasksUpdatedRecently': `Kürzlich aktualisierte Aufgaben`,
     'teams': `Teams`,
     'totalPatients': `Gesamtpatienten`,
     'updated': `Aktualisiert`,
     'visibility': `Sichtbarkeit`,
-    'wards': `Stationen`,
+    'wards': `Stationen`
   },
   'en-US': {
     'age': `Age`,
@@ -199,7 +201,9 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'createdAt': `Created at`,
     'currentTime': `Current Time`,
     'dashboard': `Dashboard`,
-    'dashboardWelcome': ({ name }): string => `Good Morning, ${name}`,
+    'dashboardWelcome': ({ name }): string => {
+      return `Good Morning, ${name}`
+    },
     'dashboardWelcomeDescription': `Here is what is happening today.`,
     'description': `Description`,
     'developmentAndPreviewInstance': `Development and preview instance`,
@@ -288,7 +292,6 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'status': `Status`,
     'task': `Task`,
     'tasks': `Tasks`,
-    'tasksUpdatedRecently': `Tasks updated recently`,
     'taskStatus': ({ status }): string => {
       return TranslationGen.resolveSelect(status, {
         'overdue': `Overdue`,
@@ -297,10 +300,12 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
         'other': `-`,
       })
     },
+    'tasksUpdatedRecently': `Tasks updated recently`,
     'teams': `Teams`,
     'totalPatients': `Total Patients`,
     'updated': `Updated`,
     'visibility': `Visibility`,
-    'wards': `Wards`,
+    'wards': `Wards`
   }
 }
+
