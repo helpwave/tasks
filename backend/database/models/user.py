@@ -19,7 +19,7 @@ class User(Base):
         primary_key=True,
         default=lambda: str(uuid.uuid4()),
     )
-    name: Mapped[str] = mapped_column(String)
+    username: Mapped[str] = mapped_column(String, nullable=False)
     firstname: Mapped[str | None] = mapped_column(String, nullable=True)
     lastname: Mapped[str | None] = mapped_column(String, nullable=True)
     title: Mapped[str | None] = mapped_column(String, nullable=True)

@@ -11,11 +11,17 @@ if TYPE_CHECKING:
 @strawberry.type
 class UserType:
     id: strawberry.ID
-    name: str
+    username: str
     firstname: str | None
     lastname: str | None
     title: str | None
     avatar_url: str | None
+
+    @strawberry.field
+    def name(self) -> str:
+        if self.firstname and self.lastname:
+            return f"{self.firstname} {self.lastname}"
+        return self.username
 
     @strawberry.field
     async def tasks(

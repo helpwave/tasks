@@ -48,18 +48,18 @@ async def get_context(
             if not db_user:
                 db_user = User(
                     id=user_id,
-                    name=username,
+                    username=username,
                     firstname=firstname,
                     lastname=lastname,
                     title="User",
                 )
                 session.add(db_user)
             elif (
-                db_user.name != username
+                db_user.username != username
                 or db_user.firstname != firstname
                 or db_user.lastname != lastname
             ):
-                db_user.name = username
+                db_user.username = username
                 db_user.firstname = firstname
                 db_user.lastname = lastname
 
