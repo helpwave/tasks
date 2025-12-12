@@ -394,6 +394,13 @@ export type GetGlobalDataQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type GetGlobalDataQuery = { __typename?: 'Query', me?: { __typename?: 'UserType', id: string, username: string, name: string, firstname?: string | null, lastname?: string | null, avatarUrl?: string | null, tasks: Array<{ __typename?: 'TaskType', id: string, done: boolean }> } | null, wards: Array<{ __typename?: 'LocationNodeType', id: string, title: string }>, teams: Array<{ __typename?: 'LocationNodeType', id: string, title: string }>, patients: Array<{ __typename?: 'PatientType', id: string, assignedLocation?: { __typename?: 'LocationNodeType', id: string } | null }> };
 
+export type CreatePatientMutationVariables = Exact<{
+  data: CreatePatientInput;
+}>;
+
+
+export type CreatePatientMutation = { __typename?: 'Mutation', createPatient: { __typename?: 'PatientType', id: string, firstname: string, lastname: string, birthdate: any, sex: Sex, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string } | null } };
+
 export type CompleteTaskMutationVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
@@ -604,6 +611,35 @@ export const useGetGlobalDataQuery = <
       {
     queryKey: variables === undefined ? ['GetGlobalData'] : ['GetGlobalData', variables],
     queryFn: fetcher<GetGlobalDataQuery, GetGlobalDataQueryVariables>(GetGlobalDataDocument, variables),
+    ...options
+  }
+    )};
+
+export const CreatePatientDocument = `
+    mutation CreatePatient($data: CreatePatientInput!) {
+  createPatient(data: $data) {
+    id
+    firstname
+    lastname
+    birthdate
+    sex
+    assignedLocation {
+      id
+      title
+    }
+  }
+}
+    `;
+
+export const useCreatePatientMutation = <
+      TError = unknown,
+      TContext = unknown
+    >(options?: UseMutationOptions<CreatePatientMutation, TError, CreatePatientMutationVariables, TContext>) => {
+    
+    return useMutation<CreatePatientMutation, TError, CreatePatientMutationVariables, TContext>(
+      {
+    mutationKey: ['CreatePatient'],
+    mutationFn: (variables?: CreatePatientMutationVariables) => fetcher<CreatePatientMutation, CreatePatientMutationVariables>(CreatePatientDocument, variables)(),
     ...options
   }
     )};

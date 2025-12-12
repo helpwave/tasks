@@ -132,5 +132,16 @@
   "totalPatients": "Total Patients",
   "updated": "Updated",
   "visibility": "Visibility",
-  "wards": "Wards"
+  "wards": "Wards",
+  "patients_addPatient": "Add Patient",
+  "addPatient_title": "Add New Patient",
+  "addPatient_firstname": "First Name",
+  "addPatient_lastname": "Last Name",
+  "addPatient_birthdate": "Birthdate",
+  "addPatient_sex": "Sex",
+  "addPatient_sex_male": "Male",
+  "addPatient_sex_female": "Female",
+  "addPatient_sex_diverse": "Diverse",
+  "common_cancel": "Cancel",
+  "common_save": "Save"
 }

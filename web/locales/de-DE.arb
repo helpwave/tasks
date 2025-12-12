@@ -132,5 +132,16 @@
   "totalPatients": "Gesamtpatienten",
   "updated": "Aktualisiert",
   "visibility": "Sichtbarkeit",
-  "wards": "Stationen"
+  "wards": "Stationen",
+  "patients_addPatient": "Patient hinzufügen",
+  "addPatient_title": "Neuen Patienten hinzufügen",
+  "addPatient_firstname": "Vorname",
+  "addPatient_lastname": "Nachname",
+  "addPatient_birthdate": "Geburtsdatum",
+  "addPatient_sex": "Geschlecht",
+  "addPatient_sex_male": "Männlich",
+  "addPatient_sex_female": "Weiblich",
+  "addPatient_sex_diverse": "Divers",
+  "common_cancel": "Abbrechen",
+  "common_save": "Speichern"
 }

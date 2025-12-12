@@ -1,14 +1,15 @@
 import type { NextPage } from 'next'
+import { useState, useMemo } from 'react'
 import { Page } from '@/components/layout/Page'
 import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
-import { IconButton, Table, Tooltip, Chip } from '@helpwave/hightide'
-import { useMemo } from 'react'
+import { IconButton, Table, Tooltip, Chip, Button } from '@helpwave/hightide'
 import type { ColumnDef } from '@tanstack/table-core'
-import { EditIcon } from 'lucide-react'
+import { EditIcon, PlusIcon } from 'lucide-react'
 import { useGetPatientsQuery } from '@/api/gql/generated'
 import { useGlobalContext } from '@/context/GlobalContext'
+import { AddPatientDialog } from '@/components/patients/AddPatientDialog' // Import the new component
 
 type PatientViewModel = {
   id: string,
@@ -33,6 +34,7 @@ const getAge = (birthDate: Date) => {
 const PatientsPage: NextPage = () => {
   const translation = useTasksTranslation()
   const { selectedLocation } = useGlobalContext()
+  const [isAddPatientOpen, setIsAddPatientOpen] = useState(false) // State for dialog
 
   const { data: queryData } = useGetPatientsQuery(
     { locationId: selectedLocation }
@@ -161,6 +163,16 @@ const PatientsPage: NextPage = () => {
       <ContentPanel
         title={translation('patients')}
         description={translation('nPatient', { count: patients.length })}
+        // Added the button here
+        action={
+          <Button
+            variant="solid"
+            onClick={() => setIsAddPatientOpen(true)}
+            icon={<PlusIcon size={18} />}
+          >
+            {translation('patients_addPatient')}
+          </Button>
+        }
       >
         <Table
           className="w-full h-full"
@@ -168,6 +180,13 @@ const PatientsPage: NextPage = () => {
           columns={columns}
         />
       </ContentPanel>
+
+      {/* Added the Dialog here */}
+      <AddPatientDialog
+        isOpen={isAddPatientOpen}
+        onClose={() => setIsAddPatientOpen(false)}
+        currentLocationId={selectedLocation}
+      />
     </Page>
   )
 }
