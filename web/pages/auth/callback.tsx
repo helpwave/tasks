@@ -1,55 +1,61 @@
 'use client'
 
-import type { NextPage } from 'next'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { handleCallback } from '@/api/auth/authService'
-import { useSearchParams } from 'next/navigation'
-import { useRouter } from 'next/router'
-import { SolidButton } from '@helpwave/hightide'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { SolidButton, LoadingAnimation } from '@helpwave/hightide'
 
-type AuthCallbackServerSideProps = {
-  jsonFeed: unknown,
-}
-
-const AuthCallback: NextPage<AuthCallbackServerSideProps> = () => {
-  const searchParams = useSearchParams()
+export default function AuthCallback() {
   const router = useRouter()
-  const [hasError, setHasError] = useState<boolean>(false)
+  const searchParams = useSearchParams()
+  const [error, setError] = useState<string | null>(null)
+
+  const processed = useRef(false)
 
   useEffect(() => {
-    const checkAuthCallback = async () => {
-      if (searchParams.get('code') && searchParams.get('state')) {
+    const processCallback = async () => {
+      if (processed.current) return
+
+      const code = searchParams.get('code')
+      const state = searchParams.get('state')
+
+      if (code && state) {
+        processed.current = true
         console.debug('Processing OIDC callback...')
+
         try {
-          await handleCallback()
-          const redirect = searchParams.get('redirect_uri')
-          const isValidRedirect = redirect && new URL(redirect).host === window.location.host
-          const defaultRedirect = '/'
-          if (!isValidRedirect) {
-            console.warn(`Redirect URL is invalid, redirecting to default route ${defaultRedirect}`)
-            await router.push(defaultRedirect)
-          } else {
-            console.info(`Redirecting to ${redirect ?? defaultRedirect}`)
-            await router.push(redirect ?? defaultRedirect)
-          }
-        } catch (error) {
-          console.error('OIDC callback error:', error)
-          setHasError(true)
+          const user = await handleCallback()
+          type UserState = { returnUrl?: string };
+
+          const state = user.state as UserState | undefined
+          const returnUrl = state?.returnUrl ?? '/'
+
+          console.info(`Login success. Redirecting to: ${returnUrl}`)
+          router.replace(returnUrl)
+
+        } catch (err) {
+          console.error('OIDC callback error:', err)
+          setError('Authentication failed. Please try again.')
+          processed.current = false
         }
       }
     }
 
-    checkAuthCallback().catch(console.error)
-  }, [searchParams]) // eslint-disable-line react-hooks/exhaustive-deps
+    processCallback()
+  }, [searchParams, router])
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen gap-4">
+        <span className="text-red-500 font-bold">{error}</span>
+        <SolidButton onClick={() => router.push('/')}>Return to Home</SolidButton>
+      </div>
+    )
+  }
 
   return (
-    <div>
-      {hasError && (
-        <span className="text-negative">Auth failed</span>
-      )}
-      <SolidButton onClick={() => router.push('/')}>Take me home.</SolidButton>
+    <div className="flex flex-col items-center justify-center w-screen h-screen">
+      <LoadingAnimation loadingText="Finalizing login..." />
     </div>
   )
 }
-
-export default AuthCallback
