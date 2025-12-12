@@ -98,6 +98,7 @@
   "login": "Login",
   "loginRequired": "Login benötigt",
   "loginRequiredDescription": "Um diese Seite benutzen zu können musst du eingeloggt sein.",
+  "logout": "Abmelden",
   "myOpenTasks": "Meine offenen Aufgaben",
   "myTasks": "Meine Aufgaben",
   "name": "Name",

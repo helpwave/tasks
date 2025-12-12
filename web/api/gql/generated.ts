@@ -45,6 +45,7 @@ export type CreatePropertyDefinitionInput = {
 export type CreateTaskInput = {
   assigneeId?: InputMaybe<Scalars['ID']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
+  dueDate?: InputMaybe<Scalars['DateTime']['input']>;
   patientId: Scalars['ID']['input'];
   previousTaskIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   properties?: InputMaybe<Array<PropertyValueInput>>;
@@ -317,6 +318,7 @@ export type TaskType = {
   creationDate: Scalars['DateTime']['output'];
   description?: Maybe<Scalars['String']['output']>;
   done: Scalars['Boolean']['output'];
+  dueDate?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['ID']['output'];
   patient: PatientType;
   patientId: Scalars['ID']['output'];
@@ -352,6 +354,7 @@ export type UpdateTaskInput = {
   assigneeId?: InputMaybe<Scalars['ID']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
   done?: InputMaybe<Scalars['Boolean']['input']>;
+  dueDate?: InputMaybe<Scalars['DateTime']['input']>;
   previousTaskIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   properties?: InputMaybe<Array<PropertyValueInput>>;
   title?: InputMaybe<Scalars['String']['input']>;
@@ -372,7 +375,7 @@ export type UserType = {
 export type GetMyTasksQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetMyTasksQuery = { __typename?: 'Query', me?: { __typename?: 'UserType', id: string, tasks: Array<{ __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, creationDate: any, updateDate?: any | null, patient: { __typename?: 'PatientType', id: string, name: string, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null }, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null } | null }> } | null };
+export type GetMyTasksQuery = { __typename?: 'Query', me?: { __typename?: 'UserType', id: string, tasks: Array<{ __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, dueDate?: any | null, creationDate: any, updateDate?: any | null, patient: { __typename?: 'PatientType', id: string, name: string, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null }, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null } | null }> } | null };
 
 export type GetOverviewDataQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -416,6 +419,7 @@ export const GetMyTasksDocument = `
       title
       description
       done
+      dueDate
       creationDate
       updateDate
       patient {

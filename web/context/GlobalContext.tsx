@@ -52,7 +52,6 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const myOpenTasksCount = data?.me?.tasks?.filter(t => !t.done).length ?? 0
     const totalPatientsCount = data?.patients?.length ?? 0
 
-    // Calculate patients in current location if selected
     const locationPatientsCount = selectedLocation
       ? data?.patients?.filter(p => p.assignedLocation?.id === selectedLocation).length ?? 0
       : totalPatientsCount

@@ -32,6 +32,7 @@ class Task(Base):
     title: Mapped[str] = mapped_column(String)
     description: Mapped[str | None] = mapped_column(String, nullable=True)
     done: Mapped[bool] = mapped_column(Boolean, default=False)
+    due_date: Mapped[datetime | None] = mapped_column(nullable=True)
     creation_date: Mapped[datetime] = mapped_column(default=datetime.now)
     update_date: Mapped[datetime | None] = mapped_column(
         nullable=True,

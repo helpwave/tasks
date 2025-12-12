@@ -98,6 +98,7 @@
   "login": "Login",
   "loginRequired": "Login required",
   "loginRequiredDescription": "To use this site you need to be logged in.",
+  "logout": "Logout",
   "myOpenTasks": "My Open Tasks",
   "myTasks": "My tasks",
   "name": "Name",

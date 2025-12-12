@@ -34,11 +34,13 @@ class TaskQuery:
         return result.scalars().all()
 
     @strawberry.field
-    async def recent_tasks(self, info: Info, limit: int = 10) -> list[TaskType]:
+    async def recent_tasks(
+        self, info: Info, limit: int = 10
+    ) -> list[TaskType]:
         result = await info.context.db.execute(
             select(models.Task)
             .order_by(desc(models.Task.update_date))
-            .limit(limit)
+            .limit(limit),
         )
         return result.scalars().all()
 
@@ -52,6 +54,7 @@ class TaskMutation:
             description=data.description,
             patient_id=data.patient_id,
             assignee_id=data.assignee_id,
+            due_date=data.due_date,
         )
         info.context.db.add(new_task)
         if data.properties:
@@ -87,6 +90,8 @@ class TaskMutation:
             task.description = data.description
         if data.done is not None:
             task.done = data.done
+        if data.due_date is not None:
+            task.due_date = data.due_date
         if data.assignee_id is not None:
             task.assignee_id = data.assignee_id
 
@@ -101,7 +106,7 @@ class TaskMutation:
     async def complete_task(self, info: Info, id: strawberry.ID) -> TaskType:
         db = info.context.db
         result = await db.execute(
-            select(models.Task).where(models.Task.id == id)
+            select(models.Task).where(models.Task.id == id),
         )
         task = result.scalars().first()
         if not task:
@@ -116,7 +121,7 @@ class TaskMutation:
     async def reopen_task(self, info: Info, id: strawberry.ID) -> TaskType:
         db = info.context.db
         result = await db.execute(
-            select(models.Task).where(models.Task.id == id)
+            select(models.Task).where(models.Task.id == id),
         )
         task = result.scalars().first()
         if not task:

@@ -76,6 +76,7 @@ class CreateTaskInput:
     title: str
     patient_id: strawberry.ID
     description: str | None = None
+    due_date: datetime | None = None
     assignee_id: strawberry.ID | None = None
     previous_task_ids: list[strawberry.ID] | None = None
     properties: list[PropertyValueInput] | None = None
@@ -86,6 +87,7 @@ class UpdateTaskInput:
     title: str | None = None
     description: str | None = None
     done: bool | None = None
+    due_date: datetime | None = None
     assignee_id: strawberry.ID | None = None
     previous_task_ids: list[strawberry.ID] | None = None
     properties: list[PropertyValueInput] | None = None

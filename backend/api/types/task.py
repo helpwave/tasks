@@ -19,6 +19,7 @@ class TaskType:
     title: str
     description: str | None
     done: bool
+    due_date: datetime | None
     creation_date: datetime
     update_date: datetime | None
     assignee_id: strawberry.ID | None

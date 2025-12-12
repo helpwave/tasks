@@ -19,6 +19,7 @@ type TaskViewModel = {
   id: string,
   name: string,
   updateDate: Date,
+  dueDate?: Date,
   patient?: { name: string },
   assignee?: { id: string, name: string, avatarURL?: string | null },
   ward?: { name: string },
@@ -40,8 +41,8 @@ const TasksPage: NextPage = () => {
     return queryData.me.tasks.map((task) => ({
       id: task.id,
       name: task.title,
-      // Renamed from dueDate/creationDate to updateDate based on requirements
       updateDate: task.updateDate ? new Date(task.updateDate) : new Date(task.creationDate),
+      dueDate: task.dueDate ? new Date(task.dueDate) : undefined,
       done: task.done,
       patient: task.patient
         ? { name: task.patient.name }
@@ -75,8 +76,9 @@ const TasksPage: NextPage = () => {
             }}
           />
         ),
-        minSize: 60,
-        size: 60,
+        minSize: 40,
+        size: 40,
+        maxSize: 40,
         enableResizing: false,
       },
       {
@@ -84,12 +86,23 @@ const TasksPage: NextPage = () => {
         header: translation('description'),
         accessorKey: 'name',
         minSize: 200,
-        size: 250,
-        maxSize: 300,
+        size: Number.MAX_SAFE_INTEGER,
+      },
+      {
+        id: 'dueDate',
+        header: translation('dueDate'),
+        accessorKey: 'dueDate',
+        cell: ({ row }) => {
+          if (!row.original.dueDate) return <span className="text-description">-</span>
+          return <SmartDate date={row.original.dueDate} />
+        },
+        minSize: 150,
+        size: 200,
+        maxSize: 200,
       },
       {
         id: 'updateDate',
-        header: 'Update Date', // Renamed header
+        header: 'Update Date',
         accessorKey: 'updateDate',
         cell: ({ row }) => (
           <SmartDate date={row.original.updateDate} />
@@ -128,7 +141,6 @@ const TasksPage: NextPage = () => {
         size: 250,
         maxSize: 400,
       },
-      // Removed status column
       {
         id: 'assignee',
         header: translation('assignedTo'),

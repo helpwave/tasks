@@ -11,6 +11,8 @@ import {
   ExpansionIcon,
   IconButton,
   MarkdownInterpreter,
+  Menu,
+  MenuItem,
   SolidButton,
   useLocalStorage
 } from '@helpwave/hightide'
@@ -22,6 +24,7 @@ import { usePathname } from 'next/navigation'
 import { TasksLogo } from '@/components/TasksLogo'
 import { useRouter } from 'next/router'
 import { useGlobalContext } from '@/context/GlobalContext'
+import { logout } from '@/api/auth/authService'
 
 export const StagingDisclaimerDialog = () => {
   const config = getConfig()
@@ -77,6 +80,7 @@ type HeaderProps = HTMLAttributes<HTMLHeadElement>
 export const Header = ({ ...props }: HeaderProps) => {
   const router = useRouter()
   const { user } = useGlobalContext()
+  const translation = useTasksTranslation()
 
   return (
     <header
@@ -97,19 +101,32 @@ export const Header = ({ ...props }: HeaderProps) => {
             <SettingsIcon />
           </IconButton>
         </div>
-        <SolidButton color="neutral" className="gap-x-1.75">
-          <div className="flex-row-1.5">
-            {user?.name}
-            <ExpansionIcon isExpanded={false} />
-          </div>
-          <Avatar
-            fullyRounded={true}
-            image={user?.avatarUrl ? {
-              avatarUrl: user.avatarUrl,
-              alt: user.name
-            } : undefined}
-          />
-        </SolidButton>
+        <Menu<HTMLButtonElement>
+          trigger={(bag, ref) => (
+            <SolidButton
+              ref={ref}
+              color="neutral"
+              className="gap-x-1.75"
+              onClick={bag.toggleOpen}
+            >
+              <div className="flex-row-1.5">
+                {user?.name}
+                <ExpansionIcon isExpanded={bag.isOpen} />
+              </div>
+              <Avatar
+                fullyRounded={true}
+                image={user?.avatarUrl ? {
+                  avatarUrl: user.avatarUrl,
+                  alt: user.name
+                } : undefined}
+              />
+            </SolidButton>
+          )}
+        >
+          <MenuItem onClick={() => logout()}>
+            {translation('logout') ?? 'Logout'}
+          </MenuItem>
+        </Menu>
       </div>
     </header>
   )
