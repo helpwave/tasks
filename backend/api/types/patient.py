@@ -1,14 +1,17 @@
 from datetime import date
+from typing import TYPE_CHECKING, Annotated
 
 import strawberry
 from api.context import Info
 from api.inputs import Gender
-from api.types.location import LocationNodeType
 from api.types.property import PropertyValueType
-from api.types.task import TaskType
 from database import models
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
+
+if TYPE_CHECKING:
+    from api.types.location import LocationNodeType
+    from api.types.task import TaskType
 
 
 @strawberry.type
@@ -37,7 +40,17 @@ class PatientType:
         )
 
     @strawberry.field
-    async def assigned_location(self, info: Info) -> LocationNodeType | None:
+    async def assigned_location(
+        self,
+        info: Info,
+    ) -> (
+        Annotated[
+            "LocationNodeType",
+            strawberry.lazy("api.types.location"),
+        ]
+        | None
+    ):
+
         if not self.assigned_location_id:
             return None
         result = await info.context.db.execute(
@@ -52,7 +65,8 @@ class PatientType:
         self,
         info: Info,
         done: bool | None = None,
-    ) -> list[TaskType]:
+    ) -> list[Annotated["TaskType", strawberry.lazy("api.types.task")]]:
+
         query = select(models.Task).where(models.Task.patient_id == self.id)
         if done is not None:
             query = query.where(models.Task.done == done)

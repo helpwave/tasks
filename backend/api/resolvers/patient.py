@@ -15,7 +15,9 @@ from .utils import process_properties
 class PatientQuery:
     @strawberry.field
     async def patient(
-        self, info: Info, id: strawberry.ID
+        self,
+        info: Info,
+        id: strawberry.ID,
     ) -> PatientType | None:
         result = await info.context.db.execute(
             select(models.Patient).where(models.Patient.id == id),
@@ -36,12 +38,22 @@ class PatientQuery:
         result = await info.context.db.execute(query)
         return result.scalars().all()
 
+    @strawberry.field
+    async def recent_patients(
+        self, info: Info, limit: int = 5
+    ) -> list[PatientType]:
+        query = select(models.Patient).limit(limit)
+        result = await info.context.db.execute(query)
+        return result.scalars().all()
+
 
 @strawberry.type
 class PatientMutation:
     @strawberry.mutation
     async def create_patient(
-        self, info: Info, data: CreatePatientInput
+        self,
+        info: Info,
+        data: CreatePatientInput,
     ) -> PatientType:
         new_patient = models.Patient(
             firstname=data.firstname,
@@ -115,7 +127,8 @@ class PatientMutation:
 class PatientSubscription:
     @strawberry.subscription
     async def patient_created(
-        self, info: Info
+        self,
+        info: Info,
     ) -> AsyncGenerator[strawberry.ID, None]:
         pubsub = redis_client.pubsub()
         await pubsub.subscribe("patient_created")

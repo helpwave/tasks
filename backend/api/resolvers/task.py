@@ -3,7 +3,7 @@ from api.context import Info
 from api.inputs import CreateTaskInput, UpdateTaskInput
 from api.types.task import TaskType
 from database import models
-from sqlalchemy import select
+from sqlalchemy import desc, select
 
 from .utils import process_properties
 
@@ -22,11 +22,24 @@ class TaskQuery:
         self,
         info: Info,
         patient_id: strawberry.ID | None = None,
+        assignee_id: strawberry.ID | None = None,
     ) -> list[TaskType]:
         query = select(models.Task)
         if patient_id:
             query = query.where(models.Task.patient_id == patient_id)
+        if assignee_id:
+            query = query.where(models.Task.assignee_id == assignee_id)
+
         result = await info.context.db.execute(query)
+        return result.scalars().all()
+
+    @strawberry.field
+    async def recent_tasks(self, info: Info, limit: int = 10) -> list[TaskType]:
+        result = await info.context.db.execute(
+            select(models.Task)
+            .order_by(desc(models.Task.update_date))
+            .limit(limit)
+        )
         return result.scalars().all()
 
 
@@ -80,6 +93,36 @@ class TaskMutation:
         if data.properties:
             await process_properties(db, task, data.properties, "task")
 
+        await db.commit()
+        await db.refresh(task)
+        return task
+
+    @strawberry.mutation
+    async def complete_task(self, info: Info, id: strawberry.ID) -> TaskType:
+        db = info.context.db
+        result = await db.execute(
+            select(models.Task).where(models.Task.id == id)
+        )
+        task = result.scalars().first()
+        if not task:
+            raise Exception("Task not found")
+
+        task.done = True
+        await db.commit()
+        await db.refresh(task)
+        return task
+
+    @strawberry.mutation
+    async def reopen_task(self, info: Info, id: strawberry.ID) -> TaskType:
+        db = info.context.db
+        result = await db.execute(
+            select(models.Task).where(models.Task.id == id)
+        )
+        task = result.scalars().first()
+        if not task:
+            raise Exception("Task not found")
+
+        task.done = False
         await db.commit()
         await db.refresh(task)
         return task
