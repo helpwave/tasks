@@ -144,5 +144,20 @@
     }
   },
   "authenticationFailed": "Authentifizierung fehlgeschlagen",
-  "returnHome": "Zur Homepage"
+  "returnHome": "Zur Homepage",
+  "addPatient": "Patient hinzufügen",
+  "editPatient": "Patient bearbeiten",
+  "openTasks": "Offene Aufgaben",
+  "closedTasks": "Erledigte Aufgaben",
+  "noOpenTasks": "Keine offenen Aufgaben",
+  "noClosedTasks": "Keine erledigten Aufgaben",
+  "save": "Speichern",
+  "cancel": "Abbrechen",
+  "create": "Erstellen",
+  "firstName": "Vorname",
+  "lastName": "Nachname",
+  "male": "Männlich",
+  "female": "Weiblich",
+  "diverse": "Divers",
+  "time.today": "Heute"
 }

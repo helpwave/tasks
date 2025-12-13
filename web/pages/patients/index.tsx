@@ -3,38 +3,37 @@ import { Page } from '@/components/layout/Page'
 import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
-import { IconButton, Table, Tooltip, Chip } from '@helpwave/hightide'
-import { useMemo } from 'react'
+import { IconButton, Table, Chip, SolidButton } from '@helpwave/hightide'
+import { useMemo, useState } from 'react'
 import type { ColumnDef } from '@tanstack/table-core'
-import { EditIcon } from 'lucide-react'
-import { useGetPatientsQuery } from '@/api/gql/generated'
+import { EditIcon, PlusIcon } from 'lucide-react'
+import { useGetPatientsQuery, Sex } from '@/api/gql/generated'
 import { useTasksContext } from '@/hooks/useTasksContext'
+import { SidePanel } from '@/components/layout/SidePanel'
+import { PatientDetailView } from '@/components/patients/PatientDetailView'
+import { SmartDate } from '@/utils/date'
 
 type PatientViewModel = {
   id: string,
   name: string,
+  firstname: string,
+  lastname: string,
   location?: string,
+  locationId?: string,
   subLocation?: string,
   openTasksCount: number,
   birthdate: Date,
-  sex: string,
-}
-
-const getAge = (birthDate: Date) => {
-  const today = new Date()
-  let age = today.getFullYear() - birthDate.getFullYear()
-  const m = today.getMonth() - birthDate.getMonth()
-  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-    age--
-  }
-  return age
+  sex: Sex,
+  tasks: any[]
 }
 
 const PatientsPage: NextPage = () => {
   const translation = useTasksTranslation()
   const { selectedLocationId } = useTasksContext()
+  const [isPanelOpen, setIsPanelOpen] = useState(false)
+  const [selectedPatient, setSelectedPatient] = useState<PatientViewModel | undefined>(undefined)
 
-  const { data: queryData } = useGetPatientsQuery({
+  const { data: queryData, refetch } = useGetPatientsQuery({
     locationId: selectedLocationId
   })
 
@@ -44,13 +43,32 @@ const PatientsPage: NextPage = () => {
     return queryData.patients.map(p => ({
       id: p.id,
       name: p.name,
+      firstname: p.firstname,
+      lastname: p.lastname,
       birthdate: new Date(p.birthdate),
       sex: p.sex,
       location: p.assignedLocation?.parent?.title,
       subLocation: p.assignedLocation?.title,
-      openTasksCount: p.tasks?.filter(t => !t.done).length ?? 0
+      locationId: p.assignedLocation?.id,
+      openTasksCount: p.tasks?.filter(t => !t.done).length ?? 0,
+      tasks: p.tasks ?? []
     }))
   }, [queryData])
+
+  const handleEdit = (patient: PatientViewModel) => {
+    setSelectedPatient(patient)
+    setIsPanelOpen(true)
+  }
+
+  const handleAdd = () => {
+    setSelectedPatient(undefined)
+    setIsPanelOpen(true)
+  }
+
+  const handleClose = () => {
+    setIsPanelOpen(false)
+    setSelectedPatient(undefined)
+  }
 
   const columns = useMemo<ColumnDef<PatientViewModel>[]>(() => [
     {
@@ -67,7 +85,7 @@ const PatientsPage: NextPage = () => {
       accessorKey: 'sex',
       cell: ({ row }) => {
         const sex = row.original.sex
-        const color = sex === 'MALE' ? 'blue' : sex === 'FEMALE' ? 'red' : 'default'
+        const color = sex === Sex.Male ? 'blue' : sex === Sex.Female ? 'red' : 'default'
 
         return (
           <Chip color={color} size="sm">
@@ -113,12 +131,8 @@ const PatientsPage: NextPage = () => {
       header: translation('birthdate'),
       accessorKey: 'birthdate',
       cell: ({ row }) => {
-        const date = row.original.birthdate
-        const age = getAge(date)
         return (
-          <Tooltip tooltip={translation('nYear', { count: age })}>
-            <span>{date.toLocaleDateString()}</span>
-          </Tooltip>
+          <SmartDate date={row.original.birthdate} showTime={false} />
         )
       },
       minSize: 100,
@@ -137,68 +151,13 @@ const PatientsPage: NextPage = () => {
       size: 100,
       maxSize: 200,
     },
-    /* TODO do query
-    {
-      id: 'myTasks',
-      header: translation('myTasks'),
-      // TODO use correct id
-      accessorFn: ({ tasks }) => tasks.filter(value => value.assigneeId === user?.profile.sid).length,
-      cell: ({ row }) => {
-        const data = row.original.tasks // .filter(value => value.assigneeId === user?.profile.sid)
-        const done = data.filter(value => value.done)
-        const upcoming = data.filter(value => !value.done && !(value.dueDate && value.dueDate > new Date()))
-        const overdue = data.filter(value => !value.done && (value.dueDate && value.dueDate > new Date()))
-
-        if(done.length === 0 && upcoming.length === 0 && overdue.length === 0) {
-          return (
-            <span className="text-description">{translation('none')}</span>
-          )
-        }
-
-        return (
-          <div className="flex flex-wrap gap-x-2 gap-y-1">
-            {done.length > 0 && (
-              <Chip color="green">{`${translation('taskStatus', { status: 'done' })} ${done.length}`}</Chip>
-            )}
-            {upcoming.length > 0 && (
-              <Chip color="yellow">{`${translation('taskStatus', { status: 'upcoming' })} ${upcoming.length}`}</Chip>
-            )}
-            {overdue.length > 0 && (
-              <Chip color="red">{`${translation('taskStatus', { status: 'overdue' })} ${overdue.length}`}</Chip>
-            )}
-          </div>
-        )
-      },
-      minSize: 100,
-      size: 100,
-      maxSize: 200,
-    },
-    {
-      id: 'lastChange',
-      header: translation('lastUpdate'),
-      accessorKey: 'lastUpdate',
-      cell: ({ row }) => {
-        if(!row.original.lastUpdate) {
-          return (<span className="text-description">-</span>)
-        }
-        return (
-          <span className="typography-label-sm font-bold">
-            {row.original.lastUpdate?.toLocaleString()}
-          </span>
-        )
-      },
-      minSize: 100,
-      size: 150,
-      maxSize: 200,
-    },
-    */
     {
       id: 'actions',
       header: '',
       cell: ({ row }) => (
         <IconButton
           color="transparent"
-          onClick={() => console.log(`clicked on settings of ${row.original.name}`)}
+          onClick={() => handleEdit(row.original)}
         >
           <EditIcon />
         </IconButton>
@@ -216,6 +175,11 @@ const PatientsPage: NextPage = () => {
       <ContentPanel
         titleElement={translation('patients')}
         description={translation('nPatient', { count: patients.length })}
+        actionElement={(
+          <SolidButton startIcon={<PlusIcon />} onClick={handleAdd}>
+            {translation('addPatient')}
+          </SolidButton>
+        )}
       >
         <Table
           className="w-full h-full"
@@ -223,6 +187,27 @@ const PatientsPage: NextPage = () => {
           columns={columns}
         />
       </ContentPanel>
+      <SidePanel
+        isOpen={isPanelOpen}
+        onClose={handleClose}
+        // Shows "Add Patient" for new, "Edit Patient" for existing
+        title={!selectedPatient ? translation('addPatient') : translation('editPatient')}
+      >
+        <PatientDetailView
+          patientId={selectedPatient?.id}
+          initialData={selectedPatient ? {
+            firstname: selectedPatient.firstname,
+            lastname: selectedPatient.lastname,
+            birthdate: selectedPatient.birthdate,
+            sex: selectedPatient.sex,
+            assignedLocationId: selectedPatient.locationId,
+            tasks: selectedPatient.tasks,
+            name: selectedPatient.name
+          } : undefined}
+          onClose={handleClose}
+          onSuccess={refetch}
+        />
+      </SidePanel>
     </Page>
   )
 }

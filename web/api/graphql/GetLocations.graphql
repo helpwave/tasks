@@ -1,0 +1,6 @@
+query GetLocations {
+  locationNodes {
+    id
+    title
+  }
+}

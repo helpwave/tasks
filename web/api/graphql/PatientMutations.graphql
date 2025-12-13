@@ -1,0 +1,29 @@
+mutation CreatePatient($data: CreatePatientInput!) {
+  createPatient(data: $data) {
+    id
+    name
+    firstname
+    lastname
+    birthdate
+    sex
+    assignedLocation {
+      id
+      title
+    }
+  }
+}
+
+mutation UpdatePatient($id: ID!, $data: UpdatePatientInput!) {
+  updatePatient(id: $id, data: $data) {
+    id
+    name
+    firstname
+    lastname
+    birthdate
+    sex
+    assignedLocation {
+      id
+      title
+    }
+  }
+}
