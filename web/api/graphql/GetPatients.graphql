@@ -16,9 +16,14 @@ query GetPatients($locationId: ID) {
     }
     tasks {
       id
+      title
+      description
       done
+      dueDate
       assignee {
         id
+        name
+        avatarUrl
       }
     }
     properties {

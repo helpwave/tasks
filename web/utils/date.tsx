@@ -6,14 +6,17 @@ import clsx from 'clsx'
 type SmartDateProps = {
   date: Date,
   className?: string,
+  showTime?: boolean,
 }
 
-const formatGerman = (date: Date) => {
+const formatGerman = (date: Date, showTime: boolean) => {
   const d = new Intl.DateTimeFormat('de-DE', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
   }).format(date)
+
+  if (!showTime) return d
 
   const t = new Intl.DateTimeFormat('de-DE', {
     hour: '2-digit',
@@ -23,21 +26,26 @@ const formatGerman = (date: Date) => {
   return `${d} um ${t} Uhr`
 }
 
-const formatAbsolute = (date: Date, locale: string) => {
+export const formatAbsolute = (date: Date, locale: string, showTime: boolean) => {
   if (locale === 'de-DE') {
-    return formatGerman(date)
+    return formatGerman(date, showTime)
   }
 
-  return new Intl.DateTimeFormat(locale, {
+  const options: Intl.DateTimeFormatOptions = {
     year: 'numeric',
     month: 'numeric',
     day: 'numeric',
-    hour: 'numeric',
-    minute: 'numeric',
-  }).format(date)
+  }
+
+  if (showTime) {
+    options.hour = 'numeric'
+    options.minute = 'numeric'
+  }
+
+  return new Intl.DateTimeFormat(locale, options).format(date)
 }
 
-const formatRelative = (date: Date, locale: string) => {
+export const formatRelative = (date: Date, locale: string, showTime: boolean) => {
   const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' })
   const now = new Date()
   const diffInSeconds = (date.getTime() - now.getTime()) / 1000
@@ -47,10 +55,10 @@ const formatRelative = (date: Date, locale: string) => {
   if (Math.abs(diffInSeconds) < 86400) return rtf.format(Math.round(diffInSeconds / 3600), 'hour')
   if (Math.abs(diffInSeconds) < 604800) return rtf.format(Math.round(diffInSeconds / 86400), 'day')
 
-  return formatAbsolute(date, locale)
+  return formatAbsolute(date, locale, showTime)
 }
 
-export const SmartDate = ({ date, className }: SmartDateProps) => {
+export const SmartDate = ({ date, className, showTime = true }: SmartDateProps) => {
   const { locale } = useLocale()
   const rerender = useRerender()
 
@@ -84,8 +92,8 @@ export const SmartDate = ({ date, className }: SmartDateProps) => {
 
   if (!date) return null
 
-  const absoluteString = formatAbsolute(date, locale)
-  const relativeString = formatRelative(date, locale)
+  const absoluteString = formatAbsolute(date, locale, showTime)
+  const relativeString = formatRelative(date, locale, showTime)
 
   return (
     <Tooltip tooltip={absoluteString} position="top">

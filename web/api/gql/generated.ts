@@ -372,6 +372,11 @@ export type UserType = {
   username: Scalars['String']['output'];
 };
 
+export type GetLocationsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetLocationsQuery = { __typename?: 'Query', locationNodes: Array<{ __typename?: 'LocationNodeType', id: string, title: string }> };
+
 export type GetMyTasksQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -394,6 +399,21 @@ export type GetGlobalDataQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type GetGlobalDataQuery = { __typename?: 'Query', me?: { __typename?: 'UserType', id: string, username: string, name: string, firstname?: string | null, lastname?: string | null, avatarUrl?: string | null, tasks: Array<{ __typename?: 'TaskType', id: string, done: boolean }> } | null, wards: Array<{ __typename?: 'LocationNodeType', id: string, title: string }>, teams: Array<{ __typename?: 'LocationNodeType', id: string, title: string }>, patients: Array<{ __typename?: 'PatientType', id: string, assignedLocation?: { __typename?: 'LocationNodeType', id: string } | null }> };
 
+export type CreatePatientMutationVariables = Exact<{
+  data: CreatePatientInput;
+}>;
+
+
+export type CreatePatientMutation = { __typename?: 'Mutation', createPatient: { __typename?: 'PatientType', id: string, name: string, firstname: string, lastname: string, birthdate: any, sex: Sex, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string } | null } };
+
+export type UpdatePatientMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  data: UpdatePatientInput;
+}>;
+
+
+export type UpdatePatientMutation = { __typename?: 'Mutation', updatePatient: { __typename?: 'PatientType', id: string, name: string, firstname: string, lastname: string, birthdate: any, sex: Sex, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string } | null } };
+
 export type CompleteTaskMutationVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
@@ -409,6 +429,31 @@ export type ReopenTaskMutationVariables = Exact<{
 export type ReopenTaskMutation = { __typename?: 'Mutation', reopenTask: { __typename?: 'TaskType', id: string, done: boolean, updateDate?: any | null } };
 
 
+
+export const GetLocationsDocument = `
+    query GetLocations {
+  locationNodes {
+    id
+    title
+  }
+}
+    `;
+
+export const useGetLocationsQuery = <
+      TData = GetLocationsQuery,
+      TError = unknown
+    >(
+      variables?: GetLocationsQueryVariables,
+      options?: Omit<UseQueryOptions<GetLocationsQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetLocationsQuery, TError, TData>['queryKey'] }
+    ) => {
+    
+    return useQuery<GetLocationsQuery, TError, TData>(
+      {
+    queryKey: variables === undefined ? ['GetLocations'] : ['GetLocations', variables],
+    queryFn: fetcher<GetLocationsQuery, GetLocationsQueryVariables>(GetLocationsDocument, variables),
+    ...options
+  }
+    )};
 
 export const GetMyTasksDocument = `
     query GetMyTasks {
@@ -604,6 +649,66 @@ export const useGetGlobalDataQuery = <
       {
     queryKey: variables === undefined ? ['GetGlobalData'] : ['GetGlobalData', variables],
     queryFn: fetcher<GetGlobalDataQuery, GetGlobalDataQueryVariables>(GetGlobalDataDocument, variables),
+    ...options
+  }
+    )};
+
+export const CreatePatientDocument = `
+    mutation CreatePatient($data: CreatePatientInput!) {
+  createPatient(data: $data) {
+    id
+    name
+    firstname
+    lastname
+    birthdate
+    sex
+    assignedLocation {
+      id
+      title
+    }
+  }
+}
+    `;
+
+export const useCreatePatientMutation = <
+      TError = unknown,
+      TContext = unknown
+    >(options?: UseMutationOptions<CreatePatientMutation, TError, CreatePatientMutationVariables, TContext>) => {
+    
+    return useMutation<CreatePatientMutation, TError, CreatePatientMutationVariables, TContext>(
+      {
+    mutationKey: ['CreatePatient'],
+    mutationFn: (variables?: CreatePatientMutationVariables) => fetcher<CreatePatientMutation, CreatePatientMutationVariables>(CreatePatientDocument, variables)(),
+    ...options
+  }
+    )};
+
+export const UpdatePatientDocument = `
+    mutation UpdatePatient($id: ID!, $data: UpdatePatientInput!) {
+  updatePatient(id: $id, data: $data) {
+    id
+    name
+    firstname
+    lastname
+    birthdate
+    sex
+    assignedLocation {
+      id
+      title
+    }
+  }
+}
+    `;
+
+export const useUpdatePatientMutation = <
+      TError = unknown,
+      TContext = unknown
+    >(options?: UseMutationOptions<UpdatePatientMutation, TError, UpdatePatientMutationVariables, TContext>) => {
+    
+    return useMutation<UpdatePatientMutation, TError, UpdatePatientMutationVariables, TContext>(
+      {
+    mutationKey: ['UpdatePatient'],
+    mutationFn: (variables?: UpdatePatientMutationVariables) => fetcher<UpdatePatientMutation, UpdatePatientMutationVariables>(UpdatePatientDocument, variables)(),
     ...options
   }
     )};

@@ -144,5 +144,20 @@
     }
   },
   "authenticationFailed": "Authentication Failed",
-  "returnHome": "Return Home"
+  "returnHome": "Return Home",
+  "addPatient": "Add Patient",
+  "editPatient": "Edit Patient",
+  "openTasks": "Open Tasks",
+  "closedTasks": "Closed Tasks",
+  "noOpenTasks": "No open tasks",
+  "noClosedTasks": "No closed tasks",
+  "save": "Save",
+  "cancel": "Cancel",
+  "create": "Create",
+  "firstName": "First Name",
+  "lastName": "Last Name",
+  "male": "Male",
+  "female": "Female",
+  "diverse": "Diverse",
+  "time.today": "Today"
 }
