@@ -26,7 +26,7 @@ const formatGerman = (date: Date, showTime: boolean) => {
   return `${d} um ${t} Uhr`
 }
 
-const formatAbsolute = (date: Date, locale: string, showTime: boolean) => {
+export const formatAbsolute = (date: Date, locale: string, showTime: boolean) => {
   if (locale === 'de-DE') {
     return formatGerman(date, showTime)
   }
@@ -45,7 +45,7 @@ const formatAbsolute = (date: Date, locale: string, showTime: boolean) => {
   return new Intl.DateTimeFormat(locale, options).format(date)
 }
 
-const formatRelative = (date: Date, locale: string, showTime: boolean) => {
+export const formatRelative = (date: Date, locale: string, showTime: boolean) => {
   const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' })
   const now = new Date()
   const diffInSeconds = (date.getTime() - now.getTime()) / 1000

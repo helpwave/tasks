@@ -1,14 +1,15 @@
-import { ReactNode, useEffect, useState } from 'react'
+import type { ReactNode } from 'react'
+import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import clsx from 'clsx'
 import { IconButton } from '@helpwave/hightide'
 
 interface SidePanelProps {
-  isOpen: boolean
-  onClose: () => void
-  title?: ReactNode
-  children: ReactNode
+  isOpen: boolean,
+  onClose: () => void,
+  title?: ReactNode,
+  children: ReactNode,
 }
 
 export const SidePanel = ({ isOpen, onClose, title, children }: SidePanelProps) => {

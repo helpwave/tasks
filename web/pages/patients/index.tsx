@@ -7,6 +7,7 @@ import { IconButton, Table, Chip, SolidButton } from '@helpwave/hightide'
 import { useMemo, useState } from 'react'
 import type { ColumnDef } from '@tanstack/table-core'
 import { EditIcon, PlusIcon } from 'lucide-react'
+import type { TaskType } from '@/api/gql/generated'
 import { useGetPatientsQuery, Sex } from '@/api/gql/generated'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { SidePanel } from '@/components/layout/SidePanel'
@@ -24,7 +25,7 @@ type PatientViewModel = {
   openTasksCount: number,
   birthdate: Date,
   sex: Sex,
-  tasks: any[]
+  tasks: TaskType[],
 }
 
 const PatientsPage: NextPage = () => {
@@ -51,7 +52,7 @@ const PatientsPage: NextPage = () => {
       subLocation: p.assignedLocation?.title,
       locationId: p.assignedLocation?.id,
       openTasksCount: p.tasks?.filter(t => !t.done).length ?? 0,
-      tasks: p.tasks ?? []
+      tasks: []
     }))
   }, [queryData])
 
@@ -190,7 +191,6 @@ const PatientsPage: NextPage = () => {
       <SidePanel
         isOpen={isPanelOpen}
         onClose={handleClose}
-        // Shows "Add Patient" for new, "Edit Patient" for existing
         title={!selectedPatient ? translation('addPatient') : translation('editPatient')}
       >
         <PatientDetailView

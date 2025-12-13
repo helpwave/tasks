@@ -1,19 +1,20 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
-import { CreatePatientInput, Sex, useCreatePatientMutation, useGetLocationsQuery, useUpdatePatientMutation, Task, UpdatePatientInput } from '@/api/gql/generated'
-import { Input, Select, SelectOption, LoadingButton, TabView, Tab, ToggleableInput } from '@helpwave/hightide'
+import type { CreatePatientInput, TaskType, UpdatePatientInput } from '@/api/gql/generated'
+import { Sex, useCreatePatientMutation, useUpdatePatientMutation } from '@/api/gql/generated'
+import { Input, Select, SelectOption, LoadingButton, TabView, Tab } from '@helpwave/hightide'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { PopupDatePicker } from '@/components/ui/PopupDatePicker'
 import { CheckCircle2, Circle, Clock } from 'lucide-react'
 
 interface PatientDetailViewProps {
-  patientId?: string
+  patientId?: string,
   initialData?: Partial<CreatePatientInput> & {
-    tasks?: Task[]
-    name?: string
-  }
-  onClose: () => void
-  onSuccess: () => void
+    tasks?: TaskType[],
+    name?: string,
+  },
+  onClose: () => void,
+  onSuccess: () => void,
 }
 
 const toISODate = (d: Date | string): string => {
@@ -67,9 +68,7 @@ export const PatientDetailView = ({ patientId, initialData, onClose, onSuccess }
         setFullName(initialData.name)
       }
     }
-  }, [initialData?.id])
-
-  const { data: locationsData } = useGetLocationsQuery()
+  }, [initialData])
 
   const { mutate: createPatient, isLoading: isCreating } = useCreatePatientMutation({
     onSuccess: () => {
@@ -86,8 +85,8 @@ export const PatientDetailView = ({ patientId, initialData, onClose, onSuccess }
 
 
   const persistChanges = (updates: Partial<UpdatePatientInput>) => {
-    if (updates.firstname !== undefined && !updates.firstname.trim()) return
-    if (updates.lastname !== undefined && !updates.lastname.trim()) return
+    if (updates.firstname !== undefined && !updates.firstname?.trim()) return
+    if (updates.lastname !== undefined && !updates.lastname?.trim()) return
 
     if (isEditMode && patientId) {
       updatePatient({
@@ -101,23 +100,12 @@ export const PatientDetailView = ({ patientId, initialData, onClose, onSuccess }
     setFormData(prev => ({ ...prev, ...updates }))
   }
 
-  const handleNameEditComplete = (newName: string) => {
-    const parts = newName.trim().split(' ')
-    const firstname = parts[0]
-    const lastname = parts.slice(1).join(' ') || ''
-
-    if (!firstname || !lastname) return
-
-    updateLocalState({ firstname, lastname })
-    persistChanges({ firstname, lastname })
-  }
-
   const handleSubmit = () => {
     if (!formData.firstname.trim() || !formData.lastname.trim()) return
 
     const dataToSend = { ...formData }
     if (!dataToSend.assignedLocationId) {
-      delete (dataToSend as any).assignedLocationId
+      delete dataToSend.assignedLocationId
     }
     createPatient({ data: dataToSend })
   }
@@ -136,13 +124,7 @@ export const PatientDetailView = ({ patientId, initialData, onClose, onSuccess }
     <div className="flex flex-col h-full bg-surface">
       <div className="flex-none mb-6">
         <div className="typography-title-lg text-primary">
-          <ToggleableInput
-            value={fullName}
-            onChangeText={setFullName}
-            onEditCompleted={handleNameEditComplete}
-            placeholder={translation('name')}
-            className="text-2xl font-bold"
-          />
+          {fullName}
         </div>
       </div>
 
@@ -208,7 +190,6 @@ export const PatientDetailView = ({ patientId, initialData, onClose, onSuccess }
 
           <Tab label={translation('tasks')} className="h-full overflow-y-auto pr-2">
             <div className="flex flex-col gap-6 pt-4">
-              {/* Open Tasks */}
               <div>
                 <h3 className="typography-label-md font-bold mb-3 flex items-center gap-2">
                   <Circle className="size-4 text-warning" />
@@ -231,7 +212,6 @@ export const PatientDetailView = ({ patientId, initialData, onClose, onSuccess }
                 </div>
               </div>
 
-              {/* Closed Tasks */}
               <div className="opacity-75">
                 <h3 className="typography-label-md font-bold mb-3 flex items-center gap-2">
                   <CheckCircle2 className="size-4 text-positive" />
@@ -251,7 +231,6 @@ export const PatientDetailView = ({ patientId, initialData, onClose, onSuccess }
         </TabView>
       </div>
 
-      {/* Footer is only visible in Add Mode */}
       {!isEditMode && (
         <div className="flex-none pt-4 mt-auto border-t border-divider flex justify-end gap-2">
           <LoadingButton

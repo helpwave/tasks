@@ -1,14 +1,17 @@
 import { useState, useRef } from 'react'
-import { DatePicker, Input, useOutsideClick } from '@helpwave/hightide'
+import { DatePicker, Input, useLocale, useOutsideClick } from '@helpwave/hightide'
 import { CalendarIcon } from 'lucide-react'
+import { formatAbsolute } from '@/utils/date'
 
 interface PopupDatePickerProps {
-  date: Date
-  onDateChange: (date: Date) => void
-  label?: string
+  date: Date,
+  onDateChange: (date: Date) => void,
+  label?: string,
 }
 
 export const PopupDatePicker = ({ date, onDateChange, label }: PopupDatePickerProps) => {
+  const { locale } = useLocale()
+
   const [isOpen, setIsOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -20,7 +23,7 @@ export const PopupDatePicker = ({ date, onDateChange, label }: PopupDatePickerPr
       <div className="relative">
         <div onClick={() => setIsOpen(!isOpen)} className="cursor-pointer">
           <Input
-            value={date ? date.toLocaleDateString() : ''}
+            value={formatAbsolute(date, locale, false)}
             readOnly
             className="cursor-pointer pr-10"
           />
