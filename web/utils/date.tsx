@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Tooltip, useRerender } from '@helpwave/hightide'
 import { useLocale } from '@/i18n/useTasksTranslation'
 import clsx from 'clsx'
@@ -99,6 +99,60 @@ export const SmartDate = ({ date, className, showTime = true }: SmartDateProps) 
     <Tooltip tooltip={absoluteString} position="top">
       <span className={clsx('cursor-help underline decoration-dotted decoration-neutral-300 underline-offset-2', className)}>
         {relativeString}
+      </span>
+    </Tooltip>
+  )
+}
+
+
+type CurrentTimeProps = {
+  className?: string,
+  showDate?: boolean,
+}
+
+
+const formatCurrentTime = (date: Date, locale: string, showDate: boolean) => {
+  const options: Intl.DateTimeFormatOptions = {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  }
+
+
+  if (showDate) {
+    options.year = 'numeric'
+    options.month = '2-digit'
+    options.day = '2-digit'
+  }
+
+
+  return new Intl.DateTimeFormat(locale, options).format(date)
+}
+
+
+export const CurrentTime = ({ className, showDate = false }: CurrentTimeProps) => {
+  const { locale } = useLocale()
+  const [now, setNow] = useState(() => new Date())
+
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setNow(new Date())
+    }, 1000)
+
+
+    return () => clearInterval(interval)
+  }, [])
+
+
+  const formatted = formatCurrentTime(now, locale, showDate)
+  const formattedExpanded = formatCurrentTime(now, locale, true)
+
+
+  return (
+    <Tooltip tooltip={formattedExpanded} position="top">
+      <span className={clsx('tabular-nums cursor-default', className)}>
+        {formatted}
       </span>
     </Tooltip>
   )

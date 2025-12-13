@@ -1,7 +1,7 @@
 // AUTO-GENERATED. DO NOT EDIT.
 /* eslint-disable @stylistic/quote-props */
-/* eslint-disable no-useless-escape */
-/* eslint-disable @typescript-eslint/no-unused-vars */
+
+
 import type { Translation } from '@helpwave/internationalization'
 import { TranslationGen } from '@helpwave/internationalization'
 
@@ -11,6 +11,7 @@ export type TasksTranslationLocales = typeof tasksTranslationLocales[number]
 
 export type TasksTranslationEntries = {
   'addPatient': string,
+  'addTask': string,
   'age': string,
   'assignedTo': string,
   'assignee': string,
@@ -100,6 +101,7 @@ export type TasksTranslationEntries = {
 export const tasksTranslation: Translation<TasksTranslationLocales, Partial<TasksTranslationEntries>> = {
   'de-DE': {
     'addPatient': `Patient hinzufügen`,
+    'addTask': `Aufgabe hinzufügen`,
     'age': `Alter`,
     'assignedTo': `Zugewiesen an`,
     'assignee': `Verantwortlich`,
@@ -244,6 +246,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
   },
   'en-US': {
     'addPatient': `Add Patient`,
+    'addTask': `Add Task`,
     'age': `Age`,
     'assignedTo': `Assigned to`,
     'assignee': `Assignee`,

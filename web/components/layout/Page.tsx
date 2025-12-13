@@ -76,9 +76,6 @@ export const StagingDisclaimerDialog = () => {
 
 type HeaderProps = HTMLAttributes<HTMLHeadElement>
 
-/**
- * The basic header for most pages
- */
 export const Header = ({ ...props }: HeaderProps) => {
   const translation = useTasksTranslation()
   const { user } = useTasksContext()
@@ -182,23 +179,23 @@ export const Sidebar = ({ ...props }: SidebarProps) => {
           <span className="typography-title-md whitespace-nowrap">{'helpwave tasks'}</span>
         </Link>
         <SidebarLink href="/">
-          <Grid2X2PlusIcon className="-rotate-90 size-5"/>
+          <Grid2X2PlusIcon className="-rotate-90 size-5" />
           <span className="flex grow">{translation('dashboard')}</span>
         </SidebarLink>
         <SidebarLink href="/tasks">
-          <CircleCheck className="size-5"/>
+          <CircleCheck className="size-5" />
           <span className="flex grow">{translation('myTasks')}</span>
           {context?.myTasksCount !== undefined && (<span className="text-description">{context.myTasksCount}</span>)}
         </SidebarLink>
         <SidebarLink href="/patients">
-          <User className="size-5"/>
+          <User className="size-5" />
           <span className="flex grow">{translation('patients')}</span>
         </SidebarLink>
 
         <Expandable
           label={(
             <div className="flex-row-2">
-              <Users className="size-5"/>
+              <Users className="size-5" />
               {translation('teams')}
             </div>
           )}
@@ -218,7 +215,7 @@ export const Sidebar = ({ ...props }: SidebarProps) => {
             {translation('overview')}
           </SidebarLink>
           {!context?.teams ? (
-            <LoadingContainer className="w-full h-10"/>
+            <LoadingContainer className="w-full h-10" />
           ) : context.teams.map(ward => (
             <SidebarLink key={ward.id} href={`${teamsRoute}/${ward.id}`} className="pl-9.5">
               {ward.title}
@@ -229,7 +226,7 @@ export const Sidebar = ({ ...props }: SidebarProps) => {
         <Expandable
           label={(
             <div className="flex-row-2">
-              <Building2 className="size-5"/>
+              <Building2 className="size-5" />
               {translation('wards')}
             </div>
           )}
@@ -249,7 +246,7 @@ export const Sidebar = ({ ...props }: SidebarProps) => {
             {translation('overview')}
           </SidebarLink>
           {!context?.wards ? (
-            <LoadingContainer className="w-full h-10"/>
+            <LoadingContainer className="w-full h-10" />
           ) : context.wards.map(ward => (
             <SidebarLink key={ward.id} href={`${wardsRoute}/${ward.id}`} className="pl-9.5">
               {ward.title}

@@ -146,6 +146,7 @@
   "authenticationFailed": "Authentifizierung fehlgeschlagen",
   "returnHome": "Zur Homepage",
   "addPatient": "Patient hinzufügen",
+  "addTask": "Aufgabe hinzufügen",
   "editPatient": "Patient bearbeiten",
   "openTasks": "Offene Aufgaben",
   "closedTasks": "Erledigte Aufgaben",

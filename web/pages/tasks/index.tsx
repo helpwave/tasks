@@ -3,7 +3,7 @@ import { Page } from '@/components/layout/Page'
 import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
-import { Avatar, Checkbox, IconButton, Table } from '@helpwave/hightide'
+import { Avatar, CheckboxUncontrolled, IconButton, SolidButton, Table } from '@helpwave/hightide'
 import { useMemo } from 'react'
 import type { ColumnDef } from '@tanstack/table-core'
 import {
@@ -11,7 +11,7 @@ import {
   useCompleteTaskMutation,
   useReopenTaskMutation
 } from '@/api/gql/generated'
-import { EditIcon } from 'lucide-react'
+import { EditIcon, PlusIcon } from 'lucide-react'
 import clsx from 'clsx'
 import { SmartDate } from '@/utils/date'
 
@@ -57,28 +57,30 @@ const TasksPage: NextPage = () => {
         ? { name: task.patient.assignedLocation.parent.title }
         : undefined,
     }))
+    //.filter((task) => !task.done)
   }, [queryData])
 
   const columns = useMemo<ColumnDef<TaskViewModel>[]>(
     () => [
       {
         id: 'done',
-        header: '',
+        header: translation('status'),
         cell: ({ row }) => (
-          <Checkbox
+          <CheckboxUncontrolled
             checked={row.original.done}
             onChange={(checked) => {
-              if (checked) {
+              if (!checked) {
                 completeTask({ id: row.original.id })
               } else {
                 reopenTask({ id: row.original.id })
               }
             }}
+            className={clsx('rounded-full')}
           />
         ),
-        minSize: 40,
-        size: 40,
-        maxSize: 40,
+        minSize: 75,
+        size: 75,
+        maxSize: 75,
         enableResizing: false,
       },
       {
@@ -202,6 +204,11 @@ const TasksPage: NextPage = () => {
       <ContentPanel
         titleElement={translation('myTasks')}
         description={translation('nTask', { count: tasks.length })}
+        actionElement={(
+          <SolidButton startIcon={<PlusIcon />}>
+            {translation('addTask')}
+          </SolidButton>
+        )}
       >
         <Table
           className="w-full h-full"

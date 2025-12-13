@@ -146,6 +146,7 @@
   "authenticationFailed": "Authentication Failed",
   "returnHome": "Return Home",
   "addPatient": "Add Patient",
+  "addTask": "Add Task",
   "editPatient": "Edit Patient",
   "openTasks": "Open Tasks",
   "closedTasks": "Closed Tasks",

@@ -8,6 +8,7 @@ import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 
 export default function AuthCallback() {
   const translation = useTasksTranslation()
+
   const router = useRouter()
   const searchParams = useSearchParams()
   const [hasError, setHasError] = useState<boolean>(false)
@@ -47,10 +48,9 @@ export default function AuthCallback() {
       <div className="flex-col-2 max-w-64">
         {hasError && (
           <span className="text-negative"> {translation('authenticationFailed')}</span>
-          // TODO add more descriptive text here
         )}
         <SolidButton onClick={() => router.push('/')}>
-          {translation('returnHome')}
+          Return Home
         </SolidButton>
       </div>
     </div>
