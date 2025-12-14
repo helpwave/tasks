@@ -8,7 +8,8 @@ import { PropertyEntry } from '@/components/PropertyEntry'
 export const propertyFieldTypeList = ['multiSelect', 'singleSelect', 'number', 'text', 'date', 'dateTime', 'checkbox'] as const
 export type PropertyFieldType = typeof propertyFieldTypeList[number]
 
-export type PropertySubjectType = 'patient' | 'task'
+export const propertySubjectTypeList = ['patient', 'task'] as const
+export type PropertySubjectType = typeof propertySubjectTypeList[number]
 
 export type PropertySelectOption = {
   id: string,
