@@ -201,7 +201,7 @@
   "property": "Eigenschaft",
   "selectOptions": "Auswahl Optionen",
   "option": "Option",
-  "sPropertySubjectType": "{subject, select, patient{Patient} other{Undefinierter Subjekt Typ}}",
+  "sPropertySubjectType": "{subject, select, patient{Patient} task{Aufgabe} other{Undefinierter Subjekt Typ}}",
   "@sPropertySubjectType": {
     "placeholders": {
       "subject": {
@@ -218,7 +218,7 @@
     }
   },
   "archiveProperty": "Eigenschaft Archivieren",
-  "archivedPropertyDescription": "Archivierte Eigenschaften können nicht mehr neu Objekten hinzugeügt werden."
+  "archivedPropertyDescription": "Archivierte Eigenschaften können nicht mehr neu Objekten hinzugeügt werden.",
   "title": "Titel",
   "taskTitlePlaceholder": "Was muss erledigt werden?",
   "selectPatient": "Patient auswählen",

@@ -201,7 +201,7 @@
   "property": "Property",
   "selectOptions": "Select Options",
   "option": "Option",
-  "sPropertySubjectType": "{subject, select, patient{Patient} other{Undefined Subject Type}}",
+  "sPropertySubjectType": "{subject, select, patient{Patient} task{Task} other{Undefined Subject Type}}",
   "@sPropertySubjectType": {
     "placeholders": {
       "subject": {
@@ -218,7 +218,7 @@
     }
   },
   "archiveProperty": "Archive Property",
-  "archivedPropertyDescription": "Archived Properties can no longer be assigned to objects."
+  "archivedPropertyDescription": "Archived Properties can no longer be assigned to objects.",
   "title": "Title",
   "taskTitlePlaceholder": "What needs to be done?",
   "selectPatient": "Select a patient",
