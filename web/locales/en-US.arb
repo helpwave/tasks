@@ -88,6 +88,7 @@
   "dashboard": "Dashboard",
   "dashboardWelcomeDescription": "Here is what is happening today.",
   "description": "Description",
+  "descriptionPlaceholder": "Add more details...",
   "developmentAndPreviewInstance": "Development and preview instance",
   "dismiss": "Dismiss",
   "dueDate": "Due Date",
@@ -147,7 +148,9 @@
   "returnHome": "Return Home",
   "addPatient": "Add Patient",
   "addTask": "Add Task",
+  "createTask": "Create Task",
   "editPatient": "Edit Patient",
+  "editTask": "Edit Task",
   "openTasks": "Open Tasks",
   "closedTasks": "Closed Tasks",
   "noOpenTasks": "No open tasks",
@@ -155,6 +158,7 @@
   "save": "Save",
   "cancel": "Cancel",
   "create": "Create",
+  "delete": "Delete",
   "firstName": "First Name",
   "lastName": "Last Name",
   "male": "Male",
@@ -165,5 +169,11 @@
   "freeBeds": "Free Beds",
   "occupancy": "Occupancy",
   "properties": "Properties",
-  "addProperty": "Add Property"
+  "addProperty": "Add Property",
+  "title": "Title",
+  "taskTitlePlaceholder": "What needs to be done?",
+  "selectPatient": "Select a patient",
+  "currentPatient": "Current Patient",
+  "selectAssignee": "Assign to...",
+  "unassigned": "Unassigned"
 }
