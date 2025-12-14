@@ -85,6 +85,7 @@ export enum LocationType {
 
 export type Mutation = {
   __typename?: 'Mutation';
+  assignTask: TaskType;
   completeTask: TaskType;
   createLocationNode: LocationNodeType;
   createPatient: PatientType;
@@ -95,10 +96,17 @@ export type Mutation = {
   deletePropertyDefinition: Scalars['Boolean']['output'];
   deleteTask: Scalars['Boolean']['output'];
   reopenTask: TaskType;
+  unassignTask: TaskType;
   updateLocationNode: LocationNodeType;
   updatePatient: PatientType;
   updatePropertyDefinition: PropertyDefinitionType;
   updateTask: TaskType;
+};
+
+
+export type MutationAssignTaskArgs = {
+  id: Scalars['ID']['input'];
+  userId: Scalars['ID']['input'];
 };
 
 
@@ -148,6 +156,11 @@ export type MutationDeleteTaskArgs = {
 
 
 export type MutationReopenTaskArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type MutationUnassignTaskArgs = {
   id: Scalars['ID']['input'];
 };
 
@@ -248,6 +261,7 @@ export type Query = {
   task?: Maybe<TaskType>;
   tasks: Array<TaskType>;
   user?: Maybe<UserType>;
+  users: Array<UserType>;
 };
 
 
@@ -392,7 +406,12 @@ export type GetPatientsQueryVariables = Exact<{
 }>;
 
 
-export type GetPatientsQuery = { __typename?: 'Query', patients: Array<{ __typename?: 'PatientType', id: string, name: string, firstname: string, lastname: string, birthdate: any, sex: Sex, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null, tasks: Array<{ __typename?: 'TaskType', id: string, done: boolean, assignee?: { __typename?: 'UserType', id: string } | null }>, properties: Array<{ __typename?: 'PropertyValueType', textValue?: string | null, definition: { __typename?: 'PropertyDefinitionType', name: string } }> }> };
+export type GetPatientsQuery = { __typename?: 'Query', patients: Array<{ __typename?: 'PatientType', id: string, name: string, firstname: string, lastname: string, birthdate: any, sex: Sex, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null, tasks: Array<{ __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, dueDate?: any | null, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null } | null }>, properties: Array<{ __typename?: 'PropertyValueType', textValue?: string | null, definition: { __typename?: 'PropertyDefinitionType', name: string } }> }> };
+
+export type GetUsersQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetUsersQuery = { __typename?: 'Query', users: Array<{ __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null }> };
 
 export type GetGlobalDataQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -413,6 +432,43 @@ export type UpdatePatientMutationVariables = Exact<{
 
 
 export type UpdatePatientMutation = { __typename?: 'Mutation', updatePatient: { __typename?: 'PatientType', id: string, name: string, firstname: string, lastname: string, birthdate: any, sex: Sex, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string } | null } };
+
+export type CreateTaskMutationVariables = Exact<{
+  data: CreateTaskInput;
+}>;
+
+
+export type CreateTaskMutation = { __typename?: 'Mutation', createTask: { __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, dueDate?: any | null, updateDate?: any | null, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null } | null, patient: { __typename?: 'PatientType', id: string, name: string } } };
+
+export type UpdateTaskMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  data: UpdateTaskInput;
+}>;
+
+
+export type UpdateTaskMutation = { __typename?: 'Mutation', updateTask: { __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, dueDate?: any | null, updateDate?: any | null, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null } | null } };
+
+export type AssignTaskMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  userId: Scalars['ID']['input'];
+}>;
+
+
+export type AssignTaskMutation = { __typename?: 'Mutation', assignTask: { __typename?: 'TaskType', id: string, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null } | null } };
+
+export type UnassignTaskMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type UnassignTaskMutation = { __typename?: 'Mutation', unassignTask: { __typename?: 'TaskType', id: string, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null } | null } };
+
+export type DeleteTaskMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteTaskMutation = { __typename?: 'Mutation', deleteTask: boolean };
 
 export type CompleteTaskMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -575,9 +631,14 @@ export const GetPatientsDocument = `
     }
     tasks {
       id
+      title
+      description
       done
+      dueDate
       assignee {
         id
+        name
+        avatarUrl
       }
     }
     properties {
@@ -602,6 +663,32 @@ export const useGetPatientsQuery = <
       {
     queryKey: variables === undefined ? ['GetPatients'] : ['GetPatients', variables],
     queryFn: fetcher<GetPatientsQuery, GetPatientsQueryVariables>(GetPatientsDocument, variables),
+    ...options
+  }
+    )};
+
+export const GetUsersDocument = `
+    query GetUsers {
+  users {
+    id
+    name
+    avatarUrl
+  }
+}
+    `;
+
+export const useGetUsersQuery = <
+      TData = GetUsersQuery,
+      TError = unknown
+    >(
+      variables?: GetUsersQueryVariables,
+      options?: Omit<UseQueryOptions<GetUsersQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetUsersQuery, TError, TData>['queryKey'] }
+    ) => {
+    
+    return useQuery<GetUsersQuery, TError, TData>(
+      {
+    queryKey: variables === undefined ? ['GetUsers'] : ['GetUsers', variables],
+    queryFn: fetcher<GetUsersQuery, GetUsersQueryVariables>(GetUsersDocument, variables),
     ...options
   }
     )};
@@ -709,6 +796,143 @@ export const useUpdatePatientMutation = <
       {
     mutationKey: ['UpdatePatient'],
     mutationFn: (variables?: UpdatePatientMutationVariables) => fetcher<UpdatePatientMutation, UpdatePatientMutationVariables>(UpdatePatientDocument, variables)(),
+    ...options
+  }
+    )};
+
+export const CreateTaskDocument = `
+    mutation CreateTask($data: CreateTaskInput!) {
+  createTask(data: $data) {
+    id
+    title
+    description
+    done
+    dueDate
+    updateDate
+    assignee {
+      id
+      name
+      avatarUrl
+    }
+    patient {
+      id
+      name
+    }
+  }
+}
+    `;
+
+export const useCreateTaskMutation = <
+      TError = unknown,
+      TContext = unknown
+    >(options?: UseMutationOptions<CreateTaskMutation, TError, CreateTaskMutationVariables, TContext>) => {
+    
+    return useMutation<CreateTaskMutation, TError, CreateTaskMutationVariables, TContext>(
+      {
+    mutationKey: ['CreateTask'],
+    mutationFn: (variables?: CreateTaskMutationVariables) => fetcher<CreateTaskMutation, CreateTaskMutationVariables>(CreateTaskDocument, variables)(),
+    ...options
+  }
+    )};
+
+export const UpdateTaskDocument = `
+    mutation UpdateTask($id: ID!, $data: UpdateTaskInput!) {
+  updateTask(id: $id, data: $data) {
+    id
+    title
+    description
+    done
+    dueDate
+    updateDate
+    assignee {
+      id
+      name
+      avatarUrl
+    }
+  }
+}
+    `;
+
+export const useUpdateTaskMutation = <
+      TError = unknown,
+      TContext = unknown
+    >(options?: UseMutationOptions<UpdateTaskMutation, TError, UpdateTaskMutationVariables, TContext>) => {
+    
+    return useMutation<UpdateTaskMutation, TError, UpdateTaskMutationVariables, TContext>(
+      {
+    mutationKey: ['UpdateTask'],
+    mutationFn: (variables?: UpdateTaskMutationVariables) => fetcher<UpdateTaskMutation, UpdateTaskMutationVariables>(UpdateTaskDocument, variables)(),
+    ...options
+  }
+    )};
+
+export const AssignTaskDocument = `
+    mutation AssignTask($id: ID!, $userId: ID!) {
+  assignTask(id: $id, userId: $userId) {
+    id
+    assignee {
+      id
+      name
+      avatarUrl
+    }
+  }
+}
+    `;
+
+export const useAssignTaskMutation = <
+      TError = unknown,
+      TContext = unknown
+    >(options?: UseMutationOptions<AssignTaskMutation, TError, AssignTaskMutationVariables, TContext>) => {
+    
+    return useMutation<AssignTaskMutation, TError, AssignTaskMutationVariables, TContext>(
+      {
+    mutationKey: ['AssignTask'],
+    mutationFn: (variables?: AssignTaskMutationVariables) => fetcher<AssignTaskMutation, AssignTaskMutationVariables>(AssignTaskDocument, variables)(),
+    ...options
+  }
+    )};
+
+export const UnassignTaskDocument = `
+    mutation UnassignTask($id: ID!) {
+  unassignTask(id: $id) {
+    id
+    assignee {
+      id
+      name
+      avatarUrl
+    }
+  }
+}
+    `;
+
+export const useUnassignTaskMutation = <
+      TError = unknown,
+      TContext = unknown
+    >(options?: UseMutationOptions<UnassignTaskMutation, TError, UnassignTaskMutationVariables, TContext>) => {
+    
+    return useMutation<UnassignTaskMutation, TError, UnassignTaskMutationVariables, TContext>(
+      {
+    mutationKey: ['UnassignTask'],
+    mutationFn: (variables?: UnassignTaskMutationVariables) => fetcher<UnassignTaskMutation, UnassignTaskMutationVariables>(UnassignTaskDocument, variables)(),
+    ...options
+  }
+    )};
+
+export const DeleteTaskDocument = `
+    mutation DeleteTask($id: ID!) {
+  deleteTask(id: $id)
+}
+    `;
+
+export const useDeleteTaskMutation = <
+      TError = unknown,
+      TContext = unknown
+    >(options?: UseMutationOptions<DeleteTaskMutation, TError, DeleteTaskMutationVariables, TContext>) => {
+    
+    return useMutation<DeleteTaskMutation, TError, DeleteTaskMutationVariables, TContext>(
+      {
+    mutationKey: ['DeleteTask'],
+    mutationFn: (variables?: DeleteTaskMutationVariables) => fetcher<DeleteTaskMutation, DeleteTaskMutationVariables>(DeleteTaskDocument, variables)(),
     ...options
   }
     )};
