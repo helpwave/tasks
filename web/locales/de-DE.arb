@@ -163,5 +163,7 @@
   "time.today": "Heute",
   "myFavorites": "Meine Favoriten",
   "freeBeds": "Freie Betten",
-  "occupancy": "Belegung"
+  "occupancy": "Belegung",
+  "properties": "Eigenschaften",
+  "addProperty": "Eigenschaften hinzufügen"
 }

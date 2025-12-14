@@ -3,7 +3,7 @@ import { Page } from '@/components/layout/Page'
 import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
-import { IconButton, Table, Chip, SolidButton } from '@helpwave/hightide'
+import { IconButton, Table, Chip, SolidButton, FillerRowElement } from '@helpwave/hightide'
 import { useMemo, useState } from 'react'
 import type { ColumnDef } from '@tanstack/table-core'
 import { EditIcon, PlusIcon } from 'lucide-react'
@@ -186,6 +186,7 @@ const PatientsPage: NextPage = () => {
           className="w-full h-full"
           data={patients}
           columns={columns}
+          fillerRow={() => (<FillerRowElement className="min-h-12"/>)}
         />
       </ContentPanel>
       <SidePanel

@@ -26,7 +26,7 @@ export const SidePanel = ({ isOpen, onClose, title, children }: SidePanelProps) 
   if (!isVisible) return null
 
   return createPortal(
-    <div className="fixed inset-0 z-50 overflow-hidden">
+    <div className="fixed inset-0 overflow-hidden">
       <div
         className={clsx(
           'absolute inset-0 bg-overlay-shadow transition-opacity duration-300',

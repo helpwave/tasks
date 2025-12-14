@@ -4,7 +4,7 @@ import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
 import { useGetOverviewDataQuery } from '@/api/gql/generated'
-import { Avatar, Table } from '@helpwave/hightide'
+import { Avatar, FillerRowElement, Table } from '@helpwave/hightide'
 import { CurrentTime, SmartDate } from '@/utils/date'
 import { ClockIcon, ListCheckIcon, UsersIcon } from 'lucide-react'
 import { useMemo } from 'react'
@@ -36,7 +36,7 @@ const Dashboard: NextPage = () => {
     {
       id: 'date',
       header: translation('updated'),
-      cell: ({ row }) => <SmartDate date={row.original.updateDate ? new Date(row.original.updateDate) : new Date()} />,
+      cell: ({ row }) => <SmartDate date={row.original.updateDate ? new Date(row.original.updateDate) : new Date()}/>,
       minSize: 100,
     }
   ], [translation])
@@ -76,7 +76,7 @@ const Dashboard: NextPage = () => {
           <Link href="/tasks">
             <div className="bg-surface rounded-lg p-4 shadow-sm flex-row-4 items-center border border-border">
               <div className="p-3 bg-primary/10 rounded-full text-primary">
-                <ListCheckIcon size={24} />
+                <ListCheckIcon size={24}/>
               </div>
               <div className="flex-col-0">
                 <span className="typography-label-sm text-description">{translation('myOpenTasks')}</span>
@@ -88,7 +88,7 @@ const Dashboard: NextPage = () => {
           <Link href="/patients">
             <div className="bg-surface rounded-lg p-4 shadow-sm flex-row-4 items-center border border-border">
               <div className="p-3 bg-green-500/10 rounded-full text-green-600">
-                <UsersIcon size={24} />
+                <UsersIcon size={24}/>
               </div>
               <div className="flex-col-0">
                 <span className="typography-label-sm text-description">{translation('totalPatients')}</span>
@@ -99,12 +99,12 @@ const Dashboard: NextPage = () => {
 
           <div className="bg-surface rounded-lg p-4 shadow-sm flex-row-4 items-center border border-border">
             <div className="p-3 bg-blue-500/10 rounded-full text-blue-600">
-              <ClockIcon size={24} />
+              <ClockIcon size={24}/>
             </div>
             <div className="flex-col-0">
               <span className="typography-label-sm text-description">{translation('currentTime')}</span>
               <span className="typography-title-lg">
-                <CurrentTime />
+                <CurrentTime/>
               </span>
             </div>
           </div>
@@ -112,11 +112,19 @@ const Dashboard: NextPage = () => {
 
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mt-4">
           <ContentPanel title={translation('recentTasks')} description={translation('tasksUpdatedRecently')}>
-            <Table data={recentTasks} columns={taskColumns} />
+            <Table
+              data={recentTasks}
+              columns={taskColumns}
+              fillerRow={() => (<FillerRowElement className="min-h-6"/>)}
+            />
           </ContentPanel>
 
           <ContentPanel title={translation('recentPatients')} description={translation('newestAdmissions')}>
-            <Table data={recentPatients} columns={patientColumns} />
+            <Table
+              data={recentPatients}
+              columns={patientColumns}
+              fillerRow={() => (<FillerRowElement className="min-h-6"/>)}
+            />
           </ContentPanel>
         </div>
 

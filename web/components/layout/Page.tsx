@@ -273,9 +273,9 @@ export const Page = ({
       </Head>
       <StagingDisclaimerDialog />
       <Sidebar className="my-4 ml-4" />
-      <div className="flex-col-4 grow overflow-hidden">
-        <Header className="mr-4 mt-4 bg-background text-on-background" />
-        <main className="flex-col-2 grow overflow-auto mr-4">
+      <div className="flex-col-4 grow overflow-y-scroll">
+        <Header className="sticky top-0 right-0 py-4 pr-4 bg-background text-on-background" />
+        <main className="flex-col-2 grow pr-4">
           {children}
           <div className="min-h-16" />
         </main>
