@@ -3,7 +3,7 @@ import { Page } from '@/components/layout/Page'
 import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
-import { Avatar, CheckboxUncontrolled, IconButton, SolidButton, Table } from '@helpwave/hightide'
+import { Avatar, CheckboxUncontrolled, FillerRowElement, IconButton, SolidButton, Table } from '@helpwave/hightide'
 import { useMemo } from 'react'
 import type { ColumnDef } from '@tanstack/table-core'
 import {
@@ -65,6 +65,7 @@ const TasksPage: NextPage = () => {
       {
         id: 'done',
         header: translation('status'),
+        accessorKey: 'done',
         cell: ({ row }) => (
           <CheckboxUncontrolled
             checked={row.original.done}
@@ -78,9 +79,9 @@ const TasksPage: NextPage = () => {
             className={clsx('rounded-full')}
           />
         ),
-        minSize: 75,
-        size: 75,
-        maxSize: 75,
+        minSize: 120,
+        size: 120,
+        maxSize: 120,
         enableResizing: false,
       },
       {
@@ -214,6 +215,16 @@ const TasksPage: NextPage = () => {
           className="w-full h-full"
           data={tasks}
           columns={columns}
+          fillerRow={() => (
+            <FillerRowElement className="min-h-17.25"/>
+          )}
+          initialState={{
+            sorting: [
+              { id: 'done', desc: true },
+              { id: 'updateDate', desc: true },
+            ]
+          }}
+          enableMultiSort={true}
         />
       </ContentPanel>
     </Page>
