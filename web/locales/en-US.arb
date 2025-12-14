@@ -163,5 +163,7 @@
   "time.today": "Today",
   "myFavorites": "My Favorites",
   "freeBeds": "Free Beds",
-  "occupancy": "Occupancy"
+  "occupancy": "Occupancy",
+  "properties": "Properties",
+  "addProperty": "Add Property"
 }

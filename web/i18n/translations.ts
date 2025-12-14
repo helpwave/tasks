@@ -11,6 +11,7 @@ export type TasksTranslationLocales = typeof tasksTranslationLocales[number]
 
 export type TasksTranslationEntries = {
   'addPatient': string,
+  'addProperty': string,
   'addTask': string,
   'age': string,
   'assignedTo': string,
@@ -77,6 +78,7 @@ export type TasksTranslationEntries = {
   'preferences': string,
   'privacy': string,
   'private': string,
+  'properties': string,
   'public': string,
   'publish': string,
   'recentPatients': string,
@@ -104,6 +106,7 @@ export type TasksTranslationEntries = {
 export const tasksTranslation: Translation<TasksTranslationLocales, Partial<TasksTranslationEntries>> = {
   'de-DE': {
     'addPatient': `Patient hinzufügen`,
+    'addProperty': `Eigenschaften hinzufügen`,
     'addTask': `Aufgabe hinzufügen`,
     'age': `Alter`,
     'assignedTo': `Zugewiesen an`,
@@ -220,6 +223,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'preferences': `Präferenzen`,
     'privacy': `Datenschutz`,
     'private': `Privat`,
+    'properties': `Eigenschaften`,
     'public': `Öffentlich`,
     'publish': `Veröffentlichen`,
     'recentPatients': `Kürzliche Patienten`,
@@ -252,6 +256,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
   },
   'en-US': {
     'addPatient': `Add Patient`,
+    'addProperty': `Add Property`,
     'addTask': `Add Task`,
     'age': `Age`,
     'assignedTo': `Assigned to`,
@@ -368,6 +373,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'preferences': `Preferences`,
     'privacy': `Privacy`,
     'private': `private`,
+    'properties': `Properties`,
     'public': `public`,
     'publish': `publish`,
     'recentPatients': `Recent Patients`,

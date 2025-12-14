@@ -3,6 +3,14 @@
 @import '@helpwave/hightide/style/uncompiled/globals.css';
 @source "./node_modules/@helpwave/hightide";
 
+:root {
+  --browser-vertical-scrollbar-width: env(scrollbar-inline-size);
+  --browser-horizontal-scrollbar-width: env(scrollbar-block-size);
+  --scrollbar-min-padding: 1rem;
+  --scrollbar-vertical-padding: calc(var(--scrollbar-min-padding) - var(--browser-vertical-scrollbar-width, 0rem));
+  --scrollbar-horizontal-padding: calc(var(--scrollbar-min-padding) - var(--browser-horizontal-scrollbar-width, 0rem));
+}
+
 @theme {
   /* Default Color Overwrites */
   --color-background: #EEEEEE;
