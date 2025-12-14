@@ -19,7 +19,16 @@ import {
 import { getConfig } from '@/utils/config'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import clsx from 'clsx'
-import { BellIcon, Building2, CircleCheck, Grid2X2PlusIcon, SettingsIcon, User, Users } from 'lucide-react'
+import {
+  BellIcon,
+  Building2,
+  CircleCheck,
+  Grid2X2PlusIcon,
+  SettingsIcon,
+  TableProperties,
+  User,
+  Users
+} from 'lucide-react'
 import { TasksLogo } from '@/components/TasksLogo'
 import { useRouter } from 'next/router'
 import { useTasksContext } from '@/hooks/useTasksContext'
@@ -253,6 +262,10 @@ export const Sidebar = ({ ...props }: SidebarProps) => {
             </SidebarLink>
           ))}
         </Expandable>
+        <SidebarLink href="/properties">
+          <TableProperties className="size-5" />
+          <span className="flex grow">{translation('properties')}</span>
+        </SidebarLink>
       </nav>
     </aside>
   )

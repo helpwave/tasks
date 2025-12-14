@@ -64,6 +64,14 @@
       }
     }
   },
+  "nProperties": "{count, plural, =1{# Eigenschaft} other{# Eigenschaften}}",
+  "@nProperties": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
   "dashboardWelcome": "Guten Morgen, {name}",
   "@dashboardWelcome": {
     "placeholders": {
@@ -165,5 +173,46 @@
   "freeBeds": "Freie Betten",
   "occupancy": "Belegung",
   "properties": "Eigenschaften",
-  "addProperty": "Eigenschaften hinzufügen"
+  "addProperty": "Eigenschaften hinzufügen",
+  "type": "Typ",
+  "subjectType": "Subjekt Type",
+  "active": "Aktiv",
+  "inactive": "Inaktiv",
+  "rEdit": "{name} ändern",
+  "@rEdit": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "rAdd": "{name} hinzufügen",
+  "@rAdd": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "property": "Eigenschaft",
+  "selectOptions": "Auswahl Optionen",
+  "option": "Option",
+  "sPropertySubjectType": "{subject, select, patient{Patient} other{Undefinierter Subjekt Typ}}",
+  "@sPropertySubjectType": {
+    "placeholders": {
+      "subject": {
+        "type": "string"
+      }
+    }
+  },
+  "sPropertyType": "{type, select, multiSelect{Multi-Auswahl} singleSelect{Einzel-Auswahl} number{Zahl} text{Text} date{Datum} dateTime{Zeitpunkt} checkbox{Checkbox} other{Undefinierter Typ}}",
+  "@sPropertyType": {
+    "placeholders": {
+      "type": {
+        "type": "string"
+      }
+    }
+  },
+  "archiveProperty": "Eigenschaft Archivieren",
+  "archivedPropertyDescription": "Archivierte Eigenschaften können nicht mehr neu Objekten hinzugeügt werden."
 }

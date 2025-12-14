@@ -10,10 +10,13 @@ export const tasksTranslationLocales = ['de-DE', 'en-US'] as const
 export type TasksTranslationLocales = typeof tasksTranslationLocales[number]
 
 export type TasksTranslationEntries = {
+  'active': string,
   'addPatient': string,
   'addProperty': string,
   'addTask': string,
   'age': string,
+  'archivedPropertyDescription': string,
+  'archiveProperty': string,
   'assignedTo': string,
   'assignee': string,
   'authenticationFailed': string,
@@ -38,6 +41,7 @@ export type TasksTranslationEntries = {
   'freeBeds': string,
   'homePage': string,
   'imprint': string,
+  'inactive': string,
   'itsYou': string,
   'lastName': string,
   'lastUpdate': string,
@@ -61,6 +65,7 @@ export type TasksTranslationEntries = {
   'notAssigned': string,
   'notes': string,
   'nPatient': (values: { count: number }) => string,
+  'nProperties': (values: { count: number }) => string,
   'nRoom': (values: { count: number }) => string,
   'nTask': (values: { count: number }) => string,
   'nTeam': (values: { count: number }) => string,
@@ -68,6 +73,7 @@ export type TasksTranslationEntries = {
   'nYear': (values: { count: number }) => string,
   'occupancy': string,
   'openTasks': string,
+  'option': string,
   'overview': string,
   'pages.404.notFound': string,
   'pages.404.notFoundDescription1': string,
@@ -79,18 +85,25 @@ export type TasksTranslationEntries = {
   'privacy': string,
   'private': string,
   'properties': string,
+  'property': string,
   'public': string,
   'publish': string,
+  'rAdd': (values: { name: string }) => string,
   'recentPatients': string,
   'recentTasks': string,
+  'rEdit': (values: { name: string }) => string,
   'returnHome': string,
   'rooms': string,
   'save': string,
+  'selectOptions': string,
   'settings': string,
   'settingsDescription': string,
   'sex': string,
+  'sPropertySubjectType': (values: { subject: string }) => string,
+  'sPropertyType': (values: { type: string }) => string,
   'stagingModalDisclaimerMarkdown': string,
   'status': string,
+  'subjectType': string,
   'task': string,
   'tasks': string,
   'taskStatus': (values: { status: string }) => string,
@@ -98,6 +111,7 @@ export type TasksTranslationEntries = {
   'teams': string,
   'time.today': string,
   'totalPatients': string,
+  'type': string,
   'updated': string,
   'visibility': string,
   'wards': string,
@@ -105,10 +119,13 @@ export type TasksTranslationEntries = {
 
 export const tasksTranslation: Translation<TasksTranslationLocales, Partial<TasksTranslationEntries>> = {
   'de-DE': {
+    'active': `Aktiv`,
     'addPatient': `Patient hinzufügen`,
     'addProperty': `Eigenschaften hinzufügen`,
     'addTask': `Aufgabe hinzufügen`,
     'age': `Alter`,
+    'archivedPropertyDescription': `Archivierte Eigenschaften können nicht mehr neu Objekten hinzugeügt werden.`,
+    'archiveProperty': `Eigenschaft Archivieren`,
     'assignedTo': `Zugewiesen an`,
     'assignee': `Verantwortlich`,
     'authenticationFailed': `Authentifizierung fehlgeschlagen`,
@@ -135,6 +152,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'freeBeds': `Freie Betten`,
     'homePage': `Startseite`,
     'imprint': `Impressum`,
+    'inactive': `Inaktiv`,
     'itsYou': `Du`,
     'lastName': `Nachname`,
     'lastUpdate': `Letzte Änderung`,
@@ -181,6 +199,12 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
         'other': `${count} Patienten`,
       })
     },
+    'nProperties': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} Eigenschaft`,
+        'other': `${count} Eigenschaften`,
+      })
+    },
     'nRoom': ({ count }): string => {
       return TranslationGen.resolvePlural(count, {
         '=1': `${count} Zimmer`,
@@ -213,6 +237,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     },
     'occupancy': `Belegung`,
     'openTasks': `Offene Aufgaben`,
+    'option': `Option`,
     'overview': `Übersicht`,
     'pages.404.notFound': `404 - Seite nicht gefunden`,
     'pages.404.notFoundDescription1': `Das ist definitiv nicht die Seite nach der Sie suchen`,
@@ -224,18 +249,45 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'privacy': `Datenschutz`,
     'private': `Privat`,
     'properties': `Eigenschaften`,
+    'property': `Eigenschaft`,
     'public': `Öffentlich`,
     'publish': `Veröffentlichen`,
+    'rAdd': ({ name }): string => {
+      return `${name} hinzufügen`
+    },
     'recentPatients': `Kürzliche Patienten`,
     'recentTasks': `Kürzliche Aufgaben`,
+    'rEdit': ({ name }): string => {
+      return `${name} ändern`
+    },
     'returnHome': `Zur Homepage`,
     'rooms': `Zimmer`,
     'save': `Speichern`,
+    'selectOptions': `Auswahl Optionen`,
     'settings': `Einstellungen`,
     'settingsDescription': `Hier kannst du die App Konfiguration ändern.`,
     'sex': `Geschlecht`,
+    'sPropertySubjectType': ({ subject }): string => {
+      return TranslationGen.resolveSelect(subject, {
+        'patient': `Patient`,
+        'other': `Undefinierter Subjekt Typ`,
+      })
+    },
+    'sPropertyType': ({ type }): string => {
+      return TranslationGen.resolveSelect(type, {
+        'multiSelect': `Multi-Auswahl`,
+        'singleSelect': `Einzel-Auswahl`,
+        'number': `Zahl`,
+        'text': `Text`,
+        'date': `Datum`,
+        'dateTime': `Zeitpunkt`,
+        'checkbox': `Checkbox`,
+        'other': `Undefinierter Typ`,
+      })
+    },
     'stagingModalDisclaimerMarkdown': `Diese öffentliche Instanz von helpwave tasks ist für \\b{Entwicklungs- und Vorschauzwecke} gedacht. Bitte stellen Sie sicher, dass Sie \\b{ausschließlich nicht-vertrauliche Testdaten} eingeben. Diese Instanz kann \\negative{\\b{jederzeit gelöscht}} werden.`,
     'status': `Status`,
+    'subjectType': `Subjekt Type`,
     'task': `Aufgabe`,
     'tasks': `Aufgaben`,
     'taskStatus': ({ status }): string => {
@@ -250,15 +302,19 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'teams': `Teams`,
     'time.today': `Heute`,
     'totalPatients': `Gesamtpatienten`,
+    'type': `Typ`,
     'updated': `Aktualisiert`,
     'visibility': `Sichtbarkeit`,
     'wards': `Stationen`
   },
   'en-US': {
+    'active': `Active`,
     'addPatient': `Add Patient`,
     'addProperty': `Add Property`,
     'addTask': `Add Task`,
     'age': `Age`,
+    'archivedPropertyDescription': `Archived Properties can no longer be assigned to objects.`,
+    'archiveProperty': `Archive Property`,
     'assignedTo': `Assigned to`,
     'assignee': `Assignee`,
     'authenticationFailed': `Authentication Failed`,
@@ -285,6 +341,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'freeBeds': `Free Beds`,
     'homePage': `Home Page`,
     'imprint': `Imprint`,
+    'inactive': `Inactive`,
     'itsYou': `You`,
     'lastName': `Last Name`,
     'lastUpdate': `Last Update`,
@@ -331,6 +388,12 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
         'other': `${count} Patients`,
       })
     },
+    'nProperties': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} Property`,
+        'other': `${count} Properties`,
+      })
+    },
     'nRoom': ({ count }): string => {
       return TranslationGen.resolvePlural(count, {
         '=1': `${count} Room`,
@@ -363,6 +426,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     },
     'occupancy': `Occupancy`,
     'openTasks': `Open Tasks`,
+    'option': `Option`,
     'overview': `Overview`,
     'pages.404.notFound': `404 - Page not found`,
     'pages.404.notFoundDescription1': `This is definitely not the page you're looking for`,
@@ -374,18 +438,45 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'privacy': `Privacy`,
     'private': `private`,
     'properties': `Properties`,
+    'property': `Property`,
     'public': `public`,
     'publish': `publish`,
+    'rAdd': ({ name }): string => {
+      return `Add ${name}`
+    },
     'recentPatients': `Recent Patients`,
     'recentTasks': `Recent Tasks`,
+    'rEdit': ({ name }): string => {
+      return `Update ${name}`
+    },
     'returnHome': `Return Home`,
     'rooms': `Rooms`,
     'save': `Save`,
+    'selectOptions': `Select Options`,
     'settings': `Settings`,
     'settingsDescription': `Here you can change the app configuration.`,
     'sex': `Sex`,
+    'sPropertySubjectType': ({ subject }): string => {
+      return TranslationGen.resolveSelect(subject, {
+        'patient': `Patient`,
+        'other': `Undefined Subject Type`,
+      })
+    },
+    'sPropertyType': ({ type }): string => {
+      return TranslationGen.resolveSelect(type, {
+        'multiSelect': `Multi-Select`,
+        'singleSelect': `Single-Select`,
+        'number': `Number`,
+        'text': `Text`,
+        'date': `Date`,
+        'dateTime': `Timepoint`,
+        'checkbox': `Checkbox`,
+        'other': `Undefined Type`,
+      })
+    },
     'stagingModalDisclaimerMarkdown': `This public instance of helpwave tasks is for \\b{development and preview purposes}. Please make sure to \\b{only} enter \\b{non-confidential testing data}. This instance can be \\negative{\\b{deleted at any time}}`,
     'status': `Status`,
+    'subjectType': `Subject Type`,
     'task': `Task`,
     'tasks': `Tasks`,
     'taskStatus': ({ status }): string => {
@@ -400,6 +491,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'teams': `Teams`,
     'time.today': `Today`,
     'totalPatients': `Total Patients`,
+    'type': `Type`,
     'updated': `Updated`,
     'visibility': `Visibility`,
     'wards': `Wards`

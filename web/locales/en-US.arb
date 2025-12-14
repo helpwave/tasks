@@ -64,6 +64,14 @@
       }
     }
   },
+  "nProperties": "{count, plural, =1{# Property} other{# Properties}}",
+  "@nProperties": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
   "dashboardWelcome": "Good Morning, {name}",
   "@dashboardWelcome": {
     "placeholders": {
@@ -165,5 +173,46 @@
   "freeBeds": "Free Beds",
   "occupancy": "Occupancy",
   "properties": "Properties",
-  "addProperty": "Add Property"
+  "addProperty": "Add Property",
+  "type": "Type",
+  "subjectType": "Subject Type",
+  "active": "Active",
+  "inactive": "Inactive",
+  "rEdit": "Update {name}",
+  "@rEdit": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "rAdd": "Add {name}",
+  "@rAdd": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "property": "Property",
+  "selectOptions": "Select Options",
+  "option": "Option",
+  "sPropertySubjectType": "{subject, select, patient{Patient} other{Undefined Subject Type}}",
+  "@sPropertySubjectType": {
+    "placeholders": {
+      "subject": {
+        "type": "string"
+      }
+    }
+  },
+  "sPropertyType": "{type, select, multiSelect{Multi-Select} singleSelect{Single-Select} number{Number} text{Text} date{Date} dateTime{Timepoint} checkbox{Checkbox} other{Undefined Type}}",
+  "@sPropertyType": {
+    "placeholders": {
+      "type": {
+        "type": "string"
+      }
+    }
+  },
+  "archiveProperty": "Archive Property",
+  "archivedPropertyDescription": "Archived Properties can no longer be assigned to objects."
 }
