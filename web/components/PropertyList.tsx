@@ -8,7 +8,7 @@ import { PropertyEntry } from '@/components/PropertyEntry'
 export const propertyFieldTypeList = ['multiSelect', 'singleSelect', 'number', 'text', 'date', 'dateTime', 'checkbox'] as const
 export type PropertyFieldType = typeof propertyFieldTypeList[number]
 
-export const propertySubjectTypeList = ['patient'] as const
+export const propertySubjectTypeList = ['patient', 'task'] as const
 export type PropertySubjectType = typeof propertySubjectTypeList[number]
 
 export type PropertySelectOption = {
@@ -205,9 +205,9 @@ export type PropertyListProps = {
  * A component for listing properties for a subject
  */
 export const PropertyList = ({
-                               subjectId,
-                               subjectType
-                             }: PropertyListProps) => {
+  subjectId,
+  subjectType
+}: PropertyListProps) => {
   const translation = useTasksTranslation()
   const {
     data,
@@ -277,7 +277,7 @@ export const PropertyList = ({
                 className="flex-row-4 px-4 py-2 items-center border-2 border-dashed bg-property-title-background text-property-title-text hover:border-primary rounded-xl cursor-pointer"
                 onClick={toggleOpen}
               >
-                <Plus size={20}/>
+                <Plus size={20} />
                 <span>{translation('addProperty')}</span>
               </div>
             )}
@@ -288,7 +288,7 @@ export const PropertyList = ({
               <LoadingAndErrorComponent
                 isLoading={isLoading}
                 hasError={isError}
-                loadingComponent={<LoadingAnimation classname="min-h-20"/>}
+                loadingComponent={<LoadingAnimation classname="min-h-20" />}
               >
                 {/* TODO searchbar here, possibly in a new component for list search */}
                 {data?.available.map(property => (

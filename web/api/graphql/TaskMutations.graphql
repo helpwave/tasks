@@ -1,3 +1,65 @@
+mutation CreateTask($data: CreateTaskInput!) {
+  createTask(data: $data) {
+    id
+    title
+    description
+    done
+    dueDate
+    updateDate
+    assignee {
+      id
+      name
+      avatarUrl
+    }
+    patient {
+      id
+      name
+    }
+  }
+}
+
+mutation UpdateTask($id: ID!, $data: UpdateTaskInput!) {
+  updateTask(id: $id, data: $data) {
+    id
+    title
+    description
+    done
+    dueDate
+    updateDate
+    assignee {
+      id
+      name
+      avatarUrl
+    }
+  }
+}
+
+mutation AssignTask($id: ID!, $userId: ID!) {
+  assignTask(id: $id, userId: $userId) {
+    id
+    assignee {
+      id
+      name
+      avatarUrl
+    }
+  }
+}
+
+mutation UnassignTask($id: ID!) {
+  unassignTask(id: $id) {
+    id
+    assignee {
+      id
+      name
+      avatarUrl
+    }
+  }
+}
+
+mutation DeleteTask($id: ID!) {
+  deleteTask(id: $id)
+}
+
 mutation CompleteTask($id: ID!) {
   completeTask(id: $id) {
     id

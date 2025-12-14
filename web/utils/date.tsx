@@ -7,6 +7,7 @@ type SmartDateProps = {
   date: Date,
   className?: string,
   showTime?: boolean,
+  mode?: 'relative' | 'absolute',
 }
 
 const formatGerman = (date: Date, showTime: boolean) => {
@@ -58,7 +59,7 @@ export const formatRelative = (date: Date, locale: string, showTime: boolean) =>
   return formatAbsolute(date, locale, showTime)
 }
 
-export const SmartDate = ({ date, className, showTime = true }: SmartDateProps) => {
+export const SmartDate = ({ date, className, showTime = true, mode = 'relative' }: SmartDateProps) => {
   const { locale } = useLocale()
   const rerender = useRerender()
 
@@ -95,10 +96,13 @@ export const SmartDate = ({ date, className, showTime = true }: SmartDateProps) 
   const absoluteString = formatAbsolute(date, locale, showTime)
   const relativeString = formatRelative(date, locale, showTime)
 
+  const displayString = mode === 'relative' ? relativeString : absoluteString
+  const tooltipString = mode === 'relative' ? absoluteString : relativeString
+
   return (
-    <Tooltip tooltip={absoluteString} position="top">
+    <Tooltip tooltip={tooltipString} position="top">
       <span className={clsx('cursor-help underline decoration-dotted decoration-neutral-300 underline-offset-2', className)}>
-        {relativeString}
+        {displayString}
       </span>
     </Tooltip>
   )

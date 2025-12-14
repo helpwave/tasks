@@ -1,3 +1,5 @@
+from datetime import timezone
+
 import strawberry
 from api.context import Info
 from api.inputs import CreateTaskInput, UpdateTaskInput
@@ -35,7 +37,9 @@ class TaskQuery:
 
     @strawberry.field
     async def recent_tasks(
-        self, info: Info, limit: int = 10
+        self,
+        info: Info,
+        limit: int = 10,
     ) -> list[TaskType]:
         result = await info.context.db.execute(
             select(models.Task)
@@ -49,12 +53,16 @@ class TaskQuery:
 class TaskMutation:
     @strawberry.mutation
     async def create_task(self, info: Info, data: CreateTaskInput) -> TaskType:
+        due_date = data.due_date
+        if due_date and due_date.tzinfo is not None:
+            due_date = due_date.astimezone(timezone.utc).replace(tzinfo=None)
+
         new_task = models.Task(
             title=data.title,
             description=data.description,
             patient_id=data.patient_id,
             assignee_id=data.assignee_id,
-            due_date=data.due_date,
+            due_date=due_date,
         )
         info.context.db.add(new_task)
         if data.properties:
@@ -90,14 +98,53 @@ class TaskMutation:
             task.description = data.description
         if data.done is not None:
             task.done = data.done
+
         if data.due_date is not None:
-            task.due_date = data.due_date
-        if data.assignee_id is not None:
-            task.assignee_id = data.assignee_id
+            if data.due_date.tzinfo is not None:
+                task.due_date = data.due_date.astimezone(timezone.utc).replace(
+                    tzinfo=None,
+                )
+            else:
+                task.due_date = data.due_date
 
         if data.properties:
             await process_properties(db, task, data.properties, "task")
 
+        await db.commit()
+        await db.refresh(task)
+        return task
+
+    @strawberry.mutation
+    async def assign_task(
+        self,
+        info: Info,
+        id: strawberry.ID,
+        user_id: strawberry.ID,
+    ) -> TaskType:
+        db = info.context.db
+        result = await db.execute(
+            select(models.Task).where(models.Task.id == id),
+        )
+        task = result.scalars().first()
+        if not task:
+            raise Exception("Task not found")
+
+        task.assignee_id = user_id
+        await db.commit()
+        await db.refresh(task)
+        return task
+
+    @strawberry.mutation
+    async def unassign_task(self, info: Info, id: strawberry.ID) -> TaskType:
+        db = info.context.db
+        result = await db.execute(
+            select(models.Task).where(models.Task.id == id),
+        )
+        task = result.scalars().first()
+        if not task:
+            raise Exception("Task not found")
+
+        task.assignee_id = None
         await db.commit()
         await db.refresh(task)
         return task

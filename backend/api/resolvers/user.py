@@ -15,5 +15,10 @@ class UserQuery:
         return result.scalars().first()
 
     @strawberry.field
+    async def users(self, info: Info) -> list[UserType]:
+        result = await info.context.db.execute(select(models.User))
+        return result.scalars().all()
+
+    @strawberry.field
     def me(self, info: Info) -> UserType | None:
         return info.context.user
