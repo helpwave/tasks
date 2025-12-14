@@ -160,5 +160,8 @@
   "male": "Male",
   "female": "Female",
   "diverse": "Diverse",
-  "time.today": "Today"
+  "time.today": "Today",
+  "myFavorites": "My Favorites",
+  "freeBeds": "Free Beds",
+  "occupancy": "Occupancy"
 }

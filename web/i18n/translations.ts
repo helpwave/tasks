@@ -1,7 +1,7 @@
 // AUTO-GENERATED. DO NOT EDIT.
 /* eslint-disable @stylistic/quote-props */
-
-
+/* eslint-disable no-useless-escape */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import type { Translation } from '@helpwave/internationalization'
 import { TranslationGen } from '@helpwave/internationalization'
 
@@ -34,6 +34,7 @@ export type TasksTranslationEntries = {
   'editPatient': string,
   'female': string,
   'firstName': string,
+  'freeBeds': string,
   'homePage': string,
   'imprint': string,
   'itsYou': string,
@@ -45,6 +46,7 @@ export type TasksTranslationEntries = {
   'loginRequiredDescription': string,
   'logout': string,
   'male': string,
+  'myFavorites': string,
   'myOpenTasks': string,
   'myTasks': string,
   'name': string,
@@ -63,6 +65,7 @@ export type TasksTranslationEntries = {
   'nTeam': (values: { count: number }) => string,
   'nWard': (values: { count: number }) => string,
   'nYear': (values: { count: number }) => string,
+  'occupancy': string,
   'openTasks': string,
   'overview': string,
   'pages.404.notFound': string,
@@ -126,6 +129,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'editPatient': `Patient bearbeiten`,
     'female': `Weiblich`,
     'firstName': `Vorname`,
+    'freeBeds': `Freie Betten`,
     'homePage': `Startseite`,
     'imprint': `Impressum`,
     'itsYou': `Du`,
@@ -137,6 +141,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'loginRequiredDescription': `Um diese Seite benutzen zu können musst du eingeloggt sein.`,
     'logout': `Abmelden`,
     'male': `Männlich`,
+    'myFavorites': `Meine Favoriten`,
     'myOpenTasks': `Meine offenen Aufgaben`,
     'myTasks': `Meine Aufgaben`,
     'name': `Name`,
@@ -203,6 +208,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
         'other': `${count} Jahre alt`,
       })
     },
+    'occupancy': `Belegung`,
     'openTasks': `Offene Aufgaben`,
     'overview': `Übersicht`,
     'pages.404.notFound': `404 - Seite nicht gefunden`,
@@ -271,6 +277,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'editPatient': `Edit Patient`,
     'female': `Female`,
     'firstName': `First Name`,
+    'freeBeds': `Free Beds`,
     'homePage': `Home Page`,
     'imprint': `Imprint`,
     'itsYou': `You`,
@@ -282,6 +289,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'loginRequiredDescription': `To use this site you need to be logged in.`,
     'logout': `Logout`,
     'male': `Male`,
+    'myFavorites': `My Favorites`,
     'myOpenTasks': `My Open Tasks`,
     'myTasks': `My tasks`,
     'name': `Name`,
@@ -348,6 +356,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
         'other': `${count} years old`,
       })
     },
+    'occupancy': `Occupancy`,
     'openTasks': `Open Tasks`,
     'overview': `Overview`,
     'pages.404.notFound': `404 - Page not found`,
