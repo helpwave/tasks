@@ -53,8 +53,8 @@ services:
       REDIS_HOSTNAME: "redis"
       REDIS_PASSWORD: "password"
 
-      ISSUER_URI: "http://keycloak:8080/realms/tasks"
-      PUBLIC_ISSUER_URI: "http://localhost:8080/realms/tasks"
+      ISSUER_URI: "http://keycloak:8080/keycloak/realms/tasks"
+      PUBLIC_ISSUER_URI: "http://localhost/keycloak/realms/tasks"
       CLIENT_ID: "tasks-backend"
       CLIENT_SECRET: "tasks-secret"
       
@@ -66,6 +66,7 @@ services:
   web:
     image: ghcr.io/helpwave/tasks-web:latest
     environment:
+      RUNTIME_GRAPHQL_ENDPOINT: "http://localhost/graphql"
       RUNTIME_ISSUER_URI: "http://localhost/keycloak/realms/tasks"
       RUNTIME_REDIRECT_URI: "http://localhost/auth/callback"
       RUNTIME_POST_LOGOUT_REDIRECT_URI: "http://localhost/"
