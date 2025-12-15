@@ -1,4 +1,4 @@
-import { SolidButton } from '@helpwave/hightide'
+import { Button } from '@helpwave/hightide'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 
 type LoginPageProps = {
@@ -13,7 +13,7 @@ export const LoginPage = ({ login }: LoginPageProps) => {
       <div className="flex-col-0 bg-surface text-on-surface max-w-[360px] p-8 gap-y-2 rounded-lg shadow-lg">
         <h1 className="font-bold font-inter text-2xl">{translation('loginRequired')}</h1>
         <span className="text-description">{translation('loginRequiredDescription')}</span>
-        <SolidButton onClick={login}>{translation('login')}</SolidButton>
+        <Button onClick={login}>{translation('login')}</Button>
       </div>
     </main>
   )

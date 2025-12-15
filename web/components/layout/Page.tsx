@@ -6,14 +6,12 @@ import Head from 'next/head'
 import titleWrapper from '@/utils/titleWrapper'
 import Link from 'next/link'
 import {
-  Avatar,
+  Avatar, Button,
   Dialog,
   Expandable,
   ExpansionIcon,
-  IconButton,
   LoadingContainer,
   MarkdownInterpreter, Menu, MenuItem,
-  SolidButton,
   useLocalStorage
 } from '@helpwave/hightide'
 import { getConfig } from '@/utils/config'
@@ -74,9 +72,9 @@ export const StagingDisclaimerDialog = () => {
         </Link>
       </div>
       <div className="flex-row-0 justify-end">
-        <SolidButton color="positive" onClick={dismissStagingDisclaimer}>
+        <Button color="positive" onClick={dismissStagingDisclaimer}>
           {translation('confirm')}
-        </SolidButton>
+        </Button>
       </div>
     </Dialog>
   )
@@ -103,16 +101,16 @@ export const Header = ({ ...props }: HeaderProps) => {
       </div>
       <div className="flex-row-2 justify-end">
         <div className="flex-row-0">
-          <IconButton color="transparent">
+          <Button coloringStyle="text" layout="icon" color="neutral">
             <BellIcon />
-          </IconButton>
-          <IconButton color="transparent" onClick={() => router.push('/settings')}>
+          </Button>
+          <Button coloringStyle="text" layout="icon" color="neutral" onClick={() => router.push('/settings')}>
             <SettingsIcon />
-          </IconButton>
+          </Button>
         </div>
         <Menu<HTMLButtonElement>
           trigger={(bag, ref) => (
-            <SolidButton
+            <Button
               ref={ref}
               color="neutral"
               className="gap-x-1.75"
@@ -129,7 +127,7 @@ export const Header = ({ ...props }: HeaderProps) => {
                   alt: user.name
                 } : undefined}
               />
-            </SolidButton>
+            </Button>
           )}
         >
           <MenuItem onClick={() => logout()}>

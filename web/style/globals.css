@@ -1,15 +1,8 @@
 @import 'tailwindcss';
 
 @import '@helpwave/hightide/style/uncompiled/globals.css';
+@import "./colors.css";
 @source "./node_modules/@helpwave/hightide";
-
-:root {
-  --browser-vertical-scrollbar-width: env(scrollbar-inline-size);
-  --browser-horizontal-scrollbar-width: env(scrollbar-block-size);
-  --scrollbar-min-padding: 1rem;
-  --scrollbar-vertical-padding: calc(var(--scrollbar-min-padding) - var(--browser-vertical-scrollbar-width, 0rem));
-  --scrollbar-horizontal-padding: calc(var(--scrollbar-min-padding) - var(--browser-horizontal-scrollbar-width, 0rem));
-}
 
 @theme {
   /* Default Color Overwrites */
@@ -23,19 +16,6 @@
   /* Sidebar */
   --color-sidebar-background: #E7E7E7;
   --color-sidebar-text:  #000000;
-
-  /* Colors */
-  --color-todo-background: var(--color-tag-red-background);
-  --color-todo-text: var(--color-tag-red-text);
-  --color-todo-icon: var(--color-tag-red-icon);
-
-  --color-inprogress-background: var(--color-tag-yellow-background);
-  --color-inprogress-text: var(--color-tag-yellow-text);
-  --color-inprogress-icon: var(--color-tag-yellow-icon);
-
-  --color-done-background: var(--color-tag-green-background);
-  --color-done-text: var(--color-tag-green-text);
-  --color-done-icon: var(--color-tag-green-icon);
 
   /* TaskModalSidebar */
   --color-task-modal-sidebar-background: var(--color-surface-variant);

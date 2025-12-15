@@ -4,7 +4,7 @@ import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
 import {
-  IconButton,
+  Button,
   LanguageDialog,
   LocalizationUtil,
   ThemeDialog,
@@ -40,17 +40,17 @@ const SettingsPage: NextPage = () => {
           <span className="typography-label-lg">{translation('language')}</span>
           <div className="flex-row-4 justify-end items-center">
             {LocalizationUtil.languagesLocalNames[locale]}
-            <IconButton color="transparent" size="small" onClick={() => setIsLanguageDialogOpen(true)}>
+            <Button layout="icon" coloringStyle="text" color="neutral" size="small" onClick={() => setIsLanguageDialogOpen(true)}>
               <Edit2Icon/>
-            </IconButton>
+            </Button>
           </div>
 
           <span className="typography-label-lg">{translation('themes', { count: 1 })}</span>
           <div className="flex-row-4 justify-end items-center">
             {translation('themeMode', { theme })}
-            <IconButton color="transparent" size="small" onClick={() => setIsThemeDialogOpen(true)}>
+            <Button layout="icon" coloringStyle="text" color="neutral" size="small" onClick={() => setIsThemeDialogOpen(true)}>
               <Edit2Icon/>
-            </IconButton>
+            </Button>
           </div>
         </div>
       </ContentPanel>

@@ -3,7 +3,7 @@ import { Page } from '@/components/layout/Page'
 import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
-import { Avatar, CheckboxUncontrolled, FillerRowElement, SolidButton, Table } from '@helpwave/hightide'
+import { Avatar, Button, CheckboxUncontrolled, FillerRowElement, Table } from '@helpwave/hightide'
 import { useMemo, useState } from 'react'
 import type { ColumnDef } from '@tanstack/table-core'
 import type {
@@ -223,9 +223,9 @@ const TasksPage: NextPage = () => {
         titleElement={translation('myTasks')}
         description={translation('nTask', { count: tasks.length })}
         actionElement={(
-          <SolidButton startIcon={<PlusIcon />} onClick={handleCreate}>
+          <Button startIcon={<PlusIcon />} onClick={handleCreate}>
             {translation('addTask')}
-          </SolidButton>
+          </Button>
         )}
       >
         <Table

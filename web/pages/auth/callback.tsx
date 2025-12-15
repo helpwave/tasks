@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react'
 import { handleCallback } from '@/api/auth/authService'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { SolidButton } from '@helpwave/hightide'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
+import { Button } from '@helpwave/hightide'
 
 export default function AuthCallback() {
   const translation = useTasksTranslation()
@@ -49,9 +49,9 @@ export default function AuthCallback() {
         {hasError && (
           <span className="text-negative"> {translation('authenticationFailed')}</span>
         )}
-        <SolidButton onClick={() => router.push('/')}>
+        <Button onClick={() => router.push('/')}>
           Return Home
-        </SolidButton>
+        </Button>
       </div>
     </div>
   )

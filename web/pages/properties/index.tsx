@@ -3,7 +3,7 @@ import { Page } from '@/components/layout/Page'
 import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
-import { Chip, FillerRowElement, IconButton, LoadingContainer, SolidButton, Table } from '@helpwave/hightide'
+import { Button, Chip, FillerRowElement, LoadingContainer, Table } from '@helpwave/hightide'
 import { useMemo, useState } from 'react'
 import type { ColumnDef } from '@tanstack/table-core'
 import { EditIcon, PlusIcon } from 'lucide-react'
@@ -57,7 +57,7 @@ const PropertiesPage: NextPage = () => {
         const value = row.original.fieldType
 
         return (
-          <Chip size="sm">
+          <Chip size="small">
             <span className="capitalize">{value}</span>
           </Chip>
         )
@@ -88,7 +88,7 @@ const PropertiesPage: NextPage = () => {
       accessorKey: 'isArchived',
       cell: ({ row }) => {
         return (
-          <Chip color={row.original.isArchived ? 'red' : 'green'}>
+          <Chip color={row.original.isArchived ? 'negative' : 'positive'}>
             {translation(row.original.isArchived ? 'inactive' : 'active')}
           </Chip>
         )
@@ -100,12 +100,14 @@ const PropertiesPage: NextPage = () => {
       id: 'actions',
       header: '',
       cell: ({ row }) => (
-        <IconButton
-          color="transparent"
+        <Button
+          layout="icon"
+          coloringStyle="text"
+          color="neutral"
           onClick={() => handleEdit(row.original)}
         >
           <EditIcon/>
-        </IconButton>
+        </Button>
       ),
       enableSorting: false,
       enableColumnFilter: false,
@@ -121,9 +123,9 @@ const PropertiesPage: NextPage = () => {
         titleElement={translation('properties')}
         description={data ?  translation('nPatient', { count: data.length }) : (<LoadingContainer/>) }
         actionElement={(
-          <SolidButton startIcon={<PlusIcon/>} onClick={handleAdd}>
+          <Button startIcon={<PlusIcon/>} onClick={handleAdd}>
             {translation('rAdd', { name: translation('property') })}
-          </SolidButton>
+          </Button>
         )}
       >
         <Table
