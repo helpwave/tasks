@@ -126,6 +126,9 @@ export const PropertyDetailView = ({
                   updateLocal({ subjectType: value as PropertySubjectType })
                   persist({ subjectType: value as PropertySubjectType })
                 }}
+                contentPanelProps={{
+                  containerClassName: 'z-100'
+                }}
               >
                 {propertySubjectTypeList.map(v => (
                   <SelectOption key={v} value={v}>
@@ -144,6 +147,9 @@ export const PropertyDetailView = ({
                 onValueChanged={value => {
                   updateLocal({ fieldType: value as PropertyFieldType })
                   persist({ fieldType: value as PropertyFieldType })
+                }}
+                contentPanelProps={{
+                  containerClassName: 'z-100'
                 }}
               >
                 {propertyFieldTypeList.map(v => (
@@ -227,7 +233,10 @@ export const PropertyDetailView = ({
                         selectData: formData.selectData ? {
                           ...formData.selectData,
                           options: [...formData.selectData.options, option]
-                        } : undefined
+                        } : {
+                          options: [option],
+                          isAllowingFreetext: false,
+                        }
                       }
                       updateLocal(update)
                       persist(update)
@@ -251,7 +260,10 @@ export const PropertyDetailView = ({
                         selectData: formData.selectData ? {
                           ...formData.selectData,
                           options: [...formData.selectData.options, newOption]
-                        } : undefined
+                        } : {
+                          options: [newOption],
+                          isAllowingFreetext: false,
+                        }
                       }
                       updateLocal(update)
                       persist(update)
