@@ -224,5 +224,8 @@
   "selectPatient": "Patient auswählen",
   "currentPatient": "Aktueller Patient",
   "selectAssignee": "Zuweisen an...",
-  "unassigned": "Nicht zugewiesen"
+  "unassigned": "Nicht zugewiesen",
+  "male": "Männlich",
+  "female": "Weiblich",
+  "diverse": "Divers"
 }

@@ -88,9 +88,15 @@ const PatientsPage: NextPage = () => {
         const sex = row.original.sex
         const color = sex === Sex.Male ? 'blue' : sex === Sex.Female ? 'red' : 'default'
 
+        const label = {
+          [Sex.Male]: translation('male'),
+          [Sex.Female]: translation('female'),
+          [Sex.Unknown]: translation('diverse'),
+        }[sex] || sex
+
         return (
           <Chip color={color} size="sm">
-            <span className="capitalize">{sex.toLowerCase()}</span>
+            <span>{label}</span>
           </Chip>
         )
       },
@@ -186,7 +192,7 @@ const PatientsPage: NextPage = () => {
           className="w-full h-full"
           data={patients}
           columns={columns}
-          fillerRow={() => (<FillerRowElement className="min-h-12"/>)}
+          fillerRow={() => (<FillerRowElement className="min-h-12" />)}
         />
       </ContentPanel>
       <SidePanel
