@@ -1,6 +1,7 @@
 'use client'
 
 import { getConfig } from '@/utils/config'
+import { executeWithRetry } from '@/utils/retry'
 import type { User } from 'oidc-client-ts'
 import { UserManager, WebStorageStateStore } from 'oidc-client-ts'
 
@@ -21,17 +22,17 @@ const createUserManager = () => {
 export const userManager = createUserManager()
 
 export const signUp = () => {
-  return userManager.signinRedirect()
+  return executeWithRetry(() => userManager.signinRedirect())
 }
 
 export const login = async (returnUrl?: string) => {
-  return userManager.signinRedirect({
+  return executeWithRetry(() => userManager.signinRedirect({
     state: { returnUrl: returnUrl || window.location.href }
-  })
+  }))
 }
 
 export const handleCallback = async () => {
-  return await userManager.signinRedirectCallback()
+  return await executeWithRetry(() => userManager.signinRedirectCallback())
 }
 
 export const logout = () => {
@@ -44,7 +45,7 @@ export const getUser = async (): Promise<User | null> => {
 
 export const renewToken = async (): Promise<User | null> => {
   try {
-    return await userManager.signinSilent()
+    return await executeWithRetry(() => userManager.signinSilent())
   } catch (error) {
     console.warn('Silent token renewal failed:', error)
     return null
