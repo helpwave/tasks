@@ -17,18 +17,18 @@ services:
       KC_DB_PASSWORD: "password"
 
       KC_HOSTNAME: "localhost"
-      KC_HOSTNAME_PORT: 8080
       KC_HOSTNAME_STRICT: false
+      KC_PROXY: edge
+      KC_HTTP_RELATIVE_PATH: /keycloak
+      KC_HTTP_ENABLED: true
 
       KEYCLOAK_ADMIN: "admin"
       KEYCLOAK_ADMIN_PASSWORD: "admin"
-    command: start-dev --import-realm
+    command: start --import-realm
     depends_on:
       - keycloak-postgres
     volumes:
       - "./keycloak:/opt/keycloak/data/import:ro"
-    ports:
-      - "8080:8080"
 
   postgres:
     image: postgres:15.15
@@ -67,19 +67,23 @@ services:
   web:
     image: ghcr.io/helpwave/tasks-web:latest
     environment:
-      ISSUER_URI: "http://localhost:8080/realms/tasks"
-      CLIENT_ID: "tasks-web"
+      RUNTIME_ISSUER_URI: "http://localhost/keycloak/realms/tasks"
+      RUNTIME_REDIRECT_URI: "http://localhost/auth/callback"
+      RUNTIME_POST_LOGOUT_REDIRECT_URI: "http://localhost/"
+      RUNTIME_CLIENT_ID: "tasks-web"
     depends_on:
       - backend
 
   proxy:
     image: ghcr.io/helpwave/tasks-proxy:latest
     environment:
+      KEYCLOAK_HOST: keycloak:8080
       BACKEND_HOST: backend:80
       FRONTEND_HOST: web:80
     ports:
       - "80:80"
     depends_on:
+      - keycloak
       - backend
       - web
 
