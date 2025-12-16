@@ -389,7 +389,7 @@ export type UserType = {
 export type GetLocationsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetLocationsQuery = { __typename?: 'Query', locationNodes: Array<{ __typename?: 'LocationNodeType', id: string, title: string }> };
+export type GetLocationsQuery = { __typename?: 'Query', locationNodes: Array<{ __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parentId?: string | null }> };
 
 export type GetMyTasksQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -505,6 +505,8 @@ export const GetLocationsDocument = `
   locationNodes {
     id
     title
+    kind
+    parentId
   }
 }
     `;

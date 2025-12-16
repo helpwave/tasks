@@ -18,12 +18,10 @@ import { getConfig } from '@/utils/config'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import clsx from 'clsx'
 import {
-  BellIcon,
   Building2,
   CircleCheck,
   Grid2X2PlusIcon,
   SettingsIcon,
-  TableProperties,
   User,
   Users
 } from 'lucide-react'
@@ -52,7 +50,7 @@ export const StagingDisclaimerDialog = () => {
     if (config.showStagingDisclaimerModal && new Date().getTime() - lastTimeStagingDisclaimerDismissed > ONE_DAY) {
       setStagingDisclaimerOpen(true)
     }
-  }, [lastTimeStagingDisclaimerDismissed])
+  }, [lastTimeStagingDisclaimerDismissed, config.showStagingDisclaimerModal])
 
   return (
     <Dialog
@@ -101,9 +99,6 @@ export const Header = ({ ...props }: HeaderProps) => {
       </div>
       <div className="flex-row-2 justify-end">
         <div className="flex-row-0">
-          <Button coloringStyle="text" layout="icon" color="neutral">
-            <BellIcon />
-          </Button>
           <Button coloringStyle="text" layout="icon" color="neutral" onClick={() => router.push('/settings')}>
             <SettingsIcon />
           </Button>
@@ -163,9 +158,6 @@ const SidebarLink = ({ children, ...props }: SidebarLinkProps) => {
 
 type SidebarProps = HTMLAttributes<HTMLDivElement>
 
-/**
- * The basic sidebar for most pages
- */
 export const Sidebar = ({ ...props }: SidebarProps) => {
   const translation = useTasksTranslation()
   const wardsRoute = '/wards'
@@ -260,10 +252,6 @@ export const Sidebar = ({ ...props }: SidebarProps) => {
             </SidebarLink>
           ))}
         </Expandable>
-        <SidebarLink href="/properties">
-          <TableProperties className="size-5" />
-          <span className="flex grow">{translation('properties')}</span>
-        </SidebarLink>
       </nav>
     </aside>
   )

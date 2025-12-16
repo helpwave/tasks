@@ -225,5 +225,31 @@
   "currentPatient": "Aktueller Patient",
   "selectAssignee": "Zuweisen an...",
   "unassigned": "Nicht zugewiesen",
-  "newPatient": "Neuer Patient"
+  "newPatient": "Neuer Patient",
+  "selectLocationDescription": "Bitte wählen Sie den zugewiesenen Standort für den Patienten aus.",
+  "searchLocations": "Standorte suchen...",
+  "selectAll": "Alle auswählen",
+  "deselectAll": "Auswahl aufheben",
+  "loading": "Laden...",
+  "noLocationsFound": "Keine Standorte gefunden",
+  "confirmSelection": "Auswahl bestätigen",
+  "expandAll": "Alle ausklappen",
+  "collapseAll": "Alle einklappen",
+  "assignedLocation": "Zugewiesener Standort",
+  "selectLocation": "Standort auswählen",
+  "clearCache": "Cache leeren",
+  "account": "Konto",
+  "system": "System",
+  "themeMode": "{theme, select, dark{Dunkel} light{Hell} system{System} other{System}}",
+  "@themeMode": {
+    "placeholders": {
+      "theme": {
+        "type": "string"
+      }
+    }
+  },
+  "chooseLanguage": "Sprache wählen",
+  "chooseTheme": "Design wählen",
+  "done": "Fertig",
+  "profile": "Profil"
 }

@@ -4,53 +4,184 @@ import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
 import {
+  Avatar,
   Button,
-  LanguageDialog,
   LocalizationUtil,
-  ThemeDialog,
+  Select,
+  SelectOption,
+  ThemeUtil,
   useLocale,
   useTheme
 } from '@helpwave/hightide'
-import { useState } from 'react'
-import { Edit2Icon } from 'lucide-react'
+import type { HightideTranslationLocales, ThemeType } from '@helpwave/hightide'
+import { useTasksContext } from '@/hooks/useTasksContext'
+import { useAuth } from '@/hooks/useAuth'
+import { LogOut, MonitorCog, MoonIcon, SunIcon, TableProperties, Trash2 } from 'lucide-react'
+import { useRouter } from 'next/router'
+import clsx from 'clsx'
+import { removeUser } from '@/api/auth/authService'
+import { useQueryClient } from '@tanstack/react-query'
+
+type ThemeIconProps = {
+  theme: ThemeType,
+  className?: string,
+}
+
+const ThemeIcon = ({ theme, className }: ThemeIconProps) => {
+  if (theme === 'dark') {
+    return (
+      <MoonIcon className={clsx('w-4 h-4', className)} />
+    )
+  } else if (theme === 'light') {
+    return (
+      <SunIcon className={clsx('w-4 h-4', className)} />
+    )
+  } else {
+    return (
+      <MonitorCog className={clsx('w-4 h-4', className)} />
+    )
+  }
+}
 
 const SettingsPage: NextPage = () => {
   const translation = useTasksTranslation()
-  const { locale } = useLocale()
-  const { theme } = useTheme()
-  const [isThemeDialogOpen, setIsThemeDialogOpen] = useState<boolean>(false)
-  const [isLanguageDialogOpen, setIsLanguageDialogOpen] = useState<boolean>(false)
+  const { locale, setLocale } = useLocale()
+  const { theme, setTheme } = useTheme()
+  const { user } = useTasksContext()
+  const { logout } = useAuth()
+  const router = useRouter()
+  const queryClient = useQueryClient()
+
+  const handleClearCache = async () => {
+    queryClient.clear()
+
+    await removeUser()
+
+    if (typeof window !== 'undefined') {
+      localStorage.clear()
+      sessionStorage.clear()
+    }
+
+    window.location.href = '/'
+  }
 
   return (
-    <Page pageTitle={titleWrapper(translation('patients'))}>
-      <LanguageDialog
-        isOpen={isLanguageDialogOpen}
-        onClose={() => setIsLanguageDialogOpen(false)}
-      />
-      <ThemeDialog
-        isOpen={isThemeDialogOpen}
-        onClose={() => setIsThemeDialogOpen(false)}
-      />
+    <Page pageTitle={titleWrapper(translation('settings'))}>
       <ContentPanel
         titleElement={translation('settings')}
         description={translation('settingsDescription')}
       >
-        <h2 className="typography-title-md">{translation('preferences')}</h2>
-        <div className="grid grid-cols-2 gap-x-8 items-center max-w-128">
-          <span className="typography-label-lg">{translation('language')}</span>
-          <div className="flex-row-4 justify-end items-center">
-            {LocalizationUtil.languagesLocalNames[locale]}
-            <Button layout="icon" coloringStyle="text" color="neutral" size="small" onClick={() => setIsLanguageDialogOpen(true)}>
-              <Edit2Icon/>
-            </Button>
+        <div className="flex flex-col gap-y-12">
+          {/* Profile Section */}
+          <section className="flex-row-4 items-center p-4 bg-surface-1 rounded-lg border border-divider">
+            <Avatar
+              size="xl"
+              fullyRounded
+              image={user?.avatarUrl ? { avatarUrl: user.avatarUrl, alt: user?.name || '' } : undefined}
+            />
+            <div className="flex-col-1">
+              <span className="typography-title-md font-bold">{user?.name}</span>
+              <span className="typography-body-sm text-description">{user?.id}</span>
+            </div>
+          </section>
+
+          {/* System / Management */}
+          <div className="flex-col-6">
+            <h2 className="typography-title-md border-b border-divider pb-2">{translation('system')}</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Button
+                color="neutral"
+                coloringStyle="outline"
+                className="justify-start h-auto py-4"
+                onClick={() => router.push('/properties')}
+                startIcon={<TableProperties className="mr-2" />}
+              >
+                <div className="flex-col-1 items-start">
+                  <span className="typography-label-lg">{translation('properties')}</span>
+                  <span className="typography-body-sm text-description font-normal">
+                    {translation('nProperties', { count: 2 })}
+                  </span>
+                </div>
+              </Button>
+            </div>
           </div>
 
-          <span className="typography-label-lg">{translation('themes', { count: 1 })}</span>
-          <div className="flex-row-4 justify-end items-center">
-            {translation('themeMode', { theme })}
-            <Button layout="icon" coloringStyle="text" color="neutral" size="small" onClick={() => setIsThemeDialogOpen(true)}>
-              <Edit2Icon/>
-            </Button>
+          {/* Preferences */}
+          <div className="flex-col-6">
+            <h2 className="typography-title-md border-b border-divider pb-2">{translation('preferences')}</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 max-w-200">
+
+              {/* Language */}
+              <div className="flex-col-2">
+                <span className="typography-label-lg">{translation('language')}</span>
+                <Select
+                  value={locale}
+                  onValueChanged={(language: string) => setLocale(language as HightideTranslationLocales)}
+                  buttonProps={{
+                    selectedDisplay: (l) => LocalizationUtil.languagesLocalNames[l as HightideTranslationLocales],
+                    className: 'w-full'
+                  }}
+                >
+                  {LocalizationUtil.locals.map((local) => (
+                    <SelectOption key={local} value={local}>
+                      {LocalizationUtil.languagesLocalNames[local]}
+                    </SelectOption>
+                  ))}
+                </Select>
+              </div>
+
+              {/* Theme */}
+              <div className="flex-col-2">
+                <span className="typography-label-lg">{translation('themes', { count: 1 })}</span>
+                <Select
+                  value={theme}
+                  onValueChanged={(theme) => setTheme(theme as ThemeType)}
+                  iconAppearance="right"
+                  buttonProps={{
+                    selectedDisplay: (value) => (
+                      <div className="flex-row-2 items-center">
+                        <ThemeIcon theme={theme} />
+                        {translation('themeMode', { theme: value })}
+                      </div>
+                    ),
+                    className: 'w-full',
+                  }}
+                >
+                  {ThemeUtil.themes.map((t) => (
+                    <SelectOption key={t} value={t} className="gap-x-6 justify-between">
+                      <div className="flex-row-2 items-center">
+                        <ThemeIcon theme={t} />
+                        {translation('themeMode', { theme: t })}
+                      </div>
+                    </SelectOption>
+                  ))}
+                </Select>
+              </div>
+            </div>
+          </div>
+
+          {/* Account / Danger Zone */}
+          <div className="flex-col-6">
+            <h2 className="typography-title-md border-b border-divider pb-2">{translation('account')}</h2>
+            <div className="flex-row-4 flex-wrap">
+              <Button
+                color="neutral"
+                coloringStyle="outline"
+                onClick={() => logout()}
+                startIcon={<LogOut className="w-4 h-4" />}
+              >
+                {translation('logout')}
+              </Button>
+
+              <Button
+                color="negative"
+                coloringStyle="outline"
+                onClick={handleClearCache}
+                startIcon={<Trash2 className="w-4 h-4" />}
+              >
+                {translation('clearCache')}
+              </Button>
+            </div>
           </div>
         </div>
       </ContentPanel>
