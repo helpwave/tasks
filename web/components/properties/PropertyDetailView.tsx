@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react'
 import {
+  Button,
   Checkbox,
   FormElementWrapper,
   Input,
   LoadingButton,
   Select,
   SelectOption,
-  Textarea,
-  TextButton
+  Textarea
 } from '@helpwave/hightide'
 import type { Property, PropertyFieldType, PropertySelectOption, PropertySubjectType } from '@/components/PropertyList'
 import { propertyFieldTypeList, propertySubjectTypeList } from '@/components/PropertyList'
@@ -126,9 +126,6 @@ export const PropertyDetailView = ({
                   updateLocal({ subjectType: value as PropertySubjectType })
                   persist({ subjectType: value as PropertySubjectType })
                 }}
-                contentPanelProps={{
-                  containerClassName: 'z-100'
-                }}
               >
                 {propertySubjectTypeList.map(v => (
                   <SelectOption key={v} value={v}>
@@ -147,9 +144,6 @@ export const PropertyDetailView = ({
                 onValueChanged={value => {
                   updateLocal({ fieldType: value as PropertyFieldType })
                   persist({ fieldType: value as PropertyFieldType })
-                }}
-                contentPanelProps={{
-                  containerClassName: 'z-100'
                 }}
               >
                 {propertyFieldTypeList.map(v => (
@@ -195,7 +189,8 @@ export const PropertyDetailView = ({
                       }}
                       className="pr-11 w-full"
                     />
-                    <TextButton
+                    <Button
+                      coloringStyle="text"
                       color="negative"
                       size="none"
                       className="absolute right-3 top-2 rounded"
@@ -212,7 +207,7 @@ export const PropertyDetailView = ({
                       }}
                     >
                       <XIcon/>
-                    </TextButton>
+                    </Button>
                   </div>
                 ))}
                 <div className="relative">
@@ -250,7 +245,8 @@ export const PropertyDetailView = ({
                     className="pr-16 w-full"
                     placeholder={translation('rAdd', { name: translation('option') })}
                   />
-                  <TextButton
+                  <Button
+                    coloringStyle="text"
                     color="primary"
                     size="none"
                     className="absolute right-3 top-2 rounded"
@@ -276,7 +272,7 @@ export const PropertyDetailView = ({
                     }}
                   >
                     <PlusIcon/>
-                  </TextButton>
+                  </Button>
                 </div>
               </div>
             </div>
@@ -295,7 +291,7 @@ export const PropertyDetailView = ({
                 </div>
                 <Checkbox
                   checked={formData.isArchived}
-                  onChange={value => {
+                  onCheckedChange={value => {
                     const update = { isArchived: value }
                     updateLocal(update)
                     persist(update)

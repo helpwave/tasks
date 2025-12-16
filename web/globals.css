@@ -1,15 +1,8 @@
 @import 'tailwindcss';
 
-@import '@helpwave/hightide/style/uncompiled/globals.css';
+@import "./style/colors.css";
+@import "@helpwave/hightide/style/uncompiled/globals.css";
 @source "./node_modules/@helpwave/hightide";
-
-:root {
-  --browser-vertical-scrollbar-width: env(scrollbar-inline-size);
-  --browser-horizontal-scrollbar-width: env(scrollbar-block-size);
-  --scrollbar-min-padding: 1rem;
-  --scrollbar-vertical-padding: calc(var(--scrollbar-min-padding) - var(--browser-vertical-scrollbar-width, 0rem));
-  --scrollbar-horizontal-padding: calc(var(--scrollbar-min-padding) - var(--browser-horizontal-scrollbar-width, 0rem));
-}
 
 @theme {
   /* Default Color Overwrites */
@@ -18,24 +11,11 @@
 
   /* Header */
   --color-header-background: #E7E7E7;
-  --color-header-text:  #000000;
+  --color-header-text: #000000;
 
   /* Sidebar */
   --color-sidebar-background: #E7E7E7;
-  --color-sidebar-text:  #000000;
-
-  /* Colors */
-  --color-todo-background: var(--color-tag-red-background);
-  --color-todo-text: var(--color-tag-red-text);
-  --color-todo-icon: var(--color-tag-red-icon);
-
-  --color-inprogress-background: var(--color-tag-yellow-background);
-  --color-inprogress-text: var(--color-tag-yellow-text);
-  --color-inprogress-icon: var(--color-tag-yellow-icon);
-
-  --color-done-background: var(--color-tag-green-background);
-  --color-done-text: var(--color-tag-green-text);
-  --color-done-icon: var(--color-tag-green-icon);
+  --color-sidebar-text: #000000;
 
   /* TaskModalSidebar */
   --color-task-modal-sidebar-background: var(--color-surface-variant);
@@ -59,4 +39,105 @@
   body {
     @apply w-screen max-w-screen h-screen max-h-screen overflow-hidden;
   }
+}
+
+
+@theme {
+  --color-gender-female: var(--color-red-400);
+  --color-gender-on-female: var(--color-white);
+  --color-gender-female-hover: var(--color-red-600);
+
+  --color-gender-male: var(--color-blue-500);
+  --color-gender-on-male: var(--color-white);
+  --color-gender-male-hover: var(--color-blue-600);
+
+  --color-gender-neutral: var(--color-blue-500);
+  --color-gender-on-neutral: var(--color-white);
+  --color-gender-neutral-hover: var(--color-blue-600);
+}
+
+@layer base {
+  @variant dark {
+
+  }
+}
+
+@utility coloring-solid {
+  @apply
+  bg-[var(--coloring-solid-color,var(--coloring-color))]
+  text-[var(--coloring-solid-text,var(--coloring-on-color))];
+}
+
+@utility coloring-solid-hover {
+  @apply
+  coloring-solid
+  hover:bg-[var(--coloring-solid-hover,var(--coloring-hover))];
+}
+
+@utility coloring-tonal {
+  @apply
+  bg-[var(--coloring-color)]/20
+  text-[var(--coloring-color)];
+}
+
+@utility coloring-tonal-hover {
+  @apply
+  coloring-tonal
+  hover:bg-[var(--coloring-color)]/30;
+}
+
+@utility coloring-text {
+  @apply
+  text-[var(--coloring-text,var(--coloring-color))];
+}
+
+@utility coloring-text-hover {
+  @apply
+  coloring-text
+  hover:bg-[var(--coloring-text-hover,var(--coloring-text,var(--coloring-color)))]/20;
+}
+
+@utility coloring-outline {
+  @apply
+  border-1
+  border-[var(--coloring-border,var(--coloring-outline,var(--coloring-color)))]
+  text-[var(--coloring-outline,var(--coloring-color))];
+}
+
+@utility coloring-outline-hover {
+  @apply
+  coloring-outline
+  hover:border-[var(--coloring-border-hover,--coloring-hover)]
+  hover:text-[var(--coloring-outline-hover,var(--coloring-hover))];
+}
+
+@utility reset-coloring-variables {
+  --coloring-color: initial;
+  --coloring-on-color: initial;
+  --coloring-hover: initial;
+  --coloring-text: initial;
+  --coloring-text-hover: initial;
+  --coloring-outline: initial;
+  --coloring-outline-hover: initial;
+}
+
+@utility gender-male {
+  @apply reset-coloring-variables;
+  --coloring-color: var(--color-gender-male);
+  --coloring-on-color: var(--color-gender-on-male);
+  --coloring-hover: var(--color-gender-male-hover);
+}
+
+@utility gender-female {
+  @apply reset-coloring-variables;
+  --coloring-color: var(--color-gender-female);
+  --coloring-on-color: var(--color-gender-on-female);
+  --coloring-hover: var(--color-gender-female-hover);
+}
+
+@utility gender-neutral {
+  @apply reset-coloring-variables;
+  --coloring-color: var(--color-gender-neutral);
+  --coloring-on-color: var(--color-gender-on-neutral);
+  --coloring-hover: var(--color-gender-neutral-hover);
 }

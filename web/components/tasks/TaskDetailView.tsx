@@ -176,7 +176,6 @@ export const TaskDetailView = ({ taskId, initialData, onClose, onSuccess }: Task
                 <Select
                   value={formData.assigneeId || 'unassigned'}
                   onValueChanged={handleAssigneeChange}
-                  contentPanelProps={{ containerClassName: 'z-[100]' }}
                 >
                   <SelectOption value="unassigned">{translation('unassigned')}</SelectOption>
                   {users.map(u => (

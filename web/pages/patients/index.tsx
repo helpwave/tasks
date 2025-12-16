@@ -3,7 +3,7 @@ import { Page } from '@/components/layout/Page'
 import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
-import { IconButton, Table, Chip, SolidButton, FillerRowElement } from '@helpwave/hightide'
+import { Table, Chip, FillerRowElement, Button } from '@helpwave/hightide'
 import { useMemo, useState } from 'react'
 import type { ColumnDef } from '@tanstack/table-core'
 import { EditIcon, PlusIcon } from 'lucide-react'
@@ -86,7 +86,7 @@ const PatientsPage: NextPage = () => {
       accessorKey: 'sex',
       cell: ({ row }) => {
         const sex = row.original.sex
-        const color = sex === Sex.Male ? 'blue' : sex === Sex.Female ? 'red' : 'default'
+        const color = sex === Sex.Male ? 'gender-male' : sex === Sex.Female ? 'gender-male' : 'gender-neutral'
 
         const label = {
           [Sex.Male]: translation('male'),
@@ -95,7 +95,7 @@ const PatientsPage: NextPage = () => {
         }[sex] || sex
 
         return (
-          <Chip color={color} size="sm">
+          <Chip color="none" size="small" className={color}>
             <span>{label}</span>
           </Chip>
         )
@@ -162,12 +162,12 @@ const PatientsPage: NextPage = () => {
       id: 'actions',
       header: '',
       cell: ({ row }) => (
-        <IconButton
-          color="transparent"
+        <Button
+          coloringStyle="text" layout="icon" color="neutral"
           onClick={() => handleEdit(row.original)}
         >
           <EditIcon />
-        </IconButton>
+        </Button>
       ),
       enableSorting: false,
       enableColumnFilter: false,
@@ -183,9 +183,9 @@ const PatientsPage: NextPage = () => {
         titleElement={translation('patients')}
         description={translation('nPatient', { count: patients.length })}
         actionElement={(
-          <SolidButton startIcon={<PlusIcon />} onClick={handleAdd}>
+          <Button startIcon={<PlusIcon />} onClick={handleAdd}>
             {translation('addPatient')}
-          </SolidButton>
+          </Button>
         )}
       >
         <Table

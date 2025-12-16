@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import clsx from 'clsx'
-import { IconButton } from '@helpwave/hightide'
+import { Button, useZIndexRegister } from '@helpwave/hightide'
 
 interface SidePanelProps {
   isOpen: boolean,
@@ -22,11 +22,12 @@ export const SidePanel = ({ isOpen, onClose, title, children }: SidePanelProps) 
   const handleAnimationEnd = () => {
     if (!isOpen) setIsVisible(false)
   }
+  const zIndex = useZIndexRegister(isOpen)
 
   if (!isVisible) return null
 
   return createPortal(
-    <div className="fixed inset-0 overflow-hidden">
+    <div className="fixed inset-0 overflow-hidden" style={{ zIndex }}>
       <div
         className={clsx(
           'absolute inset-0 bg-overlay-shadow transition-opacity duration-300',
@@ -46,13 +47,13 @@ export const SidePanel = ({ isOpen, onClose, title, children }: SidePanelProps) 
           )}
           onTransitionEnd={handleAnimationEnd}
         >
-          <div className="flex h-full flex-col bg-surface shadow-xl">
+          <div className="flex h-full flex-col bg-surface text-on-surface shadow-xl">
             <div className="flex items-center justify-between px-4 py-6 sm:px-6 border-b border-divider min-h-[80px]">
-              {title && <div className="text-lg font-medium text-text-primary flex-1">{title}</div>}
+              {title && <div className="text-lg font-medium flex-1">{title}</div>}
               <div className="ml-auto">
-                <IconButton color="transparent" onClick={onClose}>
+                <Button color="neutral" layout="icon" coloringStyle="text" onClick={onClose}>
                   <X className="h-6 w-6" />
-                </IconButton>
+                </Button>
               </div>
             </div>
             <div className="relative flex-1 px-4 py-6 sm:px-6 overflow-y-auto flex flex-col">

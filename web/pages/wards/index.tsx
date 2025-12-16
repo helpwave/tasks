@@ -134,7 +134,7 @@ type WardCardProps = {
 const WardCard = ({ ward }: WardCardProps) => {
   const translation = useTasksTranslation()
   const { isFavorite, name, patientCount, totalBedCount, freeBedCount } = ward
-  const occupancyPercentage = Math.round((1 - (freeBedCount / Math.max(totalBedCount, 1))) * 100) / 100
+  const occupancyPercentage = Math.round((1 - (freeBedCount / Math.max(totalBedCount, 1))) * 100)
   const router = useRouter()
 
   return (
@@ -181,7 +181,16 @@ const WardCard = ({ ward }: WardCardProps) => {
           </span>
         </div>
         <div className="flex-col-0">
-          <span className="typography-label-lg font-bold">
+          <span
+            className={clsx(
+              'typography-label-lg font-bold',
+              {
+                'text-description': occupancyPercentage <= 70,
+                'text-warning': 70 < occupancyPercentage && occupancyPercentage <= 85,
+                'text-negative': 85 < occupancyPercentage,
+              }
+            )}
+          >
             {occupancyPercentage + '%'}
           </span>
           {/* TODO add typography-label-sm here once it exists */}
@@ -234,7 +243,7 @@ const WardsOverviewPage: NextPage = () => {
               </div>
             )}
             headerClassName="typography-label-md font-bold !px-4 !py-4 rounded-xl"
-            contentClassName="pb-4"
+            contentExpandedClassName="pb-4"
             className="rounded-xl"
             isExpanded={true}
           >
@@ -251,7 +260,7 @@ const WardsOverviewPage: NextPage = () => {
               key={index}
               label={wardGroup.name}
               headerClassName="typography-label-md font-bold !px-4 !py-4 rounded-xl"
-              contentClassName="pb-4"
+              contentExpandedClassName="pb-4"
               className="rounded-xl"
               isExpanded={false}
             >

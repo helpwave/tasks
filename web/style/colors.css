@@ -1,0 +1,51 @@
+@theme {
+  --color-gender-female: var(--color-red-400);
+  --color-gender-on-female: var(--color-white);
+  --color-gender-female-hover: var(--color-red-600);
+
+  --color-gender-male: var(--color-blue-500);
+  --color-gender-on-male: var(--color-white);
+  --color-gender-male-hover: var(--color-blue-600);
+
+  --color-gender-neutral: var(--color-blue-500);
+  --color-gender-on-neutral: var(--color-white);
+  --color-gender-neutral-hover: var(--color-blue-600);
+}
+
+@layer base {
+  @variant dark {
+
+  }
+}
+
+@utility gender-male {
+  @apply reset-coloring-variables;
+  --coloring-color: var(--color-gender-male);
+  --coloring-on-color: var(--color-gender-on-male);
+  --coloring-hover: var(--color-gender-male-hover);
+}
+
+@utility gender-female {
+  @apply reset-coloring-variables;
+  --coloring-color: var(--color-gender-female);
+  --coloring-on-color: var(--color-gender-on-female);
+  --coloring-hover: var(--color-gender-female-hover);
+}
+
+@utility gender-neutral {
+  @apply reset-coloring-variables;
+  --coloring-color: var(--color-gender-neutral);
+  --coloring-on-color: var(--color-gender-on-neutral);
+  --coloring-hover: var(--color-gender-neutral-hover);
+}
+
+@utility coloring-text {
+  @apply
+  text-[var(--coloring-text,var(--coloring-color))];
+}
+
+@utility coloring-text-hover {
+  @apply
+  coloring-text
+  hover:bg-[var(--coloring-text-hover,var(--coloring-text,var(--coloring-color)))]/20;
+}

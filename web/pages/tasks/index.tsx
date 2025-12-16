@@ -3,7 +3,7 @@ import { Page } from '@/components/layout/Page'
 import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
-import { Avatar, CheckboxUncontrolled, FillerRowElement, SolidButton, Table } from '@helpwave/hightide'
+import { Avatar, Button, CheckboxUncontrolled, FillerRowElement, Table } from '@helpwave/hightide'
 import { useMemo, useState } from 'react'
 import type { ColumnDef } from '@tanstack/table-core'
 import type {
@@ -94,7 +94,7 @@ const TasksPage: NextPage = () => {
           <div onClick={(e) => e.stopPropagation()}>
             <CheckboxUncontrolled
               checked={row.original.done}
-              onChange={(checked) => {
+              onCheckedChange={(checked) => {
                 if (!checked) {
                   completeTask({ id: row.original.id })
                 } else {
@@ -105,9 +105,9 @@ const TasksPage: NextPage = () => {
             />
           </div>
         ),
-        minSize: 80,
-        size: 80,
-        maxSize: 80,
+        minSize: 110,
+        size: 110,
+        maxSize: 110,
         enableResizing: false,
       },
       {
@@ -223,9 +223,9 @@ const TasksPage: NextPage = () => {
         titleElement={translation('myTasks')}
         description={translation('nTask', { count: tasks.length })}
         actionElement={(
-          <SolidButton startIcon={<PlusIcon />} onClick={handleCreate}>
+          <Button startIcon={<PlusIcon />} onClick={handleCreate}>
             {translation('addTask')}
-          </SolidButton>
+          </Button>
         )}
       >
         <Table
