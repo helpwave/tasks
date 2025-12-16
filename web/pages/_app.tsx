@@ -9,7 +9,7 @@ import {
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools/production'
 import titleWrapper from '@/utils/titleWrapper'
 import { getConfig } from '@/utils/config'
-import '../style/globals.css'
+import '../globals.css'
 import { AuthProvider } from '@/hooks/useAuth'
 import { TasksContextProvider } from '@/hooks/useTasksContext'
 

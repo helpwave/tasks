@@ -94,7 +94,7 @@ const TasksPage: NextPage = () => {
           <div onClick={(e) => e.stopPropagation()}>
             <CheckboxUncontrolled
               checked={row.original.done}
-              onChange={(checked) => {
+              onCheckedChange={(checked) => {
                 if (!checked) {
                   completeTask({ id: row.original.id })
                 } else {
@@ -105,9 +105,9 @@ const TasksPage: NextPage = () => {
             />
           </div>
         ),
-        minSize: 80,
-        size: 80,
-        maxSize: 80,
+        minSize: 110,
+        size: 110,
+        maxSize: 110,
         enableResizing: false,
       },
       {

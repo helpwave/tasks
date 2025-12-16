@@ -131,7 +131,7 @@ export const PatientDetailView = ({ patientId, initialData, onClose, onSuccess }
 
       <div className="flex-grow overflow-hidden flex flex-col">
         <TabView className="h-full flex flex-col">
-          <Tab label={translation('overview')} className="h-full overflow-y-auto pr-2">
+          <Tab label={translation('overview')} className="h-full overflow-x-visible pr-2">
             <div className="flex flex-col gap-6 pt-4">
               <div className="grid grid-cols-2 gap-4">
                 <FormField label={translation('firstName')}>
@@ -177,7 +177,6 @@ export const PatientDetailView = ({ patientId, initialData, onClose, onSuccess }
                     updateLocalState({ sex: value as Sex })
                     persistChanges({ sex: value as Sex })
                   }}
-                  contentPanelProps={{ containerClassName: 'z-[100]' }}
                 >
                   {sexOptions.map(option => (
                     <SelectOption key={option.value} value={option.value}>

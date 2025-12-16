@@ -57,8 +57,8 @@ const PropertiesPage: NextPage = () => {
         const value = row.original.fieldType
 
         return (
-          <Chip size="small">
-            <span className="capitalize">{value}</span>
+          <Chip size="small" className="coloring-tonal" color="primary">
+            <span>{translation('sPropertyType', { type: value })}</span>
           </Chip>
         )
       },
@@ -74,7 +74,7 @@ const PropertiesPage: NextPage = () => {
         const data = row.original
         return (
           <span className="typography-label-sm font-bold">
-            {data.subjectType}
+            {translation('sPropertySubjectType', { subject: data.subjectType })}
           </span>
         )
       },
@@ -88,7 +88,7 @@ const PropertiesPage: NextPage = () => {
       accessorKey: 'isArchived',
       cell: ({ row }) => {
         return (
-          <Chip color={row.original.isArchived ? 'negative' : 'positive'}>
+          <Chip className="coloring-tonal" color={row.original.isArchived ? 'negative' : 'positive'}>
             {translation(row.original.isArchived ? 'inactive' : 'active')}
           </Chip>
         )

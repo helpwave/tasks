@@ -93,7 +93,7 @@ export const Header = ({ ...props }: HeaderProps) => {
     <header
       {...props}
       className={clsx(
-        'flex-row-8 items-center justify-between',
+        'flex-row-8 items-center justify-between z-10',
         props.className
       )}
     >
@@ -207,7 +207,7 @@ export const Sidebar = ({ ...props }: SidebarProps) => {
             </div>
           )}
           headerClassName="!px-2.5 !py-1.5 hover:bg-black/30"
-          contentClassName="!px-0"
+          contentClassName="!px-0 !pb-0 gap-y-0"
           className="!shadow-none"
           isExpanded={context.sidebar.isShowingTeams}
           onChange={isExpanded => context.update(prevState => ({
@@ -238,7 +238,7 @@ export const Sidebar = ({ ...props }: SidebarProps) => {
             </div>
           )}
           headerClassName="!px-2.5 !py-1.5 hover:bg-black/30"
-          contentClassName="!px-0"
+          contentClassName="!px-0 !pb-0 gap-y-0"
           className="!shadow-none"
           isExpanded={context.sidebar.isShowingWards}
           onChange={isExpanded => context.update(prevState => ({
