@@ -10,10 +10,9 @@ type PartialLocationNode = {
 
 interface LocationChipsProps {
   locations: PartialLocationNode[],
-  maxVisible?: number,
 }
 
-export const LocationChips = ({ locations, maxVisible = 3 }: LocationChipsProps) => {
+export const LocationChips = ({ locations }: LocationChipsProps) => {
   if (locations.length === 0) {
     return (
       <span className="text-description text-sm">
@@ -22,42 +21,36 @@ export const LocationChips = ({ locations, maxVisible = 3 }: LocationChipsProps)
     )
   }
 
-  const visibleLocations = locations.slice(0, maxVisible)
-  const remainingCount = locations.length - maxVisible
+  const firstLocation = locations[0]
+  const remainingCount = locations.length - 1
+  const remainingLocations = locations.slice(1)
 
   return (
     <div className="flex flex-wrap items-center gap-1.5">
-      {visibleLocations.map((location) => {
-        const fullPath = formatLocationPath(location)
-
-        return (
-          <Tooltip
-            key={location.id}
-            tooltip={fullPath}
-            position="top"
-          >
-            <Chip
-              size="small"
-              color="neutral"
-              className="cursor-help"
-            >
-              <div className="flex items-center gap-1">
-                <MapPin className="size-3" />
-                <span>{location.title}</span>
-              </div>
-            </Chip>
-          </Tooltip>
-        )
-      })}
+      <Tooltip
+        tooltip={formatLocationPath(firstLocation)}
+        position="top"
+      >
+        <Chip
+          size="small"
+          color="neutral"
+          className="cursor-help"
+        >
+          <div className="flex items-center gap-1">
+            <MapPin className="size-3" />
+            <span>{firstLocation?.title}</span>
+          </div>
+        </Chip>
+      </Tooltip>
       {remainingCount > 0 && (
         <Tooltip
-          tooltip={locations.slice(maxVisible).map(loc => formatLocationPath(loc)).join('\n')}
+          tooltip={remainingLocations.map(loc => formatLocationPath(loc)).join('\n')}
           position="top"
         >
           <Chip
             size="small"
             color="neutral"
-            className="cursor-help"
+            className="cursor-help whitespace-pre-line"
           >
             +{remainingCount}
           </Chip>

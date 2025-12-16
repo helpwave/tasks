@@ -300,7 +300,7 @@ export const LocationSelectionDialog = ({
         <Button onClick={onClose} color="neutral">
           {translation('cancel')}
         </Button>
-        <Button onClick={handleConfirm} disabled={selectedIds.size === 0}>
+        <Button onClick={handleConfirm}>
           {translation('confirmSelection')} ({selectedIds.size})
         </Button>
       </div>

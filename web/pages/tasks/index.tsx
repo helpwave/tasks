@@ -13,6 +13,7 @@ import { SmartDate } from '@/utils/date'
 import { SidePanel } from '@/components/layout/SidePanel'
 import { TaskDetailView } from '@/components/tasks/TaskDetailView'
 import { PatientDetailView } from '@/components/patients/PatientDetailView'
+import { LocationChips } from '@/components/patients/LocationChips'
 
 type TaskViewModel = {
   id: string,
@@ -20,10 +21,8 @@ type TaskViewModel = {
   description?: string,
   updateDate: Date,
   dueDate?: Date,
-  patient?: { id: string, name: string },
+  patient?: { id: string, name: string, locations: Array<{ id: string, title: string, parent?: { id: string, title: string, parent?: { id: string, title: string } | null } | null }> },
   assignee?: { id: string, name: string, avatarURL?: string | null },
-  ward?: { name: string },
-  room?: { name: string },
   done: boolean,
 }
 
@@ -48,16 +47,14 @@ const TasksPage: NextPage = () => {
       dueDate: task.dueDate ? new Date(task.dueDate) : undefined,
       done: task.done,
       patient: task.patient
-        ? { id: task.patient.id, name: task.patient.name }
+        ? {
+          id: task.patient.id,
+          name: task.patient.name,
+          locations: task.patient.assignedLocations || []
+        }
         : undefined,
       assignee: task.assignee
         ? { id: task.assignee.id, name: task.assignee.name, avatarURL: task.assignee.avatarUrl }
-        : undefined,
-      room: task.patient?.assignedLocation
-        ? { name: task.patient.assignedLocation.title }
-        : undefined,
-      ward: task.patient?.assignedLocation?.parent
-        ? { name: task.patient.assignedLocation.parent.title }
         : undefined,
     }))
   }, [queryData])
@@ -127,7 +124,7 @@ const TasksPage: NextPage = () => {
         accessorKey: 'dueDate',
         cell: ({ row }) => {
           if (!row.original.dueDate) return <span className="text-description">-</span>
-          return <SmartDate date={row.original.dueDate} mode="relative"/>
+          return <SmartDate date={row.original.dueDate} mode="relative" />
         },
         minSize: 150,
         size: 150,
@@ -138,7 +135,7 @@ const TasksPage: NextPage = () => {
         header: 'Update Date',
         accessorKey: 'updateDate',
         cell: ({ row }) => (
-          <SmartDate date={row.original.updateDate} mode="relative"/>
+          <SmartDate date={row.original.updateDate} mode="relative" />
         ),
         minSize: 150,
         size: 150,
@@ -150,7 +147,6 @@ const TasksPage: NextPage = () => {
         accessorFn: ({ patient }) => patient?.name,
         cell: ({ row }) => {
           const data = row.original
-          const hasAssignmentInfo = data.room || data.ward
           if (!data.patient) {
             return (
               <span className="text-description">
@@ -159,23 +155,19 @@ const TasksPage: NextPage = () => {
             )
           }
           return (
-            <div className="flex-col-0">
+            <div className="flex flex-col gap-1">
               <Button
                 color="neutral"
                 coloringStyle="text"
                 size="none"
                 onClick={() => {
-                  setSelectedPatientId(row.original.patient?.id ?? null)
+                  setSelectedPatientId(data.patient?.id ?? null)
                 }}
                 className="flex-row-0 justify-start rounded-md px-1"
               >
                 {data.patient?.name}
               </Button>
-              <span className="text-description">
-                {hasAssignmentInfo
-                  ? [data.ward?.name, data.room?.name].filter(Boolean).join(' - ')
-                  : translation('notAssigned')}
-              </span>
+              <LocationChips locations={data.patient.locations || []} />
             </div>
           )
         },
@@ -194,7 +186,7 @@ const TasksPage: NextPage = () => {
         titleElement={translation('myTasks')}
         description={translation('nTask', { count: tasks.length })}
         actionElement={(
-          <Button startIcon={<PlusIcon/>} onClick={handleCreate}>
+          <Button startIcon={<PlusIcon />} onClick={handleCreate}>
             {translation('addTask')}
           </Button>
         )}
@@ -204,7 +196,7 @@ const TasksPage: NextPage = () => {
           data={tasks}
           columns={columns}
           fillerRow={() => (
-            <FillerRowElement className="min-h-12"/>
+            <FillerRowElement className="min-h-12" />
           )}
           initialState={{
             sorting: [
