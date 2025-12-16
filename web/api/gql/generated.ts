@@ -415,6 +415,13 @@ export type GetPatientsQueryVariables = Exact<{
 
 export type GetPatientsQuery = { __typename?: 'Query', patients: Array<{ __typename?: 'PatientType', id: string, name: string, firstname: string, lastname: string, birthdate: any, sex: Sex, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null, tasks: Array<{ __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, dueDate?: any | null, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null } | null }>, properties: Array<{ __typename?: 'PropertyValueType', textValue?: string | null, definition: { __typename?: 'PropertyDefinitionType', name: string } }> }> };
 
+export type GetTaskQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GetTaskQuery = { __typename?: 'Query', task?: { __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, dueDate?: any | null, patient: { __typename?: 'PatientType', id: string, name: string }, assignee?: { __typename?: 'UserType', id: string, name: string } | null } | null };
+
 export type GetUsersQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -708,6 +715,42 @@ export const useGetPatientsQuery = <
       {
     queryKey: variables === undefined ? ['GetPatients'] : ['GetPatients', variables],
     queryFn: fetcher<GetPatientsQuery, GetPatientsQueryVariables>(GetPatientsDocument, variables),
+    ...options
+  }
+    )};
+
+export const GetTaskDocument = `
+    query GetTask($id: ID!) {
+  task(id: $id) {
+    id
+    title
+    description
+    done
+    dueDate
+    patient {
+      id
+      name
+    }
+    assignee {
+      id
+      name
+    }
+  }
+}
+    `;
+
+export const useGetTaskQuery = <
+      TData = GetTaskQuery,
+      TError = unknown
+    >(
+      variables: GetTaskQueryVariables,
+      options?: Omit<UseQueryOptions<GetTaskQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetTaskQuery, TError, TData>['queryKey'] }
+    ) => {
+    
+    return useQuery<GetTaskQuery, TError, TData>(
+      {
+    queryKey: ['GetTask', variables],
+    queryFn: fetcher<GetTaskQuery, GetTaskQueryVariables>(GetTaskDocument, variables),
     ...options
   }
     )};

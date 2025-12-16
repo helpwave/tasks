@@ -3,10 +3,9 @@ import { Page } from '@/components/layout/Page'
 import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
-import { Avatar, Button, CheckboxUncontrolled, FillerRowElement, Table } from '@helpwave/hightide'
+import { Button, CheckboxUncontrolled, FillerRowElement, Table } from '@helpwave/hightide'
 import { useMemo, useState } from 'react'
 import type { ColumnDef } from '@tanstack/table-core'
-import type { CreateTaskInput } from '@/api/gql/generated'
 import { useCompleteTaskMutation, useGetMyTasksQuery, useReopenTaskMutation } from '@/api/gql/generated'
 import { PlusIcon } from 'lucide-react'
 import clsx from 'clsx'
@@ -37,8 +36,6 @@ const TasksPage: NextPage = () => {
   const [isTasksPanelOpen, setIsTasksPanelOpen] = useState(false)
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null)
   const [selectedTask, setSelectedTask] = useState<TaskViewModel | null>(null)
-
-  const currentUserId = queryData?.me?.id
 
   const tasks: TaskViewModel[] = useMemo(() => {
     if (!queryData?.me?.tasks) return []
@@ -187,52 +184,9 @@ const TasksPage: NextPage = () => {
         size: 250,
         maxSize: 350,
       },
-      {
-        id: 'assignee',
-        header: translation('assignedTo'),
-        accessorFn: ({ assignee }) => assignee?.name,
-        cell: ({ row }) => {
-          const assignee = row.original.assignee
-          if (!assignee) {
-            return (
-              <span className="text-description">
-                {translation('notAssigned')}
-              </span>
-            )
-          }
-
-          const isMe = assignee.id === currentUserId
-
-          return (
-            <div className={clsx('flex-row-2 items-center', { 'font-bold text-primary': isMe })}>
-              <Avatar
-                fullyRounded={true}
-                image={{
-                  avatarUrl: assignee.avatarURL || 'https://cdn.helpwave.de/boringavatar.svg',
-                  alt: assignee.name
-                }}
-              />
-              <span>
-                {isMe ? `${translation('itsYou')} (${assignee.name})` : assignee.name}
-              </span>
-            </div>
-          )
-        },
-        minSize: 200,
-        size: 250,
-        maxSize: 350,
-      }
     ],
-    [translation, currentUserId, completeTask, reopenTask]
+    [translation, completeTask, reopenTask]
   )
-
-  const initialTaskData: Partial<CreateTaskInput> | undefined = selectedTask ? {
-    title: selectedTask.name,
-    description: selectedTask.description,
-    dueDate: selectedTask.dueDate,
-    patientId: selectedTask.patient?.id,
-    assigneeId: selectedTask.assignee?.id,
-  } : undefined
 
   return (
     <Page pageTitle={titleWrapper(translation('myTasks'))}>
@@ -269,7 +223,6 @@ const TasksPage: NextPage = () => {
         {(isTasksPanelOpen || selectedTask) && (
           <TaskDetailView
             taskId={selectedTask?.id}
-            initialData={initialTaskData}
             onClose={handleClosePanel}
             onSuccess={refetch}
           />

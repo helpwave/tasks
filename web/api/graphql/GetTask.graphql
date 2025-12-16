@@ -1,0 +1,17 @@
+query GetTask($id: ID!) {
+  task(id: $id) {
+    id
+    title
+    description
+    done
+    dueDate
+    patient {
+      id
+      name
+    }
+    assignee {
+      id
+      name
+    }
+  }
+}

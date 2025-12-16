@@ -86,7 +86,7 @@ const PatientsPage: NextPage = () => {
       accessorKey: 'sex',
       cell: ({ row }) => {
         const sex = row.original.sex
-        const color = sex === Sex.Male ? 'gender-male' : sex === Sex.Female ? 'gender-male' : 'gender-neutral'
+        const color = sex === Sex.Male ? '!gender-male' : sex === Sex.Female ? '!gender-female' : '!gender-neutral'
 
         const label = {
           [Sex.Male]: translation('male'),
