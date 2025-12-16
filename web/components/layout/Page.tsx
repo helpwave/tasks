@@ -18,7 +18,6 @@ import { getConfig } from '@/utils/config'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import clsx from 'clsx'
 import {
-  BellIcon,
   Building2,
   CircleCheck,
   Grid2X2PlusIcon,
@@ -101,9 +100,6 @@ export const Header = ({ ...props }: HeaderProps) => {
       </div>
       <div className="flex-row-2 justify-end">
         <div className="flex-row-0">
-          <Button coloringStyle="text" layout="icon" color="neutral">
-            <BellIcon />
-          </Button>
           <Button coloringStyle="text" layout="icon" color="neutral" onClick={() => router.push('/settings')}>
             <SettingsIcon />
           </Button>
