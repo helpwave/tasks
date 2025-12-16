@@ -10,6 +10,10 @@ mutation CreatePatient($data: CreatePatientInput!) {
       id
       title
     }
+    assignedLocations {
+      id
+      title
+    }
   }
 }
 
@@ -22,6 +26,10 @@ mutation UpdatePatient($id: ID!, $data: UpdatePatientInput!) {
     birthdate
     sex
     assignedLocation {
+      id
+      title
+    }
+    assignedLocations {
       id
       title
     }

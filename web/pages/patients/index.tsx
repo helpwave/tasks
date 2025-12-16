@@ -8,20 +8,19 @@ import { useMemo, useState } from 'react'
 import type { ColumnDef } from '@tanstack/table-core'
 import { EditIcon, PlusIcon } from 'lucide-react'
 import type { TaskType } from '@/api/gql/generated'
-import { useGetPatientsQuery, Sex } from '@/api/gql/generated'
+import { useGetPatientsQuery, Sex, type GetPatientsQuery } from '@/api/gql/generated'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { SidePanel } from '@/components/layout/SidePanel'
 import { PatientDetailView } from '@/components/patients/PatientDetailView'
 import { SmartDate } from '@/utils/date'
+import { LocationChips } from '@/components/patients/LocationChips'
 
 type PatientViewModel = {
   id: string,
   name: string,
   firstname: string,
   lastname: string,
-  location?: string,
-  locationId?: string,
-  subLocation?: string,
+  locations: GetPatientsQuery['patients'][0]['assignedLocations'],
   openTasksCount: number,
   birthdate: Date,
   sex: Sex,
@@ -48,9 +47,7 @@ const PatientsPage: NextPage = () => {
       lastname: p.lastname,
       birthdate: new Date(p.birthdate),
       sex: p.sex,
-      location: p.assignedLocation?.parent?.title,
-      subLocation: p.assignedLocation?.title,
-      locationId: p.assignedLocation?.id,
+      locations: p.assignedLocations as PatientViewModel['locations'],
       openTasksCount: p.tasks?.filter(t => !t.done).length ?? 0,
       tasks: []
     }))
@@ -86,7 +83,11 @@ const PatientsPage: NextPage = () => {
       accessorKey: 'sex',
       cell: ({ row }) => {
         const sex = row.original.sex
-        const color = sex === Sex.Male ? '!gender-male' : sex === Sex.Female ? '!gender-female' : '!gender-neutral'
+        const colorClass = sex === Sex.Male
+          ? '!gender-male'
+          : sex === Sex.Female
+            ? '!gender-female'
+            : 'bg-gray-600 text-white'
 
         const label = {
           [Sex.Male]: translation('male'),
@@ -95,7 +96,11 @@ const PatientsPage: NextPage = () => {
         }[sex] || sex
 
         return (
-          <Chip color="none" size="small" className={color}>
+          <Chip
+            color={sex === Sex.Unknown ? 'neutral' : 'none'}
+            size="small"
+            className={colorClass}
+          >
             <span>{label}</span>
           </Chip>
         )
@@ -105,33 +110,15 @@ const PatientsPage: NextPage = () => {
       maxSize: 150,
     },
     {
-      id: 'place',
-      header: translation('place'),
-      accessorFn: ({ location, subLocation }) => [location, subLocation].filter(Boolean).join(' - '),
-      cell: ({ row }) => {
-        const data = row.original
-        const unassigned = !data.location && !data.subLocation
-        if (unassigned) {
-          return (
-            <span className="text-description">
-              {translation('notAssigned')}
-            </span>
-          )
-        }
-        return (
-          <div className="flex-col-0">
-            <span className="typography-label-sm font-bold">
-              {data.location ?? translation('notAssigned')}
-            </span>
-            <span className="text-description">
-              {data.subLocation}
-            </span>
-          </div>
-        )
-      },
-      minSize: 150,
-      size: 150,
-      maxSize: 250,
+      id: 'locations',
+      header: translation('location'),
+      accessorKey: 'locations',
+      cell: ({ row }) => (
+        <LocationChips locations={row.original.locations} />
+      ),
+      minSize: 200,
+      size: 250,
+      maxSize: 400,
     },
     {
       id: 'birthdate',

@@ -10,12 +10,15 @@ import {
   Tab,
   TabView,
   LoadingContainer,
-  FormElementWrapper
+  FormElementWrapper,
+  Button
 } from '@helpwave/hightide'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { DateInput } from '@/components/ui/DateInput'
-import { CheckCircle2, Circle, Clock } from 'lucide-react'
+import { CheckCircle2, Circle, Clock, MapPin } from 'lucide-react'
 import { PropertyList } from '@/components/PropertyList'
+import { LocationSelectionDialog } from '@/components/locations/LocationSelectionDialog'
+import type { LocationNodeType } from '@/api/gql/generated'
 
 interface PatientDetailViewProps {
   patientId?: string,
@@ -59,23 +62,26 @@ export const PatientDetailView = ({ patientId, onClose, onSuccess }: PatientDeta
     firstname: '',
     lastname: '',
     sex: Sex.Female,
-    assignedLocationId: selectedLocationId ?? '',
+    assignedLocationIds: selectedLocationId ? [selectedLocationId] : [],
     birthdate: getDefaultBirthdate()
   })
+  const [isLocationDialogOpen, setIsLocationDialogOpen] = useState(false)
+  const [selectedLocations, setSelectedLocations] = useState<LocationNodeType[]>([])
 
   useEffect(() => {
     if (patientData?.patient) {
-      const { firstname, lastname, sex, birthdate, assignedLocation } = patientData.patient
+      const { firstname, lastname, sex, birthdate, assignedLocations } = patientData.patient
       setFormData({
         firstname,
         lastname,
         sex,
         birthdate: toISODate(birthdate),
-        assignedLocationId: assignedLocation?.id ?? selectedLocationId ?? ''
+        assignedLocationIds: assignedLocations.map(loc => loc.id)
       })
       setFullName(`${firstname} ${lastname}`)
+      setSelectedLocations(assignedLocations as LocationNodeType[])
     }
-  }, [patientData, selectedLocationId])
+  }, [patientData])
 
   const { mutate: createPatient, isLoading: isCreating } = useCreatePatientMutation({
     onSuccess: () => {
@@ -110,10 +116,19 @@ export const PatientDetailView = ({ patientId, onClose, onSuccess }: PatientDeta
     if (!formData.firstname.trim() || !formData.lastname.trim()) return
 
     const dataToSend = { ...formData }
-    if (!dataToSend.assignedLocationId) {
-      delete dataToSend.assignedLocationId
+    // Only include assignedLocationIds if there are locations selected
+    if (!dataToSend.assignedLocationIds || dataToSend.assignedLocationIds.length === 0) {
+      delete dataToSend.assignedLocationIds
     }
     createPatient({ data: dataToSend })
+  }
+
+  const handleLocationSelect = (locations: LocationNodeType[]) => {
+    setSelectedLocations(locations)
+    const locationIds = locations.map(loc => loc.id)
+    updateLocalState({ assignedLocationIds: locationIds })
+    persistChanges({ assignedLocationIds: locationIds })
+    setIsLocationDialogOpen(false)
   }
 
   const sexOptions = [
@@ -199,6 +214,55 @@ export const PatientDetailView = ({ patientId, onClose, onSuccess }: PatientDeta
                   ))}
                 </Select>
               </FormField>
+
+              <FormField label={translation('assignedLocation')}>
+                <div className="flex flex-col gap-2">
+                  <div className="flex gap-2">
+                    <Input
+                      value={selectedLocations.length > 0
+                        ? selectedLocations.map(loc => loc.title).join(', ')
+                        : ''}
+                      placeholder={translation('selectLocation')}
+                      readOnly
+                      className="flex-grow"
+                    />
+                    <Button
+                      onClick={() => setIsLocationDialogOpen(true)}
+                      layout="icon"
+                      title={translation('selectLocation')}
+                    >
+                      <MapPin className="size-4" />
+                    </Button>
+                    {selectedLocations.length > 0 && (
+                      <Button
+                        onClick={() => {
+                          setSelectedLocations([])
+                          updateLocalState({ assignedLocationIds: [] })
+                          persistChanges({ assignedLocationIds: [] })
+                        }}
+                        layout="icon"
+                        color="neutral"
+                        title={translation('clear')}
+                      >
+                        ×
+                      </Button>
+                    )}
+                  </div>
+                  {selectedLocations.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {selectedLocations.map(location => (
+                        <span
+                          key={location.id}
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded bg-surface-subdued text-sm"
+                        >
+                          <MapPin className="size-3" />
+                          {location.title}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </FormField>
             </div>
           </Tab>
 
@@ -265,6 +329,14 @@ export const PatientDetailView = ({ patientId, onClose, onSuccess }: PatientDeta
           </LoadingButton>
         </div>
       )}
+
+      <LocationSelectionDialog
+        isOpen={isLocationDialogOpen}
+        onClose={() => setIsLocationDialogOpen(false)}
+        onSelect={handleLocationSelect}
+        initialSelectedIds={selectedLocations.map(loc => loc.id)}
+        multiSelect={true}
+      />
     </div>
   )
 }

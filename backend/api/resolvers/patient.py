@@ -7,6 +7,7 @@ from api.types.patient import PatientType
 from database import models
 from database.session import redis_client
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 from .utils import process_properties
 
@@ -20,7 +21,9 @@ class PatientQuery:
         id: strawberry.ID,
     ) -> PatientType | None:
         result = await info.context.db.execute(
-            select(models.Patient).where(models.Patient.id == id),
+            select(models.Patient)
+            .where(models.Patient.id == id)
+            .options(selectinload(models.Patient.assigned_locations)),
         )
         return result.scalars().first()
 
@@ -30,9 +33,10 @@ class PatientQuery:
         info: Info,
         location_node_id: strawberry.ID | None = None,
     ) -> list[PatientType]:
-        query = select(models.Patient)
+        query = select(models.Patient).options(
+            selectinload(models.Patient.assigned_locations),
+        )
         if location_node_id:
-            # Recursive CTE to find the selected node and all its descendants
             cte = (
                 select(models.LocationNode.id)
                 .where(models.LocationNode.id == location_node_id)
@@ -45,9 +49,20 @@ class PatientQuery:
             )
             cte = cte.union_all(parent)
 
-            # Filter patients who are assigned to any of these locations
-            query = query.where(
-                models.Patient.assigned_location_id.in_(select(cte.c.id)),
+            from sqlalchemy.orm import aliased
+
+            patient_locations = aliased(models.patient_locations)
+
+            query = (
+                query.outerjoin(
+                    patient_locations,
+                    models.Patient.id == patient_locations.c.patient_id,
+                )
+                .where(
+                    (models.Patient.assigned_location_id.in_(select(cte.c.id)))
+                    | (patient_locations.c.location_id.in_(select(cte.c.id))),
+                )
+                .distinct()
             )
 
         result = await info.context.db.execute(query)
@@ -59,7 +74,13 @@ class PatientQuery:
         info: Info,
         limit: int = 5,
     ) -> list[PatientType]:
-        query = select(models.Patient).limit(limit)
+        query = (
+            select(models.Patient)
+            .options(
+                selectinload(models.Patient.assigned_locations),
+            )
+            .limit(limit)
+        )
         result = await info.context.db.execute(query)
         return result.scalars().all()
 
@@ -80,6 +101,26 @@ class PatientMutation:
             assigned_location_id=data.assigned_location_id,
         )
         info.context.db.add(new_patient)
+        await info.context.db.flush()
+
+        if data.assigned_location_ids:
+            result = await info.context.db.execute(
+                select(models.LocationNode).where(
+                    models.LocationNode.id.in_(data.assigned_location_ids),
+                ),
+            )
+            locations = result.scalars().all()
+            new_patient.assigned_locations = list(locations)
+        elif data.assigned_location_id:
+            result = await info.context.db.execute(
+                select(models.LocationNode).where(
+                    models.LocationNode.id == data.assigned_location_id,
+                ),
+            )
+            location = result.scalars().first()
+            if location:
+                new_patient.assigned_locations = [location]
+
         if data.properties:
             await process_properties(
                 info.context.db,
@@ -89,7 +130,7 @@ class PatientMutation:
             )
 
         await info.context.db.commit()
-        await info.context.db.refresh(new_patient)
+        await info.context.db.refresh(new_patient, ["assigned_locations"])
         await redis_client.publish("patient_created", new_patient.id)
         return new_patient
 
@@ -102,7 +143,9 @@ class PatientMutation:
     ) -> PatientType:
         db = info.context.db
         result = await db.execute(
-            select(models.Patient).where(models.Patient.id == id),
+            select(models.Patient)
+            .where(models.Patient.id == id)
+            .options(selectinload(models.Patient.assigned_locations)),
         )
         patient = result.scalars().first()
         if not patient:
@@ -116,14 +159,32 @@ class PatientMutation:
             patient.birthdate = data.birthdate
         if data.sex is not None:
             patient.sex = data.sex.value
-        if data.assigned_location_id is not None:
-            patient.assigned_location_id = data.assigned_location_id
+
+        if data.assigned_location_ids is not None:
+            result = await db.execute(
+                select(models.LocationNode).where(
+                    models.LocationNode.id.in_(data.assigned_location_ids),
+                ),
+            )
+            locations = result.scalars().all()
+            patient.assigned_locations = list(locations)
+        elif data.assigned_location_id is not None:
+            result = await db.execute(
+                select(models.LocationNode).where(
+                    models.LocationNode.id == data.assigned_location_id,
+                ),
+            )
+            location = result.scalars().first()
+            if location:
+                patient.assigned_locations = [location]
+            else:
+                patient.assigned_locations = []
 
         if data.properties:
             await process_properties(db, patient, data.properties, "patient")
 
         await db.commit()
-        await db.refresh(patient)
+        await db.refresh(patient, ["assigned_locations"])
         return patient
 
     @strawberry.mutation

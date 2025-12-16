@@ -50,15 +50,29 @@ class PatientType:
         ]
         | None
     ):
-
         if not self.assigned_location_id:
-            return None
+            assigned_locs = await self.assigned_locations(info)
+            return assigned_locs[0] if assigned_locs else None
+
         result = await info.context.db.execute(
             select(models.LocationNode).where(
                 models.LocationNode.id == self.assigned_location_id,
             ),
         )
         return result.scalars().first()
+
+    @strawberry.field
+    async def assigned_locations(
+        self,
+        info: Info,
+    ) -> list[
+        Annotated[
+            "LocationNodeType",
+            strawberry.lazy("api.types.location"),
+        ]
+    ]:
+        await info.context.db.refresh(self, ["assigned_locations"])
+        return self.assigned_locations or []
 
     @strawberry.field
     async def tasks(

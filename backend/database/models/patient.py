@@ -5,13 +5,20 @@ from datetime import date
 from typing import TYPE_CHECKING
 
 from database.session import Base
-from sqlalchemy import ForeignKey, String
+from sqlalchemy import Column, ForeignKey, String, Table
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 if TYPE_CHECKING:
     from .location import LocationNode
     from .property import PropertyValue
     from .task import Task
+
+patient_locations = Table(
+    "patient_locations",
+    Base.metadata,
+    Column("patient_id", ForeignKey("patients.id"), primary_key=True),
+    Column("location_id", ForeignKey("location_nodes.id"), primary_key=True),
+)
 
 
 class Patient(Base):
@@ -31,9 +38,15 @@ class Patient(Base):
         nullable=True,
     )
 
+    assigned_locations: Mapped[list[LocationNode]] = relationship(
+        "LocationNode",
+        secondary=patient_locations,
+        back_populates="patients",
+    )
     assigned_location: Mapped[LocationNode | None] = relationship(
         "LocationNode",
-        back_populates="patients",
+        foreign_keys=[assigned_location_id],
+        back_populates="legacy_patients",
     )
     tasks: Mapped[list[Task]] = relationship(
         "Task",
