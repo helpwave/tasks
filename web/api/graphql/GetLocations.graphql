@@ -2,5 +2,7 @@ query GetLocations {
   locationNodes {
     id
     title
+    kind
+    parentId
   }
 }

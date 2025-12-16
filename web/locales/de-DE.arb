@@ -227,5 +227,17 @@
   "unassigned": "Nicht zugewiesen",
   "male": "Männlich",
   "female": "Weiblich",
-  "diverse": "Divers"
+  "diverse": "Divers",
+  "selectLocation": "Standort auswählen",
+  "selectLocationDescription": "Bitte wählen Sie den zugewiesenen Standort für den Patienten aus.",
+  "searchLocations": "Standorte suchen...",
+  "selectAll": "Alle auswählen",
+  "deselectAll": "Auswahl aufheben",
+  "loading": "Laden...",
+  "noLocationsFound": "Keine Standorte gefunden",
+  "confirmSelection": "Auswahl bestätigen",
+  "expandAll": "Alle ausklappen",
+  "collapseAll": "Alle einklappen",
+  "assignedLocation": "Zugewiesener Standort",
+  "selectLocation": "Standort auswählen"
 }
