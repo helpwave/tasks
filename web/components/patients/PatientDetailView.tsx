@@ -1,19 +1,24 @@
 import { useEffect, useState } from 'react'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
-import type { CreatePatientInput, TaskType, UpdatePatientInput } from '@/api/gql/generated'
-import { Sex, useCreatePatientMutation, useUpdatePatientMutation } from '@/api/gql/generated'
-import { Input, LoadingButton, Select, SelectOption, Tab, TabView } from '@helpwave/hightide'
+import type { CreatePatientInput, UpdatePatientInput } from '@/api/gql/generated'
+import { Sex, useCreatePatientMutation, useUpdatePatientMutation, useGetPatientQuery } from '@/api/gql/generated'
+import {
+  Input,
+  LoadingButton,
+  Select,
+  SelectOption,
+  Tab,
+  TabView,
+  LoadingContainer,
+  FormElementWrapper
+} from '@helpwave/hightide'
 import { useTasksContext } from '@/hooks/useTasksContext'
-import { PopupDatePicker } from '@/components/ui/PopupDatePicker'
+import { DateInput } from '@/components/ui/DateInput'
 import { CheckCircle2, Circle, Clock } from 'lucide-react'
 import { PropertyList } from '@/components/PropertyList'
 
 interface PatientDetailViewProps {
   patientId?: string,
-  initialData?: Partial<CreatePatientInput> & {
-    tasks?: TaskType[],
-    name?: string,
-  },
   onClose: () => void,
   onSuccess: () => void,
 }
@@ -39,37 +44,38 @@ const FormField = ({ label, children }: { label: string, children: React.ReactNo
   </div>
 )
 
-export const PatientDetailView = ({ patientId, initialData, onClose, onSuccess }: PatientDetailViewProps) => {
+export const PatientDetailView = ({ patientId, onClose, onSuccess }: PatientDetailViewProps) => {
   const translation = useTasksTranslation()
   const { selectedLocationId } = useTasksContext()
   const isEditMode = !!patientId
 
-  const [fullName, setFullName] = useState(initialData?.name || '')
+  const { data: patientData, isLoading: isLoadingPatient } = useGetPatientQuery(
+    { id: patientId! },
+    { enabled: isEditMode }
+  )
 
+  const [fullName, setFullName] = useState('')
   const [formData, setFormData] = useState<CreatePatientInput>({
     firstname: '',
     lastname: '',
     sex: Sex.Female,
     assignedLocationId: selectedLocationId ?? '',
-    ...initialData,
-    birthdate: initialData?.birthdate ? toISODate(initialData.birthdate) : getDefaultBirthdate()
+    birthdate: getDefaultBirthdate()
   })
 
   useEffect(() => {
-    if (initialData) {
-      setFormData(prev => ({
-        ...prev,
-        ...initialData,
-        birthdate: initialData.birthdate ? toISODate(initialData.birthdate) : prev.birthdate
-      }))
-
-      if (initialData.firstname && initialData.lastname) {
-        setFullName(`${initialData.firstname} ${initialData.lastname}`)
-      } else if (initialData.name) {
-        setFullName(initialData.name)
-      }
+    if (patientData?.patient) {
+      const { firstname, lastname, sex, birthdate, assignedLocation } = patientData.patient
+      setFormData({
+        firstname,
+        lastname,
+        sex,
+        birthdate: toISODate(birthdate),
+        assignedLocationId: assignedLocation?.id ?? selectedLocationId ?? ''
+      })
+      setFullName(`${firstname} ${lastname}`)
     }
-  }, [initialData])
+  }, [patientData, selectedLocationId])
 
   const { mutate: createPatient, isLoading: isCreating } = useCreatePatientMutation({
     onSuccess: () => {
@@ -83,7 +89,6 @@ export const PatientDetailView = ({ patientId, initialData, onClose, onSuccess }
       onSuccess()
     }
   })
-
 
   const persistChanges = (updates: Partial<UpdatePatientInput>) => {
     if (updates.firstname !== undefined && !updates.firstname?.trim()) return
@@ -117,22 +122,26 @@ export const PatientDetailView = ({ patientId, initialData, onClose, onSuccess }
     { label: translation('diverse'), value: Sex.Unknown }
   ]
 
-  const tasks = initialData?.tasks || []
+  const tasks = patientData?.patient?.tasks || []
   const openTasks = tasks.filter(t => !t.done)
   const closedTasks = tasks.filter(t => t.done)
 
+  if (isEditMode && isLoadingPatient) {
+    return <LoadingContainer />
+  }
+
   return (
-    <div className="flex flex-col h-full bg-surface">
+    <div className="flex-col-0 h-full bg-surface">
       <div className="flex-none mb-6">
         <div className="typography-title-lg text-primary">
-          {fullName}
+          {fullName || translation('newPatient')}
         </div>
       </div>
 
-      <div className="flex-grow overflow-hidden flex flex-col">
-        <TabView className="h-full flex flex-col">
+      <div className="flex-col-0 flex-grow overflow-hidden">
+        <TabView className="h-full flex-col-0">
           <Tab label={translation('overview')} className="h-full overflow-x-visible pr-2">
-            <div className="flex flex-col gap-6 pt-4">
+            <div className="flex-col-6 pt-4">
               <div className="grid grid-cols-2 gap-4">
                 <FormField label={translation('firstName')}>
                   <Input
@@ -160,15 +169,20 @@ export const PatientDetailView = ({ patientId, initialData, onClose, onSuccess }
                 </FormField>
               </div>
 
-              <PopupDatePicker
-                label={translation('birthdate')}
-                date={new Date(formData.birthdate as string)}
-                onDateChange={date => {
-                  const dateStr = toISODate(date)
-                  updateLocalState({ birthdate: dateStr })
-                  persistChanges({ birthdate: dateStr })
-                }}
-              />
+              <FormElementWrapper label={translation('birthdate')}>
+                {(bag) => (
+                  <DateInput
+                    {...bag}
+                    date={new Date(formData.birthdate as string)}
+                    onValueChange={date => {
+                      const dateStr = toISODate(date)
+                      updateLocalState({ birthdate: dateStr })
+                      persistChanges({ birthdate: dateStr })
+                    }}
+                  />
+                )}
+              </FormElementWrapper>
+
 
               <FormField label={translation('sex')}>
                 <Select

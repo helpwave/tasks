@@ -202,15 +202,6 @@ const PatientsPage: NextPage = () => {
       >
         <PatientDetailView
           patientId={selectedPatient?.id}
-          initialData={selectedPatient ? {
-            firstname: selectedPatient.firstname,
-            lastname: selectedPatient.lastname,
-            birthdate: selectedPatient.birthdate,
-            sex: selectedPatient.sex,
-            assignedLocationId: selectedPatient.locationId,
-            tasks: selectedPatient.tasks,
-            name: selectedPatient.name
-          } : undefined}
           onClose={handleClose}
           onSuccess={refetch}
         />

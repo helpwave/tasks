@@ -401,6 +401,13 @@ export type GetOverviewDataQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type GetOverviewDataQuery = { __typename?: 'Query', recentPatients: Array<{ __typename?: 'PatientType', id: string, name: string, sex: Sex, birthdate: any, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null }>, recentTasks: Array<{ __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, updateDate?: any | null, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null } | null, patient: { __typename?: 'PatientType', id: string, name: string } }> };
 
+export type GetPatientQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GetPatientQuery = { __typename?: 'Query', patient?: { __typename?: 'PatientType', id: string, firstname: string, lastname: string, birthdate: any, sex: Sex, assignedLocation?: { __typename?: 'LocationNodeType', id: string } | null, tasks: Array<{ __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, dueDate?: any | null }> } | null };
+
 export type GetPatientsQueryVariables = Exact<{
   locationId?: InputMaybe<Scalars['ID']['input']>;
 }>;
@@ -608,6 +615,44 @@ export const useGetOverviewDataQuery = <
       {
     queryKey: variables === undefined ? ['GetOverviewData'] : ['GetOverviewData', variables],
     queryFn: fetcher<GetOverviewDataQuery, GetOverviewDataQueryVariables>(GetOverviewDataDocument, variables),
+    ...options
+  }
+    )};
+
+export const GetPatientDocument = `
+    query GetPatient($id: ID!) {
+  patient(id: $id) {
+    id
+    firstname
+    lastname
+    birthdate
+    sex
+    assignedLocation {
+      id
+    }
+    tasks {
+      id
+      title
+      description
+      done
+      dueDate
+    }
+  }
+}
+    `;
+
+export const useGetPatientQuery = <
+      TData = GetPatientQuery,
+      TError = unknown
+    >(
+      variables: GetPatientQueryVariables,
+      options?: Omit<UseQueryOptions<GetPatientQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetPatientQuery, TError, TData>['queryKey'] }
+    ) => {
+    
+    return useQuery<GetPatientQuery, TError, TData>(
+      {
+    queryKey: ['GetPatient', variables],
+    queryFn: fetcher<GetPatientQuery, GetPatientQueryVariables>(GetPatientDocument, variables),
     ...options
   }
     )};

@@ -65,10 +65,9 @@ const WardPage: NextPage = () => {
         )}
         {!isLoading && !isError && (
           <TabView>
-            <Tab label={translation('overview')}/>
-            <Tab label={translation('tasks')}/>
+            <Tab label={translation('tasks')}>
+            </Tab>
             <Tab label={translation('patients')}/>
-            <Tab label={translation('settings')}/>
           </TabView>
         )}
       </ContentPanel>

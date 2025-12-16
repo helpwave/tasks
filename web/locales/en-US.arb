@@ -225,7 +225,5 @@
   "currentPatient": "Current Patient",
   "selectAssignee": "Assign to...",
   "unassigned": "Unassigned",
-  "male": "Male",
-  "female": "Female",
-  "diverse": "Diverse"
+  "newPatient": "New Patient"
 }
