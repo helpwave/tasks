@@ -22,7 +22,6 @@ import {
   CircleCheck,
   Grid2X2PlusIcon,
   SettingsIcon,
-  TableProperties,
   User,
   Users
 } from 'lucide-react'
@@ -159,9 +158,6 @@ const SidebarLink = ({ children, ...props }: SidebarLinkProps) => {
 
 type SidebarProps = HTMLAttributes<HTMLDivElement>
 
-/**
- * The basic sidebar for most pages
- */
 export const Sidebar = ({ ...props }: SidebarProps) => {
   const translation = useTasksTranslation()
   const wardsRoute = '/wards'
@@ -256,10 +252,6 @@ export const Sidebar = ({ ...props }: SidebarProps) => {
             </SidebarLink>
           ))}
         </Expandable>
-        <SidebarLink href="/properties">
-          <TableProperties className="size-5" />
-          <span className="flex grow">{translation('properties')}</span>
-        </SidebarLink>
       </nav>
     </aside>
   )

@@ -10,6 +10,7 @@ export const tasksTranslationLocales = ['de-DE', 'en-US'] as const
 export type TasksTranslationLocales = typeof tasksTranslationLocales[number]
 
 export type TasksTranslationEntries = {
+  'account': string,
   'active': string,
   'addPatient': string,
   'addProperty': string,
@@ -23,6 +24,9 @@ export type TasksTranslationEntries = {
   'authenticationFailed': string,
   'birthdate': string,
   'cancel': string,
+  'chooseLanguage': string,
+  'chooseTheme': string,
+  'clearCache': string,
   'closedTasks': string,
   'collapseAll': string,
   'confirm': string,
@@ -42,6 +46,7 @@ export type TasksTranslationEntries = {
   'developmentAndPreviewInstance': string,
   'dismiss': string,
   'diverse': string,
+  'done': string,
   'dueDate': string,
   'editPatient': string,
   'editTask': string,
@@ -96,6 +101,7 @@ export type TasksTranslationEntries = {
   'preferences': string,
   'privacy': string,
   'private': string,
+  'profile': string,
   'properties': string,
   'property': string,
   'public': string,
@@ -122,12 +128,14 @@ export type TasksTranslationEntries = {
   'stagingModalDisclaimerMarkdown': string,
   'status': string,
   'subjectType': string,
+  'system': string,
   'task': string,
   'tasks': string,
   'taskStatus': (values: { status: string }) => string,
   'tasksUpdatedRecently': string,
   'taskTitlePlaceholder': string,
   'teams': string,
+  'themeMode': (values: { theme: string }) => string,
   'time.today': string,
   'title': string,
   'totalPatients': string,
@@ -140,6 +148,7 @@ export type TasksTranslationEntries = {
 
 export const tasksTranslation: Translation<TasksTranslationLocales, Partial<TasksTranslationEntries>> = {
   'de-DE': {
+    'account': `Konto`,
     'active': `Aktiv`,
     'addPatient': `Patient hinzufügen`,
     'addProperty': `Eigenschaften hinzufügen`,
@@ -153,6 +162,9 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'authenticationFailed': `Authentifizierung fehlgeschlagen`,
     'birthdate': `Geburtsdatum`,
     'cancel': `Abbrechen`,
+    'chooseLanguage': `Sprache wählen`,
+    'chooseTheme': `Design wählen`,
+    'clearCache': `Cache leeren`,
     'closedTasks': `Erledigte Aufgaben`,
     'collapseAll': `Alle einklappen`,
     'confirm': `Bestätigen`,
@@ -174,6 +186,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'developmentAndPreviewInstance': `Entwicklungs- und Vorschauinstanz`,
     'dismiss': `Schließen`,
     'diverse': `Divers`,
+    'done': `Fertig`,
     'dueDate': `Fälligkeitsdatum`,
     'editPatient': `Patient bearbeiten`,
     'editTask': `Aufgabe bearbeiten`,
@@ -281,6 +294,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'preferences': `Präferenzen`,
     'privacy': `Datenschutz`,
     'private': `Privat`,
+    'profile': `Profil`,
     'properties': `Eigenschaften`,
     'property': `Eigenschaft`,
     'public': `Öffentlich`,
@@ -328,6 +342,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'stagingModalDisclaimerMarkdown': `Diese öffentliche Instanz von helpwave tasks ist für \\b{Entwicklungs- und Vorschauzwecke} gedacht. Bitte stellen Sie sicher, dass Sie \\b{ausschließlich nicht-vertrauliche Testdaten} eingeben. Diese Instanz kann \\negative{\\b{jederzeit gelöscht}} werden.`,
     'status': `Status`,
     'subjectType': `Subjekt Type`,
+    'system': `System`,
     'task': `Aufgabe`,
     'tasks': `Aufgaben`,
     'taskStatus': ({ status }): string => {
@@ -341,6 +356,14 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'tasksUpdatedRecently': `Kürzlich aktualisierte Aufgaben`,
     'taskTitlePlaceholder': `Was muss erledigt werden?`,
     'teams': `Teams`,
+    'themeMode': ({ theme }): string => {
+      return TranslationGen.resolveSelect(theme, {
+        'dark': `Dunkel`,
+        'light': `Hell`,
+        'system': `System`,
+        'other': `System`,
+      })
+    },
     'time.today': `Heute`,
     'title': `Titel`,
     'totalPatients': `Gesamtpatienten`,
@@ -351,6 +374,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'wards': `Stationen`
   },
   'en-US': {
+    'account': `Account`,
     'active': `Active`,
     'addPatient': `Add Patient`,
     'addProperty': `Add Property`,
@@ -364,6 +388,9 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'authenticationFailed': `Authentication Failed`,
     'birthdate': `Birthdate`,
     'cancel': `Cancel`,
+    'chooseLanguage': `Choose Language`,
+    'chooseTheme': `Choose Theme`,
+    'clearCache': `Clear Cache`,
     'closedTasks': `Closed Tasks`,
     'collapseAll': `Collapse All`,
     'confirm': `Confirm`,
@@ -385,6 +412,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'developmentAndPreviewInstance': `Development and preview instance`,
     'dismiss': `Dismiss`,
     'diverse': `Diverse`,
+    'done': `Done`,
     'dueDate': `Due Date`,
     'editPatient': `Edit Patient`,
     'editTask': `Edit Task`,
@@ -539,6 +567,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'stagingModalDisclaimerMarkdown': `This public instance of helpwave tasks is for \\b{development and preview purposes}. Please make sure to \\b{only} enter \\b{non-confidential testing data}. This instance can be \\negative{\\b{deleted at any time}}`,
     'status': `Status`,
     'subjectType': `Subject Type`,
+    'system': `System`,
     'task': `Task`,
     'tasks': `Tasks`,
     'taskStatus': ({ status }): string => {
@@ -552,6 +581,14 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'tasksUpdatedRecently': `Tasks updated recently`,
     'taskTitlePlaceholder': `What needs to be done?`,
     'teams': `Teams`,
+    'themeMode': ({ theme }): string => {
+      return TranslationGen.resolveSelect(theme, {
+        'dark': `Dark`,
+        'light': `Light`,
+        'system': `System`,
+        'other': `System`,
+      })
+    },
     'time.today': `Today`,
     'title': `Title`,
     'totalPatients': `Total Patients`,

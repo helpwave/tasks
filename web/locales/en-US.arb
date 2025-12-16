@@ -239,5 +239,19 @@
   "expandAll": "Expand All",
   "collapseAll": "Collapse All",
   "assignedLocation": "Assigned Location",
-  "selectLocation": "Select Location"
+  "selectLocation": "Select Location",
+  "clearCache": "Clear Cache",
+  "account": "Account",
+  "system": "System",
+  "themeMode": "{theme, select, dark{Dark} light{Light} system{System} other{System}}",
+  "@themeMode": {
+    "placeholders": {
+      "theme": {
+        "type": "string"
+      }
+    }
+  },
+  "chooseLanguage": "Choose Language",
+  "chooseTheme": "Choose Theme",
+  "done": "Done"
 }

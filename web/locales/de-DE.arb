@@ -239,5 +239,20 @@
   "expandAll": "Alle ausklappen",
   "collapseAll": "Alle einklappen",
   "assignedLocation": "Zugewiesener Standort",
-  "selectLocation": "Standort auswählen"
+  "selectLocation": "Standort auswählen",
+  "clearCache": "Cache leeren",
+  "account": "Konto",
+  "system": "System",
+  "themeMode": "{theme, select, dark{Dunkel} light{Hell} system{System} other{System}}",
+  "@themeMode": {
+    "placeholders": {
+      "theme": {
+        "type": "string"
+      }
+    }
+  },
+  "chooseLanguage": "Sprache wählen",
+  "chooseTheme": "Design wählen",
+  "done": "Fertig",
+  "profile": "Profil"
 }
