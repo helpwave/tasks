@@ -52,7 +52,7 @@ export const StagingDisclaimerDialog = () => {
     if (config.showStagingDisclaimerModal && new Date().getTime() - lastTimeStagingDisclaimerDismissed > ONE_DAY) {
       setStagingDisclaimerOpen(true)
     }
-  }, [lastTimeStagingDisclaimerDismissed])
+  }, [lastTimeStagingDisclaimerDismissed, config.showStagingDisclaimerModal])
 
   return (
     <Dialog

@@ -227,5 +227,17 @@
   "unassigned": "Unassigned",
   "male": "Male",
   "female": "Female",
-  "diverse": "Diverse"
+  "diverse": "Diverse",
+  "selectLocation": "Select Location",
+  "selectLocationDescription": "Please select the assigned location for the patient.",
+  "searchLocations": "Search locations...",
+  "selectAll": "Select All",
+  "deselectAll": "Deselect All",
+  "loading": "Loading...",
+  "noLocationsFound": "No locations found",
+  "confirmSelection": "Confirm Selection",
+  "expandAll": "Expand All",
+  "collapseAll": "Collapse All",
+  "assignedLocation": "Assigned Location",
+  "selectLocation": "Select Location"
 }
