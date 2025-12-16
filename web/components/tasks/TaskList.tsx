@@ -1,5 +1,6 @@
 import { useMemo, useState, forwardRef, useImperativeHandle } from 'react'
 import { Button, CheckboxUncontrolled, FillerRowElement, Table, SearchBar, Avatar } from '@helpwave/hightide'
+import { PlusIcon } from 'lucide-react'
 import { useCompleteTaskMutation, useReopenTaskMutation } from '@/api/gql/generated'
 import clsx from 'clsx'
 import { SmartDate } from '@/utils/date'
@@ -61,7 +62,9 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
 
     if (searchQuery) {
       const lowerQuery = searchQuery.toLowerCase()
-      data = data.filter(t => t.name.toLowerCase().includes(lowerQuery))
+      data = data.filter(t =>
+        t.name.toLowerCase().includes(lowerQuery) ||
+        t.patient?.name.toLowerCase().includes(lowerQuery))
     }
 
     return data
@@ -223,12 +226,23 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
 
   return (
     <div className="flex flex-col h-full gap-4">
-      <div className="w-full max-w-md">
-        <SearchBar
-          placeholder={translation('search')}
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
+      <div className="flex justify-between w-full">
+        <div className="w-full max-w-md">
+          <SearchBar
+            placeholder={translation('search')}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+        <Button
+          startIcon={<PlusIcon />}
+          onClick={() => {
+            setSelectedTask(null)
+            setIsTasksPanelOpen(true)
+          }}
+        >
+          {translation('addTask')}
+        </Button>
       </div>
       <Table
         className="w-full h-full"
@@ -253,7 +267,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
           <TaskDetailView
             taskId={selectedTask?.id}
             onClose={handleClosePanel}
-            onSuccess={onRefetch || (() => {})}
+            onSuccess={onRefetch || (() => { })}
           />
         )}
       </SidePanel>
@@ -265,7 +279,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
           <PatientDetailView
             patientId={selectedPatientId}
             onClose={() => setSelectedPatientId(null)}
-            onSuccess={onRefetch || (() => {})}
+            onSuccess={onRefetch || (() => { })}
           />
         )}
       </SidePanel>

@@ -210,9 +210,6 @@ export const Sidebar = ({ ...props }: SidebarProps) => {
             }
           }))}
         >
-          <SidebarLink href={teamsRoute} className="pl-9.5">
-            {translation('overview')}
-          </SidebarLink>
           {!context?.teams ? (
             <LoadingContainer className="w-full h-10" />
           ) : context.teams.map(ward => (
@@ -241,9 +238,6 @@ export const Sidebar = ({ ...props }: SidebarProps) => {
             }
           }))}
         >
-          <SidebarLink href={wardsRoute} className="pl-9.5">
-            {translation('overview')}
-          </SidebarLink>
           {!context?.wards ? (
             <LoadingContainer className="w-full h-10" />
           ) : context.wards.map(ward => (
