@@ -86,7 +86,7 @@ const PatientsPage: NextPage = () => {
       accessorKey: 'sex',
       cell: ({ row }) => {
         const sex = row.original.sex
-        const color = sex === Sex.Male ? 'gender-male' : sex === Sex.Female ? 'gender-male' : 'gender-neutral'
+        const color = sex === Sex.Male ? '!gender-male' : sex === Sex.Female ? '!gender-female' : '!gender-neutral'
 
         const label = {
           [Sex.Male]: translation('male'),
@@ -202,15 +202,6 @@ const PatientsPage: NextPage = () => {
       >
         <PatientDetailView
           patientId={selectedPatient?.id}
-          initialData={selectedPatient ? {
-            firstname: selectedPatient.firstname,
-            lastname: selectedPatient.lastname,
-            birthdate: selectedPatient.birthdate,
-            sex: selectedPatient.sex,
-            assignedLocationId: selectedPatient.locationId,
-            tasks: selectedPatient.tasks,
-            name: selectedPatient.name
-          } : undefined}
           onClose={handleClose}
           onSuccess={refetch}
         />

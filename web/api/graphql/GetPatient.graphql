@@ -1,0 +1,19 @@
+query GetPatient($id: ID!) {
+  patient(id: $id) {
+    id
+    firstname
+    lastname
+    birthdate
+    sex
+    assignedLocation {
+      id
+    }
+    tasks {
+      id
+      title
+      description
+      done
+      dueDate
+    }
+  }
+}

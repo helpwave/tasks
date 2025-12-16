@@ -7,7 +7,8 @@ import {
   useAssignTaskMutation,
   useUnassignTaskMutation,
   useGetPatientsQuery,
-  useGetUsersQuery
+  useGetUsersQuery,
+  useGetTaskQuery
 } from '@/api/gql/generated'
 import {
   Input,
@@ -17,14 +18,14 @@ import {
   Tab,
   TabView,
   Textarea,
-  DateTimePicker
+  DateTimePicker,
+  LoadingContainer
 } from '@helpwave/hightide'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { PropertyList } from '@/components/PropertyList'
 
 interface TaskDetailViewProps {
   taskId?: string,
-  initialData?: Partial<CreateTaskInput>,
   onClose: () => void,
   onSuccess: () => void,
 }
@@ -36,10 +37,15 @@ const FormField = ({ label, children }: { label: string, children: React.ReactNo
   </div>
 )
 
-export const TaskDetailView = ({ taskId, initialData, onClose, onSuccess }: TaskDetailViewProps) => {
+export const TaskDetailView = ({ taskId, onClose, onSuccess }: TaskDetailViewProps) => {
   const translation = useTasksTranslation()
   const { selectedLocationId } = useTasksContext()
   const isEditMode = !!taskId
+
+  const { data: taskData, isLoading: isLoadingTask } = useGetTaskQuery(
+    { id: taskId! },
+    { enabled: isEditMode }
+  )
 
   const { data: patientsData } = useGetPatientsQuery(
     { locationId: selectedLocationId },
@@ -72,18 +78,19 @@ export const TaskDetailView = ({ taskId, initialData, onClose, onSuccess }: Task
     patientId: '',
     assigneeId: null,
     dueDate: null,
-    ...initialData,
   })
 
   useEffect(() => {
-    if (initialData) {
-      setFormData(prev => ({
-        ...prev,
-        ...initialData,
-        dueDate: initialData.dueDate ? new Date(initialData.dueDate) : null
-      }))
+    if (taskData?.task) {
+      setFormData({
+        title: taskData.task.title,
+        description: taskData.task.description || '',
+        patientId: taskData.task.patient?.id || '',
+        assigneeId: taskData.task.assignee?.id || null,
+        dueDate: taskData.task.dueDate ? new Date(taskData.task.dueDate) : null
+      })
     }
-  }, [initialData])
+  }, [taskData])
 
   const updateLocalState = (updates: Partial<CreateTaskInput>) => {
     setFormData(prev => ({ ...prev, ...updates }))
@@ -132,6 +139,10 @@ export const TaskDetailView = ({ taskId, initialData, onClose, onSuccess }: Task
   const patients = patientsData?.patients || []
   const users = usersData?.users || []
 
+  if (isEditMode && isLoadingTask) {
+    return <LoadingContainer />
+  }
+
   return (
     <div className="flex flex-col h-full bg-surface">
       <div className="flex-none mb-6">
@@ -166,8 +177,8 @@ export const TaskDetailView = ({ taskId, initialData, onClose, onSuccess }: Task
                       {p.name}
                     </SelectOption>
                   ))}
-                  {isEditMode && initialData?.patientId && !patients.find(p => p.id === initialData.patientId) && (
-                    <SelectOption value={initialData.patientId}>{translation('currentPatient')}</SelectOption>
+                  {isEditMode && taskData?.task?.patient && !patients.find(p => p.id === taskData.task?.patient?.id) && (
+                    <SelectOption value={taskData.task.patient.id}>{taskData.task.patient.name}</SelectOption>
                   )}
                 </Select>
               </FormField>

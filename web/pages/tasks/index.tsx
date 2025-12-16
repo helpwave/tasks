@@ -3,22 +3,16 @@ import { Page } from '@/components/layout/Page'
 import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
-import { Avatar, Button, CheckboxUncontrolled, FillerRowElement, Table } from '@helpwave/hightide'
+import { Button, CheckboxUncontrolled, FillerRowElement, Table } from '@helpwave/hightide'
 import { useMemo, useState } from 'react'
 import type { ColumnDef } from '@tanstack/table-core'
-import type {
-  CreateTaskInput
-} from '@/api/gql/generated'
-import {
-  useGetMyTasksQuery,
-  useCompleteTaskMutation,
-  useReopenTaskMutation
-} from '@/api/gql/generated'
+import { useCompleteTaskMutation, useGetMyTasksQuery, useReopenTaskMutation } from '@/api/gql/generated'
 import { PlusIcon } from 'lucide-react'
 import clsx from 'clsx'
 import { SmartDate } from '@/utils/date'
 import { SidePanel } from '@/components/layout/SidePanel'
 import { TaskDetailView } from '@/components/tasks/TaskDetailView'
+import { PatientDetailView } from '@/components/patients/PatientDetailView'
 
 type TaskViewModel = {
   id: string,
@@ -39,10 +33,9 @@ const TasksPage: NextPage = () => {
   const { mutate: completeTask } = useCompleteTaskMutation({ onSuccess: () => refetch() })
   const { mutate: reopenTask } = useReopenTaskMutation({ onSuccess: () => refetch() })
 
-  const [isPanelOpen, setIsPanelOpen] = useState(false)
+  const [isTasksPanelOpen, setIsTasksPanelOpen] = useState(false)
+  const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null)
   const [selectedTask, setSelectedTask] = useState<TaskViewModel | null>(null)
-
-  const currentUserId = queryData?.me?.id
 
   const tasks: TaskViewModel[] = useMemo(() => {
     if (!queryData?.me?.tasks) return []
@@ -71,16 +64,16 @@ const TasksPage: NextPage = () => {
 
   const handleCreate = () => {
     setSelectedTask(null)
-    setIsPanelOpen(true)
+    setIsTasksPanelOpen(true)
   }
 
-  const handleRowClick = (task: TaskViewModel) => {
+  const selectTask = (task: TaskViewModel) => {
     setSelectedTask(task)
-    setIsPanelOpen(true)
+    setIsTasksPanelOpen(true)
   }
 
   const handleClosePanel = () => {
-    setIsPanelOpen(false)
+    setIsTasksPanelOpen(false)
     setTimeout(() => setSelectedTask(null), 300)
   }
 
@@ -111,8 +104,19 @@ const TasksPage: NextPage = () => {
         enableResizing: false,
       },
       {
-        id: 'description',
-        header: translation('description'),
+        id: 'title',
+        header: translation('title'),
+        cell: ({ row }) => {
+          return (
+            <Button
+              color="neutral"
+              coloringStyle="text"
+              onClick={() => selectTask(row.original)}
+            >
+              {row.original.name}
+            </Button>
+          )
+        },
         accessorKey: 'name',
         minSize: 200,
         size: Number.MAX_SAFE_INTEGER,
@@ -123,7 +127,7 @@ const TasksPage: NextPage = () => {
         accessorKey: 'dueDate',
         cell: ({ row }) => {
           if (!row.original.dueDate) return <span className="text-description">-</span>
-          return <SmartDate date={row.original.dueDate} mode="relative" />
+          return <SmartDate date={row.original.dueDate} mode="relative"/>
         },
         minSize: 150,
         size: 150,
@@ -134,7 +138,7 @@ const TasksPage: NextPage = () => {
         header: 'Update Date',
         accessorKey: 'updateDate',
         cell: ({ row }) => (
-          <SmartDate date={row.original.updateDate} mode="relative" />
+          <SmartDate date={row.original.updateDate} mode="relative"/>
         ),
         minSize: 150,
         size: 150,
@@ -156,7 +160,17 @@ const TasksPage: NextPage = () => {
           }
           return (
             <div className="flex-col-0">
-              <span>{data.patient?.name}</span>
+              <Button
+                color="neutral"
+                coloringStyle="text"
+                size="none"
+                onClick={() => {
+                  setSelectedPatientId(row.original.patient?.id ?? null)
+                }}
+                className="flex-row-0 justify-start rounded-md px-1"
+              >
+                {data.patient?.name}
+              </Button>
               <span className="text-description">
                 {hasAssignmentInfo
                   ? [data.ward?.name, data.room?.name].filter(Boolean).join(' - ')
@@ -170,52 +184,9 @@ const TasksPage: NextPage = () => {
         size: 250,
         maxSize: 350,
       },
-      {
-        id: 'assignee',
-        header: translation('assignedTo'),
-        accessorFn: ({ assignee }) => assignee?.name,
-        cell: ({ row }) => {
-          const assignee = row.original.assignee
-          if (!assignee) {
-            return (
-              <span className="text-description">
-                {translation('notAssigned')}
-              </span>
-            )
-          }
-
-          const isMe = assignee.id === currentUserId
-
-          return (
-            <div className={clsx('flex-row-2 items-center', { 'font-bold text-primary': isMe })}>
-              <Avatar
-                fullyRounded={true}
-                image={{
-                  avatarUrl: assignee.avatarURL || 'https://cdn.helpwave.de/boringavatar.svg',
-                  alt: assignee.name
-                }}
-              />
-              <span>
-                {isMe ? `${translation('itsYou')} (${assignee.name})` : assignee.name}
-              </span>
-            </div>
-          )
-        },
-        minSize: 200,
-        size: 250,
-        maxSize: 350,
-      }
     ],
-    [translation, currentUserId, completeTask, reopenTask]
+    [translation, completeTask, reopenTask]
   )
-
-  const initialTaskData: Partial<CreateTaskInput> | undefined = selectedTask ? {
-    title: selectedTask.name,
-    description: selectedTask.description,
-    dueDate: selectedTask.dueDate,
-    patientId: selectedTask.patient?.id,
-    assigneeId: selectedTask.assignee?.id,
-  } : undefined
 
   return (
     <Page pageTitle={titleWrapper(translation('myTasks'))}>
@@ -223,7 +194,7 @@ const TasksPage: NextPage = () => {
         titleElement={translation('myTasks')}
         description={translation('nTask', { count: tasks.length })}
         actionElement={(
-          <Button startIcon={<PlusIcon />} onClick={handleCreate}>
+          <Button startIcon={<PlusIcon/>} onClick={handleCreate}>
             {translation('addTask')}
           </Button>
         )}
@@ -233,7 +204,7 @@ const TasksPage: NextPage = () => {
           data={tasks}
           columns={columns}
           fillerRow={() => (
-            <FillerRowElement className="min-h-17.25" />
+            <FillerRowElement className="min-h-12"/>
           )}
           initialState={{
             sorting: [
@@ -242,19 +213,29 @@ const TasksPage: NextPage = () => {
             ]
           }}
           enableMultiSort={true}
-          onRowClick={(row) => handleRowClick(row.original)}
         />
       </ContentPanel>
 
       <SidePanel
-        isOpen={isPanelOpen}
+        isOpen={isTasksPanelOpen}
         onClose={handleClosePanel}
       >
-        {(isPanelOpen || selectedTask) && (
+        {(isTasksPanelOpen || selectedTask) && (
           <TaskDetailView
             taskId={selectedTask?.id}
-            initialData={initialTaskData}
             onClose={handleClosePanel}
+            onSuccess={refetch}
+          />
+        )}
+      </SidePanel>
+      <SidePanel
+        isOpen={!!selectedPatientId}
+        onClose={() => setSelectedPatientId(null)}
+      >
+        {!!selectedPatientId && (
+          <PatientDetailView
+            patientId={selectedPatientId}
+            onClose={() => setSelectedPatientId(null)}
             onSuccess={refetch}
           />
         )}

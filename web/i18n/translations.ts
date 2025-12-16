@@ -74,6 +74,7 @@ export type TasksTranslationEntries = {
   'nBed': (values: { count: number }) => string,
   'nCurrentlyPatients': (values: { count: number }) => string,
   'newestAdmissions': string,
+  'newPatient': string,
   'noClosedTasks': string,
   'noLocationsFound': string,
   'noOpenTasks': string,
@@ -227,6 +228,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
       return _out
     },
     'newestAdmissions': `Neueste Aufnahmen`,
+    'newPatient': `Neuer Patient`,
     'noClosedTasks': `Keine erledigten Aufgaben`,
     'noLocationsFound': `Keine Standorte gefunden`,
     'noOpenTasks': `Keine offenen Aufgaben`,
@@ -453,6 +455,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
       return _out
     },
     'newestAdmissions': `Newest admissions`,
+    'newPatient': `New Patient`,
     'noClosedTasks': `No closed tasks`,
     'noLocationsFound': `No locations found`,
     'noOpenTasks': `No open tasks`,
