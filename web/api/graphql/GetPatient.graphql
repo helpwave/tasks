@@ -7,6 +7,11 @@ query GetPatient($id: ID!) {
     sex
     assignedLocation {
       id
+      title
+    }
+    assignedLocations {
+      id
+      title
     }
     tasks {
       id

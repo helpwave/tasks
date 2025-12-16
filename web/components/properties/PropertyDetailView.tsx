@@ -22,13 +22,12 @@ interface PropertyDetailViewProps {
   onSuccess: () => void,
 }
 
-// TODO fix Select option panels not showing properly when opening them
 export const PropertyDetailView = ({
-                                     id,
-                                     initialData,
-                                     onClose,
-                                     onSuccess
-                                   }: PropertyDetailViewProps) => {
+  id,
+  initialData,
+  onClose,
+  onSuccess
+}: PropertyDetailViewProps) => {
   const translation = useTasksTranslation()
   const isEditMode = !!id
 
@@ -158,11 +157,10 @@ export const PropertyDetailView = ({
           {isSelectType && (
             <div className="flex-col-2">
               <span className="typography-title-md">
-                  {translation('selectOptions')}
+                {translation('selectOptions')}
               </span>
               <div className="flex-col-2 min-h-64 max-h-64 overflow-y-auto">
                 {formData.selectData?.options.map((option) => (
-                  // TODO integrate isCustom and description attributes of a select option
                   <div key={option.id} className="relative">
                     <Input
                       value={option.name}
@@ -203,10 +201,9 @@ export const PropertyDetailView = ({
                         }
                         updateLocal(update)
                         persist(update)
-                        // TODO add confirm dialog before deleting
                       }}
                     >
-                      <XIcon/>
+                      <XIcon />
                     </Button>
                   </div>
                 ))}
@@ -271,7 +268,7 @@ export const PropertyDetailView = ({
                       })
                     }}
                   >
-                    <PlusIcon/>
+                    <PlusIcon />
                   </Button>
                 </div>
               </div>
@@ -282,12 +279,12 @@ export const PropertyDetailView = ({
 
               <div className="flex-row-4 justify-between items-center">
                 <div className="flex-col-1">
-                <span className="typography-title-md">
-                  {translation('archiveProperty')}
-                </span>
+                  <span className="typography-title-md">
+                    {translation('archiveProperty')}
+                  </span>
                   <span className="text-description">
-                  {translation('archivedPropertyDescription')}
-                </span>
+                    {translation('archivedPropertyDescription')}
+                  </span>
                 </div>
                 <Checkbox
                   checked={formData.isArchived}
@@ -302,7 +299,7 @@ export const PropertyDetailView = ({
             </>
           )}
         </div>
-        <div className="min-h-16"/>
+        <div className="min-h-16" />
       </div>
 
       {!isEditMode && (

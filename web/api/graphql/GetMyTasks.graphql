@@ -20,6 +20,19 @@ query GetMyTasks {
             title
           }
         }
+        assignedLocations {
+          id
+          title
+          kind
+          parent {
+            id
+            title
+            parent {
+              id
+              title
+            }
+          }
+        }
       }
       assignee {
         id

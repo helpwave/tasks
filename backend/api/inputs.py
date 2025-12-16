@@ -58,6 +58,7 @@ class CreatePatientInput:
     birthdate: date
     sex: Sex
     assigned_location_id: strawberry.ID | None = None
+    assigned_location_ids: list[strawberry.ID] | None = None
     properties: list[PropertyValueInput] | None = None
 
 
@@ -68,6 +69,7 @@ class UpdatePatientInput:
     birthdate: date | None = None
     sex: Sex | None = None
     assigned_location_id: strawberry.ID | None = None
+    assigned_location_ids: list[strawberry.ID] | None = None
     properties: list[PropertyValueInput] | None = None
 
 

@@ -10,12 +10,15 @@ import {
   Tab,
   TabView,
   LoadingContainer,
-  FormElementWrapper
+  FormElementWrapper,
+  Button
 } from '@helpwave/hightide'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { DateInput } from '@/components/ui/DateInput'
-import { CheckCircle2, Circle, Clock } from 'lucide-react'
+import { CheckCircle2, Circle, Clock, MapPin } from 'lucide-react'
 import { PropertyList } from '@/components/PropertyList'
+import { LocationSelectionDialog } from '@/components/locations/LocationSelectionDialog'
+import type { LocationNodeType } from '@/api/gql/generated'
 
 interface PatientDetailViewProps {
   patientId?: string,
@@ -59,23 +62,26 @@ export const PatientDetailView = ({ patientId, onClose, onSuccess }: PatientDeta
     firstname: '',
     lastname: '',
     sex: Sex.Female,
-    assignedLocationId: selectedLocationId ?? '',
+    assignedLocationIds: selectedLocationId ? [selectedLocationId] : [],
     birthdate: getDefaultBirthdate()
   })
+  const [isLocationDialogOpen, setIsLocationDialogOpen] = useState(false)
+  const [selectedLocations, setSelectedLocations] = useState<LocationNodeType[]>([])
 
   useEffect(() => {
     if (patientData?.patient) {
-      const { firstname, lastname, sex, birthdate, assignedLocation } = patientData.patient
+      const { firstname, lastname, sex, birthdate, assignedLocations } = patientData.patient
       setFormData({
         firstname,
         lastname,
         sex,
         birthdate: toISODate(birthdate),
-        assignedLocationId: assignedLocation?.id ?? selectedLocationId ?? ''
+        assignedLocationIds: assignedLocations.map(loc => loc.id)
       })
       setFullName(`${firstname} ${lastname}`)
+      setSelectedLocations(assignedLocations as LocationNodeType[])
     }
-  }, [patientData, selectedLocationId])
+  }, [patientData])
 
   const { mutate: createPatient, isLoading: isCreating } = useCreatePatientMutation({
     onSuccess: () => {
@@ -110,10 +116,20 @@ export const PatientDetailView = ({ patientId, onClose, onSuccess }: PatientDeta
     if (!formData.firstname.trim() || !formData.lastname.trim()) return
 
     const dataToSend = { ...formData }
-    if (!dataToSend.assignedLocationId) {
-      delete dataToSend.assignedLocationId
+
+    if (!dataToSend.assignedLocationIds || dataToSend.assignedLocationIds.length === 0) {
+      delete dataToSend.assignedLocationIds
     }
+
     createPatient({ data: dataToSend })
+  }
+
+  const handleLocationSelect = (locations: LocationNodeType[]) => {
+    setSelectedLocations(locations)
+    const locationIds = locations.map(loc => loc.id)
+    updateLocalState({ assignedLocationIds: locationIds })
+    persistChanges({ assignedLocationIds: locationIds })
+    setIsLocationDialogOpen(false)
   }
 
   const sexOptions = [
@@ -199,12 +215,61 @@ export const PatientDetailView = ({ patientId, onClose, onSuccess }: PatientDeta
                   ))}
                 </Select>
               </FormField>
+
+              <FormField label={translation('assignedLocation')}>
+                <div className="flex flex-col gap-2">
+                  <div className="flex gap-2">
+                    <Input
+                      value={selectedLocations.length > 0
+                        ? selectedLocations.map(loc => loc.title).join(', ')
+                        : ''}
+                      placeholder={translation('selectLocation')}
+                      readOnly
+                      className="flex-grow"
+                    />
+                    <Button
+                      onClick={() => setIsLocationDialogOpen(true)}
+                      layout="icon"
+                      title={translation('selectLocation')}
+                    >
+                      <MapPin className="size-4" />
+                    </Button>
+                    {selectedLocations.length > 0 && (
+                      <Button
+                        onClick={() => {
+                          setSelectedLocations([])
+                          updateLocalState({ assignedLocationIds: [] })
+                          persistChanges({ assignedLocationIds: [] })
+                        }}
+                        layout="icon"
+                        color="neutral"
+                        title={translation('clear')}
+                      >
+                        ×
+                      </Button>
+                    )}
+                  </div>
+                  {selectedLocations.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {selectedLocations.map(location => (
+                        <span
+                          key={location.id}
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded bg-surface-subdued text-sm"
+                        >
+                          <MapPin className="size-3" />
+                          {location.title}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </FormField>
             </div>
           </Tab>
 
           {patientId && (
             <Tab label={translation('properties')} className="h-full overflow-y-auto pr-2 pt-2 pb-16">
-              <PropertyList subjectId={patientId} subjectType="patient"/>
+              <PropertyList subjectId={patientId} subjectType="patient" />
             </Tab>
           )}
 
@@ -212,7 +277,7 @@ export const PatientDetailView = ({ patientId, onClose, onSuccess }: PatientDeta
             <div className="flex flex-col gap-6 pt-4">
               <div>
                 <h3 className="typography-label-md font-bold mb-3 flex items-center gap-2">
-                  <Circle className="size-4 text-warning"/>
+                  <Circle className="size-4 text-warning" />
                   {translation('openTasks')} ({openTasks.length})
                 </h3>
                 <div className="flex flex-col gap-2">
@@ -220,13 +285,13 @@ export const PatientDetailView = ({ patientId, onClose, onSuccess }: PatientDeta
                     <div className="text-description italic">{translation('noOpenTasks')}</div>}
                   {openTasks.map(task => (
                     <div key={task.id}
-                         className="p-3 rounded-lg border border-divider bg-surface hover:border-primary transition-colors cursor-pointer">
+                      className="p-3 rounded-lg border border-divider bg-surface hover:border-primary transition-colors cursor-pointer">
                       <div className="font-semibold">{task.title}</div>
                       {task.description &&
                         <div className="text-sm text-description mt-1 line-clamp-2">{task.description}</div>}
                       {task.dueDate && (
                         <div className="flex items-center gap-1 mt-2 text-xs text-warning">
-                          <Clock className="size-3"/>
+                          <Clock className="size-3" />
                           {new Date(task.dueDate).toLocaleDateString()}
                         </div>
                       )}
@@ -237,7 +302,7 @@ export const PatientDetailView = ({ patientId, onClose, onSuccess }: PatientDeta
 
               <div className="opacity-75">
                 <h3 className="typography-label-md font-bold mb-3 flex items-center gap-2">
-                  <CheckCircle2 className="size-4 text-positive"/>
+                  <CheckCircle2 className="size-4 text-positive" />
                   {translation('closedTasks')} ({closedTasks.length})
                 </h3>
                 <div className="flex flex-col gap-2">
@@ -265,6 +330,14 @@ export const PatientDetailView = ({ patientId, onClose, onSuccess }: PatientDeta
           </LoadingButton>
         </div>
       )}
+
+      <LocationSelectionDialog
+        isOpen={isLocationDialogOpen}
+        onClose={() => setIsLocationDialogOpen(false)}
+        onSelect={handleLocationSelect}
+        initialSelectedIds={selectedLocations.map(loc => loc.id)}
+        multiSelect={true}
+      />
     </div>
   )
 }

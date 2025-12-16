@@ -26,26 +26,30 @@ export const DateInput = ({ date, onValueChange, containerProps, ...props }: Dat
   const isReadOnly = useMemo(() => props.readOnly || props.disabled, [props.readOnly, props.disabled])
 
   useEffect(() => {
-    if(isReadOnly) {
+    if (isReadOnly) {
       setIsOpen(false)
     }
   }, [isReadOnly])
+
+  const cleanInputProps = { ...props } as Omit<typeof props, 'isShowingError' | 'setIsShowingError'> & Record<string, unknown>
+  delete (cleanInputProps as Record<string, unknown>)['isShowingError']
+  delete (cleanInputProps as Record<string, unknown>)['setIsShowingError']
 
   return (
     <>
       <div {...containerProps} className={clsx('relative w-full', containerProps?.className)}>
         <Input
-          {...props}
+          {...cleanInputProps}
           value={formatAbsolute(date, locale, false)}
           onClick={(event) => {
             setIsOpen(true)
-            props.onClick?.(event)
+            cleanInputProps.onClick?.(event)
           }}
           readOnly={true}
           className={clsx(
             'pr-10 w-full',
             { 'hover:cursor-pointer': !isReadOnly },
-            props.className
+            cleanInputProps.className
           )}
         />
         <Button
