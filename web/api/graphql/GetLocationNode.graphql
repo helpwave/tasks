@@ -1,0 +1,8 @@
+query GetLocationNode($id: ID!) {
+  locationNode(id: $id) {
+    id
+    title
+    kind
+    parentId
+  }
+}

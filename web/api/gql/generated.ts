@@ -389,6 +389,13 @@ export type UserType = {
   username: Scalars['String']['output'];
 };
 
+export type GetLocationNodeQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GetLocationNodeQuery = { __typename?: 'Query', locationNode?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parentId?: string | null } | null };
+
 export type GetLocationsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -416,7 +423,7 @@ export type GetPatientsQueryVariables = Exact<{
 }>;
 
 
-export type GetPatientsQuery = { __typename?: 'Query', patients: Array<{ __typename?: 'PatientType', id: string, name: string, firstname: string, lastname: string, birthdate: any, sex: Sex, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null, assignedLocations: Array<{ __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null } | null }>, tasks: Array<{ __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, dueDate?: any | null, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null } | null }>, properties: Array<{ __typename?: 'PropertyValueType', textValue?: string | null, definition: { __typename?: 'PropertyDefinitionType', name: string } }> }> };
+export type GetPatientsQuery = { __typename?: 'Query', patients: Array<{ __typename?: 'PatientType', id: string, name: string, firstname: string, lastname: string, birthdate: any, sex: Sex, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null, assignedLocations: Array<{ __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null } | null }>, tasks: Array<{ __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, dueDate?: any | null, creationDate: any, updateDate?: any | null, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null } | null }>, properties: Array<{ __typename?: 'PropertyValueType', textValue?: string | null, definition: { __typename?: 'PropertyDefinitionType', name: string } }> }> };
 
 export type GetTaskQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -502,6 +509,33 @@ export type ReopenTaskMutationVariables = Exact<{
 export type ReopenTaskMutation = { __typename?: 'Mutation', reopenTask: { __typename?: 'TaskType', id: string, done: boolean, updateDate?: any | null } };
 
 
+
+export const GetLocationNodeDocument = `
+    query GetLocationNode($id: ID!) {
+  locationNode(id: $id) {
+    id
+    title
+    kind
+    parentId
+  }
+}
+    `;
+
+export const useGetLocationNodeQuery = <
+      TData = GetLocationNodeQuery,
+      TError = unknown
+    >(
+      variables: GetLocationNodeQueryVariables,
+      options?: Omit<UseQueryOptions<GetLocationNodeQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetLocationNodeQuery, TError, TData>['queryKey'] }
+    ) => {
+    
+    return useQuery<GetLocationNodeQuery, TError, TData>(
+      {
+    queryKey: ['GetLocationNode', variables],
+    queryFn: fetcher<GetLocationNodeQuery, GetLocationNodeQueryVariables>(GetLocationNodeDocument, variables),
+    ...options
+  }
+    )};
 
 export const GetLocationsDocument = `
     query GetLocations {
@@ -727,6 +761,8 @@ export const GetPatientsDocument = `
       description
       done
       dueDate
+      creationDate
+      updateDate
       assignee {
         id
         name

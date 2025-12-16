@@ -1,6 +1,6 @@
 import { useMemo, useState, forwardRef, useImperativeHandle } from 'react'
-import { Button, CheckboxUncontrolled, FillerRowElement, Table, SearchBar } from '@helpwave/hightide'
-import { useCompleteTaskMutation, useGetMyTasksQuery, useReopenTaskMutation } from '@/api/gql/generated'
+import { Button, CheckboxUncontrolled, FillerRowElement, Table, SearchBar, Avatar } from '@helpwave/hightide'
+import { useCompleteTaskMutation, useReopenTaskMutation } from '@/api/gql/generated'
 import clsx from 'clsx'
 import { SmartDate } from '@/utils/date'
 import { SidePanel } from '@/components/layout/SidePanel'
@@ -10,26 +10,39 @@ import { LocationChips } from '@/components/patients/LocationChips'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import type { ColumnDef } from '@tanstack/table-core'
 
-type TaskViewModel = {
+export type TaskViewModel = {
   id: string,
   name: string,
   description?: string,
   updateDate: Date,
   dueDate?: Date,
-  patient?: { id: string, name: string, locations: Array<{ id: string, title: string, parent?: { id: string, title: string, parent?: { id: string, title: string } | null } | null }> },
+  patient?: {
+    id: string,
+    name: string,
+    locations: Array<{
+      id: string,
+      title: string,
+      parent?: { id: string, title: string, parent?: { id: string, title: string } | null } | null,
+    }>,
+  },
   assignee?: { id: string, name: string, avatarURL?: string | null },
   done: boolean,
 }
 
 export type TaskListRef = {
-  openCreate: () => void
+  openCreate: () => void,
 }
 
-export const TaskList = forwardRef<TaskListRef, {}>((_, ref) => {
+type TaskListProps = {
+  tasks: TaskViewModel[],
+  onRefetch?: () => void,
+  showAssignee?: boolean,
+}
+
+export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initialTasks, onRefetch, showAssignee = false }, ref) => {
   const translation = useTasksTranslation()
-  const { data: queryData, refetch } = useGetMyTasksQuery()
-  const { mutate: completeTask } = useCompleteTaskMutation({ onSuccess: () => refetch() })
-  const { mutate: reopenTask } = useReopenTaskMutation({ onSuccess: () => refetch() })
+  const { mutate: completeTask } = useCompleteTaskMutation({ onSuccess: onRefetch })
+  const { mutate: reopenTask } = useReopenTaskMutation({ onSuccess: onRefetch })
 
   const [isTasksPanelOpen, setIsTasksPanelOpen] = useState(false)
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null)
@@ -43,27 +56,8 @@ export const TaskList = forwardRef<TaskListRef, {}>((_, ref) => {
     }
   }))
 
-  const tasks: TaskViewModel[] = useMemo(() => {
-    if (!queryData?.me?.tasks) return []
-
-    let data = queryData.me.tasks.map((task) => ({
-      id: task.id,
-      name: task.title,
-      description: task.description || undefined,
-      updateDate: task.updateDate ? new Date(task.updateDate) : new Date(task.creationDate),
-      dueDate: task.dueDate ? new Date(task.dueDate) : undefined,
-      done: task.done,
-      patient: task.patient
-        ? {
-          id: task.patient.id,
-          name: task.patient.name,
-          locations: task.patient.assignedLocations || []
-        }
-        : undefined,
-      assignee: task.assignee
-        ? { id: task.assignee.id, name: task.assignee.name, avatarURL: task.assignee.avatarUrl }
-        : undefined,
-    }))
+  const tasks = useMemo(() => {
+    let data = initialTasks
 
     if (searchQuery) {
       const lowerQuery = searchQuery.toLowerCase()
@@ -71,7 +65,7 @@ export const TaskList = forwardRef<TaskListRef, {}>((_, ref) => {
     }
 
     return data
-  }, [queryData, searchQuery])
+  }, [initialTasks, searchQuery])
 
   const selectTask = (task: TaskViewModel) => {
     setSelectedTask(task)
@@ -84,109 +78,147 @@ export const TaskList = forwardRef<TaskListRef, {}>((_, ref) => {
   }
 
   const columns = useMemo<ColumnDef<TaskViewModel>[]>(
-    () => [
-      {
-        id: 'done',
-        header: translation('status'),
-        accessorKey: 'done',
-        cell: ({ row }) => (
-          <div onClick={(e) => e.stopPropagation()}>
-            <CheckboxUncontrolled
-              checked={row.original.done}
-              onCheckedChange={(checked) => {
-                if (!checked) {
-                  completeTask({ id: row.original.id })
-                } else {
-                  reopenTask({ id: row.original.id })
-                }
-              }}
-              className={clsx('rounded-full')}
-            />
-          </div>
-        ),
-        minSize: 110,
-        size: 110,
-        maxSize: 110,
-        enableResizing: false,
-      },
-      {
-        id: 'title',
-        header: translation('title'),
-        cell: ({ row }) => {
-          return (
-            <Button
-              color="neutral"
-              coloringStyle="text"
-              onClick={() => selectTask(row.original)}
-            >
-              {row.original.name}
-            </Button>
-          )
+    () => {
+      const cols: ColumnDef<TaskViewModel>[] = [
+        {
+          id: 'done',
+          header: translation('status'),
+          accessorKey: 'done',
+          cell: ({ row }) => (
+            <div onClick={(e) => e.stopPropagation()}>
+              <CheckboxUncontrolled
+                checked={row.original.done}
+                onCheckedChange={(checked) => {
+                  if (!checked) {
+                    completeTask({ id: row.original.id })
+                  } else {
+                    reopenTask({ id: row.original.id })
+                  }
+                }}
+                className={clsx('rounded-full')}
+              />
+            </div>
+          ),
+          minSize: 110,
+          size: 110,
+          maxSize: 110,
+          enableResizing: false,
         },
-        accessorKey: 'name',
-        minSize: 200,
-        size: Number.MAX_SAFE_INTEGER,
-      },
-      {
-        id: 'dueDate',
-        header: translation('dueDate'),
-        accessorKey: 'dueDate',
-        cell: ({ row }) => {
-          if (!row.original.dueDate) return <span className="text-description">-</span>
-          return <SmartDate date={row.original.dueDate} mode="relative" />
-        },
-        minSize: 150,
-        size: 150,
-        maxSize: 200,
-      },
-      {
-        id: 'updateDate',
-        header: 'Update Date',
-        accessorKey: 'updateDate',
-        cell: ({ row }) => (
-          <SmartDate date={row.original.updateDate} mode="relative" />
-        ),
-        minSize: 150,
-        size: 150,
-        maxSize: 200,
-      },
-      {
-        id: 'patient',
-        header: translation('patient'),
-        accessorFn: ({ patient }) => patient?.name,
-        cell: ({ row }) => {
-          const data = row.original
-          if (!data.patient) {
+        {
+          id: 'title',
+          header: translation('title'),
+          cell: ({ row }) => {
             return (
-              <span className="text-description">
-                {translation('noPatient')}
-              </span>
-            )
-          }
-          return (
-            <div className="flex flex-col gap-1">
               <Button
                 color="neutral"
                 coloringStyle="text"
-                size="none"
-                onClick={() => {
-                  setSelectedPatientId(data.patient?.id ?? null)
-                }}
-                className="flex-row-0 justify-start rounded-md px-1"
+                onClick={() => selectTask(row.original)}
               >
-                {data.patient?.name}
+                {row.original.name}
               </Button>
-              <LocationChips locations={data.patient.locations || []} />
-            </div>
-          )
+            )
+          },
+          accessorKey: 'name',
+          minSize: 200,
+          size: Number.MAX_SAFE_INTEGER,
         },
-        sortingFn: 'text',
-        minSize: 200,
-        size: 250,
-        maxSize: 350,
-      },
-    ],
-    [translation, completeTask, reopenTask]
+        {
+          id: 'dueDate',
+          header: translation('dueDate'),
+          accessorKey: 'dueDate',
+          cell: ({ row }) => {
+            if (!row.original.dueDate) return <span className="text-description">-</span>
+            return <SmartDate date={row.original.dueDate} mode="relative" />
+          },
+          minSize: 150,
+          size: 150,
+          maxSize: 200,
+        },
+        {
+          id: 'updateDate',
+          header: 'Update Date',
+          accessorKey: 'updateDate',
+          cell: ({ row }) => (
+            <SmartDate date={row.original.updateDate} mode="relative" />
+          ),
+          minSize: 150,
+          size: 150,
+          maxSize: 200,
+        },
+        {
+          id: 'patient',
+          header: translation('patient'),
+          accessorFn: ({ patient }) => patient?.name,
+          cell: ({ row }) => {
+            const data = row.original
+            if (!data.patient) {
+              return (
+                <span className="text-description">
+                  {translation('noPatient')}
+                </span>
+              )
+            }
+            return (
+              <div className="flex flex-col gap-1">
+                <Button
+                  color="neutral"
+                  coloringStyle="text"
+                  size="none"
+                  onClick={() => {
+                    setSelectedPatientId(data.patient?.id ?? null)
+                  }}
+                  className="flex-row-0 justify-start rounded-md px-1"
+                >
+                  {data.patient?.name}
+                </Button>
+                <LocationChips locations={data.patient.locations || []} />
+              </div>
+            )
+          },
+          sortingFn: 'text',
+          minSize: 200,
+          size: 250,
+          maxSize: 350,
+        },
+      ]
+
+      if (showAssignee) {
+        cols.push({
+          id: 'assignee',
+          header: translation('assignedTo'),
+          accessorFn: ({ assignee }) => assignee?.name,
+          cell: ({ row }) => {
+            const assignee = row.original.assignee
+            if (!assignee) {
+              return (
+                <span className="text-description">
+                  {translation('notAssigned')}
+                </span>
+              )
+            }
+
+            return (
+              <div className="flex-row-2 items-center">
+                <Avatar
+                  fullyRounded={true}
+                  image={{
+                    avatarUrl: assignee.avatarURL || 'https://cdn.helpwave.de/boringavatar.svg',
+                    alt: assignee.name
+                  }}
+                />
+                <span>{assignee.name}</span>
+              </div>
+            )
+          },
+          minSize: 200,
+          size: 250,
+          maxSize: 350,
+        })
+      }
+
+      return cols
+    },
+    [translation, completeTask, reopenTask, showAssignee]
   )
 
   return (
@@ -221,7 +253,7 @@ export const TaskList = forwardRef<TaskListRef, {}>((_, ref) => {
           <TaskDetailView
             taskId={selectedTask?.id}
             onClose={handleClosePanel}
-            onSuccess={refetch}
+            onSuccess={onRefetch || (() => {})}
           />
         )}
       </SidePanel>
@@ -233,7 +265,7 @@ export const TaskList = forwardRef<TaskListRef, {}>((_, ref) => {
           <PatientDetailView
             patientId={selectedPatientId}
             onClose={() => setSelectedPatientId(null)}
-            onSuccess={refetch}
+            onSuccess={onRefetch || (() => {})}
           />
         )}
       </SidePanel>

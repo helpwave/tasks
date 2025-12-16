@@ -22,11 +22,11 @@ type PatientViewModel = {
 }
 
 export type PatientListRef = {
-  openCreate: () => void
+  openCreate: () => void,
 }
 
 type PatientListProps = {
-  locationId?: string
+  locationId?: string,
 }
 
 export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ locationId }, ref) => {
@@ -66,8 +66,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ locat
       data = data.filter(p =>
         p.name.toLowerCase().includes(lowerQuery) ||
         p.firstname.toLowerCase().includes(lowerQuery) ||
-        p.lastname.toLowerCase().includes(lowerQuery)
-      )
+        p.lastname.toLowerCase().includes(lowerQuery))
     }
 
     return data

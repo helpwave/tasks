@@ -7,7 +7,7 @@ from api.types.patient import PatientType
 from database import models
 from database.session import redis_client
 from sqlalchemy import select
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import aliased, selectinload
 
 from .utils import process_properties
 
@@ -23,7 +23,10 @@ class PatientQuery:
         result = await info.context.db.execute(
             select(models.Patient)
             .where(models.Patient.id == id)
-            .options(selectinload(models.Patient.assigned_locations)),
+            .options(
+                selectinload(models.Patient.assigned_locations),
+                selectinload(models.Patient.tasks),
+            ),
         )
         return result.scalars().first()
 
@@ -35,6 +38,7 @@ class PatientQuery:
     ) -> list[PatientType]:
         query = select(models.Patient).options(
             selectinload(models.Patient.assigned_locations),
+            selectinload(models.Patient.tasks),
         )
         if location_node_id:
             cte = (
@@ -48,8 +52,6 @@ class PatientQuery:
                 models.LocationNode.parent_id == cte.c.id,
             )
             cte = cte.union_all(parent)
-
-            from sqlalchemy.orm import aliased
 
             patient_locations = aliased(models.patient_locations)
 
@@ -78,6 +80,7 @@ class PatientQuery:
             select(models.Patient)
             .options(
                 selectinload(models.Patient.assigned_locations),
+                selectinload(models.Patient.tasks),
             )
             .limit(limit)
         )

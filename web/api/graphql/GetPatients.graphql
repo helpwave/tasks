@@ -37,6 +37,8 @@ query GetPatients($locationId: ID) {
       description
       done
       dueDate
+      creationDate
+      updateDate
       assignee {
         id
         name
