@@ -116,10 +116,11 @@ export const PatientDetailView = ({ patientId, onClose, onSuccess }: PatientDeta
     if (!formData.firstname.trim() || !formData.lastname.trim()) return
 
     const dataToSend = { ...formData }
-    // Only include assignedLocationIds if there are locations selected
+
     if (!dataToSend.assignedLocationIds || dataToSend.assignedLocationIds.length === 0) {
       delete dataToSend.assignedLocationIds
     }
+
     createPatient({ data: dataToSend })
   }
 
@@ -268,7 +269,7 @@ export const PatientDetailView = ({ patientId, onClose, onSuccess }: PatientDeta
 
           {patientId && (
             <Tab label={translation('properties')} className="h-full overflow-y-auto pr-2 pt-2 pb-16">
-              <PropertyList subjectId={patientId} subjectType="patient"/>
+              <PropertyList subjectId={patientId} subjectType="patient" />
             </Tab>
           )}
 
@@ -276,7 +277,7 @@ export const PatientDetailView = ({ patientId, onClose, onSuccess }: PatientDeta
             <div className="flex flex-col gap-6 pt-4">
               <div>
                 <h3 className="typography-label-md font-bold mb-3 flex items-center gap-2">
-                  <Circle className="size-4 text-warning"/>
+                  <Circle className="size-4 text-warning" />
                   {translation('openTasks')} ({openTasks.length})
                 </h3>
                 <div className="flex flex-col gap-2">
@@ -284,13 +285,13 @@ export const PatientDetailView = ({ patientId, onClose, onSuccess }: PatientDeta
                     <div className="text-description italic">{translation('noOpenTasks')}</div>}
                   {openTasks.map(task => (
                     <div key={task.id}
-                         className="p-3 rounded-lg border border-divider bg-surface hover:border-primary transition-colors cursor-pointer">
+                      className="p-3 rounded-lg border border-divider bg-surface hover:border-primary transition-colors cursor-pointer">
                       <div className="font-semibold">{task.title}</div>
                       {task.description &&
                         <div className="text-sm text-description mt-1 line-clamp-2">{task.description}</div>}
                       {task.dueDate && (
                         <div className="flex items-center gap-1 mt-2 text-xs text-warning">
-                          <Clock className="size-3"/>
+                          <Clock className="size-3" />
                           {new Date(task.dueDate).toLocaleDateString()}
                         </div>
                       )}
@@ -301,7 +302,7 @@ export const PatientDetailView = ({ patientId, onClose, onSuccess }: PatientDeta
 
               <div className="opacity-75">
                 <h3 className="typography-label-md font-bold mb-3 flex items-center gap-2">
-                  <CheckCircle2 className="size-4 text-positive"/>
+                  <CheckCircle2 className="size-4 text-positive" />
                   {translation('closedTasks')} ({closedTasks.length})
                 </h3>
                 <div className="flex flex-col gap-2">
