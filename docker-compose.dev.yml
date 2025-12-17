@@ -66,6 +66,9 @@ services:
       PUBLIC_ISSUER_URI: "http://localhost:8080/realms/tasks"
       CLIENT_ID: "tasks-backend"
       CLIENT_SECRET: "tasks-secret"
+      SCAFFOLD_DIRECTORY: "/scaffold"
+    volumes:
+      - "./scaffold:/scaffold:ro"
     depends_on:
       - postgres
       - redis

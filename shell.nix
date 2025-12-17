@@ -53,6 +53,7 @@ pkgs.mkShell {
     export REDIS_URL="redis://:${redisPassword}@${redisHost}:${toString redisPort}"
     export ISSUER_URI="http://localhost:8080/realms/tasks"
     export CLIENT_SECRET="tasks-secret"
+    export SCAFFOLD_DIRECTORY="$PROJECT_ROOT/scaffold"
 
     export LD_LIBRARY_PATH="${libPath}:$LD_LIBRARY_PATH"
 
