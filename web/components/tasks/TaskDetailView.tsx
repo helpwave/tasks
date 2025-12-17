@@ -25,7 +25,6 @@ import {
   Textarea
 } from '@helpwave/hightide'
 import { useTasksContext } from '@/hooks/useTasksContext'
-import { PropertyList } from '@/components/PropertyList'
 import { User } from 'lucide-react'
 import { SidePanel } from '@/components/layout/SidePanel'
 import { PatientDetailView } from '@/components/patients/PatientDetailView'
@@ -275,12 +274,6 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
               </FormElementWrapper>
             </div>
           </Tab>
-
-          {taskId && (
-            <Tab label={translation('properties')} className="h-full overflow-y-auto pr-2 pt-2 pb-16">
-              <PropertyList subjectId={taskId} subjectType="task"/>
-            </Tab>
-          )}
         </TabView>
       </div>
 

@@ -32,7 +32,6 @@ import { useTasksContext } from '@/hooks/useTasksContext'
 import { DateInput } from '@/components/ui/DateInput'
 import { CheckCircle2, ChevronDown, Circle, Clock, MapPin, PlusIcon, XIcon } from 'lucide-react'
 import { PatientStateChip } from '@/components/patients/PatientStateChip'
-import { PropertyList } from '@/components/PropertyList'
 import { LocationSelectionDialog } from '@/components/locations/LocationSelectionDialog'
 import clsx from 'clsx'
 import { SidePanel } from '@/components/layout/SidePanel'
@@ -552,12 +551,6 @@ export const PatientDetailView = ({
               )}
             </FormElementWrapper>
           </Tab>
-
-          {patientId && (
-            <Tab label={translation('properties')} className="h-full overflow-y-auto pr-2 pt-2 pb-16">
-              <PropertyList subjectId={patientId} subjectType="patient"/>
-            </Tab>
-          )}
 
         </TabView>
       </div>
