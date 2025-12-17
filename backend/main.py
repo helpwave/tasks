@@ -1,4 +1,5 @@
 import logging
+from contextlib import asynccontextmanager
 
 from api.context import get_context
 from api.extensions import GlobalAuthExtension
@@ -9,9 +10,18 @@ from config import ALLOWED_ORIGINS, IS_DEV, LOGGER
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routers import auth
+from scaffold import load_scaffold_data
 from strawberry import Schema
 
 logger = logging.getLogger(LOGGER)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logger.info("Starting up application...")
+    await load_scaffold_data()
+    yield
+    logger.info("Shutting down application...")
 
 schema = Schema(
     query=Query,
@@ -31,6 +41,7 @@ app = FastAPI(
     docs_url="/docs" if IS_DEV else None,
     redoc_url="/redoc" if IS_DEV else None,
     openapi_url="/openapi.json" if IS_DEV else None,
+    lifespan=lifespan,
 )
 
 app.add_exception_handler(

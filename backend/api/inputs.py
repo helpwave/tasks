@@ -13,6 +13,8 @@ class Sex(Enum):
 
 @strawberry.enum
 class LocationType(Enum):
+    HOSPITAL = "HOSPITAL"
+    PRACTICE = "PRACTICE"
     CLINIC = "CLINIC"
     TEAM = "TEAM"
     WARD = "WARD"

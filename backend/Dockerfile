@@ -28,4 +28,6 @@ COPY . /app
 
 WORKDIR /app
 
+RUN mkdir -p /scaffold && chmod 755 /scaffold
+
 CMD ["sh", "-c", "alembic upgrade head && uvicorn main:app --proxy-headers --host $HOST --port $PORT"]

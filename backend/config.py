@@ -49,3 +49,5 @@ else:
         for origin in _allowed_origins_str.split(",")
         if origin.strip()
     ]
+
+SCAFFOLD_DIRECTORY = os.getenv("SCAFFOLD_DIRECTORY", None)
