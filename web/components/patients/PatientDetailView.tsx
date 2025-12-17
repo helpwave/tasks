@@ -315,9 +315,9 @@ export const PatientDetailView = ({
       )}
       <div className="flex-col-0 flex-grow overflow-hidden">
         <TabView className="h-full flex-col-0">
-          <Tab label={translation('tasks')} className="h-full overflow-y-auto pr-2">
-            <div className="flex flex-col gap-4 pt-4">
-              {isEditMode && (
+          {isEditMode && (
+            <Tab label={translation('tasks')} className="h-full overflow-y-auto pr-2">
+              <div className="flex flex-col gap-4 pt-4">
                 <div className="mb-2">
                   <Button
                     startIcon={<PlusIcon/>}
@@ -327,58 +327,58 @@ export const PatientDetailView = ({
                     {translation('addTask')}
                   </Button>
                 </div>
-              )}
-              <div>
-                <button
-                  onClick={() => setOpenExpanded(!openExpanded)}
-                  className="text-lg font-bold mb-3 flex items-center gap-2 w-full text-left"
-                >
-                  <ChevronDown className={clsx('size-5 transition-transform', { '-rotate-90': !openExpanded })}/>
-                  <Circle className="size-5 text-warning"/>
-                  {translation('openTasks')} ({openTasks.length})
-                </button>
-                {openExpanded && (
-                  <div className="flex flex-col gap-2">
-                    {openTasks.length === 0 &&
-                      <div className="text-description italic">{translation('noOpenTasks')}</div>}
-                    {openTasks.map(task => (
-                      <TaskCard
-                        key={task.id}
-                        task={task}
-                        onClick={() => setTaskId(task.id)}
-                        onToggleDone={(done) => handleToggleDone(task.id, done)}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
+                <div>
+                  <button
+                    onClick={() => setOpenExpanded(!openExpanded)}
+                    className="text-lg font-bold mb-3 flex items-center gap-2 w-full text-left"
+                  >
+                    <ChevronDown className={clsx('size-5 transition-transform', { '-rotate-90': !openExpanded })}/>
+                    <Circle className="size-5 text-warning"/>
+                    {translation('openTasks')} ({openTasks.length})
+                  </button>
+                  {openExpanded && (
+                    <div className="flex flex-col gap-2">
+                      {openTasks.length === 0 &&
+                        <div className="text-description italic">{translation('noOpenTasks')}</div>}
+                      {openTasks.map(task => (
+                        <TaskCard
+                          key={task.id}
+                          task={task}
+                          onClick={() => setTaskId(task.id)}
+                          onToggleDone={(done) => handleToggleDone(task.id, done)}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
 
-              <div className="opacity-75">
-                <button
-                  onClick={() => setClosedExpanded(!closedExpanded)}
-                  className="text-lg font-bold mb-3 flex items-center gap-2 w-full text-left"
-                >
-                  <ChevronDown className={clsx('size-5 transition-transform', { '-rotate-90': !closedExpanded })}/>
-                  <CheckCircle2 className="size-5 text-positive"/>
-                  {translation('closedTasks')} ({closedTasks.length})
-                </button>
-                {closedExpanded && (
-                  <div className="flex flex-col gap-2">
-                    {closedTasks.length === 0 &&
-                      <div className="text-description italic">{translation('noClosedTasks')}</div>}
-                    {closedTasks.map(task => (
-                      <TaskCard
-                        key={task.id}
-                        task={task}
-                        onClick={() => setTaskId(task.id)}
-                        onToggleDone={(done) => handleToggleDone(task.id, done)}
-                      />
-                    ))}
-                  </div>
-                )}
+                <div className="opacity-75">
+                  <button
+                    onClick={() => setClosedExpanded(!closedExpanded)}
+                    className="text-lg font-bold mb-3 flex items-center gap-2 w-full text-left"
+                  >
+                    <ChevronDown className={clsx('size-5 transition-transform', { '-rotate-90': !closedExpanded })}/>
+                    <CheckCircle2 className="size-5 text-positive"/>
+                    {translation('closedTasks')} ({closedTasks.length})
+                  </button>
+                  {closedExpanded && (
+                    <div className="flex flex-col gap-2">
+                      {closedTasks.length === 0 &&
+                        <div className="text-description italic">{translation('noClosedTasks')}</div>}
+                      {closedTasks.map(task => (
+                        <TaskCard
+                          key={task.id}
+                          task={task}
+                          onClick={() => setTaskId(task.id)}
+                          onToggleDone={(done) => handleToggleDone(task.id, done)}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          </Tab>
+            </Tab>
+          )}
 
           <Tab label={translation('patientData')} className="flex-col-6 px-1 pt-4 h-full overflow-x-visible ">
             <div className="grid grid-cols-2 gap-4">
