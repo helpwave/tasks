@@ -4,12 +4,12 @@ from pathlib import Path
 from typing import Any
 
 from api.inputs import LocationType
-from config import SCAFFOLD_DIRECTORY
+from config import LOGGER, SCAFFOLD_DIRECTORY
 from database.models.location import LocationNode
 from database.session import async_session
 from sqlalchemy import select
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(LOGGER)
 
 
 async def load_scaffold_data() -> None:

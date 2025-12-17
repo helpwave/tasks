@@ -19,6 +19,7 @@ import {
   Avatar,
   Button,
   CheckboxUncontrolled,
+  ConfirmDialog,
   FormElementWrapper,
   Input,
   LoadingButton,
@@ -32,7 +33,6 @@ import { useTasksContext } from '@/hooks/useTasksContext'
 import { DateInput } from '@/components/ui/DateInput'
 import { CheckCircle2, ChevronDown, Circle, Clock, MapPin, PlusIcon, XIcon } from 'lucide-react'
 import { PatientStateChip } from '@/components/patients/PatientStateChip'
-import { PropertyList } from '@/components/PropertyList'
 import { LocationSelectionDialog } from '@/components/locations/LocationSelectionDialog'
 import clsx from 'clsx'
 import { SidePanel } from '@/components/layout/SidePanel'
@@ -162,6 +162,8 @@ export const PatientDetailView = ({
   const [isWaiting, setIsWaiting] = useState(false)
   const [isLocationDialogOpen, setIsLocationDialogOpen] = useState(false)
   const [selectedLocations, setSelectedLocations] = useState<LocationNodeType[]>([])
+  const [isMarkDeadDialogOpen, setIsMarkDeadDialogOpen] = useState(false)
+  const [isDischargeDialogOpen, setIsDischargeDialogOpen] = useState(false)
 
   useEffect(() => {
     if (patientData?.patient) {
@@ -282,8 +284,7 @@ export const PatientDetailView = ({
     return <LoadingContainer/>
   }
 
-  const patient = patientData?.patient
-  const patientName = patient ? `${patient.firstname} ${patient.lastname}` : ''
+  const patientName = patientData?.patient ? `${patientData.patient.firstname} ${patientData.patient.lastname}` : ''
   const patientLocation = selectedLocations.length > 0 ? selectedLocations.map(loc => formatLocationPath(loc)).join(' ▸ ') : ''
 
   const handleToggleDone = (taskId: string, done: boolean) => {
@@ -300,8 +301,8 @@ export const PatientDetailView = ({
         <div className="px-1 py-3 mb-4">
           <div className="flex items-center justify-between">
             <div className="font-semibold text-lg">{patientName}</div>
-            {patient?.state && (
-              <PatientStateChip state={patient.state} />
+            {patientData?.patient?.state && (
+              <PatientStateChip state={patientData.patient.state} />
             )}
           </div>
           {patientLocation && (
@@ -464,39 +465,42 @@ export const PatientDetailView = ({
               </FormElementWrapper>
             )}
 
-            {isEditMode && patientId && patient && (
-              <FormElementWrapper label={translation('patientActions')}>
-                {() => (
-                  <div className="flex gap-2 flex-wrap">
-                    {patient.state !== PatientState.Admitted && (
-                      <Button
-                        onClick={() => admitPatient({ id: patientId })}
-                        color="positive"
-                      >
-                        {translation('admitPatient')}
-                      </Button>
-                    )}
-                    {patient.state !== PatientState.Discharged && (
-                      <Button
-                        onClick={() => dischargePatient({ id: patientId })}
-                        color="neutral"
-                        coloringStyle="outline"
-                      >
-                        {translation('dischargePatient')}
-                      </Button>
-                    )}
-                    {patient.state !== PatientState.Wait && (
-                      <Button
-                        onClick={() => waitPatient({ id: patientId })}
-                        color="warning"
-                      >
-                        {translation('waitPatient')}
-                      </Button>
-                    )}
-                  </div>
-                )}
-              </FormElementWrapper>
-            )}
+            {isEditMode && patientId && patientData?.patient && (() => {
+              const patient = patientData.patient
+              return (
+                <FormElementWrapper label={translation('patientActions')}>
+                  {() => (
+                    <div className="flex gap-2 flex-wrap">
+                      {patient.state !== PatientState.Admitted && (
+                        <Button
+                          onClick={() => admitPatient({ id: patientId })}
+                          color="positive"
+                        >
+                          {translation('admitPatient')}
+                        </Button>
+                      )}
+                      {patient.state !== PatientState.Discharged && (
+                        <Button
+                          onClick={() => setIsDischargeDialogOpen(true)}
+                          color="neutral"
+                          coloringStyle="outline"
+                        >
+                          {translation('dischargePatient')}
+                        </Button>
+                      )}
+                      {patient.state !== PatientState.Wait && (
+                        <Button
+                          onClick={() => waitPatient({ id: patientId })}
+                          color="warning"
+                        >
+                          {translation('waitPatient')}
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </FormElementWrapper>
+              )
+            })()}
 
             <FormElementWrapper label={translation('assignedLocation')}>
               {({ isShowingError: _, setIsShowingError: _2, ...bag }) => (
@@ -551,12 +555,6 @@ export const PatientDetailView = ({
             </FormElementWrapper>
           </Tab>
 
-          {patientId && (
-            <Tab label={translation('properties')} className="h-full overflow-y-auto pr-2 pt-2 pb-16">
-              <PropertyList subjectId={patientId} subjectType="patient"/>
-            </Tab>
-          )}
-
         </TabView>
       </div>
 
@@ -571,10 +569,10 @@ export const PatientDetailView = ({
         </div>
       )}
 
-      {isEditMode && patientId && patient && patient.state !== PatientState.Dead && (
+      {isEditMode && patientId && patientData?.patient && patientData.patient.state !== PatientState.Dead && (
         <div className="flex-none pt-4 mt-auto border-t border-divider flex justify-end gap-2">
           <Button
-            onClick={() => markPatientDead({ id: patientId })}
+            onClick={() => setIsMarkDeadDialogOpen(true)}
             color="negative"
             coloringStyle="text"
           >
@@ -582,6 +580,34 @@ export const PatientDetailView = ({
           </Button>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={isMarkDeadDialogOpen}
+        onCancel={() => setIsMarkDeadDialogOpen(false)}
+        onConfirm={() => {
+          if (patientId) {
+            markPatientDead({ id: patientId })
+          }
+          setIsMarkDeadDialogOpen(false)
+        }}
+        titleElement={translation('markPatientDead')}
+        description={translation('markPatientDeadConfirmation')}
+        confirmType="negative"
+      />
+
+      <ConfirmDialog
+        isOpen={isDischargeDialogOpen}
+        onCancel={() => setIsDischargeDialogOpen(false)}
+        onConfirm={() => {
+          if (patientId) {
+            dischargePatient({ id: patientId })
+          }
+          setIsDischargeDialogOpen(false)
+        }}
+        titleElement={translation('dischargePatient')}
+        description={translation('dischargePatientConfirmation')}
+        confirmType="neutral"
+      />
 
       <LocationSelectionDialog
         isOpen={isLocationDialogOpen}
