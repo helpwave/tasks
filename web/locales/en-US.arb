@@ -261,5 +261,13 @@
         "type": "string"
       }
     }
+  },
+  "locationType": "{type, select, CLINIC{Clinic} WARD{Ward} TEAM{Team} ROOM{Room} BED{Bed} other{Other}}",
+  "@locationType": {
+    "placeholders": {
+      "type": {
+        "type": "string"
+      }
+    }
   }
 }

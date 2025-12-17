@@ -160,8 +160,7 @@ type SidebarProps = HTMLAttributes<HTMLDivElement>
 
 export const Sidebar = ({ ...props }: SidebarProps) => {
   const translation = useTasksTranslation()
-  const wardsRoute = '/wards'
-  const teamsRoute = '/teams'
+  const locationRoute = '/location'
   const context = useTasksContext()
 
   return (
@@ -212,9 +211,9 @@ export const Sidebar = ({ ...props }: SidebarProps) => {
         >
           {!context?.teams ? (
             <LoadingContainer className="w-full h-10" />
-          ) : context.teams.map(ward => (
-            <SidebarLink key={ward.id} href={`${teamsRoute}/${ward.id}`} className="pl-9.5">
-              {ward.title}
+          ) : context.teams.map(team => (
+            <SidebarLink key={team.id} href={`${locationRoute}/${team.id}`} className="pl-9.5">
+              {team.title}
             </SidebarLink>
           ))}
         </Expandable>
@@ -241,7 +240,7 @@ export const Sidebar = ({ ...props }: SidebarProps) => {
           {!context?.wards ? (
             <LoadingContainer className="w-full h-10" />
           ) : context.wards.map(ward => (
-            <SidebarLink key={ward.id} href={`${wardsRoute}/${ward.id}`} className="pl-9.5">
+            <SidebarLink key={ward.id} href={`${locationRoute}/${ward.id}`} className="pl-9.5">
               {ward.title}
             </SidebarLink>
           ))}

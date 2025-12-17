@@ -63,6 +63,7 @@ export type TasksTranslationEntries = {
   'lastUpdate': string,
   'loading': string,
   'location': string,
+  'locationType': (values: { type: string }) => string,
   'login': string,
   'loginRequired': string,
   'loginRequiredDescription': string,
@@ -208,6 +209,16 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'lastUpdate': `Letzte Änderung`,
     'loading': `Laden...`,
     'location': `Ort`,
+    'locationType': ({ type }): string => {
+      return TranslationGen.resolveSelect(type, {
+        'CLINIC': `Klinik`,
+        'WARD': `Station`,
+        'TEAM': `Team`,
+        'ROOM': `Zimmer`,
+        'BED': `Bett`,
+        'other': `Sonstiges`,
+      })
+    },
     'login': `Login`,
     'loginRequired': `Login benötigt`,
     'loginRequiredDescription': `Um diese Seite benutzen zu können musst du eingeloggt sein.`,
@@ -314,8 +325,8 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'rClickToAdd': ({ name }): string => {
       return `Klicken um ${name} hinzuzufügen`
     },
-    'recentPatients': `Kürzliche Patienten`,
-    'recentTasks': `Kürzliche Aufgaben`,
+    'recentPatients': `Deine kürzlichen Patienten`,
+    'recentTasks': `Deine kürzlichen Aufgaben`,
     'rEdit': ({ name }): string => {
       return `${name} ändern`
     },
@@ -441,6 +452,16 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'lastUpdate': `Last Update`,
     'loading': `Loading...`,
     'location': `Location`,
+    'locationType': ({ type }): string => {
+      return TranslationGen.resolveSelect(type, {
+        'CLINIC': `Clinic`,
+        'WARD': `Ward`,
+        'TEAM': `Team`,
+        'ROOM': `Room`,
+        'BED': `Bed`,
+        'other': `Other`,
+      })
+    },
     'login': `Login`,
     'loginRequired': `Login required`,
     'loginRequiredDescription': `To use this site you need to be logged in.`,
@@ -546,8 +567,8 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'rClickToAdd': ({ name }): string => {
       return `Click to add ${name}`
     },
-    'recentPatients': `Recent Patients`,
-    'recentTasks': `Recent Tasks`,
+    'recentPatients': `Your Recent Patients`,
+    'recentTasks': `Your Recent Tasks`,
     'rEdit': ({ name }): string => {
       return `Update ${name}`
     },
