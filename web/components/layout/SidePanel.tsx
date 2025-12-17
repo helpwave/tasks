@@ -69,7 +69,7 @@ export const SidePanel = ({ isOpen, onClose, title, children }: SidePanelProps) 
               </div>
             </div>
             <div className="relative flex-1 px-4 py-6 sm:px-6 overflow-y-auto flex flex-col">
-              {children}
+              {isVisible && children}
             </div>
           </div>
         </div>

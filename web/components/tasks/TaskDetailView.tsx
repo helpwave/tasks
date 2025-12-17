@@ -2,27 +2,32 @@ import { useEffect, useState } from 'react'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import type { CreateTaskInput, UpdateTaskInput } from '@/api/gql/generated'
 import {
-  useCreateTaskMutation,
-  useUpdateTaskMutation,
   useAssignTaskMutation,
-  useUnassignTaskMutation,
+  useCreateTaskMutation,
   useGetPatientsQuery,
+  useGetTaskQuery,
   useGetUsersQuery,
-  useGetTaskQuery
+  useUnassignTaskMutation,
+  useUpdateTaskMutation
 } from '@/api/gql/generated'
 import {
+  Button,
+  FormElementWrapper,
   Input,
   LoadingButton,
+  LoadingContainer,
   Select,
   SelectOption,
   Tab,
   TabView,
-  Textarea,
-  DateTimePicker,
-  LoadingContainer
+  Textarea
 } from '@helpwave/hightide'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { PropertyList } from '@/components/PropertyList'
+import { User } from 'lucide-react'
+import { SidePanel } from '@/components/layout/SidePanel'
+import { PatientDetailView } from '@/components/patients/PatientDetailView'
+import { DateInput } from '@/components/ui/DateInput'
 
 interface TaskDetailViewProps {
   taskId: string | null,
@@ -30,19 +35,13 @@ interface TaskDetailViewProps {
   onSuccess: () => void,
 }
 
-const FormField = ({ label, children }: { label: string, children: React.ReactNode }) => (
-  <div className="flex flex-col gap-1.5">
-    <label className="typography-label-sm font-bold text-text-secondary">{label}</label>
-    {children}
-  </div>
-)
-
 export const TaskDetailView = ({ taskId, onClose, onSuccess }: TaskDetailViewProps) => {
   const translation = useTasksTranslation()
   const { selectedLocationId } = useTasksContext()
+  const [isShowingPatientDialog, setIsShowingPatientDialog] = useState<boolean>(false)
   const isEditMode = !!taskId
 
-  const { data: taskData, isLoading: isLoadingTask } = useGetTaskQuery(
+  const { data: taskData, isLoading: isLoadingTask, refetch } = useGetTaskQuery(
     { id: taskId! },
     { enabled: isEditMode }
   )
@@ -140,7 +139,7 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess }: TaskDetailViewPro
   const users = usersData?.users || []
 
   if (isEditMode && isLoadingTask) {
-    return <LoadingContainer />
+    return <LoadingContainer/>
   }
 
   return (
@@ -149,78 +148,126 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess }: TaskDetailViewPro
         <TabView className="h-full flex flex-col">
           <Tab label={translation('overview')} className="h-full overflow-y-auto pr-2">
             <div className="flex flex-col gap-6 pt-4">
+              <FormElementWrapper label={translation('title')}>
+                {({ isShowingError: _1, setIsShowingError: _2, ...bag }) => (
+                  <Input
+                    {...bag}
+                    value={formData.title || ''}
+                    placeholder={translation('taskTitlePlaceholder')}
+                    onChange={e => updateLocalState({ title: e.target.value })}
+                    onBlur={() => persistChanges({ title: formData.title })}
+                  />
+                )}
+              </FormElementWrapper>
 
-              <FormField label={translation('title')}>
-                <Input
-                  value={formData.title || ''}
-                  placeholder={translation('taskTitlePlaceholder')}
-                  onChange={e => updateLocalState({ title: e.target.value })}
-                  onBlur={() => persistChanges({ title: formData.title })}
-                />
-              </FormField>
+              <FormElementWrapper label={translation('patient')}>
+                {({ isShowingError: _1, setIsShowingError: _2, ...bag }) => {
+                  return (!isEditMode) ? (
+                    <Select
+                      {...bag}
+                      value={formData.patientId}
+                      onValueChanged={(value) => updateLocalState({ patientId: value })}
+                      disabled={isEditMode}
+                    >
+                      {patients.map(patient => {
+                        return (
+                          <SelectOption key={patient.id} value={patient.id}>
+                            {patient.name}
+                          </SelectOption>
+                        )
+                      })}
+                    </Select>
+                  ) : (
+                    <Button
+                      color="neutral"
+                      onClick={() => setIsShowingPatientDialog(true)}
+                      className="w-fit"
+                    >
+                      <User className="size-4"/>
+                      { taskData?.task?.patient?.name}
+                    </Button>
+                  )
+                }}
+              </FormElementWrapper>
 
-              <FormField label={translation('patient')}>
-                <Select
-                  value={formData.patientId}
-                  onValueChanged={(value) => updateLocalState({ patientId: value })}
-                  disabled={isEditMode}
-                  contentPanelProps={{ containerClassName: 'z-[100]' }}
-                >
-                  {patients.map(p => (
-                    <SelectOption key={p.id} value={p.id}>
-                      {p.name}
-                    </SelectOption>
-                  ))}
-                  {isEditMode && taskData?.task?.patient && !patients.find(p => p.id === taskData.task?.patient?.id) && (
-                    <SelectOption value={taskData.task.patient.id}>{taskData.task.patient.name}</SelectOption>
-                  )}
-                </Select>
-              </FormField>
+              <FormElementWrapper label={translation('assignedTo')}>
+                {({ isShowingError: _1, setIsShowingError: _2, ...bag }) => (
+                  <Select
+                    {...bag}
+                    value={formData.assigneeId || 'unassigned'}
+                    onValueChanged={handleAssigneeChange}
+                  >
+                    <SelectOption value="unassigned">{translation('unassigned')}</SelectOption>
+                    {users.map(u => (
+                      <SelectOption key={u.id} value={u.id}>
+                        {u.name}
+                      </SelectOption>
+                    ))}
+                  </Select>
+                )}
+              </FormElementWrapper>
 
-              <FormField label={translation('assignedTo')}>
-                <Select
-                  value={formData.assigneeId || 'unassigned'}
-                  onValueChanged={handleAssigneeChange}
-                >
-                  <SelectOption value="unassigned">{translation('unassigned')}</SelectOption>
-                  {users.map(u => (
-                    <SelectOption key={u.id} value={u.id}>
-                      {u.name}
-                    </SelectOption>
-                  ))}
-                </Select>
-              </FormField>
+              <FormElementWrapper label={translation('dueDate')}>
+                {({ isShowingError: _1, setIsShowingError: _2, ...bag }) => (
+                  <DateInput
+                    {...bag}
+                    date={formData.dueDate}
+                    onValueChange={(date) => {
+                      updateLocalState({ dueDate: date })
+                      persistChanges({ dueDate: date })
+                    }}
+                    onRemove={() => {
+                      updateLocalState({ dueDate: null })
+                      persistChanges({ dueDate: null })
+                    }}
+                    mode="dateTime"
+                  />
+                )}
+              </FormElementWrapper>
 
-              <FormField label={translation('dueDate')}>
-                <DateTimePicker
-                  value={formData.dueDate ? new Date(formData.dueDate) : undefined}
-                  onChange={(date) => {
-                    updateLocalState({ dueDate: date })
-                    persistChanges({ dueDate: date })
-                  }}
-                />
-              </FormField>
-
-              <FormField label={translation('description')}>
-                <Textarea
-                  value={formData.description || ''}
-                  placeholder={translation('descriptionPlaceholder')}
-                  onChange={e => updateLocalState({ description: e.target.value })}
-                  onBlur={() => persistChanges({ description: formData.description })}
-                  minLength={4}
-                />
-              </FormField>
-
+              <FormElementWrapper label={translation('description')}>
+                {({ isShowingError: _1, setIsShowingError: _2, ...bag }) => (
+                  <Textarea
+                    {...bag}
+                    value={formData.description || ''}
+                    placeholder={translation('descriptionPlaceholder')}
+                    onChange={e => updateLocalState({ description: e.target.value })}
+                    onBlur={() => persistChanges({ description: formData.description })}
+                    minLength={4}
+                  />
+                )}
+              </FormElementWrapper>
+              <Button
+                color="negative"
+                className="w-fit"
+                onClick={() => {
+                  // TODO delete Task here
+                }}
+              >
+                {translation('delete')}
+              </Button>
             </div>
           </Tab>
 
           {taskId && (
             <Tab label={translation('properties')} className="h-full overflow-y-auto pr-2 pt-2 pb-16">
-              <PropertyList subjectId={taskId} subjectType="task" />
+              <PropertyList subjectId={taskId} subjectType="task"/>
             </Tab>
           )}
         </TabView>
       </div>
+
+      <SidePanel
+        isOpen={isShowingPatientDialog}
+        onClose={() => setIsShowingPatientDialog(false)}
+        title={translation('editPatient')}
+      >
+        <PatientDetailView
+          patientId={formData.patientId}
+          onClose={() => setIsShowingPatientDialog(false)}
+          onSuccess={refetch}
+        />
+      </SidePanel>
 
       {!isEditMode && (
         <div className="flex-none pt-4 mt-auto border-t border-divider flex justify-end gap-2">

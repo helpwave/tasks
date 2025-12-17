@@ -1,7 +1,14 @@
 import { useEffect, useState } from 'react'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import type { CreatePatientInput, LocationNodeType, UpdatePatientInput } from '@/api/gql/generated'
-import { Sex, useCreatePatientMutation, useGetPatientQuery, useUpdatePatientMutation, useCompleteTaskMutation, useReopenTaskMutation } from '@/api/gql/generated'
+import {
+  Sex,
+  useCompleteTaskMutation,
+  useCreatePatientMutation,
+  useGetPatientQuery,
+  useReopenTaskMutation,
+  useUpdatePatientMutation
+} from '@/api/gql/generated'
 import type { ButtonProps } from '@helpwave/hightide'
 import {
   Avatar,
@@ -101,7 +108,7 @@ function TaskCard({ task, onToggleDone, ...props }: TaskCardProps) {
           {task.dueDate && !task.done && (
             <div className="flex items-center gap-1 mt-2 text-xs text-warning">
               <Clock className="size-3"/>
-              <SmartDate date={new Date(task.dueDate)} mode="relative" showTime={false} />
+              <SmartDate date={new Date(task.dueDate)} mode="relative" showTime={false}/>
             </div>
           )}
         </div>
@@ -254,7 +261,7 @@ export const PatientDetailView = ({
           <div className="font-semibold text-lg">{patientName}</div>
           {patientLocation && (
             <div className="flex items-center gap-1 text-sm text-description">
-              <MapPin className="size-3" />
+              <MapPin className="size-3"/>
               {patientLocation}
             </div>
           )}
@@ -269,7 +276,7 @@ export const PatientDetailView = ({
                   onClick={() => setOpenExpanded(!openExpanded)}
                   className="text-lg font-bold mb-3 flex items-center gap-2 w-full text-left"
                 >
-                  <ChevronDown className={clsx('size-5 transition-transform', { '-rotate-90': !openExpanded })} />
+                  <ChevronDown className={clsx('size-5 transition-transform', { '-rotate-90': !openExpanded })}/>
                   <Circle className="size-5 text-warning"/>
                   {translation('openTasks')} ({openTasks.length})
                 </button>
@@ -294,7 +301,7 @@ export const PatientDetailView = ({
                   onClick={() => setClosedExpanded(!closedExpanded)}
                   className="text-lg font-bold mb-3 flex items-center gap-2 w-full text-left"
                 >
-                  <ChevronDown className={clsx('size-5 transition-transform', { '-rotate-90': !closedExpanded })} />
+                  <ChevronDown className={clsx('size-5 transition-transform', { '-rotate-90': !closedExpanded })}/>
                   <CheckCircle2 className="size-5 text-positive"/>
                   {translation('closedTasks')} ({closedTasks.length})
                 </button>
@@ -353,10 +360,15 @@ export const PatientDetailView = ({
                 <DateInput
                   {...bag}
                   date={new Date(formData.birthdate as string)}
+                  mode="date"
                   onValueChange={date => {
                     const dateStr = toISODate(date)
                     updateLocalState({ birthdate: dateStr })
                     persistChanges({ birthdate: dateStr })
+                  }}
+                  onRemove={() => {
+                    updateLocalState({ birthdate: null })
+                    persistChanges({ birthdate: null })
                   }}
                 />
               )}
@@ -472,11 +484,9 @@ export const PatientDetailView = ({
         <TaskDetailView
           taskId={taskId}
           onSuccess={() => {
-            refetch()
+            refetch().catch(console.error)
           }}
-          onClose={() => {
-            setTaskId(null)
-          }}
+          onClose={() => setTaskId(null)}
         />
       </SidePanel>
     </div>

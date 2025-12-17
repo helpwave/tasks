@@ -252,5 +252,14 @@
   "chooseLanguage": "Choose Language",
   "chooseTheme": "Choose Theme",
   "done": "Done",
-  "patientData": "Data"
+  "patientData": "Data",
+  "clickToAdd": "Click to add",
+  "rClickToAdd": "Click to add {name}",
+  "@rClickToAdd": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  }
 }
