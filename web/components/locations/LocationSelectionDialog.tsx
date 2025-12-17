@@ -24,8 +24,8 @@ import {
 export type LocationPickerUseCase =
   | 'default'
   | 'clinic'
-  | 'position' // HOSPITAL, PRACTICE, CLINIC, WARD, BED, ROOM
-  | 'teams' // CLINIC, TEAM, PRACTICE, HOSPITAL
+  | 'position'
+  | 'teams'
 
 interface LocationSelectionDialogProps {
   isOpen: boolean,
@@ -197,14 +197,15 @@ export const LocationSelectionDialog = ({
         LocationType.Room,
         'PRACTICE',
         'HOSPITAL',
+        'CLINIC',
+        'WARD',
+        'BED',
+        'ROOM',
       ])
       return (node: LocationNodeType) => {
         const kindStr = node.kind.toString().toUpperCase()
         return allowedKinds.has(node.kind as LocationType) ||
-               allowedKinds.has(kindStr) ||
-               kindStr === 'PRACTICE' ||
-               kindStr === 'HOSPITAL' ||
-               kindStr === 'ROOM'
+               allowedKinds.has(kindStr)
       }
     } else if (useCase === 'teams') {
       const allowedKinds = new Set<string>([
@@ -212,13 +213,13 @@ export const LocationSelectionDialog = ({
         LocationType.Team,
         'PRACTICE',
         'HOSPITAL',
+        'CLINIC',
+        'TEAM',
       ])
       return (node: LocationNodeType) => {
         const kindStr = node.kind.toString().toUpperCase()
         return allowedKinds.has(node.kind as LocationType) ||
-               allowedKinds.has(kindStr) ||
-               kindStr === 'PRACTICE' ||
-               kindStr === 'HOSPITAL'
+               allowedKinds.has(kindStr)
       }
     }
 
@@ -228,23 +229,32 @@ export const LocationSelectionDialog = ({
   const filterTree = useMemo(() => {
     const filterNode = (node: TreeNode<LocationNodeType>): (TreeNode<LocationNodeType> & { isSelectable?: boolean }) | null => {
       const hasChildren = node.children && node.children.length > 0
+      const nodeMatchesFilter = matchesFilter(node)
 
       if (hasChildren) {
         const filteredChildren = node.children
           .map(child => filterNode(child))
           .filter((child): child is TreeNode<LocationNodeType> & { isSelectable?: boolean } => child !== null)
 
-        if (filteredChildren.length === 0) {
-          return null
+        if (nodeMatchesFilter) {
+          return {
+            ...node,
+            children: filteredChildren,
+            isSelectable: true,
+          }
         }
 
-        return {
-          ...node,
-          children: filteredChildren,
-          isSelectable: false,
+        if (filteredChildren.length > 0) {
+          return {
+            ...node,
+            children: filteredChildren,
+            isSelectable: false,
+          }
         }
+
+        return null
       } else {
-        if (matchesFilter(node)) {
+        if (nodeMatchesFilter) {
           return {
             ...node,
             children: [],

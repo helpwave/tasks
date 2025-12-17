@@ -10,6 +10,7 @@ import { useGetLocationNodeQuery, useGetPatientsQuery, type LocationType } from 
 import { useMemo } from 'react'
 import { useRouter } from 'next/router'
 import { LocationChips } from '@/components/patients/LocationChips'
+import { LOCATION_PATH_SEPARATOR } from '@/utils/location'
 
 const getKindStyles = (kind: string) => {
   const k = kind.toUpperCase()
@@ -109,7 +110,7 @@ const LocationPage: NextPage = () => {
                 <div className="flex flex-wrap items-center -space-x-1 scale-75 origin-top-left">
                   {parentChain.map((parent, index) => (
                     <div key={parent.id} className="flex items-center">
-                      {index > 0 && <span className="text-description mx-3">▸</span>}
+                      {index > 0 && <span className="text-description mx-3">{LOCATION_PATH_SEPARATOR}</span>}
                       <LocationChips locations={[parent]} />
                     </div>
                   ))}

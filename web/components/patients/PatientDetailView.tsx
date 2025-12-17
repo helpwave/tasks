@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import type { CreatePatientInput, LocationNodeType, UpdatePatientInput } from '@/api/gql/generated'
 import {
@@ -38,7 +38,8 @@ import clsx from 'clsx'
 import { SidePanel } from '@/components/layout/SidePanel'
 import { TaskDetailView } from '@/components/tasks/TaskDetailView'
 import { SmartDate } from '@/utils/date'
-import { formatLocationPath } from '@/utils/location'
+import { formatLocationPath, formatLocationPathFromId } from '@/utils/location'
+import { useGetLocationsQuery } from '@/api/gql/generated'
 
 type ExtendedCreatePatientInput = CreatePatientInput & {
   clinicId?: string,
@@ -158,6 +159,17 @@ export const PatientDetailView = ({
     { id: patientId! },
     { enabled: isEditMode }
   )
+
+  const { data: locationsData } = useGetLocationsQuery()
+
+  const locationsMap = useMemo(() => {
+    if (!locationsData?.locationNodes) return new Map()
+    const map = new Map<string, { id: string, title: string, parentId?: string | null }>()
+    locationsData.locationNodes.forEach(loc => {
+      map.set(loc.id, { id: loc.id, title: loc.title, parentId: loc.parentId || null })
+    })
+    return map
+  }, [locationsData])
 
   const { mutate: completeTask } = useCompleteTaskMutation({ onSuccess: () => refetch() })
   const { mutate: reopenTask } = useReopenTaskMutation({ onSuccess: () => refetch() })
@@ -586,7 +598,7 @@ export const PatientDetailView = ({
                   <div className="flex gap-2">
                     <Input
                       {...bag}
-                      value={selectedClinic ? formatLocationPath(selectedClinic) : ''}
+                      value={selectedClinic ? (locationsMap.size > 0 ? formatLocationPathFromId(selectedClinic.id, locationsMap) : formatLocationPath(selectedClinic)) : ''}
                       placeholder={translation('selectClinic')}
                       readOnly
                       className="flex-grow cursor-pointer"
@@ -625,7 +637,7 @@ export const PatientDetailView = ({
                   <div className="flex gap-2">
                     <Input
                       {...bag}
-                      value={selectedPosition ? formatLocationPath(selectedPosition) : ''}
+                      value={selectedPosition ? (locationsMap.size > 0 ? formatLocationPathFromId(selectedPosition.id, locationsMap) : formatLocationPath(selectedPosition)) : ''}
                       placeholder={translation('selectPosition')}
                       readOnly
                       className="flex-grow cursor-pointer"
@@ -664,7 +676,7 @@ export const PatientDetailView = ({
                     <Input
                       {...bag}
                       value={selectedTeams.length > 0
-                        ? selectedTeams.map(loc => formatLocationPath(loc)).join(', ')
+                        ? selectedTeams.map(loc => locationsMap.size > 0 ? formatLocationPathFromId(loc.id, locationsMap) : formatLocationPath(loc)).join(', ')
                         : ''}
                       placeholder={translation('selectTeams')}
                       readOnly
