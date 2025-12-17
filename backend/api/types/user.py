@@ -12,10 +12,12 @@ if TYPE_CHECKING:
 class UserType:
     id: strawberry.ID
     username: str
+    email: str | None
     firstname: str | None
     lastname: str | None
     title: str | None
     avatar_url: str | None
+    organizations: str | None
 
     @strawberry.field
     def name(self) -> str:

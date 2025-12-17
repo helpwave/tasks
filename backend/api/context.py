@@ -39,6 +39,17 @@ async def get_context(
         )
         firstname = user_payload.get("given_name")
         lastname = user_payload.get("family_name")
+        email = user_payload.get("email")
+        picture = user_payload.get("picture")
+        
+        # Extract organizations from OIDC token (can be array or single value)
+        organizations_raw = user_payload.get("organization")
+        organizations = None
+        if organizations_raw:
+            if isinstance(organizations_raw, list):
+                organizations = ",".join(str(org) for org in organizations_raw)
+            else:
+                organizations = str(organizations_raw)
 
         if user_id:
             result = await session.execute(
@@ -51,9 +62,12 @@ async def get_context(
                     new_user = User(
                         id=user_id,
                         username=username,
+                        email=email,
                         firstname=firstname,
                         lastname=lastname,
                         title="User",
+                        avatar_url=picture,
+                        organizations=organizations,
                     )
                     session.add(new_user)
                     await session.commit()
@@ -70,10 +84,17 @@ async def get_context(
                 db_user.username != username
                 or db_user.firstname != firstname
                 or db_user.lastname != lastname
+                or db_user.email != email
+                or db_user.avatar_url != picture
+                or db_user.organizations != organizations
             ):
                 db_user.username = username
                 db_user.firstname = firstname
                 db_user.lastname = lastname
+                db_user.email = email
+                if picture:
+                    db_user.avatar_url = picture
+                db_user.organizations = organizations
                 session.add(db_user)
                 await session.commit()
                 await session.refresh(db_user)

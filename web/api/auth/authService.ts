@@ -13,7 +13,7 @@ const createUserManager = () => {
     client_id: config.auth.clientId,
     redirect_uri: config.auth.redirect_uri,
     response_type: 'code',
-    scope: 'openid profile email',
+    scope: 'openid profile email organization',
     post_logout_redirect_uri: config.auth.post_logout_redirect_uri,
     userStore: typeof window !== 'undefined' ? new WebStorageStateStore({ store: window.localStorage }) : undefined,
   })

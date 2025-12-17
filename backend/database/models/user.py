@@ -20,6 +20,7 @@ class User(Base):
         default=lambda: str(uuid.uuid4()),
     )
     username: Mapped[str] = mapped_column(String, nullable=False)
+    email: Mapped[str | None] = mapped_column(String, nullable=True)
     firstname: Mapped[str | None] = mapped_column(String, nullable=True)
     lastname: Mapped[str | None] = mapped_column(String, nullable=True)
     title: Mapped[str | None] = mapped_column(String, nullable=True)
@@ -28,5 +29,6 @@ class User(Base):
         nullable=True,
         default="https://cdn.helpwave.de/boringavatar.svg",
     )
+    organizations: Mapped[str | None] = mapped_column(String, nullable=True)
 
     tasks: Mapped[list[Task]] = relationship("Task", back_populates="assignee")

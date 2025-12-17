@@ -53,7 +53,7 @@ class InteractiveAuthenticator:
       f"{KEYCLOAK_URL}/realms/{REALM}/protocol/openid-connect/auth"
       f"?client_id={CLIENT_ID}"
       f"&response_type=code"
-      f"&scope=openid profile email"
+      f"&scope=openid profile email organization"
       f"&redirect_uri={REDIRECT_URI}"
     )
 

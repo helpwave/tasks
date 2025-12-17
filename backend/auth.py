@@ -148,7 +148,7 @@ async def unauthenticated_redirect_handler(
         f"{PUBLIC_ISSUER_URI}/protocol/openid-connect/auth"
         f"?client_id={CLIENT_ID}"
         f"&response_type=code"
-        f"&scope=openid profile email"
+        f"&scope=openid profile email organization"
         f"&redirect_uri={redirect_uri}"
     )
     return RedirectResponse(url=login_url)

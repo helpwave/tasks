@@ -13,7 +13,7 @@ class AuthedGraphQLRouter(GraphQLRouter):
             f"{ISSUER_URI}/protocol/openid-connect/auth"
             f"?client_id={CLIENT_ID}"
             f"&response_type=code"
-            f"&scope=openid profile email"
+            f"&scope=openid profile email organization"
             f"&redirect_uri={redirect_uri}"
         )
         logout_url = f"{request.base_url}logout"
