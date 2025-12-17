@@ -257,7 +257,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
         onRowClick={row => setTaskDialogState({ isOpen: true, taskId: row.original.id })}
       />
       <SidePanel
-        title={taskDialogState.isOpen ? translation('editTask') : translation('createTask')}
+        title={taskDialogState.taskId ? translation('editTask') : translation('createTask')}
         isOpen={taskDialogState.isOpen}
         onClose={() => setTaskDialogState({ isOpen: false })}
       >
