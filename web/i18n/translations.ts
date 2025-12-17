@@ -194,7 +194,18 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'currentTime': `Aktuelle Zeit`,
     'dashboard': `Dashboard`,
     'dashboardWelcome': ({ name }): string => {
-      return `Guten Morgen, ${name}`
+      const hour = new Date().getHours()
+      let greeting: string
+      if (hour >= 5 && hour < 12) {
+        greeting = 'Guten Morgen'
+      } else if (hour >= 12 && hour < 18) {
+        greeting = 'Guten Tag'
+      } else if (hour >= 18 && hour < 22) {
+        greeting = 'Guten Abend'
+      } else {
+        greeting = 'Gute Nacht'
+      }
+      return `${greeting}, ${name}`
     },
     'dashboardWelcomeDescription': `Hier ist, was heute passiert.`,
     'delete': `Löschen`,
@@ -454,7 +465,18 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'currentTime': `Current Time`,
     'dashboard': `Dashboard`,
     'dashboardWelcome': ({ name }): string => {
-      return `Good Morning, ${name}`
+      const hour = new Date().getHours()
+      let greeting: string
+      if (hour >= 5 && hour < 12) {
+        greeting = 'Good Morning'
+      } else if (hour >= 12 && hour < 18) {
+        greeting = 'Good Afternoon'
+      } else if (hour >= 18 && hour < 22) {
+        greeting = 'Good Evening'
+      } else {
+        greeting = 'Good Night'
+      }
+      return `${greeting}, ${name}`
     },
     'dashboardWelcomeDescription': `Here is what is happening today.`,
     'delete': `Delete`,
