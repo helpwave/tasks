@@ -4,6 +4,7 @@ import type { CreateTaskInput, UpdateTaskInput } from '@/api/gql/generated'
 import {
   useAssignTaskMutation,
   useCreateTaskMutation,
+  useDeleteTaskMutation,
   useGetPatientsQuery,
   useGetTaskQuery,
   useGetUsersQuery,
@@ -74,6 +75,13 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
 
   const { mutate: unassignTask } = useUnassignTaskMutation({
     onSuccess: () => onSuccess()
+  })
+
+  const { mutate: deleteTask, isLoading: isDeleting } = useDeleteTaskMutation({
+    onSuccess: () => {
+      onSuccess()
+      onClose()
+    }
   })
 
   const [formData, setFormData] = useState<Partial<CreateTaskInput & { done: boolean }>>({
@@ -265,14 +273,6 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
                   />
                 )}
               </FormElementWrapper>
-              <Button
-                color="negative"
-                className="w-fit"
-                onClick={() => {
-                }}
-              >
-                {translation('delete')}
-              </Button>
             </div>
           </Tab>
 
@@ -304,6 +304,23 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
             disabled={!formData.title?.trim() || !formData.patientId}
           >
             {translation('create')}
+          </LoadingButton>
+        </div>
+      )}
+
+      {isEditMode && taskId && (
+        <div className="flex-none pt-4 mt-auto border-t border-divider flex justify-end gap-2">
+          <LoadingButton
+            onClick={() => {
+              if (window.confirm(translation('delete') + '?')) {
+                deleteTask({ id: taskId })
+              }
+            }}
+            isLoading={isDeleting}
+            color="neutral"
+            coloringStyle="outline"
+          >
+            {translation('delete')}
           </LoadingButton>
         </div>
       )}
