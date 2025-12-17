@@ -17,7 +17,7 @@ import {
   Square,
   ChevronsDown,
   ChevronsUp,
-  MinusIcon,
+  MinusIcon
 } from 'lucide-react'
 
 interface LocationSelectionDialogProps {

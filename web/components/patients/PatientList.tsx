@@ -1,6 +1,6 @@
 import { useMemo, useState, forwardRef, useImperativeHandle } from 'react'
 import { Table, Chip, FillerRowElement, Button, SearchBar } from '@helpwave/hightide'
-import { EditIcon, PlusIcon } from 'lucide-react'
+import { PlusIcon } from 'lucide-react'
 import { useGetPatientsQuery, Sex, type GetPatientsQuery, type TaskType } from '@/api/gql/generated'
 import { SidePanel } from '@/components/layout/SidePanel'
 import { PatientDetailView } from '@/components/patients/PatientDetailView'
@@ -16,6 +16,7 @@ type PatientViewModel = {
   lastname: string,
   locations: GetPatientsQuery['patients'][0]['assignedLocations'],
   openTasksCount: number,
+  closedTasksCount: number,
   birthdate: Date,
   sex: Sex,
   tasks: TaskType[],
@@ -58,6 +59,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ locat
       sex: p.sex,
       locations: p.assignedLocations as PatientViewModel['locations'],
       openTasksCount: p.tasks?.filter(t => !t.done).length ?? 0,
+      closedTasksCount: p.tasks?.filter(t => t.done).length ?? 0,
       tasks: []
     }))
 
@@ -147,35 +149,31 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ locat
       size: 120,
     },
     {
-      id: 'tasks',
-      header: translation('tasks'),
+      id: 'openTasks',
+      header: translation('openTasks'),
       accessorKey: 'openTasksCount',
       cell: ({ row }) => (
         <span className={row.original.openTasksCount > 0 ? 'font-bold text-primary' : 'text-description'}>
           {row.original.openTasksCount}
         </span>
       ),
-      minSize: 100,
+      minSize: 80,
       size: 100,
-      maxSize: 200,
+      maxSize: 150,
     },
     {
-      id: 'actions',
-      header: '',
+      id: 'closedTasks',
+      header: translation('closedTasks'),
+      accessorKey: 'closedTasksCount',
       cell: ({ row }) => (
-        <Button
-          coloringStyle="text" layout="icon" color="neutral"
-          onClick={() => handleEdit(row.original)}
-        >
-          <EditIcon />
-        </Button>
+        <span className="text-description">
+          {row.original.closedTasksCount}
+        </span>
       ),
-      enableSorting: false,
-      enableColumnFilter: false,
-      size: 77,
-      minSize: 77,
-      maxSize: 77
-    }
+      minSize: 80,
+      size: 100,
+      maxSize: 150,
+    },
   ], [translation])
 
   return (
@@ -200,10 +198,11 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ locat
         </Button>
       </div>
       <Table
-        className="w-full h-full"
+        className="w-full h-full cursor-pointer"
         data={patients}
         columns={columns}
         fillerRow={() => (<FillerRowElement className="min-h-12" />)}
+        onRowClick={(row) => handleEdit(row.original)}
       />
       <SidePanel
         isOpen={isPanelOpen}

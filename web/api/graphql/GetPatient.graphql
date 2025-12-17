@@ -19,6 +19,12 @@ query GetPatient($id: ID!) {
       description
       done
       dueDate
+      updateDate
+      assignee {
+        id
+        name
+        avatarUrl
+      }
     }
   }
 }

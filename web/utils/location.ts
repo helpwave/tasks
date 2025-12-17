@@ -20,6 +20,6 @@ export const buildLocationPath = (location: PartialLocationNode | LocationNodeTy
   return path
 }
 
-export const formatLocationPath = (location: PartialLocationNode | LocationNodeType | null | undefined, separator: string = ' > '): string => {
+export const formatLocationPath = (location: PartialLocationNode | LocationNodeType | null | undefined, separator: string = ' ▸ '): string => {
   return buildLocationPath(location).join(separator)
 }

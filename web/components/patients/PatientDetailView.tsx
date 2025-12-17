@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
-import type { CreatePatientInput, LocationNodeType, TaskType, UpdatePatientInput } from '@/api/gql/generated'
-import { Sex, useCreatePatientMutation, useGetPatientQuery, useUpdatePatientMutation } from '@/api/gql/generated'
+import type { CreatePatientInput, LocationNodeType, UpdatePatientInput } from '@/api/gql/generated'
+import { Sex, useCreatePatientMutation, useGetPatientQuery, useUpdatePatientMutation, useCompleteTaskMutation, useReopenTaskMutation } from '@/api/gql/generated'
 import type { ButtonProps } from '@helpwave/hightide'
 import {
+  Avatar,
   Button,
+  CheckboxUncontrolled,
   FormElementWrapper,
   Input,
   LoadingButton,
@@ -16,12 +18,14 @@ import {
 } from '@helpwave/hightide'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { DateInput } from '@/components/ui/DateInput'
-import { CheckCircle2, Circle, Clock, MapPin, XIcon } from 'lucide-react'
+import { CheckCircle2, ChevronDown, Circle, Clock, MapPin, XIcon } from 'lucide-react'
 import { PropertyList } from '@/components/PropertyList'
 import { LocationSelectionDialog } from '@/components/locations/LocationSelectionDialog'
 import clsx from 'clsx'
 import { SidePanel } from '@/components/layout/SidePanel'
 import { TaskDetailView } from '@/components/tasks/TaskDetailView'
+import { SmartDate } from '@/utils/date'
+import { formatLocationPath } from '@/utils/location'
 
 const toISODate = (d: Date | string): string => {
   const date = typeof d === 'string' ? new Date(d) : d
@@ -38,34 +42,71 @@ const getDefaultBirthdate = () => {
 }
 
 type TaskCardProps = ButtonProps & {
-  task: Pick<TaskType, 'done' | 'title' | 'id' | 'description' | 'dueDate'>,
+  task: {
+    id: string,
+    title: string,
+    description?: string | null,
+    done: boolean,
+    dueDate?: string | null,
+    assignee?: { id: string, name: string, avatarUrl?: string | null } | null,
+  },
+  onToggleDone: (done: boolean) => void,
 }
 
-function TaskCard({ task, ...props }: TaskCardProps) {
+function TaskCard({ task, onToggleDone, ...props }: TaskCardProps) {
+  const descriptionPreview = task.description && task.description.length > 80
+    ? task.description.slice(0, 80) + '...'
+    : task.description
+
   return (
-    <Button
+    <button
       {...props}
-      color="neutral"
-      coloringStyle="text"
-      className="border-2 p-3 rounded-lg flex-col-1 items-start h-auto"
+      className="border-2 p-3 rounded-lg text-left w-full transition-colors hover:border-primary bg-transparent"
     >
-      <div
-        className={clsx(
-          'font-semibold text-description',
-          { 'line-through': task.done }
-        )}
-      >
-        {task.title}
-      </div>
-      {task.description && !task.done &&
-        <div className="text-sm text-description mt-1 line-clamp-2">{task.description}</div>}
-      {task.dueDate && !task.done && (
-        <div className="flex items-center gap-1 mt-2 text-xs text-warning">
-          <Clock className="size-3"/>
-          {new Date(task.dueDate).toLocaleDateString()}
+      <div className="flex items-start gap-3 w-full">
+        <div onClick={(e) => e.stopPropagation()}>
+          <CheckboxUncontrolled
+            checked={task.done}
+            onCheckedChange={(checked) => onToggleDone(!checked)}
+            className="rounded-full mt-0.5"
+          />
         </div>
-      )}
-    </Button>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between gap-2">
+            <div
+              className={clsx(
+                'font-semibold',
+                { 'line-through text-description': task.done }
+              )}
+            >
+              {task.title}
+            </div>
+            {task.assignee && (
+              <div className="flex items-center gap-1 text-xs text-description shrink-0">
+                <Avatar
+                  fullyRounded={true}
+                  size="sm"
+                  image={{
+                    avatarUrl: task.assignee.avatarUrl || 'https://cdn.helpwave.de/boringavatar.svg',
+                    alt: task.assignee.name
+                  }}
+                />
+                <span>{task.assignee.name}</span>
+              </div>
+            )}
+          </div>
+          {descriptionPreview && !task.done && (
+            <div className="text-sm text-description mt-1">{descriptionPreview}</div>
+          )}
+          {task.dueDate && !task.done && (
+            <div className="flex items-center gap-1 mt-2 text-xs text-warning">
+              <Clock className="size-3"/>
+              <SmartDate date={new Date(task.dueDate)} mode="relative" showTime={false} />
+            </div>
+          )}
+        </div>
+      </div>
+    </button>
   )
 }
 
@@ -91,6 +132,9 @@ export const PatientDetailView = ({
     { id: patientId! },
     { enabled: isEditMode }
   )
+
+  const { mutate: completeTask } = useCompleteTaskMutation({ onSuccess: () => refetch() })
+  const { mutate: reopenTask } = useReopenTaskMutation({ onSuccess: () => refetch() })
 
   const [formData, setFormData] = useState<CreatePatientInput>({
     firstname: '',
@@ -172,19 +216,107 @@ export const PatientDetailView = ({
     { label: translation('diverse'), value: Sex.Unknown }
   ]
 
+  const [openExpanded, setOpenExpanded] = useState(true)
+  const [closedExpanded, setClosedExpanded] = useState(false)
+
+  const sortByDueDate = <T extends { dueDate?: string | null }>(tasks: T[]): T[] => {
+    return [...tasks].sort((a, b) => {
+      if (!a.dueDate && !b.dueDate) return 0
+      if (!a.dueDate) return 1
+      if (!b.dueDate) return -1
+      return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
+    })
+  }
+
   const tasks = patientData?.patient?.tasks || []
-  const openTasks = tasks.filter(t => !t.done)
-  const closedTasks = tasks.filter(t => t.done)
+  const openTasks = sortByDueDate(tasks.filter(t => !t.done))
+  const closedTasks = sortByDueDate(tasks.filter(t => t.done))
 
   if (isEditMode && isLoadingPatient) {
     return <LoadingContainer/>
   }
 
+  const patientName = patientData?.patient ? `${patientData.patient.firstname} ${patientData.patient.lastname}` : ''
+  const patientLocation = selectedLocations.length > 0 ? selectedLocations.map(loc => formatLocationPath(loc)).join(' ▸ ') : ''
+
+  const handleToggleDone = (taskId: string, done: boolean) => {
+    if (done) {
+      completeTask({ id: taskId })
+    } else {
+      reopenTask({ id: taskId })
+    }
+  }
+
   return (
     <div className="flex-col-0 h-full bg-surface">
+      {isEditMode && patientName && (
+        <div className="px-1 py-3 mb-4">
+          <div className="font-semibold text-lg">{patientName}</div>
+          {patientLocation && (
+            <div className="flex items-center gap-1 text-sm text-description">
+              <MapPin className="size-3" />
+              {patientLocation}
+            </div>
+          )}
+        </div>
+      )}
       <div className="flex-col-0 flex-grow overflow-hidden">
         <TabView className="h-full flex-col-0">
-          <Tab label={translation('overview')} className="flex-col-6 px-1 pt-4 h-full overflow-x-visible ">
+          <Tab label={translation('tasks')} className="h-full overflow-y-auto pr-2">
+            <div className="flex flex-col gap-4 pt-4">
+              <div>
+                <button
+                  onClick={() => setOpenExpanded(!openExpanded)}
+                  className="text-lg font-bold mb-3 flex items-center gap-2 w-full text-left"
+                >
+                  <ChevronDown className={clsx('size-5 transition-transform', { '-rotate-90': !openExpanded })} />
+                  <Circle className="size-5 text-warning"/>
+                  {translation('openTasks')} ({openTasks.length})
+                </button>
+                {openExpanded && (
+                  <div className="flex flex-col gap-2">
+                    {openTasks.length === 0 &&
+                      <div className="text-description italic">{translation('noOpenTasks')}</div>}
+                    {openTasks.map(task => (
+                      <TaskCard
+                        key={task.id}
+                        task={task}
+                        onClick={() => setTaskId(task.id)}
+                        onToggleDone={(done) => handleToggleDone(task.id, done)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="opacity-75">
+                <button
+                  onClick={() => setClosedExpanded(!closedExpanded)}
+                  className="text-lg font-bold mb-3 flex items-center gap-2 w-full text-left"
+                >
+                  <ChevronDown className={clsx('size-5 transition-transform', { '-rotate-90': !closedExpanded })} />
+                  <CheckCircle2 className="size-5 text-positive"/>
+                  {translation('closedTasks')} ({closedTasks.length})
+                </button>
+                {closedExpanded && (
+                  <div className="flex flex-col gap-2">
+                    {closedTasks.length === 0 &&
+                      <div className="text-description italic">{translation('noClosedTasks')}</div>}
+                    {closedTasks.map(task => (
+                      <TaskCard
+                        key={task.id}
+                        task={task}
+                        onClick={() => setTaskId(task.id)}
+                        onToggleDone={(done) => handleToggleDone(task.id, done)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </Tab>
+
+          <Tab label={translation('patientData')} className="flex-col-6 px-1 pt-4 h-full overflow-x-visible ">
             <div className="grid grid-cols-2 gap-4">
               <FormElementWrapper label={translation('firstName')}>
                 {({ isShowingError: _, setIsShowingError: _2, ...bag }) => (
@@ -309,37 +441,6 @@ export const PatientDetailView = ({
             </Tab>
           )}
 
-          <Tab label={translation('tasks')} className="h-full overflow-y-auto pr-2">
-            <div className="flex flex-col gap-6 pt-4">
-              <div>
-                <span className="typography-title-sm font-bold mb-3 flex items-center gap-2">
-                  <Circle className="size-5 text-warning"/>
-                  {translation('openTasks')} ({openTasks.length})
-                </span>
-                <div className="flex flex-col gap-2">
-                  {openTasks.length === 0 &&
-                    <div className="text-description italic">{translation('noOpenTasks')}</div>}
-                  {openTasks.map(task => (
-                    <TaskCard key={task.id} task={task} onClick={() => setTaskId(task.id)}/>
-                  ))}
-                </div>
-              </div>
-
-              <div className="opacity-75">
-                <span className="typography-title-sm font-bold mb-3 flex items-center gap-2">
-                  <CheckCircle2 className="size-5 text-positive"/>
-                  {translation('closedTasks')} ({closedTasks.length})
-                </span>
-                <div className="flex flex-col gap-2">
-                  {closedTasks.length === 0 &&
-                    <div className="text-description italic">{translation('noClosedTasks')}</div>}
-                  {closedTasks.map(task => (
-                    <TaskCard key={task.id} task={task} onClick={() => setTaskId(task.id)}/>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </Tab>
         </TabView>
       </div>
 
