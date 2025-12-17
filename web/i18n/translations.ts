@@ -27,6 +27,7 @@ export type TasksTranslationEntries = {
   'chooseLanguage': string,
   'chooseTheme': string,
   'clearCache': string,
+  'clickToAdd': string,
   'closedTasks': string,
   'collapseAll': string,
   'confirm': string,
@@ -109,6 +110,7 @@ export type TasksTranslationEntries = {
   'public': string,
   'publish': string,
   'rAdd': (values: { name: string }) => string,
+  'rClickToAdd': (values: { name: string }) => string,
   'recentPatients': string,
   'recentTasks': string,
   'rEdit': (values: { name: string }) => string,
@@ -167,6 +169,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'chooseLanguage': `Sprache wählen`,
     'chooseTheme': `Design wählen`,
     'clearCache': `Cache leeren`,
+    'clickToAdd': `Klicken um hinzuzufügen`,
     'closedTasks': `Erledigte Aufgaben`,
     'collapseAll': `Alle einklappen`,
     'confirm': `Bestätigen`,
@@ -306,6 +309,9 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'rAdd': ({ name }): string => {
       return `${name} hinzufügen`
     },
+    'rClickToAdd': ({ name }): string => {
+      return `Klicken um ${name} hinzuzufügen`
+    },
     'recentPatients': `Kürzliche Patienten`,
     'recentTasks': `Kürzliche Aufgaben`,
     'rEdit': ({ name }): string => {
@@ -395,6 +401,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'chooseLanguage': `Choose Language`,
     'chooseTheme': `Choose Theme`,
     'clearCache': `Clear Cache`,
+    'clickToAdd': `Click to add`,
     'closedTasks': `Closed Tasks`,
     'collapseAll': `Collapse All`,
     'confirm': `Confirm`,
@@ -532,6 +539,9 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'publish': `publish`,
     'rAdd': ({ name }): string => {
       return `Add ${name}`
+    },
+    'rClickToAdd': ({ name }): string => {
+      return `Click to add ${name}`
     },
     'recentPatients': `Recent Patients`,
     'recentTasks': `Recent Tasks`,

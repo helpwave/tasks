@@ -252,5 +252,14 @@
   "chooseTheme": "Design wählen",
   "done": "Fertig",
   "profile": "Profil",
-  "patientData": "Daten"
+  "patientData": "Daten",
+  "clickToAdd": "Klicken um hinzuzufügen",
+  "rClickToAdd": "Klicken um {name} hinzuzufügen",
+  "@rClickToAdd": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  }
 }

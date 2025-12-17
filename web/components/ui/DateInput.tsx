@@ -1,25 +1,50 @@
 import type { HTMLAttributes } from 'react'
-import { useMemo } from 'react'
-import { useEffect, useRef, useState } from 'react'
-import type { InputProps } from '@helpwave/hightide'
-import { Button, DatePicker, Input, useLocale, useOutsideClick, useZIndexRegister } from '@helpwave/hightide'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import type { DateTimePickerProps, InputProps } from '@helpwave/hightide'
+import {
+  Button,
+  DateTimePicker,
+  Input,
+  useLocale,
+  useOutsideClick,
+  useOverwritableState,
+  useZIndexRegister
+} from '@helpwave/hightide'
 import { CalendarIcon } from 'lucide-react'
 import { formatAbsolute } from '@/utils/date'
 import clsx from 'clsx'
+import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 
 export type DateInputProps = InputProps & {
-  date: Date,
+  date: Date | null,
   onValueChange: (date: Date) => void,
+  onRemove: () => void,
+  // TODO also allow only time selection here
+  mode: 'date' | 'dateTime',
   containerProps?: HTMLAttributes<HTMLDivElement>,
+  dateTimePickerProps?: Omit<DateTimePickerProps, 'mode' | 'value' | 'onChange'>,
 }
 
-export const DateInput = ({ date, onValueChange, containerProps, ...props }: DateInputProps) => {
+export const DateInput = ({
+                            date: initialDate,
+                            onValueChange,
+                            onRemove,
+                            containerProps,
+                            mode = 'date',
+                            dateTimePickerProps,
+                            ...props
+                          }: DateInputProps) => {
+  const translation = useTasksTranslation()
   const { locale } = useLocale()
   const [isOpen, setIsOpen] = useState(false)
+  const [date, setDate] = useOverwritableState<Date>(useMemo(() => initialDate ?? new Date(), [initialDate]))
 
   const containerRef = useRef<HTMLDivElement>(null)
 
-  useOutsideClick([containerRef], () => setIsOpen(false))
+  useOutsideClick([containerRef], () => {
+    setIsOpen(false)
+    setDate(initialDate ?? new Date())
+  })
 
   const zIndex = useZIndexRegister(isOpen)
 
@@ -40,7 +65,8 @@ export const DateInput = ({ date, onValueChange, containerProps, ...props }: Dat
       <div {...containerProps} className={clsx('relative w-full', containerProps?.className)}>
         <Input
           {...cleanInputProps}
-          value={formatAbsolute(date, locale, false)}
+          placeholder={translation('clickToAdd')}
+          value={initialDate ? formatAbsolute(initialDate, locale, mode === 'dateTime') : ''}
           onClick={(event) => {
             setIsOpen(true)
             cleanInputProps.onClick?.(event)
@@ -67,13 +93,24 @@ export const DateInput = ({ date, onValueChange, containerProps, ...props }: Dat
           className="absolute mt-1 left-0 rounded-lg shadow-xl border bg-surface text-on-surface border-divider p-2"
           style={{ zIndex }}
         >
-          <DatePicker
+          <DateTimePicker
+            {...dateTimePickerProps}
+            mode={mode}
             value={date}
             onChange={(newDate) => {
+              setDate(newDate)
+            }}
+            onFinish={(newDate) => {
+              setDate(newDate)
               onValueChange(newDate)
               setIsOpen(false)
             }}
-            className="max-h-75.5 min-w-80"
+            onRemove={() => {
+              const newDate = new Date()
+              setDate(newDate)
+              onRemove()
+              setIsOpen(false)
+            }}
           />
         </div>
       )}
