@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, forwardRef, useImperativeHandle, useEffect } from 'react'
 import { Avatar, Button, CheckboxUncontrolled, FillerRowElement, SearchBar, Table } from '@helpwave/hightide'
 import { PlusIcon } from 'lucide-react'
 import { useCompleteTaskMutation, useReopenTaskMutation } from '@/api/gql/generated'
@@ -30,6 +30,11 @@ export type TaskViewModel = {
   done: boolean,
 }
 
+export type TaskListRef = {
+  openCreate: () => void,
+  openTask: (taskId: string) => void,
+}
+
 type TaskDialogState = {
   isOpen: boolean,
   taskId?: string,
@@ -39,13 +44,11 @@ type TaskListProps = {
   tasks: TaskViewModel[],
   onRefetch?: () => void,
   showAssignee?: boolean,
+  initialTaskId?: string,
+  onInitialTaskOpened?: () => void,
 }
 
-export const TaskList = ({
-                           tasks: initialTasks,
-                           onRefetch,
-                           showAssignee = false
-                         }: TaskListProps) => {
+export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initialTasks, onRefetch, showAssignee = false, initialTaskId, onInitialTaskOpened }, ref) => {
   const translation = useTasksTranslation()
   const { mutate: completeTask } = useCompleteTaskMutation({ onSuccess: onRefetch })
   const { mutate: reopenTask } = useReopenTaskMutation({ onSuccess: onRefetch })
@@ -53,6 +56,24 @@ export const TaskList = ({
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null)
   const [taskDialogState, setTaskDialogState] = useState<TaskDialogState>({ isOpen: false })
   const [searchQuery, setSearchQuery] = useState('')
+  const [initialOpened, setInitialOpened] = useState(false)
+
+  useImperativeHandle(ref, () => ({
+    openCreate: () => {
+      setTaskDialogState({ isOpen: true })
+    },
+    openTask: (taskId: string) => {
+      setTaskDialogState({ isOpen: true, taskId })
+    }
+  }))
+
+  useEffect(() => {
+    if (initialTaskId && initialTasks.length > 0 && !initialOpened) {
+      setTaskDialogState({ isOpen: true, taskId: initialTaskId })
+      setInitialOpened(true)
+      onInitialTaskOpened?.()
+    }
+  }, [initialTaskId, initialTasks, initialOpened, onInitialTaskOpened])
 
   const tasks = useMemo(() => {
     let data = initialTasks
@@ -262,4 +283,4 @@ export const TaskList = ({
       </SidePanel>
     </div>
   )
-}
+})

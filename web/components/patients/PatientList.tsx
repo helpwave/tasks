@@ -1,4 +1,4 @@
-import { useMemo, useState, forwardRef, useImperativeHandle } from 'react'
+import { useMemo, useState, forwardRef, useImperativeHandle, useEffect } from 'react'
 import { Table, Chip, FillerRowElement, Button, SearchBar } from '@helpwave/hightide'
 import { PlusIcon } from 'lucide-react'
 import { useGetPatientsQuery, Sex, type GetPatientsQuery, type TaskType } from '@/api/gql/generated'
@@ -24,17 +24,21 @@ type PatientViewModel = {
 
 export type PatientListRef = {
   openCreate: () => void,
+  openPatient: (patientId: string) => void,
 }
 
 type PatientListProps = {
   locationId?: string,
+  initialPatientId?: string,
+  onInitialPatientOpened?: () => void,
 }
 
-export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ locationId }, ref) => {
+export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ locationId, initialPatientId, onInitialPatientOpened }, ref) => {
   const translation = useTasksTranslation()
   const [isPanelOpen, setIsPanelOpen] = useState(false)
   const [selectedPatient, setSelectedPatient] = useState<PatientViewModel | undefined>(undefined)
   const [searchQuery, setSearchQuery] = useState('')
+  const [initialOpened, setInitialOpened] = useState(false)
 
   const { data: queryData, refetch } = useGetPatientsQuery({
     locationId: locationId
@@ -44,6 +48,13 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ locat
     openCreate: () => {
       setSelectedPatient(undefined)
       setIsPanelOpen(true)
+    },
+    openPatient: (patientId: string) => {
+      const patient = patients.find(p => p.id === patientId)
+      if (patient) {
+        setSelectedPatient(patient)
+        setIsPanelOpen(true)
+      }
     }
   }))
 
@@ -73,6 +84,18 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ locat
 
     return data
   }, [queryData, searchQuery])
+
+  useEffect(() => {
+    if (initialPatientId && patients.length > 0 && !initialOpened) {
+      const patient = patients.find(p => p.id === initialPatientId)
+      if (patient) {
+        setSelectedPatient(patient)
+        setIsPanelOpen(true)
+        setInitialOpened(true)
+        onInitialPatientOpened?.()
+      }
+    }
+  }, [initialPatientId, patients, initialOpened, onInitialPatientOpened])
 
   const handleEdit = (patient: PatientViewModel) => {
     setSelectedPatient(patient)

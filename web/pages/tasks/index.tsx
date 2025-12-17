@@ -6,10 +6,13 @@ import { ContentPanel } from '@/components/layout/ContentPanel'
 import { TaskList, type TaskViewModel } from '@/components/tasks/TaskList'
 import { useMemo } from 'react'
 import { useGetMyTasksQuery } from '@/api/gql/generated'
+import { useRouter } from 'next/router'
 
 const TasksPage: NextPage = () => {
   const translation = useTasksTranslation()
+  const router = useRouter()
   const { data: queryData, refetch } = useGetMyTasksQuery()
+  const taskId = router.query['taskId'] as string | undefined
 
   const tasks: TaskViewModel[] = useMemo(() => {
     if (!queryData?.me?.tasks) return []
@@ -44,6 +47,8 @@ const TasksPage: NextPage = () => {
           tasks={tasks}
           onRefetch={refetch}
           showAssignee={false}
+          initialTaskId={taskId}
+          onInitialTaskOpened={() => router.replace('/tasks', undefined, { shallow: true })}
         />
       </ContentPanel>
     </Page>
