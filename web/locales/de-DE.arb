@@ -297,5 +297,8 @@
       }
     }
   },
-  "waitingroom": "Wartezimmer"
+  "waitingroom": "Wartezimmer",
+  "deleteTaskConfirmation": "Sind Sie sicher, dass Sie diese Aufgabe löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
+  "markPatientDeadConfirmation": "Sind Sie sicher, dass Sie diesen Patienten als verstorben markieren möchten?",
+  "dischargePatientConfirmation": "Sind Sie sicher, dass Sie diesen Patienten entlassen möchten? Diese Aktion ändert den Status des Patienten."
 }

@@ -19,6 +19,7 @@ import {
   Avatar,
   Button,
   CheckboxUncontrolled,
+  ConfirmDialog,
   FormElementWrapper,
   Input,
   LoadingButton,
@@ -32,7 +33,6 @@ import { useTasksContext } from '@/hooks/useTasksContext'
 import { DateInput } from '@/components/ui/DateInput'
 import { CheckCircle2, ChevronDown, Circle, Clock, MapPin, PlusIcon, XIcon, Building2, Locate, Users } from 'lucide-react'
 import { PatientStateChip } from '@/components/patients/PatientStateChip'
-import { PropertyList } from '@/components/PropertyList'
 import { LocationSelectionDialog } from '@/components/locations/LocationSelectionDialog'
 import clsx from 'clsx'
 import { SidePanel } from '@/components/layout/SidePanel'
@@ -179,6 +179,8 @@ export const PatientDetailView = ({
   const [selectedClinic, setSelectedClinic] = useState<LocationNodeType | null>(null)
   const [selectedPosition, setSelectedPosition] = useState<LocationNodeType | null>(null)
   const [selectedTeams, setSelectedTeams] = useState<LocationNodeType[]>([])
+  const [isMarkDeadDialogOpen, setIsMarkDeadDialogOpen] = useState(false)
+  const [isDischargeDialogOpen, setIsDischargeDialogOpen] = useState(false)
 
   useEffect(() => {
     if (patientData?.patient) {
@@ -391,9 +393,9 @@ export const PatientDetailView = ({
       )}
       <div className="flex-col-0 flex-grow overflow-hidden">
         <TabView className="h-full flex-col-0">
-          <Tab label={translation('tasks')} className="h-full overflow-y-auto pr-2">
-            <div className="flex flex-col gap-4 pt-4">
-              {isEditMode && (
+          {isEditMode && (
+            <Tab label={translation('tasks')} className="h-full overflow-y-auto pr-2">
+              <div className="flex flex-col gap-4 pt-4">
                 <div className="mb-2">
                   <Button
                     startIcon={<PlusIcon/>}
@@ -403,58 +405,58 @@ export const PatientDetailView = ({
                     {translation('addTask')}
                   </Button>
                 </div>
-              )}
-              <div>
-                <button
-                  onClick={() => setOpenExpanded(!openExpanded)}
-                  className="text-lg font-bold mb-3 flex items-center gap-2 w-full text-left"
-                >
-                  <ChevronDown className={clsx('size-5 transition-transform', { '-rotate-90': !openExpanded })}/>
-                  <Circle className="size-5 text-warning"/>
-                  {translation('openTasks')} ({openTasks.length})
-                </button>
-                {openExpanded && (
-                  <div className="flex flex-col gap-2">
-                    {openTasks.length === 0 &&
-                      <div className="text-description italic">{translation('noOpenTasks')}</div>}
-                    {openTasks.map(task => (
-                      <TaskCard
-                        key={task.id}
-                        task={task}
-                        onClick={() => setTaskId(task.id)}
-                        onToggleDone={(done) => handleToggleDone(task.id, done)}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
+                <div>
+                  <button
+                    onClick={() => setOpenExpanded(!openExpanded)}
+                    className="text-lg font-bold mb-3 flex items-center gap-2 w-full text-left"
+                  >
+                    <ChevronDown className={clsx('size-5 transition-transform', { '-rotate-90': !openExpanded })}/>
+                    <Circle className="size-5 text-warning"/>
+                    {translation('openTasks')} ({openTasks.length})
+                  </button>
+                  {openExpanded && (
+                    <div className="flex flex-col gap-2">
+                      {openTasks.length === 0 &&
+                        <div className="text-description italic">{translation('noOpenTasks')}</div>}
+                      {openTasks.map(task => (
+                        <TaskCard
+                          key={task.id}
+                          task={task}
+                          onClick={() => setTaskId(task.id)}
+                          onToggleDone={(done) => handleToggleDone(task.id, done)}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
 
-              <div className="opacity-75">
-                <button
-                  onClick={() => setClosedExpanded(!closedExpanded)}
-                  className="text-lg font-bold mb-3 flex items-center gap-2 w-full text-left"
-                >
-                  <ChevronDown className={clsx('size-5 transition-transform', { '-rotate-90': !closedExpanded })}/>
-                  <CheckCircle2 className="size-5 text-positive"/>
-                  {translation('closedTasks')} ({closedTasks.length})
-                </button>
-                {closedExpanded && (
-                  <div className="flex flex-col gap-2">
-                    {closedTasks.length === 0 &&
-                      <div className="text-description italic">{translation('noClosedTasks')}</div>}
-                    {closedTasks.map(task => (
-                      <TaskCard
-                        key={task.id}
-                        task={task}
-                        onClick={() => setTaskId(task.id)}
-                        onToggleDone={(done) => handleToggleDone(task.id, done)}
-                      />
-                    ))}
-                  </div>
-                )}
+                <div className="opacity-75">
+                  <button
+                    onClick={() => setClosedExpanded(!closedExpanded)}
+                    className="text-lg font-bold mb-3 flex items-center gap-2 w-full text-left"
+                  >
+                    <ChevronDown className={clsx('size-5 transition-transform', { '-rotate-90': !closedExpanded })}/>
+                    <CheckCircle2 className="size-5 text-positive"/>
+                    {translation('closedTasks')} ({closedTasks.length})
+                  </button>
+                  {closedExpanded && (
+                    <div className="flex flex-col gap-2">
+                      {closedTasks.length === 0 &&
+                        <div className="text-description italic">{translation('noClosedTasks')}</div>}
+                      {closedTasks.map(task => (
+                        <TaskCard
+                          key={task.id}
+                          task={task}
+                          onClick={() => setTaskId(task.id)}
+                          onToggleDone={(done) => handleToggleDone(task.id, done)}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          </Tab>
+            </Tab>
+          )}
 
           <Tab label={translation('patientData')} className="flex-col-6 px-1 pt-4 h-full overflow-x-visible ">
             <div className="grid grid-cols-2 gap-4">
@@ -557,7 +559,7 @@ export const PatientDetailView = ({
                       )}
                       {patient.state !== PatientState.Discharged && (
                         <Button
-                          onClick={() => dischargePatient({ id: patientId })}
+                          onClick={() => setIsDischargeDialogOpen(true)}
                           color="neutral"
                           coloringStyle="outline"
                         >
@@ -696,12 +698,6 @@ export const PatientDetailView = ({
             </FormElementWrapper>
           </Tab>
 
-          {patientId && (
-            <Tab label={translation('properties')} className="h-full overflow-y-auto pr-2 pt-2 pb-16">
-              <PropertyList subjectId={patientId} subjectType="patient"/>
-            </Tab>
-          )}
-
         </TabView>
       </div>
 
@@ -719,7 +715,7 @@ export const PatientDetailView = ({
       {isEditMode && patientId && patientData?.patient && patientData.patient.state !== PatientState.Dead && (
         <div className="flex-none pt-4 mt-auto border-t border-divider flex justify-end gap-2">
           <Button
-            onClick={() => markPatientDead({ id: patientId })}
+            onClick={() => setIsMarkDeadDialogOpen(true)}
             color="negative"
             coloringStyle="text"
           >
@@ -727,6 +723,34 @@ export const PatientDetailView = ({
           </Button>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={isMarkDeadDialogOpen}
+        onCancel={() => setIsMarkDeadDialogOpen(false)}
+        onConfirm={() => {
+          if (patientId) {
+            markPatientDead({ id: patientId })
+          }
+          setIsMarkDeadDialogOpen(false)
+        }}
+        titleElement={translation('markPatientDead')}
+        description={translation('markPatientDeadConfirmation')}
+        confirmType="negative"
+      />
+
+      <ConfirmDialog
+        isOpen={isDischargeDialogOpen}
+        onCancel={() => setIsDischargeDialogOpen(false)}
+        onConfirm={() => {
+          if (patientId) {
+            dischargePatient({ id: patientId })
+          }
+          setIsDischargeDialogOpen(false)
+        }}
+        titleElement={translation('dischargePatient')}
+        description={translation('dischargePatientConfirmation')}
+        confirmType="neutral"
+      />
 
       <LocationSelectionDialog
         isOpen={isClinicDialogOpen}

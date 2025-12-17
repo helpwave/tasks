@@ -16,8 +16,7 @@ import {
 import type { HightideTranslationLocales, ThemeType } from '@helpwave/hightide'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { useAuth } from '@/hooks/useAuth'
-import { LogOut, MonitorCog, MoonIcon, SunIcon, TableProperties, Trash2 } from 'lucide-react'
-import { useRouter } from 'next/router'
+import { LogOut, MonitorCog, MoonIcon, SunIcon, Trash2 } from 'lucide-react'
 import clsx from 'clsx'
 import { removeUser } from '@/api/auth/authService'
 import { useQueryClient } from '@tanstack/react-query'
@@ -49,7 +48,6 @@ const SettingsPage: NextPage = () => {
   const { theme, setTheme } = useTheme()
   const { user } = useTasksContext()
   const { logout } = useAuth()
-  const router = useRouter()
   const queryClient = useQueryClient()
 
   const handleClearCache = async () => {
@@ -86,6 +84,7 @@ const SettingsPage: NextPage = () => {
           </section>
 
           {/* System / Management */}
+          {/* Temporarily hidden - properties feature disabled
           <div className="flex-col-6">
             <h2 className="typography-title-md border-b border-divider pb-2">{translation('system')}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -105,6 +104,7 @@ const SettingsPage: NextPage = () => {
               </Button>
             </div>
           </div>
+          */}
 
           {/* Preferences */}
           <div className="flex-col-6">
