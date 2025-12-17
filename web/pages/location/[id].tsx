@@ -109,7 +109,7 @@ const LocationPage: NextPage = () => {
                 <div className="flex flex-wrap items-center -space-x-1 scale-75 origin-top-left">
                   {parentChain.map((parent, index) => (
                     <div key={parent.id} className="flex items-center">
-                      {index > 0 && <span className="text-description mx-0.5">▸</span>}
+                      {index > 0 && <span className="text-description mx-3">▸</span>}
                       <LocationChips locations={[parent]} />
                     </div>
                   ))}
