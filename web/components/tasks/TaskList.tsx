@@ -45,7 +45,6 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
   const { mutate: completeTask } = useCompleteTaskMutation({ onSuccess: onRefetch })
   const { mutate: reopenTask } = useReopenTaskMutation({ onSuccess: onRefetch })
 
-  const [isTasksPanelOpen, setIsTasksPanelOpen] = useState(false)
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null)
   const [selectedTask, setSelectedTask] = useState<TaskViewModel | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
@@ -53,7 +52,6 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
   useImperativeHandle(ref, () => ({
     openCreate: () => {
       setSelectedTask(null)
-      setIsTasksPanelOpen(true)
     }
   }))
 
@@ -69,16 +67,6 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
 
     return data
   }, [initialTasks, searchQuery])
-
-  const selectTask = (task: TaskViewModel) => {
-    setSelectedTask(task)
-    setIsTasksPanelOpen(true)
-  }
-
-  const handleClosePanel = () => {
-    setIsTasksPanelOpen(false)
-    setTimeout(() => setSelectedTask(null), 300)
-  }
 
   const columns = useMemo<ColumnDef<TaskViewModel>[]>(
     () => {
@@ -110,17 +98,6 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
         {
           id: 'title',
           header: translation('title'),
-          cell: ({ row }) => {
-            return (
-              <Button
-                color="neutral"
-                coloringStyle="text"
-                onClick={() => selectTask(row.original)}
-              >
-                {row.original.name}
-              </Button>
-            )
-          },
           accessorKey: 'name',
           minSize: 200,
           size: Number.MAX_SAFE_INTEGER,
@@ -165,12 +142,12 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
               <div className="flex flex-col gap-1">
                 <Button
                   color="neutral"
-                  coloringStyle="text"
-                  size="none"
-                  onClick={() => {
+                  size="small"
+                  onClick={event => {
+                    event.stopPropagation()
                     setSelectedPatientId(data.patient?.id ?? null)
                   }}
-                  className="flex-row-0 justify-start rounded-md px-1"
+                  className="flex-row-0 justify-start w-fit"
                 >
                   {data.patient?.name}
                 </Button>
@@ -237,16 +214,13 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
         </div>
         <Button
           startIcon={<PlusIcon />}
-          onClick={() => {
-            setSelectedTask(null)
-            setIsTasksPanelOpen(true)
-          }}
+          onClick={() => setSelectedTask(null)}
         >
           {translation('addTask')}
         </Button>
       </div>
       <Table
-        className="w-full h-full"
+        className="w-full h-full cursor-pointer"
         data={tasks}
         columns={columns}
         fillerRow={() => (
@@ -259,16 +233,17 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
           ]
         }}
         enableMultiSort={true}
+        onRowClick={row => setSelectedTask(row.original)}
       />
       <SidePanel
         title={selectedTask ? translation('editTask') : translation('createTask')}
-        isOpen={isTasksPanelOpen}
-        onClose={handleClosePanel}
+        isOpen={!!selectedTask}
+        onClose={() => setSelectedTask(null)}
       >
-        {(isTasksPanelOpen || selectedTask) && (
+        {(selectedTask) && (
           <TaskDetailView
             taskId={selectedTask?.id ?? null}
-            onClose={handleClosePanel}
+            onClose={() => setSelectedTask(null)}
             onSuccess={onRefetch || (() => { })}
           />
         )}
