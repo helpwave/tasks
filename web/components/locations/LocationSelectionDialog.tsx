@@ -244,6 +244,7 @@ export const LocationSelectionDialog = ({
               placeholder={translation('searchLocations')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onSearch={() => null}
               className="w-full"
             />
           </div>
