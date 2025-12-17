@@ -12,7 +12,6 @@ import {
 } from '@/api/gql/generated'
 import {
   Button,
-  DateTimePicker,
   FormElementWrapper,
   Input,
   LoadingButton,
@@ -28,6 +27,7 @@ import { PropertyList } from '@/components/PropertyList'
 import { User } from 'lucide-react'
 import { SidePanel } from '@/components/layout/SidePanel'
 import { PatientDetailView } from '@/components/patients/PatientDetailView'
+import { DateInput } from '@/components/ui/DateInput'
 
 interface TaskDetailViewProps {
   taskId: string | null,
@@ -148,7 +148,6 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess }: TaskDetailViewPro
         <TabView className="h-full flex flex-col">
           <Tab label={translation('overview')} className="h-full overflow-y-auto pr-2">
             <div className="flex flex-col gap-6 pt-4">
-
               <FormElementWrapper label={translation('title')}>
                 {({ isShowingError: _1, setIsShowingError: _2, ...bag }) => (
                   <Input
@@ -163,36 +162,31 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess }: TaskDetailViewPro
 
               <FormElementWrapper label={translation('patient')}>
                 {({ isShowingError: _1, setIsShowingError: _2, ...bag }) => {
-                  const patient = patients.find(value => value.id === formData.patientId)
-                  //return (isCreating || !patient) ? (
-                    return (
-<Select
+                  return (!isEditMode) ? (
+                    <Select
                       {...bag}
                       value={formData.patientId}
                       onValueChanged={(value) => updateLocalState({ patientId: value })}
                       disabled={isEditMode}
                     >
-                      {patients.map(patient => (
-                        <SelectOption key={patient.id} value={patient.id}>
-                          {patient.name}
-                        </SelectOption>
-                      ))}
-                      {isEditMode && taskData?.task?.patient && !patients.find(p => p.id === taskData.task?.patient?.id) && (
-                        <SelectOption value={taskData.task.patient.id}>{taskData.task.patient.name}</SelectOption>
-                      )}
+                      {patients.map(patient => {
+                        return (
+                          <SelectOption key={patient.id} value={patient.id}>
+                            {patient.name}
+                          </SelectOption>
+                        )
+                      })}
                     </Select>
-                  )
-                /*: (
+                  ) : (
                     <Button
                       color="neutral"
-                      coloringStyle="text"
                       onClick={() => setIsShowingPatientDialog(true)}
                       className="w-fit"
                     >
                       <User className="size-4"/>
-                      {patient.name}
+                      { taskData?.task?.patient?.name}
                     </Button>
-                  )*/
+                  )
                 }}
               </FormElementWrapper>
 
@@ -215,13 +209,18 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess }: TaskDetailViewPro
 
               <FormElementWrapper label={translation('dueDate')}>
                 {({ isShowingError: _1, setIsShowingError: _2, ...bag }) => (
-                  <DateTimePicker
+                  <DateInput
                     {...bag}
-                    value={formData.dueDate ? new Date(formData.dueDate) : undefined}
-                    onChange={(date) => {
+                    date={formData.dueDate}
+                    onValueChange={(date) => {
                       updateLocalState({ dueDate: date })
                       persistChanges({ dueDate: date })
                     }}
+                    onRemove={() => {
+                      updateLocalState({ dueDate: null })
+                      persistChanges({ dueDate: null })
+                    }}
+                    mode="dateTime"
                   />
                 )}
               </FormElementWrapper>
@@ -238,7 +237,15 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess }: TaskDetailViewPro
                   />
                 )}
               </FormElementWrapper>
-
+              <Button
+                color="negative"
+                className="w-fit"
+                onClick={() => {
+                  // TODO delete Task here
+                }}
+              >
+                {translation('delete')}
+              </Button>
             </div>
           </Tab>
 
