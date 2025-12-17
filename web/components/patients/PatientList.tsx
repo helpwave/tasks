@@ -186,6 +186,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ locat
             placeholder={translation('search')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            onSearch={() => null}
           />
         </div>
         <Button
