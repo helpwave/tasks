@@ -68,15 +68,15 @@ const TeamPage: NextPage = () => {
         )}
         {!isLoading && !isError && (
           <TabView>
+            <Tab label={translation('patients')}>
+              <PatientList locationId={id} />
+            </Tab>
             <Tab label={translation('tasks')}>
               <TaskList
                 tasks={tasks}
                 onRefetch={refetchPatients}
                 showAssignee={true}
               />
-            </Tab>
-            <Tab label={translation('patients')}>
-              <PatientList locationId={id} />
             </Tab>
           </TabView>
         )}

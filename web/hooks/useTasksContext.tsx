@@ -17,6 +17,7 @@ type LocationNode = {
 type SidebarContextType = {
   isShowingTeams: boolean,
   isShowingWards: boolean,
+  isShowingClinics: boolean,
 }
 
 export type TasksContextState = {
@@ -25,6 +26,7 @@ export type TasksContextState = {
   locationPatientsCount?: number,
   teams?: LocationNode[],
   wards?: LocationNode[],
+  clinics?: LocationNode[],
   selectedLocationId?: string,
   sidebar: SidebarContextType,
   user?: User,
@@ -52,6 +54,7 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
     sidebar: {
       isShowingTeams: false,
       isShowingWards: false,
+      isShowingClinics: false,
     }
   })
 
@@ -61,6 +64,7 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
       sidebar: {
         isShowingWards: !!pathName && (pathName.startsWith('/location') || pathName.startsWith('/wards') || prevState.sidebar.isShowingWards),
         isShowingTeams: !!pathName && (pathName.startsWith('/location') || pathName.startsWith('/teams') || prevState.sidebar.isShowingTeams),
+        isShowingClinics: !!pathName && (pathName.startsWith('/location') || pathName.startsWith('/clinics') || prevState.sidebar.isShowingClinics),
       },
     }))
   }, [pathName])
@@ -83,6 +87,7 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
         : totalPatientsCount,
       teams: data?.teams,
       wards: data?.wards,
+      clinics: data?.clinics,
     }))
   }, [data])
 

@@ -141,6 +141,7 @@ export type TasksTranslationEntries = {
   'tasksUpdatedRecently': string,
   'taskTitlePlaceholder': string,
   'teams': string,
+  'clinics': string,
   'themeMode': (values: { theme: string }) => string,
   'time.today': string,
   'title': string,
@@ -379,6 +380,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'tasksUpdatedRecently': `Kürzlich aktualisierte Aufgaben`,
     'taskTitlePlaceholder': `Was muss erledigt werden?`,
     'teams': `Teams`,
+    'clinics': `Kliniken`,
     'themeMode': ({ theme }): string => {
       return TranslationGen.resolveSelect(theme, {
         'dark': `Dunkel`,
@@ -621,6 +623,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'tasksUpdatedRecently': `Tasks updated recently`,
     'taskTitlePlaceholder': `What needs to be done?`,
     'teams': `Teams`,
+    'clinics': `Clinics`,
     'themeMode': ({ theme }): string => {
       return TranslationGen.resolveSelect(theme, {
         'dark': `Dark`,

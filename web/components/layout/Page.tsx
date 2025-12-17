@@ -21,6 +21,7 @@ import {
   Building2,
   CircleCheck,
   Grid2X2PlusIcon,
+  Hospital,
   SettingsIcon,
   User,
   Users
@@ -242,6 +243,34 @@ export const Sidebar = ({ ...props }: SidebarProps) => {
           ) : context.wards.map(ward => (
             <SidebarLink key={ward.id} href={`${locationRoute}/${ward.id}`} className="pl-9.5">
               {ward.title}
+            </SidebarLink>
+          ))}
+        </Expandable>
+
+        <Expandable
+          label={(
+            <div className="flex-row-2">
+              <Hospital className="size-5" />
+              {translation('clinics')}
+            </div>
+          )}
+          headerClassName="!px-2.5 !py-1.5 hover:bg-black/30"
+          contentClassName="!px-0 !pb-0 gap-y-0"
+          className="!shadow-none"
+          isExpanded={context.sidebar.isShowingClinics}
+          onChange={isExpanded => context.update(prevState => ({
+            ...prevState,
+            sidebar: {
+              ...prevState.sidebar,
+              isShowingClinics: isExpanded,
+            }
+          }))}
+        >
+          {!context?.clinics ? (
+            <LoadingContainer className="w-full h-10" />
+          ) : context.clinics.map(clinic => (
+            <SidebarLink key={clinic.id} href={`${locationRoute}/${clinic.id}`} className="pl-9.5">
+              {clinic.title}
             </SidebarLink>
           ))}
         </Expandable>
