@@ -103,8 +103,6 @@ class PatientMutation:
             sex=data.sex.value,
             assigned_location_id=data.assigned_location_id,
         )
-        info.context.db.add(new_patient)
-        await info.context.db.flush()
 
         if data.assigned_location_ids:
             result = await info.context.db.execute(
@@ -132,7 +130,9 @@ class PatientMutation:
                 "patient",
             )
 
+        info.context.db.add(new_patient)
         await info.context.db.commit()
+
         await info.context.db.refresh(new_patient, ["assigned_locations"])
         await redis_client.publish("patient_created", new_patient.id)
         return new_patient

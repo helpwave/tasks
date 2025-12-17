@@ -8,6 +8,7 @@ import webbrowser
 from datetime import date, datetime, timedelta
 from enum import Enum
 from http.server import BaseHTTPRequestHandler, HTTPServer
+from typing import Any, List, Optional
 from urllib.parse import parse_qs, urlparse
 
 import requests
@@ -117,17 +118,17 @@ class RandomDataGenerator:
     ]
 
     @staticmethod
-    def get_name():
+    def get_name() -> tuple[str, str]:
         return random.choice(RandomDataGenerator.first_names), random.choice(
             RandomDataGenerator.last_names,
         )
 
     @staticmethod
-    def get_task_title():
+    def get_task_title() -> str:
         return random.choice(RandomDataGenerator.task_titles)
 
     @staticmethod
-    def get_birthdate():
+    def get_birthdate() -> str:
         start_date = date(1940, 1, 1)
         end_date = date(2005, 12, 31)
         delta = end_date - start_date
@@ -135,20 +136,20 @@ class RandomDataGenerator:
         return (start_date + timedelta(days=random_days)).isoformat()
 
     @staticmethod
-    def get_due_date():
+    def get_due_date() -> str:
         now = datetime.now()
         random_hours = random.randint(1, 168)
         return (now + timedelta(hours=random_hours)).isoformat()
 
     @staticmethod
-    def get_sex():
+    def get_sex() -> str:
         return random.choice(list(Sex)).value
 
 
 class OAuthCallbackHandler(BaseHTTPRequestHandler):
-    auth_code = None
+    auth_code: str | None = None
 
-    def do_GET(self):
+    def do_GET(self) -> None:
         parsed_url = urlparse(self.path)
         if parsed_url.path == "/callback":
             query_params = parse_qs(parsed_url.query)
@@ -176,12 +177,12 @@ class OAuthCallbackHandler(BaseHTTPRequestHandler):
         else:
             self.send_error(404, "Not Found")
 
-    def log_message(self, format, *args):
+    def log_message(self, format: str, *args: Any) -> None:
         pass
 
 
 class InteractiveAuthenticator:
-    def __init__(self, session):
+    def __init__(self, session: requests.Session):
         self.session = session
 
     def login(self) -> str:
@@ -231,7 +232,7 @@ class InteractiveAuthenticator:
 
 class GraphQLClient:
     def __init__(self):
-        self.token = None
+        self.token: Optional[str] = None
         self.session = requests.Session()
         self.authenticator = InteractiveAuthenticator(self.session)
 
@@ -276,13 +277,17 @@ class GraphQLClient:
 class ClinicSimulator:
     def __init__(self):
         self.client = GraphQLClient()
-        self.all_locations = []
-        self.locations = []
-        self.patient_ids = []
-        self.task_ids = []
-        self.user_id = None
+        self.all_locations: List[dict] = []
+        self.locations: List[str] = []
+        self.patient_ids: List[str] = []
+        self.task_ids: List[str] = []
+        self.user_id: Optional[str] = None
 
-    def load_state(self):
+    def _log_errors(self, context: str, response: dict) -> None:
+        if "errors" in response:
+            logger.error(f"Error in {context}: {response['errors']}")
+
+    def load_state(self) -> None:
         query = """
         query LoadState {
             locationNodes {
@@ -300,7 +305,11 @@ class ClinicSimulator:
         }
         """
         response = self.client.query(query)
-        data = response.get("data", {})
+        data = response.get("data")
+
+        if not data:
+            self._log_errors("load_state", response)
+            return
 
         self.all_locations = data.get("locationNodes", [])
 
@@ -314,7 +323,7 @@ class ClinicSimulator:
             f"State loaded: {len(self.locations)} assignable locations, {len(self.patient_ids)} patients, {len(self.task_ids)} tasks",
         )
 
-    def print_structure(self):
+    def print_structure(self) -> None:
         logger.info("\n" + "=" * 40)
         logger.info("CURRENT LOCATION HIERARCHY")
         logger.info("=" * 40)
@@ -330,7 +339,7 @@ class ClinicSimulator:
             else:
                 roots.append(l["id"])
 
-        def print_tree(node_id, prefix="", is_last=True):
+        def print_tree(node_id: str, prefix: str = "", is_last: bool = True):
             node = nodes[node_id]
             connector = "└── " if is_last else "├── "
             print(f"{prefix}{connector}{node['title']} ({node['kind']})")
@@ -345,7 +354,7 @@ class ClinicSimulator:
             print_tree(root_id, "", i == len(roots) - 1)
         print("\n")
 
-    def fetch_current_user(self):
+    def fetch_current_user(self) -> None:
         query = """
         query GetMe {
             me {
@@ -355,14 +364,21 @@ class ClinicSimulator:
         }
         """
         response = self.client.query(query)
-        data = response.get("data", {})
-        if data.get("me"):
+        data = response.get("data")
+        if data and data.get("me"):
             self.user_id = data["me"]["id"]
             logger.info(
                 f"Logged in as user: {data['me']['username']} ({self.user_id})",
             )
+        else:
+            self._log_errors("fetch_current_user", response)
 
-    def create_location(self, title, kind, parent_id=None):
+    def create_location(
+        self,
+        title: str,
+        kind: str,
+        parent_id: Optional[str] = None,
+    ) -> Optional[str]:
         mutation = """
         mutation CreateLocation($title: String!, $kind: LocationType!, $parentId: ID) {
             createLocationNode(data: {
@@ -380,18 +396,21 @@ class ClinicSimulator:
             "parentId": parent_id,
         }
         response = self.client.query(mutation, variables)
-        data = response.get("data", {})
+        data = response.get("data")
+
         if data and data.get("createLocationNode"):
             return data["createLocationNode"]["id"]
+
+        self._log_errors(f"create_location({title})", response)
         return None
 
     def create_rooms_and_beds(
         self,
-        parent_id,
-        prefix,
-        num_rooms=3,
-        beds_per_room=2,
-    ):
+        parent_id: str,
+        prefix: str,
+        num_rooms: int = 3,
+        beds_per_room: int = 2,
+    ) -> None:
         for r in range(1, num_rooms + 1):
             room_id = self.create_location(
                 f"{prefix} Room {r}",
@@ -403,7 +422,7 @@ class ClinicSimulator:
             for b in range(1, beds_per_room + 1):
                 self.create_location(f"Bed {b}", "BED", room_id)
 
-    def ensure_hospital_structure(self):
+    def ensure_hospital_structure(self) -> None:
         if self.locations:
             return
 
@@ -456,23 +475,27 @@ class ClinicSimulator:
         logger.info("Hospital structure generation complete.")
         self.load_state()
 
-    def create_patient(self):
+    def create_patient(self) -> None:
         if not self.locations:
             logger.warning("No locations available to assign patient")
             return
 
         first, last = RandomDataGenerator.get_name()
         mutation = """
-        mutation CreatePatient($firstname: String!, $lastname: String!, $birthdate: Date!, $sex: Sex!, $locationId: ID) {
+        mutation CreatePatient($firstname: String!, $lastname: String!, $birthdate: Date!, $sex: Sex!, $locationIds: [ID!]) {
             createPatient(data: {
                 firstname: $firstname,
                 lastname: $lastname,
                 birthdate: $birthdate,
                 sex: $sex,
-                assignedLocationId: $locationId
+                assignedLocationIds: $locationIds
             }) {
                 id
                 name
+                assignedLocations {
+                    id
+                    title
+                }
             }
         }
         """
@@ -481,20 +504,23 @@ class ClinicSimulator:
             "lastname": last,
             "birthdate": RandomDataGenerator.get_birthdate(),
             "sex": RandomDataGenerator.get_sex(),
-            "locationId": random.choice(self.locations),
+            "locationIds": [random.choice(self.locations)],
         }
 
         response = self.client.query(mutation, variables)
-        data = response.get("data", {})
-        if data.get("createPatient"):
+        data = response.get("data")
+
+        if data and data.get("createPatient"):
             pid = data["createPatient"]["id"]
             self.patient_ids.append(pid)
             logger.info(f"Created patient {first} {last}")
 
             for _ in range(random.randint(1, 3)):
                 self.create_task(pid)
+        else:
+            self._log_errors("create_patient", response)
 
-    def create_task(self, patient_id=None):
+    def create_task(self, patient_id: Optional[str] = None) -> None:
         if not patient_id:
             if not self.patient_ids:
                 return
@@ -528,8 +554,9 @@ class ClinicSimulator:
         }
 
         response = self.client.query(mutation, variables)
-        data = response.get("data", {})
-        if data.get("createTask"):
+        data = response.get("data")
+
+        if data and data.get("createTask"):
             self.task_ids.append(data["createTask"]["id"])
             assigned_msg = (
                 f" assigned to Me ({self.user_id})"
@@ -537,8 +564,10 @@ class ClinicSimulator:
                 else " (unassigned)"
             )
             logger.info(f"Created task '{title}'{assigned_msg} due {due_date}")
+        else:
+            self._log_errors("create_task", response)
 
-    def update_task(self):
+    def update_task(self) -> None:
         if not self.task_ids:
             return
 
@@ -566,14 +595,17 @@ class ClinicSimulator:
                     )
                     self.task_ids.remove(tid)
                     return
+            # Log other errors
+            self._log_errors("update_task", response)
 
-        data = response.get("data", {})
+        data = response.get("data")
         result_key = "completeTask" if complete else "reopenTask"
+
         if data and data.get(result_key):
             status = "DONE" if complete else "OPEN"
             logger.info(f"Updated task {tid} -> status: {status}")
 
-    def move_patient(self):
+    def move_patient(self) -> None:
         if not self.patient_ids or not self.locations:
             return
 
@@ -581,13 +613,19 @@ class ClinicSimulator:
         lid = random.choice(self.locations)
 
         mutation = """
-        mutation MovePatient($id: ID!, $lid: ID) {
-            updatePatient(id: $id, data: { assignedLocationId: $lid }) {
+        mutation MovePatient($id: ID!, $locationIds: [ID!]) {
+            updatePatient(id: $id, data: { assignedLocationIds: $locationIds }) {
                 id
+                assignedLocations {
+                    id
+                }
             }
         }
         """
-        response = self.client.query(mutation, {"id": pid, "lid": lid})
+        response = self.client.query(
+            mutation,
+            {"id": pid, "locationIds": [lid]},
+        )
 
         if "errors" in response:
             for error in response["errors"]:
@@ -597,12 +635,13 @@ class ClinicSimulator:
                     )
                     self.patient_ids.remove(pid)
                     return
+            self._log_errors("move_patient", response)
 
-        data = response.get("data", {})
-        if data.get("updatePatient"):
+        data = response.get("data")
+        if data and data.get("updatePatient"):
             logger.info(f"Moved patient {pid} to new location {lid}")
 
-    def delete_patient(self):
+    def delete_patient(self) -> None:
         if not self.patient_ids:
             return
 
@@ -613,13 +652,15 @@ class ClinicSimulator:
         }
         """
         response = self.client.query(mutation, {"id": pid})
-        data = response.get("data", {})
+        data = response.get("data")
 
-        if data.get("deletePatient"):
+        if data and data.get("deletePatient"):
             self.patient_ids.remove(pid)
             logger.info(f"Deleted patient {pid}")
+        elif "errors" in response:
+            self._log_errors("delete_patient", response)
 
-    def run(self):
+    def run(self) -> None:
         self.client.query("{ __typename }")
 
         self.fetch_current_user()

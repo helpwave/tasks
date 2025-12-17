@@ -50,15 +50,21 @@ class PatientType:
         ]
         | None
     ):
-        if not self.assigned_location_id:
-            assigned_locs = await self.assigned_locations(info)
-            return assigned_locs[0] if assigned_locs else None
+        if self.assigned_location_id:
+            result = await info.context.db.execute(
+                select(models.LocationNode).where(
+                    models.LocationNode.id == self.assigned_location_id,
+                ),
+            )
+            return result.scalars().first()
 
-        result = await info.context.db.execute(
-            select(models.LocationNode).where(
-                models.LocationNode.id == self.assigned_location_id,
-            ),
+        query = (
+            select(models.LocationNode)
+            .join(models.patient_locations)
+            .where(models.patient_locations.c.patient_id == self.id)
+            .limit(1)
         )
+        result = await info.context.db.execute(query)
         return result.scalars().first()
 
     @strawberry.field
