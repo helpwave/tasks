@@ -1,19 +1,21 @@
 import type { ReactNode } from 'react'
+import { useRef } from 'react'
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import clsx from 'clsx'
-import { Button, useZIndexRegister } from '@helpwave/hightide'
+import { Button, useFocusTrap, useZIndexRegister } from '@helpwave/hightide'
 
 interface SidePanelProps {
   isOpen: boolean,
   onClose: () => void,
-  title?: ReactNode,
+  title: ReactNode,
   children: ReactNode,
 }
 
 export const SidePanel = ({ isOpen, onClose, title, children }: SidePanelProps) => {
   const [isVisible, setIsVisible] = useState(isOpen)
+  const ref = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     if (isOpen) setIsVisible(true)
@@ -24,10 +26,20 @@ export const SidePanel = ({ isOpen, onClose, title, children }: SidePanelProps) 
   }
   const zIndex = useZIndexRegister(isOpen)
 
-  if (!isVisible) return null
+
+  useFocusTrap({
+    active: isOpen,
+    // @ts-expect-error TODO Will be fixed when upgrading hightide to the newest typescript and react versions
+    container: ref,
+  })
 
   return createPortal(
-    <div className="fixed inset-0 overflow-hidden" style={{ zIndex }}>
+    <div
+      ref={ref}
+      className="fixed inset-0 overflow-hidden"
+      style={{ zIndex }}
+      hidden={!isVisible}
+    >
       <div
         className={clsx(
           'absolute inset-0 bg-overlay-shadow transition-opacity duration-300',

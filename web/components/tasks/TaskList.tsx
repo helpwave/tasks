@@ -260,6 +260,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
         enableMultiSort={true}
       />
       <SidePanel
+        title={selectedTask ? translation('editTask') : translation('createTask')}
         isOpen={isTasksPanelOpen}
         onClose={handleClosePanel}
       >
@@ -272,6 +273,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
         )}
       </SidePanel>
       <SidePanel
+        title={translation('editPatient')}
         isOpen={!!selectedPatientId}
         onClose={() => setSelectedPatientId(null)}
       >

@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
-import type { CreatePatientInput, LocationNodeType, UpdatePatientInput } from '@/api/gql/generated'
+import type { CreatePatientInput, LocationNodeType, TaskType, UpdatePatientInput } from '@/api/gql/generated'
 import { Sex, useCreatePatientMutation, useGetPatientQuery, useUpdatePatientMutation } from '@/api/gql/generated'
+import type { ButtonProps } from '@helpwave/hightide'
 import {
   Button,
   FormElementWrapper,
@@ -18,13 +19,9 @@ import { DateInput } from '@/components/ui/DateInput'
 import { CheckCircle2, Circle, Clock, MapPin, XIcon } from 'lucide-react'
 import { PropertyList } from '@/components/PropertyList'
 import { LocationSelectionDialog } from '@/components/locations/LocationSelectionDialog'
-
-interface PatientDetailViewProps {
-  patientId?: string,
-  onClose: () => void,
-  onSuccess: () => void,
-  initialCreateData?: Partial<CreatePatientInput>,
-}
+import clsx from 'clsx'
+import { SidePanel } from '@/components/layout/SidePanel'
+import { TaskDetailView } from '@/components/tasks/TaskDetailView'
 
 const toISODate = (d: Date | string): string => {
   const date = typeof d === 'string' ? new Date(d) : d
@@ -40,6 +37,45 @@ const getDefaultBirthdate = () => {
   return toISODate(d)
 }
 
+type TaskCardProps = ButtonProps & {
+  task: Pick<TaskType, 'done' | 'title' | 'id' | 'description' | 'dueDate'>,
+}
+
+function TaskCard({ task, ...props }: TaskCardProps) {
+  return (
+    <Button
+      {...props}
+      color="neutral"
+      coloringStyle="text"
+      className="border-2 p-3 rounded-lg flex-col-1 items-start h-auto"
+    >
+      <div
+        className={clsx(
+          'font-semibold text-description',
+          { 'line-through': task.done }
+        )}
+      >
+        {task.title}
+      </div>
+      {task.description && !task.done &&
+        <div className="text-sm text-description mt-1 line-clamp-2">{task.description}</div>}
+      {task.dueDate && !task.done && (
+        <div className="flex items-center gap-1 mt-2 text-xs text-warning">
+          <Clock className="size-3"/>
+          {new Date(task.dueDate).toLocaleDateString()}
+        </div>
+      )}
+    </Button>
+  )
+}
+
+interface PatientDetailViewProps {
+  patientId?: string,
+  onClose: () => void,
+  onSuccess: () => void,
+  initialCreateData?: Partial<CreatePatientInput>,
+}
+
 export const PatientDetailView = ({
                                     patientId,
                                     onClose,
@@ -48,14 +84,14 @@ export const PatientDetailView = ({
                                   }: PatientDetailViewProps) => {
   const translation = useTasksTranslation()
   const { selectedLocationId } = useTasksContext()
+  const [taskId, setTaskId] = useState<string | null>(null)
   const isEditMode = !!patientId
 
-  const { data: patientData, isLoading: isLoadingPatient } = useGetPatientQuery(
+  const { data: patientData, isLoading: isLoadingPatient, refetch } = useGetPatientQuery(
     { id: patientId! },
     { enabled: isEditMode }
   )
 
-  const [fullName, setFullName] = useState('')
   const [formData, setFormData] = useState<CreatePatientInput>({
     firstname: '',
     lastname: '',
@@ -77,7 +113,6 @@ export const PatientDetailView = ({
         birthdate: toISODate(birthdate),
         assignedLocationIds: assignedLocations.map(loc => loc.id)
       })
-      setFullName(`${firstname} ${lastname}`)
       setSelectedLocations(assignedLocations as LocationNodeType[])
     }
   }, [patientData])
@@ -141,20 +176,12 @@ export const PatientDetailView = ({
   const openTasks = tasks.filter(t => !t.done)
   const closedTasks = tasks.filter(t => t.done)
 
-  console.log(patientData)
-
   if (isEditMode && isLoadingPatient) {
     return <LoadingContainer/>
   }
 
   return (
     <div className="flex-col-0 h-full bg-surface">
-      <div className="flex-none mb-6">
-        <div className="typography-title-lg text-primary">
-          {fullName || translation('newPatient')}
-        </div>
-      </div>
-
       <div className="flex-col-0 flex-grow overflow-hidden">
         <TabView className="h-full flex-col-0">
           <Tab label={translation('overview')} className="flex-col-6 px-1 pt-4 h-full overflow-x-visible ">
@@ -167,7 +194,6 @@ export const PatientDetailView = ({
                     placeholder={translation('firstName')}
                     onChange={e => {
                       const val = e.target.value
-                      setFullName(`${val} ${formData.lastname}`)
                       updateLocalState({ firstname: val })
                     }}
                     onBlur={() => persistChanges({ firstname: formData.firstname })}
@@ -182,7 +208,6 @@ export const PatientDetailView = ({
                     placeholder={translation('lastName')}
                     onChange={e => {
                       const val = e.target.value
-                      setFullName(`${formData.firstname} ${val}`)
                       updateLocalState({ lastname: val })
                     }}
                     onBlur={() => persistChanges({ lastname: formData.lastname })}
@@ -287,7 +312,7 @@ export const PatientDetailView = ({
           <Tab label={translation('tasks')} className="h-full overflow-y-auto pr-2">
             <div className="flex flex-col gap-6 pt-4">
               <div>
-                <span className="typography-title-md font-bold mb-3 flex items-center gap-2">
+                <span className="typography-title-sm font-bold mb-3 flex items-center gap-2">
                   <Circle className="size-5 text-warning"/>
                   {translation('openTasks')} ({openTasks.length})
                 </span>
@@ -295,34 +320,21 @@ export const PatientDetailView = ({
                   {openTasks.length === 0 &&
                     <div className="text-description italic">{translation('noOpenTasks')}</div>}
                   {openTasks.map(task => (
-                    <div key={task.id}
-                         className="p-3 rounded-lg border border-divider bg-surface hover:border-primary transition-colors cursor-pointer">
-                      <div className="font-semibold">{task.title}</div>
-                      {task.description &&
-                        <div className="text-sm text-description mt-1 line-clamp-2">{task.description}</div>}
-                      {task.dueDate && (
-                        <div className="flex items-center gap-1 mt-2 text-xs text-warning">
-                          <Clock className="size-3"/>
-                          {new Date(task.dueDate).toLocaleDateString()}
-                        </div>
-                      )}
-                    </div>
+                    <TaskCard key={task.id} task={task} onClick={() => setTaskId(task.id)}/>
                   ))}
                 </div>
               </div>
 
               <div className="opacity-75">
-                <span className="typography-label-md font-bold mb-3 flex items-center gap-2">
-                  <CheckCircle2 className="size-4 text-positive"/>
+                <span className="typography-title-sm font-bold mb-3 flex items-center gap-2">
+                  <CheckCircle2 className="size-5 text-positive"/>
                   {translation('closedTasks')} ({closedTasks.length})
                 </span>
                 <div className="flex flex-col gap-2">
                   {closedTasks.length === 0 &&
                     <div className="text-description italic">{translation('noClosedTasks')}</div>}
                   {closedTasks.map(task => (
-                    <div key={task.id} className="p-3 rounded-lg border border-divider bg-surface-subdued">
-                      <div className="font-semibold line-through text-description">{task.title}</div>
-                    </div>
+                    <TaskCard key={task.id} task={task} onClick={() => setTaskId(task.id)}/>
                   ))}
                 </div>
               </div>
@@ -349,6 +361,23 @@ export const PatientDetailView = ({
         initialSelectedIds={selectedLocations.map(loc => loc.id)}
         multiSelect={true}
       />
+      <SidePanel
+        isOpen={!!taskId}
+        onClose={() => {
+          setTaskId(null)
+        }}
+        title={translation('editTask')}
+      >
+        <TaskDetailView
+          taskId={taskId}
+          onSuccess={() => {
+            refetch()
+          }}
+          onClose={() => {
+            setTaskId(null)
+          }}
+        />
+      </SidePanel>
     </div>
   )
 }
