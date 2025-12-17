@@ -270,5 +270,20 @@
         "type": "string"
       }
     }
-  }
+  },
+  "waitingForPatient": "Waiting for patient",
+  "patientActions": "Patient Actions",
+  "admitPatient": "Admit Patient",
+  "dischargePatient": "Discharge Patient",
+  "markPatientDead": "Mark Patient Dead",
+  "waitPatient": "Set Patient to Waiting",
+  "patientState": "{state, select, WAIT{Waiting} ADMITTED{Admitted} DISCHARGED{Discharged} DEAD{Dead} other{Unknown}}",
+  "@patientState": {
+    "placeholders": {
+      "state": {
+        "type": "string"
+      }
+    }
+  },
+  "waitingroom": "Waitingroom"
 }

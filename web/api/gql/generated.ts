@@ -32,6 +32,7 @@ export type CreatePatientInput = {
   lastname: Scalars['String']['input'];
   properties?: InputMaybe<Array<PropertyValueInput>>;
   sex: Sex;
+  state?: InputMaybe<PatientState>;
 };
 
 export type CreatePropertyDefinitionInput = {
@@ -86,6 +87,7 @@ export enum LocationType {
 
 export type Mutation = {
   __typename?: 'Mutation';
+  admitPatient: PatientType;
   assignTask: TaskType;
   completeTask: TaskType;
   createLocationNode: LocationNodeType;
@@ -96,12 +98,20 @@ export type Mutation = {
   deletePatient: Scalars['Boolean']['output'];
   deletePropertyDefinition: Scalars['Boolean']['output'];
   deleteTask: Scalars['Boolean']['output'];
+  dischargePatient: PatientType;
+  markPatientDead: PatientType;
   reopenTask: TaskType;
   unassignTask: TaskType;
   updateLocationNode: LocationNodeType;
   updatePatient: PatientType;
   updatePropertyDefinition: PropertyDefinitionType;
   updateTask: TaskType;
+  waitPatient: PatientType;
+};
+
+
+export type MutationAdmitPatientArgs = {
+  id: Scalars['ID']['input'];
 };
 
 
@@ -156,6 +166,16 @@ export type MutationDeleteTaskArgs = {
 };
 
 
+export type MutationDischargePatientArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type MutationMarkPatientDeadArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
 export type MutationReopenTaskArgs = {
   id: Scalars['ID']['input'];
 };
@@ -189,6 +209,18 @@ export type MutationUpdateTaskArgs = {
   id: Scalars['ID']['input'];
 };
 
+
+export type MutationWaitPatientArgs = {
+  id: Scalars['ID']['input'];
+};
+
+export enum PatientState {
+  Admitted = 'ADMITTED',
+  Dead = 'DEAD',
+  Discharged = 'DISCHARGED',
+  Wait = 'WAIT'
+}
+
 export type PatientType = {
   __typename?: 'PatientType';
   age: Scalars['Int']['output'];
@@ -202,6 +234,7 @@ export type PatientType = {
   name: Scalars['String']['output'];
   properties: Array<PropertyValueType>;
   sex: Sex;
+  state: PatientState;
   tasks: Array<TaskType>;
 };
 
@@ -288,6 +321,7 @@ export type QueryPatientArgs = {
 
 export type QueryPatientsArgs = {
   locationNodeId?: InputMaybe<Scalars['ID']['input']>;
+  states?: InputMaybe<Array<PatientState>>;
 };
 
 
@@ -416,14 +450,15 @@ export type GetPatientQueryVariables = Exact<{
 }>;
 
 
-export type GetPatientQuery = { __typename?: 'Query', patient?: { __typename?: 'PatientType', id: string, firstname: string, lastname: string, birthdate: any, sex: Sex, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string } | null, assignedLocations: Array<{ __typename?: 'LocationNodeType', id: string, title: string }>, tasks: Array<{ __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, dueDate?: any | null, updateDate?: any | null, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null } | null }> } | null };
+export type GetPatientQuery = { __typename?: 'Query', patient?: { __typename?: 'PatientType', id: string, firstname: string, lastname: string, birthdate: any, sex: Sex, state: PatientState, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string } | null, assignedLocations: Array<{ __typename?: 'LocationNodeType', id: string, title: string }>, tasks: Array<{ __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, dueDate?: any | null, updateDate?: any | null, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null } | null }> } | null };
 
 export type GetPatientsQueryVariables = Exact<{
   locationId?: InputMaybe<Scalars['ID']['input']>;
+  states?: InputMaybe<Array<PatientState> | PatientState>;
 }>;
 
 
-export type GetPatientsQuery = { __typename?: 'Query', patients: Array<{ __typename?: 'PatientType', id: string, name: string, firstname: string, lastname: string, birthdate: any, sex: Sex, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null, assignedLocations: Array<{ __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null } | null }>, tasks: Array<{ __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, dueDate?: any | null, creationDate: any, updateDate?: any | null, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null } | null }>, properties: Array<{ __typename?: 'PropertyValueType', textValue?: string | null, definition: { __typename?: 'PropertyDefinitionType', name: string } }> }> };
+export type GetPatientsQuery = { __typename?: 'Query', patients: Array<{ __typename?: 'PatientType', id: string, name: string, firstname: string, lastname: string, birthdate: any, sex: Sex, state: PatientState, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null, assignedLocations: Array<{ __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null } | null }>, tasks: Array<{ __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, dueDate?: any | null, creationDate: any, updateDate?: any | null, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null } | null }>, properties: Array<{ __typename?: 'PropertyValueType', textValue?: string | null, definition: { __typename?: 'PropertyDefinitionType', name: string } }> }> };
 
 export type GetTaskQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -440,14 +475,14 @@ export type GetUsersQuery = { __typename?: 'Query', users: Array<{ __typename?: 
 export type GetGlobalDataQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetGlobalDataQuery = { __typename?: 'Query', me?: { __typename?: 'UserType', id: string, username: string, name: string, firstname?: string | null, lastname?: string | null, avatarUrl?: string | null, tasks: Array<{ __typename?: 'TaskType', id: string, done: boolean }> } | null, wards: Array<{ __typename?: 'LocationNodeType', id: string, title: string }>, teams: Array<{ __typename?: 'LocationNodeType', id: string, title: string }>, clinics: Array<{ __typename?: 'LocationNodeType', id: string, title: string }>, patients: Array<{ __typename?: 'PatientType', id: string, assignedLocation?: { __typename?: 'LocationNodeType', id: string } | null }> };
+export type GetGlobalDataQuery = { __typename?: 'Query', me?: { __typename?: 'UserType', id: string, username: string, name: string, firstname?: string | null, lastname?: string | null, avatarUrl?: string | null, tasks: Array<{ __typename?: 'TaskType', id: string, done: boolean }> } | null, wards: Array<{ __typename?: 'LocationNodeType', id: string, title: string }>, teams: Array<{ __typename?: 'LocationNodeType', id: string, title: string }>, clinics: Array<{ __typename?: 'LocationNodeType', id: string, title: string }>, patients: Array<{ __typename?: 'PatientType', id: string, state: PatientState, assignedLocation?: { __typename?: 'LocationNodeType', id: string } | null }>, waitingPatients: Array<{ __typename?: 'PatientType', id: string, state: PatientState }> };
 
 export type CreatePatientMutationVariables = Exact<{
   data: CreatePatientInput;
 }>;
 
 
-export type CreatePatientMutation = { __typename?: 'Mutation', createPatient: { __typename?: 'PatientType', id: string, name: string, firstname: string, lastname: string, birthdate: any, sex: Sex, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string } | null, assignedLocations: Array<{ __typename?: 'LocationNodeType', id: string, title: string }> } };
+export type CreatePatientMutation = { __typename?: 'Mutation', createPatient: { __typename?: 'PatientType', id: string, name: string, firstname: string, lastname: string, birthdate: any, sex: Sex, state: PatientState, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string } | null, assignedLocations: Array<{ __typename?: 'LocationNodeType', id: string, title: string }> } };
 
 export type UpdatePatientMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -455,7 +490,35 @@ export type UpdatePatientMutationVariables = Exact<{
 }>;
 
 
-export type UpdatePatientMutation = { __typename?: 'Mutation', updatePatient: { __typename?: 'PatientType', id: string, name: string, firstname: string, lastname: string, birthdate: any, sex: Sex, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string } | null, assignedLocations: Array<{ __typename?: 'LocationNodeType', id: string, title: string }> } };
+export type UpdatePatientMutation = { __typename?: 'Mutation', updatePatient: { __typename?: 'PatientType', id: string, name: string, firstname: string, lastname: string, birthdate: any, sex: Sex, state: PatientState, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string } | null, assignedLocations: Array<{ __typename?: 'LocationNodeType', id: string, title: string }> } };
+
+export type AdmitPatientMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type AdmitPatientMutation = { __typename?: 'Mutation', admitPatient: { __typename?: 'PatientType', id: string, state: PatientState } };
+
+export type DischargePatientMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DischargePatientMutation = { __typename?: 'Mutation', dischargePatient: { __typename?: 'PatientType', id: string, state: PatientState } };
+
+export type MarkPatientDeadMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type MarkPatientDeadMutation = { __typename?: 'Mutation', markPatientDead: { __typename?: 'PatientType', id: string, state: PatientState } };
+
+export type WaitPatientMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type WaitPatientMutation = { __typename?: 'Mutation', waitPatient: { __typename?: 'PatientType', id: string, state: PatientState } };
 
 export type CreateTaskMutationVariables = Exact<{
   data: CreateTaskInput;
@@ -710,6 +773,7 @@ export const GetPatientDocument = `
     lastname
     birthdate
     sex
+    state
     assignedLocation {
       id
       title
@@ -752,14 +816,15 @@ export const useGetPatientQuery = <
     )};
 
 export const GetPatientsDocument = `
-    query GetPatients($locationId: ID) {
-  patients(locationNodeId: $locationId) {
+    query GetPatients($locationId: ID, $states: [PatientState!]) {
+  patients(locationNodeId: $locationId, states: $states) {
     id
     name
     firstname
     lastname
     birthdate
     sex
+    state
     assignedLocation {
       id
       title
@@ -915,9 +980,14 @@ export const GetGlobalDataDocument = `
   }
   patients {
     id
+    state
     assignedLocation {
       id
     }
+  }
+  waitingPatients: patients(states: [WAIT]) {
+    id
+    state
   }
 }
     `;
@@ -947,6 +1017,7 @@ export const CreatePatientDocument = `
     lastname
     birthdate
     sex
+    state
     assignedLocation {
       id
       title
@@ -981,6 +1052,7 @@ export const UpdatePatientDocument = `
     lastname
     birthdate
     sex
+    state
     assignedLocation {
       id
       title
@@ -1002,6 +1074,94 @@ export const useUpdatePatientMutation = <
       {
     mutationKey: ['UpdatePatient'],
     mutationFn: (variables?: UpdatePatientMutationVariables) => fetcher<UpdatePatientMutation, UpdatePatientMutationVariables>(UpdatePatientDocument, variables)(),
+    ...options
+  }
+    )};
+
+export const AdmitPatientDocument = `
+    mutation AdmitPatient($id: ID!) {
+  admitPatient(id: $id) {
+    id
+    state
+  }
+}
+    `;
+
+export const useAdmitPatientMutation = <
+      TError = unknown,
+      TContext = unknown
+    >(options?: UseMutationOptions<AdmitPatientMutation, TError, AdmitPatientMutationVariables, TContext>) => {
+    
+    return useMutation<AdmitPatientMutation, TError, AdmitPatientMutationVariables, TContext>(
+      {
+    mutationKey: ['AdmitPatient'],
+    mutationFn: (variables?: AdmitPatientMutationVariables) => fetcher<AdmitPatientMutation, AdmitPatientMutationVariables>(AdmitPatientDocument, variables)(),
+    ...options
+  }
+    )};
+
+export const DischargePatientDocument = `
+    mutation DischargePatient($id: ID!) {
+  dischargePatient(id: $id) {
+    id
+    state
+  }
+}
+    `;
+
+export const useDischargePatientMutation = <
+      TError = unknown,
+      TContext = unknown
+    >(options?: UseMutationOptions<DischargePatientMutation, TError, DischargePatientMutationVariables, TContext>) => {
+    
+    return useMutation<DischargePatientMutation, TError, DischargePatientMutationVariables, TContext>(
+      {
+    mutationKey: ['DischargePatient'],
+    mutationFn: (variables?: DischargePatientMutationVariables) => fetcher<DischargePatientMutation, DischargePatientMutationVariables>(DischargePatientDocument, variables)(),
+    ...options
+  }
+    )};
+
+export const MarkPatientDeadDocument = `
+    mutation MarkPatientDead($id: ID!) {
+  markPatientDead(id: $id) {
+    id
+    state
+  }
+}
+    `;
+
+export const useMarkPatientDeadMutation = <
+      TError = unknown,
+      TContext = unknown
+    >(options?: UseMutationOptions<MarkPatientDeadMutation, TError, MarkPatientDeadMutationVariables, TContext>) => {
+    
+    return useMutation<MarkPatientDeadMutation, TError, MarkPatientDeadMutationVariables, TContext>(
+      {
+    mutationKey: ['MarkPatientDead'],
+    mutationFn: (variables?: MarkPatientDeadMutationVariables) => fetcher<MarkPatientDeadMutation, MarkPatientDeadMutationVariables>(MarkPatientDeadDocument, variables)(),
+    ...options
+  }
+    )};
+
+export const WaitPatientDocument = `
+    mutation WaitPatient($id: ID!) {
+  waitPatient(id: $id) {
+    id
+    state
+  }
+}
+    `;
+
+export const useWaitPatientMutation = <
+      TError = unknown,
+      TContext = unknown
+    >(options?: UseMutationOptions<WaitPatientMutation, TError, WaitPatientMutationVariables, TContext>) => {
+    
+    return useMutation<WaitPatientMutation, TError, WaitPatientMutationVariables, TContext>(
+      {
+    mutationKey: ['WaitPatient'],
+    mutationFn: (variables?: WaitPatientMutationVariables) => fetcher<WaitPatientMutation, WaitPatientMutationVariables>(WaitPatientDocument, variables)(),
     ...options
   }
     )};

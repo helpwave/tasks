@@ -271,5 +271,20 @@
         "type": "string"
       }
     }
-  }
+  },
+  "waitingForPatient": "Warten auf Patient",
+  "patientActions": "Patientenaktionen",
+  "admitPatient": "Patient aufnehmen",
+  "dischargePatient": "Patient entlassen",
+  "markPatientDead": "Patient als verstorben markieren",
+  "waitPatient": "Patient auf Warteliste setzen",
+  "patientState": "{state, select, WAIT{Wartend} ADMITTED{Aufgenommen} DISCHARGED{Entlassen} DEAD{Verstorben} other{Unbekannt}}",
+  "@patientState": {
+    "placeholders": {
+      "state": {
+        "type": "string"
+      }
+    }
+  },
+  "waitingroom": "Wartezimmer"
 }

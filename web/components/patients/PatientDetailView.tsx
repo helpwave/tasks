@@ -3,11 +3,16 @@ import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import type { CreatePatientInput, LocationNodeType, UpdatePatientInput } from '@/api/gql/generated'
 import {
   Sex,
+  PatientState,
   useCompleteTaskMutation,
   useCreatePatientMutation,
   useGetPatientQuery,
   useReopenTaskMutation,
-  useUpdatePatientMutation
+  useUpdatePatientMutation,
+  useAdmitPatientMutation,
+  useDischargePatientMutation,
+  useMarkPatientDeadMutation,
+  useWaitPatientMutation
 } from '@/api/gql/generated'
 import type { ButtonProps } from '@helpwave/hightide'
 import {
@@ -26,6 +31,7 @@ import {
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { DateInput } from '@/components/ui/DateInput'
 import { CheckCircle2, ChevronDown, Circle, Clock, MapPin, XIcon } from 'lucide-react'
+import { PatientStateChip } from '@/components/patients/PatientStateChip'
 import { PropertyList } from '@/components/PropertyList'
 import { LocationSelectionDialog } from '@/components/locations/LocationSelectionDialog'
 import clsx from 'clsx'
@@ -149,8 +155,10 @@ export const PatientDetailView = ({
     sex: Sex.Female,
     assignedLocationIds: selectedLocationId ? [selectedLocationId] : [],
     birthdate: getDefaultBirthdate(),
+    state: PatientState.Wait,
     ...initialCreateData,
   })
+  const [isWaiting, setIsWaiting] = useState(false)
   const [isLocationDialogOpen, setIsLocationDialogOpen] = useState(false)
   const [selectedLocations, setSelectedLocations] = useState<LocationNodeType[]>([])
 
@@ -178,6 +186,35 @@ export const PatientDetailView = ({
   const { mutate: updatePatient } = useUpdatePatientMutation({
     onSuccess: () => {
       onSuccess()
+      refetch()
+    }
+  })
+
+  const { mutate: admitPatient } = useAdmitPatientMutation({
+    onSuccess: () => {
+      onSuccess()
+      refetch()
+    }
+  })
+
+  const { mutate: dischargePatient } = useDischargePatientMutation({
+    onSuccess: () => {
+      onSuccess()
+      refetch()
+    }
+  })
+
+  const { mutate: markPatientDead } = useMarkPatientDeadMutation({
+    onSuccess: () => {
+      onSuccess()
+      refetch()
+    }
+  })
+
+  const { mutate: waitPatient } = useWaitPatientMutation({
+    onSuccess: () => {
+      onSuccess()
+      refetch()
     }
   })
 
@@ -201,6 +238,7 @@ export const PatientDetailView = ({
     if (!formData.firstname.trim() || !formData.lastname.trim()) return
 
     const dataToSend = { ...formData }
+    dataToSend.state = isWaiting ? PatientState.Wait : PatientState.Admitted
 
     if (!dataToSend.assignedLocationIds || dataToSend.assignedLocationIds.length === 0) {
       delete dataToSend.assignedLocationIds
@@ -258,7 +296,12 @@ export const PatientDetailView = ({
     <div className="flex-col-0 h-full bg-surface">
       {isEditMode && patientName && (
         <div className="px-1 py-3 mb-4">
-          <div className="font-semibold text-lg">{patientName}</div>
+          <div className="flex items-center justify-between">
+            <div className="font-semibold text-lg">{patientName}</div>
+            {patientData?.patient?.state && (
+              <PatientStateChip state={patientData.patient.state} />
+            )}
+          </div>
           {patientLocation && (
             <div className="flex items-center gap-1 text-sm text-description">
               <MapPin className="size-3"/>
@@ -393,6 +436,60 @@ export const PatientDetailView = ({
                 </Select>
               )}
             </FormElementWrapper>
+
+            {!isEditMode && (
+              <FormElementWrapper label="">
+                {() => (
+                  <div className="flex items-center gap-2">
+                    <CheckboxUncontrolled
+                      checked={isWaiting}
+                      onCheckedChange={setIsWaiting}
+                    />
+                    <span>{translation('waitingForPatient')}</span>
+                  </div>
+                )}
+              </FormElementWrapper>
+            )}
+
+            {isEditMode && patientId && patientData?.patient && (
+              <div className="flex flex-col gap-2">
+                <div className="text-sm font-semibold mb-2">{translation('patientActions')}</div>
+                <div className="flex gap-2 flex-wrap">
+                  {patientData.patient.state !== PatientState.Admitted && (
+                    <Button
+                      onClick={() => admitPatient({ id: patientId })}
+                      color="positive"
+                    >
+                      {translation('admitPatient')}
+                    </Button>
+                  )}
+                  {patientData.patient.state !== PatientState.Discharged && (
+                    <Button
+                      onClick={() => dischargePatient({ id: patientId })}
+                      color="neutral"
+                    >
+                      {translation('dischargePatient')}
+                    </Button>
+                  )}
+                  {patientData.patient.state !== PatientState.Dead && (
+                    <Button
+                      onClick={() => markPatientDead({ id: patientId })}
+                      color="negative"
+                    >
+                      {translation('markPatientDead')}
+                    </Button>
+                  )}
+                  {patientData.patient.state !== PatientState.Wait && (
+                    <Button
+                      onClick={() => waitPatient({ id: patientId })}
+                      color="warning"
+                    >
+                      {translation('waitPatient')}
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )}
 
             <FormElementWrapper label={translation('assignedLocation')}>
               {({ isShowingError: _, setIsShowingError: _2, ...bag }) => (

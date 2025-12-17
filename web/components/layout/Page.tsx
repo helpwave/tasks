@@ -24,7 +24,8 @@ import {
   Hospital,
   SettingsIcon,
   User,
-  Users
+  Users,
+  Clock
 } from 'lucide-react'
 import { TasksLogo } from '@/components/TasksLogo'
 import { useRouter } from 'next/router'
@@ -186,6 +187,13 @@ export const Sidebar = ({ ...props }: SidebarProps) => {
           <span className="flex grow">{translation('myTasks')}</span>
           {context?.myTasksCount !== undefined && (<span className="text-description">{context.myTasksCount}</span>)}
         </SidebarLink>
+        {context?.waitingPatientsCount !== undefined && context.waitingPatientsCount > 0 && (
+          <SidebarLink href="/waitingroom">
+            <Clock className="size-5" />
+            <span className="flex grow">{translation('waitingroom')}</span>
+            <span className="text-description">{context.waitingPatientsCount}</span>
+          </SidebarLink>
+        )}
         <SidebarLink href="/patients">
           <User className="size-5" />
           <span className="flex grow">{translation('patients')}</span>

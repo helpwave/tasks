@@ -6,6 +6,7 @@ mutation CreatePatient($data: CreatePatientInput!) {
     lastname
     birthdate
     sex
+    state
     assignedLocation {
       id
       title
@@ -25,6 +26,7 @@ mutation UpdatePatient($id: ID!, $data: UpdatePatientInput!) {
     lastname
     birthdate
     sex
+    state
     assignedLocation {
       id
       title
@@ -33,5 +35,33 @@ mutation UpdatePatient($id: ID!, $data: UpdatePatientInput!) {
       id
       title
     }
+  }
+}
+
+mutation AdmitPatient($id: ID!) {
+  admitPatient(id: $id) {
+    id
+    state
+  }
+}
+
+mutation DischargePatient($id: ID!) {
+  dischargePatient(id: $id) {
+    id
+    state
+  }
+}
+
+mutation MarkPatientDead($id: ID!) {
+  markPatientDead(id: $id) {
+    id
+    state
+  }
+}
+
+mutation WaitPatient($id: ID!) {
+  waitPatient(id: $id) {
+    id
+    state
   }
 }

@@ -2,7 +2,7 @@ from collections.abc import AsyncGenerator
 
 import strawberry
 from api.context import Info
-from api.inputs import CreatePatientInput, UpdatePatientInput
+from api.inputs import CreatePatientInput, PatientState, UpdatePatientInput
 from api.types.patient import PatientType
 from database import models
 from database.session import redis_client
@@ -35,11 +35,18 @@ class PatientQuery:
         self,
         info: Info,
         location_node_id: strawberry.ID | None = None,
+        states: list[PatientState] | None = None,
     ) -> list[PatientType]:
         query = select(models.Patient).options(
             selectinload(models.Patient.assigned_locations),
             selectinload(models.Patient.tasks),
         )
+        
+        if states:
+            state_values = [s.value for s in states]
+            query = query.where(models.Patient.state.in_(state_values))
+        else:
+            query = query.where(models.Patient.state == PatientState.ADMITTED.value)
         if location_node_id:
             cte = (
                 select(models.LocationNode.id)
@@ -96,11 +103,13 @@ class PatientMutation:
         info: Info,
         data: CreatePatientInput,
     ) -> PatientType:
+        initial_state = data.state.value if data.state else PatientState.WAIT.value
         new_patient = models.Patient(
             firstname=data.firstname,
             lastname=data.lastname,
             birthdate=data.birthdate,
             sex=data.sex.value,
+            state=initial_state,
             assigned_location_id=data.assigned_location_id,
         )
 
@@ -202,6 +211,70 @@ class PatientMutation:
         await db.delete(patient)
         await db.commit()
         return True
+
+    @strawberry.mutation
+    async def admit_patient(self, info: Info, id: strawberry.ID) -> PatientType:
+        db = info.context.db
+        result = await db.execute(
+            select(models.Patient)
+            .where(models.Patient.id == id)
+            .options(selectinload(models.Patient.assigned_locations)),
+        )
+        patient = result.scalars().first()
+        if not patient:
+            raise Exception("Patient not found")
+        patient.state = PatientState.ADMITTED.value
+        await db.commit()
+        await db.refresh(patient, ["assigned_locations"])
+        return patient
+
+    @strawberry.mutation
+    async def discharge_patient(self, info: Info, id: strawberry.ID) -> PatientType:
+        db = info.context.db
+        result = await db.execute(
+            select(models.Patient)
+            .where(models.Patient.id == id)
+            .options(selectinload(models.Patient.assigned_locations)),
+        )
+        patient = result.scalars().first()
+        if not patient:
+            raise Exception("Patient not found")
+        patient.state = PatientState.DISCHARGED.value
+        await db.commit()
+        await db.refresh(patient, ["assigned_locations"])
+        return patient
+
+    @strawberry.mutation
+    async def mark_patient_dead(self, info: Info, id: strawberry.ID) -> PatientType:
+        db = info.context.db
+        result = await db.execute(
+            select(models.Patient)
+            .where(models.Patient.id == id)
+            .options(selectinload(models.Patient.assigned_locations)),
+        )
+        patient = result.scalars().first()
+        if not patient:
+            raise Exception("Patient not found")
+        patient.state = PatientState.DEAD.value
+        await db.commit()
+        await db.refresh(patient, ["assigned_locations"])
+        return patient
+
+    @strawberry.mutation
+    async def wait_patient(self, info: Info, id: strawberry.ID) -> PatientType:
+        db = info.context.db
+        result = await db.execute(
+            select(models.Patient)
+            .where(models.Patient.id == id)
+            .options(selectinload(models.Patient.assigned_locations)),
+        )
+        patient = result.scalars().first()
+        if not patient:
+            raise Exception("Patient not found")
+        patient.state = PatientState.WAIT.value
+        await db.commit()
+        await db.refresh(patient, ["assigned_locations"])
+        return patient
 
 
 @strawberry.type

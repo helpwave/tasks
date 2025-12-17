@@ -39,6 +39,14 @@ class PropertyEntity(Enum):
     TASK = "TASK"
 
 
+@strawberry.enum
+class PatientState(Enum):
+    WAIT = "WAIT"
+    ADMITTED = "ADMITTED"
+    DISCHARGED = "DISCHARGED"
+    DEAD = "DEAD"
+
+
 @strawberry.input
 class PropertyValueInput:
     definition_id: strawberry.ID
@@ -60,6 +68,7 @@ class CreatePatientInput:
     assigned_location_id: strawberry.ID | None = None
     assigned_location_ids: list[strawberry.ID] | None = None
     properties: list[PropertyValueInput] | None = None
+    state: PatientState | None = None
 
 
 @strawberry.input

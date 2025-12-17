@@ -24,6 +24,7 @@ export type TasksContextState = {
   myTasksCount?: number,
   totalPatientsCount?: number,
   locationPatientsCount?: number,
+  waitingPatientsCount?: number,
   teams?: LocationNode[],
   wards?: LocationNode[],
   clinics?: LocationNode[],
@@ -73,6 +74,7 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
 
   useEffect(() => {
     const totalPatientsCount = data?.patients?.length ?? 0
+    const waitingPatientsCount = data?.waitingPatients?.length ?? 0
     setState(prevState => ({
       ...prevState,
       user: data?.me ? {
@@ -82,6 +84,7 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
       } : undefined,
       myTasksCount: data?.me?.tasks?.filter(t => !t.done).length ?? 0,
       totalPatientsCount,
+      waitingPatientsCount,
       locationPatientsCount: prevState.selectedLocationId
         ? data?.patients?.filter(p => p.assignedLocation?.id === prevState.selectedLocationId).length ?? 0
         : totalPatientsCount,

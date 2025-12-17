@@ -25,8 +25,13 @@ query GetGlobalData {
   }
   patients {
     id
+    state
     assignedLocation {
       id
     }
+  }
+  waitingPatients: patients(states: [WAIT]) {
+    id
+    state
   }
 }

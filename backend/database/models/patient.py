@@ -33,6 +33,7 @@ class Patient(Base):
     lastname: Mapped[str] = mapped_column(String)
     birthdate: Mapped[date] = mapped_column()
     sex: Mapped[str] = mapped_column(String)
+    state: Mapped[str] = mapped_column(String, default="WAIT")
     assigned_location_id: Mapped[str | None] = mapped_column(
         ForeignKey("location_nodes.id"),
         nullable=True,

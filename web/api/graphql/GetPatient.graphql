@@ -5,6 +5,7 @@ query GetPatient($id: ID!) {
     lastname
     birthdate
     sex
+    state
     assignedLocation {
       id
       title

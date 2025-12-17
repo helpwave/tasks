@@ -1,11 +1,12 @@
 import { useMemo, useState, forwardRef, useImperativeHandle, useEffect } from 'react'
 import { Table, Chip, FillerRowElement, Button, SearchBar } from '@helpwave/hightide'
 import { PlusIcon } from 'lucide-react'
-import { useGetPatientsQuery, Sex, type GetPatientsQuery, type TaskType } from '@/api/gql/generated'
+import { useGetPatientsQuery, Sex, type GetPatientsQuery, type TaskType, type PatientState, PatientState as PatientStateEnum } from '@/api/gql/generated'
 import { SidePanel } from '@/components/layout/SidePanel'
 import { PatientDetailView } from '@/components/patients/PatientDetailView'
 import { SmartDate } from '@/utils/date'
 import { LocationChips } from '@/components/patients/LocationChips'
+import { PatientStateChip } from '@/components/patients/PatientStateChip'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import type { ColumnDef } from '@tanstack/table-core'
 
@@ -19,6 +20,7 @@ type PatientViewModel = {
   closedTasksCount: number,
   birthdate: Date,
   sex: Sex,
+  state: PatientState,
   tasks: TaskType[],
 }
 
@@ -31,9 +33,10 @@ type PatientListProps = {
   locationId?: string,
   initialPatientId?: string,
   onInitialPatientOpened?: () => void,
+  acceptedStates?: PatientState[],
 }
 
-export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ locationId, initialPatientId, onInitialPatientOpened }, ref) => {
+export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ locationId, initialPatientId, onInitialPatientOpened, acceptedStates }, ref) => {
   const translation = useTasksTranslation()
   const [isPanelOpen, setIsPanelOpen] = useState(false)
   const [selectedPatient, setSelectedPatient] = useState<PatientViewModel | undefined>(undefined)
@@ -41,7 +44,8 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ locat
   const [initialOpened, setInitialOpened] = useState(false)
 
   const { data: queryData, refetch } = useGetPatientsQuery({
-    locationId: locationId
+    locationId: locationId,
+    states: acceptedStates
   })
 
   const patients: PatientViewModel[] = useMemo(() => {
@@ -54,6 +58,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ locat
       lastname: p.lastname,
       birthdate: new Date(p.birthdate),
       sex: p.sex,
+      state: p.state,
       locations: p.assignedLocations as PatientViewModel['locations'],
       openTasksCount: p.tasks?.filter(t => !t.done).length ?? 0,
       closedTasksCount: p.tasks?.filter(t => t.done).length ?? 0,
@@ -115,6 +120,17 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ locat
       minSize: 200,
       size: 250,
       maxSize: 300,
+    },
+    {
+      id: 'state',
+      header: translation('status'),
+      accessorKey: 'state',
+      cell: ({ row }) => (
+        <PatientStateChip state={row.original.state} />
+      ),
+      minSize: 100,
+      size: 120,
+      maxSize: 150,
     },
     {
       id: 'sex',
