@@ -360,10 +360,15 @@ export const PatientDetailView = ({
                 <DateInput
                   {...bag}
                   date={new Date(formData.birthdate as string)}
+                  mode="date"
                   onValueChange={date => {
                     const dateStr = toISODate(date)
                     updateLocalState({ birthdate: dateStr })
                     persistChanges({ birthdate: dateStr })
+                  }}
+                  onRemove={() => {
+                    updateLocalState({ birthdate: null })
+                    persistChanges({ birthdate: null })
                   }}
                 />
               )}
