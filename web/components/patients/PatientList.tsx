@@ -216,6 +216,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ locat
             setSelectedPatient(undefined)
             setIsPanelOpen(true)
           }}
+          className="min-w-[13rem]"
         >
           {translation('addPatient')}
         </Button>

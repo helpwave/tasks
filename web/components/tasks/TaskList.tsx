@@ -235,6 +235,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
         <Button
           startIcon={<PlusIcon/>}
           onClick={() => setTaskDialogState({ isOpen: true })}
+          className="min-w-[13rem]"
         >
           {translation('addTask')}
         </Button>
