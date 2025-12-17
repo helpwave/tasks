@@ -30,7 +30,7 @@ import {
 } from '@helpwave/hightide'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { DateInput } from '@/components/ui/DateInput'
-import { CheckCircle2, ChevronDown, Circle, Clock, MapPin, XIcon } from 'lucide-react'
+import { CheckCircle2, ChevronDown, Circle, Clock, MapPin, PlusIcon, XIcon } from 'lucide-react'
 import { PatientStateChip } from '@/components/patients/PatientStateChip'
 import { PropertyList } from '@/components/PropertyList'
 import { LocationSelectionDialog } from '@/components/locations/LocationSelectionDialog'
@@ -139,6 +139,7 @@ export const PatientDetailView = ({
   const translation = useTasksTranslation()
   const { selectedLocationId } = useTasksContext()
   const [taskId, setTaskId] = useState<string | null>(null)
+  const [isCreatingTask, setIsCreatingTask] = useState(false)
   const isEditMode = !!patientId
 
   const { data: patientData, isLoading: isLoadingPatient, refetch } = useGetPatientQuery(
@@ -314,6 +315,17 @@ export const PatientDetailView = ({
         <TabView className="h-full flex-col-0">
           <Tab label={translation('tasks')} className="h-full overflow-y-auto pr-2">
             <div className="flex flex-col gap-4 pt-4">
+              {isEditMode && (
+                <div className="mb-2">
+                  <Button
+                    startIcon={<PlusIcon/>}
+                    onClick={() => setIsCreatingTask(true)}
+                    className="w-full"
+                  >
+                    {translation('addTask')}
+                  </Button>
+                </div>
+              )}
               <div>
                 <button
                   onClick={() => setOpenExpanded(!openExpanded)}
@@ -572,18 +584,24 @@ export const PatientDetailView = ({
         multiSelect={true}
       />
       <SidePanel
-        isOpen={!!taskId}
+        isOpen={!!taskId || isCreatingTask}
         onClose={() => {
           setTaskId(null)
+          setIsCreatingTask(false)
         }}
-        title={translation('editTask')}
+        title={taskId ? translation('editTask') : translation('createTask')}
       >
         <TaskDetailView
           taskId={taskId}
+          initialPatientId={isCreatingTask ? patientId : undefined}
           onSuccess={() => {
             refetch().catch(console.error)
+            setIsCreatingTask(false)
           }}
-          onClose={() => setTaskId(null)}
+          onClose={() => {
+            setTaskId(null)
+            setIsCreatingTask(false)
+          }}
         />
       </SidePanel>
     </div>

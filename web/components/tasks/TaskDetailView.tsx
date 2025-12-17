@@ -34,9 +34,10 @@ interface TaskDetailViewProps {
   taskId: string | null,
   onClose: () => void,
   onSuccess: () => void,
+  initialPatientId?: string,
 }
 
-export const TaskDetailView = ({ taskId, onClose, onSuccess }: TaskDetailViewProps) => {
+export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }: TaskDetailViewProps) => {
   const translation = useTasksTranslation()
   const { selectedLocationId } = useTasksContext()
   const [isShowingPatientDialog, setIsShowingPatientDialog] = useState<boolean>(false)
@@ -78,7 +79,7 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess }: TaskDetailViewPro
   const [formData, setFormData] = useState<Partial<CreateTaskInput & { done: boolean }>>({
     title: '',
     description: '',
-    patientId: '',
+    patientId: initialPatientId || '',
     assigneeId: null,
     dueDate: null,
     done: false,
@@ -94,8 +95,11 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess }: TaskDetailViewPro
         dueDate: taskData.task.dueDate ? new Date(taskData.task.dueDate) : null,
         done: taskData.task.done || false
       })
+    } else if (initialPatientId && !taskId) {
+      // Set initial patient ID when creating a new task
+      setFormData(prev => ({ ...prev, patientId: initialPatientId }))
     }
-  }, [taskData])
+  }, [taskData, initialPatientId, taskId])
 
   const updateLocalState = (updates: Partial<CreateTaskInput>) => {
     setFormData(prev => ({ ...prev, ...updates }))
