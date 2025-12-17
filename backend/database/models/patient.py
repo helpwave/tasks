@@ -20,6 +20,13 @@ patient_locations = Table(
     Column("location_id", ForeignKey("location_nodes.id"), primary_key=True),
 )
 
+patient_teams = Table(
+    "patient_teams",
+    Base.metadata,
+    Column("patient_id", ForeignKey("patients.id"), primary_key=True),
+    Column("location_id", ForeignKey("location_nodes.id"), primary_key=True),
+)
+
 
 class Patient(Base):
     __tablename__ = "patients"
@@ -38,6 +45,14 @@ class Patient(Base):
         ForeignKey("location_nodes.id"),
         nullable=True,
     )
+    clinic_id: Mapped[str] = mapped_column(
+        ForeignKey("location_nodes.id"),
+        nullable=False,
+    )
+    position_id: Mapped[str | None] = mapped_column(
+        ForeignKey("location_nodes.id"),
+        nullable=True,
+    )
 
     assigned_locations: Mapped[list[LocationNode]] = relationship(
         "LocationNode",
@@ -48,6 +63,21 @@ class Patient(Base):
         "LocationNode",
         foreign_keys=[assigned_location_id],
         back_populates="legacy_patients",
+    )
+    clinic: Mapped[LocationNode] = relationship(
+        "LocationNode",
+        foreign_keys=[clinic_id],
+        back_populates="patients_as_clinic",
+    )
+    position: Mapped[LocationNode | None] = relationship(
+        "LocationNode",
+        foreign_keys=[position_id],
+        back_populates="patients_as_position",
+    )
+    teams: Mapped[list[LocationNode]] = relationship(
+        "LocationNode",
+        secondary=patient_teams,
+        back_populates="patients_as_teams",
     )
     tasks: Mapped[list[Task]] = relationship(
         "Task",

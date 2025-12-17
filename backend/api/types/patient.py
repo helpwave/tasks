@@ -23,6 +23,8 @@ class PatientType:
     sex: Sex
     state: PatientState
     assigned_location_id: strawberry.ID | None
+    clinic_id: strawberry.ID
+    position_id: strawberry.ID | None
 
     @strawberry.field
     def name(self) -> str:
@@ -80,6 +82,57 @@ class PatientType:
     ]:
         await info.context.db.refresh(self, ["assigned_locations"])
         return self.assigned_locations or []
+
+    @strawberry.field
+    async def clinic(
+        self,
+        info: Info,
+    ) -> Annotated[
+        "LocationNodeType",
+        strawberry.lazy("api.types.location"),
+    ]:
+        result = await info.context.db.execute(
+            select(models.LocationNode).where(
+                models.LocationNode.id == self.clinic_id,
+            ),
+        )
+        clinic = result.scalars().first()
+        if not clinic:
+            raise Exception(f"Clinic location not found for patient {self.id}")
+        return clinic
+
+    @strawberry.field
+    async def position(
+        self,
+        info: Info,
+    ) -> (
+        Annotated[
+            "LocationNodeType",
+            strawberry.lazy("api.types.location"),
+        ]
+        | None
+    ):
+        if not self.position_id:
+            return None
+        result = await info.context.db.execute(
+            select(models.LocationNode).where(
+                models.LocationNode.id == self.position_id,
+            ),
+        )
+        return result.scalars().first()
+
+    @strawberry.field
+    async def teams(
+        self,
+        info: Info,
+    ) -> list[
+        Annotated[
+            "LocationNodeType",
+            strawberry.lazy("api.types.location"),
+        ]
+    ]:
+        await info.context.db.refresh(self, ["teams"])
+        return self.teams or []
 
     @strawberry.field
     async def tasks(

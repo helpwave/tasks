@@ -15,7 +15,7 @@ type PatientViewModel = {
   name: string,
   firstname: string,
   lastname: string,
-  locations: GetPatientsQuery['patients'][0]['assignedLocations'],
+  position: GetPatientsQuery['patients'][0]['position'],
   openTasksCount: number,
   closedTasksCount: number,
   birthdate: Date,
@@ -59,7 +59,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ locat
       birthdate: new Date(p.birthdate),
       sex: p.sex,
       state: p.state,
-      locations: p.assignedLocations as PatientViewModel['locations'],
+      position: p.position,
       openTasksCount: p.tasks?.filter(t => !t.done).length ?? 0,
       closedTasksCount: p.tasks?.filter(t => t.done).length ?? 0,
       tasks: []
@@ -165,11 +165,11 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ locat
       maxSize: 150,
     },
     {
-      id: 'locations',
+      id: 'position',
       header: translation('location'),
-      accessorKey: 'locations',
+      accessorKey: 'position',
       cell: ({ row }) => (
-        <LocationChips locations={row.original.locations} />
+        <LocationChips locations={row.original.position ? [row.original.position] : []} />
       ),
       minSize: 200,
       size: 250,

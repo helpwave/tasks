@@ -28,11 +28,14 @@ export type CreatePatientInput = {
   assignedLocationId?: InputMaybe<Scalars['ID']['input']>;
   assignedLocationIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   birthdate: Scalars['Date']['input'];
+  clinicId: Scalars['ID']['input'];
   firstname: Scalars['String']['input'];
   lastname: Scalars['String']['input'];
+  positionId?: InputMaybe<Scalars['ID']['input']>;
   properties?: InputMaybe<Array<PropertyValueInput>>;
   sex: Sex;
   state?: InputMaybe<PatientState>;
+  teamIds?: InputMaybe<Array<Scalars['ID']['input']>>;
 };
 
 export type CreatePropertyDefinitionInput = {
@@ -79,7 +82,9 @@ export type LocationNodeType = {
 export enum LocationType {
   Bed = 'BED',
   Clinic = 'CLINIC',
+  Hospital = 'HOSPITAL',
   Other = 'OTHER',
+  Practice = 'PRACTICE',
   Room = 'ROOM',
   Team = 'TEAM',
   Ward = 'WARD'
@@ -228,14 +233,19 @@ export type PatientType = {
   assignedLocationId?: Maybe<Scalars['ID']['output']>;
   assignedLocations: Array<LocationNodeType>;
   birthdate: Scalars['Date']['output'];
+  clinic: LocationNodeType;
+  clinicId: Scalars['ID']['output'];
   firstname: Scalars['String']['output'];
   id: Scalars['ID']['output'];
   lastname: Scalars['String']['output'];
   name: Scalars['String']['output'];
+  position?: Maybe<LocationNodeType>;
+  positionId?: Maybe<Scalars['ID']['output']>;
   properties: Array<PropertyValueType>;
   sex: Sex;
   state: PatientState;
   tasks: Array<TaskType>;
+  teams: Array<LocationNodeType>;
 };
 
 
@@ -387,10 +397,13 @@ export type UpdatePatientInput = {
   assignedLocationId?: InputMaybe<Scalars['ID']['input']>;
   assignedLocationIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   birthdate?: InputMaybe<Scalars['Date']['input']>;
+  clinicId?: InputMaybe<Scalars['ID']['input']>;
   firstname?: InputMaybe<Scalars['String']['input']>;
   lastname?: InputMaybe<Scalars['String']['input']>;
+  positionId?: InputMaybe<Scalars['ID']['input']>;
   properties?: InputMaybe<Array<PropertyValueInput>>;
   sex?: InputMaybe<Sex>;
+  teamIds?: InputMaybe<Array<Scalars['ID']['input']>>;
 };
 
 export type UpdatePropertyDefinitionInput = {
@@ -414,10 +427,12 @@ export type UpdateTaskInput = {
 export type UserType = {
   __typename?: 'UserType';
   avatarUrl?: Maybe<Scalars['String']['output']>;
+  email?: Maybe<Scalars['String']['output']>;
   firstname?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   lastname?: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
+  organizations?: Maybe<Scalars['String']['output']>;
   tasks: Array<TaskType>;
   title?: Maybe<Scalars['String']['output']>;
   username: Scalars['String']['output'];
@@ -450,7 +465,7 @@ export type GetPatientQueryVariables = Exact<{
 }>;
 
 
-export type GetPatientQuery = { __typename?: 'Query', patient?: { __typename?: 'PatientType', id: string, firstname: string, lastname: string, birthdate: any, sex: Sex, state: PatientState, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string } | null, assignedLocations: Array<{ __typename?: 'LocationNodeType', id: string, title: string }>, tasks: Array<{ __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, dueDate?: any | null, updateDate?: any | null, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null } | null }> } | null };
+export type GetPatientQuery = { __typename?: 'Query', patient?: { __typename?: 'PatientType', id: string, firstname: string, lastname: string, birthdate: any, sex: Sex, state: PatientState, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string } | null, assignedLocations: Array<{ __typename?: 'LocationNodeType', id: string, title: string }>, clinic: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null } | null } | null }, position?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null } | null } | null } | null, teams: Array<{ __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null } | null } | null }>, tasks: Array<{ __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, dueDate?: any | null, updateDate?: any | null, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null } | null }> } | null };
 
 export type GetPatientsQueryVariables = Exact<{
   locationId?: InputMaybe<Scalars['ID']['input']>;
@@ -458,7 +473,7 @@ export type GetPatientsQueryVariables = Exact<{
 }>;
 
 
-export type GetPatientsQuery = { __typename?: 'Query', patients: Array<{ __typename?: 'PatientType', id: string, name: string, firstname: string, lastname: string, birthdate: any, sex: Sex, state: PatientState, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null, assignedLocations: Array<{ __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null } | null }>, tasks: Array<{ __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, dueDate?: any | null, creationDate: any, updateDate?: any | null, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null } | null }>, properties: Array<{ __typename?: 'PropertyValueType', textValue?: string | null, definition: { __typename?: 'PropertyDefinitionType', name: string } }> }> };
+export type GetPatientsQuery = { __typename?: 'Query', patients: Array<{ __typename?: 'PatientType', id: string, name: string, firstname: string, lastname: string, birthdate: any, sex: Sex, state: PatientState, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null, assignedLocations: Array<{ __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null } | null }>, position?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null } | null } | null } | null, tasks: Array<{ __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, dueDate?: any | null, creationDate: any, updateDate?: any | null, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null } | null }>, properties: Array<{ __typename?: 'PropertyValueType', textValue?: string | null, definition: { __typename?: 'PropertyDefinitionType', name: string } }> }> };
 
 export type GetTaskQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -482,7 +497,7 @@ export type CreatePatientMutationVariables = Exact<{
 }>;
 
 
-export type CreatePatientMutation = { __typename?: 'Mutation', createPatient: { __typename?: 'PatientType', id: string, name: string, firstname: string, lastname: string, birthdate: any, sex: Sex, state: PatientState, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string } | null, assignedLocations: Array<{ __typename?: 'LocationNodeType', id: string, title: string }> } };
+export type CreatePatientMutation = { __typename?: 'Mutation', createPatient: { __typename?: 'PatientType', id: string, name: string, firstname: string, lastname: string, birthdate: any, sex: Sex, state: PatientState, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string } | null, assignedLocations: Array<{ __typename?: 'LocationNodeType', id: string, title: string }>, clinic: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType }, position?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType } | null, teams: Array<{ __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType }> } };
 
 export type UpdatePatientMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -490,7 +505,7 @@ export type UpdatePatientMutationVariables = Exact<{
 }>;
 
 
-export type UpdatePatientMutation = { __typename?: 'Mutation', updatePatient: { __typename?: 'PatientType', id: string, name: string, firstname: string, lastname: string, birthdate: any, sex: Sex, state: PatientState, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string } | null, assignedLocations: Array<{ __typename?: 'LocationNodeType', id: string, title: string }> } };
+export type UpdatePatientMutation = { __typename?: 'Mutation', updatePatient: { __typename?: 'PatientType', id: string, name: string, firstname: string, lastname: string, birthdate: any, sex: Sex, state: PatientState, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string } | null, assignedLocations: Array<{ __typename?: 'LocationNodeType', id: string, title: string }>, clinic: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType }, position?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType } | null, teams: Array<{ __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType }> } };
 
 export type AdmitPatientMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -782,6 +797,69 @@ export const GetPatientDocument = `
       id
       title
     }
+    clinic {
+      id
+      title
+      kind
+      parent {
+        id
+        title
+        parent {
+          id
+          title
+          parent {
+            id
+            title
+            parent {
+              id
+              title
+            }
+          }
+        }
+      }
+    }
+    position {
+      id
+      title
+      kind
+      parent {
+        id
+        title
+        parent {
+          id
+          title
+          parent {
+            id
+            title
+            parent {
+              id
+              title
+            }
+          }
+        }
+      }
+    }
+    teams {
+      id
+      title
+      kind
+      parent {
+        id
+        title
+        parent {
+          id
+          title
+          parent {
+            id
+            title
+            parent {
+              id
+              title
+            }
+          }
+        }
+      }
+    }
     tasks {
       id
       title
@@ -846,6 +924,27 @@ export const GetPatientsDocument = `
           parent {
             id
             title
+          }
+        }
+      }
+    }
+    position {
+      id
+      title
+      kind
+      parent {
+        id
+        title
+        parent {
+          id
+          title
+          parent {
+            id
+            title
+            parent {
+              id
+              title
+            }
           }
         }
       }
@@ -1026,6 +1125,21 @@ export const CreatePatientDocument = `
       id
       title
     }
+    clinic {
+      id
+      title
+      kind
+    }
+    position {
+      id
+      title
+      kind
+    }
+    teams {
+      id
+      title
+      kind
+    }
   }
 }
     `;
@@ -1060,6 +1174,21 @@ export const UpdatePatientDocument = `
     assignedLocations {
       id
       title
+    }
+    clinic {
+      id
+      title
+      kind
+    }
+    position {
+      id
+      title
+      kind
+    }
+    teams {
+      id
+      title
+      kind
     }
   }
 }
