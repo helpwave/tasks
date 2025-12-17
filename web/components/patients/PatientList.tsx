@@ -1,7 +1,7 @@
 import { useMemo, useState, forwardRef, useImperativeHandle, useEffect } from 'react'
 import { Table, Chip, FillerRowElement, Button, SearchBar } from '@helpwave/hightide'
 import { PlusIcon } from 'lucide-react'
-import { useGetPatientsQuery, Sex, type GetPatientsQuery, type TaskType, type PatientState, PatientState as PatientStateEnum } from '@/api/gql/generated'
+import { useGetPatientsQuery, Sex, type GetPatientsQuery, type TaskType, type PatientState } from '@/api/gql/generated'
 import { SidePanel } from '@/components/layout/SidePanel'
 import { PatientDetailView } from '@/components/patients/PatientDetailView'
 import { SmartDate } from '@/utils/date'

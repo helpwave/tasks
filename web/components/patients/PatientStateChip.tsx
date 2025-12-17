@@ -3,12 +3,12 @@ import { PatientState } from '@/api/gql/generated'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 
 type PatientStateChipProps = {
-  state: PatientState
+  state: PatientState,
 }
 
 export const PatientStateChip = ({ state }: PatientStateChipProps) => {
   const translation = useTasksTranslation()
-  
+
   const getColor = (state: PatientState): 'positive' | 'warning' | 'neutral' | 'negative' => {
     switch (state) {
       case PatientState.Admitted:
