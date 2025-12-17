@@ -44,20 +44,6 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ locat
     locationId: locationId
   })
 
-  useImperativeHandle(ref, () => ({
-    openCreate: () => {
-      setSelectedPatient(undefined)
-      setIsPanelOpen(true)
-    },
-    openPatient: (patientId: string) => {
-      const patient = patients.find(p => p.id === patientId)
-      if (patient) {
-        setSelectedPatient(patient)
-        setIsPanelOpen(true)
-      }
-    }
-  }))
-
   const patients: PatientViewModel[] = useMemo(() => {
     if (!queryData?.patients) return []
 
@@ -84,6 +70,20 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ locat
 
     return data
   }, [queryData, searchQuery])
+
+  useImperativeHandle(ref, () => ({
+    openCreate: () => {
+      setSelectedPatient(undefined)
+      setIsPanelOpen(true)
+    },
+    openPatient: (patientId: string) => {
+      const patient = patients.find(p => p.id === patientId)
+      if (patient) {
+        setSelectedPatient(patient)
+        setIsPanelOpen(true)
+      }
+    }
+  }), [patients])
 
   useEffect(() => {
     if (initialPatientId && patients.length > 0 && !initialOpened) {

@@ -285,3 +285,5 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
     </div>
   )
 })
+
+TaskList.displayName = 'TaskList'

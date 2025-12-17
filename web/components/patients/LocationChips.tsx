@@ -39,6 +39,14 @@ export const LocationChips = ({ locations }: LocationChipsProps) => {
   }
 
   const firstLocation = locations[0]
+  if (!firstLocation) {
+    return (
+      <span className="text-description text-sm">
+        Not assigned
+      </span>
+    )
+  }
+
   const remainingCount = locations.length - 1
   const remainingLocations = locations.slice(1)
 

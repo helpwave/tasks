@@ -39,5 +39,7 @@
     "public/ga.js",
     "build/types/**/*.ts"
   ],
-  "exclude": []
+  "exclude": [
+    "build/dev"
+  ]
 }

@@ -12,6 +12,7 @@ import {
 } from '@/api/gql/generated'
 import {
   Button,
+  CheckboxUncontrolled,
   FormElementWrapper,
   Input,
   LoadingButton,
@@ -60,7 +61,10 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess }: TaskDetailViewPro
   })
 
   const { mutate: updateTask } = useUpdateTaskMutation({
-    onSuccess: () => onSuccess()
+    onSuccess: () => {
+      refetch()
+      onSuccess()
+    }
   })
 
   const { mutate: assignTask } = useAssignTaskMutation({
@@ -71,12 +75,13 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess }: TaskDetailViewPro
     onSuccess: () => onSuccess()
   })
 
-  const [formData, setFormData] = useState<Partial<CreateTaskInput>>({
+  const [formData, setFormData] = useState<Partial<CreateTaskInput & { done: boolean }>>({
     title: '',
     description: '',
     patientId: '',
     assigneeId: null,
     dueDate: null,
+    done: false,
   })
 
   useEffect(() => {
@@ -86,7 +91,8 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess }: TaskDetailViewPro
         description: taskData.task.description || '',
         patientId: taskData.task.patient?.id || '',
         assigneeId: taskData.task.assignee?.id || null,
-        dueDate: taskData.task.dueDate ? new Date(taskData.task.dueDate) : null
+        dueDate: taskData.task.dueDate ? new Date(taskData.task.dueDate) : null,
+        done: taskData.task.done || false
       })
     }
   }, [taskData])
@@ -148,17 +154,33 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess }: TaskDetailViewPro
         <TabView className="h-full flex flex-col">
           <Tab label={translation('overview')} className="h-full overflow-y-auto pr-2">
             <div className="flex flex-col gap-6 pt-4">
-              <FormElementWrapper label={translation('title')}>
-                {({ isShowingError: _1, setIsShowingError: _2, ...bag }) => (
-                  <Input
-                    {...bag}
-                    value={formData.title || ''}
-                    placeholder={translation('taskTitlePlaceholder')}
-                    onChange={e => updateLocalState({ title: e.target.value })}
-                    onBlur={() => persistChanges({ title: formData.title })}
+              <div className="flex items-center gap-3 ml-4">
+                {isEditMode && (
+                  <CheckboxUncontrolled
+                    id="task-done"
+                    checked={formData.done || false}
+                    onCheckedChange={(checked) => {
+                      if (!taskId) return
+                      const newDoneValue = !checked
+                      updateLocalState({ done: newDoneValue } as Partial<CreateTaskInput & { done: boolean }>)
+                      updateTask({
+                        id: taskId,
+                        data: { done: newDoneValue } as UpdateTaskInput
+                      })
+                    }}
+                    className="rounded-full scale-125"
                   />
                 )}
-              </FormElementWrapper>
+                <Input
+                  id="task-title"
+                  name="task-title"
+                  value={formData.title || ''}
+                  placeholder={translation('taskTitlePlaceholder')}
+                  onChange={e => updateLocalState({ title: e.target.value })}
+                  onBlur={() => persistChanges({ title: formData.title })}
+                  className="flex-1 text-lg py-3"
+                />
+              </div>
 
               <FormElementWrapper label={translation('patient')}>
                 {({ isShowingError: _1, setIsShowingError: _2, ...bag }) => {
@@ -178,14 +200,16 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess }: TaskDetailViewPro
                       })}
                     </Select>
                   ) : (
-                    <Button
-                      color="neutral"
-                      onClick={() => setIsShowingPatientDialog(true)}
-                      className="w-fit"
-                    >
-                      <User className="size-4"/>
-                      { taskData?.task?.patient?.name}
-                    </Button>
+                    <div id={bag.id}>
+                      <Button
+                        color="neutral"
+                        onClick={() => setIsShowingPatientDialog(true)}
+                        className="w-fit"
+                      >
+                        <User className="size-4"/>
+                        { taskData?.task?.patient?.name}
+                      </Button>
+                    </div>
                   )
                 }}
               </FormElementWrapper>
@@ -241,7 +265,6 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess }: TaskDetailViewPro
                 color="negative"
                 className="w-fit"
                 onClick={() => {
-                  // TODO delete Task here
                 }}
               >
                 {translation('delete')}

@@ -71,8 +71,8 @@ const LocationPage: NextPage = () => {
   const parentChain = useMemo(() => {
     if (!locationData?.locationNode?.parent) return []
     const chain: Array<{ id: string, title: string, kind?: LocationType }> = []
-    let current = locationData.locationNode.parent
-    
+    let current: typeof locationData.locationNode.parent | null = locationData.locationNode.parent
+
     while (current) {
       chain.push({
         id: current.id,
@@ -81,7 +81,7 @@ const LocationPage: NextPage = () => {
       })
       current = current.parent || null
     }
-    
+
     return chain.reverse() // Reverse to get root-to-parent order
   }, [locationData])
 
