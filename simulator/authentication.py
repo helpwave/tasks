@@ -1,14 +1,16 @@
 import webbrowser
-
 from http.server import BaseHTTPRequestHandler, HTTPServer
+from typing import Any
 from urllib.parse import parse_qs, urlparse
 import threading
+import requests
 from config import *
 
-class OAuthCallbackHandler(BaseHTTPRequestHandler):
-  auth_code = None
 
-  def do_GET(self):
+class OAuthCallbackHandler(BaseHTTPRequestHandler):
+  auth_code: str | None = None
+
+  def do_GET(self) -> None:
     parsed_url = urlparse(self.path)
     if parsed_url.path == "/callback":
       query_params = parse_qs(parsed_url.query)
@@ -36,12 +38,12 @@ class OAuthCallbackHandler(BaseHTTPRequestHandler):
     else:
       self.send_error(404, "Not Found")
 
-  def log_message(self, format, *args):
+  def log_message(self, format: str, *args: Any) -> None:
     pass
 
 
 class InteractiveAuthenticator:
-  def __init__(self, session):
+  def __init__(self, session: requests.Session):
     self.session = session
 
   def login(self) -> str:

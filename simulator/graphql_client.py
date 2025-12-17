@@ -1,9 +1,9 @@
-import requests
+from typing import Optional
 from authentication import *
 
 class GraphQLClient:
   def __init__(self):
-    self.token = None
+    self.token: Optional[str] = None
     self.session = requests.Session()
     self.authenticator = InteractiveAuthenticator(self.session)
 

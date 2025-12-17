@@ -88,29 +88,29 @@ class RandomDataGenerator:
   ]
 
   @staticmethod
-  def get_name():
-    return random.choice(RandomDataGenerator.first_names), random.choice(
-      RandomDataGenerator.last_names,
-    )
+  def get_name() -> tuple[str, str]:
+      return random.choice(RandomDataGenerator.first_names), random.choice(
+          RandomDataGenerator.last_names,
+  )
 
   @staticmethod
-  def get_task_title():
-    return random.choice(RandomDataGenerator.task_titles)
+  def get_task_title() -> str:
+      return random.choice(RandomDataGenerator.task_titles)
 
   @staticmethod
-  def get_birthdate():
-    start_date = date(1940, 1, 1)
-    end_date = date(2005, 12, 31)
-    delta = end_date - start_date
-    random_days = random.randrange(delta.days)
-    return (start_date + timedelta(days=random_days)).isoformat()
+  def get_birthdate() -> str:
+      start_date = date(1940, 1, 1)
+      end_date = date(2005, 12, 31)
+      delta = end_date - start_date
+      random_days = random.randrange(delta.days)
+      return (start_date + timedelta(days=random_days)).isoformat()
 
   @staticmethod
-  def get_due_date():
-    now = datetime.now()
-    random_hours = random.randint(1, 168)
-    return (now + timedelta(hours=random_hours)).isoformat()
+  def get_due_date() -> str:
+      now = datetime.now()
+      random_hours = random.randint(1, 168)
+      return (now + timedelta(hours=random_hours)).isoformat()
 
   @staticmethod
-  def get_sex():
-    return random.choice(list(Sex)).value
+  def get_sex() -> str:
+      return random.choice(list(Sex)).value

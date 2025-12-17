@@ -67,7 +67,7 @@ pkgs.mkShell {
       req_file="$PROJECT_ROOT/backend/requirements.txt"
       req_hash_file="$PROJECT_ROOT/$venvDir/.requirements_hash"
       current_hash=$(sha256sum "$req_file" | cut -d " " -f1)
-      
+
       if [ ! -f "$req_hash_file" ] || [ "$(cat "$req_hash_file")" != "$current_hash" ]; then
         echo ">>> Requirements changed. Updating pip..."
         pip install --upgrade pip > /dev/null
@@ -84,7 +84,7 @@ pkgs.mkShell {
 
     run-simulator() {
       echo ">>> Running simulator"
-      (cd "$PROJECT_ROOT/simulator" && ${pkgs.python313}/bin/python3 main.py)
+      (${pkgs.python313}/bin/python3 "$PROJECT_ROOT/simulator")
     }
 
     start-docker() {
@@ -147,7 +147,7 @@ pkgs.mkShell {
       trap "echo '>>> Stopping all dev services...'; stop-docker; exit" SIGINT
 
       run-alembic-upgrade
-      
+
       bash -c '
         trap "exit" SIGINT
         (cd "$PROJECT_ROOT/backend" && exec uvicorn main:app --reload) &
