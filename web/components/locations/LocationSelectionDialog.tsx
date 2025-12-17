@@ -16,7 +16,8 @@ import {
   CheckSquare,
   Square,
   ChevronsDown,
-  ChevronsUp, MinusIcon
+  ChevronsUp,
+  MinusIcon,
 } from 'lucide-react'
 
 interface LocationSelectionDialogProps {
@@ -99,7 +100,7 @@ const LocationTreeItem = ({
   if (!hasChildren) {
     return (
       <div className="flex-row-2 items-center rounded-lg px-4 py-1 transition-colors hover:bg-surface-hover">
-        <MinusIcon className="size-6 text-description"/>
+        <MinusIcon className="size-6 text-description" />
         {labelContent}
       </div>
     )
