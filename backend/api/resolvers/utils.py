@@ -27,8 +27,10 @@ async def process_properties(
             select_value=p_in.select_value,
             multi_select_values=ms_val,
         )
+
         if entity_kind == "patient":
-            prop_val.patient = entity
+            prop_val.patient_id = entity.id
         elif entity_kind == "task":
-            prop_val.task = entity
+            prop_val.task_id = entity.id
+
         db.add(prop_val)
