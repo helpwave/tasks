@@ -3,8 +3,6 @@ import { Page } from '@/components/layout/Page'
 import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
-import { Button } from '@helpwave/hightide'
-import { PlusIcon } from 'lucide-react'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { PatientList, type PatientListRef } from '@/components/patients/PatientList'
 import { useRef } from 'react'
@@ -16,14 +14,7 @@ const PatientsPage: NextPage = () => {
 
   return (
     <Page pageTitle={titleWrapper(translation('patients'))}>
-      <ContentPanel
-        titleElement={translation('patients')}
-        actionElement={(
-          <Button startIcon={<PlusIcon />} onClick={() => listRef.current?.openCreate()}>
-            {translation('addPatient')}
-          </Button>
-        )}
-      >
+      <ContentPanel titleElement={translation('patients')}>
         <PatientList
           ref={listRef}
           locationId={selectedLocationId}

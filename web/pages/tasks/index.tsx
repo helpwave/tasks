@@ -3,8 +3,6 @@ import { Page } from '@/components/layout/Page'
 import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
-import { Button } from '@helpwave/hightide'
-import { PlusIcon } from 'lucide-react'
 import { TaskList, type TaskListRef, type TaskViewModel } from '@/components/tasks/TaskList'
 import { useMemo, useRef } from 'react'
 import { useGetMyTasksQuery } from '@/api/gql/generated'
@@ -42,11 +40,6 @@ const TasksPage: NextPage = () => {
       <ContentPanel
         titleElement={translation('myTasks')}
         description={translation('nTask', { count: tasks.length })}
-        actionElement={(
-          <Button startIcon={<PlusIcon />} onClick={() => listRef.current?.openCreate()}>
-            {translation('addTask')}
-          </Button>
-        )}
       >
         <TaskList
           ref={listRef}

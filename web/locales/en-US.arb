@@ -250,5 +250,6 @@
   },
   "chooseLanguage": "Choose Language",
   "chooseTheme": "Choose Theme",
-  "done": "Done"
+  "done": "Done",
+  "patientData": "Data"
 }

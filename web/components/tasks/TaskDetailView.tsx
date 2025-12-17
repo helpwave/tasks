@@ -25,7 +25,7 @@ import { useTasksContext } from '@/hooks/useTasksContext'
 import { PropertyList } from '@/components/PropertyList'
 
 interface TaskDetailViewProps {
-  taskId?: string,
+  taskId: string | null,
   onClose: () => void,
   onSuccess: () => void,
 }
@@ -145,12 +145,6 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess }: TaskDetailViewPro
 
   return (
     <div className="flex flex-col h-full bg-surface">
-      <div className="flex-none mb-6">
-        <div className="typography-title-lg text-primary">
-          {isEditMode ? translation('editTask') : translation('createTask')}
-        </div>
-      </div>
-
       <div className="flex-grow overflow-hidden flex flex-col">
         <TabView className="h-full flex flex-col">
           <Tab label={translation('overview')} className="h-full overflow-y-auto pr-2">
