@@ -4,5 +4,29 @@ query GetLocationNode($id: ID!) {
     title
     kind
     parentId
+    parent {
+      id
+      title
+      kind
+      parentId
+      parent {
+        id
+        title
+        kind
+        parentId
+        parent {
+          id
+          title
+          kind
+          parentId
+          parent {
+            id
+            title
+            kind
+            parentId
+          }
+        }
+      }
+    }
   }
 }

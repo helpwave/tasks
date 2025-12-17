@@ -394,7 +394,7 @@ export type GetLocationNodeQueryVariables = Exact<{
 }>;
 
 
-export type GetLocationNodeQuery = { __typename?: 'Query', locationNode?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parentId?: string | null } | null };
+export type GetLocationNodeQuery = { __typename?: 'Query', locationNode?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parentId?: string | null, parent?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parentId?: string | null, parent?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parentId?: string | null, parent?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parentId?: string | null, parent?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parentId?: string | null } | null } | null } | null } | null } | null };
 
 export type GetLocationsQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -517,6 +517,30 @@ export const GetLocationNodeDocument = `
     title
     kind
     parentId
+    parent {
+      id
+      title
+      kind
+      parentId
+      parent {
+        id
+        title
+        kind
+        parentId
+        parent {
+          id
+          title
+          kind
+          parentId
+          parent {
+            id
+            title
+            kind
+            parentId
+          }
+        }
+      }
+    }
   }
 }
     `;

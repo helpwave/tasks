@@ -6,9 +6,10 @@ import { ContentPanel } from '@/components/layout/ContentPanel'
 import { LoadingContainer, Tab, TabView, Chip } from '@helpwave/hightide'
 import { PatientList } from '@/components/patients/PatientList'
 import { TaskList, type TaskViewModel } from '@/components/tasks/TaskList'
-import { useGetLocationNodeQuery, useGetPatientsQuery } from '@/api/gql/generated'
+import { useGetLocationNodeQuery, useGetPatientsQuery, type LocationType } from '@/api/gql/generated'
 import { useMemo } from 'react'
 import { useRouter } from 'next/router'
+import { LocationChips } from '@/components/patients/LocationChips'
 
 const getKindStyles = (kind: string) => {
   const k = kind.toUpperCase()
@@ -66,6 +67,24 @@ const LocationPage: NextPage = () => {
   const locationKind = locationData?.locationNode?.kind
   const locationTitle = locationData?.locationNode?.title
 
+  // Build parent chain
+  const parentChain = useMemo(() => {
+    if (!locationData?.locationNode?.parent) return []
+    const chain: Array<{ id: string, title: string, kind?: LocationType }> = []
+    let current = locationData.locationNode.parent
+    
+    while (current) {
+      chain.push({
+        id: current.id,
+        title: current.title,
+        kind: current.kind,
+      })
+      current = current.parent || null
+    }
+    
+    return chain.reverse() // Reverse to get root-to-parent order
+  }, [locationData])
+
   return (
     <Page pageTitle={titleWrapper(locationTitle || translation('location'))}>
       <ContentPanel
@@ -73,16 +92,28 @@ const LocationPage: NextPage = () => {
           isLoading ? (
             <LoadingContainer className="w-16 h-7" />
           ) : (
-            <div className="flex items-center gap-2">
-              <span>{locationTitle}</span>
-              {locationKind && (
-                <Chip
-                  size="small"
-                  color="none"
-                  className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider ${getKindStyles(locationKind)}`}
-                >
-                  {translation('locationType', { type: locationKind })}
-                </Chip>
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <span className="typography-title-lg font-bold">{locationTitle}</span>
+                {locationKind && (
+                  <Chip
+                    size="small"
+                    color="none"
+                    className={`text-[8px] font-bold px-0.5 py-0.5 rounded uppercase tracking-wider ${getKindStyles(locationKind)}`}
+                  >
+                    {translation('locationType', { type: locationKind })}
+                  </Chip>
+                )}
+              </div>
+              {parentChain.length > 0 && (
+                <div className="flex flex-wrap items-center -space-x-1 scale-75 origin-top-left">
+                  {parentChain.map((parent, index) => (
+                    <div key={parent.id} className="flex items-center">
+                      {index > 0 && <span className="text-description mx-0.5">▸</span>}
+                      <LocationChips locations={[parent]} />
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           )
