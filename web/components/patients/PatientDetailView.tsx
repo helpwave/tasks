@@ -282,8 +282,7 @@ export const PatientDetailView = ({
     return <LoadingContainer/>
   }
 
-  const patient = patientData?.patient
-  const patientName = patient ? `${patient.firstname} ${patient.lastname}` : ''
+  const patientName = patientData?.patient ? `${patientData.patient.firstname} ${patientData.patient.lastname}` : ''
   const patientLocation = selectedLocations.length > 0 ? selectedLocations.map(loc => formatLocationPath(loc)).join(' ▸ ') : ''
 
   const handleToggleDone = (taskId: string, done: boolean) => {
@@ -300,8 +299,8 @@ export const PatientDetailView = ({
         <div className="px-1 py-3 mb-4">
           <div className="flex items-center justify-between">
             <div className="font-semibold text-lg">{patientName}</div>
-            {patient?.state && (
-              <PatientStateChip state={patient.state} />
+            {patientData?.patient?.state && (
+              <PatientStateChip state={patientData.patient.state} />
             )}
           </div>
           {patientLocation && (
@@ -464,39 +463,42 @@ export const PatientDetailView = ({
               </FormElementWrapper>
             )}
 
-            {isEditMode && patientId && patient && (
-              <FormElementWrapper label={translation('patientActions')}>
-                {() => (
-                  <div className="flex gap-2 flex-wrap">
-                    {patient.state !== PatientState.Admitted && (
-                      <Button
-                        onClick={() => admitPatient({ id: patientId })}
-                        color="positive"
-                      >
-                        {translation('admitPatient')}
-                      </Button>
-                    )}
-                    {patient.state !== PatientState.Discharged && (
-                      <Button
-                        onClick={() => dischargePatient({ id: patientId })}
-                        color="neutral"
-                        coloringStyle="outline"
-                      >
-                        {translation('dischargePatient')}
-                      </Button>
-                    )}
-                    {patient.state !== PatientState.Wait && (
-                      <Button
-                        onClick={() => waitPatient({ id: patientId })}
-                        color="warning"
-                      >
-                        {translation('waitPatient')}
-                      </Button>
-                    )}
-                  </div>
-                )}
-              </FormElementWrapper>
-            )}
+            {isEditMode && patientId && patientData?.patient && (() => {
+              const patient = patientData.patient
+              return (
+                <FormElementWrapper label={translation('patientActions')}>
+                  {() => (
+                    <div className="flex gap-2 flex-wrap">
+                      {patient.state !== PatientState.Admitted && (
+                        <Button
+                          onClick={() => admitPatient({ id: patientId })}
+                          color="positive"
+                        >
+                          {translation('admitPatient')}
+                        </Button>
+                      )}
+                      {patient.state !== PatientState.Discharged && (
+                        <Button
+                          onClick={() => dischargePatient({ id: patientId })}
+                          color="neutral"
+                          coloringStyle="outline"
+                        >
+                          {translation('dischargePatient')}
+                        </Button>
+                      )}
+                      {patient.state !== PatientState.Wait && (
+                        <Button
+                          onClick={() => waitPatient({ id: patientId })}
+                          color="warning"
+                        >
+                          {translation('waitPatient')}
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </FormElementWrapper>
+              )
+            })()}
 
             <FormElementWrapper label={translation('assignedLocation')}>
               {({ isShowingError: _, setIsShowingError: _2, ...bag }) => (
@@ -571,7 +573,7 @@ export const PatientDetailView = ({
         </div>
       )}
 
-      {isEditMode && patientId && patient && patient.state !== PatientState.Dead && (
+      {isEditMode && patientId && patientData?.patient && patientData.patient.state !== PatientState.Dead && (
         <div className="flex-none pt-4 mt-auto border-t border-divider flex justify-end gap-2">
           <Button
             onClick={() => markPatientDead({ id: patientId })}
