@@ -267,7 +267,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
       >
         {(isTasksPanelOpen || selectedTask) && (
           <TaskDetailView
-            taskId={selectedTask?.id}
+            taskId={selectedTask?.id ?? null}
             onClose={handleClosePanel}
             onSuccess={onRefetch || (() => { })}
           />
