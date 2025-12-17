@@ -99,6 +99,7 @@ export type TasksTranslationEntries = {
   'patient': string,
   'patientData': string,
   'patients': string,
+  'patientsUpdatedRecently': string,
   'place': string,
   'preferences': string,
   'privacy': string,
@@ -294,6 +295,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'patient': `Patient`,
     'patientData': `Daten`,
     'patients': `Patienten`,
+    'patientsUpdatedRecently': `Kürzlich aktualisierte Patienten`,
     'place': `Ort`,
     'preferences': `Präferenzen`,
     'privacy': `Datenschutz`,
@@ -306,8 +308,8 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'rAdd': ({ name }): string => {
       return `${name} hinzufügen`
     },
-    'recentPatients': `Kürzliche Patienten`,
-    'recentTasks': `Kürzliche Aufgaben`,
+    'recentPatients': `Deine kürzlichen Patienten`,
+    'recentTasks': `Deine kürzlichen Aufgaben`,
     'rEdit': ({ name }): string => {
       return `${name} ändern`
     },
@@ -522,6 +524,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'patient': `Patient`,
     'patientData': `Data`,
     'patients': `Patients`,
+    'patientsUpdatedRecently': `Patients updated recently`,
     'place': `Place`,
     'preferences': `Preferences`,
     'privacy': `Privacy`,
@@ -533,8 +536,8 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'rAdd': ({ name }): string => {
       return `Add ${name}`
     },
-    'recentPatients': `Recent Patients`,
-    'recentTasks': `Recent Tasks`,
+    'recentPatients': `Your Recent Patients`,
+    'recentTasks': `Your Recent Tasks`,
     'rEdit': ({ name }): string => {
       return `Update ${name}`
     },

@@ -7,15 +7,21 @@ import { useGetOverviewDataQuery } from '@/api/gql/generated'
 import { Avatar, FillerRowElement, Table } from '@helpwave/hightide'
 import { CurrentTime, SmartDate } from '@/utils/date'
 import { ClockIcon, ListCheckIcon, UsersIcon } from 'lucide-react'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import type { ColumnDef } from '@tanstack/table-core'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import Link from 'next/link'
+import { SidePanel } from '@/components/layout/SidePanel'
+import { PatientDetailView } from '@/components/patients/PatientDetailView'
+import { TaskDetailView } from '@/components/tasks/TaskDetailView'
 
 const Dashboard: NextPage = () => {
   const translation = useTasksTranslation()
   const { user, myTasksCount, totalPatientsCount } = useTasksContext()
-  const { data } = useGetOverviewDataQuery()
+  const { data, refetch } = useGetOverviewDataQuery()
+
+  const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null)
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
 
   const recentPatients = useMemo(() => data?.recentPatients ?? [], [data])
   const recentTasks = useMemo(() => data?.recentTasks ?? [], [data])
@@ -71,10 +77,10 @@ const Dashboard: NextPage = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="flex flex-wrap gap-4">
 
-          <Link href="/tasks">
-            <div className="bg-surface rounded-lg p-4 shadow-sm flex-row-4 items-center border border-border">
+          <Link href="/tasks" className="min-w-[200px] min-h-[80px] flex-1">
+            <div className="bg-surface rounded-lg p-4 shadow-sm flex-row-4 items-center border border-border h-full">
               <div className="p-3 bg-primary/10 rounded-full text-primary">
                 <ListCheckIcon size={24}/>
               </div>
@@ -85,8 +91,8 @@ const Dashboard: NextPage = () => {
             </div>
           </Link>
 
-          <Link href="/patients">
-            <div className="bg-surface rounded-lg p-4 shadow-sm flex-row-4 items-center border border-border">
+          <Link href="/patients" className="min-w-[200px] min-h-[80px] flex-1">
+            <div className="bg-surface rounded-lg p-4 shadow-sm flex-row-4 items-center border border-border h-full">
               <div className="p-3 bg-green-500/10 rounded-full text-green-600">
                 <UsersIcon size={24}/>
               </div>
@@ -97,7 +103,7 @@ const Dashboard: NextPage = () => {
             </div>
           </Link>
 
-          <div className="bg-surface rounded-lg p-4 shadow-sm flex-row-4 items-center border border-border">
+          <div className="min-w-[200px] min-h-[80px] flex-1 bg-surface rounded-lg p-4 shadow-sm flex-row-4 items-center border border-border">
             <div className="p-3 bg-blue-500/10 rounded-full text-blue-600">
               <ClockIcon size={24}/>
             </div>
@@ -113,20 +119,52 @@ const Dashboard: NextPage = () => {
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mt-4">
           <ContentPanel title={translation('recentTasks')} description={translation('tasksUpdatedRecently')}>
             <Table
+              className="cursor-pointer"
               data={recentTasks}
               columns={taskColumns}
               fillerRow={() => (<FillerRowElement className="min-h-6"/>)}
+              onRowClick={(row) => setSelectedTaskId(row.original.id)}
             />
           </ContentPanel>
 
-          <ContentPanel title={translation('recentPatients')} description={translation('newestAdmissions')}>
+          <ContentPanel title={translation('recentPatients')} description={translation('patientsUpdatedRecently')}>
             <Table
+              className="cursor-pointer"
               data={recentPatients}
               columns={patientColumns}
               fillerRow={() => (<FillerRowElement className="min-h-6"/>)}
+              onRowClick={(row) => setSelectedPatientId(row.original.id)}
             />
           </ContentPanel>
         </div>
+
+        <SidePanel
+          title={translation('editPatient')}
+          isOpen={!!selectedPatientId}
+          onClose={() => setSelectedPatientId(null)}
+        >
+          {selectedPatientId && (
+            <PatientDetailView
+              patientId={selectedPatientId}
+              onClose={() => setSelectedPatientId(null)}
+              onSuccess={() => refetch()}
+            />
+          )}
+        </SidePanel>
+
+        <SidePanel
+          title={translation('editTask')}
+          isOpen={!!selectedTaskId}
+          onClose={() => setSelectedTaskId(null)}
+        >
+          {selectedTaskId && (
+            <TaskDetailView
+              taskId={selectedTaskId}
+              onClose={() => setSelectedTaskId(null)}
+              onSuccess={() => refetch()}
+            />
+          )}
+        </SidePanel>
 
       </div>
     </Page>

@@ -1,4 +1,4 @@
-import { useMemo, useState, forwardRef, useImperativeHandle } from 'react'
+import { useMemo, useState, forwardRef, useImperativeHandle, useEffect } from 'react'
 import { Button, CheckboxUncontrolled, FillerRowElement, Table, SearchBar, Avatar } from '@helpwave/hightide'
 import { PlusIcon } from 'lucide-react'
 import { useCompleteTaskMutation, useReopenTaskMutation } from '@/api/gql/generated'
@@ -32,15 +32,18 @@ export type TaskViewModel = {
 
 export type TaskListRef = {
   openCreate: () => void,
+  openTask: (taskId: string) => void,
 }
 
 type TaskListProps = {
   tasks: TaskViewModel[],
   onRefetch?: () => void,
   showAssignee?: boolean,
+  initialTaskId?: string,
+  onInitialTaskOpened?: () => void,
 }
 
-export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initialTasks, onRefetch, showAssignee = false }, ref) => {
+export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initialTasks, onRefetch, showAssignee = false, initialTaskId, onInitialTaskOpened }, ref) => {
   const translation = useTasksTranslation()
   const { mutate: completeTask } = useCompleteTaskMutation({ onSuccess: onRefetch })
   const { mutate: reopenTask } = useReopenTaskMutation({ onSuccess: onRefetch })
@@ -49,13 +52,33 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null)
   const [selectedTask, setSelectedTask] = useState<TaskViewModel | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [initialOpened, setInitialOpened] = useState(false)
 
   useImperativeHandle(ref, () => ({
     openCreate: () => {
       setSelectedTask(null)
       setIsTasksPanelOpen(true)
+    },
+    openTask: (taskId: string) => {
+      const task = initialTasks.find(t => t.id === taskId)
+      if (task) {
+        setSelectedTask(task)
+        setIsTasksPanelOpen(true)
+      }
     }
   }))
+
+  useEffect(() => {
+    if (initialTaskId && initialTasks.length > 0 && !initialOpened) {
+      const task = initialTasks.find(t => t.id === initialTaskId)
+      if (task) {
+        setSelectedTask(task)
+        setIsTasksPanelOpen(true)
+        setInitialOpened(true)
+        onInitialTaskOpened?.()
+      }
+    }
+  }, [initialTaskId, initialTasks, initialOpened, onInitialTaskOpened])
 
   const tasks = useMemo(() => {
     let data = initialTasks

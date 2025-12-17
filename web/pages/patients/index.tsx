@@ -4,20 +4,22 @@ import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
 import { useTasksContext } from '@/hooks/useTasksContext'
-import { PatientList, type PatientListRef } from '@/components/patients/PatientList'
-import { useRef } from 'react'
+import { PatientList } from '@/components/patients/PatientList'
+import { useRouter } from 'next/router'
 
 const PatientsPage: NextPage = () => {
   const translation = useTasksTranslation()
+  const router = useRouter()
   const { selectedLocationId } = useTasksContext()
-  const listRef = useRef<PatientListRef>(null)
+  const patientId = router.query['patientId'] as string | undefined
 
   return (
     <Page pageTitle={titleWrapper(translation('patients'))}>
       <ContentPanel titleElement={translation('patients')}>
         <PatientList
-          ref={listRef}
           locationId={selectedLocationId}
+          initialPatientId={patientId}
+          onInitialPatientOpened={() => router.replace('/patients', undefined, { shallow: true })}
         />
       </ContentPanel>
     </Page>
