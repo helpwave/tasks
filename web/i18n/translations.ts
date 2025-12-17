@@ -29,6 +29,7 @@ export type TasksTranslationEntries = {
   'chooseTheme': string,
   'clearCache': string,
   'clickToAdd': string,
+  'clinic': string,
   'clinics': string,
   'closedTasks': string,
   'collapseAll': string,
@@ -108,7 +109,14 @@ export type TasksTranslationEntries = {
   'patients': string,
   'patientState': (values: { state: string }) => string,
   'patientsUpdatedRecently': string,
+  'pickClinic': string,
+  'pickClinicDescription': string,
+  'pickPosition': string,
+  'pickPositionDescription': string,
+  'pickTeams': string,
+  'pickTeamsDescription': string,
   'place': string,
+  'position': string,
   'preferences': string,
   'privacy': string,
   'private': string,
@@ -128,10 +136,13 @@ export type TasksTranslationEntries = {
   'searchLocations': string,
   'selectAll': string,
   'selectAssignee': string,
+  'selectClinic': string,
   'selectLocation': string,
   'selectLocationDescription': string,
   'selectOptions': string,
   'selectPatient': string,
+  'selectPosition': string,
+  'selectTeams': string,
   'settings': string,
   'settingsDescription': string,
   'sex': string,
@@ -182,6 +193,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'chooseTheme': `Design wählen`,
     'clearCache': `Cache leeren`,
     'clickToAdd': `Klicken um hinzuzufügen`,
+    'clinic': `Klinik`,
     'clinics': `Kliniken`,
     'closedTasks': `Erledigte Aufgaben`,
     'collapseAll': `Alle einklappen`,
@@ -194,18 +206,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'currentTime': `Aktuelle Zeit`,
     'dashboard': `Dashboard`,
     'dashboardWelcome': ({ name }): string => {
-      const hour = new Date().getHours()
-      let greeting: string
-      if (hour >= 5 && hour < 12) {
-        greeting = 'Guten Morgen'
-      } else if (hour >= 12 && hour < 18) {
-        greeting = 'Guten Tag'
-      } else if (hour >= 18 && hour < 22) {
-        greeting = 'Guten Abend'
-      } else {
-        greeting = 'Gute Nacht'
-      }
-      return `${greeting}, ${name}`
+      return `Guten Morgen, ${name}`
     },
     'dashboardWelcomeDescription': `Hier ist, was heute passiert.`,
     'delete': `Löschen`,
@@ -344,7 +345,14 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
       })
     },
     'patientsUpdatedRecently': `Kürzlich aktualisierte Patienten`,
+    'pickClinic': `Klinik auswählen`,
+    'pickClinicDescription': `Wählen Sie die Klinik für diesen Patienten aus. Es können nur Klinik-Standorte ausgewählt werden.`,
+    'pickPosition': `Position auswählen`,
+    'pickPositionDescription': `Wählen Sie die Position für diesen Patienten aus. Sie können Krankenhaus-, Praxis-, Klinik-, Station-, Bett- oder Zimmer-Standorte auswählen.`,
+    'pickTeams': `Teams auswählen`,
+    'pickTeamsDescription': `Wählen Sie ein oder mehrere Teams für diesen Patienten aus. Sie können Klinik-, Team-, Praxis- oder Krankenhaus-Standorte auswählen.`,
     'place': `Ort`,
+    'position': `Position`,
     'preferences': `Präferenzen`,
     'privacy': `Datenschutz`,
     'private': `Privat`,
@@ -370,10 +378,13 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'searchLocations': `Standorte suchen...`,
     'selectAll': `Alle auswählen`,
     'selectAssignee': `Zuweisen an...`,
+    'selectClinic': `Klinik auswählen`,
     'selectLocation': `Standort auswählen`,
     'selectLocationDescription': `Bitte wählen Sie den zugewiesenen Standort für den Patienten aus.`,
     'selectOptions': `Auswahl Optionen`,
     'selectPatient': `Patient auswählen`,
+    'selectPosition': `Position auswählen`,
+    'selectTeams': `Teams auswählen`,
     'settings': `Einstellungen`,
     'settingsDescription': `Hier kannst du die App Konfiguration ändern.`,
     'sex': `Geschlecht`,
@@ -453,6 +464,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'chooseTheme': `Choose Theme`,
     'clearCache': `Clear Cache`,
     'clickToAdd': `Click to add`,
+    'clinic': `Clinic`,
     'clinics': `Clinics`,
     'closedTasks': `Closed Tasks`,
     'collapseAll': `Collapse All`,
@@ -465,18 +477,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'currentTime': `Current Time`,
     'dashboard': `Dashboard`,
     'dashboardWelcome': ({ name }): string => {
-      const hour = new Date().getHours()
-      let greeting: string
-      if (hour >= 5 && hour < 12) {
-        greeting = 'Good Morning'
-      } else if (hour >= 12 && hour < 18) {
-        greeting = 'Good Afternoon'
-      } else if (hour >= 18 && hour < 22) {
-        greeting = 'Good Evening'
-      } else {
-        greeting = 'Good Night'
-      }
-      return `${greeting}, ${name}`
+      return `Good Morning, ${name}`
     },
     'dashboardWelcomeDescription': `Here is what is happening today.`,
     'delete': `Delete`,
@@ -615,7 +616,14 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
       })
     },
     'patientsUpdatedRecently': `Patients updated recently`,
+    'pickClinic': `Pick the clinic`,
+    'pickClinicDescription': `Select the clinic for this patient. Only clinic locations can be selected.`,
+    'pickPosition': `Pick the position`,
+    'pickPositionDescription': `Select the position for this patient. You can select hospital, practice, clinic, ward, bed, or room locations.`,
+    'pickTeams': `Pick teams`,
+    'pickTeamsDescription': `Select one or more teams for this patient. You can select clinic, team, practice, or hospital locations.`,
     'place': `Place`,
+    'position': `Position`,
     'preferences': `Preferences`,
     'privacy': `Privacy`,
     'private': `private`,
@@ -640,10 +648,13 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'searchLocations': `Search locations...`,
     'selectAll': `Select All`,
     'selectAssignee': `Assign to...`,
+    'selectClinic': `Select Clinic`,
     'selectLocation': `Select Location`,
     'selectLocationDescription': `Please select the assigned location for the patient.`,
     'selectOptions': `Select Options`,
     'selectPatient': `Select a patient`,
+    'selectPosition': `Select Position`,
+    'selectTeams': `Select Teams`,
     'settings': `Settings`,
     'settingsDescription': `Here you can change the app configuration.`,
     'sex': `Sex`,

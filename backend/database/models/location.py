@@ -45,3 +45,18 @@ class LocationNode(Base):
         foreign_keys="Patient.assigned_location_id",
         back_populates="assigned_location",
     )
+    patients_as_clinic: Mapped[list[Patient]] = relationship(
+        "Patient",
+        foreign_keys="Patient.clinic_id",
+        back_populates="clinic",
+    )
+    patients_as_position: Mapped[list[Patient]] = relationship(
+        "Patient",
+        foreign_keys="Patient.position_id",
+        back_populates="position",
+    )
+    patients_as_teams: Mapped[list[Patient]] = relationship(
+        "Patient",
+        secondary="patient_teams",
+        back_populates="teams",
+    )

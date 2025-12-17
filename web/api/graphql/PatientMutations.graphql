@@ -15,6 +15,21 @@ mutation CreatePatient($data: CreatePatientInput!) {
       id
       title
     }
+    clinic {
+      id
+      title
+      kind
+    }
+    position {
+      id
+      title
+      kind
+    }
+    teams {
+      id
+      title
+      kind
+    }
   }
 }
 
@@ -34,6 +49,21 @@ mutation UpdatePatient($id: ID!, $data: UpdatePatientInput!) {
     assignedLocations {
       id
       title
+    }
+    clinic {
+      id
+      title
+      kind
+    }
+    position {
+      id
+      title
+      kind
+    }
+    teams {
+      id
+      title
+      kind
     }
   }
 }

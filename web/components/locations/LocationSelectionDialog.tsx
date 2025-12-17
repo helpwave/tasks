@@ -8,6 +8,7 @@ import {
 } from '@helpwave/hightide'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import type { LocationNodeType } from '@/api/gql/generated'
+import { LocationType } from '@/api/gql/generated'
 import { useGetLocationsQuery } from '@/api/gql/generated'
 import type { TreeNode } from '@/utils/tree'
 import { buildTree } from '@/utils/tree'
@@ -20,12 +21,19 @@ import {
   MinusIcon
 } from 'lucide-react'
 
+export type LocationPickerUseCase =
+  | 'default'
+  | 'clinic'
+  | 'position' // HOSPITAL, PRACTICE, CLINIC, WARD, BED, ROOM
+  | 'teams' // CLINIC, TEAM, PRACTICE, HOSPITAL
+
 interface LocationSelectionDialogProps {
   isOpen: boolean,
   onClose: () => void,
   onSelect: (locations: LocationNodeType[]) => void,
   initialSelectedIds?: string[],
   multiSelect?: boolean,
+  useCase?: LocationPickerUseCase,
 }
 
 interface LocationTreeItemProps {
@@ -35,6 +43,7 @@ interface LocationTreeItemProps {
   expandedIds: Set<string>,
   onExpandToggle: (nodeId: string, isOpen: boolean) => void,
   level?: number,
+  isSelectable?: boolean,
 }
 
 const getKindStyles = (kind: string) => {
@@ -53,41 +62,48 @@ const LocationTreeItem = ({
   onToggle,
   expandedIds,
   onExpandToggle,
-  level = 0
+  level = 0,
+  isSelectable = true,
 }: LocationTreeItemProps) => {
   const isSelected = selectedIds.has(node.id)
   const isExpanded = expandedIds.has(node.id)
   const hasChildren = node.children && node.children.length > 0
 
   const isIndeterminate = useMemo(() => {
-    if (!hasChildren) return false
+    if (!hasChildren || !isSelectable) return false
     const checkChildren = (n: TreeNode<LocationNodeType>): boolean => {
       return n.children.some(child => selectedIds.has(child.id) || checkChildren(child))
     }
     return !isSelected && checkChildren(node)
-  }, [hasChildren, node, selectedIds, isSelected])
+  }, [hasChildren, node, selectedIds, isSelected, isSelectable])
 
   const handleCheck = (checked: boolean) => {
-    onToggle(node, checked)
+    if (isSelectable) {
+      onToggle(node, checked)
+    }
   }
 
   const labelContent = (
     <div
-      className="flex items-center gap-3 w-fit py-2 cursor-pointer group"
+      className={`flex items-center gap-3 w-fit py-2 ${isSelectable ? 'cursor-pointer' : 'cursor-default'} group`}
       onClick={(e) => {
-        e.stopPropagation()
-        handleCheck(!isSelected)
+        if (isSelectable) {
+          e.stopPropagation()
+          handleCheck(!isSelected)
+        }
       }}
     >
-      <Checkbox
-        checked={isSelected}
-        indeterminate={isIndeterminate}
-        onCheckedChange={handleCheck}
-        className="flex-shrink-0"
-        onClick={(e) => e.stopPropagation()}
-      />
+      {isSelectable && (
+        <Checkbox
+          checked={isSelected}
+          indeterminate={isIndeterminate}
+          onCheckedChange={handleCheck}
+          className="flex-shrink-0"
+          onClick={(e) => e.stopPropagation()}
+        />
+      )}
       <div className="flex-grow flex items-center gap-2 select-none">
-        <span className="text-text-primary font-medium group-hover:text-text-primary transition-colors">
+        <span className={`text-text-primary font-medium ${isSelectable ? 'group-hover:text-text-primary' : 'opacity-75'} transition-colors`}>
           {node.title}
         </span>
         <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider ${getKindStyles(node.kind)}`}>
@@ -127,6 +143,7 @@ const LocationTreeItem = ({
               expandedIds={expandedIds}
               onExpandToggle={onExpandToggle}
               level={level + 1}
+              isSelectable={(child as TreeNode<LocationNodeType> & { isSelectable?: boolean }).isSelectable ?? true}
             />
           ))}
         </div>
@@ -140,7 +157,8 @@ export const LocationSelectionDialog = ({
   onClose,
   onSelect,
   initialSelectedIds = [],
-  multiSelect = true
+  multiSelect = true,
+  useCase = 'default',
 }: LocationSelectionDialogProps) => {
   const translation = useTasksTranslation()
   const { data, isLoading } = useGetLocationsQuery({}, { enabled: isOpen })
@@ -161,20 +179,120 @@ export const LocationSelectionDialog = ({
     }
   }, [isOpen, initialSelectedIds])
 
+  const matchesFilter = useMemo(() => {
+    if (useCase === 'default') {
+      return () => true
+    }
+
+    if (useCase === 'clinic') {
+      return (node: LocationNodeType) => {
+        const kindStr = node.kind.toString().toUpperCase()
+        return kindStr === 'CLINIC' || node.kind === LocationType.Clinic
+      }
+    } else if (useCase === 'position') {
+      const allowedKinds = new Set<string>([
+        LocationType.Clinic,
+        LocationType.Ward,
+        LocationType.Bed,
+        LocationType.Room,
+        'PRACTICE',
+        'HOSPITAL',
+      ])
+      return (node: LocationNodeType) => {
+        const kindStr = node.kind.toString().toUpperCase()
+        return allowedKinds.has(node.kind as LocationType) ||
+               allowedKinds.has(kindStr) ||
+               kindStr === 'PRACTICE' ||
+               kindStr === 'HOSPITAL' ||
+               kindStr === 'ROOM'
+      }
+    } else if (useCase === 'teams') {
+      const allowedKinds = new Set<string>([
+        LocationType.Clinic,
+        LocationType.Team,
+        'PRACTICE',
+        'HOSPITAL',
+      ])
+      return (node: LocationNodeType) => {
+        const kindStr = node.kind.toString().toUpperCase()
+        return allowedKinds.has(node.kind as LocationType) ||
+               allowedKinds.has(kindStr) ||
+               kindStr === 'PRACTICE' ||
+               kindStr === 'HOSPITAL'
+      }
+    }
+
+    return () => true
+  }, [useCase])
+
+  const filterTree = useMemo(() => {
+    const filterNode = (node: TreeNode<LocationNodeType>): (TreeNode<LocationNodeType> & { isSelectable?: boolean }) | null => {
+      const hasChildren = node.children && node.children.length > 0
+
+      if (hasChildren) {
+        const filteredChildren = node.children
+          .map(child => filterNode(child))
+          .filter((child): child is TreeNode<LocationNodeType> & { isSelectable?: boolean } => child !== null)
+
+        if (filteredChildren.length === 0) {
+          return null
+        }
+
+        return {
+          ...node,
+          children: filteredChildren,
+          isSelectable: false,
+        }
+      } else {
+        if (matchesFilter(node)) {
+          return {
+            ...node,
+            children: [],
+            isSelectable: true,
+          }
+        }
+        return null
+      }
+    }
+
+    return filterNode
+  }, [matchesFilter])
+
   const treeData = useMemo(() => {
     if (!data?.locationNodes) return []
     const nodes = data.locationNodes as LocationNodeType[]
 
-    let filtered = nodes
+    let allNodes = nodes
+
     if (searchQuery.trim()) {
       const lower = searchQuery.toLowerCase()
-      filtered = nodes.filter(n =>
+      const searchFiltered = allNodes.filter(n =>
         n.title.toLowerCase().includes(lower) ||
-        n.kind.toLowerCase().includes(lower))
+        n.kind.toString().toLowerCase().includes(lower))
+      const searchIds = new Set(searchFiltered.map(n => n.id))
+      const parentIds = new Set<string>()
+      searchFiltered.forEach(n => {
+        let current: LocationNodeType | undefined = n
+        while (current?.parentId) {
+          parentIds.add(current.parentId)
+          current = nodes.find(node => node.id === current?.parentId)
+        }
+      })
+      allNodes = allNodes.filter(n => searchIds.has(n.id) || parentIds.has(n.id))
     }
 
-    return buildTree(filtered)
-  }, [data, searchQuery])
+    const fullTree = buildTree(allNodes)
+
+    if (useCase === 'default') {
+      return fullTree.map(node => ({ ...node, isSelectable: true })) as Array<TreeNode<LocationNodeType> & { isSelectable: boolean }>
+    }
+
+    const filtered = fullTree
+      .map(filterTree)
+      .filter((node): node is TreeNode<LocationNodeType> & { isSelectable?: boolean } => node !== null)
+
+    return filtered
+  }, [data, searchQuery, useCase, filterTree])
 
   const handleToggleSelect = (node: LocationNodeType, checked: boolean) => {
     const newSet = new Set(selectedIds)
@@ -232,10 +350,18 @@ export const LocationSelectionDialog = ({
       titleElement={(
         <div className="flex items-center gap-2">
           <MapPin className="size-6 text-primary" />
-          {translation('selectLocation')}
+          {useCase === 'clinic' ? translation('pickClinic') :
+           useCase === 'position' ? translation('pickPosition') :
+           useCase === 'teams' ? translation('pickTeams') :
+           translation('selectLocation')}
         </div>
       )}
-      description={translation('selectLocationDescription')}
+      description={
+        useCase === 'clinic' ? translation('pickClinicDescription') :
+        useCase === 'position' ? translation('pickPositionDescription') :
+        useCase === 'teams' ? translation('pickTeamsDescription') :
+        translation('selectLocationDescription')
+      }
       className="w-[600px] h-[80vh] flex flex-col max-w-full"
     >
       <div className="flex flex-col gap-4 mt-4 h-full overflow-hidden">
@@ -286,6 +412,7 @@ export const LocationSelectionDialog = ({
                   onToggle={handleToggleSelect}
                   expandedIds={expandedIds}
                   onExpandToggle={handleExpandToggle}
+                  isSelectable={node.isSelectable ?? true}
                 />
               ))}
               {treeData.length === 0 && (

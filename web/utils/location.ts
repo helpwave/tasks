@@ -1,5 +1,7 @@
 import type { LocationNodeType } from '@/api/gql/generated'
 
+export const LOCATION_PATH_SEPARATOR = ' ▸ '
+
 type PartialLocationNode = {
   id: string,
   title: string,
@@ -20,6 +22,6 @@ export const buildLocationPath = (location: PartialLocationNode | LocationNodeTy
   return path
 }
 
-export const formatLocationPath = (location: PartialLocationNode | LocationNodeType | null | undefined, separator: string = ' ▸ '): string => {
+export const formatLocationPath = (location: PartialLocationNode | LocationNodeType | null | undefined, separator: string = LOCATION_PATH_SEPARATOR): string => {
   return buildLocationPath(location).join(separator)
 }
