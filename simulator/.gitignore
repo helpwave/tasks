@@ -1,3 +1,56 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+*.pyc
+
+# Environment / virtualenv
 .env
-.env*
-!.env.example
+.venv/
+venv/
+env/
+ENV/
+
+# IDEs / editors
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Byte-compiled / cache
+*.log
+*.sqlite3
+*.db
+*.bak
+
+# Migrations (optional: you may want to track Alembic migrations)
+app/db/migrations/__pycache__/
+app/db/migrations/versions/__pycache__/
+
+# Redis / celery / temp files
+*.pid
+*.sock
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Coverage / test reports
+htmlcov/
+.coverage
+.tox/
+.pytest_cache/
+
+# Logs
+logs/
+
+# Build / packaging
+build/
+dist/
+*.egg-info/
+
+# Secrets (never commit)
+.env.local
+.env.*.local

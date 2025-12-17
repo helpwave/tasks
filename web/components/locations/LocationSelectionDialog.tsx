@@ -16,7 +16,7 @@ import {
   CheckSquare,
   Square,
   ChevronsDown,
-  ChevronsUp
+  ChevronsUp, MinusIcon
 } from 'lucide-react'
 
 interface LocationSelectionDialogProps {
@@ -72,7 +72,7 @@ const LocationTreeItem = ({
 
   const labelContent = (
     <div
-      className="flex items-center gap-3 w-full py-2 cursor-pointer group !text-text-primary hover:!text-text-primary"
+      className="flex items-center gap-3 w-fit py-2 cursor-pointer group"
       onClick={(e) => {
         e.stopPropagation()
         handleCheck(!isSelected)
@@ -85,7 +85,6 @@ const LocationTreeItem = ({
         className="flex-shrink-0"
         onClick={(e) => e.stopPropagation()}
       />
-
       <div className="flex-grow flex items-center gap-2 select-none">
         <span className="text-text-primary font-medium group-hover:text-text-primary transition-colors">
           {node.title}
@@ -99,7 +98,8 @@ const LocationTreeItem = ({
 
   if (!hasChildren) {
     return (
-      <div className="hover:bg-surface-hover rounded-lg px-2 transition-colors">
+      <div className="flex-row-2 items-center rounded-lg px-4 py-1 transition-colors hover:bg-surface-hover">
+        <MinusIcon className="size-6 text-description"/>
         {labelContent}
       </div>
     )
@@ -113,8 +113,8 @@ const LocationTreeItem = ({
         isExpanded={isExpanded}
         onChange={(isOpen) => onExpandToggle(node.id, isOpen)}
         className="!shadow-none !bg-transparent !rounded-none"
-        headerClassName="px-2 hover:bg-surface-hover rounded-lg transition-colors !text-text-primary hover:!text-text-primary"
-        contentExpandedClassName="!max-h-none !overflow-visible border-l-2 border-divider ml-[1.15rem] pl-2 mt-1"
+        headerClassName="px-2 hover:bg-surface-hover rounded-lg transition-colors !text-text-primary hover:!text-text-primary flex-row-reverse justify-end"
+        contentExpandedClassName="!max-h-none !overflow-visible border-l-2 border-divider ml-5 pl-2 pr-0 mt-1"
       >
         <div className="flex flex-col gap-1">
           {node.children.map(child => (
