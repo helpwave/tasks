@@ -14,6 +14,7 @@ import {
 import {
   Button,
   CheckboxUncontrolled,
+  ConfirmDialog,
   FormElementWrapper,
   Input,
   LoadingButton,
@@ -41,6 +42,7 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
   const translation = useTasksTranslation()
   const { selectedLocationId } = useTasksContext()
   const [isShowingPatientDialog, setIsShowingPatientDialog] = useState<boolean>(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState<boolean>(false)
   const isEditMode = !!taskId
 
   const { data: taskData, isLoading: isLoadingTask, refetch } = useGetTaskQuery(
@@ -304,11 +306,7 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
       {isEditMode && taskId && (
         <div className="flex-none pt-4 mt-auto border-t border-divider flex justify-end gap-2">
           <LoadingButton
-            onClick={() => {
-              if (window.confirm(translation('delete') + '?')) {
-                deleteTask({ id: taskId })
-              }
-            }}
+            onClick={() => setIsDeleteDialogOpen(true)}
             isLoading={isDeleting}
             color="neutral"
             coloringStyle="outline"
@@ -317,6 +315,20 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
           </LoadingButton>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={isDeleteDialogOpen}
+        onCancel={() => setIsDeleteDialogOpen(false)}
+        onConfirm={() => {
+          if (taskId) {
+            deleteTask({ id: taskId })
+          }
+          setIsDeleteDialogOpen(false)
+        }}
+        titleElement={translation('delete')}
+        description={translation('deleteTaskConfirmation')}
+        confirmType="negative"
+      />
     </div>
   )
 }

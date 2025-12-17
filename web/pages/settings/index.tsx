@@ -17,7 +17,6 @@ import type { HightideTranslationLocales, ThemeType } from '@helpwave/hightide'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { useAuth } from '@/hooks/useAuth'
 import { LogOut, MonitorCog, MoonIcon, SunIcon, Trash2 } from 'lucide-react'
-import { useRouter } from 'next/router'
 import clsx from 'clsx'
 import { removeUser } from '@/api/auth/authService'
 import { useQueryClient } from '@tanstack/react-query'
@@ -49,7 +48,6 @@ const SettingsPage: NextPage = () => {
   const { theme, setTheme } = useTheme()
   const { user } = useTasksContext()
   const { logout } = useAuth()
-  const router = useRouter()
   const queryClient = useQueryClient()
 
   const handleClearCache = async () => {

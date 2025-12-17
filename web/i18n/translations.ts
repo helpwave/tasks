@@ -43,11 +43,13 @@ export type TasksTranslationEntries = {
   'dashboardWelcome': (values: { name: string }) => string,
   'dashboardWelcomeDescription': string,
   'delete': string,
+  'deleteTaskConfirmation': string,
   'description': string,
   'descriptionPlaceholder': string,
   'deselectAll': string,
   'developmentAndPreviewInstance': string,
   'dischargePatient': string,
+  'dischargePatientConfirmation': string,
   'dismiss': string,
   'diverse': string,
   'done': string,
@@ -73,6 +75,7 @@ export type TasksTranslationEntries = {
   'logout': string,
   'male': string,
   'markPatientDead': string,
+  'markPatientDeadConfirmation': string,
   'myFavorites': string,
   'myOpenTasks': string,
   'myTasks': string,
@@ -194,26 +197,17 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'currentTime': `Aktuelle Zeit`,
     'dashboard': `Dashboard`,
     'dashboardWelcome': ({ name }): string => {
-      const hour = new Date().getHours()
-      let greeting: string
-      if (hour >= 5 && hour < 12) {
-        greeting = 'Guten Morgen'
-      } else if (hour >= 12 && hour < 18) {
-        greeting = 'Guten Tag'
-      } else if (hour >= 18 && hour < 22) {
-        greeting = 'Guten Abend'
-      } else {
-        greeting = 'Gute Nacht'
-      }
-      return `${greeting}, ${name}`
+      return `Guten Morgen, ${name}`
     },
     'dashboardWelcomeDescription': `Hier ist, was heute passiert.`,
     'delete': `Löschen`,
+    'deleteTaskConfirmation': `Sind Sie sicher, dass Sie diese Aufgabe löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.`,
     'description': `Beschreibung`,
     'descriptionPlaceholder': `Weitere Details hinzufügen...`,
     'deselectAll': `Auswahl aufheben`,
     'developmentAndPreviewInstance': `Entwicklungs- und Vorschauinstanz`,
     'dischargePatient': `Patient entlassen`,
+    'dischargePatientConfirmation': `Sind Sie sicher, dass Sie diesen Patienten entlassen möchten? Diese Aktion ändert den Status des Patienten.`,
     'dismiss': `Schließen`,
     'diverse': `Divers`,
     'done': `Fertig`,
@@ -248,6 +242,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'logout': `Abmelden`,
     'male': `Männlich`,
     'markPatientDead': `Patient als verstorben markieren`,
+    'markPatientDeadConfirmation': `Sind Sie sicher, dass Sie diesen Patienten als verstorben markieren möchten?`,
     'myFavorites': `Meine Favoriten`,
     'myOpenTasks': `Meine offenen Aufgaben`,
     'myTasks': `Meine Aufgaben`,
@@ -465,26 +460,17 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'currentTime': `Current Time`,
     'dashboard': `Dashboard`,
     'dashboardWelcome': ({ name }): string => {
-      const hour = new Date().getHours()
-      let greeting: string
-      if (hour >= 5 && hour < 12) {
-        greeting = 'Good Morning'
-      } else if (hour >= 12 && hour < 18) {
-        greeting = 'Good Afternoon'
-      } else if (hour >= 18 && hour < 22) {
-        greeting = 'Good Evening'
-      } else {
-        greeting = 'Good Night'
-      }
-      return `${greeting}, ${name}`
+      return `Good Morning, ${name}`
     },
     'dashboardWelcomeDescription': `Here is what is happening today.`,
     'delete': `Delete`,
+    'deleteTaskConfirmation': `Are you sure you want to delete this task? This action cannot be undone.`,
     'description': `Description`,
     'descriptionPlaceholder': `Add more details...`,
     'deselectAll': `Deselect All`,
     'developmentAndPreviewInstance': `Development and preview instance`,
     'dischargePatient': `Discharge Patient`,
+    'dischargePatientConfirmation': `Are you sure you want to discharge this patient? This action will change the patient state.`,
     'dismiss': `Dismiss`,
     'diverse': `Diverse`,
     'done': `Done`,
@@ -519,6 +505,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'logout': `Logout`,
     'male': `Male`,
     'markPatientDead': `Mark Patient Dead`,
+    'markPatientDeadConfirmation': `Are you sure you want to mark this patient as dead?`,
     'myFavorites': `My Favorites`,
     'myOpenTasks': `My Open Tasks`,
     'myTasks': `My tasks`,

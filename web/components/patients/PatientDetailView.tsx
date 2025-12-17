@@ -19,6 +19,7 @@ import {
   Avatar,
   Button,
   CheckboxUncontrolled,
+  ConfirmDialog,
   FormElementWrapper,
   Input,
   LoadingButton,
@@ -161,6 +162,8 @@ export const PatientDetailView = ({
   const [isWaiting, setIsWaiting] = useState(false)
   const [isLocationDialogOpen, setIsLocationDialogOpen] = useState(false)
   const [selectedLocations, setSelectedLocations] = useState<LocationNodeType[]>([])
+  const [isMarkDeadDialogOpen, setIsMarkDeadDialogOpen] = useState(false)
+  const [isDischargeDialogOpen, setIsDischargeDialogOpen] = useState(false)
 
   useEffect(() => {
     if (patientData?.patient) {
@@ -478,7 +481,7 @@ export const PatientDetailView = ({
                       )}
                       {patient.state !== PatientState.Discharged && (
                         <Button
-                          onClick={() => dischargePatient({ id: patientId })}
+                          onClick={() => setIsDischargeDialogOpen(true)}
                           color="neutral"
                           coloringStyle="outline"
                         >
@@ -569,7 +572,7 @@ export const PatientDetailView = ({
       {isEditMode && patientId && patientData?.patient && patientData.patient.state !== PatientState.Dead && (
         <div className="flex-none pt-4 mt-auto border-t border-divider flex justify-end gap-2">
           <Button
-            onClick={() => markPatientDead({ id: patientId })}
+            onClick={() => setIsMarkDeadDialogOpen(true)}
             color="negative"
             coloringStyle="text"
           >
@@ -577,6 +580,34 @@ export const PatientDetailView = ({
           </Button>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={isMarkDeadDialogOpen}
+        onCancel={() => setIsMarkDeadDialogOpen(false)}
+        onConfirm={() => {
+          if (patientId) {
+            markPatientDead({ id: patientId })
+          }
+          setIsMarkDeadDialogOpen(false)
+        }}
+        titleElement={translation('markPatientDead')}
+        description={translation('markPatientDeadConfirmation')}
+        confirmType="negative"
+      />
+
+      <ConfirmDialog
+        isOpen={isDischargeDialogOpen}
+        onCancel={() => setIsDischargeDialogOpen(false)}
+        onConfirm={() => {
+          if (patientId) {
+            dischargePatient({ id: patientId })
+          }
+          setIsDischargeDialogOpen(false)
+        }}
+        titleElement={translation('dischargePatient')}
+        description={translation('dischargePatientConfirmation')}
+        confirmType="neutral"
+      />
 
       <LocationSelectionDialog
         isOpen={isLocationDialogOpen}
