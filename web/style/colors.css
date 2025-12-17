@@ -1,4 +1,8 @@
 @theme {
+  /* Default Color Overwrites */
+  --color-background: #EEEEEE;
+  --color-foreground: #000000;
+
   --color-gender-female: var(--color-red-400);
   --color-gender-on-female: var(--color-white);
   --color-gender-female-hover: var(--color-red-600);
@@ -13,8 +17,11 @@
 }
 
 @layer base {
+  /* Here are overrides for the light theme */
   @variant dark {
-
+    /* Header */
+    --color-header-background: var(--color-black);
+    --color-header-text: var(--color-white);
   }
 }
 
@@ -37,15 +44,4 @@
   --coloring-color: var(--color-gender-neutral);
   --coloring-on-color: var(--color-gender-on-neutral);
   --coloring-hover: var(--color-gender-neutral-hover);
-}
-
-@utility coloring-text {
-  @apply
-  text-[var(--coloring-text,var(--coloring-color))];
-}
-
-@utility coloring-text-hover {
-  @apply
-  coloring-text
-  hover:bg-[var(--coloring-text-hover,var(--coloring-text,var(--coloring-color)))]/20;
 }
