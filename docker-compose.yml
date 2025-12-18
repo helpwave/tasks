@@ -59,6 +59,9 @@ services:
       CLIENT_SECRET: "tasks-secret"
       
       ENV: "development"
+      SCAFFOLD_DIRECTORY: "/scaffold"
+    volumes:
+      - "./scaffold:/scaffold:ro"
     depends_on:
       - postgres
       - redis

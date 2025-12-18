@@ -12,6 +12,35 @@ from sqlalchemy.orm import aliased, selectinload
 from .utils import process_properties
 
 
+def validate_location_kind(location: models.LocationNode, expected_kind: str, field_name: str) -> None:
+    """Validate that a location has the expected kind."""
+    if location.kind.upper() != expected_kind.upper():
+        raise Exception(
+            f"{field_name} must be a location of kind {expected_kind}, "
+            f"but got {location.kind}"
+        )
+
+
+def validate_position_kind(location: models.LocationNode, field_name: str) -> None:
+    """Validate that a location is a valid position type."""
+    allowed_kinds = {"HOSPITAL", "PRACTICE", "CLINIC", "WARD", "BED", "ROOM"}
+    if location.kind.upper() not in allowed_kinds:
+        raise Exception(
+            f"{field_name} must be a location of kind HOSPITAL, PRACTICE, CLINIC, "
+            f"WARD, BED, or ROOM, but got {location.kind}"
+        )
+
+
+def validate_team_kind(location: models.LocationNode, field_name: str) -> None:
+    """Validate that a location is a valid team type."""
+    allowed_kinds = {"CLINIC", "TEAM", "PRACTICE", "HOSPITAL"}
+    if location.kind.upper() not in allowed_kinds:
+        raise Exception(
+            f"{field_name} must be a location of kind CLINIC, TEAM, PRACTICE, "
+            f"or HOSPITAL, but got {location.kind}"
+        )
+
+
 @strawberry.type
 class PatientQuery:
     @strawberry.field
@@ -26,6 +55,7 @@ class PatientQuery:
             .options(
                 selectinload(models.Patient.assigned_locations),
                 selectinload(models.Patient.tasks),
+                selectinload(models.Patient.teams),
             ),
         )
         return result.scalars().first()
@@ -40,6 +70,7 @@ class PatientQuery:
         query = select(models.Patient).options(
             selectinload(models.Patient.assigned_locations),
             selectinload(models.Patient.tasks),
+            selectinload(models.Patient.teams),
         )
         
         if states:
@@ -88,6 +119,7 @@ class PatientQuery:
             .options(
                 selectinload(models.Patient.assigned_locations),
                 selectinload(models.Patient.tasks),
+                selectinload(models.Patient.teams),
             )
             .limit(limit)
         )
@@ -103,7 +135,46 @@ class PatientMutation:
         info: Info,
         data: CreatePatientInput,
     ) -> PatientType:
+        db = info.context.db
         initial_state = data.state.value if data.state else PatientState.WAIT.value
+        
+        clinic_result = await db.execute(
+            select(models.LocationNode).where(
+                models.LocationNode.id == data.clinic_id,
+            ),
+        )
+        clinic = clinic_result.scalars().first()
+        if not clinic:
+            raise Exception(f"Clinic location with id {data.clinic_id} not found")
+        validate_location_kind(clinic, "CLINIC", "clinic_id")
+
+        position = None
+        if data.position_id:
+            position_result = await db.execute(
+                select(models.LocationNode).where(
+                    models.LocationNode.id == data.position_id,
+                ),
+            )
+            position = position_result.scalars().first()
+            if not position:
+                raise Exception(f"Position location with id {data.position_id} not found")
+            validate_position_kind(position, "position_id")
+
+        teams = []
+        if data.team_ids:
+            teams_result = await db.execute(
+                select(models.LocationNode).where(
+                    models.LocationNode.id.in_(data.team_ids),
+                ),
+            )
+            teams = list(teams_result.scalars().all())
+            if len(teams) != len(data.team_ids):
+                found_ids = {t.id for t in teams}
+                missing_ids = set(data.team_ids) - found_ids
+                raise Exception(f"Team locations with ids {missing_ids} not found")
+            for team in teams:
+                validate_team_kind(team, "team_ids")
+
         new_patient = models.Patient(
             firstname=data.firstname,
             lastname=data.lastname,
@@ -111,10 +182,15 @@ class PatientMutation:
             sex=data.sex.value,
             state=initial_state,
             assigned_location_id=data.assigned_location_id,
+            clinic_id=data.clinic_id,
+            position_id=data.position_id,
         )
 
+        if teams:
+            new_patient.teams = teams
+
         if data.assigned_location_ids:
-            result = await info.context.db.execute(
+            result = await db.execute(
                 select(models.LocationNode).where(
                     models.LocationNode.id.in_(data.assigned_location_ids),
                 ),
@@ -122,7 +198,7 @@ class PatientMutation:
             locations = result.scalars().all()
             new_patient.assigned_locations = list(locations)
         elif data.assigned_location_id:
-            result = await info.context.db.execute(
+            result = await db.execute(
                 select(models.LocationNode).where(
                     models.LocationNode.id == data.assigned_location_id,
                 ),
@@ -133,16 +209,16 @@ class PatientMutation:
 
         if data.properties:
             await process_properties(
-                info.context.db,
+                db,
                 new_patient,
                 data.properties,
                 "patient",
             )
 
-        info.context.db.add(new_patient)
-        await info.context.db.commit()
+        db.add(new_patient)
+        await db.commit()
 
-        await info.context.db.refresh(new_patient, ["assigned_locations"])
+        await db.refresh(new_patient, ["assigned_locations", "teams"])
         await redis_client.publish("patient_created", new_patient.id)
         return new_patient
 
@@ -157,7 +233,10 @@ class PatientMutation:
         result = await db.execute(
             select(models.Patient)
             .where(models.Patient.id == id)
-            .options(selectinload(models.Patient.assigned_locations)),
+            .options(
+                selectinload(models.Patient.assigned_locations),
+                selectinload(models.Patient.teams),
+            ),
         )
         patient = result.scalars().first()
         if not patient:
@@ -171,6 +250,49 @@ class PatientMutation:
             patient.birthdate = data.birthdate
         if data.sex is not None:
             patient.sex = data.sex.value
+
+        # Update clinic (if provided)
+        if data.clinic_id is not None:
+            clinic_result = await db.execute(
+                select(models.LocationNode).where(
+                    models.LocationNode.id == data.clinic_id,
+                ),
+            )
+            clinic = clinic_result.scalars().first()
+            if not clinic:
+                raise Exception(f"Clinic location with id {data.clinic_id} not found")
+            validate_location_kind(clinic, "CLINIC", "clinic_id")
+            patient.clinic_id = data.clinic_id
+
+        if data.position_id is not None:
+            position_result = await db.execute(
+                select(models.LocationNode).where(
+                    models.LocationNode.id == data.position_id,
+                ),
+            )
+            position = position_result.scalars().first()
+            if not position:
+                raise Exception(f"Position location with id {data.position_id} not found")
+            validate_position_kind(position, "position_id")
+            patient.position_id = data.position_id
+
+        if data.team_ids is not None:
+            if len(data.team_ids) == 0:
+                patient.teams = []
+            else:
+                teams_result = await db.execute(
+                    select(models.LocationNode).where(
+                        models.LocationNode.id.in_(data.team_ids),
+                    ),
+                )
+                teams = list(teams_result.scalars().all())
+                if len(teams) != len(data.team_ids):
+                    found_ids = {t.id for t in teams}
+                    missing_ids = set(data.team_ids) - found_ids
+                    raise Exception(f"Team locations with ids {missing_ids} not found")
+                for team in teams:
+                    validate_team_kind(team, "team_ids")
+                patient.teams = teams
 
         if data.assigned_location_ids is not None:
             result = await db.execute(
@@ -196,7 +318,7 @@ class PatientMutation:
             await process_properties(db, patient, data.properties, "patient")
 
         await db.commit()
-        await db.refresh(patient, ["assigned_locations"])
+        await db.refresh(patient, ["assigned_locations", "teams"])
         return patient
 
     @strawberry.mutation
@@ -218,7 +340,10 @@ class PatientMutation:
         result = await db.execute(
             select(models.Patient)
             .where(models.Patient.id == id)
-            .options(selectinload(models.Patient.assigned_locations)),
+            .options(
+                selectinload(models.Patient.assigned_locations),
+                selectinload(models.Patient.teams),
+            ),
         )
         patient = result.scalars().first()
         if not patient:
@@ -234,7 +359,10 @@ class PatientMutation:
         result = await db.execute(
             select(models.Patient)
             .where(models.Patient.id == id)
-            .options(selectinload(models.Patient.assigned_locations)),
+            .options(
+                selectinload(models.Patient.assigned_locations),
+                selectinload(models.Patient.teams),
+            ),
         )
         patient = result.scalars().first()
         if not patient:
@@ -250,7 +378,10 @@ class PatientMutation:
         result = await db.execute(
             select(models.Patient)
             .where(models.Patient.id == id)
-            .options(selectinload(models.Patient.assigned_locations)),
+            .options(
+                selectinload(models.Patient.assigned_locations),
+                selectinload(models.Patient.teams),
+            ),
         )
         patient = result.scalars().first()
         if not patient:
@@ -266,7 +397,10 @@ class PatientMutation:
         result = await db.execute(
             select(models.Patient)
             .where(models.Patient.id == id)
-            .options(selectinload(models.Patient.assigned_locations)),
+            .options(
+                selectinload(models.Patient.assigned_locations),
+                selectinload(models.Patient.teams),
+            ),
         )
         patient = result.scalars().first()
         if not patient:

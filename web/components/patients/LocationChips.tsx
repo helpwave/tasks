@@ -14,6 +14,7 @@ type PartialLocationNode = {
 
 interface LocationChipsProps {
   locations: PartialLocationNode[],
+  disableLink?: boolean,
 }
 
 const getKindStyles = (kind: string | undefined) => {
@@ -27,7 +28,7 @@ const getKindStyles = (kind: string | undefined) => {
   return 'bg-surface-subdued text-text-tertiary'
 }
 
-export const LocationChips = ({ locations }: LocationChipsProps) => {
+export const LocationChips = ({ locations, disableLink = false }: LocationChipsProps) => {
   const translation = useTasksTranslation()
 
   if (locations.length === 0) {
@@ -50,29 +51,39 @@ export const LocationChips = ({ locations }: LocationChipsProps) => {
   const remainingCount = locations.length - 1
   const remainingLocations = locations.slice(1)
 
+  const chipContent = (
+    <Chip
+      size="small"
+      color="neutral"
+      className="cursor-pointer hover:opacity-80 transition-opacity"
+    >
+      <div className="flex items-center gap-1">
+        <MapPin className="size-3" />
+        <span>{firstLocation?.title}</span>
+        {firstLocation?.kind && (
+          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider ${getKindStyles(firstLocation.kind)}`}>
+            {translation('locationType', { type: firstLocation.kind })}
+          </span>
+        )}
+      </div>
+    </Chip>
+  )
+
   return (
-    <div className="flex flex-wrap items-center gap-1.5">
+    <div className="flex flex-wrap items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
       <Tooltip
         tooltip={formatLocationPath(firstLocation)}
         position="top"
       >
-        <Link href={`/location/${firstLocation.id}`} className="inline-block">
-          <Chip
-            size="small"
-            color="neutral"
-            className="cursor-pointer hover:opacity-80 transition-opacity"
-          >
-            <div className="flex items-center gap-1">
-              <MapPin className="size-3" />
-              <span>{firstLocation?.title}</span>
-              {firstLocation?.kind && (
-                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider ${getKindStyles(firstLocation.kind)}`}>
-                  {translation('locationType', { type: firstLocation.kind })}
-                </span>
-              )}
-            </div>
-          </Chip>
-        </Link>
+        {disableLink ? (
+          <div className="inline-block">
+            {chipContent}
+          </div>
+        ) : (
+          <Link href={`/location/${firstLocation.id}`} className="inline-block">
+            {chipContent}
+          </Link>
+        )}
       </Tooltip>
       {remainingCount > 0 && (
         <Tooltip
@@ -83,6 +94,7 @@ export const LocationChips = ({ locations }: LocationChipsProps) => {
             size="small"
             color="neutral"
             className="cursor-help whitespace-pre-line"
+            onClick={(e) => e.stopPropagation()}
           >
             +{remainingCount}
           </Chip>

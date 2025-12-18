@@ -128,12 +128,14 @@ const PropertiesPage: NextPage = () => {
           </Button>
         )}
       >
-        <Table
-          className="w-full h-full"
-          data={data ?? []}
-          columns={columns}
-          fillerRow={() => (<FillerRowElement className="min-h-12"/>)}
-        />
+        <div className="overflow-x-auto -mx-4 px-4 lg:mx-0 lg:px-0">
+          <Table
+            className="w-full h-full min-w-[600px]"
+            data={data ?? []}
+            columns={columns}
+            fillerRow={() => (<FillerRowElement className="min-h-12"/>)}
+          />
+        </div>
       </ContentPanel>
       <SidePanel
         isOpen={isPanelOpen}

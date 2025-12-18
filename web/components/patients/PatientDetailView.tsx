@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import type { CreatePatientInput, LocationNodeType, UpdatePatientInput } from '@/api/gql/generated'
 import {
@@ -31,14 +31,28 @@ import {
   TabView
 } from '@helpwave/hightide'
 import { useTasksContext } from '@/hooks/useTasksContext'
-import { CheckCircle2, ChevronDown, Circle, Clock, MapPin, PlusIcon, XIcon } from 'lucide-react'
+import { CheckCircle2, ChevronDown, Circle, Clock, MapPin, PlusIcon, XIcon, Building2, Locate, Users } from 'lucide-react'
 import { PatientStateChip } from '@/components/patients/PatientStateChip'
+import { LocationChips } from '@/components/patients/LocationChips'
 import { LocationSelectionDialog } from '@/components/locations/LocationSelectionDialog'
 import clsx from 'clsx'
 import { SidePanel } from '@/components/layout/SidePanel'
 import { TaskDetailView } from '@/components/tasks/TaskDetailView'
 import { SmartDate } from '@/utils/date'
-import { formatLocationPath } from '@/utils/location'
+import { formatLocationPath, formatLocationPathFromId } from '@/utils/location'
+import { useGetLocationsQuery } from '@/api/gql/generated'
+
+type ExtendedCreatePatientInput = CreatePatientInput & {
+  clinicId?: string,
+  positionId?: string,
+  teamIds?: string[],
+}
+
+type ExtendedUpdatePatientInput = UpdatePatientInput & {
+  clinicId?: string,
+  positionId?: string,
+  teamIds?: string[],
+}
 
 const toISODate = (d: Date | string): string => {
   const date = typeof d === 'string' ? new Date(d) : d
@@ -159,6 +173,17 @@ export const PatientDetailView = ({
     { enabled: isEditMode }
   )
 
+  const { data: locationsData } = useGetLocationsQuery()
+
+  const locationsMap = useMemo(() => {
+    if (!locationsData?.locationNodes) return new Map()
+    const map = new Map<string, { id: string, title: string, parentId?: string | null }>()
+    locationsData.locationNodes.forEach(loc => {
+      map.set(loc.id, { id: loc.id, title: loc.title, parentId: loc.parentId || null })
+    })
+    return map
+  }, [locationsData])
+
   const { mutate: completeTask } = useCompleteTaskMutation({ onSuccess: () => refetch() })
   const { mutate: reopenTask } = useReopenTaskMutation({ onSuccess: () => refetch() })
 
@@ -169,25 +194,36 @@ export const PatientDetailView = ({
     assignedLocationIds: selectedLocationId ? [selectedLocationId] : [],
     birthdate: getDefaultBirthdate(),
     state: PatientState.Wait,
+    clinicId: undefined,
     ...initialCreateData,
-  })
+  } as CreatePatientInput & { clinicId?: string, positionId?: string, teamIds?: string[] })
   const [isWaiting, setIsWaiting] = useState(false)
-  const [isLocationDialogOpen, setIsLocationDialogOpen] = useState(false)
-  const [selectedLocations, setSelectedLocations] = useState<LocationNodeType[]>([])
+  const [isClinicDialogOpen, setIsClinicDialogOpen] = useState(false)
+  const [isPositionDialogOpen, setIsPositionDialogOpen] = useState(false)
+  const [isTeamsDialogOpen, setIsTeamsDialogOpen] = useState(false)
+  const [selectedClinic, setSelectedClinic] = useState<LocationNodeType | null>(null)
+  const [selectedPosition, setSelectedPosition] = useState<LocationNodeType | null>(null)
+  const [selectedTeams, setSelectedTeams] = useState<LocationNodeType[]>([])
   const [isMarkDeadDialogOpen, setIsMarkDeadDialogOpen] = useState(false)
   const [isDischargeDialogOpen, setIsDischargeDialogOpen] = useState(false)
 
   useEffect(() => {
     if (patientData?.patient) {
-      const { firstname, lastname, sex, birthdate, assignedLocations } = patientData.patient
+      const patient = patientData.patient
+      const { firstname, lastname, sex, birthdate, assignedLocations, clinic, position, teams } = patient
       setFormData({
         firstname,
         lastname,
         sex,
         birthdate: toISODate(birthdate),
-        assignedLocationIds: assignedLocations.map(loc => loc.id)
-      })
-      setSelectedLocations(assignedLocations as LocationNodeType[])
+        assignedLocationIds: assignedLocations.map(loc => loc.id),
+        clinicId: clinic?.id || undefined,
+        positionId: position?.id || undefined,
+        teamIds: teams?.map(t => t.id) || undefined,
+      } as CreatePatientInput & { clinicId?: string, positionId?: string, teamIds?: string[] })
+      setSelectedClinic(clinic ? (clinic as LocationNodeType) : null)
+      setSelectedPosition(position ? (position as LocationNodeType) : null)
+      setSelectedTeams((teams || []) as LocationNodeType[])
     }
   }, [patientData])
 
@@ -237,10 +273,21 @@ export const PatientDetailView = ({
     if (updates.firstname !== undefined && !updates.firstname?.trim()) return
     if (updates.lastname !== undefined && !updates.lastname?.trim()) return
 
-    if (isEditMode && patientId) {
+    const cleanedUpdates: Partial<UpdatePatientInput> = { ...updates }
+    if (cleanedUpdates.clinicId === '' || cleanedUpdates.clinicId === undefined) {
+      delete cleanedUpdates.clinicId
+    }
+    if (cleanedUpdates.positionId === '' || cleanedUpdates.positionId === undefined) {
+      delete cleanedUpdates.positionId
+    }
+    if (cleanedUpdates.teamIds === undefined || (Array.isArray(cleanedUpdates.teamIds) && cleanedUpdates.teamIds.length === 0)) {
+      delete cleanedUpdates.teamIds
+    }
+
+    if (isEditMode && patientId && Object.keys(cleanedUpdates).length > 0) {
       updatePatient({
         id: patientId,
-        data: updates as UpdatePatientInput
+        data: cleanedUpdates as UpdatePatientInput
       })
     }
   }
@@ -251,23 +298,67 @@ export const PatientDetailView = ({
 
   const handleSubmit = () => {
     if (!formData.firstname.trim() || !formData.lastname.trim()) return
+    if (!selectedClinic?.id) {
+      return
+    }
 
-    const dataToSend = { ...formData }
-    dataToSend.state = isWaiting ? PatientState.Wait : PatientState.Admitted
+    const dataToSend = {
+      ...formData,
+      clinicId: selectedClinic.id,
+      state: isWaiting ? PatientState.Wait : PatientState.Admitted,
+    } as ExtendedCreatePatientInput
+
+    if (selectedPosition) {
+      dataToSend.positionId = selectedPosition.id
+    }
+
+    if (selectedTeams.length > 0) {
+      dataToSend.teamIds = selectedTeams.map(t => t.id)
+    }
 
     if (!dataToSend.assignedLocationIds || dataToSend.assignedLocationIds.length === 0) {
       delete dataToSend.assignedLocationIds
+    }
+    if (!dataToSend.positionId) {
+      delete dataToSend.positionId
+    }
+    if (!dataToSend.teamIds || dataToSend.teamIds.length === 0) {
+      delete dataToSend.teamIds
     }
 
     createPatient({ data: dataToSend })
   }
 
-  const handleLocationSelect = (locations: LocationNodeType[]) => {
-    setSelectedLocations(locations)
-    const locationIds = locations.map(loc => loc.id)
-    updateLocalState({ assignedLocationIds: locationIds })
-    persistChanges({ assignedLocationIds: locationIds })
-    setIsLocationDialogOpen(false)
+  const handleClinicSelect = (locations: LocationNodeType[]) => {
+    const clinic = locations[0]
+    if (clinic) {
+      setSelectedClinic(clinic)
+      updateLocalState({ clinicId: clinic.id } as Partial<ExtendedCreatePatientInput>)
+      persistChanges({ clinicId: clinic.id } as Partial<ExtendedUpdatePatientInput>)
+    }
+    setIsClinicDialogOpen(false)
+  }
+
+  const handlePositionSelect = (locations: LocationNodeType[]) => {
+    const position = locations[0]
+    if (position) {
+      setSelectedPosition(position)
+      updateLocalState({ positionId: position.id } as Partial<ExtendedCreatePatientInput>)
+      persistChanges({ positionId: position.id } as Partial<ExtendedUpdatePatientInput>)
+    } else {
+      setSelectedPosition(null)
+      updateLocalState({ positionId: undefined } as Partial<ExtendedCreatePatientInput>)
+      persistChanges({ positionId: undefined } as Partial<ExtendedUpdatePatientInput>)
+    }
+    setIsPositionDialogOpen(false)
+  }
+
+  const handleTeamsSelect = (locations: LocationNodeType[]) => {
+    setSelectedTeams(locations)
+    const teamIds = locations.map(loc => loc.id)
+    updateLocalState({ teamIds } as Partial<ExtendedCreatePatientInput>)
+    persistChanges({ teamIds } as Partial<ExtendedUpdatePatientInput>)
+    setIsTeamsDialogOpen(false)
   }
 
   const sexOptions = [
@@ -292,6 +383,20 @@ export const PatientDetailView = ({
   const openTasks = sortByDueDate(tasks.filter(t => !t.done))
   const closedTasks = sortByDueDate(tasks.filter(t => t.done))
 
+  const patientName = patientData?.patient ? `${patientData.patient.firstname} ${patientData.patient.lastname}` : ''
+  const displayLocation = useMemo(() => {
+    if (patientData?.patient?.position) {
+      return [patientData.patient.position]
+    }
+    if (selectedClinic) {
+      return [selectedClinic]
+    }
+    if (patientData?.patient?.assignedLocations && patientData.patient.assignedLocations.length > 0) {
+      return patientData.patient.assignedLocations
+    }
+    return []
+  }, [patientData?.patient?.position, patientData?.patient?.assignedLocations, selectedClinic])
+
   const startDate = useMemo(() => {
     const year = new Date()
     year.setFullYear(year.getFullYear() - 100)
@@ -305,9 +410,6 @@ export const PatientDetailView = ({
   if (isEditMode && isLoadingPatient) {
     return <LoadingContainer/>
   }
-
-  const patientName = patientData?.patient ? `${patientData.patient.firstname} ${patientData.patient.lastname}` : ''
-  const patientLocation = selectedLocations.length > 0 ? selectedLocations.map(loc => formatLocationPath(loc)).join(' ▸ ') : ''
 
   const handleToggleDone = (taskId: string, done: boolean) => {
     if (done) {
@@ -327,19 +429,18 @@ export const PatientDetailView = ({
               <PatientStateChip state={patientData.patient.state}/>
             )}
           </div>
-          {patientLocation && (
-            <div className="flex items-center gap-1 text-sm text-description">
-              <MapPin className="size-3"/>
-              {patientLocation}
+          {displayLocation.length > 0 && (
+            <div className="flex items-center gap-1">
+              <LocationChips locations={displayLocation} disableLink={false} />
             </div>
           )}
         </div>
       )}
       <div className="flex-col-0 flex-grow overflow-hidden">
         <TabView className="h-full flex-col-0">
-          <Tab label={translation('tasks')} className="h-full overflow-y-auto pr-2">
-            <div className="flex flex-col gap-4 pt-4">
-              {isEditMode && (
+          {isEditMode && (
+            <Tab label={translation('tasks')} className="h-full overflow-y-auto pr-2">
+              <div className="flex flex-col gap-4 pt-4">
                 <div className="mb-2">
                   <Button
                     startIcon={<PlusIcon/>}
@@ -349,61 +450,61 @@ export const PatientDetailView = ({
                     {translation('addTask')}
                   </Button>
                 </div>
-              )}
-              <div>
-                <button
-                  onClick={() => setOpenExpanded(!openExpanded)}
-                  className="text-lg font-bold mb-3 flex items-center gap-2 w-full text-left"
-                >
-                  <ChevronDown className={clsx('size-5 transition-transform', { '-rotate-90': !openExpanded })}/>
-                  <Circle className="size-5 text-warning"/>
-                  {translation('openTasks')} ({openTasks.length})
-                </button>
-                {openExpanded && (
-                  <div className="flex flex-col gap-2">
-                    {openTasks.length === 0 &&
-                      <div className="text-description italic">{translation('noOpenTasks')}</div>}
-                    {openTasks.map(task => (
-                      <TaskCard
-                        key={task.id}
-                        task={task}
-                        onClick={() => setTaskId(task.id)}
-                        onToggleDone={(done) => handleToggleDone(task.id, done)}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
+                <div>
+                  <button
+                    onClick={() => setOpenExpanded(!openExpanded)}
+                    className="text-lg font-bold mb-3 flex items-center gap-2 w-full text-left"
+                  >
+                    <ChevronDown className={clsx('size-5 transition-transform', { '-rotate-90': !openExpanded })}/>
+                    <Circle className="size-5 text-warning"/>
+                    {translation('openTasks')} ({openTasks.length})
+                  </button>
+                  {openExpanded && (
+                    <div className="flex flex-col gap-2">
+                      {openTasks.length === 0 &&
+                        <div className="text-description italic">{translation('noOpenTasks')}</div>}
+                      {openTasks.map(task => (
+                        <TaskCard
+                          key={task.id}
+                          task={task}
+                          onClick={() => setTaskId(task.id)}
+                          onToggleDone={(done) => handleToggleDone(task.id, done)}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
 
-              <div className="opacity-75">
-                <button
-                  onClick={() => setClosedExpanded(!closedExpanded)}
-                  className="text-lg font-bold mb-3 flex items-center gap-2 w-full text-left"
-                >
-                  <ChevronDown className={clsx('size-5 transition-transform', { '-rotate-90': !closedExpanded })}/>
-                  <CheckCircle2 className="size-5 text-positive"/>
-                  {translation('closedTasks')} ({closedTasks.length})
-                </button>
-                {closedExpanded && (
-                  <div className="flex flex-col gap-2">
-                    {closedTasks.length === 0 &&
-                      <div className="text-description italic">{translation('noClosedTasks')}</div>}
-                    {closedTasks.map(task => (
-                      <TaskCard
-                        key={task.id}
-                        task={task}
-                        onClick={() => setTaskId(task.id)}
-                        onToggleDone={(done) => handleToggleDone(task.id, done)}
-                      />
-                    ))}
-                  </div>
-                )}
+                <div className="opacity-75">
+                  <button
+                    onClick={() => setClosedExpanded(!closedExpanded)}
+                    className="text-lg font-bold mb-3 flex items-center gap-2 w-full text-left"
+                  >
+                    <ChevronDown className={clsx('size-5 transition-transform', { '-rotate-90': !closedExpanded })}/>
+                    <CheckCircle2 className="size-5 text-positive"/>
+                    {translation('closedTasks')} ({closedTasks.length})
+                  </button>
+                  {closedExpanded && (
+                    <div className="flex flex-col gap-2">
+                      {closedTasks.length === 0 &&
+                        <div className="text-description italic">{translation('noClosedTasks')}</div>}
+                      {closedTasks.map(task => (
+                        <TaskCard
+                          key={task.id}
+                          task={task}
+                          onClick={() => setTaskId(task.id)}
+                          onToggleDone={(done) => handleToggleDone(task.id, done)}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          </Tab>
+            </Tab>
+          )}
 
           <Tab label={translation('patientData')} className="flex-col-6 px-1 pt-4 h-full overflow-x-visible ">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormElementWrapper label={translation('firstName')}>
                 {({ isShowingError: _, setIsShowingError: _2, ...bag }) => (
                   <Input
@@ -532,32 +633,32 @@ export const PatientDetailView = ({
               )
             })()}
 
-            <FormElementWrapper label={translation('assignedLocation')}>
+            <FormElementWrapper label={translation('clinic') + ' *'}>
               {({ isShowingError: _, setIsShowingError: _2, ...bag }) => (
                 <div className="flex flex-col gap-2">
                   <div className="flex gap-2">
                     <Input
                       {...bag}
-                      value={selectedLocations.length > 0
-                        ? selectedLocations.map(loc => loc.title).join(', ')
-                        : ''}
-                      placeholder={translation('selectLocation')}
+                      value={selectedClinic ? (locationsMap.size > 0 ? formatLocationPathFromId(selectedClinic.id, locationsMap) : formatLocationPath(selectedClinic)) : ''}
+                      placeholder={translation('selectClinic')}
                       readOnly
-                      className="flex-grow"
+                      className="flex-grow cursor-pointer"
+                      required
+                      onClick={() => setIsClinicDialogOpen(true)}
                     />
                     <Button
-                      onClick={() => setIsLocationDialogOpen(true)}
+                      onClick={() => setIsClinicDialogOpen(true)}
                       layout="icon"
-                      title={translation('selectLocation')}
+                      title={translation('selectClinic')}
                     >
-                      <MapPin className="size-4"/>
+                      <Building2 className="size-4"/>
                     </Button>
-                    {selectedLocations.length > 0 && (
+                    {selectedClinic && (
                       <Button
                         onClick={() => {
-                          setSelectedLocations([])
-                          updateLocalState({ assignedLocationIds: [] })
-                          persistChanges({ assignedLocationIds: [] })
+                          setSelectedClinic(null)
+                          updateLocalState({ clinicId: undefined } as Partial<ExtendedCreatePatientInput>)
+                          persistChanges({ clinicId: undefined } as Partial<ExtendedUpdatePatientInput>)
                         }}
                         layout="icon"
                         color="neutral"
@@ -567,19 +668,84 @@ export const PatientDetailView = ({
                       </Button>
                     )}
                   </div>
-                  {selectedLocations.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {selectedLocations.map(location => (
-                        <span
-                          key={location.id}
-                          className="inline-flex items-center gap-1 px-2 py-1 rounded bg-surface-subdued text-sm"
-                        >
-                          <MapPin className="size-3"/>
-                          {location.title}
-                        </span>
-                      ))}
-                    </div>
-                  )}
+                </div>
+              )}
+            </FormElementWrapper>
+
+            <FormElementWrapper label={translation('position')}>
+              {({ isShowingError: _, setIsShowingError: _2, ...bag }) => (
+                <div className="flex flex-col gap-2">
+                  <div className="flex gap-2">
+                    <Input
+                      {...bag}
+                      value={selectedPosition ? (locationsMap.size > 0 ? formatLocationPathFromId(selectedPosition.id, locationsMap) : formatLocationPath(selectedPosition)) : ''}
+                      placeholder={translation('selectPosition')}
+                      readOnly
+                      className="flex-grow cursor-pointer"
+                      onClick={() => setIsPositionDialogOpen(true)}
+                    />
+                    <Button
+                      onClick={() => setIsPositionDialogOpen(true)}
+                      layout="icon"
+                      title={translation('selectPosition')}
+                    >
+                      <Locate className="size-4"/>
+                    </Button>
+                    {selectedPosition && (
+                      <Button
+                        onClick={() => {
+                          setSelectedPosition(null)
+                          updateLocalState({ positionId: undefined } as Partial<ExtendedCreatePatientInput>)
+                          persistChanges({ positionId: undefined } as Partial<ExtendedUpdatePatientInput>)
+                        }}
+                        layout="icon"
+                        color="neutral"
+                        title={translation('clear')}
+                      >
+                        <XIcon className="size-5"/>
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </FormElementWrapper>
+
+            <FormElementWrapper label={translation('teams')}>
+              {({ isShowingError: _, setIsShowingError: _2, ...bag }) => (
+                <div className="flex flex-col gap-2">
+                  <div className="flex gap-2">
+                    <Input
+                      {...bag}
+                      value={selectedTeams.length > 0
+                        ? selectedTeams.map(loc => locationsMap.size > 0 ? formatLocationPathFromId(loc.id, locationsMap) : formatLocationPath(loc)).join(', ')
+                        : ''}
+                      placeholder={translation('selectTeams')}
+                      readOnly
+                      className="flex-grow cursor-pointer"
+                      onClick={() => setIsTeamsDialogOpen(true)}
+                    />
+                    <Button
+                      onClick={() => setIsTeamsDialogOpen(true)}
+                      layout="icon"
+                      title={translation('selectTeams')}
+                    >
+                      <Users className="size-4"/>
+                    </Button>
+                    {selectedTeams.length > 0 && (
+                      <Button
+                        onClick={() => {
+                          setSelectedTeams([])
+                          updateLocalState({ teamIds: [] } as Partial<ExtendedCreatePatientInput>)
+                          persistChanges({ teamIds: [] } as Partial<ExtendedUpdatePatientInput>)
+                        }}
+                        layout="icon"
+                        color="neutral"
+                        title={translation('clear')}
+                      >
+                        <XIcon className="size-5"/>
+                      </Button>
+                    )}
+                  </div>
                 </div>
               )}
             </FormElementWrapper>
@@ -640,11 +806,28 @@ export const PatientDetailView = ({
       />
 
       <LocationSelectionDialog
-        isOpen={isLocationDialogOpen}
-        onClose={() => setIsLocationDialogOpen(false)}
-        onSelect={handleLocationSelect}
-        initialSelectedIds={selectedLocations.map(loc => loc.id)}
+        isOpen={isClinicDialogOpen}
+        onClose={() => setIsClinicDialogOpen(false)}
+        onSelect={handleClinicSelect}
+        initialSelectedIds={selectedClinic ? [selectedClinic.id] : []}
+        multiSelect={false}
+        useCase="clinic"
+      />
+      <LocationSelectionDialog
+        isOpen={isPositionDialogOpen}
+        onClose={() => setIsPositionDialogOpen(false)}
+        onSelect={handlePositionSelect}
+        initialSelectedIds={selectedPosition ? [selectedPosition.id] : []}
+        multiSelect={false}
+        useCase="position"
+      />
+      <LocationSelectionDialog
+        isOpen={isTeamsDialogOpen}
+        onClose={() => setIsTeamsDialogOpen(false)}
+        onSelect={handleTeamsSelect}
+        initialSelectedIds={selectedTeams.map(loc => loc.id)}
         multiSelect={true}
+        useCase="teams"
       />
       <SidePanel
         isOpen={!!taskId || isCreatingTask}

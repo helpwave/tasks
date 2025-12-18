@@ -15,7 +15,7 @@ type PatientViewModel = {
   name: string,
   firstname: string,
   lastname: string,
-  locations: GetPatientsQuery['patients'][0]['assignedLocations'],
+  position: GetPatientsQuery['patients'][0]['position'],
   openTasksCount: number,
   closedTasksCount: number,
   birthdate: Date,
@@ -59,7 +59,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ locat
       birthdate: new Date(p.birthdate),
       sex: p.sex,
       state: p.state,
-      locations: p.assignedLocations as PatientViewModel['locations'],
+      position: p.position,
       openTasksCount: p.tasks?.filter(t => !t.done).length ?? 0,
       closedTasksCount: p.tasks?.filter(t => t.done).length ?? 0,
       tasks: []
@@ -165,11 +165,11 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ locat
       maxSize: 150,
     },
     {
-      id: 'locations',
+      id: 'position',
       header: translation('location'),
-      accessorKey: 'locations',
+      accessorKey: 'position',
       cell: ({ row }) => (
-        <LocationChips locations={row.original.locations} />
+        <LocationChips locations={row.original.position ? [row.original.position] : []} />
       ),
       minSize: 200,
       size: 250,
@@ -217,8 +217,8 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ locat
 
   return (
     <div className="flex flex-col h-full gap-4">
-      <div className="flex justify-between w-full">
-        <div className="w-full max-w-md">
+      <div className="flex flex-col sm:flex-row justify-between w-full gap-4">
+        <div className="w-full sm:max-w-md">
           <SearchBar
             placeholder={translation('search')}
             value={searchQuery}
@@ -232,18 +232,20 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ locat
             setSelectedPatient(undefined)
             setIsPanelOpen(true)
           }}
-          className="min-w-[13rem]"
+          className="w-full sm:w-auto min-w-[13rem]"
         >
           {translation('addPatient')}
         </Button>
       </div>
-      <Table
-        className="w-full h-full cursor-pointer"
-        data={patients}
-        columns={columns}
-        fillerRow={() => (<FillerRowElement className="min-h-12" />)}
-        onRowClick={(row) => handleEdit(row.original)}
-      />
+      <div className="overflow-x-auto -mx-4 px-4 lg:mx-0 lg:px-0">
+        <Table
+          className="w-full h-full cursor-pointer min-w-[800px]"
+          data={patients}
+          columns={columns}
+          fillerRow={() => (<FillerRowElement className="min-h-12" />)}
+          onRowClick={(row) => handleEdit(row.original)}
+        />
+      </div>
       <SidePanel
         isOpen={isPanelOpen}
         onClose={handleClose}

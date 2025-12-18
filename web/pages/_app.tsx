@@ -12,6 +12,7 @@ import { getConfig } from '@/utils/config'
 import '../globals.css'
 import { AuthProvider } from '@/hooks/useAuth'
 import { TasksContextProvider } from '@/hooks/useTasksContext'
+import { InstallPrompt } from '@/components/pwa/InstallPrompt'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -55,6 +56,7 @@ function MyApp({
                     >
                       <TasksContextProvider>
                         <Component {...pageProps} />
+                        <InstallPrompt />
                       </TasksContextProvider>
                     </AuthProvider>
                     {config.env === 'development' && <ReactQueryDevtools position="bottom-left" />}

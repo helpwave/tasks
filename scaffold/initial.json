@@ -1,0 +1,95 @@
+[
+  {
+    "name": "helpwave Krankenhaus",
+    "type": "HOSPITAL",
+    "children": [
+      {
+        "name": "Cardiology",
+        "type": "CLINIC",
+        "children": [
+          { "name": "Cardio-Diagnostics Team", "type": "TEAM" },
+          { "name": "Interventional Team", "type": "TEAM" },
+          {
+            "name": "Ward C1",
+            "type": "WARD",
+            "children": [
+              {
+                "name": "Raum 01",
+                "type": "ROOM",
+                "children": [
+                  { "name": "Bett Tür", "type": "BED" },
+                  { "name": "Bett Fenster", "type": "BED" }
+                ]
+              },
+              {
+                "name": "Raum 02",
+                "type": "ROOM",
+                "children": [
+                  { "name": "Bett Tür", "type": "BED" },
+                  { "name": "Bett Fenster", "type": "BED" }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Orthopedics",
+        "type": "CLINIC",
+        "children": [
+          { "name": "Surgical Excellence Team", "type": "TEAM" },
+          { "name": "Physio-Support Team", "type": "TEAM" },
+          {
+            "name": "Ward O2",
+            "type": "WARD",
+            "children": [
+              {
+                "name": "Raum 01",
+                "type": "ROOM",
+                "children": [
+                  { "name": "Bett Tür", "type": "BED" },
+                  { "name": "Bett Fenster", "type": "BED" }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "Ward O3",
+            "type": "WARD",
+            "children": [
+              {
+                "name": "Raum 01",
+                "type": "ROOM",
+                "children": [
+                  { "name": "Bett Tür", "type": "BED" },
+                  { "name": "Bett Fenster", "type": "BED" }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Neurology",
+        "type": "CLINIC",
+        "children": [
+          { "name": "Stroke Response Team", "type": "TEAM" },
+          {
+            "name": "Ward N1",
+            "type": "WARD",
+            "children": [
+              {
+                "name": "Raum 01",
+                "type": "ROOM",
+                "children": [
+                  { "name": "Bett Tür", "type": "BED" },
+                  { "name": "Bett Fenster", "type": "BED" }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]
