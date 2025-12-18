@@ -307,7 +307,10 @@ export const LocationSelectionDialog = ({
   const handleToggleSelect = (node: LocationNodeType, checked: boolean) => {
     const newSet = new Set(selectedIds)
     if (checked) {
-      if (!multiSelect) newSet.clear()
+      // For clinic useCase, enforce exactly one selection (clear all first)
+      if (useCase === 'clinic' || !multiSelect) {
+        newSet.clear()
+      }
       newSet.add(node.id)
     } else {
       newSet.delete(node.id)
@@ -439,7 +442,10 @@ export const LocationSelectionDialog = ({
         <Button onClick={onClose} color="neutral">
           {translation('cancel')}
         </Button>
-        <Button onClick={handleConfirm}>
+        <Button
+          onClick={handleConfirm}
+          disabled={useCase === 'clinic' && selectedIds.size !== 1}
+        >
           {translation('confirmSelection')} ({selectedIds.size})
         </Button>
       </div>

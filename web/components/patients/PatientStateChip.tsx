@@ -25,7 +25,7 @@ export const PatientStateChip = ({ state }: PatientStateChipProps) => {
   }
 
   return (
-    <Chip color={getColor(state)} size="small" className="font-[var(--font-space-grotesk)] uppercase">
+    <Chip color={getColor(state)} size="small" className="font-[var(--font-space-grotesk)] uppercase text-xs">
       {translation('patientState', { state: state as string })}
     </Chip>
   )
