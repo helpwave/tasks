@@ -15,6 +15,7 @@ type PartialLocationNode = {
 interface LocationChipsProps {
   locations: PartialLocationNode[],
   disableLink?: boolean,
+  small?: boolean,
 }
 
 const getKindStyles = (kind: string | undefined) => {
@@ -28,7 +29,7 @@ const getKindStyles = (kind: string | undefined) => {
   return 'bg-surface-subdued text-text-tertiary'
 }
 
-export const LocationChips = ({ locations, disableLink = false }: LocationChipsProps) => {
+export const LocationChips = ({ locations, disableLink = false, small = false }: LocationChipsProps) => {
   const translation = useTasksTranslation()
 
   if (locations.length === 0) {
@@ -55,7 +56,7 @@ export const LocationChips = ({ locations, disableLink = false }: LocationChipsP
     <Chip
       size="small"
       color="neutral"
-      className="cursor-pointer hover:opacity-80 transition-opacity"
+      className={`cursor-pointer hover:opacity-80 transition-opacity ${small ? 'text-xs' : ''}`}
     >
       <div className="flex items-center gap-1">
         <MapPin className="size-3" />
@@ -93,7 +94,7 @@ export const LocationChips = ({ locations, disableLink = false }: LocationChipsP
           <Chip
             size="small"
             color="neutral"
-            className="cursor-help whitespace-pre-line"
+            className={`cursor-help whitespace-pre-line ${small ? 'text-xs' : ''}`}
             onClick={(e) => e.stopPropagation()}
           >
             +{remainingCount}

@@ -171,7 +171,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
                 >
                   {data.patient?.name}
                 </Button>
-                <LocationChips locations={data.patient.locations || []}/>
+                <LocationChips locations={data.patient.locations || []} small />
               </div>
             )
           },

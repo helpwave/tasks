@@ -128,9 +128,9 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ locat
       cell: ({ row }) => (
         <PatientStateChip state={row.original.state} />
       ),
-      minSize: 100,
-      size: 120,
-      maxSize: 150,
+      minSize: 120,
+      size: 144,
+      maxSize: 180,
     },
     {
       id: 'sex',
@@ -169,7 +169,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ locat
       header: translation('location'),
       accessorKey: 'position',
       cell: ({ row }) => (
-        <LocationChips locations={row.original.position ? [row.original.position] : []} />
+        <LocationChips locations={row.original.position ? [row.original.position] : []} small />
       ),
       minSize: 200,
       size: 250,
