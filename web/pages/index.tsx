@@ -117,7 +117,7 @@ const Dashboard: NextPage = () => {
         </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mt-4">
-          <ContentPanel title={translation('recentTasks')} description={translation('tasksUpdatedRecently')}>
+          <ContentPanel titleElement={translation('recentTasks')} description={translation('tasksUpdatedRecently')}>
             <div className="overflow-x-auto -mx-4 px-4 lg:mx-0 lg:px-0">
               <Table
                 className="cursor-pointer min-w-[600px]"
@@ -129,7 +129,7 @@ const Dashboard: NextPage = () => {
             </div>
           </ContentPanel>
 
-          <ContentPanel title={translation('recentPatients')} description={translation('patientsUpdatedRecently')}>
+          <ContentPanel titleElement={translation('recentPatients')} description={translation('patientsUpdatedRecently')}>
             <div className="overflow-x-auto -mx-4 px-4 lg:mx-0 lg:px-0">
               <Table
                 className="cursor-pointer min-w-[600px]"

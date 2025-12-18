@@ -2,16 +2,16 @@ import { useEffect, useState, useMemo } from 'react'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import type { CreatePatientInput, LocationNodeType, UpdatePatientInput } from '@/api/gql/generated'
 import {
-  Sex,
   PatientState,
+  Sex,
+  useAdmitPatientMutation,
   useCompleteTaskMutation,
   useCreatePatientMutation,
+  useDischargePatientMutation,
   useGetPatientQuery,
+  useMarkPatientDeadMutation,
   useReopenTaskMutation,
   useUpdatePatientMutation,
-  useAdmitPatientMutation,
-  useDischargePatientMutation,
-  useMarkPatientDeadMutation,
   useWaitPatientMutation
 } from '@/api/gql/generated'
 import type { ButtonProps } from '@helpwave/hightide'
@@ -20,6 +20,7 @@ import {
   Button,
   CheckboxUncontrolled,
   ConfirmDialog,
+  DateTimeInput,
   FormElementWrapper,
   Input,
   LoadingButton,
@@ -30,7 +31,6 @@ import {
   TabView
 } from '@helpwave/hightide'
 import { useTasksContext } from '@/hooks/useTasksContext'
-import { DateInput } from '@/components/ui/DateInput'
 import { CheckCircle2, ChevronDown, Circle, Clock, PlusIcon, XIcon, Building2, Locate, Users } from 'lucide-react'
 import { PatientStateChip } from '@/components/patients/PatientStateChip'
 import { LocationChips } from '@/components/patients/LocationChips'
@@ -60,6 +60,18 @@ const toISODate = (d: Date | string): string => {
   const month = String(date.getMonth() + 1).padStart(2, '0')
   const day = String(date.getDate()).padStart(2, '0')
   return `${year}-${month}-${day}`
+}
+
+export const localToUTCWithSameTime = (d: Date) => {
+  return new Date(Date.UTC(
+    d.getFullYear(),
+    d.getMonth(),
+    d.getDate(),
+    d.getHours(),
+    d.getMinutes(),
+    d.getSeconds(),
+    d.getMilliseconds()
+  ))
 }
 
 const getDefaultBirthdate = () => {
@@ -456,6 +468,16 @@ export const PatientDetailView = ({
     return []
   }, [patientData?.patient?.position, patientData?.patient?.assignedLocations, selectedClinic])
 
+  const startDate = useMemo(() => {
+    const year = new Date()
+    year.setFullYear(year.getFullYear() - 100)
+    return year
+  }, [])
+
+  const endDate = useMemo(() => {
+    return new Date()
+  }, [])
+
   if (isEditMode && isLoadingPatient) {
     return <LoadingContainer/>
   }
@@ -475,7 +497,7 @@ export const PatientDetailView = ({
           <div className="flex items-center justify-between">
             <div className="font-semibold text-lg">{patientName}</div>
             {patientData?.patient?.state && (
-              <PatientStateChip state={patientData.patient.state} />
+              <PatientStateChip state={patientData.patient.state}/>
             )}
           </div>
           {displayLocation.length > 0 && (
@@ -612,18 +634,26 @@ export const PatientDetailView = ({
               isShowingError={!!birthdateError}
             >
               {({ isShowingError, setIsShowingError: _setIsShowingError, ...bag }) => (
-                <DateInput
+                <DateTimeInput
                   {...bag}
-                  date={formData.birthdate ? new Date(formData.birthdate as string) : null}
+                  date={formData.birthdate ? new Date(formData.birthdate as string) : undefined}
+                  pickerProps={{
+                    start: startDate,
+                    end: endDate
+                  }}
                   mode="date"
-                  required
-                  onValueChange={date => {
+                  required={true}
+                  onValueChange={(date) => {
+                    // TODO fix this later when hightide use UTC strings only
                     const dateStr = toISODate(date)
                     updateLocalState({ birthdate: dateStr })
-                    persistChanges({ birthdate: dateStr })
                     if (isShowingError) {
                       validateBirthdate(dateStr)
                     }
+                  }}
+                  onEditCompleted={(date) => {
+                    updateLocalState({ birthdate: toISODate(date) })
+                    persistChanges({ birthdate: toISODate(localToUTCWithSameTime(date)) })
                   }}
                   onRemove={() => {
                     updateLocalState({ birthdate: null })
