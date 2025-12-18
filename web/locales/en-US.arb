@@ -299,5 +299,10 @@
   "waitingroom": "Waitingroom",
   "deleteTaskConfirmation": "Are you sure you want to delete this task? This action cannot be undone.",
   "markPatientDeadConfirmation": "Are you sure you want to mark this patient as dead?",
-  "dischargePatientConfirmation": "Are you sure you want to discharge this patient? This action will change the patient state."
+  "dischargePatientConfirmation": "Are you sure you want to discharge this patient? This action will change the patient state.",
+  "openSurvey": "Open Survey",
+  "retakeSurvey": "Retake Survey",
+  "feedback": "Feedback",
+  "surveyTitle": "Help us to improve helpwave tasks",
+  "surveyDescription": "Your feedback is valuable to us. Please take a moment to complete our survey."
 }

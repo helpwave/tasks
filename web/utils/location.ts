@@ -28,28 +28,28 @@ export const formatLocationPath = (location: PartialLocationNode | LocationNodeT
 
 export const buildLocationPathFromId = (
   locationId: string | null | undefined,
-  allLocations: Map<string, { id: string, title: string, parentId?: string | null }>,
+  allLocations: Map<string, { id: string, title: string, parentId?: string | null }>
 ): string[] => {
   if (!locationId) return []
-  
+
   const path: string[] = []
   let currentId: string | null | undefined = locationId
-  
+
   while (currentId) {
     const location = allLocations.get(currentId)
     if (!location) break
-    
+
     path.unshift(location.title)
     currentId = location.parentId || null
   }
-  
+
   return path
 }
 
 export const formatLocationPathFromId = (
   locationId: string | null | undefined,
   allLocations: Map<string, { id: string, title: string, parentId?: string | null }>,
-  separator: string = LOCATION_PATH_SEPARATOR,
+  separator: string = LOCATION_PATH_SEPARATOR
 ): string => {
   return buildLocationPathFromId(locationId, allLocations).join(separator)
 }

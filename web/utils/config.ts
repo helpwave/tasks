@@ -11,6 +11,8 @@ export const publicEnvSchema = z.object({
   RUNTIME_CLIENT_ID: z.string().min(1).default('tasks-web'),
   RUNTIME_REDIRECT_URI: z.string().min(1).default('http://localhost:3000/auth/callback'),
   RUNTIME_POST_LOGOUT_REDIRECT_URI: z.string().min(1).default('http://localhost:3000/'),
+  RUNTIME_ONBOARDING_SURVEY_URL: z.string().url().optional(),
+  RUNTIME_WEEKLY_SURVEY_URL: z.string().url().optional(),
 })
 
 const configSchema = publicEnvSchema.transform(obj => ({
@@ -20,6 +22,8 @@ const configSchema = publicEnvSchema.transform(obj => ({
   imprintUrl: obj.RUNTIME_IMPRINT_URL,
   privacyUrl: obj.RUNTIME_PRIVACY_URL,
   graphqlEndpoint: obj.RUNTIME_GRAPHQL_ENDPOINT,
+  onboardingSurveyUrl: obj.RUNTIME_ONBOARDING_SURVEY_URL,
+  weeklySurveyUrl: obj.RUNTIME_WEEKLY_SURVEY_URL,
   auth: {
     issuer: obj.RUNTIME_ISSUER_URI,
     clientId: obj.RUNTIME_CLIENT_ID,

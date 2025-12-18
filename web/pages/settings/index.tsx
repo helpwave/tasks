@@ -16,10 +16,13 @@ import {
 import type { HightideTranslationLocales, ThemeType } from '@helpwave/hightide'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { useAuth } from '@/hooks/useAuth'
-import { LogOut, MonitorCog, MoonIcon, SunIcon, Trash2 } from 'lucide-react'
+import { LogOut, MonitorCog, MoonIcon, SunIcon, Trash2, ClipboardList } from 'lucide-react'
 import clsx from 'clsx'
 import { removeUser } from '@/api/auth/authService'
 import { useQueryClient } from '@tanstack/react-query'
+import { hashString } from '@/utils/hash'
+import { getConfig } from '@/utils/config'
+import { useLocalStorage } from '@helpwave/hightide'
 
 type ThemeIconProps = {
   theme: ThemeType,
@@ -49,6 +52,15 @@ const SettingsPage: NextPage = () => {
   const { user } = useTasksContext()
   const { logout } = useAuth()
   const queryClient = useQueryClient()
+  const config = getConfig()
+
+  const {
+    setValue: setOnboardingSurveyCompleted
+  } = useLocalStorage('onboarding-survey-completed', 0)
+
+  const {
+    setValue: setWeeklySurveyLastCompleted
+  } = useLocalStorage('weekly-survey-last-completed', 0)
 
   const handleClearCache = async () => {
     queryClient.clear()
@@ -61,6 +73,21 @@ const SettingsPage: NextPage = () => {
     }
 
     window.location.href = '/'
+  }
+
+  const handleRetakeSurvey = async () => {
+    if (!user?.id) return
+
+    setOnboardingSurveyCompleted(0)
+    setWeeklySurveyLastCompleted(0)
+
+    const surveyUrl = config.onboardingSurveyUrl || config.weeklySurveyUrl
+    if (surveyUrl) {
+      const hashedUserId = await hashString(user.id)
+      const url = new URL(surveyUrl)
+      url.searchParams.set('userId', hashedUserId)
+      window.open(url.toString(), '_blank', 'noopener,noreferrer')
+    }
   }
 
   return (
@@ -159,6 +186,23 @@ const SettingsPage: NextPage = () => {
               </div>
             </div>
           </div>
+
+          {/* Survey */}
+          {(config.onboardingSurveyUrl || config.weeklySurveyUrl) && (
+            <div className="flex-col-6">
+              <h2 className="typography-title-md border-b border-divider pb-2">{translation('feedback')}</h2>
+              <div className="flex-row-4 flex-wrap">
+                <Button
+                  color="neutral"
+                  coloringStyle="outline"
+                  onClick={handleRetakeSurvey}
+                  startIcon={<ClipboardList className="w-4 h-4" />}
+                >
+                  {translation('retakeSurvey')}
+                </Button>
+              </div>
+            </div>
+          )}
 
           {/* Account / Danger Zone */}
           <div className="flex-col-6">
