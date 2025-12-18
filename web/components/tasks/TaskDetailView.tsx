@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import type { CreateTaskInput, UpdateTaskInput } from '@/api/gql/generated'
 import {
@@ -44,6 +44,10 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
   const [isShowingPatientDialog, setIsShowingPatientDialog] = useState<boolean>(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState<boolean>(false)
   const isEditMode = !!taskId
+
+  // Validation state for required fields
+  const [titleError, setTitleError] = useState<string | null>(null)
+  const [patientIdError, setPatientIdError] = useState<string | null>(null)
 
   const { data: taskData, isLoading: isLoadingTask, refetch } = useGetTaskQuery(
     { id: taskId! },
@@ -114,6 +118,33 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
     setFormData(prev => ({ ...prev, ...updates }))
   }
 
+  // Validation functions
+  const validateTitle = (value: string): boolean => {
+    if (!value || !value.trim()) {
+      setTitleError(translation('taskTitlePlaceholder') + ' is required')
+      return false
+    }
+    setTitleError(null)
+    return true
+  }
+
+  const validatePatientId = (value: string | null | undefined): boolean => {
+    if (!value || !value.trim()) {
+      setPatientIdError(translation('patient') + ' is required')
+      return false
+    }
+    setPatientIdError(null)
+    return true
+  }
+
+  // Check if form is valid (for create mode)
+  const isFormValid = useMemo(() => {
+    if (isEditMode) return true // Edit mode doesn't need validation for submission
+    const titleValid = formData.title?.trim() || false
+    const patientIdValid = !!formData.patientId
+    return titleValid && patientIdValid
+  }, [formData.title, formData.patientId, isEditMode])
+
   const persistChanges = (updates: Partial<UpdateTaskInput>) => {
     if (isEditMode && taskId) {
       if (updates.title !== undefined && !updates.title?.trim()) return
@@ -140,7 +171,13 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
   }
 
   const handleSubmit = () => {
-    if (!formData.title?.trim() || !formData.patientId) return
+    // Validate all required fields
+    const titleValid = validateTitle(formData.title || '')
+    const patientIdValid = validatePatientId(formData.patientId)
+
+    if (!titleValid || !patientIdValid) {
+      return
+    }
 
     createTask({
       data: {
@@ -166,7 +203,7 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
       <div className="flex-grow overflow-hidden flex flex-col">
         <TabView className="h-full flex flex-col">
           <Tab label={translation('overview')} className="h-full overflow-y-auto pr-2">
-            <div className="flex flex-col gap-6 pt-4">
+            <div className="flex flex-col gap-6 pt-4 pb-24">
               <div className="flex items-center gap-3 ml-4">
                 {isEditMode && (
                   <CheckboxUncontrolled
@@ -184,24 +221,53 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
                     className="rounded-full scale-125"
                   />
                 )}
-                <Input
-                  id="task-title"
-                  name="task-title"
-                  value={formData.title || ''}
-                  placeholder={translation('taskTitlePlaceholder')}
-                  onChange={e => updateLocalState({ title: e.target.value })}
-                  onBlur={() => persistChanges({ title: formData.title })}
-                  className="flex-1 text-lg py-3"
-                />
+                <div className="flex-1">
+                  <FormElementWrapper
+                    label=""
+                    error={titleError || undefined}
+                    isShowingError={!!titleError}
+                  >
+                    {({ isShowingError, setIsShowingError: _setIsShowingError, ...bag }) => (
+                      <Input
+                        {...bag}
+                        id="task-title"
+                        name="task-title"
+                        value={formData.title || ''}
+                        placeholder={translation('taskTitlePlaceholder')}
+                        required
+                        onChange={e => {
+                          updateLocalState({ title: e.target.value })
+                          if (isShowingError) {
+                            validateTitle(e.target.value)
+                          }
+                        }}
+                        onBlur={() => {
+                          if (!isEditMode) {
+                            validateTitle(formData.title || '')
+                          }
+                          persistChanges({ title: formData.title })
+                        }}
+                        className="flex-1 text-lg py-3"
+                      />
+                    )}
+                  </FormElementWrapper>
+                </div>
               </div>
 
-              <FormElementWrapper label={translation('patient')}>
-                {({ isShowingError: _1, setIsShowingError: _2, ...bag }) => {
+              <FormElementWrapper
+                label={translation('patient')}
+                error={patientIdError || undefined}
+                isShowingError={!!patientIdError}
+              >
+                {({ isShowingError: _isShowingError, setIsShowingError: _setIsShowingError, ...bag }) => {
                   return (!isEditMode) ? (
                     <Select
                       {...bag}
                       value={formData.patientId}
-                      onValueChanged={(value) => updateLocalState({ patientId: value })}
+                      onValueChanged={(value) => {
+                        updateLocalState({ patientId: value })
+                        validatePatientId(value)
+                      }}
                       disabled={isEditMode}
                     >
                       {patients.map(patient => {
@@ -296,7 +362,7 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
           <LoadingButton
             onClick={handleSubmit}
             isLoading={isCreating}
-            disabled={!formData.title?.trim() || !formData.patientId}
+            disabled={!isFormValid}
           >
             {translation('create')}
           </LoadingButton>

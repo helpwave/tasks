@@ -154,7 +154,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ locat
           <Chip
             color={sex === Sex.Unknown ? 'neutral' : 'none'}
             size="small"
-            className={`${colorClass} font-[var(--font-space-grotesk)] uppercase`}
+            className={`${colorClass} font-[var(--font-space-grotesk)] uppercase text-xs`}
           >
             <span>{label}</span>
           </Chip>

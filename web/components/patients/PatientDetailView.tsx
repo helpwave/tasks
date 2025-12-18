@@ -195,6 +195,13 @@ export const PatientDetailView = ({
   const [isMarkDeadDialogOpen, setIsMarkDeadDialogOpen] = useState(false)
   const [isDischargeDialogOpen, setIsDischargeDialogOpen] = useState(false)
 
+  // Validation state for required fields
+  const [firstnameError, setFirstnameError] = useState<string | null>(null)
+  const [lastnameError, setLastnameError] = useState<string | null>(null)
+  const [clinicError, setClinicError] = useState<string | null>(null)
+  const [birthdateError, setBirthdateError] = useState<string | null>(null)
+  const [sexError, setSexError] = useState<string | null>(null)
+
   useEffect(() => {
     if (patientData?.patient) {
       const patient = patientData.patient
@@ -284,9 +291,72 @@ export const PatientDetailView = ({
     setFormData(prev => ({ ...prev, ...updates }))
   }
 
+  // Validation functions
+  const validateFirstname = (value: string): boolean => {
+    if (!value || !value.trim()) {
+      setFirstnameError(translation('firstName') + ' is required')
+      return false
+    }
+    setFirstnameError(null)
+    return true
+  }
+
+  const validateLastname = (value: string): boolean => {
+    if (!value || !value.trim()) {
+      setLastnameError(translation('lastName') + ' is required')
+      return false
+    }
+    setLastnameError(null)
+    return true
+  }
+
+  const validateClinic = (): boolean => {
+    if (!selectedClinic || !selectedClinic.id) {
+      setClinicError(translation('clinic') + ' is required')
+      return false
+    }
+    setClinicError(null)
+    return true
+  }
+
+  const validateBirthdate = (value: string | null | undefined): boolean => {
+    if (!value || !value.trim()) {
+      setBirthdateError(translation('birthdate') + ' is required')
+      return false
+    }
+    setBirthdateError(null)
+    return true
+  }
+
+  const validateSex = (value: Sex | null | undefined): boolean => {
+    if (!value) {
+      setSexError(translation('sex') + ' is required')
+      return false
+    }
+    setSexError(null)
+    return true
+  }
+
+  // Check if form is valid (for create mode)
+  const isFormValid = useMemo(() => {
+    if (isEditMode) return true // Edit mode doesn't need validation for submission
+    const firstnameValid = formData.firstname?.trim() || false
+    const lastnameValid = formData.lastname?.trim() || false
+    const clinicValid = !!selectedClinic?.id
+    const birthdateValid = !!formData.birthdate && formData.birthdate.trim() !== ''
+    const sexValid = !!formData.sex
+    return firstnameValid && lastnameValid && clinicValid && birthdateValid && sexValid
+  }, [formData.firstname, formData.lastname, formData.birthdate, formData.sex, selectedClinic, isEditMode])
+
   const handleSubmit = () => {
-    if (!formData.firstname.trim() || !formData.lastname.trim()) return
-    if (!selectedClinic?.id) {
+    // Validate all required fields
+    const firstnameValid = validateFirstname(formData.firstname || '')
+    const lastnameValid = validateLastname(formData.lastname || '')
+    const clinicValid = validateClinic()
+    const birthdateValid = validateBirthdate(formData.birthdate)
+    const sexValid = validateSex(formData.sex)
+
+    if (!firstnameValid || !lastnameValid || !clinicValid || !birthdateValid || !sexValid || !selectedClinic) {
       return
     }
 
@@ -323,6 +393,7 @@ export const PatientDetailView = ({
       setSelectedClinic(clinic)
       updateLocalState({ clinicId: clinic.id } as Partial<ExtendedCreatePatientInput>)
       persistChanges({ clinicId: clinic.id } as Partial<ExtendedUpdatePatientInput>)
+      validateClinic()
     }
     setIsClinicDialogOpen(false)
   }
@@ -418,7 +489,7 @@ export const PatientDetailView = ({
         <TabView className="h-full flex-col-0">
           {isEditMode && (
             <Tab label={translation('tasks')} className="h-full overflow-y-auto pr-2">
-              <div className="flex flex-col gap-4 pt-4">
+              <div className="flex flex-col gap-4 pt-4 pb-24">
                 <div className="mb-2">
                   <Button
                     startIcon={<PlusIcon/>}
@@ -481,66 +552,104 @@ export const PatientDetailView = ({
             </Tab>
           )}
 
-          <Tab label={translation('patientData')} className="flex-col-6 px-1 pt-4 h-full overflow-x-visible ">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormElementWrapper label={translation('firstName')}>
-                {({ isShowingError: _, setIsShowingError: _2, ...bag }) => (
+          <Tab label={translation('patientData')} className="flex-col-6 px-1 pt-4 h-full overflow-x-visible overflow-y-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-24">
+              <FormElementWrapper
+                label={translation('firstName')}
+                error={firstnameError || undefined}
+                isShowingError={!!firstnameError}
+              >
+                {({ isShowingError, setIsShowingError: _setIsShowingError, ...bag }) => (
                   <Input
                     {...bag}
                     value={formData.firstname}
                     placeholder={translation('firstName')}
+                    required
                     onChange={e => {
                       const val = e.target.value
                       updateLocalState({ firstname: val })
+                      if (isShowingError) {
+                        validateFirstname(val)
+                      }
                     }}
-                    onBlur={() => persistChanges({ firstname: formData.firstname })}
+                    onBlur={() => {
+                      validateFirstname(formData.firstname || '')
+                      persistChanges({ firstname: formData.firstname })
+                    }}
                   />
                 )}
               </FormElementWrapper>
-              <FormElementWrapper label={translation('lastName')}>
-                {({ isShowingError: _, setIsShowingError: _2, ...bag }) => (
+              <FormElementWrapper
+                label={translation('lastName')}
+                error={lastnameError || undefined}
+                isShowingError={!!lastnameError}
+              >
+                {({ isShowingError, setIsShowingError: _setIsShowingError, ...bag }) => (
                   <Input
                     {...bag}
                     value={formData.lastname}
                     placeholder={translation('lastName')}
+                    required
                     onChange={e => {
                       const val = e.target.value
                       updateLocalState({ lastname: val })
+                      if (isShowingError) {
+                        validateLastname(val)
+                      }
                     }}
-                    onBlur={() => persistChanges({ lastname: formData.lastname })}
+                    onBlur={() => {
+                      validateLastname(formData.lastname || '')
+                      persistChanges({ lastname: formData.lastname })
+                    }}
                   />
                 )}
               </FormElementWrapper>
             </div>
 
-            <FormElementWrapper label={translation('birthdate')}>
-              {({ isShowingError: _, setIsShowingError: _2, ...bag }) => (
+            <FormElementWrapper
+              label={translation('birthdate')}
+              error={birthdateError || undefined}
+              isShowingError={!!birthdateError}
+            >
+              {({ isShowingError, setIsShowingError: _setIsShowingError, ...bag }) => (
                 <DateInput
                   {...bag}
-                  date={new Date(formData.birthdate as string)}
+                  date={formData.birthdate ? new Date(formData.birthdate as string) : null}
                   mode="date"
+                  required
                   onValueChange={date => {
                     const dateStr = toISODate(date)
                     updateLocalState({ birthdate: dateStr })
                     persistChanges({ birthdate: dateStr })
+                    if (isShowingError) {
+                      validateBirthdate(dateStr)
+                    }
                   }}
                   onRemove={() => {
                     updateLocalState({ birthdate: null })
                     persistChanges({ birthdate: null })
+                    if (!isEditMode) {
+                      validateBirthdate(null)
+                    }
                   }}
                 />
               )}
             </FormElementWrapper>
 
 
-            <FormElementWrapper label={translation('sex')}>
-              {({ isShowingError: _, setIsShowingError: _2, ...bag }) => (
+            <FormElementWrapper
+              label={translation('sex')}
+              error={sexError || undefined}
+              isShowingError={!!sexError}
+            >
+              {({ isShowingError: _isShowingError, setIsShowingError: _setIsShowingError, ...bag }) => (
                 <Select
                   {...bag}
                   value={formData.sex}
                   onValueChanged={(value) => {
                     updateLocalState({ sex: value as Sex })
                     persistChanges({ sex: value as Sex })
+                    validateSex(value as Sex)
                   }}
                 >
                   {sexOptions.map(option => (
@@ -603,8 +712,12 @@ export const PatientDetailView = ({
               )
             })()}
 
-            <FormElementWrapper label={translation('clinic') + ' *'}>
-              {({ isShowingError: _, setIsShowingError: _2, ...bag }) => (
+            <FormElementWrapper
+              label={translation('clinic') + ' *'}
+              error={clinicError || undefined}
+              isShowingError={!!clinicError}
+            >
+              {({ isShowingError: _isShowingError, setIsShowingError: _setIsShowingError, ...bag }) => (
                 <div className="flex flex-col gap-2">
                   <div className="flex gap-2">
                     <Input
@@ -623,12 +736,13 @@ export const PatientDetailView = ({
                     >
                       <Building2 className="size-4"/>
                     </Button>
-                    {selectedClinic && (
+                    {selectedClinic && !isEditMode && (
                       <Button
                         onClick={() => {
                           setSelectedClinic(null)
                           updateLocalState({ clinicId: undefined } as Partial<ExtendedCreatePatientInput>)
                           persistChanges({ clinicId: undefined } as Partial<ExtendedUpdatePatientInput>)
+                          validateClinic()
                         }}
                         layout="icon"
                         color="neutral"
@@ -729,6 +843,7 @@ export const PatientDetailView = ({
           <LoadingButton
             onClick={handleSubmit}
             isLoading={isCreating}
+            disabled={!isFormValid}
           >
             {translation('create')}
           </LoadingButton>
