@@ -9,6 +9,7 @@ import {
   SelectOption,
   Textarea
 } from '@helpwave/hightide'
+import { ValidatedFormElementWrapper } from '@/components/ui/Form'
 import type { Property, PropertyFieldType, PropertySelectOption, PropertySubjectType } from '@/components/PropertyList'
 import { propertyFieldTypeList, propertySubjectTypeList } from '@/components/PropertyList'
 import { useMutation } from '@tanstack/react-query'
@@ -94,16 +95,21 @@ export const PropertyDetailView = ({
     <div className="flex flex-col h-full bg-surface">
       <div className="flex-grow overflow-hidden flex flex-col">
         <div className="flex flex-col gap-6 pt-4">
-          <FormElementWrapper label={translation('name')}>
-            {({ ...bag }) => (
+          <ValidatedFormElementWrapper
+            label={translation('name')}
+            value={formData.name}
+            required={true}
+          >
+            {({ invalid, ...bag }) => (
               <Input
                 {...bag}
                 value={formData.name}
                 onChange={e => updateLocal({ name: e.target.value })}
                 onBlur={() => persist({ name: formData.name })}
+                invalid={invalid}
               />
             )}
-          </FormElementWrapper>
+          </ValidatedFormElementWrapper>
 
           <FormElementWrapper label={translation('description')}>
             {({ ...bag }) => (

@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState } from 'react'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import type { CreatePatientInput, LocationNodeType, UpdatePatientInput } from '@/api/gql/generated'
 import {
@@ -29,29 +29,17 @@ import {
   Tab,
   TabView
 } from '@helpwave/hightide'
+import { ValidatedFormElementWrapper, FormValidationProvider, useFormValidationContext } from '@/components/ui/Form'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { DateInput } from '@/components/ui/DateInput'
-import { CheckCircle2, ChevronDown, Circle, Clock, MapPin, PlusIcon, XIcon, Building2, Locate, Users } from 'lucide-react'
+import { CheckCircle2, ChevronDown, Circle, Clock, MapPin, PlusIcon, XIcon } from 'lucide-react'
 import { PatientStateChip } from '@/components/patients/PatientStateChip'
 import { LocationSelectionDialog } from '@/components/locations/LocationSelectionDialog'
 import clsx from 'clsx'
 import { SidePanel } from '@/components/layout/SidePanel'
 import { TaskDetailView } from '@/components/tasks/TaskDetailView'
 import { SmartDate } from '@/utils/date'
-import { formatLocationPath, formatLocationPathFromId } from '@/utils/location'
-import { useGetLocationsQuery } from '@/api/gql/generated'
-
-type ExtendedCreatePatientInput = CreatePatientInput & {
-  clinicId?: string,
-  positionId?: string,
-  teamIds?: string[],
-}
-
-type ExtendedUpdatePatientInput = UpdatePatientInput & {
-  clinicId?: string,
-  positionId?: string,
-  teamIds?: string[],
-}
+import { formatLocationPath } from '@/utils/location'
 
 const toISODate = (d: Date | string): string => {
   const date = typeof d === 'string' ? new Date(d) : d
@@ -160,17 +148,6 @@ export const PatientDetailView = ({
     { enabled: isEditMode }
   )
 
-  const { data: locationsData } = useGetLocationsQuery()
-
-  const locationsMap = useMemo(() => {
-    if (!locationsData?.locationNodes) return new Map()
-    const map = new Map<string, { id: string, title: string, parentId?: string | null }>()
-    locationsData.locationNodes.forEach(loc => {
-      map.set(loc.id, { id: loc.id, title: loc.title, parentId: loc.parentId || null })
-    })
-    return map
-  }, [locationsData])
-
   const { mutate: completeTask } = useCompleteTaskMutation({ onSuccess: () => refetch() })
   const { mutate: reopenTask } = useReopenTaskMutation({ onSuccess: () => refetch() })
 
@@ -181,16 +158,21 @@ export const PatientDetailView = ({
     assignedLocationIds: selectedLocationId ? [selectedLocationId] : [],
     birthdate: getDefaultBirthdate(),
     state: PatientState.Wait,
-    clinicId: undefined,
+    clinicId: '',
     ...initialCreateData,
-  } as CreatePatientInput & { clinicId?: string, positionId?: string, teamIds?: string[] })
+  })
   const [isWaiting, setIsWaiting] = useState(false)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isClinicDialogOpen, setIsClinicDialogOpen] = useState(false)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isPositionDialogOpen, setIsPositionDialogOpen] = useState(false)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isTeamsDialogOpen, setIsTeamsDialogOpen] = useState(false)
+  const [isLocationDialogOpen, setIsLocationDialogOpen] = useState(false)
   const [selectedClinic, setSelectedClinic] = useState<LocationNodeType | null>(null)
   const [selectedPosition, setSelectedPosition] = useState<LocationNodeType | null>(null)
   const [selectedTeams, setSelectedTeams] = useState<LocationNodeType[]>([])
+  const [selectedLocations, setSelectedLocations] = useState<LocationNodeType[]>([])
   const [isMarkDeadDialogOpen, setIsMarkDeadDialogOpen] = useState(false)
   const [isDischargeDialogOpen, setIsDischargeDialogOpen] = useState(false)
 
@@ -204,13 +186,14 @@ export const PatientDetailView = ({
         sex,
         birthdate: toISODate(birthdate),
         assignedLocationIds: assignedLocations.map(loc => loc.id),
-        clinicId: clinic?.id || undefined,
-        positionId: position?.id || undefined,
-        teamIds: teams?.map(t => t.id) || undefined,
-      } as CreatePatientInput & { clinicId?: string, positionId?: string, teamIds?: string[] })
+        clinicId: clinic?.id || '',
+        positionId: position?.id,
+        teamIds: teams?.map(t => t.id),
+      })
       setSelectedClinic(clinic ? (clinic as LocationNodeType) : null)
       setSelectedPosition(position ? (position as LocationNodeType) : null)
       setSelectedTeams((teams || []) as LocationNodeType[])
+      setSelectedLocations(assignedLocations as LocationNodeType[])
     }
   }, [patientData])
 
@@ -283,69 +266,89 @@ export const PatientDetailView = ({
     setFormData(prev => ({ ...prev, ...updates }))
   }
 
+  const validationContext = useFormValidationContext()
+
   const handleSubmit = () => {
-    if (!formData.firstname.trim() || !formData.lastname.trim()) return
-    if (!selectedClinic?.id) {
-      return
+    if (validationContext) {
+      validationContext.validateAll()
     }
 
-    const dataToSend = {
-      ...formData,
-      clinicId: selectedClinic.id,
-      state: isWaiting ? PatientState.Wait : PatientState.Admitted,
-    } as ExtendedCreatePatientInput
+    const checkAndSubmit = () => {
+      if (!formData.firstname.trim() || !formData.lastname.trim()) {
+        return
+      }
+      if (!selectedClinic?.id) {
+        return
+      }
 
-    if (selectedPosition) {
-      dataToSend.positionId = selectedPosition.id
+      const dataToSend: CreatePatientInput = {
+        ...formData,
+        clinicId: selectedClinic.id,
+        state: isWaiting ? PatientState.Wait : PatientState.Admitted,
+      }
+
+      if (selectedPosition) {
+        dataToSend.positionId = selectedPosition.id
+      }
+
+      if (selectedTeams.length > 0) {
+        dataToSend.teamIds = selectedTeams.map(t => t.id)
+      }
+
+      if (!dataToSend.assignedLocationIds || dataToSend.assignedLocationIds.length === 0) {
+        delete dataToSend.assignedLocationIds
+      }
+      if (!dataToSend.positionId) {
+        delete dataToSend.positionId
+      }
+      if (!dataToSend.teamIds || dataToSend.teamIds.length === 0) {
+        delete dataToSend.teamIds
+      }
+
+      createPatient({ data: dataToSend })
     }
 
-    if (selectedTeams.length > 0) {
-      dataToSend.teamIds = selectedTeams.map(t => t.id)
-    }
-
-    if (!dataToSend.assignedLocationIds || dataToSend.assignedLocationIds.length === 0) {
-      delete dataToSend.assignedLocationIds
-    }
-    if (!dataToSend.positionId) {
-      delete dataToSend.positionId
-    }
-    if (!dataToSend.teamIds || dataToSend.teamIds.length === 0) {
-      delete dataToSend.teamIds
-    }
-
-    createPatient({ data: dataToSend })
+    requestAnimationFrame(() => {
+      setTimeout(checkAndSubmit, 0)
+    })
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleClinicSelect = (locations: LocationNodeType[]) => {
     const clinic = locations[0]
     if (clinic) {
       setSelectedClinic(clinic)
-      updateLocalState({ clinicId: clinic.id } as Partial<ExtendedCreatePatientInput>)
-      persistChanges({ clinicId: clinic.id } as Partial<ExtendedUpdatePatientInput>)
+      updateLocalState({ clinicId: clinic.id })
+      persistChanges({ clinicId: clinic.id })
+      setIsClinicDialogOpen(false)
     }
-    setIsClinicDialogOpen(false)
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handlePositionSelect = (locations: LocationNodeType[]) => {
     const position = locations[0]
     if (position) {
       setSelectedPosition(position)
-      updateLocalState({ positionId: position.id } as Partial<ExtendedCreatePatientInput>)
-      persistChanges({ positionId: position.id } as Partial<ExtendedUpdatePatientInput>)
-    } else {
-      setSelectedPosition(null)
-      updateLocalState({ positionId: undefined } as Partial<ExtendedCreatePatientInput>)
-      persistChanges({ positionId: undefined } as Partial<ExtendedUpdatePatientInput>)
+      updateLocalState({ positionId: position.id })
+      persistChanges({ positionId: position.id })
+      setIsPositionDialogOpen(false)
     }
-    setIsPositionDialogOpen(false)
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleTeamsSelect = (locations: LocationNodeType[]) => {
     setSelectedTeams(locations)
     const teamIds = locations.map(loc => loc.id)
-    updateLocalState({ teamIds } as Partial<ExtendedCreatePatientInput>)
-    persistChanges({ teamIds } as Partial<ExtendedUpdatePatientInput>)
+    updateLocalState({ teamIds })
+    persistChanges({ teamIds })
     setIsTeamsDialogOpen(false)
+  }
+
+  const handleLocationSelect = (locations: LocationNodeType[]) => {
+    setSelectedLocations(locations)
+    const locationIds = locations.map(loc => loc.id)
+    updateLocalState({ assignedLocationIds: locationIds })
+    persistChanges({ assignedLocationIds: locationIds })
   }
 
   const sexOptions = [
@@ -386,7 +389,8 @@ export const PatientDetailView = ({
   }
 
   return (
-    <div className="flex-col-0 h-full bg-surface">
+    <FormValidationProvider>
+      <div className="flex-col-0 h-full bg-surface">
       {isEditMode && patientName && (
         <div className="px-1 py-3 mb-4">
           <div className="flex items-center justify-between">
@@ -472,8 +476,12 @@ export const PatientDetailView = ({
 
           <Tab label={translation('patientData')} className="flex-col-6 px-1 pt-4 h-full overflow-x-visible ">
             <div className="grid grid-cols-2 gap-4">
-              <FormElementWrapper label={translation('firstName')}>
-                {({ isShowingError: _, setIsShowingError: _2, ...bag }) => (
+              <ValidatedFormElementWrapper
+                label={translation('firstName')}
+                value={formData.firstname}
+                required={true}
+              >
+                {({ invalid, ...bag }) => (
                   <Input
                     {...bag}
                     value={formData.firstname}
@@ -483,11 +491,16 @@ export const PatientDetailView = ({
                       updateLocalState({ firstname: val })
                     }}
                     onBlur={() => persistChanges({ firstname: formData.firstname })}
+                    invalid={invalid}
                   />
                 )}
-              </FormElementWrapper>
-              <FormElementWrapper label={translation('lastName')}>
-                {({ isShowingError: _, setIsShowingError: _2, ...bag }) => (
+              </ValidatedFormElementWrapper>
+              <ValidatedFormElementWrapper
+                label={translation('lastName')}
+                value={formData.lastname}
+                required={true}
+              >
+                {({ invalid, ...bag }) => (
                   <Input
                     {...bag}
                     value={formData.lastname}
@@ -497,9 +510,10 @@ export const PatientDetailView = ({
                       updateLocalState({ lastname: val })
                     }}
                     onBlur={() => persistChanges({ lastname: formData.lastname })}
+                    invalid={invalid}
                   />
                 )}
-              </FormElementWrapper>
+              </ValidatedFormElementWrapper>
             </div>
 
             <FormElementWrapper label={translation('birthdate')}>
@@ -592,110 +606,32 @@ export const PatientDetailView = ({
               )
             })()}
 
-            <FormElementWrapper label={translation('clinic') + ' *'}>
+            <FormElementWrapper label={translation('assignedLocation')}>
               {({ isShowingError: _, setIsShowingError: _2, ...bag }) => (
                 <div className="flex flex-col gap-2">
                   <div className="flex gap-2">
                     <Input
                       {...bag}
-                      value={selectedClinic ? (locationsMap.size > 0 ? formatLocationPathFromId(selectedClinic.id, locationsMap) : formatLocationPath(selectedClinic)) : ''}
-                      placeholder={translation('selectClinic')}
-                      readOnly
-                      className="flex-grow cursor-pointer"
-                      required
-                      onClick={() => setIsClinicDialogOpen(true)}
-                    />
-                    <Button
-                      onClick={() => setIsClinicDialogOpen(true)}
-                      layout="icon"
-                      title={translation('selectClinic')}
-                    >
-                      <Building2 className="size-4"/>
-                    </Button>
-                    {selectedClinic && (
-                      <Button
-                        onClick={() => {
-                          setSelectedClinic(null)
-                          updateLocalState({ clinicId: undefined } as Partial<ExtendedCreatePatientInput>)
-                          persistChanges({ clinicId: undefined } as Partial<ExtendedUpdatePatientInput>)
-                        }}
-                        layout="icon"
-                        color="neutral"
-                        title={translation('clear')}
-                      >
-                        <XIcon className="size-5"/>
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              )}
-            </FormElementWrapper>
-
-            <FormElementWrapper label={translation('position')}>
-              {({ isShowingError: _, setIsShowingError: _2, ...bag }) => (
-                <div className="flex flex-col gap-2">
-                  <div className="flex gap-2">
-                    <Input
-                      {...bag}
-                      value={selectedPosition ? (locationsMap.size > 0 ? formatLocationPathFromId(selectedPosition.id, locationsMap) : formatLocationPath(selectedPosition)) : ''}
-                      placeholder={translation('selectPosition')}
-                      readOnly
-                      className="flex-grow cursor-pointer"
-                      onClick={() => setIsPositionDialogOpen(true)}
-                    />
-                    <Button
-                      onClick={() => setIsPositionDialogOpen(true)}
-                      layout="icon"
-                      title={translation('selectPosition')}
-                    >
-                      <Locate className="size-4"/>
-                    </Button>
-                    {selectedPosition && (
-                      <Button
-                        onClick={() => {
-                          setSelectedPosition(null)
-                          updateLocalState({ positionId: undefined } as Partial<ExtendedCreatePatientInput>)
-                          persistChanges({ positionId: undefined } as Partial<ExtendedUpdatePatientInput>)
-                        }}
-                        layout="icon"
-                        color="neutral"
-                        title={translation('clear')}
-                      >
-                        <XIcon className="size-5"/>
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              )}
-            </FormElementWrapper>
-
-            <FormElementWrapper label={translation('teams')}>
-              {({ isShowingError: _, setIsShowingError: _2, ...bag }) => (
-                <div className="flex flex-col gap-2">
-                  <div className="flex gap-2">
-                    <Input
-                      {...bag}
-                      value={selectedTeams.length > 0
-                        ? selectedTeams.map(loc => locationsMap.size > 0 ? formatLocationPathFromId(loc.id, locationsMap) : formatLocationPath(loc)).join(', ')
+                      value={selectedLocations.length > 0
+                        ? selectedLocations.map(loc => loc.title).join(', ')
                         : ''}
-                      placeholder={translation('selectTeams')}
+                      placeholder={translation('selectLocation')}
                       readOnly
-                      className="flex-grow cursor-pointer"
-                      onClick={() => setIsTeamsDialogOpen(true)}
+                      className="flex-grow"
                     />
                     <Button
-                      onClick={() => setIsTeamsDialogOpen(true)}
+                      onClick={() => setIsLocationDialogOpen(true)}
                       layout="icon"
-                      title={translation('selectTeams')}
+                      title={translation('selectLocation')}
                     >
-                      <Users className="size-4"/>
+                      <MapPin className="size-4"/>
                     </Button>
-                    {selectedTeams.length > 0 && (
+                    {selectedLocations.length > 0 && (
                       <Button
                         onClick={() => {
-                          setSelectedTeams([])
-                          updateLocalState({ teamIds: [] } as Partial<ExtendedCreatePatientInput>)
-                          persistChanges({ teamIds: [] } as Partial<ExtendedUpdatePatientInput>)
+                          setSelectedLocations([])
+                          updateLocalState({ assignedLocationIds: [] })
+                          persistChanges({ assignedLocationIds: [] })
                         }}
                         layout="icon"
                         color="neutral"
@@ -705,6 +641,19 @@ export const PatientDetailView = ({
                       </Button>
                     )}
                   </div>
+                  {selectedLocations.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {selectedLocations.map(location => (
+                        <span
+                          key={location.id}
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded bg-surface-subdued text-sm"
+                        >
+                          <MapPin className="size-3"/>
+                          {location.title}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </FormElementWrapper>
@@ -765,28 +714,11 @@ export const PatientDetailView = ({
       />
 
       <LocationSelectionDialog
-        isOpen={isClinicDialogOpen}
-        onClose={() => setIsClinicDialogOpen(false)}
-        onSelect={handleClinicSelect}
-        initialSelectedIds={selectedClinic ? [selectedClinic.id] : []}
-        multiSelect={false}
-        useCase="clinic"
-      />
-      <LocationSelectionDialog
-        isOpen={isPositionDialogOpen}
-        onClose={() => setIsPositionDialogOpen(false)}
-        onSelect={handlePositionSelect}
-        initialSelectedIds={selectedPosition ? [selectedPosition.id] : []}
-        multiSelect={false}
-        useCase="position"
-      />
-      <LocationSelectionDialog
-        isOpen={isTeamsDialogOpen}
-        onClose={() => setIsTeamsDialogOpen(false)}
-        onSelect={handleTeamsSelect}
-        initialSelectedIds={selectedTeams.map(loc => loc.id)}
+        isOpen={isLocationDialogOpen}
+        onClose={() => setIsLocationDialogOpen(false)}
+        onSelect={handleLocationSelect}
+        initialSelectedIds={selectedLocations.map(loc => loc.id)}
         multiSelect={true}
-        useCase="teams"
       />
       <SidePanel
         isOpen={!!taskId || isCreatingTask}
@@ -809,6 +741,7 @@ export const PatientDetailView = ({
           }}
         />
       </SidePanel>
-    </div>
+      </div>
+    </FormValidationProvider>
   )
 }

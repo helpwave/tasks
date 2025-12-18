@@ -25,6 +25,7 @@ import {
   TabView,
   Textarea
 } from '@helpwave/hightide'
+import { ValidatedFormElementWrapper, FormValidationProvider, useFormValidationContext } from '@/components/ui/Form'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { User } from 'lucide-react'
 import { SidePanel } from '@/components/layout/SidePanel'
@@ -105,7 +106,6 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
         done: taskData.task.done || false
       })
     } else if (initialPatientId && !taskId) {
-      // Set initial patient ID when creating a new task
       setFormData(prev => ({ ...prev, patientId: initialPatientId }))
     }
   }, [taskData, initialPatientId, taskId])
@@ -139,18 +139,32 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
     }
   }
 
-  const handleSubmit = () => {
-    if (!formData.title?.trim() || !formData.patientId) return
+  const validationContext = useFormValidationContext()
 
-    createTask({
-      data: {
-        title: formData.title,
-        patientId: formData.patientId,
-        description: formData.description,
-        assigneeId: formData.assigneeId,
-        dueDate: formData.dueDate,
-        properties: formData.properties
-      } as CreateTaskInput
+  const handleSubmit = () => {
+    if (validationContext) {
+      validationContext.validateAll()
+    }
+
+    const checkAndSubmit = () => {
+      if (!formData.title?.trim() || !formData.patientId) {
+        return
+      }
+
+      createTask({
+        data: {
+          title: formData.title,
+          patientId: formData.patientId,
+          description: formData.description,
+          assigneeId: formData.assigneeId,
+          dueDate: formData.dueDate,
+          properties: formData.properties
+        } as CreateTaskInput
+      })
+    }
+
+    requestAnimationFrame(() => {
+      setTimeout(checkAndSubmit, 0)
     })
   }
 
@@ -162,7 +176,8 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
   }
 
   return (
-    <div className="flex flex-col h-full bg-surface">
+    <FormValidationProvider>
+      <div className="flex flex-col h-full bg-surface">
       <div className="flex-grow overflow-hidden flex flex-col">
         <TabView className="h-full flex flex-col">
           <Tab label={translation('overview')} className="h-full overflow-y-auto pr-2">
@@ -184,25 +199,39 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
                     className="rounded-full scale-125"
                   />
                 )}
-                <Input
-                  id="task-title"
-                  name="task-title"
-                  value={formData.title || ''}
-                  placeholder={translation('taskTitlePlaceholder')}
-                  onChange={e => updateLocalState({ title: e.target.value })}
-                  onBlur={() => persistChanges({ title: formData.title })}
-                  className="flex-1 text-lg py-3"
-                />
+                <ValidatedFormElementWrapper
+                  value={formData.title}
+                  required={true}
+                >
+                  {({ invalid, ...bag }) => (
+                    <Input
+                      {...bag}
+                      id="task-title"
+                      name="task-title"
+                      value={formData.title || ''}
+                      placeholder={translation('taskTitlePlaceholder')}
+                      onChange={e => updateLocalState({ title: e.target.value })}
+                      onBlur={() => persistChanges({ title: formData.title })}
+                      className="flex-1 text-lg py-3"
+                      invalid={invalid}
+                    />
+                  )}
+                </ValidatedFormElementWrapper>
               </div>
 
-              <FormElementWrapper label={translation('patient')}>
-                {({ isShowingError: _1, setIsShowingError: _2, ...bag }) => {
+              <ValidatedFormElementWrapper
+                label={translation('patient')}
+                value={formData.patientId}
+                required={!isEditMode}
+              >
+                {({ invalid, ...bag }) => {
                   return (!isEditMode) ? (
                     <Select
                       {...bag}
                       value={formData.patientId}
                       onValueChanged={(value) => updateLocalState({ patientId: value })}
                       disabled={isEditMode}
+                      invalid={invalid}
                     >
                       {patients.map(patient => {
                         return (
@@ -225,7 +254,7 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
                     </div>
                   )
                 }}
-              </FormElementWrapper>
+              </ValidatedFormElementWrapper>
 
               <FormElementWrapper label={translation('assignedTo')}>
                 {({ isShowingError: _1, setIsShowingError: _2, ...bag }) => (
@@ -329,6 +358,7 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
         description={translation('deleteTaskConfirmation')}
         confirmType="negative"
       />
-    </div>
+      </div>
+    </FormValidationProvider>
   )
 }
