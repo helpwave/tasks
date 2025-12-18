@@ -49,12 +49,12 @@ export const SidePanel = ({ isOpen, onClose, title, children }: SidePanelProps) 
       />
       <div
         className={clsx(
-          'absolute inset-y-0 right-0 flex max-w-full pl-10 pointer-events-none'
+          'absolute inset-y-0 right-0 flex max-w-full lg:pl-10 pointer-events-none'
         )}
       >
         <div
           className={clsx(
-            'pointer-events-auto w-screen md:w-[60vw] transform transition-transform duration-300 ease-in-out',
+            'pointer-events-auto w-screen lg:w-[60vw] transform transition-transform duration-300 ease-in-out',
             isOpen ? 'translate-x-0' : 'translate-x-full'
           )}
           onTransitionEnd={handleAnimationEnd}

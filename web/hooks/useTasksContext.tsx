@@ -59,17 +59,6 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
     }
   })
 
-  useEffect(() => {
-    setState(prevState => ({
-      ...prevState,
-      sidebar: {
-        isShowingWards: !!pathName && (pathName.startsWith('/location') || pathName.startsWith('/wards') || prevState.sidebar.isShowingWards),
-        isShowingTeams: !!pathName && (pathName.startsWith('/location') || pathName.startsWith('/teams') || prevState.sidebar.isShowingTeams),
-        isShowingClinics: !!pathName && (pathName.startsWith('/location') || pathName.startsWith('/clinics') || prevState.sidebar.isShowingClinics),
-      },
-    }))
-  }, [pathName])
-
   const { data } = useGetGlobalDataQuery()
 
   useEffect(() => {

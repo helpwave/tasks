@@ -223,8 +223,8 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
 
   return (
     <div className="flex flex-col h-full gap-4">
-      <div className="flex justify-between w-full">
-        <div className="w-full max-w-md">
+      <div className="flex flex-col sm:flex-row justify-between w-full gap-4">
+        <div className="w-full sm:max-w-md">
           <SearchBar
             placeholder={translation('search')}
             value={searchQuery}
@@ -235,27 +235,29 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
         <Button
           startIcon={<PlusIcon/>}
           onClick={() => setTaskDialogState({ isOpen: true })}
-          className="min-w-[13rem]"
+          className="w-full sm:w-auto min-w-[13rem]"
         >
           {translation('addTask')}
         </Button>
       </div>
-      <Table
-        className="w-full h-full cursor-pointer"
-        data={tasks}
-        columns={columns}
-        fillerRow={() => (
-          <FillerRowElement className="min-h-12"/>
-        )}
-        initialState={{
-          sorting: [
-            { id: 'done', desc: true },
-            { id: 'updateDate', desc: true },
-          ]
-        }}
-        enableMultiSort={true}
-        onRowClick={row => setTaskDialogState({ isOpen: true, taskId: row.original.id })}
-      />
+      <div className="overflow-x-auto -mx-4 px-4 lg:mx-0 lg:px-0">
+        <Table
+          className="w-full h-full cursor-pointer min-w-[800px]"
+          data={tasks}
+          columns={columns}
+          fillerRow={() => (
+            <FillerRowElement className="min-h-12"/>
+          )}
+          initialState={{
+            sorting: [
+              { id: 'done', desc: true },
+              { id: 'updateDate', desc: true },
+            ]
+          }}
+          enableMultiSort={true}
+          onRowClick={row => setTaskDialogState({ isOpen: true, taskId: row.original.id })}
+        />
+      </div>
       <SidePanel
         title={taskDialogState.taskId ? translation('editTask') : translation('createTask')}
         isOpen={taskDialogState.isOpen}

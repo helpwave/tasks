@@ -12,6 +12,7 @@ class MyDocument extends Document {
     return (
       <Html>
         <Head>
+          <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes, viewport-fit=cover" />
           {isDev ? (
             <script
               id="env-vars-dev"
@@ -32,7 +33,12 @@ class MyDocument extends Document {
           <link rel="apple-touch-icon" sizes="167x167" href="/touch-icon-167.png" />
           <link rel="apple-touch-icon" sizes="180x180" href="/touch-icon-180.png" />
           <link rel="manifest" href="/manifest.json" />
-          <meta name="theme-color" media="(prefers-color-scheme: light)" content="white" />
+          <meta name="theme-color" content="#281c20" />
+          <meta name="apple-mobile-web-app-capable" content="yes" />
+          <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+          <meta name="apple-mobile-web-app-title" content="Tasks" />
+          <meta name="mobile-web-app-capable" content="yes" />
+          <meta name="application-name" content="helpwave tasks" />
           <meta property="og:site_name" content="helpwave" />
           <meta property="og:image" content="https://cdn.helpwave.de/thumbnail_tasks.png" />
           <meta property="og:image:url" content="https://cdn.helpwave.de/thumbnail_tasks.png" />

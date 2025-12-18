@@ -31,8 +31,9 @@ import {
 } from '@helpwave/hightide'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { DateInput } from '@/components/ui/DateInput'
-import { CheckCircle2, ChevronDown, Circle, Clock, MapPin, PlusIcon, XIcon, Building2, Locate, Users } from 'lucide-react'
+import { CheckCircle2, ChevronDown, Circle, Clock, PlusIcon, XIcon, Building2, Locate, Users } from 'lucide-react'
 import { PatientStateChip } from '@/components/patients/PatientStateChip'
+import { LocationChips } from '@/components/patients/LocationChips'
 import { LocationSelectionDialog } from '@/components/locations/LocationSelectionDialog'
 import clsx from 'clsx'
 import { SidePanel } from '@/components/layout/SidePanel'
@@ -370,12 +371,23 @@ export const PatientDetailView = ({
   const openTasks = sortByDueDate(tasks.filter(t => !t.done))
   const closedTasks = sortByDueDate(tasks.filter(t => t.done))
 
+  const patientName = patientData?.patient ? `${patientData.patient.firstname} ${patientData.patient.lastname}` : ''
+  const displayLocation = useMemo(() => {
+    if (patientData?.patient?.position) {
+      return [patientData.patient.position]
+    }
+    if (selectedClinic) {
+      return [selectedClinic]
+    }
+    if (patientData?.patient?.assignedLocations && patientData.patient.assignedLocations.length > 0) {
+      return patientData.patient.assignedLocations
+    }
+    return []
+  }, [patientData?.patient?.position, patientData?.patient?.assignedLocations, selectedClinic])
+
   if (isEditMode && isLoadingPatient) {
     return <LoadingContainer/>
   }
-
-  const patientName = patientData?.patient ? `${patientData.patient.firstname} ${patientData.patient.lastname}` : ''
-  const patientLocation = selectedClinic ? formatLocationPath(selectedClinic) : ''
 
   const handleToggleDone = (taskId: string, done: boolean) => {
     if (done) {
@@ -395,10 +407,9 @@ export const PatientDetailView = ({
               <PatientStateChip state={patientData.patient.state} />
             )}
           </div>
-          {patientLocation && (
-            <div className="flex items-center gap-1 text-sm text-description">
-              <MapPin className="size-3"/>
-              {patientLocation}
+          {displayLocation.length > 0 && (
+            <div className="flex items-center gap-1">
+              <LocationChips locations={displayLocation} disableLink={false} />
             </div>
           )}
         </div>
@@ -471,7 +482,7 @@ export const PatientDetailView = ({
           )}
 
           <Tab label={translation('patientData')} className="flex-col-6 px-1 pt-4 h-full overflow-x-visible ">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormElementWrapper label={translation('firstName')}>
                 {({ isShowingError: _, setIsShowingError: _2, ...bag }) => (
                   <Input

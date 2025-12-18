@@ -304,5 +304,8 @@
   "retakeSurvey": "Retake Survey",
   "feedback": "Feedback",
   "surveyTitle": "Help us to improve helpwave tasks",
-  "surveyDescription": "Your feedback is valuable to us. Please take a moment to complete our survey."
+  "surveyDescription": "Your feedback is valuable to us. Please take a moment to complete our survey.",
+  "installApp": "Install App",
+  "installAppDescription": "Install helpwave tasks for a better experience with offline support and faster access.",
+  "install": "Install"
 }

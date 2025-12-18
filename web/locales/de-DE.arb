@@ -305,5 +305,8 @@
   "retakeSurvey": "Umfrage erneut durchführen",
   "feedback": "Feedback",
   "surveyTitle": "Helfen Sie uns, helpwave tasks zu verbessern",
-  "surveyDescription": "Ihr Feedback ist wertvoll für uns. Bitte nehmen Sie sich einen Moment Zeit, um unsere Umfrage auszufüllen."
+  "surveyDescription": "Ihr Feedback ist wertvoll für uns. Bitte nehmen Sie sich einen Moment Zeit, um unsere Umfrage auszufüllen.",
+  "installApp": "App installieren",
+  "installAppDescription": "Installieren Sie helpwave tasks für eine bessere Erfahrung mit Offline-Unterstützung und schnellerem Zugriff.",
+  "install": "Installieren"
 }
