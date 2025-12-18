@@ -31,6 +31,7 @@ import { TasksLogo } from '@/components/TasksLogo'
 import { useRouter } from 'next/router'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { useAuth } from '@/hooks/useAuth'
+import { hashString } from '@/utils/hash'
 
 export const StagingDisclaimerDialog = () => {
   const config = getConfig()
@@ -74,6 +75,103 @@ export const StagingDisclaimerDialog = () => {
       <div className="flex-row-0 justify-end">
         <Button color="positive" onClick={dismissStagingDisclaimer}>
           {translation('confirm')}
+        </Button>
+      </div>
+    </Dialog>
+  )
+}
+
+export const SurveyModal = () => {
+  const config = getConfig()
+  const translation = useTasksTranslation()
+  const { user } = useTasksContext()
+
+  const [isSurveyOpen, setSurveyOpen] = useState(false)
+  const [surveyType, setSurveyType] = useState<'onboarding' | 'weekly' | null>(null)
+  const [surveyUrl, setSurveyUrl] = useState<string | null>(null)
+
+  const {
+    value: onboardingSurveyCompleted,
+    setValue: setOnboardingSurveyCompleted
+  } = useLocalStorage('onboarding-survey-completed', 0)
+
+  const {
+    value: weeklySurveyLastCompleted,
+    setValue: setWeeklySurveyLastCompleted
+  } = useLocalStorage('weekly-survey-last-completed', 0)
+
+  useEffect(() => {
+    if (!config.onboardingSurveyUrl && !config.weeklySurveyUrl) {
+      return
+    }
+
+    if (!user?.id) {
+      return
+    }
+
+    const setupSurvey = async () => {
+      const now = new Date().getTime()
+      const ONE_WEEK = 1000 * 60 * 60 * 24 * 7
+
+      const hashedUserId = await hashString(user.id)
+
+      if (config.onboardingSurveyUrl && onboardingSurveyCompleted === 0) {
+        const url = new URL(config.onboardingSurveyUrl)
+        url.searchParams.set('userId', hashedUserId)
+        setSurveyType('onboarding')
+        setSurveyUrl(url.toString())
+        setSurveyOpen(true)
+        return
+      }
+
+      if (config.weeklySurveyUrl && onboardingSurveyCompleted > 0 && (weeklySurveyLastCompleted === 0 || now - weeklySurveyLastCompleted >= ONE_WEEK)) {
+        const url = new URL(config.weeklySurveyUrl)
+        url.searchParams.set('userId', hashedUserId)
+        setSurveyType('weekly')
+        setSurveyUrl(url.toString())
+        setSurveyOpen(true)
+        return
+      }
+    }
+
+    setupSurvey().catch(console.error)
+  }, [config.onboardingSurveyUrl, config.weeklySurveyUrl, user?.id, onboardingSurveyCompleted, weeklySurveyLastCompleted])
+
+  const handleDismiss = () => {
+    setSurveyOpen(false)
+  }
+
+  const handleOpenSurvey = () => {
+    if (surveyUrl) {
+      window.open(surveyUrl, '_blank', 'noopener,noreferrer')
+      if (surveyType === 'onboarding') {
+        setOnboardingSurveyCompleted(new Date().getTime())
+      } else if (surveyType === 'weekly') {
+        setWeeklySurveyLastCompleted(new Date().getTime())
+      }
+      setSurveyOpen(false)
+    }
+  }
+
+  if (!surveyUrl || !surveyType) {
+    return null
+  }
+
+  return (
+    <Dialog
+      isModal={false}
+      isOpen={isSurveyOpen}
+      titleElement={translation('surveyTitle')}
+      description={translation('surveyDescription')}
+      className={clsx('z-20 w-200')}
+      backgroundClassName="z-10"
+    >
+      <div className="flex-row-0 justify-end gap-2">
+        <Button color="neutral" coloringStyle="outline" onClick={handleDismiss}>
+          {translation('dismiss')}
+        </Button>
+        <Button color="positive" onClick={handleOpenSurvey}>
+          {translation('openSurvey')}
         </Button>
       </div>
     </Dialog>
@@ -301,6 +399,7 @@ export const Page = ({
         <title>{titleWrapper(pageTitle)}</title>
       </Head>
       <StagingDisclaimerDialog />
+      <SurveyModal />
       <Sidebar className="my-4 ml-4" />
       <div className="flex-col-4 grow overflow-y-scroll">
         <Header className="sticky top-0 right-0 py-4 pr-4 bg-background text-on-background" />

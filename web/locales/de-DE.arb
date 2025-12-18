@@ -300,5 +300,10 @@
   "waitingroom": "Wartezimmer",
   "deleteTaskConfirmation": "Sind Sie sicher, dass Sie diese Aufgabe löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
   "markPatientDeadConfirmation": "Sind Sie sicher, dass Sie diesen Patienten als verstorben markieren möchten?",
-  "dischargePatientConfirmation": "Sind Sie sicher, dass Sie diesen Patienten entlassen möchten? Diese Aktion ändert den Status des Patienten."
+  "dischargePatientConfirmation": "Sind Sie sicher, dass Sie diesen Patienten entlassen möchten? Diese Aktion ändert den Status des Patienten.",
+  "openSurvey": "Umfrage öffnen",
+  "retakeSurvey": "Umfrage erneut durchführen",
+  "feedback": "Feedback",
+  "surveyTitle": "Helfen Sie uns, helpwave tasks zu verbessern",
+  "surveyDescription": "Ihr Feedback ist wertvoll für uns. Bitte nehmen Sie sich einen Moment Zeit, um unsere Umfrage auszufüllen."
 }
