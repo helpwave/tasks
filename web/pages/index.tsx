@@ -118,9 +118,9 @@ const Dashboard: NextPage = () => {
 
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mt-4">
           <ContentPanel titleElement={translation('recentTasks')} description={translation('tasksUpdatedRecently')}>
-            <div className="overflow-x-auto -mx-4 px-4 lg:mx-0 lg:px-0">
+            <div className="overflow-hidden">
               <Table
-                className="cursor-pointer min-w-[600px]"
+                className="cursor-pointer"
                 data={recentTasks}
                 columns={taskColumns}
                 fillerRow={() => (<FillerRowElement className="min-h-6"/>)}
@@ -130,9 +130,9 @@ const Dashboard: NextPage = () => {
           </ContentPanel>
 
           <ContentPanel titleElement={translation('recentPatients')} description={translation('patientsUpdatedRecently')}>
-            <div className="overflow-x-auto -mx-4 px-4 lg:mx-0 lg:px-0">
+            <div className="overflow-hidden">
               <Table
-                className="cursor-pointer min-w-[600px]"
+                className="cursor-pointer"
                 data={recentPatients}
                 columns={patientColumns}
                 fillerRow={() => (<FillerRowElement className="min-h-6"/>)}
