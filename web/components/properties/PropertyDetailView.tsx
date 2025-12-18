@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import {
   Button,
   Checkbox,
@@ -9,7 +9,7 @@ import {
   SelectOption,
   Textarea
 } from '@helpwave/hightide'
-import { ValidatedFormElementWrapper } from '@/components/ui/Form'
+import { ValidatedFormElementWrapper, FormValidationProvider, useFormValidationContext } from '@/components/ui/Form'
 import type { Property, PropertyFieldType, PropertySelectOption, PropertySubjectType } from '@/components/PropertyList'
 import { propertyFieldTypeList, propertySubjectTypeList } from '@/components/PropertyList'
 import { useMutation } from '@tanstack/react-query'
@@ -84,7 +84,17 @@ export const PropertyDetailView = ({
     updateProperty({ id, data: updates })
   }
 
+  const validationContext = useFormValidationContext()
+
+  const isFormValid = useMemo(() => {
+    if (!validationContext) return true
+    return validationContext.isFormValid()
+  }, [validationContext])
+
   const handleCreate = () => {
+    if (validationContext) {
+      validationContext.validateAll()
+    }
     if (!formData.name.trim()) return
     createProperty({ data: formData })
   }
@@ -92,6 +102,7 @@ export const PropertyDetailView = ({
   const isSelectType = formData.fieldType === 'multiSelect' || formData.fieldType === 'singleSelect'
 
   return (
+    <FormValidationProvider>
     <div className="flex flex-col h-full bg-surface">
       <div className="flex-grow overflow-hidden flex flex-col">
         <div className="flex flex-col gap-6 pt-4">
@@ -310,11 +321,12 @@ export const PropertyDetailView = ({
 
       {!isEditMode && (
         <div className="flex-none pt-4 mt-auto border-t border-divider flex justify-end">
-          <LoadingButton onClick={handleCreate} isLoading={isLoading}>
+          <LoadingButton onClick={handleCreate} isLoading={isLoading} disabled={!isFormValid}>
             Create
           </LoadingButton>
         </div>
       )}
     </div>
+    </FormValidationProvider>
   )
 }

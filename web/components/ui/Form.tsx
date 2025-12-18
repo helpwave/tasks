@@ -4,10 +4,13 @@ import { useState, useCallback, useMemo, createContext, useContext, useRef, useE
 import { FormElementWrapper, type FormElementWrapperProps } from '@helpwave/hightide'
 
 type ValidationTrigger = () => void
+type ValidationStateGetter = () => { isValid: boolean }
 
 const FormValidationContext = createContext<{
   registerField: (trigger: ValidationTrigger) => () => void,
+  registerValidationState: (getter: ValidationStateGetter) => () => void,
   validateAll: () => void,
+  isFormValid: () => boolean,
 } | null>(null)
 
 export const useFormValidationContext = () => {
@@ -17,6 +20,7 @@ export const useFormValidationContext = () => {
 
 export const FormValidationProvider = ({ children }: { children: React.ReactNode }) => {
   const fieldTriggers = useRef<Set<ValidationTrigger>>(new Set())
+  const validationStateGetters = useRef<Set<ValidationStateGetter>>(new Set())
 
   const registerField = useCallback((trigger: ValidationTrigger) => {
     fieldTriggers.current.add(trigger)
@@ -25,12 +29,29 @@ export const FormValidationProvider = ({ children }: { children: React.ReactNode
     }
   }, [])
 
+  const registerValidationState = useCallback((getter: ValidationStateGetter) => {
+    validationStateGetters.current.add(getter)
+    return () => {
+      validationStateGetters.current.delete(getter)
+    }
+  }, [])
+
   const validateAll = useCallback(() => {
     fieldTriggers.current.forEach(trigger => trigger())
   }, [])
 
+  const isFormValid = useCallback(() => {
+    for (const getter of validationStateGetters.current) {
+      const state = getter()
+      if (!state.isValid) {
+        return false
+      }
+    }
+    return true
+  }, [])
+
   return (
-    <FormValidationContext.Provider value={{ registerField, validateAll }}>
+    <FormValidationContext.Provider value={{ registerField, registerValidationState, validateAll, isFormValid }}>
       {children}
     </FormValidationContext.Provider>
   )
@@ -69,9 +90,14 @@ export const useFormFieldValidation = (
 
   useEffect(() => {
     if (validationContext) {
-      return validationContext.registerField(triggerValidation)
+      const unregisterField = validationContext.registerField(triggerValidation)
+      const unregisterState = validationContext.registerValidationState(() => ({ isValid }))
+      return () => {
+        unregisterField()
+        unregisterState()
+      }
     }
-  }, [validationContext, triggerValidation])
+  }, [validationContext, triggerValidation, isValid])
 
   const errorMessage = useMemo(() => {
     if (hasError) {

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import type { CreatePatientInput, LocationNodeType, UpdatePatientInput } from '@/api/gql/generated'
 import {
@@ -162,11 +162,8 @@ export const PatientDetailView = ({
     ...initialCreateData,
   })
   const [isWaiting, setIsWaiting] = useState(false)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isClinicDialogOpen, setIsClinicDialogOpen] = useState(false)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isPositionDialogOpen, setIsPositionDialogOpen] = useState(false)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isTeamsDialogOpen, setIsTeamsDialogOpen] = useState(false)
   const [isLocationDialogOpen, setIsLocationDialogOpen] = useState(false)
   const [selectedClinic, setSelectedClinic] = useState<LocationNodeType | null>(null)
@@ -268,6 +265,13 @@ export const PatientDetailView = ({
 
   const validationContext = useFormValidationContext()
 
+  const isFormValid = useMemo(() => {
+    if (!validationContext) return true
+    const formValid = validationContext.isFormValid()
+    const clinicValid = !!selectedClinic?.id
+    return formValid && clinicValid
+  }, [validationContext, selectedClinic])
+
   const handleSubmit = () => {
     if (validationContext) {
       validationContext.validateAll()
@@ -313,7 +317,6 @@ export const PatientDetailView = ({
     })
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleClinicSelect = (locations: LocationNodeType[]) => {
     const clinic = locations[0]
     if (clinic) {
@@ -324,7 +327,6 @@ export const PatientDetailView = ({
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handlePositionSelect = (locations: LocationNodeType[]) => {
     const position = locations[0]
     if (position) {
@@ -335,7 +337,6 @@ export const PatientDetailView = ({
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleTeamsSelect = (locations: LocationNodeType[]) => {
     setSelectedTeams(locations)
     const teamIds = locations.map(loc => loc.id)
@@ -606,6 +607,137 @@ export const PatientDetailView = ({
               )
             })()}
 
+            <ValidatedFormElementWrapper
+              label={translation('clinic')}
+              value={selectedClinic?.id}
+              required={true}
+            >
+              {({ invalid, ...bag }) => (
+                <div className="flex flex-col gap-2">
+                  <div className="flex gap-2">
+                    <Input
+                      {...bag}
+                      value={selectedClinic ? formatLocationPath(selectedClinic) : ''}
+                      placeholder={translation('selectClinic')}
+                      readOnly
+                      className="flex-grow"
+                      invalid={invalid}
+                    />
+                    <Button
+                      onClick={() => setIsClinicDialogOpen(true)}
+                      layout="icon"
+                      title={translation('selectClinic')}
+                    >
+                      <MapPin className="size-4"/>
+                    </Button>
+                    {selectedClinic && (
+                      <Button
+                        onClick={() => {
+                          setSelectedClinic(null)
+                          updateLocalState({ clinicId: '' })
+                          persistChanges({ clinicId: '' })
+                        }}
+                        layout="icon"
+                        color="neutral"
+                        title={translation('clear')}
+                      >
+                        <XIcon className="size-5"/>
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </ValidatedFormElementWrapper>
+
+            <FormElementWrapper label={translation('position')}>
+              {({ isShowingError: _, setIsShowingError: _2, ...bag }) => (
+                <div className="flex flex-col gap-2">
+                  <div className="flex gap-2">
+                    <Input
+                      {...bag}
+                      value={selectedPosition ? formatLocationPath(selectedPosition) : ''}
+                      placeholder={translation('selectPosition')}
+                      readOnly
+                      className="flex-grow"
+                    />
+                    <Button
+                      onClick={() => setIsPositionDialogOpen(true)}
+                      layout="icon"
+                      title={translation('selectPosition')}
+                    >
+                      <MapPin className="size-4"/>
+                    </Button>
+                    {selectedPosition && (
+                      <Button
+                        onClick={() => {
+                          setSelectedPosition(null)
+                          updateLocalState({ positionId: undefined })
+                          persistChanges({ positionId: undefined })
+                        }}
+                        layout="icon"
+                        color="neutral"
+                        title={translation('clear')}
+                      >
+                        <XIcon className="size-5"/>
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </FormElementWrapper>
+
+            <FormElementWrapper label={translation('teams')}>
+              {({ isShowingError: _, setIsShowingError: _2, ...bag }) => (
+                <div className="flex flex-col gap-2">
+                  <div className="flex gap-2">
+                    <Input
+                      {...bag}
+                      value={selectedTeams.length > 0
+                        ? selectedTeams.map(loc => formatLocationPath(loc)).join(', ')
+                        : ''}
+                      placeholder={translation('selectTeams')}
+                      readOnly
+                      className="flex-grow"
+                    />
+                    <Button
+                      onClick={() => setIsTeamsDialogOpen(true)}
+                      layout="icon"
+                      title={translation('selectTeams')}
+                    >
+                      <MapPin className="size-4"/>
+                    </Button>
+                    {selectedTeams.length > 0 && (
+                      <Button
+                        onClick={() => {
+                          setSelectedTeams([])
+                          updateLocalState({ teamIds: [] })
+                          persistChanges({ teamIds: [] })
+                        }}
+                        layout="icon"
+                        color="neutral"
+                        title={translation('clear')}
+                      >
+                        <XIcon className="size-5"/>
+                      </Button>
+                    )}
+                  </div>
+                  {selectedTeams.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {selectedTeams.map(team => (
+                        <span
+                          key={team.id}
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded bg-surface-subdued text-sm"
+                        >
+                          <MapPin className="size-3"/>
+                          {formatLocationPath(team)}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </FormElementWrapper>
+
             <FormElementWrapper label={translation('assignedLocation')}>
               {({ isShowingError: _, setIsShowingError: _2, ...bag }) => (
                 <div className="flex flex-col gap-2">
@@ -667,6 +799,7 @@ export const PatientDetailView = ({
           <LoadingButton
             onClick={handleSubmit}
             isLoading={isCreating}
+            disabled={!isFormValid}
           >
             {translation('create')}
           </LoadingButton>
@@ -713,6 +846,30 @@ export const PatientDetailView = ({
         confirmType="neutral"
       />
 
+      <LocationSelectionDialog
+        isOpen={isClinicDialogOpen}
+        onClose={() => setIsClinicDialogOpen(false)}
+        onSelect={handleClinicSelect}
+        initialSelectedIds={selectedClinic ? [selectedClinic.id] : []}
+        multiSelect={false}
+        useCase="clinic"
+      />
+      <LocationSelectionDialog
+        isOpen={isPositionDialogOpen}
+        onClose={() => setIsPositionDialogOpen(false)}
+        onSelect={handlePositionSelect}
+        initialSelectedIds={selectedPosition ? [selectedPosition.id] : []}
+        multiSelect={false}
+        useCase="position"
+      />
+      <LocationSelectionDialog
+        isOpen={isTeamsDialogOpen}
+        onClose={() => setIsTeamsDialogOpen(false)}
+        onSelect={handleTeamsSelect}
+        initialSelectedIds={selectedTeams.map(t => t.id)}
+        multiSelect={true}
+        useCase="teams"
+      />
       <LocationSelectionDialog
         isOpen={isLocationDialogOpen}
         onClose={() => setIsLocationDialogOpen(false)}
