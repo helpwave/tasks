@@ -14,7 +14,7 @@ import {
 import {
   Button,
   CheckboxUncontrolled,
-  ConfirmDialog, DateTimeInput,
+  ConfirmDialog,
   FormElementWrapper,
   Input,
   LoadingButton,
@@ -310,24 +310,29 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
               </FormElementWrapper>
 
               <FormElementWrapper label={translation('dueDate')}>
-                {({ isShowingError: _1, setIsShowingError: _2, ...bag }) => (
-                  <DateTimeInput
-                    {...bag}
-                    date={formData.dueDate ?? undefined}
-                    onValueChange={(date) => {
-                      updateLocalState({ dueDate: date })
-                    }}
-                    onEditCompleted={(date) => {
-                      updateLocalState({ dueDate: date })
-                      persistChanges({ dueDate: localToUTCWithSameTime(date) })
-                    }}
-                    onRemove={() => {
-                      updateLocalState({ dueDate: null })
-                      persistChanges({ dueDate: null })
-                    }}
-                    mode="dateTime"
-                  />
-                )}
+                {({ isShowingError: _1, setIsShowingError: _2, ...bag }) => {
+                  const dateValue = formData.dueDate 
+                    ? new Date(formData.dueDate).toISOString().slice(0, 16)
+                    : ''
+                  return (
+                    <Input
+                      {...bag}
+                      type="datetime-local"
+                      value={dateValue}
+                      onChange={(e) => {
+                        const date = e.target.value ? new Date(e.target.value) : null
+                        updateLocalState({ dueDate: date })
+                      }}
+                      onBlur={() => {
+                        if (formData.dueDate) {
+                          persistChanges({ dueDate: localToUTCWithSameTime(formData.dueDate) })
+                        } else {
+                          persistChanges({ dueDate: null })
+                        }
+                      }}
+                    />
+                  )
+                }}
               </FormElementWrapper>
 
               <FormElementWrapper label={translation('description')}>

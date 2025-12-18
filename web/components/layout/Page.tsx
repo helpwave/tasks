@@ -103,6 +103,11 @@ export const SurveyModal = () => {
     setValue: setWeeklySurveyLastCompleted
   } = useLocalStorage('weekly-survey-last-completed', 0)
 
+  const {
+    value: surveyLastDismissed,
+    setValue: setSurveyLastDismissed
+  } = useLocalStorage('survey-last-dismissed', 0)
+
   useEffect(() => {
     if (!config.onboardingSurveyUrl && !config.weeklySurveyUrl) {
       return
@@ -112,9 +117,18 @@ export const SurveyModal = () => {
       return
     }
 
+    if (isSurveyOpen) {
+      return
+    }
+
     const setupSurvey = async () => {
       const now = new Date().getTime()
       const ONE_WEEK = 1000 * 60 * 60 * 24 * 7
+      const TEN_MINUTES = 1000 * 60 * 10
+
+      if (surveyLastDismissed > 0 && now - surveyLastDismissed < TEN_MINUTES) {
+        return
+      }
 
       const hashedUserId = await hashString(user.id)
 
@@ -138,9 +152,10 @@ export const SurveyModal = () => {
     }
 
     setupSurvey().catch(console.error)
-  }, [config.onboardingSurveyUrl, config.weeklySurveyUrl, user?.id, onboardingSurveyCompleted, weeklySurveyLastCompleted])
+  }, [config.onboardingSurveyUrl, config.weeklySurveyUrl, user?.id, onboardingSurveyCompleted, weeklySurveyLastCompleted, surveyLastDismissed, isSurveyOpen])
 
   const handleDismiss = () => {
+    setSurveyLastDismissed(new Date().getTime())
     setSurveyOpen(false)
   }
 
