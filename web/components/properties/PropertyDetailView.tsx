@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState } from 'react'
 import {
   Button,
   Checkbox,
@@ -86,10 +86,10 @@ export const PropertyDetailView = ({
 
   const validationContext = useFormValidationContext()
 
-  const isFormValid = useMemo(() => {
+  const isFormValid = (() => {
     if (!validationContext) return true
     return validationContext.isFormValid()
-  }, [validationContext])
+  })()
 
   const handleCreate = () => {
     if (validationContext) {

@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState } from 'react'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import type { CreatePatientInput, LocationNodeType, UpdatePatientInput } from '@/api/gql/generated'
 import {
@@ -265,12 +265,12 @@ export const PatientDetailView = ({
 
   const validationContext = useFormValidationContext()
 
-  const isFormValid = useMemo(() => {
+  const isFormValid = (() => {
     if (!validationContext) return true
     const formValid = validationContext.isFormValid()
     const clinicValid = !!selectedClinic?.id
     return formValid && clinicValid
-  }, [validationContext, selectedClinic])
+  })()
 
   const handleSubmit = () => {
     if (validationContext) {

@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState } from 'react'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import type { CreateTaskInput, UpdateTaskInput } from '@/api/gql/generated'
 import {
@@ -141,10 +141,10 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
 
   const validationContext = useFormValidationContext()
 
-  const isFormValid = useMemo(() => {
+  const isFormValid = (() => {
     if (!validationContext) return true
     return validationContext.isFormValid()
-  }, [validationContext])
+  })()
 
   const handleSubmit = () => {
     if (validationContext) {

@@ -11,6 +11,7 @@ const FormValidationContext = createContext<{
   registerValidationState: (getter: ValidationStateGetter) => () => void,
   validateAll: () => void,
   isFormValid: () => boolean,
+  validationVersion: number,
 } | null>(null)
 
 export const useFormValidationContext = () => {
@@ -21,6 +22,7 @@ export const useFormValidationContext = () => {
 export const FormValidationProvider = ({ children }: { children: React.ReactNode }) => {
   const fieldTriggers = useRef<Set<ValidationTrigger>>(new Set())
   const validationStateGetters = useRef<Set<ValidationStateGetter>>(new Set())
+  const [validationVersion, setValidationVersion] = useState(0)
 
   const registerField = useCallback((trigger: ValidationTrigger) => {
     fieldTriggers.current.add(trigger)
@@ -31,13 +33,16 @@ export const FormValidationProvider = ({ children }: { children: React.ReactNode
 
   const registerValidationState = useCallback((getter: ValidationStateGetter) => {
     validationStateGetters.current.add(getter)
+    setValidationVersion(v => v + 1)
     return () => {
       validationStateGetters.current.delete(getter)
+      setValidationVersion(v => v + 1)
     }
   }, [])
 
   const validateAll = useCallback(() => {
     fieldTriggers.current.forEach(trigger => trigger())
+    setValidationVersion(v => v + 1)
   }, [])
 
   const isFormValid = useCallback(() => {
@@ -51,7 +56,7 @@ export const FormValidationProvider = ({ children }: { children: React.ReactNode
   }, [])
 
   return (
-    <FormValidationContext.Provider value={{ registerField, registerValidationState, validateAll, isFormValid }}>
+    <FormValidationContext.Provider value={{ registerField, registerValidationState, validateAll, isFormValid, validationVersion }}>
       {children}
     </FormValidationContext.Provider>
   )
@@ -91,13 +96,17 @@ export const useFormFieldValidation = (
   useEffect(() => {
     if (validationContext) {
       const unregisterField = validationContext.registerField(triggerValidation)
-      const unregisterState = validationContext.registerValidationState(() => ({ isValid }))
+      const getter = () => ({ isValid })
+      const unregisterState = validationContext.registerValidationState(getter)
+      if (validationContext.validationVersion !== undefined) {
+        void validationContext.validationVersion
+      }
       return () => {
         unregisterField()
         unregisterState()
       }
     }
-  }, [validationContext, triggerValidation, isValid])
+  }, [validationContext, triggerValidation, isValid, validationContext?.validationVersion])
 
   const errorMessage = useMemo(() => {
     if (hasError) {
