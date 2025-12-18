@@ -92,15 +92,23 @@ class PatientQuery:
             cte = cte.union_all(parent)
 
             patient_locations = aliased(models.patient_locations)
+            patient_teams = aliased(models.patient_teams)
 
             query = (
                 query.outerjoin(
                     patient_locations,
                     models.Patient.id == patient_locations.c.patient_id,
                 )
+                .outerjoin(
+                    patient_teams,
+                    models.Patient.id == patient_teams.c.patient_id,
+                )
                 .where(
                     (models.Patient.assigned_location_id.in_(select(cte.c.id)))
-                    | (patient_locations.c.location_id.in_(select(cte.c.id))),
+                    | (patient_locations.c.location_id.in_(select(cte.c.id)))
+                    | (models.Patient.clinic_id.in_(select(cte.c.id)))
+                    | (models.Patient.position_id.in_(select(cte.c.id)))
+                    | (patient_teams.c.location_id.in_(select(cte.c.id))),
                 )
                 .distinct()
             )
@@ -251,7 +259,6 @@ class PatientMutation:
         if data.sex is not None:
             patient.sex = data.sex.value
 
-        # Update clinic (if provided)
         if data.clinic_id is not None:
             clinic_result = await db.execute(
                 select(models.LocationNode).where(

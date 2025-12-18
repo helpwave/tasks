@@ -44,7 +44,6 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState<boolean>(false)
   const isEditMode = !!taskId
 
-  // Validation state for required fields
   const [titleError, setTitleError] = useState<string | null>(null)
   const [patientIdError, setPatientIdError] = useState<string | null>(null)
 
@@ -117,7 +116,6 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
     setFormData(prev => ({ ...prev, ...updates }))
   }
 
-  // Validation functions
   const validateTitle = (value: string): boolean => {
     if (!value || !value.trim()) {
       setTitleError(translation('taskTitlePlaceholder') + ' is required')
@@ -136,9 +134,8 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
     return true
   }
 
-  // Check if form is valid (for create mode)
   const isFormValid = useMemo(() => {
-    if (isEditMode) return true // Edit mode doesn't need validation for submission
+    if (isEditMode) return true
     const titleValid = formData.title?.trim() || false
     const patientIdValid = !!formData.patientId
     return titleValid && patientIdValid
@@ -170,7 +167,6 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
   }
 
   const handleSubmit = () => {
-    // Validate all required fields
     const titleValid = validateTitle(formData.title || '')
     const patientIdValid = validatePatientId(formData.patientId)
 
@@ -311,7 +307,7 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
 
               <FormElementWrapper label={translation('dueDate')}>
                 {({ isShowingError: _1, setIsShowingError: _2, ...bag }) => {
-                  const dateValue = formData.dueDate 
+                  const dateValue = formData.dueDate
                     ? new Date(formData.dueDate).toISOString().slice(0, 16)
                     : ''
                   return (

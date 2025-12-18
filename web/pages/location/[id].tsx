@@ -43,6 +43,12 @@ const LocationPage: NextPage = () => {
     return patientsData.patients.flatMap(patient => {
       if (!patient.tasks) return []
 
+      const mergedLocations = [
+        ...(patient.clinic ? [patient.clinic] : []),
+        ...(patient.position ? [patient.position] : []),
+        ...(patient.teams || [])
+      ]
+
       return patient.tasks.map(task => ({
         id: task.id,
         name: task.title,
@@ -53,7 +59,7 @@ const LocationPage: NextPage = () => {
         patient: {
           id: patient.id,
           name: patient.name,
-          locations: patient.assignedLocations || []
+          locations: mergedLocations
         },
         assignee: task.assignee
           ? { id: task.assignee.id, name: task.assignee.name, avatarURL: task.assignee.avatarUrl }
@@ -68,7 +74,6 @@ const LocationPage: NextPage = () => {
   const locationKind = locationData?.locationNode?.kind
   const locationTitle = locationData?.locationNode?.title
 
-  // Build parent chain
   const parentChain = useMemo(() => {
     if (!locationData?.locationNode?.parent) return []
     const chain: Array<{ id: string, title: string, kind?: LocationType }> = []

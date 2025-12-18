@@ -1,7 +1,7 @@
 @import 'tailwindcss';
 
 @import "./style/colors.css";
-@import "@helpwave/hightide/style/uncompiled/globals.css";
+@import "@helpwave/hightide/dist/style/uncompiled/globals.css";
 @source "./node_modules/@helpwave/hightide";
 
 @layer components {

@@ -32,7 +32,49 @@ query GetPatients($locationId: ID, $states: [PatientState!]) {
         }
       }
     }
+    clinic {
+      id
+      title
+      kind
+      parent {
+        id
+        title
+        parent {
+          id
+          title
+          parent {
+            id
+            title
+            parent {
+              id
+              title
+            }
+          }
+        }
+      }
+    }
     position {
+      id
+      title
+      kind
+      parent {
+        id
+        title
+        parent {
+          id
+          title
+          parent {
+            id
+            title
+            parent {
+              id
+              title
+            }
+          }
+        }
+      }
+    }
+    teams {
       id
       title
       kind
