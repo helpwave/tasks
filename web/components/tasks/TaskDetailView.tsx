@@ -14,7 +14,7 @@ import {
 import {
   Button,
   CheckboxUncontrolled,
-  ConfirmDialog,
+  ConfirmDialog, DateTimeInput,
   FormElementWrapper,
   Input,
   LoadingButton,
@@ -28,8 +28,7 @@ import {
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { User } from 'lucide-react'
 import { SidePanel } from '@/components/layout/SidePanel'
-import { PatientDetailView } from '@/components/patients/PatientDetailView'
-import { DateInput } from '@/components/ui/DateInput'
+import { localToUTCWithSameTime, PatientDetailView } from '@/components/patients/PatientDetailView'
 
 interface TaskDetailViewProps {
   taskId: string | null,
@@ -246,12 +245,15 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
 
               <FormElementWrapper label={translation('dueDate')}>
                 {({ isShowingError: _1, setIsShowingError: _2, ...bag }) => (
-                  <DateInput
+                  <DateTimeInput
                     {...bag}
-                    date={formData.dueDate}
+                    date={formData.dueDate ?? undefined}
                     onValueChange={(date) => {
                       updateLocalState({ dueDate: date })
-                      persistChanges({ dueDate: date })
+                    }}
+                    onEditCompleted={(date) => {
+                      updateLocalState({ dueDate: date })
+                      persistChanges({ dueDate: localToUTCWithSameTime(date) })
                     }}
                     onRemove={() => {
                       updateLocalState({ dueDate: null })

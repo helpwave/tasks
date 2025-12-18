@@ -29,7 +29,6 @@ export const SidePanel = ({ isOpen, onClose, title, children }: SidePanelProps) 
 
   useFocusTrap({
     active: isOpen,
-    // @ts-expect-error TODO Will be fixed when upgrading hightide to the newest typescript and react versions
     container: ref,
   })
 
