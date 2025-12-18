@@ -31,7 +31,7 @@ import {
   TabView
 } from '@helpwave/hightide'
 import { useTasksContext } from '@/hooks/useTasksContext'
-import { CheckCircle2, ChevronDown, Circle, Clock, MapPin, PlusIcon, XIcon, Building2, Locate, Users } from 'lucide-react'
+import { CheckCircle2, ChevronDown, Circle, Clock, PlusIcon, XIcon, Building2, Locate, Users } from 'lucide-react'
 import { PatientStateChip } from '@/components/patients/PatientStateChip'
 import { LocationChips } from '@/components/patients/LocationChips'
 import { LocationSelectionDialog } from '@/components/locations/LocationSelectionDialog'
