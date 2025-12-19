@@ -22,6 +22,7 @@ query GetOverviewData {
     title
     description
     done
+    dueDate
     updateDate
     assignee {
       id

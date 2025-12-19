@@ -18,6 +18,19 @@ import { LocationChips } from '@/components/patients/LocationChips'
 import { useCompleteTaskMutation, useReopenTaskMutation } from '@/api/gql/generated'
 import clsx from 'clsx'
 
+const isOverdue = (dueDate: Date | undefined | null, done: boolean): boolean => {
+  if (!dueDate || done) return false
+  return new Date(dueDate).getTime() < Date.now()
+}
+
+const isCloseToDueDate = (dueDate: Date | undefined | null, done: boolean): boolean => {
+  if (!dueDate || done) return false
+  const now = Date.now()
+  const dueTime = new Date(dueDate).getTime()
+  const oneHour = 60 * 60 * 1000
+  return dueTime > now && dueTime - now <= oneHour
+}
+
 const Dashboard: NextPage = () => {
   const translation = useTasksTranslation()
   const { user, myTasksCount, totalPatientsCount } = useTasksContext()
@@ -68,6 +81,9 @@ const Dashboard: NextPage = () => {
       id: 'title',
       header: translation('task'),
       accessorKey: 'title',
+      cell: ({ row }) => {
+        return row.original.title
+      },
       minSize: 200,
     },
     {
@@ -77,7 +93,7 @@ const Dashboard: NextPage = () => {
       cell: ({ row }) => {
         const patient = row.original.patient
         if (!patient) return <span>-</span>
-        
+
         return (
           <div className="flex flex-col gap-1">
             <Button
@@ -100,9 +116,37 @@ const Dashboard: NextPage = () => {
       minSize: 150,
     },
     {
+      id: 'dueDate',
+      header: translation('dueDate'),
+      accessorKey: 'dueDate',
+      cell: ({ row }) => {
+        if (!row.original.dueDate) return <span className="text-description">-</span>
+        const overdue = isOverdue(row.original.dueDate, row.original.done)
+        const closeToDue = isCloseToDueDate(row.original.dueDate, row.original.done)
+        let colorClass = ''
+        if (overdue) {
+          colorClass = '!text-red-500'
+        } else if (closeToDue) {
+          colorClass = '!text-orange-500'
+        }
+        return (
+          <SmartDate
+            date={new Date(row.original.dueDate)}
+            mode="relative"
+            className={clsx(colorClass)}
+          />
+        )
+      },
+      minSize: 150,
+      size: 150,
+      maxSize: 200,
+    },
+    {
       id: 'date',
       header: translation('updated'),
-      cell: ({ row }) => <SmartDate date={row.original.updateDate ? new Date(row.original.updateDate) : new Date()}/>,
+      cell: ({ row }) => (
+        <SmartDate date={row.original.updateDate ? new Date(row.original.updateDate) : new Date()}/>
+      ),
       minSize: 100,
     }
   ], [translation, completeTask, reopenTask])
@@ -133,10 +177,10 @@ const Dashboard: NextPage = () => {
           .map(t => t.updateDate ? new Date(t.updateDate) : null)
           .filter((d): d is Date => d !== null)
           .sort((a, b) => b.getTime() - a.getTime())
-        
+
         const mostRecentDate = updateDates[0]
         if (!mostRecentDate) return <span className="text-description">-</span>
-        
+
         return <SmartDate date={mostRecentDate} />
       },
       minSize: 100,

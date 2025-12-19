@@ -48,6 +48,19 @@ type TaskListProps = {
   onInitialTaskOpened?: () => void,
 }
 
+const isOverdue = (dueDate: Date | undefined, done: boolean): boolean => {
+  if (!dueDate || done) return false
+  return dueDate.getTime() < Date.now()
+}
+
+const isCloseToDueDate = (dueDate: Date | undefined, done: boolean): boolean => {
+  if (!dueDate || done) return false
+  const now = Date.now()
+  const dueTime = dueDate.getTime()
+  const oneHour = 60 * 60 * 1000
+  return dueTime > now && dueTime - now <= oneHour
+}
+
 export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initialTasks, onRefetch, showAssignee = false, initialTaskId, onInitialTaskOpened }, ref) => {
   const translation = useTasksTranslation()
   const { mutate: completeTask } = useCompleteTaskMutation({ onSuccess: onRefetch })
@@ -119,6 +132,9 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
           id: 'title',
           header: translation('title'),
           accessorKey: 'name',
+          cell: ({ row }) => {
+            return row.original.name
+          },
           minSize: 200,
           size: Number.MAX_SAFE_INTEGER,
         },
@@ -128,7 +144,21 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
           accessorKey: 'dueDate',
           cell: ({ row }) => {
             if (!row.original.dueDate) return <span className="text-description">-</span>
-            return <SmartDate date={row.original.dueDate} mode="relative"/>
+            const overdue = isOverdue(row.original.dueDate, row.original.done)
+            const closeToDue = isCloseToDueDate(row.original.dueDate, row.original.done)
+            let colorClass = ''
+            if (overdue) {
+              colorClass = '!text-red-500'
+            } else if (closeToDue) {
+              colorClass = '!text-orange-500'
+            }
+            return (
+              <SmartDate
+                date={row.original.dueDate}
+                mode="relative"
+                className={clsx(colorClass)}
+              />
+            )
           },
           minSize: 150,
           size: 150,
