@@ -1,10 +1,12 @@
 import hashlib
+import inspect
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from functools import wraps
 from typing import Any, Callable
 
+import strawberry
 from config import INFLUXDB_BUCKET, INFLUXDB_ORG, INFLUXDB_TOKEN, INFLUXDB_URL, LOGGER
 from influxdb_client import InfluxDBClient, Point
 from influxdb_client.client.write_api import SYNCHRONOUS
@@ -51,11 +53,13 @@ class AuditLogger:
             return
 
         try:
+            now = datetime.now(timezone.utc)
             point = (
                 Point("activity")
                 .tag("case_id", case_id)
                 .tag("activity", activity_name)
-                .field("timestamp", datetime.now(timezone.utc).timestamp())
+                .field("count", 1)
+                .time(now)
             )
 
             if user_id:
@@ -82,15 +86,49 @@ class AuditLogger:
 
 def audit_log(activity_name: str | None = None):
     def decorator(func: Callable) -> Callable:
+        sig = inspect.signature(func)
+        param_names = list(sig.parameters.keys())
+        info_param_index = None
+        if "info" in param_names:
+            info_param_index = param_names.index("info")
+        
         @wraps(func)
         async def wrapper(*args: Any, **kwargs: Any) -> Any:
+            logger.debug(f"Audit decorator called for function: {func.__name__}, args count: {len(args)}, kwargs: {list(kwargs.keys())}, param_names: {param_names}")
+            
             info = None
-            for arg in args:
-                if hasattr(arg, "context"):
-                    info = arg
-                    break
+            
+            if "info" in kwargs:
+                info = kwargs["info"]
+                logger.debug(f"Found Info object in kwargs for {func.__name__}")
+            elif info_param_index is not None and len(args) > info_param_index:
+                info = args[info_param_index]
+                logger.debug(f"Found Info object in args[{info_param_index}] for {func.__name__}")
+            else:
+                for i, arg in enumerate(args):
+                    if arg is None:
+                        continue
+                    try:
+                        if hasattr(arg, "context"):
+                            info = arg
+                            logger.debug(f"Found Info object in args[{i}] for {func.__name__} by context attribute")
+                            break
+                        elif hasattr(arg, "__class__"):
+                            type_name = type(arg).__name__
+                            if "Info" in type_name:
+                                info = arg
+                                logger.debug(f"Found Info object in args[{i}] for {func.__name__} by type name: {type_name}")
+                                break
+                    except Exception as e:
+                        logger.debug(f"Error checking arg[{i}]: {e}")
+                        continue
 
-            if not info or not hasattr(info, "context"):
+            if not info:
+                logger.warning(f"Audit decorator: No Info object found for {func.__name__}, skipping audit log. Args: {[type(a).__name__ if a is not None else 'None' for a in args]}, Kwargs keys: {list(kwargs.keys())}, info_param_index: {info_param_index}")
+                return await func(*args, **kwargs)
+            
+            if not hasattr(info, "context"):
+                logger.warning(f"Audit decorator: Info object found but no context attribute for {func.__name__}, skipping audit log")
                 return await func(*args, **kwargs)
 
             context = info.context
@@ -103,33 +141,106 @@ def audit_log(activity_name: str | None = None):
 
             if "id" in kwargs:
                 entity_id = str(kwargs["id"])
-            elif len(args) > 1 and isinstance(args[1], str):
-                entity_id = args[1]
+                logger.debug(f"Found id in kwargs: {entity_id} for {func.__name__}")
+            elif len(args) > 1:
+                logger.debug(f"Checking args[1] for {func.__name__}: {type(args[1])}, value: {args[1]}")
+                if isinstance(args[1], str):
+                    entity_id = args[1]
+                elif hasattr(args[1], "__str__"):
+                    entity_id = str(args[1])
 
             if entity_id:
                 case_id = entity_id
+                logger.debug(f"Set case_id from entity_id: {case_id} for {func.__name__}")
 
             activity = activity_name or func.__name__
 
-            audit_context = {}
-            if "data" in kwargs:
-                audit_context["data"] = str(kwargs["data"])
+            def serialize_payload(obj: Any) -> Any:
+                if obj is None or obj is strawberry.UNSET:
+                    return None
+                elif isinstance(obj, (str, int, float, bool)):
+                    return obj
+                elif isinstance(obj, (date, datetime)):
+                    return obj.isoformat()
+                elif isinstance(obj, dict):
+                    return {k: serialize_payload(v) for k, v in obj.items()}
+                elif isinstance(obj, (list, tuple)):
+                    return [serialize_payload(item) for item in obj]
+                elif hasattr(obj, "value"):
+                    return obj.value
+                elif hasattr(obj, "__dict__"):
+                    result = {}
+                    for k, v in obj.__dict__.items():
+                        if not k.startswith("_") and v is not strawberry.UNSET:
+                            try:
+                                serialized = serialize_payload(v)
+                                if serialized is not None:
+                                    result[k] = serialized
+                            except Exception as e:
+                                logger.debug(f"Error serializing field {k}: {e}")
+                                result[k] = str(v)
+                    return result
+                elif hasattr(obj, "__annotations__"):
+                    result = {}
+                    annotations = obj.__annotations__
+                    for attr_name in annotations.keys():
+                        if not attr_name.startswith("_"):
+                            try:
+                                attr_value = getattr(obj, attr_name, None)
+                                if attr_value is not strawberry.UNSET and attr_value is not None:
+                                    serialized = serialize_payload(attr_value)
+                                    if serialized is not None:
+                                        result[attr_name] = serialized
+                            except Exception as e:
+                                logger.debug(f"Error serializing annotation {attr_name}: {e}")
+                                try:
+                                    attr_value = getattr(obj, attr_name, None)
+                                    if attr_value is not strawberry.UNSET and attr_value is not None:
+                                        result[attr_name] = str(attr_value)
+                                except Exception:
+                                    pass
+                    return result
+                else:
+                    try:
+                        return str(obj)
+                    except Exception:
+                        return repr(obj)
 
+            audit_context = {}
+            payload = {}
+            
+            for key, value in kwargs.items():
+                if key != "info":
+                    try:
+                        payload[key] = serialize_payload(value)
+                    except Exception as e:
+                        logger.debug(f"Error serializing {key}: {e}")
+                        payload[key] = str(value)
+            
+            audit_context["payload"] = payload
+
+            payload_json = json.dumps(payload, default=str)
+            logger.debug(f"Calling function {func.__name__} with activity={activity}, case_id={case_id}, payload keys: {list(payload.keys())}, payload size: {len(payload_json)} bytes")
             result = await func(*args, **kwargs)
 
             if hasattr(result, "id"):
                 case_id = str(result.id)
+                logger.debug(f"Set case_id from result.id: {case_id} for {func.__name__}")
             elif isinstance(result, dict) and "id" in result:
                 case_id = str(result["id"])
+                logger.debug(f"Set case_id from result dict: {case_id} for {func.__name__}")
 
             if case_id:
+                logger.info(f"Audit decorator: Logging activity {activity} for case_id {case_id} (user: {user_id}), payload included: {len(payload) > 0}")
                 AuditLogger.log_activity(
                     case_id=case_id,
                     activity_name=activity,
                     user_id=user_id,
                     user_name=user_name,
-                    context=audit_context if audit_context else None,
+                    context=audit_context,
                 )
+            else:
+                logger.warning(f"Audit decorator: No case_id found for {func.__name__}, skipping audit log. Result type: {type(result)}, has id attr: {hasattr(result, 'id') if result else 'N/A'}")
 
             return result
 

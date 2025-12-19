@@ -918,6 +918,18 @@ export const PatientDetailView = ({
                 </div>
               )}
             </FormElementWrapper>
+
+            {isEditMode && patientId && patientData?.patient && patientData.patient.state !== PatientState.Dead && (
+              <div className="pt-6 mt-6 border-t border-divider flex justify-end gap-2">
+                <Button
+                  onClick={() => setIsMarkDeadDialogOpen(true)}
+                  color="negative"
+                  coloringStyle="outline"
+                >
+                  {translation('markPatientDead')}
+                </Button>
+              </div>
+            )}
           </Tab>
 
         </TabView>
@@ -932,18 +944,6 @@ export const PatientDetailView = ({
           >
             {translation('create')}
           </LoadingButton>
-        </div>
-      )}
-
-      {isEditMode && patientId && patientData?.patient && patientData.patient.state !== PatientState.Dead && (
-        <div className="flex-none pt-4 mt-auto border-t border-divider flex justify-end gap-2">
-          <Button
-            onClick={() => setIsMarkDeadDialogOpen(true)}
-            color="negative"
-            coloringStyle="text"
-          >
-            {translation('markPatientDead')}
-          </Button>
         </div>
       )}
 

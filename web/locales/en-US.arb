@@ -310,5 +310,8 @@
   "install": "Install",
   "conflictDetected": "Conflict Detected",
   "overwrite": "Overwrite",
-  "noNotifications": "No recent updates"
+  "noNotifications": "No recent updates",
+  "notifications": "Notifications",
+  "dismissAll": "Dismiss All",
+  "security": "Security"
 }

@@ -208,6 +208,7 @@ export const Header = ({ onMenuClick, isMenuOpen, ...props }: HeaderProps) => {
   const { user } = useTasksContext()
   const router = useRouter()
   const { logout } = useAuth()
+  const config = getConfig()
 
   return (
     <header
@@ -259,6 +260,12 @@ export const Header = ({ onMenuClick, isMenuOpen, ...props }: HeaderProps) => {
             </Button>
           )}
         >
+          <MenuItem onClick={() => {
+            const accountUrl = `${config.auth.issuer}/account`
+            window.open(accountUrl, '_blank', 'noopener,noreferrer')
+          }}>
+            {translation('security') ?? 'Security'}
+          </MenuItem>
           <MenuItem onClick={() => logout()}>
             {translation('logout') ?? 'Logout'}
           </MenuItem>

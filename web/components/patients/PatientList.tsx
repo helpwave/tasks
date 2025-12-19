@@ -41,7 +41,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ locat
   const [isPanelOpen, setIsPanelOpen] = useState(false)
   const [selectedPatient, setSelectedPatient] = useState<PatientViewModel | undefined>(undefined)
   const [searchQuery, setSearchQuery] = useState('')
-  const [initialOpened, setInitialOpened] = useState(false)
+  const [openedPatientId, setOpenedPatientId] = useState<string | null>(null)
 
   const { data: queryData, refetch } = useGetPatientsQuery(
     {
@@ -98,16 +98,18 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ locat
   }), [patients])
 
   useEffect(() => {
-    if (initialPatientId && patients.length > 0 && !initialOpened) {
+    if (initialPatientId && patients.length > 0 && openedPatientId !== initialPatientId) {
       const patient = patients.find(p => p.id === initialPatientId)
       if (patient) {
         setSelectedPatient(patient)
         setIsPanelOpen(true)
-        setInitialOpened(true)
+        setOpenedPatientId(initialPatientId)
         onInitialPatientOpened?.()
       }
+    } else if (!initialPatientId) {
+      setOpenedPatientId(null)
     }
-  }, [initialPatientId, patients, initialOpened, onInitialPatientOpened])
+  }, [initialPatientId, patients, openedPatientId, onInitialPatientOpened])
 
   const handleEdit = (patient: PatientViewModel) => {
     setSelectedPatient(patient)

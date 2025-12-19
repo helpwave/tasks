@@ -2,10 +2,10 @@ import { Dialog, Button } from '@helpwave/hightide'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 
 interface ConflictResolutionDialogProps {
-  isOpen: boolean
-  onClose: () => void
-  onResolve: () => void
-  message: string
+  isOpen: boolean,
+  onClose: () => void,
+  onResolve: () => void,
+  message: string,
 }
 
 export const ConflictResolutionDialog = ({
@@ -20,25 +20,23 @@ export const ConflictResolutionDialog = ({
     <Dialog
       isOpen={isOpen}
       onClose={onClose}
-      title={translation('conflictDetected') || 'Conflict Detected'}
+      titleElement={translation('conflictDetected') || 'Conflict Detected'}
+      description={message}
     >
-      <div className="flex-col-4">
-        <p>{message}</p>
-        <div className="flex-row-2 justify-end">
-          <Button
-            color="neutral"
-            coloringStyle="outline"
-            onClick={onClose}
-          >
-            {translation('cancel') || 'Cancel'}
-          </Button>
-          <Button
-            color="primary"
-            onClick={onResolve}
-          >
-            {translation('overwrite') || 'Overwrite'}
-          </Button>
-        </div>
+      <div className="flex-row-2 justify-end mt-4">
+        <Button
+          color="neutral"
+          coloringStyle="outline"
+          onClick={onClose}
+        >
+          {translation('cancel') || 'Cancel'}
+        </Button>
+        <Button
+          color="primary"
+          onClick={onResolve}
+        >
+          {translation('overwrite') || 'Overwrite'}
+        </Button>
       </div>
     </Dialog>
   )
