@@ -250,8 +250,8 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
           )}
           initialState={{
             sorting: [
-              { id: 'done', desc: true },
-              { id: 'updateDate', desc: true },
+              { id: 'done', desc: false },
+              { id: 'dueDate', desc: false },
             ]
           }}
           enableMultiSort={true}

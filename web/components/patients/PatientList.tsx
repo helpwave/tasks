@@ -1,5 +1,5 @@
 import { useMemo, useState, forwardRef, useImperativeHandle, useEffect } from 'react'
-import { Table, Chip, FillerRowElement, Button, SearchBar } from '@helpwave/hightide'
+import { Table, Chip, FillerRowElement, Button, SearchBar, ProgressIndicator, Tooltip } from '@helpwave/hightide'
 import { PlusIcon } from 'lucide-react'
 import { useGetPatientsQuery, Sex, type GetPatientsQuery, type TaskType, type PatientState } from '@/api/gql/generated'
 import { SidePanel } from '@/components/layout/SidePanel'
@@ -195,30 +195,33 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ locat
       size: 120,
     },
     {
-      id: 'openTasks',
-      header: translation('openTasks'),
-      accessorKey: 'openTasksCount',
-      cell: ({ row }) => (
-        <span className={row.original.openTasksCount > 0 ? 'font-bold text-primary' : 'text-description'}>
-          {row.original.openTasksCount}
-        </span>
-      ),
+      id: 'tasks',
+      header: translation('tasks'),
+      accessorFn: ({ openTasksCount, closedTasksCount }) => {
+        const total = openTasksCount + closedTasksCount
+        return total === 0 ? 0 : openTasksCount / total
+      },
+      cell: ({ row }) => {
+        const { openTasksCount, closedTasksCount } = row.original
+        const total = openTasksCount + closedTasksCount
+        const progress = total === 0 ? 0 : openTasksCount / total
+        const tooltipText = `${translation('openTasks')}: ${openTasksCount}\n${translation('closedTasks')}: ${closedTasksCount}`
+
+        return (
+          <Tooltip
+            tooltip={tooltipText}
+            position="top"
+            tooltipClassName="whitespace-pre-line"
+          >
+            <div className="w-full max-w-[80px]">
+              <ProgressIndicator progress={progress} rotation={-90} />
+            </div>
+          </Tooltip>
+        )
+      },
       minSize: 80,
-      size: 100,
-      maxSize: 150,
-    },
-    {
-      id: 'closedTasks',
-      header: translation('closedTasks'),
-      accessorKey: 'closedTasksCount',
-      cell: ({ row }) => (
-        <span className="text-description">
-          {row.original.closedTasksCount}
-        </span>
-      ),
-      minSize: 80,
-      size: 100,
-      maxSize: 150,
+      size: 90,
+      maxSize: 100,
     },
   ], [translation])
 
