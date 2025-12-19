@@ -353,6 +353,7 @@ export const Sidebar = ({ isOpen, onClose, ...props }: SidebarProps) => {
         <SidebarLink href="/patients" onClick={onClose}>
           <User className="size-5" />
           <span className="flex grow">{translation('patients')}</span>
+          {context?.totalPatientsCount !== undefined && (<span className="text-description">{context.totalPatientsCount}</span>)}
         </SidebarLink>
 
         <Expandable

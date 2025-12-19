@@ -14,6 +14,7 @@ import {
   useUpdatePatientMutation,
   useWaitPatientMutation
 } from '@/api/gql/generated'
+import { useQueryClient } from '@tanstack/react-query'
 import type { ButtonProps } from '@helpwave/hightide'
 import {
   Avatar,
@@ -164,6 +165,7 @@ export const PatientDetailView = ({
                                   }: PatientDetailViewProps) => {
   const translation = useTasksTranslation()
   const { selectedLocationId } = useTasksContext()
+  const queryClient = useQueryClient()
   const [taskId, setTaskId] = useState<string | null>(null)
   const [isCreatingTask, setIsCreatingTask] = useState(false)
   const isEditMode = !!patientId
@@ -236,6 +238,7 @@ export const PatientDetailView = ({
 
   const { mutate: createPatient, isLoading: isCreating } = useCreatePatientMutation({
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
       onSuccess()
       onClose()
     }
@@ -243,6 +246,7 @@ export const PatientDetailView = ({
 
   const { mutate: updatePatient } = useUpdatePatientMutation({
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
       onSuccess()
       refetch()
     }
@@ -250,6 +254,7 @@ export const PatientDetailView = ({
 
   const { mutate: admitPatient } = useAdmitPatientMutation({
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
       onSuccess()
       refetch()
     }
@@ -257,6 +262,7 @@ export const PatientDetailView = ({
 
   const { mutate: dischargePatient } = useDischargePatientMutation({
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
       onSuccess()
       refetch()
     }
@@ -264,6 +270,7 @@ export const PatientDetailView = ({
 
   const { mutate: markPatientDead } = useMarkPatientDeadMutation({
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
       onSuccess()
       refetch()
     }
@@ -271,6 +278,7 @@ export const PatientDetailView = ({
 
   const { mutate: waitPatient } = useWaitPatientMutation({
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
       onSuccess()
       refetch()
     }
