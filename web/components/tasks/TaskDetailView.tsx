@@ -332,7 +332,7 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
                     }}
                     onEditCompleted={(date) => {
                       updateLocalState({ dueDate: date })
-                      persistChanges({ dueDate: localToUTCWithSameTime(date) })
+                      persistChanges({ dueDate: date ? localToUTCWithSameTime(date) : null })
                     }}
                     onRemove={() => {
                       updateLocalState({ dueDate: null })

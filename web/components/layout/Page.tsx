@@ -29,6 +29,7 @@ import {
   Menu as MenuIcon,
   X
 } from 'lucide-react'
+import { NotificationBell } from '@/components/NotificationBell'
 import { TasksLogo } from '@/components/TasksLogo'
 import { useRouter } from 'next/router'
 import { useTasksContext } from '@/hooks/useTasksContext'
@@ -228,6 +229,9 @@ export const Header = ({ onMenuClick, isMenuOpen, ...props }: HeaderProps) => {
         </Button>
       </div>
       <div className="flex-row-2 justify-end">
+        <div className="flex-row-0">
+          <NotificationBell />
+        </div>
         <div className="flex-row-0">
           <Button coloringStyle="text" layout="icon" color="neutral" onClick={() => router.push('/settings')}>
             <SettingsIcon />

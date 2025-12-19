@@ -1,6 +1,6 @@
 import strawberry
 
-from .location import LocationMutation, LocationQuery
+from .location import LocationQuery
 from .patient import PatientMutation, PatientQuery, PatientSubscription
 from .property import PropertyDefinitionMutation, PropertyDefinitionQuery
 from .task import TaskMutation, TaskQuery, TaskSubscription
@@ -22,7 +22,6 @@ class Query(
 class Mutation(
     PatientMutation,
     TaskMutation,
-    LocationMutation,
     PropertyDefinitionMutation,
 ):
     pass

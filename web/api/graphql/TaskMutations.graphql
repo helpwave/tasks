@@ -26,6 +26,7 @@ mutation UpdateTask($id: ID!, $data: UpdateTaskInput!) {
     done
     dueDate
     updateDate
+    checksum
     assignee {
       id
       name

@@ -58,3 +58,18 @@ class TaskType:
         )
         result = await info.context.db.execute(query)
         return result.scalars().all()
+
+    @strawberry.field
+    def checksum(self) -> str:
+        from api.audit import AuditLogger
+
+        data = {
+            "id": self.id,
+            "title": self.title,
+            "description": self.description,
+            "done": self.done,
+            "due_date": str(self.due_date) if self.due_date else None,
+            "assignee_id": self.assignee_id,
+            "patient_id": self.patient_id,
+        }
+        return AuditLogger.calculate_checksum(data)

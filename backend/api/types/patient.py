@@ -156,3 +156,20 @@ class PatientType:
         )
         result = await info.context.db.execute(query)
         return result.scalars().all()
+
+    @strawberry.field
+    def checksum(self) -> str:
+        from api.audit import AuditLogger
+
+        data = {
+            "id": self.id,
+            "firstname": self.firstname,
+            "lastname": self.lastname,
+            "birthdate": str(self.birthdate),
+            "sex": self.sex.value,
+            "state": self.state.value,
+            "assigned_location_id": self.assigned_location_id,
+            "clinic_id": self.clinic_id,
+            "position_id": self.position_id,
+        }
+        return AuditLogger.calculate_checksum(data)

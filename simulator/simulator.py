@@ -111,29 +111,6 @@ class ClinicSimulator:
     kind: str,
     parent_id: Optional[str] = None,
   ) -> Optional[str]:
-    mutation = """
-      mutation CreateLocation($title: String!, $kind: LocationType!, $parentId: ID) {
-          createLocationNode(data: {
-              title: $title,
-              kind: $kind,
-              parentId: $parentId
-          }) {
-              id
-          }
-      }
-      """
-    variables = {
-      "title": title,
-      "kind": kind,
-      "parentId": parent_id,
-    }
-    response = self.client.query(mutation, variables)
-    data = response.get("data")
-
-    if data and data.get("createLocationNode"):
-      return data["createLocationNode"]["id"]
-
-    self._log_errors(f"create_location({title})", response)
     return None
 
   def create_rooms_and_beds(

@@ -6,6 +6,7 @@ query GetPatient($id: ID!) {
     birthdate
     sex
     state
+    checksum
     assignedLocation {
       id
       title

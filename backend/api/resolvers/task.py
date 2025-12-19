@@ -3,11 +3,12 @@ from collections.abc import AsyncGenerator
 from datetime import timezone
 
 import strawberry
+from api.audit import audit_log
 from api.context import Info
 from api.inputs import CreateTaskInput, UpdateTaskInput
 from api.types.task import TaskType
 from database import models
-from database.session import redis_client
+from database.session import publish_to_redis
 from sqlalchemy import desc, select
 
 from .utils import process_properties
@@ -55,6 +56,7 @@ class TaskQuery:
 @strawberry.type
 class TaskMutation:
     @strawberry.mutation
+    @audit_log("create_task")
     async def create_task(self, info: Info, data: CreateTaskInput) -> TaskType:
         due_date = data.due_date
         if due_date and due_date.tzinfo is not None:
@@ -78,18 +80,22 @@ class TaskMutation:
 
         await info.context.db.commit()
         await info.context.db.refresh(new_task)
-        await redis_client.publish("task_created", new_task.id)
+        await publish_to_redis("task_created", new_task.id)
         if new_task.patient_id:
-            await redis_client.publish("patient_updated", new_task.patient_id)
+            await publish_to_redis("patient_updated", new_task.patient_id)
         return new_task
 
     @strawberry.mutation
+    @audit_log("update_task")
     async def update_task(
         self,
         info: Info,
         id: strawberry.ID,
         data: UpdateTaskInput,
     ) -> TaskType:
+        from api.audit import AuditLogger
+        from api.types.task import TaskType
+
         db = info.context.db
         result = await db.execute(
             select(models.Task).where(models.Task.id == id),
@@ -97,6 +103,24 @@ class TaskMutation:
         task = result.scalars().first()
         if not task:
             raise Exception("Task not found")
+
+        if data.checksum:
+            task_type = TaskType(
+                id=task.id,
+                title=task.title,
+                description=task.description,
+                done=task.done,
+                due_date=task.due_date,
+                creation_date=task.creation_date,
+                update_date=task.update_date,
+                assignee_id=task.assignee_id,
+                patient_id=task.patient_id,
+            )
+            current_checksum = task_type.checksum
+            if data.checksum != current_checksum:
+                raise Exception(
+                    f"CONFLICT: Task data has been modified. Expected checksum: {current_checksum}, Got: {data.checksum}"
+                )
 
         if data.title is not None:
             task.title = data.title
@@ -121,12 +145,13 @@ class TaskMutation:
 
         await db.commit()
         await db.refresh(task)
-        await redis_client.publish("task_updated", task.id)
+        await publish_to_redis("task_updated", task.id)
         if task.patient_id:
-            await redis_client.publish("patient_updated", task.patient_id)
+            await publish_to_redis("patient_updated", task.patient_id)
         return task
 
     @strawberry.mutation
+    @audit_log("assign_task")
     async def assign_task(
         self,
         info: Info,
@@ -144,12 +169,13 @@ class TaskMutation:
         task.assignee_id = user_id
         await db.commit()
         await db.refresh(task)
-        await redis_client.publish("task_updated", task.id)
+        await publish_to_redis("task_updated", task.id)
         if task.patient_id:
-            await redis_client.publish("patient_updated", task.patient_id)
+            await publish_to_redis("patient_updated", task.patient_id)
         return task
 
     @strawberry.mutation
+    @audit_log("unassign_task")
     async def unassign_task(self, info: Info, id: strawberry.ID) -> TaskType:
         db = info.context.db
         result = await db.execute(
@@ -162,12 +188,13 @@ class TaskMutation:
         task.assignee_id = None
         await db.commit()
         await db.refresh(task)
-        await redis_client.publish("task_updated", task.id)
+        await publish_to_redis("task_updated", task.id)
         if task.patient_id:
-            await redis_client.publish("patient_updated", task.patient_id)
+            await publish_to_redis("patient_updated", task.patient_id)
         return task
 
     @strawberry.mutation
+    @audit_log("complete_task")
     async def complete_task(self, info: Info, id: strawberry.ID) -> TaskType:
         db = info.context.db
         result = await db.execute(
@@ -180,12 +207,13 @@ class TaskMutation:
         task.done = True
         await db.commit()
         await db.refresh(task)
-        await redis_client.publish("task_updated", task.id)
+        await publish_to_redis("task_updated", task.id)
         if task.patient_id:
-            await redis_client.publish("patient_updated", task.patient_id)
+            await publish_to_redis("patient_updated", task.patient_id)
         return task
 
     @strawberry.mutation
+    @audit_log("reopen_task")
     async def reopen_task(self, info: Info, id: strawberry.ID) -> TaskType:
         db = info.context.db
         result = await db.execute(
@@ -198,12 +226,13 @@ class TaskMutation:
         task.done = False
         await db.commit()
         await db.refresh(task)
-        await redis_client.publish("task_updated", task.id)
+        await publish_to_redis("task_updated", task.id)
         if task.patient_id:
-            await redis_client.publish("patient_updated", task.patient_id)
+            await publish_to_redis("patient_updated", task.patient_id)
         return task
 
     @strawberry.mutation
+    @audit_log("delete_task")
     async def delete_task(self, info: Info, id: strawberry.ID) -> bool:
         db = info.context.db
         result = await db.execute(
@@ -217,9 +246,9 @@ class TaskMutation:
         patient_id = task.patient_id
         await db.delete(task)
         await db.commit()
-        await redis_client.publish("task_deleted", task_id)
+        await publish_to_redis("task_deleted", task_id)
         if patient_id:
-            await redis_client.publish("patient_updated", patient_id)
+            await publish_to_redis("patient_updated", patient_id)
         return True
 
 

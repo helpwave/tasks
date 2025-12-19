@@ -181,6 +181,9 @@ export type TasksTranslationEntries = {
   'waitingroom': string,
   'waitPatient': string,
   'wards': string,
+  'conflictDetected': string,
+  'noNotifications': string,
+  'overwrite': string,
 }
 
 export const tasksTranslation: Translation<TasksTranslationLocales, Partial<TasksTranslationEntries>> = {
@@ -492,6 +495,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'collapseAll': `Collapse All`,
     'confirm': `Confirm`,
     'confirmSelection': `Confirm Selection`,
+    'conflictDetected': `Conflict Detected`,
     'create': `Create`,
     'createdAt': `Created at`,
     'createTask': `Create Task`,
@@ -572,6 +576,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'newPatient': `New Patient`,
     'noClosedTasks': `No closed tasks`,
     'noLocationsFound': `No locations found`,
+    'noNotifications': `No recent updates`,
     'noOpenTasks': `No open tasks`,
     'noPatient': `No Patient`,
     'nOrganization': ({ count }): string => {
@@ -629,6 +634,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'openTasks': `Open Tasks`,
     'option': `Option`,
     'overview': `Overview`,
+    'overwrite': `Overwrite`,
     'pages.404.notFound': `404 - Page not found`,
     'pages.404.notFoundDescription1': `This is definitely not the page you're looking for`,
     'pages.404.notFoundDescription2': `Let me take you to the`,

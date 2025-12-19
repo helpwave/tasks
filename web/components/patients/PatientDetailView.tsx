@@ -57,15 +57,18 @@ type ExtendedUpdatePatientInput = UpdatePatientInput & {
   teamIds?: string[],
 }
 
-const toISODate = (d: Date | string): string => {
+const toISODate = (d: Date | string | null | undefined): string | null => {
+  if (!d) return null
   const date = typeof d === 'string' ? new Date(d) : d
+  if (!(date instanceof Date) || isNaN(date.getTime())) return null
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')
   const day = String(date.getDate()).padStart(2, '0')
   return `${year}-${month}-${day}`
 }
 
-export const localToUTCWithSameTime = (d: Date) => {
+export const localToUTCWithSameTime = (d: Date | null | undefined): Date | null => {
+  if (!d) return null
   return new Date(Date.UTC(
     d.getFullYear(),
     d.getMonth(),
@@ -698,8 +701,12 @@ export const PatientDetailView = ({
                     }
                   }}
                   onEditCompleted={(date) => {
-                    updateLocalState({ birthdate: toISODate(date) })
-                    persistChanges({ birthdate: toISODate(localToUTCWithSameTime(date)) })
+                    if (date) {
+                      const utcDate = localToUTCWithSameTime(date)
+                      const isoDate = utcDate ? toISODate(utcDate) : null
+                      updateLocalState({ birthdate: isoDate })
+                      persistChanges({ birthdate: isoDate })
+                    }
                   }}
                   onRemove={() => {
                     updateLocalState({ birthdate: null })

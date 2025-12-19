@@ -42,6 +42,7 @@ mutation UpdatePatient($id: ID!, $data: UpdatePatientInput!) {
     birthdate
     sex
     state
+    checksum
     assignedLocation {
       id
       title

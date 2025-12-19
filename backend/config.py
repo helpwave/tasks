@@ -51,3 +51,8 @@ else:
     ]
 
 SCAFFOLD_DIRECTORY = os.getenv("SCAFFOLD_DIRECTORY", None)
+
+INFLUXDB_URL = os.getenv("INFLUXDB_URL", "http://localhost:8086")
+INFLUXDB_TOKEN = os.getenv("INFLUXDB_TOKEN", None)
+INFLUXDB_ORG = os.getenv("INFLUXDB_ORG", "tasks")
+INFLUXDB_BUCKET = os.getenv("INFLUXDB_BUCKET", "audit")

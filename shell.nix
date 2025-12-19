@@ -54,6 +54,10 @@ pkgs.mkShell {
     export ISSUER_URI="http://localhost:8080/realms/tasks"
     export CLIENT_SECRET="tasks-secret"
     export SCAFFOLD_DIRECTORY="$PROJECT_ROOT/scaffold"
+    export INFLUXDB_URL="http://localhost:8086"
+    export INFLUXDB_TOKEN="tasks-token-secret"
+    export INFLUXDB_ORG="tasks"
+    export INFLUXDB_BUCKET="audit"
 
     export LD_LIBRARY_PATH="${libPath}:$LD_LIBRARY_PATH"
 
@@ -89,12 +93,12 @@ pkgs.mkShell {
     }
 
     start-docker() {
-      echo ">>> Starting PostgreSQL, Redis and Keycloak via Docker..."
-      (cd "$PROJECT_ROOT" && ${dockerCompose}/bin/docker-compose -f $DOCKER_COMPOSE_FILE up -d postgres redis keycloak)
+      echo ">>> Starting PostgreSQL, Redis, Keycloak and InfluxDB via Docker..."
+      (cd "$PROJECT_ROOT" && ${dockerCompose}/bin/docker-compose -f $DOCKER_COMPOSE_FILE up -d postgres redis keycloak influxdb)
     }
 
     stop-docker() {
-      echo ">>> Stopping PostgreSQL, Redis and Keycloak..."
+      echo ">>> Stopping PostgreSQL, Redis, Keycloak and InfluxDB..."
       (cd "$PROJECT_ROOT" && ${dockerCompose}/bin/docker-compose -f $DOCKER_COMPOSE_FILE down)
     }
 
@@ -143,7 +147,7 @@ pkgs.mkShell {
     }
 
     run-dev-all() {
-      ${dockerCompose}/bin/docker-compose -f $DOCKER_COMPOSE_FILE ps --services | grep -vE "keycloak|postgres|redis" | xargs ${dockerCompose}/bin/docker-compose -f $DOCKER_COMPOSE_FILE stop
+      ${dockerCompose}/bin/docker-compose -f $DOCKER_COMPOSE_FILE ps --services | grep -vE "keycloak|postgres|redis|influxdb" | xargs ${dockerCompose}/bin/docker-compose -f $DOCKER_COMPOSE_FILE stop
       start-docker
       trap "echo '>>> Stopping all dev services...'; stop-docker; exit" SIGINT
 
