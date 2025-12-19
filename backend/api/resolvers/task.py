@@ -1,3 +1,5 @@
+from collections.abc import AsyncGenerator
+
 from datetime import timezone
 
 import strawberry
@@ -5,6 +7,7 @@ from api.context import Info
 from api.inputs import CreateTaskInput, UpdateTaskInput
 from api.types.task import TaskType
 from database import models
+from database.session import redis_client
 from sqlalchemy import desc, select
 
 from .utils import process_properties
@@ -75,6 +78,9 @@ class TaskMutation:
 
         await info.context.db.commit()
         await info.context.db.refresh(new_task)
+        await redis_client.publish("task_created", new_task.id)
+        if new_task.patient_id:
+            await redis_client.publish("patient_updated", new_task.patient_id)
         return new_task
 
     @strawberry.mutation
@@ -112,6 +118,9 @@ class TaskMutation:
 
         await db.commit()
         await db.refresh(task)
+        await redis_client.publish("task_updated", task.id)
+        if task.patient_id:
+            await redis_client.publish("patient_updated", task.patient_id)
         return task
 
     @strawberry.mutation
@@ -132,6 +141,9 @@ class TaskMutation:
         task.assignee_id = user_id
         await db.commit()
         await db.refresh(task)
+        await redis_client.publish("task_updated", task.id)
+        if task.patient_id:
+            await redis_client.publish("patient_updated", task.patient_id)
         return task
 
     @strawberry.mutation
@@ -147,6 +159,9 @@ class TaskMutation:
         task.assignee_id = None
         await db.commit()
         await db.refresh(task)
+        await redis_client.publish("task_updated", task.id)
+        if task.patient_id:
+            await redis_client.publish("patient_updated", task.patient_id)
         return task
 
     @strawberry.mutation
@@ -162,6 +177,9 @@ class TaskMutation:
         task.done = True
         await db.commit()
         await db.refresh(task)
+        await redis_client.publish("task_updated", task.id)
+        if task.patient_id:
+            await redis_client.publish("patient_updated", task.patient_id)
         return task
 
     @strawberry.mutation
@@ -177,6 +195,9 @@ class TaskMutation:
         task.done = False
         await db.commit()
         await db.refresh(task)
+        await redis_client.publish("task_updated", task.id)
+        if task.patient_id:
+            await redis_client.publish("patient_updated", task.patient_id)
         return task
 
     @strawberry.mutation
@@ -189,6 +210,59 @@ class TaskMutation:
         if not task:
             return False
 
+        task_id = task.id
+        patient_id = task.patient_id
         await db.delete(task)
         await db.commit()
+        await redis_client.publish("task_deleted", task_id)
+        if patient_id:
+            await redis_client.publish("patient_updated", patient_id)
         return True
+
+
+@strawberry.type
+class TaskSubscription:
+    @strawberry.subscription
+    async def task_created(
+        self,
+        info: Info,
+    ) -> AsyncGenerator[strawberry.ID, None]:
+        pubsub = redis_client.pubsub()
+        await pubsub.subscribe("task_created")
+        try:
+            async for message in pubsub.listen():
+                if message["type"] == "message":
+                    yield message["data"]
+        finally:
+            await pubsub.close()
+
+    @strawberry.subscription
+    async def task_updated(
+        self,
+        info: Info,
+        task_id: strawberry.ID | None = None,
+    ) -> AsyncGenerator[strawberry.ID, None]:
+        pubsub = redis_client.pubsub()
+        await pubsub.subscribe("task_updated")
+        try:
+            async for message in pubsub.listen():
+                if message["type"] == "message":
+                    task_id_str = message["data"]
+                    if task_id is None or task_id_str == task_id:
+                        yield task_id_str
+        finally:
+            await pubsub.close()
+
+    @strawberry.subscription
+    async def task_deleted(
+        self,
+        info: Info,
+    ) -> AsyncGenerator[strawberry.ID, None]:
+        pubsub = redis_client.pubsub()
+        await pubsub.subscribe("task_deleted")
+        try:
+            async for message in pubsub.listen():
+                if message["type"] == "message":
+                    yield message["data"]
+        finally:
+            await pubsub.close()

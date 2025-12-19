@@ -3,7 +3,7 @@ import strawberry
 from .location import LocationMutation, LocationQuery
 from .patient import PatientMutation, PatientQuery, PatientSubscription
 from .property import PropertyDefinitionMutation, PropertyDefinitionQuery
-from .task import TaskMutation, TaskQuery
+from .task import TaskMutation, TaskQuery, TaskSubscription
 from .user import UserQuery
 
 
@@ -29,5 +29,5 @@ class Mutation(
 
 
 @strawberry.type
-class Subscription(PatientSubscription):
+class Subscription(PatientSubscription, TaskSubscription):
     pass

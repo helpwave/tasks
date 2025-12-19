@@ -172,10 +172,21 @@ export const PatientDetailView = ({
 
   const { data: patientData, isLoading: isLoadingPatient, refetch } = useGetPatientQuery(
     { id: patientId! },
-    { enabled: isEditMode }
+    { 
+      enabled: isEditMode,
+      refetchInterval: 3000,
+      refetchOnWindowFocus: true,
+      refetchOnMount: true,
+    }
   )
 
-  const { data: locationsData } = useGetLocationsQuery()
+  const { data: locationsData } = useGetLocationsQuery(
+    undefined,
+    {
+      refetchInterval: 10000,
+      refetchOnWindowFocus: true,
+    }
+  )
 
   const locationsMap = useMemo(() => {
     if (!locationsData?.locationNodes) return new Map()

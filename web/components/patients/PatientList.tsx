@@ -43,10 +43,17 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ locat
   const [searchQuery, setSearchQuery] = useState('')
   const [initialOpened, setInitialOpened] = useState(false)
 
-  const { data: queryData, refetch } = useGetPatientsQuery({
-    locationId: locationId,
-    states: acceptedStates
-  })
+  const { data: queryData, refetch } = useGetPatientsQuery(
+    {
+      locationId: locationId,
+      states: acceptedStates
+    },
+    {
+      refetchInterval: 5000,
+      refetchOnWindowFocus: true,
+      refetchOnMount: true,
+    }
+  )
 
   const patients: PatientViewModel[] = useMemo(() => {
     if (!queryData?.patients) return []

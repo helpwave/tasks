@@ -369,6 +369,26 @@ export enum Sex {
 export type Subscription = {
   __typename?: 'Subscription';
   patientCreated: Scalars['ID']['output'];
+  patientStateChanged: Scalars['ID']['output'];
+  patientUpdated: Scalars['ID']['output'];
+  taskCreated: Scalars['ID']['output'];
+  taskDeleted: Scalars['ID']['output'];
+  taskUpdated: Scalars['ID']['output'];
+};
+
+
+export type SubscriptionPatientStateChangedArgs = {
+  patientId?: InputMaybe<Scalars['ID']['input']>;
+};
+
+
+export type SubscriptionPatientUpdatedArgs = {
+  patientId?: InputMaybe<Scalars['ID']['input']>;
+};
+
+
+export type SubscriptionTaskUpdatedArgs = {
+  taskId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type TaskType = {
@@ -534,6 +554,42 @@ export type WaitPatientMutationVariables = Exact<{
 
 
 export type WaitPatientMutation = { __typename?: 'Mutation', waitPatient: { __typename?: 'PatientType', id: string, state: PatientState } };
+
+export type PatientCreatedSubscriptionVariables = Exact<{ [key: string]: never; }>;
+
+
+export type PatientCreatedSubscription = { __typename?: 'Subscription', patientCreated: string };
+
+export type PatientUpdatedSubscriptionVariables = Exact<{
+  patientId?: InputMaybe<Scalars['ID']['input']>;
+}>;
+
+
+export type PatientUpdatedSubscription = { __typename?: 'Subscription', patientUpdated: string };
+
+export type PatientStateChangedSubscriptionVariables = Exact<{
+  patientId?: InputMaybe<Scalars['ID']['input']>;
+}>;
+
+
+export type PatientStateChangedSubscription = { __typename?: 'Subscription', patientStateChanged: string };
+
+export type TaskCreatedSubscriptionVariables = Exact<{ [key: string]: never; }>;
+
+
+export type TaskCreatedSubscription = { __typename?: 'Subscription', taskCreated: string };
+
+export type TaskUpdatedSubscriptionVariables = Exact<{
+  taskId?: InputMaybe<Scalars['ID']['input']>;
+}>;
+
+
+export type TaskUpdatedSubscription = { __typename?: 'Subscription', taskUpdated: string };
+
+export type TaskDeletedSubscriptionVariables = Exact<{ [key: string]: never; }>;
+
+
+export type TaskDeletedSubscription = { __typename?: 'Subscription', taskDeleted: string };
 
 export type CreateTaskMutationVariables = Exact<{
   data: CreateTaskInput;
@@ -1337,6 +1393,36 @@ export const useWaitPatientMutation = <
   }
     )};
 
+export const PatientCreatedDocument = `
+    subscription PatientCreated {
+  patientCreated
+}
+    `;
+export const PatientUpdatedDocument = `
+    subscription PatientUpdated($patientId: ID) {
+  patientUpdated(patientId: $patientId)
+}
+    `;
+export const PatientStateChangedDocument = `
+    subscription PatientStateChanged($patientId: ID) {
+  patientStateChanged(patientId: $patientId)
+}
+    `;
+export const TaskCreatedDocument = `
+    subscription TaskCreated {
+  taskCreated
+}
+    `;
+export const TaskUpdatedDocument = `
+    subscription TaskUpdated($taskId: ID) {
+  taskUpdated(taskId: $taskId)
+}
+    `;
+export const TaskDeletedDocument = `
+    subscription TaskDeleted {
+  taskDeleted
+}
+    `;
 export const CreateTaskDocument = `
     mutation CreateTask($data: CreateTaskInput!) {
   createTask(data: $data) {

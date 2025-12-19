@@ -49,14 +49,29 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
 
   const { data: taskData, isLoading: isLoadingTask, refetch } = useGetTaskQuery(
     { id: taskId! },
-    { enabled: isEditMode }
+    { 
+      enabled: isEditMode,
+      refetchInterval: 3000,
+      refetchOnWindowFocus: true,
+      refetchOnMount: true,
+    }
   )
 
   const { data: patientsData } = useGetPatientsQuery(
     { locationId: selectedLocationId },
-    { enabled: !isEditMode }
+    { 
+      enabled: !isEditMode,
+      refetchInterval: 5000,
+      refetchOnWindowFocus: true,
+    }
   )
-  const { data: usersData } = useGetUsersQuery()
+  const { data: usersData } = useGetUsersQuery(
+    undefined,
+    {
+      refetchInterval: 15000,
+      refetchOnWindowFocus: true,
+    }
+  )
 
   const { mutate: createTask, isLoading: isCreating } = useCreateTaskMutation({
     onSuccess: () => {

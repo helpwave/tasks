@@ -17,12 +17,21 @@ const TeamPage: NextPage = () => {
 
   const { data: locationData, isLoading: isLoadingLocation, isError: isLocationError } = useGetLocationNodeQuery(
     { id: id! },
-    { enabled: !!id }
+    { 
+      enabled: !!id,
+      refetchInterval: 10000,
+      refetchOnWindowFocus: true,
+    }
   )
 
   const { data: patientsData, refetch: refetchPatients, isLoading: isLoadingPatients } = useGetPatientsQuery(
     { locationId: id },
-    { enabled: !!id }
+    { 
+      enabled: !!id,
+      refetchInterval: 5000,
+      refetchOnWindowFocus: true,
+      refetchOnMount: true,
+    }
   )
 
   const tasks: TaskViewModel[] = useMemo(() => {

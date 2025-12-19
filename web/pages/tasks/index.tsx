@@ -11,7 +11,14 @@ import { useRouter } from 'next/router'
 const TasksPage: NextPage = () => {
   const translation = useTasksTranslation()
   const router = useRouter()
-  const { data: queryData, refetch } = useGetMyTasksQuery()
+  const { data: queryData, refetch } = useGetMyTasksQuery(
+    undefined,
+    {
+      refetchInterval: 5000,
+      refetchOnWindowFocus: true,
+      refetchOnMount: true,
+    }
+  )
   const taskId = router.query['taskId'] as string | undefined
 
   const tasks: TaskViewModel[] = useMemo(() => {

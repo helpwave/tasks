@@ -161,7 +161,14 @@ export const LocationSelectionDialog = ({
   useCase = 'default',
 }: LocationSelectionDialogProps) => {
   const translation = useTasksTranslation()
-  const { data, isLoading } = useGetLocationsQuery({}, { enabled: isOpen })
+  const { data, isLoading } = useGetLocationsQuery(
+    {}, 
+    { 
+      enabled: isOpen,
+      refetchInterval: 15000,
+      refetchOnWindowFocus: true,
+    }
+  )
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set(initialSelectedIds))
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())

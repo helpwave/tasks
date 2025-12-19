@@ -63,6 +63,9 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
 
   const { data } = useGetGlobalDataQuery(undefined, {
     enabled: !isAuthLoading && !!identity,
+    refetchInterval: 5000,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
   })
 
   useEffect(() => {

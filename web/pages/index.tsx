@@ -18,7 +18,14 @@ import { TaskDetailView } from '@/components/tasks/TaskDetailView'
 const Dashboard: NextPage = () => {
   const translation = useTasksTranslation()
   const { user, myTasksCount, totalPatientsCount } = useTasksContext()
-  const { data, refetch } = useGetOverviewDataQuery()
+  const { data, refetch } = useGetOverviewDataQuery(
+    undefined,
+    {
+      refetchInterval: 5000,
+      refetchOnWindowFocus: true,
+      refetchOnMount: true,
+    }
+  )
 
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null)
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)

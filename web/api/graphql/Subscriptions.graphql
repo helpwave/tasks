@@ -1,0 +1,24 @@
+subscription PatientCreated {
+  patientCreated
+}
+
+subscription PatientUpdated($patientId: ID) {
+  patientUpdated(patientId: $patientId)
+}
+
+subscription PatientStateChanged($patientId: ID) {
+  patientStateChanged(patientId: $patientId)
+}
+
+subscription TaskCreated {
+  taskCreated
+}
+
+subscription TaskUpdated($taskId: ID) {
+  taskUpdated(taskId: $taskId)
+}
+
+subscription TaskDeleted {
+  taskDeleted
+}
+

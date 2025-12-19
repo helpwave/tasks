@@ -326,6 +326,7 @@ class PatientMutation:
 
         await db.commit()
         await db.refresh(patient, ["assigned_locations", "teams"])
+        await redis_client.publish("patient_updated", patient.id)
         return patient
 
     @strawberry.mutation
@@ -358,6 +359,8 @@ class PatientMutation:
         patient.state = PatientState.ADMITTED.value
         await db.commit()
         await db.refresh(patient, ["assigned_locations"])
+        await redis_client.publish("patient_updated", patient.id)
+        await redis_client.publish("patient_state_changed", patient.id)
         return patient
 
     @strawberry.mutation
@@ -377,6 +380,8 @@ class PatientMutation:
         patient.state = PatientState.DISCHARGED.value
         await db.commit()
         await db.refresh(patient, ["assigned_locations"])
+        await redis_client.publish("patient_updated", patient.id)
+        await redis_client.publish("patient_state_changed", patient.id)
         return patient
 
     @strawberry.mutation
@@ -396,6 +401,8 @@ class PatientMutation:
         patient.state = PatientState.DEAD.value
         await db.commit()
         await db.refresh(patient, ["assigned_locations"])
+        await redis_client.publish("patient_updated", patient.id)
+        await redis_client.publish("patient_state_changed", patient.id)
         return patient
 
     @strawberry.mutation
@@ -415,6 +422,8 @@ class PatientMutation:
         patient.state = PatientState.WAIT.value
         await db.commit()
         await db.refresh(patient, ["assigned_locations"])
+        await redis_client.publish("patient_updated", patient.id)
+        await redis_client.publish("patient_state_changed", patient.id)
         return patient
 
 
@@ -431,5 +440,39 @@ class PatientSubscription:
             async for message in pubsub.listen():
                 if message["type"] == "message":
                     yield message["data"]
+        finally:
+            await pubsub.close()
+
+    @strawberry.subscription
+    async def patient_updated(
+        self,
+        info: Info,
+        patient_id: strawberry.ID | None = None,
+    ) -> AsyncGenerator[strawberry.ID, None]:
+        pubsub = redis_client.pubsub()
+        await pubsub.subscribe("patient_updated")
+        try:
+            async for message in pubsub.listen():
+                if message["type"] == "message":
+                    patient_id_str = message["data"]
+                    if patient_id is None or patient_id_str == patient_id:
+                        yield patient_id_str
+        finally:
+            await pubsub.close()
+
+    @strawberry.subscription
+    async def patient_state_changed(
+        self,
+        info: Info,
+        patient_id: strawberry.ID | None = None,
+    ) -> AsyncGenerator[strawberry.ID, None]:
+        pubsub = redis_client.pubsub()
+        await pubsub.subscribe("patient_state_changed")
+        try:
+            async for message in pubsub.listen():
+                if message["type"] == "message":
+                    patient_id_str = message["data"]
+                    if patient_id is None or patient_id_str == patient_id:
+                        yield patient_id_str
         finally:
             await pubsub.close()
