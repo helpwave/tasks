@@ -140,8 +140,8 @@ function TaskCard({ task, onToggleDone, ...props }: TaskCardProps) {
           )}
           {task.dueDate && !task.done && (
             <div className="flex items-center gap-1 mt-2 text-xs text-warning">
-              <Clock className="size-3"/>
-              <SmartDate date={new Date(task.dueDate)} mode="relative" showTime={false}/>
+              <Clock className="size-3" />
+              <SmartDate date={new Date(task.dueDate)} mode="relative" showTime={false} />
             </div>
           )}
         </div>
@@ -158,11 +158,11 @@ interface PatientDetailViewProps {
 }
 
 export const PatientDetailView = ({
-                                    patientId,
-                                    onClose,
-                                    onSuccess,
-                                    initialCreateData = {}
-                                  }: PatientDetailViewProps) => {
+  patientId,
+  onClose,
+  onSuccess,
+  initialCreateData = {}
+}: PatientDetailViewProps) => {
   const translation = useTasksTranslation()
   const { selectedLocationId } = useTasksContext()
   const queryClient = useQueryClient()
@@ -172,7 +172,7 @@ export const PatientDetailView = ({
 
   const { data: patientData, isLoading: isLoadingPatient, refetch } = useGetPatientQuery(
     { id: patientId! },
-    { 
+    {
       enabled: isEditMode,
       refetchInterval: 3000,
       refetchOnWindowFocus: true,
@@ -341,8 +341,9 @@ export const PatientDetailView = ({
     return true
   }
 
-  const validateClinic = (): boolean => {
-    if (!selectedClinic || !selectedClinic.id) {
+  const validateClinic = (clinic?: LocationNodeType | null): boolean => {
+    const clinicToValidate = clinic !== undefined ? clinic : selectedClinic
+    if (!clinicToValidate || !clinicToValidate.id) {
       setClinicError(translation('clinic') + ' is required')
       return false
     }
@@ -423,8 +424,17 @@ export const PatientDetailView = ({
     if (clinic) {
       setSelectedClinic(clinic)
       updateLocalState({ clinicId: clinic.id } as Partial<ExtendedCreatePatientInput>)
-      persistChanges({ clinicId: clinic.id } as Partial<ExtendedUpdatePatientInput>)
-      validateClinic()
+      if (isEditMode) {
+        persistChanges({ clinicId: clinic.id } as Partial<ExtendedUpdatePatientInput>)
+      }
+      validateClinic(clinic)
+    } else {
+      setSelectedClinic(null)
+      updateLocalState({ clinicId: undefined } as Partial<ExtendedCreatePatientInput>)
+      if (isEditMode) {
+        persistChanges({ clinicId: undefined } as Partial<ExtendedUpdatePatientInput>)
+      }
+      validateClinic(null)
     }
     setIsClinicDialogOpen(false)
   }
@@ -498,7 +508,7 @@ export const PatientDetailView = ({
   }, [])
 
   if (isEditMode && isLoadingPatient) {
-    return <LoadingContainer/>
+    return <LoadingContainer />
   }
 
   const handleToggleDone = (taskId: string, done: boolean) => {
@@ -516,7 +526,7 @@ export const PatientDetailView = ({
           <div className="flex items-center justify-between">
             <div className="font-semibold text-lg">{patientName}</div>
             {patientData?.patient?.state && (
-              <PatientStateChip state={patientData.patient.state}/>
+              <PatientStateChip state={patientData.patient.state} />
             )}
           </div>
           {displayLocation.length > 0 && (
@@ -533,7 +543,7 @@ export const PatientDetailView = ({
               <div className="flex flex-col gap-4 pt-4 pb-24">
                 <div className="mb-2">
                   <Button
-                    startIcon={<PlusIcon/>}
+                    startIcon={<PlusIcon />}
                     onClick={() => setIsCreatingTask(true)}
                     className="w-full"
                   >
@@ -545,8 +555,8 @@ export const PatientDetailView = ({
                     onClick={() => setOpenExpanded(!openExpanded)}
                     className="text-lg font-bold mb-3 flex items-center gap-2 w-full text-left"
                   >
-                    <ChevronDown className={clsx('size-5 transition-transform', { '-rotate-90': !openExpanded })}/>
-                    <Circle className="size-5 text-warning"/>
+                    <ChevronDown className={clsx('size-5 transition-transform', { '-rotate-90': !openExpanded })} />
+                    <Circle className="size-5 text-warning" />
                     {translation('openTasks')} ({openTasks.length})
                   </button>
                   {openExpanded && (
@@ -570,8 +580,8 @@ export const PatientDetailView = ({
                     onClick={() => setClosedExpanded(!closedExpanded)}
                     className="text-lg font-bold mb-3 flex items-center gap-2 w-full text-left"
                   >
-                    <ChevronDown className={clsx('size-5 transition-transform', { '-rotate-90': !closedExpanded })}/>
-                    <CheckCircle2 className="size-5 text-positive"/>
+                    <ChevronDown className={clsx('size-5 transition-transform', { '-rotate-90': !closedExpanded })} />
+                    <CheckCircle2 className="size-5 text-positive" />
                     {translation('closedTasks')} ({closedTasks.length})
                   </button>
                   {closedExpanded && (
@@ -783,21 +793,23 @@ export const PatientDetailView = ({
                       layout="icon"
                       title={translation('selectClinic')}
                     >
-                      <Building2 className="size-4"/>
+                      <Building2 className="size-4" />
                     </Button>
                     {selectedClinic && !isEditMode && (
                       <Button
                         onClick={() => {
                           setSelectedClinic(null)
                           updateLocalState({ clinicId: undefined } as Partial<ExtendedCreatePatientInput>)
-                          persistChanges({ clinicId: undefined } as Partial<ExtendedUpdatePatientInput>)
-                          validateClinic()
+                          if (isEditMode) {
+                            persistChanges({ clinicId: undefined } as Partial<ExtendedUpdatePatientInput>)
+                          }
+                          validateClinic(null)
                         }}
                         layout="icon"
                         color="neutral"
                         title={translation('clear')}
                       >
-                        <XIcon className="size-5"/>
+                        <XIcon className="size-5" />
                       </Button>
                     )}
                   </div>
@@ -822,7 +834,7 @@ export const PatientDetailView = ({
                       layout="icon"
                       title={translation('selectPosition')}
                     >
-                      <Locate className="size-4"/>
+                      <Locate className="size-4" />
                     </Button>
                     {selectedPosition && (
                       <Button
@@ -835,7 +847,7 @@ export const PatientDetailView = ({
                         color="neutral"
                         title={translation('clear')}
                       >
-                        <XIcon className="size-5"/>
+                        <XIcon className="size-5" />
                       </Button>
                     )}
                   </div>
@@ -862,7 +874,7 @@ export const PatientDetailView = ({
                       layout="icon"
                       title={translation('selectTeams')}
                     >
-                      <Users className="size-4"/>
+                      <Users className="size-4" />
                     </Button>
                     {selectedTeams.length > 0 && (
                       <Button
@@ -875,7 +887,7 @@ export const PatientDetailView = ({
                         color="neutral"
                         title={translation('clear')}
                       >
-                        <XIcon className="size-5"/>
+                        <XIcon className="size-5" />
                       </Button>
                     )}
                   </div>
