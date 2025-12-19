@@ -191,8 +191,8 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ locat
           <SmartDate date={row.original.birthdate} showTime={false} />
         )
       },
-      minSize: 100,
-      size: 120,
+      minSize: 90,
+      size: 100,
     },
     {
       id: 'tasks',
@@ -220,8 +220,8 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ locat
         )
       },
       minSize: 80,
-      size: 90,
-      maxSize: 100,
+      size: 110,
+      maxSize: 130,
     },
   ], [translation])
 
