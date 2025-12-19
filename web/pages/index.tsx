@@ -4,7 +4,7 @@ import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
 import { useGetOverviewDataQuery } from '@/api/gql/generated'
-import { Avatar, FillerRowElement, Table } from '@helpwave/hightide'
+import { Avatar, Button, CheckboxUncontrolled, FillerRowElement, Table } from '@helpwave/hightide'
 import { CurrentTime, SmartDate } from '@/utils/date'
 import { ClockIcon, ListCheckIcon, UsersIcon } from 'lucide-react'
 import { useMemo, useState } from 'react'
@@ -14,6 +14,9 @@ import Link from 'next/link'
 import { SidePanel } from '@/components/layout/SidePanel'
 import { PatientDetailView } from '@/components/patients/PatientDetailView'
 import { TaskDetailView } from '@/components/tasks/TaskDetailView'
+import { LocationChips } from '@/components/patients/LocationChips'
+import { useCompleteTaskMutation, useReopenTaskMutation } from '@/api/gql/generated'
+import clsx from 'clsx'
 
 const Dashboard: NextPage = () => {
   const translation = useTasksTranslation()
@@ -30,10 +33,37 @@ const Dashboard: NextPage = () => {
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null)
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
 
+  const { mutate: completeTask } = useCompleteTaskMutation({ onSuccess: () => refetch() })
+  const { mutate: reopenTask } = useReopenTaskMutation({ onSuccess: () => refetch() })
+
   const recentPatients = useMemo(() => data?.recentPatients ?? [], [data])
   const recentTasks = useMemo(() => data?.recentTasks ?? [], [data])
 
   const taskColumns = useMemo<ColumnDef<typeof recentTasks[0]>[]>(() => [
+    {
+      id: 'done',
+      header: translation('status'),
+      accessorKey: 'done',
+      cell: ({ row }) => (
+        <div onClick={(e) => e.stopPropagation()}>
+          <CheckboxUncontrolled
+            checked={row.original.done}
+            onCheckedChange={(checked) => {
+              if (!checked) {
+                completeTask({ id: row.original.id })
+              } else {
+                reopenTask({ id: row.original.id })
+              }
+            }}
+            className={clsx('rounded-full')}
+          />
+        </div>
+      ),
+      minSize: 110,
+      size: 110,
+      maxSize: 110,
+      enableResizing: false,
+    },
     {
       id: 'title',
       header: translation('task'),
@@ -43,7 +73,30 @@ const Dashboard: NextPage = () => {
     {
       id: 'patient',
       header: translation('patient'),
-      accessorFn: (row) => row.patient?.name ?? '-',
+      accessorKey: 'patient',
+      cell: ({ row }) => {
+        const patient = row.original.patient
+        if (!patient) return <span>-</span>
+        
+        return (
+          <div className="flex flex-col gap-1">
+            <Button
+              color="neutral"
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation()
+                setSelectedPatientId(patient.id)
+              }}
+              className="flex-row-0 justify-start w-fit"
+            >
+              {patient.name}
+            </Button>
+            {patient.position && (
+              <LocationChips locations={[patient.position]} small />
+            )}
+          </div>
+        )
+      },
       minSize: 150,
     },
     {
@@ -52,7 +105,7 @@ const Dashboard: NextPage = () => {
       cell: ({ row }) => <SmartDate date={row.original.updateDate ? new Date(row.original.updateDate) : new Date()}/>,
       minSize: 100,
     }
-  ], [translation])
+  ], [translation, completeTask, reopenTask])
 
   const patientColumns = useMemo<ColumnDef<typeof recentPatients[0]>[]>(() => [
     {
@@ -64,8 +117,29 @@ const Dashboard: NextPage = () => {
     {
       id: 'location',
       header: translation('location'),
-      accessorFn: (row) => row.assignedLocation?.parent?.title ?? '-',
+      accessorKey: 'position',
+      cell: ({ row }) => (
+        <LocationChips locations={row.original.position ? [row.original.position] : []} small />
+      ),
       minSize: 150,
+    },
+    {
+      id: 'updated',
+      header: translation('updated'),
+      accessorKey: 'tasks',
+      cell: ({ row }) => {
+        const tasks = row.original.tasks || []
+        const updateDates = tasks
+          .map(t => t.updateDate ? new Date(t.updateDate) : null)
+          .filter((d): d is Date => d !== null)
+          .sort((a, b) => b.getTime() - a.getTime())
+        
+        const mostRecentDate = updateDates[0]
+        if (!mostRecentDate) return <span className="text-description">-</span>
+        
+        return <SmartDate date={mostRecentDate} />
+      },
+      minSize: 100,
     }
   ], [translation])
 
@@ -123,11 +197,11 @@ const Dashboard: NextPage = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mt-4">
-          <ContentPanel titleElement={translation('recentTasks')} description={translation('tasksUpdatedRecently')}>
+        <div className="flex flex-col xl:flex-row gap-6 mt-4 max-w-[1450px]">
+          <ContentPanel titleElement={translation('recentTasks')} description={translation('tasksUpdatedRecently')} className="xl:w-[calc(60%-14.4px)] flex-shrink-0">
             <div className="overflow-x-auto -mx-4 px-4 lg:mx-0 lg:px-0">
               <Table
-                className="cursor-pointer min-w-[600px]"
+                className="cursor-pointer w-full"
                 data={recentTasks}
                 columns={taskColumns}
                 fillerRow={() => (<FillerRowElement className="min-h-6"/>)}
@@ -136,10 +210,10 @@ const Dashboard: NextPage = () => {
             </div>
           </ContentPanel>
 
-          <ContentPanel titleElement={translation('recentPatients')} description={translation('patientsUpdatedRecently')}>
+          <ContentPanel titleElement={translation('recentPatients')} description={translation('patientsUpdatedRecently')} className="xl:w-[calc(40%-9.6px)] flex-shrink-0">
             <div className="overflow-x-auto -mx-4 px-4 lg:mx-0 lg:px-0">
               <Table
-                className="cursor-pointer min-w-[600px]"
+                className="cursor-pointer w-full"
                 data={recentPatients}
                 columns={patientColumns}
                 fillerRow={() => (<FillerRowElement className="min-h-6"/>)}

@@ -478,7 +478,7 @@ export type GetMyTasksQuery = { __typename?: 'Query', me?: { __typename?: 'UserT
 export type GetOverviewDataQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetOverviewDataQuery = { __typename?: 'Query', recentPatients: Array<{ __typename?: 'PatientType', id: string, name: string, sex: Sex, birthdate: any, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null }>, recentTasks: Array<{ __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, updateDate?: any | null, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null } | null, patient: { __typename?: 'PatientType', id: string, name: string } }> };
+export type GetOverviewDataQuery = { __typename?: 'Query', recentPatients: Array<{ __typename?: 'PatientType', id: string, name: string, sex: Sex, birthdate: any, position?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null, tasks: Array<{ __typename?: 'TaskType', updateDate?: any | null }> }>, recentTasks: Array<{ __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, updateDate?: any | null, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null } | null, patient: { __typename?: 'PatientType', id: string, name: string, position?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null } }> };
 
 export type GetPatientQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -792,13 +792,17 @@ export const GetOverviewDataDocument = `
     name
     sex
     birthdate
-    assignedLocation {
+    position {
       id
       title
+      kind
       parent {
         id
         title
       }
+    }
+    tasks {
+      updateDate
     }
   }
   recentTasks(limit: 10) {
@@ -815,6 +819,15 @@ export const GetOverviewDataDocument = `
     patient {
       id
       name
+      position {
+        id
+        title
+        kind
+        parent {
+          id
+          title
+        }
+      }
     }
   }
 }

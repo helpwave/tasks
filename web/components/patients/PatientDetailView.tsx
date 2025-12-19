@@ -26,10 +26,12 @@ import {
   Input,
   LoadingButton,
   LoadingContainer,
+  ProgressIndicator,
   Select,
   SelectOption,
   Tab,
-  TabView
+  TabView,
+  Tooltip
 } from '@helpwave/hightide'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { CheckCircle2, ChevronDown, Circle, Clock, PlusIcon, XIcon, Building2, Locate, Users } from 'lucide-react'
@@ -482,6 +484,8 @@ export const PatientDetailView = ({
   const tasks = patientData?.patient?.tasks || []
   const openTasks = sortByDueDate(tasks.filter(t => !t.done))
   const closedTasks = sortByDueDate(tasks.filter(t => t.done))
+  const totalTasks = openTasks.length + closedTasks.length
+  const taskProgress = totalTasks === 0 ? 0 : openTasks.length / totalTasks
 
   const patientName = patientData?.patient ? `${patientData.patient.firstname} ${patientData.patient.lastname}` : ''
   const displayLocation = useMemo(() => {
@@ -525,9 +529,22 @@ export const PatientDetailView = ({
         <div className="px-1 py-3 mb-4">
           <div className="flex items-center justify-between">
             <div className="font-semibold text-lg">{patientName}</div>
-            {patientData?.patient?.state && (
-              <PatientStateChip state={patientData.patient.state} />
-            )}
+            <div className="flex items-center gap-2">
+              {totalTasks > 0 && (
+                <Tooltip
+                  tooltip={`${translation('openTasks')}: ${openTasks.length}\n${translation('closedTasks')}: ${closedTasks.length}`}
+                  position="top"
+                  tooltipClassName="whitespace-pre-line"
+                >
+                  <div className="w-12">
+                    <ProgressIndicator progress={taskProgress} rotation={-90} />
+                  </div>
+                </Tooltip>
+              )}
+              {patientData?.patient?.state && (
+                <PatientStateChip state={patientData.patient.state} />
+              )}
+            </div>
           </div>
           {displayLocation.length > 0 && (
             <div className="flex items-center gap-1">

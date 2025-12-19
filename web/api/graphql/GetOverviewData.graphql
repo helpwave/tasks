@@ -4,13 +4,17 @@ query GetOverviewData {
     name
     sex
     birthdate
-    assignedLocation {
+    position {
       id
       title
+      kind
       parent {
         id
         title
       }
+    }
+    tasks {
+      updateDate
     }
   }
   recentTasks(limit: 10) {
@@ -27,6 +31,15 @@ query GetOverviewData {
     patient {
       id
       name
+      position {
+        id
+        title
+        kind
+        parent {
+          id
+          title
+        }
+      }
     }
   }
 }
