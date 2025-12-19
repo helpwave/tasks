@@ -199,12 +199,12 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ locat
       header: translation('tasks'),
       accessorFn: ({ openTasksCount, closedTasksCount }) => {
         const total = openTasksCount + closedTasksCount
-        return total === 0 ? 0 : openTasksCount / total
+        return total === 0 ? 0 : closedTasksCount / total
       },
       cell: ({ row }) => {
         const { openTasksCount, closedTasksCount } = row.original
         const total = openTasksCount + closedTasksCount
-        const progress = total === 0 ? 0 : openTasksCount / total
+        const progress = total === 0 ? 0 : closedTasksCount / total
         const tooltipText = `${translation('openTasks')}: ${openTasksCount}\n${translation('closedTasks')}: ${closedTasksCount}`
 
         return (
@@ -227,7 +227,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ locat
 
   return (
     <div className="flex flex-col h-full gap-4">
-      <div className="flex flex-col sm:flex-row justify-between w-full gap-4">
+      <div className="flex flex-col sm:flex-row justify-between w-full gap-4 -mx-4 px-4 lg:mx-0 lg:pl-0 lg:pr-4">
         <div className="w-full sm:max-w-md">
           <SearchBar
             placeholder={translation('search')}
@@ -247,7 +247,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ locat
           {translation('addPatient')}
         </Button>
       </div>
-      <div className="overflow-x-auto -mx-4 px-4 lg:mx-0 lg:px-0">
+      <div className="overflow-x-auto -mx-4 px-4 lg:mx-0 lg:pl-0 lg:pr-4">
         <Table
           className="w-full h-full cursor-pointer min-w-[800px]"
           data={patients}

@@ -253,7 +253,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
 
   return (
     <div className="flex flex-col h-full gap-4">
-      <div className="flex flex-col sm:flex-row justify-between w-full gap-4">
+      <div className="flex flex-col sm:flex-row justify-between w-full gap-4 -mx-4 px-4 lg:mx-0 lg:pl-0 lg:pr-4">
         <div className="w-full sm:max-w-md">
           <SearchBar
             placeholder={translation('search')}
@@ -270,7 +270,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
           {translation('addTask')}
         </Button>
       </div>
-      <div className="overflow-x-auto -mx-4 px-4 lg:mx-0 lg:px-0">
+      <div className="overflow-x-auto -mx-4 px-4 lg:mx-0 lg:pl-0 lg:pr-4">
         <Table
           className="w-full h-full cursor-pointer min-w-[800px]"
           data={tasks}

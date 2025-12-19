@@ -95,22 +95,17 @@ const Dashboard: NextPage = () => {
         if (!patient) return <span>-</span>
 
         return (
-          <div className="flex flex-col gap-1">
-            <Button
-              color="neutral"
-              size="small"
-              onClick={(e) => {
-                e.stopPropagation()
-                setSelectedPatientId(patient.id)
-              }}
-              className="flex-row-0 justify-start w-fit"
-            >
-              {patient.name}
-            </Button>
-            {patient.position && (
-              <LocationChips locations={[patient.position]} small />
-            )}
-          </div>
+          <Button
+            color="neutral"
+            size="small"
+            onClick={(e) => {
+              e.stopPropagation()
+              setSelectedPatientId(patient.id)
+            }}
+            className="flex-row-0 justify-start w-fit"
+          >
+            {patient.name}
+          </Button>
         )
       },
       minSize: 150,
@@ -241,7 +236,7 @@ const Dashboard: NextPage = () => {
           </div>
         </div>
 
-        <div className="flex flex-col xl:flex-row gap-6 mt-4 max-w-[1450px]">
+        <div className="flex flex-col xl:flex-row gap-6 mt-4">
           <ContentPanel titleElement={translation('recentTasks')} description={translation('tasksUpdatedRecently')} className="xl:w-[calc(60%-14.4px)] flex-shrink-0">
             <div className="overflow-x-auto -mx-4 px-4 lg:mx-0 lg:px-0">
               <Table
