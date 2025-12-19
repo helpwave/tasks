@@ -2,6 +2,7 @@ import type { Dispatch, SetStateAction } from 'react'
 import { createContext, type PropsWithChildren, useContext, useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { useGetGlobalDataQuery } from '@/api/gql/generated'
+import { useAuth } from './useAuth'
 
 type User = {
   id: string,
@@ -51,6 +52,7 @@ export const useTasksContext = (): TasksContextType => {
 
 export const TasksContextProvider = ({ children }: PropsWithChildren) => {
   const pathName = usePathname()
+  const { identity, isLoading: isAuthLoading } = useAuth()
   const [state, setState] = useState<TasksContextState>({
     sidebar: {
       isShowingTeams: false,
@@ -59,7 +61,9 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
     }
   })
 
-  const { data } = useGetGlobalDataQuery()
+  const { data } = useGetGlobalDataQuery(undefined, {
+    enabled: !isAuthLoading && !!identity,
+  })
 
   useEffect(() => {
     const totalPatientsCount = data?.patients?.length ?? 0

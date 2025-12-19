@@ -49,55 +49,89 @@ export const AuthProvider = ({
 
   useEffect(() => {
     if(isIgnored) {
+      setAuthState({ isLoading: false })
       return
     }
 
+    let isMounted = true
+
     restoreSession()
       .then((identity) => {
+        if (!isMounted) return
+        
         if (identity) {
           console.debug('Loaded identity')
           setAuthState({ identity, isLoading: false })
           onTokenExpiringCallback(async () => {
             console.debug('Token expiring, refreshing...')
             const renewed = await renewToken()
-            setAuthState({
-              identity: renewed ?? undefined,
-              isLoading: false,
-            })
+            if (isMounted) {
+              setAuthState({
+                identity: renewed ?? undefined,
+                isLoading: false,
+              })
+            }
           })
         } else {
           if (!isUnprotected) {
-            console.debug('Trying to login...')
+            console.debug('No identity found, redirecting to login...')
             login(
               config.auth.redirect_uri +
               `?redirect_uri=${encodeURIComponent(window.location.href)}`
-            ).catch(console.error)
+            ).catch((error) => {
+              if (!error?.response?.status || error.response.status !== 400) {
+                console.error('Login redirect error:', error)
+              }
+            })
           } else {
-            console.debug('Logging out...')
+            console.debug('Unprotected route, clearing auth state...')
             removeUser()
               .then(() => {
-                setAuthState({ isLoading: false })
+                if (isMounted) {
+                  setAuthState({ isLoading: false })
+                }
               })
               .catch(console.error)
           }
         }
       })
-      .catch(async () => {
+      .catch(async (error) => {
+        if (!isMounted) return
+        
+        const isKeycloakUnavailable = error?.response?.status === 400 || 
+                                      error?.status === 400 ||
+                                      (error?.message && error.message.includes('400'))
+        
         if (!isUnprotected) {
-          console.debug('Login error, Trying to login...')
-          login(
-            config.auth.redirect_uri +
-            `?redirect_uri=${encodeURIComponent(window.location.href)}`
-          ).catch(console.error)
+          if (isKeycloakUnavailable) {
+            console.debug('Keycloak not ready, showing login page...')
+            setAuthState({ isLoading: false })
+          } else {
+            console.debug('Login error, redirecting to login...')
+            login(
+              config.auth.redirect_uri +
+              `?redirect_uri=${encodeURIComponent(window.location.href)}`
+            ).catch((err) => {
+              if (!err?.response?.status || err.response.status !== 400) {
+                console.error('Login redirect error:', err)
+              }
+            })
+          }
         } else {
-          console.debug('Login error, logging out...')
+          console.debug('Login error on unprotected route, clearing auth state...')
           removeUser()
             .then(() => {
-              setAuthState({ isLoading: false })
+              if (isMounted) {
+                setAuthState({ isLoading: false })
+              }
             })
             .catch(console.error)
         }
       })
+    
+    return () => {
+      isMounted = false
+    }
   }, [isIgnored, isUnprotected])
 
   const logoutAndReset = useCallback(() => {

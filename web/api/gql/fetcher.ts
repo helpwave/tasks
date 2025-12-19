@@ -8,6 +8,13 @@ const url = config.graphqlEndpoint
 const client = new GraphQLClient(url)
 
 const handleError = async (error: any) => {
+  const isKeycloakUnavailable = error?.response?.status === 400 || 
+                                error?.status === 400
+  
+  if (isKeycloakUnavailable) {
+    throw error
+  }
+  
   const responseData = error?.response?.data || error?.response
   const errorObject = typeof responseData === 'string' ? JSON.parse(responseData) : responseData
 
