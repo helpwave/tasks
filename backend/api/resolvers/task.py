@@ -105,13 +105,16 @@ class TaskMutation:
         if data.done is not None:
             task.done = data.done
 
-        if data.due_date is not None:
-            if data.due_date.tzinfo is not None:
-                task.due_date = data.due_date.astimezone(timezone.utc).replace(
-                    tzinfo=None,
-                )
+        if data.due_date is not strawberry.UNSET:
+            if data.due_date is not None:
+                if data.due_date.tzinfo is not None:
+                    task.due_date = data.due_date.astimezone(timezone.utc).replace(
+                        tzinfo=None,
+                    )
+                else:
+                    task.due_date = data.due_date
             else:
-                task.due_date = data.due_date
+                task.due_date = None
 
         if data.properties:
             await process_properties(db, task, data.properties, "task")
