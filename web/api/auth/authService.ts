@@ -12,34 +12,41 @@ let lastRestoreSessionResult: User | undefined | null = null
 let lastRestoreSessionTime: number = 0
 const RESTORE_SESSION_CACHE_MS = 2000
 
-const isKeycloakUnavailable = (error: any): boolean => {
+interface ErrorWithResponse {
+  response?: { status?: number, data?: { status?: number } },
+  status?: number,
+  message?: string,
+}
+
+const isAuthenticationServerUnavailable = (error: unknown): boolean => {
   if (!error) return false
-  
-  const status = error?.response?.status || error?.status || 
-                 (error?.response?.data?.status) ||
-                 (typeof error === 'object' && 'status' in error ? error.status : null)
-  
+
+  const err = error as ErrorWithResponse
+  const status = err?.response?.status || err?.status ||
+                 (err?.response?.data?.status) ||
+                 (typeof error === 'object' && 'status' in error ? (error as { status?: number }).status : null)
+
   if (status === 400 || status === 503 || status === 502) {
     return true
   }
-  
-  if (error?.message && (
-    error.message.includes('fetch') ||
-    error.message.includes('network') ||
-    error.message.includes('Failed to fetch') ||
-    error.message.includes('ECONNREFUSED')
+
+  if (err?.message && (
+    err.message.includes('fetch') ||
+    err.message.includes('network') ||
+    err.message.includes('Failed to fetch') ||
+    err.message.includes('ECONNREFUSED')
   )) {
     return true
   }
-  
-  if (error?.message && (
-    error.message.includes('metadata') ||
-    error.message.includes('well-known') ||
-    error.message.includes('configuration')
+
+  if (err?.message && (
+    err.message.includes('metadata') ||
+    err.message.includes('well-known') ||
+    err.message.includes('configuration')
   )) {
     return true
   }
-  
+
   return false
 }
 
@@ -64,7 +71,7 @@ export const signUp = () => {
     3,
     500,
     2,
-    (error) => isKeycloakUnavailable(error)
+    (error) => isAuthenticationServerUnavailable(error)
   )
 }
 
@@ -76,7 +83,7 @@ export const login = async (returnUrl?: string) => {
     3,
     500,
     2,
-    (error) => isKeycloakUnavailable(error)
+    (error) => isAuthenticationServerUnavailable(error)
   )
 }
 
@@ -86,7 +93,7 @@ export const handleCallback = async () => {
     3,
     500,
     2,
-    (error) => isKeycloakUnavailable(error)
+    (error) => isAuthenticationServerUnavailable(error)
   )
 }
 
@@ -100,7 +107,7 @@ export const getUser = async (): Promise<User | null> => {
     3,
     500,
     2,
-    (error) => isKeycloakUnavailable(error)
+    (error) => isAuthenticationServerUnavailable(error)
   )
 }
 
@@ -111,7 +118,7 @@ export const renewToken = async (): Promise<User | null> => {
       3,
       500,
       2,
-      (error) => isKeycloakUnavailable(error)
+      (error) => isAuthenticationServerUnavailable(error)
     )
   } catch (error) {
     console.warn('Silent token renewal failed:', error)
@@ -125,18 +132,18 @@ export const removeUser = async () => {
 
 export const restoreSession = async (): Promise<User | undefined> => {
   if (typeof window === 'undefined') return
-  
+
   const now = Date.now()
-  if (restoreSessionLock === null && 
-      lastRestoreSessionResult !== null && 
+  if (restoreSessionLock === null &&
+      lastRestoreSessionResult !== null &&
       (now - lastRestoreSessionTime) < RESTORE_SESSION_CACHE_MS) {
     return lastRestoreSessionResult ?? undefined
   }
-  
+
   if (restoreSessionLock !== null) {
     return await restoreSessionLock
   }
-  
+
   restoreSessionLock = (async (): Promise<User | undefined> => {
     try {
       const user = await executeWithRetry(
@@ -144,9 +151,9 @@ export const restoreSession = async (): Promise<User | undefined> => {
         3,
         500,
         2,
-        (error) => isKeycloakUnavailable(error)
+        (error) => isAuthenticationServerUnavailable(error)
       )
-      
+
       if (!user) {
         lastRestoreSessionResult = undefined
         lastRestoreSessionTime = now
@@ -166,8 +173,8 @@ export const restoreSession = async (): Promise<User | undefined> => {
       lastRestoreSessionTime = now
       return user
     } catch (error) {
-      if (isKeycloakUnavailable(error)) {
-        console.debug('Keycloak not ready yet, session restoration will retry:', error)
+      if (isAuthenticationServerUnavailable(error)) {
+        console.debug('Authentication server not ready yet, session restoration will retry:', error)
       } else {
         console.warn('Session restoration failed:', error)
       }
@@ -180,7 +187,7 @@ export const restoreSession = async (): Promise<User | undefined> => {
       }, 100)
     }
   })()
-  
+
   return await restoreSessionLock
 }
 

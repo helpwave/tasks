@@ -50,7 +50,7 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
 
   const { data: taskData, isLoading: isLoadingTask, refetch } = useGetTaskQuery(
     { id: taskId! },
-    { 
+    {
       enabled: isEditMode,
       refetchInterval: 3000,
       refetchOnWindowFocus: true,
@@ -60,7 +60,7 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
 
   const { data: patientsData } = useGetPatientsQuery(
     { locationId: selectedLocationId },
-    { 
+    {
       enabled: !isEditMode,
       refetchInterval: 5000,
       refetchOnWindowFocus: true,

@@ -162,8 +162,8 @@ export const LocationSelectionDialog = ({
 }: LocationSelectionDialogProps) => {
   const translation = useTasksTranslation()
   const { data, isLoading } = useGetLocationsQuery(
-    {}, 
-    { 
+    {},
+    {
       enabled: isOpen,
       refetchInterval: 15000,
       refetchOnWindowFocus: true,

@@ -14,19 +14,40 @@ export const InstallPrompt = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null)
   const [isOpen, setIsOpen] = useState(false)
   const [isInstalled, setIsInstalled] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {
-    // Check if app is already installed
-    if (window.matchMedia('(display-mode: standalone)').matches) {
-      setIsInstalled(true)
-      return
+    const checkMobile = () => {
+      const isMobileDevice = window.matchMedia('(max-width: 768px)').matches ||
+                            /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+      setIsMobile(isMobileDevice)
+      return isMobileDevice
     }
 
-    // Check if app was installed before
+    const isMobileDevice = checkMobile()
+    const mediaQuery = window.matchMedia('(max-width: 768px)')
+    const handleMediaChange = () => checkMobile()
+    mediaQuery.addEventListener('change', handleMediaChange)
+
+    if (!isMobileDevice) {
+      return () => {
+        mediaQuery.removeEventListener('change', handleMediaChange)
+      }
+    }
+
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      setIsInstalled(true)
+      return () => {
+        mediaQuery.removeEventListener('change', handleMediaChange)
+      }
+    }
+
     const installed = localStorage.getItem('pwa-installed')
     if (installed === 'true') {
       setIsInstalled(true)
-      return
+      return () => {
+        mediaQuery.removeEventListener('change', handleMediaChange)
+      }
     }
 
     const handleBeforeInstallPrompt = (e: Event) => {
@@ -48,6 +69,7 @@ export const InstallPrompt = () => {
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
       window.removeEventListener('appinstalled', handleAppInstalled)
+      mediaQuery.removeEventListener('change', handleMediaChange)
     }
   }, [])
 
@@ -72,8 +94,7 @@ export const InstallPrompt = () => {
     sessionStorage.setItem('pwa-prompt-dismissed', 'true')
   }
 
-  // Don't show if already installed or dismissed this session
-  if (isInstalled || !isOpen || sessionStorage.getItem('pwa-prompt-dismissed') === 'true') {
+  if (!isMobile || isInstalled || !isOpen || sessionStorage.getItem('pwa-prompt-dismissed') === 'true') {
     return null
   }
 

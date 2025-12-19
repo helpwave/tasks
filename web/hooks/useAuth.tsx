@@ -58,7 +58,7 @@ export const AuthProvider = ({
     restoreSession()
       .then((identity) => {
         if (!isMounted) return
-        
+
         if (identity) {
           console.debug('Loaded identity')
           setAuthState({ identity, isLoading: false })
@@ -97,14 +97,14 @@ export const AuthProvider = ({
       })
       .catch(async (error) => {
         if (!isMounted) return
-        
-        const isKeycloakUnavailable = error?.response?.status === 400 || 
-                                      error?.status === 400 ||
-                                      (error?.message && error.message.includes('400'))
-        
+
+        const isAuthenticationServerUnavailable = error?.response?.status === 400 ||
+                                                error?.status === 400 ||
+                                                (error?.message && error.message.includes('400'))
+
         if (!isUnprotected) {
-          if (isKeycloakUnavailable) {
-            console.debug('Keycloak not ready, showing login page...')
+          if (isAuthenticationServerUnavailable) {
+            console.debug('Authentication server not ready, showing login page...')
             setAuthState({ isLoading: false })
           } else {
             console.debug('Login error, redirecting to login...')
@@ -128,7 +128,7 @@ export const AuthProvider = ({
             .catch(console.error)
         }
       })
-    
+
     return () => {
       isMounted = false
     }
