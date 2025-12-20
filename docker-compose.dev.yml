@@ -56,6 +56,8 @@ services:
       DOCKER_INFLUXDB_INIT_ORG: "tasks"
       DOCKER_INFLUXDB_INIT_BUCKET: "audit"
       DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: "tasks-token-secret"
+    ports:
+      - "8086:8086"
     volumes:
       - "influxdb-data:/var/lib/influxdb2"
 

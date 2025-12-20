@@ -44,7 +44,6 @@ class AuditLogger:
         case_id: str,
         activity_name: str,
         user_id: str | None = None,
-        user_name: str | None = None,
         context: dict[str, Any] | None = None,
     ) -> None:
         client = cls._get_client()
@@ -64,8 +63,6 @@ class AuditLogger:
 
             if user_id:
                 point = point.tag("user_id", user_id)
-            if user_name:
-                point = point.tag("user_name", user_name)
             if context:
                 point = point.field("context", json.dumps(context))
 
@@ -134,7 +131,6 @@ def audit_log(activity_name: str | None = None):
             context = info.context
             user = context.user
             user_id = user.id if user else None
-            user_name = user.username if user else None
 
             case_id = None
             entity_id = None
@@ -236,7 +232,6 @@ def audit_log(activity_name: str | None = None):
                     case_id=case_id,
                     activity_name=activity,
                     user_id=user_id,
-                    user_name=user_name,
                     context=audit_context,
                 )
             else:
