@@ -161,13 +161,16 @@ class PatientType:
     def checksum(self) -> str:
         from api.audit import AuditLogger
 
+        sex_value = self.sex.value if hasattr(self.sex, "value") else self.sex
+        state_value = self.state.value if hasattr(self.state, "value") else self.state
+
         data = {
             "id": self.id,
             "firstname": self.firstname,
             "lastname": self.lastname,
             "birthdate": str(self.birthdate),
-            "sex": self.sex.value,
-            "state": self.state.value,
+            "sex": sex_value,
+            "state": state_value,
             "assigned_location_id": self.assigned_location_id,
             "clinic_id": self.clinic_id,
             "position_id": self.position_id,

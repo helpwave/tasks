@@ -3,7 +3,7 @@ from collections.abc import AsyncGenerator
 import strawberry
 from api.audit import audit_log
 from api.context import Info
-from api.inputs import CreatePatientInput, PatientState, UpdatePatientInput
+from api.inputs import CreatePatientInput, PatientState, Sex, UpdatePatientInput
 from api.types.patient import PatientType
 from database import models
 from database.session import publish_to_redis, redis_client
@@ -259,8 +259,8 @@ class PatientMutation:
                 firstname=patient.firstname,
                 lastname=patient.lastname,
                 birthdate=patient.birthdate,
-                sex=patient.sex,
-                state=patient.state,
+                sex=Sex(patient.sex),
+                state=PatientState(patient.state),
                 assigned_location_id=patient.assigned_location_id,
                 clinic_id=patient.clinic_id,
                 position_id=patient.position_id,
@@ -292,20 +292,23 @@ class PatientMutation:
             validate_location_kind(clinic, "CLINIC", "clinic_id")
             patient.clinic_id = data.clinic_id
 
-        if data.position_id is not None:
-            position_result = await db.execute(
-                select(models.LocationNode).where(
-                    models.LocationNode.id == data.position_id,
-                ),
-            )
-            position = position_result.scalars().first()
-            if not position:
-                raise Exception(f"Position location with id {data.position_id} not found")
-            validate_position_kind(position, "position_id")
-            patient.position_id = data.position_id
+        if data.position_id is not strawberry.UNSET:
+            if data.position_id is None:
+                patient.position_id = None
+            else:
+                position_result = await db.execute(
+                    select(models.LocationNode).where(
+                        models.LocationNode.id == data.position_id,
+                    ),
+                )
+                position = position_result.scalars().first()
+                if not position:
+                    raise Exception(f"Position location with id {data.position_id} not found")
+                validate_position_kind(position, "position_id")
+                patient.position_id = data.position_id
 
-        if data.team_ids is not None:
-            if len(data.team_ids) == 0:
+        if data.team_ids is not strawberry.UNSET:
+            if data.team_ids is None or len(data.team_ids) == 0:
                 patient.teams = []
             else:
                 teams_result = await db.execute(

@@ -309,9 +309,9 @@ export const PatientDetailView = ({
       delete cleanedUpdates.clinicId
     }
     if (cleanedUpdates.positionId === '' || cleanedUpdates.positionId === undefined) {
-      delete cleanedUpdates.positionId
+      cleanedUpdates.positionId = null
     }
-    if (cleanedUpdates.teamIds === undefined || (Array.isArray(cleanedUpdates.teamIds) && cleanedUpdates.teamIds.length === 0)) {
+    if (cleanedUpdates.teamIds === undefined) {
       delete cleanedUpdates.teamIds
     }
 

@@ -85,8 +85,8 @@ class UpdatePatientInput:
     assigned_location_id: strawberry.ID | None = None
     assigned_location_ids: list[strawberry.ID] | None = None
     clinic_id: strawberry.ID | None = None
-    position_id: strawberry.ID | None = None
-    team_ids: list[strawberry.ID] | None = None
+    position_id: strawberry.ID | None = strawberry.UNSET
+    team_ids: list[strawberry.ID] | None = strawberry.UNSET
     properties: list[PropertyValueInput] | None = None
     checksum: str | None = None
 
