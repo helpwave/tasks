@@ -1,5 +1,5 @@
-import { useEffect, useMemo } from 'react'
-import { Button, Menu, MenuItem, Chip, useLocalStorage } from '@helpwave/hightide'
+import { useEffect, useMemo, useState, useRef } from 'react'
+import { Button, Chip, useLocalStorage } from '@helpwave/hightide'
 import { Bell } from 'lucide-react'
 import { useGetOverviewDataQuery } from '@/api/gql/generated'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
@@ -21,6 +21,8 @@ export const Notifications = () => {
   const translation = useTasksTranslation()
   const router = useRouter()
   const { user } = useTasksContext()
+  const [isOpen, setIsOpen] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
   const { data, refetch } = useGetOverviewDataQuery(undefined, {
     refetchInterval: 10000,
     refetchOnWindowFocus: true,
@@ -58,6 +60,21 @@ export const Notifications = () => {
     }, 30000)
     return () => clearInterval(interval)
   }, [refetch])
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside)
+      }
+    }
+  }, [isOpen])
 
   const notifications: NotificationItem[] = useMemo(() => {
     const items: NotificationItem[] = []
@@ -137,96 +154,96 @@ export const Notifications = () => {
   }
 
   return (
-    <div className="relative">
-      <Menu<HTMLButtonElement>
-        trigger={(bag, ref) => (
-          <Button
-            ref={ref}
-            coloringStyle="text"
-            layout="icon"
-            color="neutral"
-            onClick={bag.toggleOpen}
-            className="relative"
-          >
-            <Bell className="size-5" />
-            {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 flex min-w-[18px] h-[18px] px-1 items-center justify-center rounded-full bg-primary text-on-primary text-[10px] font-bold leading-none">
-                {unreadCount > 9 ? '9+' : unreadCount}
-              </span>
-            )}
-          </Button>
-        )}
-        menuClassName="!right-0 !translate-x-[-50%]"
+    <div className="relative" ref={containerRef}>
+      <Button
+        coloringStyle="text"
+        layout="icon"
+        color="neutral"
+        onClick={() => setIsOpen(!isOpen)}
+        className="relative"
       >
-        <div className="max-h-96 overflow-y-auto w-80 border border-divider rounded-lg bg-surface shadow-lg relative" style={{ marginTop: '8px' }}>
-          <div className="absolute -top-2 right-4 w-4 h-4 bg-surface border-l border-t border-divider rotate-45"></div>
-        {notifications.length > 0 && (
-          <div className="px-4 py-2 border-b border-divider flex-row-2 justify-between items-center bg-surface">
-            <span className="typography-label-lg font-semibold">
-              {translation('notifications') || 'Notifications'}
-            </span>
-            <Button
-              size="small"
-              coloringStyle="text"
-              color="neutral"
-              onClick={(e) => {
-                e.stopPropagation()
-                handleDismissAll()
-              }}
-            >
-              {translation('dismissAll') || 'Dismiss All'}
-            </Button>
-          </div>
+        <Bell className="size-5" />
+        {unreadCount > 0 && (
+          <span className="absolute -top-1 -right-1 flex min-w-[18px] h-[18px] px-1 items-center justify-center rounded-full bg-primary text-on-primary text-[10px] font-bold leading-none">
+            {unreadCount > 9 ? '9+' : unreadCount}
+          </span>
         )}
-        <div>
-          {notifications.length > 0 ? (
-            notifications.map((notification, index) => {
-              const isRead = readNotifications.has(notification.id)
-              return (
-                <div key={notification.id}>
-                  <MenuItem
-                    onClick={() => handleNotificationClick(notification)}
-                    className={isRead ? 'opacity-60' : ''}
-                  >
-                    <div className="flex-row-2 items-start w-full">
-                      <div className="flex-col-1 flex-1 min-w-0">
-                        <div className="flex-row-2 items-center gap-2">
-                          <span className="typography-body-sm font-medium truncate">{notification.title}</span>
-                          <Chip
-                            size="small"
-                            color={notification.type === 'patient' ? 'primary' : 'neutral'}
-                          >
-                            {notification.type === 'patient'
-                              ? (translation('patient') || 'Patient')
-                              : (translation('task') || 'Task')}
-                          </Chip>
-                        </div>
-                        <span className="typography-body-xs text-description truncate">
-                          {notification.subtitle}
-                          {notification.date && (
-                            <> • <SmartDate date={notification.date} showTime={true} /></>
+      </Button>
+      {isOpen && (
+        <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 z-[300]">
+          <div className="max-h-96 overflow-y-auto w-80 border border-divider rounded-lg bg-surface relative">
+            <div className="absolute -top-2 right-4 w-4 h-4 bg-surface border-l border-t border-divider rotate-45"></div>
+            {notifications.length > 0 && (
+              <div className="px-4 py-2 border-b border-divider flex-row-2 justify-between items-center bg-surface">
+                <span className="typography-label-lg font-semibold">
+                  {translation('notifications') || 'Notifications'}
+                </span>
+                <Button
+                  size="small"
+                  coloringStyle="text"
+                  color="neutral"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleDismissAll()
+                  }}
+                >
+                  {translation('dismissAll') || 'Dismiss All'}
+                </Button>
+              </div>
+            )}
+            <div>
+              {notifications.length > 0 ? (
+                notifications.map((notification, index) => {
+                  const isRead = readNotifications.has(notification.id)
+                  return (
+                    <div key={notification.id}>
+                      <div
+                        onClick={() => {
+                          handleNotificationClick(notification)
+                          setIsOpen(false)
+                        }}
+                        className={`block px-3 py-1.5 first:rounded-t-md last:rounded-b-md text-sm font-semibold text-nowrap text-left cursor-pointer hover:bg-primary/20 ${isRead ? 'opacity-60' : ''}`}
+                      >
+                        <div className="flex-row-2 items-start w-full">
+                          <div className="flex-col-1 flex-1 min-w-0">
+                            <div className="flex-row-2 items-center gap-2">
+                              <span className="typography-body-sm font-medium truncate">{notification.title}</span>
+                              <Chip
+                                size="small"
+                                color={notification.type === 'patient' ? 'primary' : 'neutral'}
+                              >
+                                {notification.type === 'patient'
+                                  ? (translation('patient') || 'Patient')
+                                  : (translation('task') || 'Task')}
+                              </Chip>
+                            </div>
+                            <span className="typography-body-xs text-description truncate">
+                              {notification.subtitle}
+                              {notification.date && (
+                                <> • <SmartDate date={notification.date} showTime={true} /></>
+                              )}
+                            </span>
+                          </div>
+                          {!isRead && (
+                            <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-1.5" />
                           )}
-                        </span>
+                        </div>
                       </div>
-                      {!isRead && (
-                        <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-1.5" />
+                      {index < notifications.length - 1 && (
+                        <div className="border-b border-divider" />
                       )}
                     </div>
-                  </MenuItem>
-                  {index < notifications.length - 1 && (
-                    <div className="border-b border-divider" />
-                  )}
+                  )
+                })
+              ) : (
+                <div className="px-4 py-8 text-center text-description">
+                  {translation('noNotifications') || 'No recent updates'}
                 </div>
-              )
-            })
-          ) : (
-            <div className="px-4 py-8 text-center text-description">
-              {translation('noNotifications') || 'No recent updates'}
+              )}
             </div>
-          )}
+          </div>
         </div>
-      </div>
-      </Menu>
+      )}
     </div>
   )
 }

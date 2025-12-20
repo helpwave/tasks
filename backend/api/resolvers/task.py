@@ -93,9 +93,6 @@ class TaskMutation:
         id: strawberry.ID,
         data: UpdateTaskInput,
     ) -> TaskType:
-        from api.audit import AuditLogger
-        from api.types.task import TaskType
-
         db = info.context.db
         result = await db.execute(
             select(models.Task).where(models.Task.id == id),

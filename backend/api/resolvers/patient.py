@@ -240,9 +240,6 @@ class PatientMutation:
         id: strawberry.ID,
         data: UpdatePatientInput,
     ) -> PatientType:
-        from api.audit import AuditLogger
-        from api.types.patient import PatientType
-
         db = info.context.db
         result = await db.execute(
             select(models.Patient)

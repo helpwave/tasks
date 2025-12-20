@@ -1,0 +1,38 @@
+name: Python lint
+
+on:
+  push:
+    branches:
+      - '*'
+    paths:
+      - 'backend/**/*.py'
+      - 'simulator/**/*.py'
+      - '.github/workflows/lint-python.yml'
+  pull_request:
+    paths:
+      - 'backend/**/*.py'
+      - 'simulator/**/*.py'
+      - '.github/workflows/lint-python.yml'
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install flake8
+        run: pip install flake8
+
+      - name: Run flake8 on backend
+        run: flake8 backend --ignore=E501
+
+      - name: Run flake8 on simulator
+        run: flake8 simulator --ignore=E501
+
