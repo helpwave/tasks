@@ -129,10 +129,11 @@ class DirectGrantAuthenticator:
         if CLIENT_SECRET:
             data["client_secret"] = CLIENT_SECRET
 
-        max_retries = 5
-        retry_delay = 2
+        retry_delay = 3
+        attempt = 0
 
-        for attempt in range(max_retries):
+        while True:
+            attempt += 1
             try:
                 response = self.session.post(token_url, data=data, timeout=10)
 
@@ -142,13 +143,12 @@ class DirectGrantAuthenticator:
                     return token_data["access_token"]
 
                 if response.status_code == 503 or response.status_code == 502:
-                    if attempt < max_retries - 1:
-                        logger.warning(
-                            f"Keycloak not ready (HTTP {response.status_code}). "
-                            f"Retrying in {retry_delay} seconds... (attempt {attempt + 1}/{max_retries})",
-                        )
-                        time.sleep(retry_delay)
-                        continue
+                    logger.warning(
+                        f"Keycloak not ready (HTTP {response.status_code}). "
+                        f"Retrying in {retry_delay} seconds... (attempt {attempt})",
+                    )
+                    time.sleep(retry_delay)
+                    continue
 
                 try:
                     error_data = response.json()
@@ -161,19 +161,16 @@ class DirectGrantAuthenticator:
                         f"HTTP {response.status_code}: {response.text[:100]}"
                     )
 
-                raise Exception(
+                logger.warning(
                     f"Authentication failed: {error_msg}. "
-                    f"Make sure the client '{CLIENT_ID}' has 'Direct Access Grants' enabled in Keycloak "
-                    f"and that USERNAME/PASSWORD are correct.",
+                    f"Retrying in {retry_delay} seconds... (attempt {attempt})",
                 )
+                time.sleep(retry_delay)
+                continue
             except requests.exceptions.RequestException as e:
-                if attempt < max_retries - 1:
-                    logger.warning(
-                        f"Connection error during authentication: {e}. "
-                        f"Retrying in {retry_delay} seconds... (attempt {attempt + 1}/{max_retries})",
-                    )
-                    time.sleep(retry_delay)
-                    continue
-                raise
-
-        raise Exception("Authentication failed after multiple retries")
+                logger.warning(
+                    f"Connection error during authentication: {e}. "
+                    f"Retrying in {retry_delay} seconds... (attempt {attempt})",
+                )
+                time.sleep(retry_delay)
+                continue

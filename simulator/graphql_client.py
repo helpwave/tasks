@@ -13,6 +13,21 @@ class GraphQLClient:
         else:
             self.authenticator = InteractiveAuthenticator(self.session)
 
+    def _is_authentication_error(self, response: requests.Response) -> bool:
+        if response.status_code == 401:
+            return True
+        if response.status_code == 400:
+            try:
+                error_data = response.json()
+                if "errors" in error_data:
+                    for error in error_data["errors"]:
+                        message = error.get("message", "").lower()
+                        if "unauthenticated" in message or "not authenticated" in message:
+                            return True
+            except Exception:
+                pass
+        return False
+
     def query(self, query: str, variables: dict = None) -> dict:
         if not self.token:
             self.token = self.authenticator.login()
@@ -31,9 +46,9 @@ class GraphQLClient:
                 headers=headers,
             )
 
-            if response.status_code == 401:
+            if self._is_authentication_error(response):
                 logger.warning(
-                    "Token expired (401). Initiating re-authentication...",
+                    "Authentication error detected. Re-authenticating...",
                 )
                 self.token = self.authenticator.login()
                 headers["Authorization"] = f"Bearer {self.token}"
