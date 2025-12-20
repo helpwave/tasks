@@ -17,7 +17,7 @@ type NotificationItem = {
   taskId?: string,
 }
 
-export const NotificationBell = () => {
+export const Notifications = () => {
   const translation = useTasksTranslation()
   const router = useRouter()
   const { user } = useTasksContext()
@@ -156,9 +156,9 @@ export const NotificationBell = () => {
             )}
           </Button>
         )}
-        className="[&>div]:!left-auto [&>div]:!right-0 [&>div]:!translate-x-0"
+        menuClassName="!right-0 !translate-x-[-50%]"
       >
-        <div className="max-h-96 overflow-y-auto w-80 border border-divider rounded-lg bg-surface shadow-lg relative pt-3" style={{ marginTop: '8px' }}>
+        <div className="max-h-96 overflow-y-auto w-80 border border-divider rounded-lg bg-surface shadow-lg relative" style={{ marginTop: '8px' }}>
           <div className="absolute -top-2 right-4 w-4 h-4 bg-surface border-l border-t border-divider rotate-45"></div>
         {notifications.length > 0 && (
           <div className="px-4 py-2 border-b border-divider flex-row-2 justify-between items-center bg-surface">
