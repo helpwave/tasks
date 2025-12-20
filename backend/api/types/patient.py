@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Annotated
 import strawberry
 from api.context import Info
 from api.inputs import PatientState, Sex
+from api.types.base import ChecksumMixin
 from api.types.property import PropertyValueType
 from database import models
 from sqlalchemy import select
@@ -15,7 +16,7 @@ if TYPE_CHECKING:
 
 
 @strawberry.type
-class PatientType:
+class PatientType(ChecksumMixin):
     id: strawberry.ID
     firstname: str
     lastname: str
@@ -157,22 +158,3 @@ class PatientType:
         result = await info.context.db.execute(query)
         return result.scalars().all()
 
-    @strawberry.field
-    def checksum(self) -> str:
-        from api.audit import AuditLogger
-
-        sex_value = self.sex.value if hasattr(self.sex, "value") else self.sex
-        state_value = self.state.value if hasattr(self.state, "value") else self.state
-
-        data = {
-            "id": self.id,
-            "firstname": self.firstname,
-            "lastname": self.lastname,
-            "birthdate": str(self.birthdate),
-            "sex": sex_value,
-            "state": state_value,
-            "assigned_location_id": self.assigned_location_id,
-            "clinic_id": self.clinic_id,
-            "position_id": self.position_id,
-        }
-        return AuditLogger.calculate_checksum(data)
