@@ -1,27 +1,25 @@
 from collections.abc import AsyncGenerator
 
-from datetime import timezone
-
 import strawberry
 from api.audit import audit_log
 from api.context import Info
 from api.inputs import CreateTaskInput, UpdateTaskInput
+from api.resolvers.base import BaseMutationResolver, BaseSubscriptionResolver
+from api.services.base import BaseRepository
+from api.services.checksum import validate_checksum
+from api.services.datetime import normalize_datetime_to_utc
+from api.services.property import PropertyService
 from api.types.task import TaskType
 from database import models
-from database.session import publish_to_redis, redis_client
 from sqlalchemy import desc, select
-
-from .utils import process_properties
 
 
 @strawberry.type
 class TaskQuery:
     @strawberry.field
     async def task(self, info: Info, id: strawberry.ID) -> TaskType | None:
-        result = await info.context.db.execute(
-            select(models.Task).where(models.Task.id == id),
-        )
-        return result.scalars().first()
+        repo = BaseRepository(info.context.db, models.Task)
+        return await repo.get_by_id(id)
 
     @strawberry.field
     async def tasks(
@@ -54,36 +52,34 @@ class TaskQuery:
 
 
 @strawberry.type
-class TaskMutation:
+class TaskMutation(BaseMutationResolver[models.Task]):
+    def __init__(self):
+        super().__init__(models.Task, "task")
+
+    def _get_property_service(self, db) -> PropertyService:
+        return PropertyService(db)
+
     @strawberry.mutation
     @audit_log("create_task")
     async def create_task(self, info: Info, data: CreateTaskInput) -> TaskType:
-        due_date = data.due_date
-        if due_date and due_date.tzinfo is not None:
-            due_date = due_date.astimezone(timezone.utc).replace(tzinfo=None)
-
         new_task = models.Task(
             title=data.title,
             description=data.description,
             patient_id=data.patient_id,
             assignee_id=data.assignee_id,
-            due_date=due_date,
+            due_date=normalize_datetime_to_utc(data.due_date),
         )
-        info.context.db.add(new_task)
-        if data.properties:
-            await process_properties(
-                info.context.db,
-                new_task,
-                data.properties,
-                "task",
-            )
 
-        await info.context.db.commit()
-        await info.context.db.refresh(new_task)
-        await publish_to_redis("task_created", new_task.id)
-        if new_task.patient_id:
-            await publish_to_redis("patient_updated", new_task.patient_id)
-        return new_task
+        if data.properties:
+            property_service = self._get_property_service(info.context.db)
+            await property_service.process_properties(new_task, data.properties, "task")
+
+        return await self.create_and_notify(
+            info,
+            new_task,
+            "patient" if new_task.patient_id else None,
+            new_task.patient_id if new_task.patient_id else None,
+        )
 
     @strawberry.mutation
     @audit_log("update_task")
@@ -93,31 +89,11 @@ class TaskMutation:
         id: strawberry.ID,
         data: UpdateTaskInput,
     ) -> TaskType:
-        db = info.context.db
-        result = await db.execute(
-            select(models.Task).where(models.Task.id == id),
-        )
-        task = result.scalars().first()
-        if not task:
-            raise Exception("Task not found")
+        repo = self.get_repository(info.context.db)
+        task = await repo.get_by_id_or_raise(id, "Task not found")
 
         if data.checksum:
-            task_type = TaskType(
-                id=task.id,
-                title=task.title,
-                description=task.description,
-                done=task.done,
-                due_date=task.due_date,
-                creation_date=task.creation_date,
-                update_date=task.update_date,
-                assignee_id=task.assignee_id,
-                patient_id=task.patient_id,
-            )
-            current_checksum = task_type.checksum
-            if data.checksum != current_checksum:
-                raise Exception(
-                    f"CONFLICT: Task data has been modified. Expected checksum: {current_checksum}, Got: {data.checksum}"
-                )
+            validate_checksum(task, data.checksum, "Task")
 
         if data.title is not None:
             task.title = data.title
@@ -127,25 +103,29 @@ class TaskMutation:
             task.done = data.done
 
         if data.due_date is not strawberry.UNSET:
-            if data.due_date is not None:
-                if data.due_date.tzinfo is not None:
-                    task.due_date = data.due_date.astimezone(timezone.utc).replace(
-                        tzinfo=None,
-                    )
-                else:
-                    task.due_date = data.due_date
-            else:
-                task.due_date = None
+            task.due_date = normalize_datetime_to_utc(data.due_date) if data.due_date else None
 
         if data.properties:
-            await process_properties(db, task, data.properties, "task")
+            property_service = self._get_property_service(info.context.db)
+            await property_service.process_properties(task, data.properties, "task")
 
-        await db.commit()
-        await db.refresh(task)
-        await publish_to_redis("task_updated", task.id)
-        if task.patient_id:
-            await publish_to_redis("patient_updated", task.patient_id)
-        return task
+        return await self.update_and_notify(
+            info,
+            task,
+            "patient",
+            task.patient_id,
+        )
+
+    async def _update_task_field(
+        self,
+        info: Info,
+        id: strawberry.ID,
+        field_updater,
+    ) -> TaskType:
+        repo = self.get_repository(info.context.db)
+        task = await repo.get_by_id_or_raise(id, "Task not found")
+        field_updater(task)
+        return await self.update_and_notify(info, task, "patient", task.patient_id)
 
     @strawberry.mutation
     @audit_log("assign_task")
@@ -155,115 +135,61 @@ class TaskMutation:
         id: strawberry.ID,
         user_id: strawberry.ID,
     ) -> TaskType:
-        db = info.context.db
-        result = await db.execute(
-            select(models.Task).where(models.Task.id == id),
+        return await self._update_task_field(
+            info,
+            id,
+            lambda task: setattr(task, "assignee_id", user_id),
         )
-        task = result.scalars().first()
-        if not task:
-            raise Exception("Task not found")
-
-        task.assignee_id = user_id
-        await db.commit()
-        await db.refresh(task)
-        await publish_to_redis("task_updated", task.id)
-        if task.patient_id:
-            await publish_to_redis("patient_updated", task.patient_id)
-        return task
 
     @strawberry.mutation
     @audit_log("unassign_task")
     async def unassign_task(self, info: Info, id: strawberry.ID) -> TaskType:
-        db = info.context.db
-        result = await db.execute(
-            select(models.Task).where(models.Task.id == id),
+        return await self._update_task_field(
+            info,
+            id,
+            lambda task: setattr(task, "assignee_id", None),
         )
-        task = result.scalars().first()
-        if not task:
-            raise Exception("Task not found")
-
-        task.assignee_id = None
-        await db.commit()
-        await db.refresh(task)
-        await publish_to_redis("task_updated", task.id)
-        if task.patient_id:
-            await publish_to_redis("patient_updated", task.patient_id)
-        return task
 
     @strawberry.mutation
     @audit_log("complete_task")
     async def complete_task(self, info: Info, id: strawberry.ID) -> TaskType:
-        db = info.context.db
-        result = await db.execute(
-            select(models.Task).where(models.Task.id == id),
+        return await self._update_task_field(
+            info,
+            id,
+            lambda task: setattr(task, "done", True),
         )
-        task = result.scalars().first()
-        if not task:
-            raise Exception("Task not found")
-
-        task.done = True
-        await db.commit()
-        await db.refresh(task)
-        await publish_to_redis("task_updated", task.id)
-        if task.patient_id:
-            await publish_to_redis("patient_updated", task.patient_id)
-        return task
 
     @strawberry.mutation
     @audit_log("reopen_task")
     async def reopen_task(self, info: Info, id: strawberry.ID) -> TaskType:
-        db = info.context.db
-        result = await db.execute(
-            select(models.Task).where(models.Task.id == id),
+        return await self._update_task_field(
+            info,
+            id,
+            lambda task: setattr(task, "done", False),
         )
-        task = result.scalars().first()
-        if not task:
-            raise Exception("Task not found")
-
-        task.done = False
-        await db.commit()
-        await db.refresh(task)
-        await publish_to_redis("task_updated", task.id)
-        if task.patient_id:
-            await publish_to_redis("patient_updated", task.patient_id)
-        return task
 
     @strawberry.mutation
     @audit_log("delete_task")
     async def delete_task(self, info: Info, id: strawberry.ID) -> bool:
-        db = info.context.db
-        result = await db.execute(
-            select(models.Task).where(models.Task.id == id),
-        )
-        task = result.scalars().first()
+        repo = self.get_repository(info.context.db)
+        task = await repo.get_by_id(id)
         if not task:
             return False
 
-        task_id = task.id
         patient_id = task.patient_id
-        await db.delete(task)
-        await db.commit()
-        await publish_to_redis("task_deleted", task_id)
-        if patient_id:
-            await publish_to_redis("patient_updated", patient_id)
+        await self.delete_entity(info, task, "patient", patient_id)
         return True
 
 
 @strawberry.type
-class TaskSubscription:
+class TaskSubscription(BaseSubscriptionResolver):
+    def __init__(self):
+        super().__init__("task")
+
     @strawberry.subscription
-    async def task_created(
-        self,
-        info: Info,
-    ) -> AsyncGenerator[strawberry.ID, None]:
-        pubsub = redis_client.pubsub()
-        await pubsub.subscribe("task_created")
-        try:
-            async for message in pubsub.listen():
-                if message["type"] == "message":
-                    yield message["data"]
-        finally:
-            await pubsub.close()
+    async def task_created(self, info: Info) -> AsyncGenerator[strawberry.ID, None]:
+        async for task_id in self.entity_created(info):
+            yield task_id
 
     @strawberry.subscription
     async def task_updated(
@@ -271,27 +197,10 @@ class TaskSubscription:
         info: Info,
         task_id: strawberry.ID | None = None,
     ) -> AsyncGenerator[strawberry.ID, None]:
-        pubsub = redis_client.pubsub()
-        await pubsub.subscribe("task_updated")
-        try:
-            async for message in pubsub.listen():
-                if message["type"] == "message":
-                    task_id_str = message["data"]
-                    if task_id is None or task_id_str == task_id:
-                        yield task_id_str
-        finally:
-            await pubsub.close()
+        async for updated_id in self.entity_updated(info, task_id):
+            yield updated_id
 
     @strawberry.subscription
-    async def task_deleted(
-        self,
-        info: Info,
-    ) -> AsyncGenerator[strawberry.ID, None]:
-        pubsub = redis_client.pubsub()
-        await pubsub.subscribe("task_deleted")
-        try:
-            async for message in pubsub.listen():
-                if message["type"] == "message":
-                    yield message["data"]
-        finally:
-            await pubsub.close()
+    async def task_deleted(self, info: Info) -> AsyncGenerator[strawberry.ID, None]:
+        async for task_id in self.entity_deleted(info):
+            yield task_id

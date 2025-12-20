@@ -4,6 +4,8 @@ from api.inputs import (
     CreatePropertyDefinitionInput,
     UpdatePropertyDefinitionInput,
 )
+from api.resolvers.base import BaseMutationResolver
+from api.services.base import BaseRepository
 from api.types.property import PropertyDefinitionType
 from database import models
 from sqlalchemy import select
@@ -23,7 +25,10 @@ class PropertyDefinitionQuery:
 
 
 @strawberry.type
-class PropertyDefinitionMutation:
+class PropertyDefinitionMutation(BaseMutationResolver[models.PropertyDefinition]):
+    def __init__(self):
+        super().__init__(models.PropertyDefinition, "property_definition")
+
     @strawberry.mutation
     async def create_property_definition(
         self,
@@ -41,10 +46,7 @@ class PropertyDefinitionMutation:
             is_active=data.is_active,
             allowed_entities=entities_str,
         )
-        info.context.db.add(defn)
-        await info.context.db.commit()
-        await info.context.db.refresh(defn)
-        return defn
+        return await self.create_and_notify(info, defn)
 
     @strawberry.mutation
     async def update_property_definition(
@@ -53,15 +55,8 @@ class PropertyDefinitionMutation:
         id: strawberry.ID,
         data: UpdatePropertyDefinitionInput,
     ) -> PropertyDefinitionType:
-        db = info.context.db
-        result = await db.execute(
-            select(models.PropertyDefinition).where(
-                models.PropertyDefinition.id == id,
-            ),
-        )
-        defn = result.scalars().first()
-        if not defn:
-            raise Exception("Property Definition not found")
+        repo = self.get_repository(info.context.db)
+        defn = await repo.get_by_id_or_raise(id, "Property Definition not found")
 
         if data.name is not None:
             defn.name = data.name
@@ -76,9 +71,7 @@ class PropertyDefinitionMutation:
                 [e.value for e in data.allowed_entities],
             )
 
-        await db.commit()
-        await db.refresh(defn)
-        return defn
+        return await self.update_and_notify(info, defn)
 
     @strawberry.mutation
     async def delete_property_definition(
@@ -86,16 +79,10 @@ class PropertyDefinitionMutation:
         info: Info,
         id: strawberry.ID,
     ) -> bool:
-        db = info.context.db
-        result = await db.execute(
-            select(models.PropertyDefinition).where(
-                models.PropertyDefinition.id == id,
-            ),
-        )
-        defn = result.scalars().first()
+        repo = self.get_repository(info.context.db)
+        defn = await repo.get_by_id(id)
         if not defn:
             return False
 
-        await db.delete(defn)
-        await db.commit()
+        await self.delete_entity(info, defn)
         return True
