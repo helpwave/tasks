@@ -55,4 +55,3 @@ class ChecksumMixin:
     def checksum(self) -> str:
         data = self._get_checksum_data()
         return AuditLogger.calculate_checksum(data)
-

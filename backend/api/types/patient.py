@@ -157,4 +157,3 @@ class PatientType(ChecksumMixin):
         )
         result = await info.context.db.execute(query)
         return result.scalars().all()
-
