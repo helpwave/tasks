@@ -1,6 +1,5 @@
 import pytest
 from api.services.checksum import validate_checksum
-from database.models.task import Task
 
 
 @pytest.mark.asyncio

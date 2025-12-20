@@ -45,7 +45,7 @@ def get_user_payload(connection: HTTPConnection) -> Optional[dict]:
 
 
 def get_public_key(token: str) -> Any:
-    global jwks_cache  # noqa: F824
+    global jwks_cache  # noqa: PLW0603
 
     try:
         header = jwt.get_unverified_header(token)

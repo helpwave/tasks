@@ -1,9 +1,6 @@
 import pytest
 from api.inputs import PropertyValueInput
 from api.services.property import PropertyService
-from database.models.patient import Patient
-from database.models.task import Task
-from api.inputs import Sex, PatientState
 
 
 @pytest.mark.asyncio

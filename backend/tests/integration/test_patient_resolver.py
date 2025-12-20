@@ -1,7 +1,6 @@
 import pytest
 from api.context import Context
 from api.resolvers.patient import PatientQuery, PatientMutation
-from database.models.patient import Patient
 from api.inputs import Sex, PatientState
 
 

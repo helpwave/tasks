@@ -1,9 +1,7 @@
 import pytest
-from api.context import Context, Info
+from api.context import Context
 from api.resolvers.task import TaskQuery, TaskMutation
 from database.models.task import Task
-from typing import Any
-import strawberry
 
 
 class MockInfo:

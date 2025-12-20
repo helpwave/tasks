@@ -5,7 +5,6 @@ from api.inputs import (
     UpdatePropertyDefinitionInput,
 )
 from api.resolvers.base import BaseMutationResolver
-from api.services.base import BaseRepository
 from api.types.property import PropertyDefinitionType
 from database import models
 from sqlalchemy import select

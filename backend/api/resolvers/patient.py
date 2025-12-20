@@ -3,9 +3,8 @@ from collections.abc import AsyncGenerator
 import strawberry
 from api.audit import audit_log
 from api.context import Info
-from api.inputs import CreatePatientInput, PatientState, Sex, UpdatePatientInput
+from api.inputs import CreatePatientInput, PatientState, UpdatePatientInput
 from api.resolvers.base import BaseMutationResolver, BaseSubscriptionResolver
-from api.services.base import BaseRepository
 from api.services.checksum import validate_checksum
 from api.services.location import LocationService
 from api.services.property import PropertyService
@@ -133,9 +132,8 @@ class PatientMutation(BaseMutationResolver[models.Patient]):
 
         await location_service.validate_and_get_clinic(data.clinic_id)
 
-        position = None
         if data.position_id:
-            position = await location_service.validate_and_get_position(data.position_id)
+            await location_service.validate_and_get_position(data.position_id)
 
         teams = []
         if data.team_ids:
@@ -181,7 +179,6 @@ class PatientMutation(BaseMutationResolver[models.Patient]):
         data: UpdatePatientInput,
     ) -> PatientType:
         db = info.context.db
-        repo = BaseRepository(db, models.Patient)
         result = await db.execute(
             select(models.Patient)
             .where(models.Patient.id == id)
