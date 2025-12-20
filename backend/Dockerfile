@@ -6,7 +6,7 @@ ENV PIP_NO_WARN_ABOUT_ROOT_USER=1
 
 WORKDIR /build
 
-RUN apk update && apk upgrade --no-cache && apk add gcc musl-dev libffi-dev libressl-dev && apk add gcc musl-dev libffi-dev libressl-dev
+RUN apk add --no-cache gcc=15.2.0-r2 musl-dev=1.2.5-r21 libffi-dev=3.5.2-r0 libressl-dev=4.2.1-r0
 
 COPY requirements.txt /build
 
@@ -20,8 +20,6 @@ ENV PYTHONUNBUFFERED=1
 
 ENV PORT=80
 ENV HOST="0.0.0.0"
-
-RUN apk update && apk upgrade --no-cache
 
 COPY --from=builder /build/venv /usr/local/
 COPY . /app

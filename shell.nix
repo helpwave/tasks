@@ -19,6 +19,7 @@ let
   redis = pkgs.redis;
   dockerCompose = pkgs.docker-compose;
   netcat = pkgs.netcat-gnu;
+  hadolint = pkgs.hadolint;
 
   libPath = pkgs.lib.makeLibraryPath [
     pkgs.stdenv.cc.cc.lib
@@ -40,6 +41,7 @@ pkgs.mkShell {
     redis
     netcat
     pkgs.gcc
+    hadolint
   ];
 
   venvDir = "./backend/venv";
@@ -104,7 +106,7 @@ pkgs.mkShell {
           echo "$current_hash" > "$req_hash_file"
         fi
       fi
-      (cd "$PROJECT_ROOT/simulator" && exec python -m simulator)
+      (cd "$PROJECT_ROOT/simulator" && exec python main.py)
     }
 
     start-docker() {
@@ -179,7 +181,23 @@ pkgs.mkShell {
       stop-docker
     }
 
+    lint-dockerfiles() {
+      echo ">>> Linting all Dockerfiles with hadolint..."
+      ${hadolint}/bin/hadolint --failure-threshold warning \
+        "$PROJECT_ROOT/backend/Dockerfile" \
+        "$PROJECT_ROOT/simulator/Dockerfile" \
+        "$PROJECT_ROOT/web/Dockerfile" \
+        "$PROJECT_ROOT/proxy/Dockerfile"
+      local exit_code=$?
+      if [ $exit_code -eq 0 ]; then
+        echo ">>> All Dockerfiles passed hadolint checks"
+      else
+        echo ">>> Some Dockerfiles have warnings or errors"
+        return $exit_code
+      fi
+    }
+
     echo ">>> Environment ready."
-    echo "Commands: run-dev-backend, run-dev-web, run-dev-all, run-alembic, psql-dev, redis-cli-dev, clean-dev, start-docker, stop-docker, run-simulator"
+    echo "Commands: run-dev-backend, run-dev-web, run-dev-all, run-alembic, psql-dev, redis-cli-dev, clean-dev, start-docker, stop-docker, run-simulator, lint-dockerfiles"
   '';
 }
