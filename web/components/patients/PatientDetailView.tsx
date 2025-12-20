@@ -560,7 +560,7 @@ export const PatientDetailView = ({
         <TabView className="h-full flex-col-0">
           {isEditMode && (
             <Tab label={translation('tasks')} className="h-full overflow-y-auto pr-2">
-              <div className="flex flex-col gap-4 pt-4 pb-24">
+              <div className="flex flex-col gap-4 pt-4">
                 <div className="mb-2">
                   <Button
                     startIcon={<PlusIcon />}
@@ -624,7 +624,7 @@ export const PatientDetailView = ({
           )}
 
           <Tab label={translation('patientData')} className="flex-col-6 px-1 pt-4 h-full overflow-x-visible overflow-y-auto">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-24">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormElementWrapper
                 label={translation('firstName')}
                 error={firstnameError || undefined}
