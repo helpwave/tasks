@@ -6,12 +6,12 @@ import Head from 'next/head'
 import titleWrapper from '@/utils/titleWrapper'
 import Link from 'next/link'
 import {
-  Avatar, Button,
+  Avatar,
+  Button,
   Dialog,
   Expandable,
-  ExpansionIcon,
   LoadingContainer,
-  MarkdownInterpreter, Menu, MenuItem,
+  MarkdownInterpreter,
   useLocalStorage
 } from '@helpwave/hightide'
 import { getConfig } from '@/utils/config'
@@ -29,10 +29,10 @@ import {
   Menu as MenuIcon,
   X
 } from 'lucide-react'
+import { Notifications } from '@/components/Notifications'
 import { TasksLogo } from '@/components/TasksLogo'
 import { useRouter } from 'next/router'
 import { useTasksContext } from '@/hooks/useTasksContext'
-import { useAuth } from '@/hooks/useAuth'
 import { hashString } from '@/utils/hash'
 import { useSwipeGesture } from '@/hooks/useSwipeGesture'
 
@@ -203,10 +203,8 @@ type HeaderProps = HTMLAttributes<HTMLHeadElement> & {
 }
 
 export const Header = ({ onMenuClick, isMenuOpen, ...props }: HeaderProps) => {
-  const translation = useTasksTranslation()
-  const { user } = useTasksContext()
   const router = useRouter()
-  const { logout } = useAuth()
+  const { user } = useTasksContext()
 
   return (
     <header
@@ -229,36 +227,24 @@ export const Header = ({ onMenuClick, isMenuOpen, ...props }: HeaderProps) => {
       </div>
       <div className="flex-row-2 justify-end">
         <div className="flex-row-0">
+          <Notifications />
+        </div>
+        <div className="flex-row-0">
           <Button coloringStyle="text" layout="icon" color="neutral" onClick={() => router.push('/settings')}>
             <SettingsIcon />
           </Button>
         </div>
-        <Menu<HTMLButtonElement>
-          trigger={(bag, ref) => (
-            <Button
-              ref={ref}
-              color="neutral"
-              className="gap-x-1.75"
-              onClick={bag.toggleOpen}
-            >
-              <div className="flex-row-1.5">
-                <span className="hidden sm:inline">{user?.name}</span>
-                <ExpansionIcon isExpanded={bag.isOpen} />
-              </div>
-              <Avatar
-                fullyRounded={true}
-                image={user?.avatarUrl ? {
-                  avatarUrl: user.avatarUrl,
-                  alt: user.name
-                } : undefined}
-              />
-            </Button>
-          )}
-        >
-          <MenuItem onClick={() => logout()}>
-            {translation('logout') ?? 'Logout'}
-          </MenuItem>
-        </Menu>
+        <div className="flex-row-1.5 items-center gap-x-1.75">
+          <span className="hidden sm:inline typography-title-sm">{user?.name}</span>
+          <Avatar
+            size="lg"
+            fullyRounded={true}
+            image={user?.avatarUrl ? {
+              avatarUrl: user.avatarUrl,
+              alt: user.name
+            } : undefined}
+          />
+        </div>
       </div>
     </header>
   )
@@ -334,113 +320,113 @@ export const Sidebar = ({ isOpen, onClose, ...props }: SidebarProps) => {
               <X className="size-6" />
             </Button>
           </div>
-        <SidebarLink href="/" onClick={onClose}>
-          <Grid2X2PlusIcon className="-rotate-90 size-5" />
-          <span className="flex grow">{translation('dashboard')}</span>
-        </SidebarLink>
-        <SidebarLink href="/tasks" onClick={onClose}>
-          <CircleCheck className="size-5" />
-          <span className="flex grow">{translation('myTasks')}</span>
-          {context?.myTasksCount !== undefined && (<span className="text-description">{context.myTasksCount}</span>)}
-        </SidebarLink>
-        {context?.waitingPatientsCount !== undefined && context.waitingPatientsCount > 0 && (
-          <SidebarLink href="/waitingroom" onClick={onClose}>
-            <Clock className="size-5" />
-            <span className="flex grow">{translation('waitingroom')}</span>
-            <span className="text-description">{context.waitingPatientsCount}</span>
+          <SidebarLink href="/" onClick={onClose}>
+            <Grid2X2PlusIcon className="-rotate-90 size-5" />
+            <span className="flex grow">{translation('dashboard')}</span>
           </SidebarLink>
-        )}
-        <SidebarLink href="/patients" onClick={onClose}>
-          <User className="size-5" />
-          <span className="flex grow">{translation('patients')}</span>
-          {context?.totalPatientsCount !== undefined && (<span className="text-description">{context.totalPatientsCount}</span>)}
-        </SidebarLink>
-
-        <Expandable
-          label={(
-            <div className="flex-row-2">
-              <Users className="size-5" />
-              {translation('teams')}
-            </div>
-          )}
-          headerClassName="!px-2.5 !py-1.5 hover:bg-black/30"
-          contentClassName="!px-0 !pb-0 gap-y-0"
-          className="!shadow-none"
-          isExpanded={context.sidebar.isShowingTeams}
-          onChange={isExpanded => context.update(prevState => ({
-            ...prevState,
-            sidebar: {
-              ...prevState.sidebar,
-              isShowingTeams: isExpanded,
-            }
-          }))}
-        >
-          {!context?.teams ? (
-            <LoadingContainer className="w-full h-10" />
-          ) : context.teams.map(team => (
-            <SidebarLink key={team.id} href={`${locationRoute}/${team.id}`} className="pl-9.5" onClick={onClose}>
-              {team.title}
+          <SidebarLink href="/tasks" onClick={onClose}>
+            <CircleCheck className="size-5" />
+            <span className="flex grow">{translation('myTasks')}</span>
+            {context?.myTasksCount !== undefined && (<span className="text-description">{context.myTasksCount}</span>)}
+          </SidebarLink>
+          {context?.waitingPatientsCount !== undefined && context.waitingPatientsCount > 0 && (
+            <SidebarLink href="/waitingroom" onClick={onClose}>
+              <Clock className="size-5" />
+              <span className="flex grow">{translation('waitingroom')}</span>
+              <span className="text-description">{context.waitingPatientsCount}</span>
             </SidebarLink>
-          ))}
-        </Expandable>
-
-        <Expandable
-          label={(
-            <div className="flex-row-2">
-              <Building2 className="size-5" />
-              {translation('wards')}
-            </div>
           )}
-          headerClassName="!px-2.5 !py-1.5 hover:bg-black/30"
-          contentClassName="!px-0 !pb-0 gap-y-0"
-          className="!shadow-none"
-          isExpanded={context.sidebar.isShowingWards}
-          onChange={isExpanded => context.update(prevState => ({
-            ...prevState,
-            sidebar: {
-              ...prevState.sidebar,
-              isShowingWards: isExpanded,
-            }
-          }))}
-        >
-          {!context?.wards ? (
-            <LoadingContainer className="w-full h-10" />
-          ) : context.wards.map(ward => (
-            <SidebarLink key={ward.id} href={`${locationRoute}/${ward.id}`} className="pl-9.5" onClick={onClose}>
-              {ward.title}
-            </SidebarLink>
-          ))}
-        </Expandable>
+          <SidebarLink href="/patients" onClick={onClose}>
+            <User className="size-5" />
+            <span className="flex grow">{translation('patients')}</span>
+            {context?.totalPatientsCount !== undefined && (<span className="text-description">{context.totalPatientsCount}</span>)}
+          </SidebarLink>
 
-        <Expandable
-          label={(
-            <div className="flex-row-2">
-              <Hospital className="size-5" />
-              {translation('clinics')}
-            </div>
-          )}
-          headerClassName="!px-2.5 !py-1.5 hover:bg-black/30"
-          contentClassName="!px-0 !pb-0 gap-y-0"
-          className="!shadow-none"
-          isExpanded={context.sidebar.isShowingClinics}
-          onChange={isExpanded => context.update(prevState => ({
-            ...prevState,
-            sidebar: {
-              ...prevState.sidebar,
-              isShowingClinics: isExpanded,
-            }
-          }))}
-        >
-          {!context?.clinics ? (
-            <LoadingContainer className="w-full h-10" />
-          ) : context.clinics.map(clinic => (
-            <SidebarLink key={clinic.id} href={`${locationRoute}/${clinic.id}`} className="pl-9.5" onClick={onClose}>
-              {clinic.title}
-            </SidebarLink>
-          ))}
-        </Expandable>
-      </nav>
-    </aside>
+          <Expandable
+            label={(
+              <div className="flex-row-2">
+                <Users className="size-5" />
+                {translation('teams')}
+              </div>
+            )}
+            headerClassName="!px-2.5 !py-1.5 hover:bg-black/30"
+            contentClassName="!px-0 !pb-0 gap-y-0"
+            className="!shadow-none"
+            isExpanded={context.sidebar.isShowingTeams}
+            onChange={isExpanded => context.update(prevState => ({
+              ...prevState,
+              sidebar: {
+                ...prevState.sidebar,
+                isShowingTeams: isExpanded,
+              }
+            }))}
+          >
+            {!context?.teams ? (
+              <LoadingContainer className="w-full h-10" />
+            ) : context.teams.map(team => (
+              <SidebarLink key={team.id} href={`${locationRoute}/${team.id}`} className="pl-9.5" onClick={onClose}>
+                {team.title}
+              </SidebarLink>
+            ))}
+          </Expandable>
+
+          <Expandable
+            label={(
+              <div className="flex-row-2">
+                <Building2 className="size-5" />
+                {translation('wards')}
+              </div>
+            )}
+            headerClassName="!px-2.5 !py-1.5 hover:bg-black/30"
+            contentClassName="!px-0 !pb-0 gap-y-0"
+            className="!shadow-none"
+            isExpanded={context.sidebar.isShowingWards}
+            onChange={isExpanded => context.update(prevState => ({
+              ...prevState,
+              sidebar: {
+                ...prevState.sidebar,
+                isShowingWards: isExpanded,
+              }
+            }))}
+          >
+            {!context?.wards ? (
+              <LoadingContainer className="w-full h-10" />
+            ) : context.wards.map(ward => (
+              <SidebarLink key={ward.id} href={`${locationRoute}/${ward.id}`} className="pl-9.5" onClick={onClose}>
+                {ward.title}
+              </SidebarLink>
+            ))}
+          </Expandable>
+
+          <Expandable
+            label={(
+              <div className="flex-row-2">
+                <Hospital className="size-5" />
+                {translation('clinics')}
+              </div>
+            )}
+            headerClassName="!px-2.5 !py-1.5 hover:bg-black/30"
+            contentClassName="!px-0 !pb-0 gap-y-0"
+            className="!shadow-none"
+            isExpanded={context.sidebar.isShowingClinics}
+            onChange={isExpanded => context.update(prevState => ({
+              ...prevState,
+              sidebar: {
+                ...prevState.sidebar,
+                isShowingClinics: isExpanded,
+              }
+            }))}
+          >
+            {!context?.clinics ? (
+              <LoadingContainer className="w-full h-10" />
+            ) : context.clinics.map(clinic => (
+              <SidebarLink key={clinic.id} href={`${locationRoute}/${clinic.id}`} className="pl-9.5" onClick={onClose}>
+                {clinic.title}
+              </SidebarLink>
+            ))}
+          </Expandable>
+        </nav>
+      </aside>
     </>
   )
 }

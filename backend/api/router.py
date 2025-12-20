@@ -28,24 +28,24 @@ class AuthedGraphQLRouter(GraphQLRouter):
                 var loginUrl = "{login_url}";
                 var logoutUrl = "{logout_url}";
                 var isAuthenticated = {is_authenticated};
-                
+
                 function injectAuthButton() {{
                     var sidebars = document.querySelectorAll('.graphiql-sidebar-section');
-                    var sidebar = sidebars[0]; 
-                    
+                    var sidebar = sidebars[0];
+
                     if (sidebar && !document.getElementById('custom-auth-button')) {{
                         var button = document.createElement('button');
                         button.id = 'custom-auth-button';
                         button.className = 'graphiql-un-styled';
                         button.type = 'button';
-                        
+
                         if (isAuthenticated) {{
                             button.setAttribute('aria-label', 'Logout');
                             button.title = 'Logout';
                             button.innerHTML = `
-                                <svg height="1em" viewBox="0 0 24 24" fill="none" 
-                                     stroke="currentColor" stroke-width="1.5" 
-                                     stroke-linecap="round" stroke-linejoin="round" 
+                                <svg height="1em" viewBox="0 0 24 24" fill="none"
+                                     stroke="currentColor" stroke-width="1.5"
+                                     stroke-linecap="round" stroke-linejoin="round"
                                      xmlns="http://www.w3.org/2000/svg">
                                     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
                                     <polyline points="16 17 21 12 16 7"></polyline>
@@ -59,9 +59,9 @@ class AuthedGraphQLRouter(GraphQLRouter):
                             button.setAttribute('aria-label', 'Login with OIDC');
                             button.title = 'Login with OIDC';
                             button.innerHTML = `
-                                <svg height="1em" viewBox="0 0 24 24" fill="none" 
-                                     stroke="currentColor" stroke-width="1.5" 
-                                     stroke-linecap="round" stroke-linejoin="round" 
+                                <svg height="1em" viewBox="0 0 24 24" fill="none"
+                                     stroke="currentColor" stroke-width="1.5"
+                                     stroke-linecap="round" stroke-linejoin="round"
                                      xmlns="http://www.w3.org/2000/svg">
                                     <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
                                     <polyline points="10 17 15 12 10 7"></polyline>
@@ -85,7 +85,7 @@ class AuthedGraphQLRouter(GraphQLRouter):
                     childList: true,
                     subtree: true
                 }});
-                
+
                 injectAuthButton();
             }})();
         </script>

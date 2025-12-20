@@ -8,3 +8,4 @@ requests==2.32.5
 sqlalchemy==2.0.45
 strawberry-graphql[fastapi]==0.287.3
 uvicorn[standard]==0.38.0
+influxdb_client==1.49.0

@@ -15,7 +15,7 @@ export const ContentPanel = ({
   ...props
 }: ContentPanelProps) => {
   return (
-    <div {...props} className={clsx('flex-col-2 w-full h-full pt-6', props.className)}>
+    <div {...props} className={clsx('flex-col-2 w-full pt-6', props.className)}>
       <div className="flex-col-0">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full">
           <h1 className="typography-title-lg">{titleElement}</h1>

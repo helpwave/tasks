@@ -1,11 +1,12 @@
 from collections.abc import AsyncGenerator
 
 import strawberry
+from api.audit import audit_log
 from api.context import Info
-from api.inputs import CreatePatientInput, PatientState, UpdatePatientInput
+from api.inputs import CreatePatientInput, PatientState, Sex, UpdatePatientInput
 from api.types.patient import PatientType
 from database import models
-from database.session import redis_client
+from database.session import publish_to_redis, redis_client
 from sqlalchemy import select
 from sqlalchemy.orm import aliased, selectinload
 
@@ -72,7 +73,7 @@ class PatientQuery:
             selectinload(models.Patient.tasks),
             selectinload(models.Patient.teams),
         )
-        
+
         if states:
             state_values = [s.value for s in states]
             query = query.where(models.Patient.state.in_(state_values))
@@ -138,6 +139,7 @@ class PatientQuery:
 @strawberry.type
 class PatientMutation:
     @strawberry.mutation
+    @audit_log("create_patient")
     async def create_patient(
         self,
         info: Info,
@@ -145,7 +147,7 @@ class PatientMutation:
     ) -> PatientType:
         db = info.context.db
         initial_state = data.state.value if data.state else PatientState.WAIT.value
-        
+
         clinic_result = await db.execute(
             select(models.LocationNode).where(
                 models.LocationNode.id == data.clinic_id,
@@ -227,10 +229,11 @@ class PatientMutation:
         await db.commit()
 
         await db.refresh(new_patient, ["assigned_locations", "teams"])
-        await redis_client.publish("patient_created", new_patient.id)
+        await publish_to_redis("patient_created", new_patient.id)
         return new_patient
 
     @strawberry.mutation
+    @audit_log("update_patient")
     async def update_patient(
         self,
         info: Info,
@@ -249,6 +252,24 @@ class PatientMutation:
         patient = result.scalars().first()
         if not patient:
             raise Exception("Patient not found")
+
+        if data.checksum:
+            patient_type = PatientType(
+                id=patient.id,
+                firstname=patient.firstname,
+                lastname=patient.lastname,
+                birthdate=patient.birthdate,
+                sex=Sex(patient.sex),
+                state=PatientState(patient.state),
+                assigned_location_id=patient.assigned_location_id,
+                clinic_id=patient.clinic_id,
+                position_id=patient.position_id,
+            )
+            current_checksum = patient_type.checksum
+            if data.checksum != current_checksum:
+                raise Exception(
+                    f"CONFLICT: Patient data has been modified. Expected checksum: {current_checksum}, Got: {data.checksum}"
+                )
 
         if data.firstname is not None:
             patient.firstname = data.firstname
@@ -271,20 +292,23 @@ class PatientMutation:
             validate_location_kind(clinic, "CLINIC", "clinic_id")
             patient.clinic_id = data.clinic_id
 
-        if data.position_id is not None:
-            position_result = await db.execute(
-                select(models.LocationNode).where(
-                    models.LocationNode.id == data.position_id,
-                ),
-            )
-            position = position_result.scalars().first()
-            if not position:
-                raise Exception(f"Position location with id {data.position_id} not found")
-            validate_position_kind(position, "position_id")
-            patient.position_id = data.position_id
+        if data.position_id is not strawberry.UNSET:
+            if data.position_id is None:
+                patient.position_id = None
+            else:
+                position_result = await db.execute(
+                    select(models.LocationNode).where(
+                        models.LocationNode.id == data.position_id,
+                    ),
+                )
+                position = position_result.scalars().first()
+                if not position:
+                    raise Exception(f"Position location with id {data.position_id} not found")
+                validate_position_kind(position, "position_id")
+                patient.position_id = data.position_id
 
-        if data.team_ids is not None:
-            if len(data.team_ids) == 0:
+        if data.team_ids is not strawberry.UNSET:
+            if data.team_ids is None or len(data.team_ids) == 0:
                 patient.teams = []
             else:
                 teams_result = await db.execute(
@@ -326,10 +350,11 @@ class PatientMutation:
 
         await db.commit()
         await db.refresh(patient, ["assigned_locations", "teams"])
-        await redis_client.publish("patient_updated", patient.id)
+        await publish_to_redis("patient_updated", patient.id)
         return patient
 
     @strawberry.mutation
+    @audit_log("delete_patient")
     async def delete_patient(self, info: Info, id: strawberry.ID) -> bool:
         db = info.context.db
         result = await db.execute(
@@ -343,6 +368,7 @@ class PatientMutation:
         return True
 
     @strawberry.mutation
+    @audit_log("admit_patient")
     async def admit_patient(self, info: Info, id: strawberry.ID) -> PatientType:
         db = info.context.db
         result = await db.execute(
@@ -359,11 +385,12 @@ class PatientMutation:
         patient.state = PatientState.ADMITTED.value
         await db.commit()
         await db.refresh(patient, ["assigned_locations"])
-        await redis_client.publish("patient_updated", patient.id)
-        await redis_client.publish("patient_state_changed", patient.id)
+        await publish_to_redis("patient_updated", patient.id)
+        await publish_to_redis("patient_state_changed", patient.id)
         return patient
 
     @strawberry.mutation
+    @audit_log("discharge_patient")
     async def discharge_patient(self, info: Info, id: strawberry.ID) -> PatientType:
         db = info.context.db
         result = await db.execute(
@@ -380,11 +407,12 @@ class PatientMutation:
         patient.state = PatientState.DISCHARGED.value
         await db.commit()
         await db.refresh(patient, ["assigned_locations"])
-        await redis_client.publish("patient_updated", patient.id)
-        await redis_client.publish("patient_state_changed", patient.id)
+        await publish_to_redis("patient_updated", patient.id)
+        await publish_to_redis("patient_state_changed", patient.id)
         return patient
 
     @strawberry.mutation
+    @audit_log("mark_patient_dead")
     async def mark_patient_dead(self, info: Info, id: strawberry.ID) -> PatientType:
         db = info.context.db
         result = await db.execute(
@@ -401,11 +429,12 @@ class PatientMutation:
         patient.state = PatientState.DEAD.value
         await db.commit()
         await db.refresh(patient, ["assigned_locations"])
-        await redis_client.publish("patient_updated", patient.id)
-        await redis_client.publish("patient_state_changed", patient.id)
+        await publish_to_redis("patient_updated", patient.id)
+        await publish_to_redis("patient_state_changed", patient.id)
         return patient
 
     @strawberry.mutation
+    @audit_log("wait_patient")
     async def wait_patient(self, info: Info, id: strawberry.ID) -> PatientType:
         db = info.context.db
         result = await db.execute(
@@ -422,8 +451,8 @@ class PatientMutation:
         patient.state = PatientState.WAIT.value
         await db.commit()
         await db.refresh(patient, ["assigned_locations"])
-        await redis_client.publish("patient_updated", patient.id)
-        await redis_client.publish("patient_state_changed", patient.id)
+        await publish_to_redis("patient_updated", patient.id)
+        await publish_to_redis("patient_state_changed", patient.id)
         return patient
 
 

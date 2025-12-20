@@ -19,6 +19,7 @@ let
   redis = pkgs.redis;
   dockerCompose = pkgs.docker-compose;
   netcat = pkgs.netcat-gnu;
+  hadolint = pkgs.hadolint;
 
   libPath = pkgs.lib.makeLibraryPath [
     pkgs.stdenv.cc.cc.lib
@@ -40,6 +41,7 @@ pkgs.mkShell {
     redis
     netcat
     pkgs.gcc
+    hadolint
   ];
 
   venvDir = "./backend/venv";
@@ -54,6 +56,10 @@ pkgs.mkShell {
     export ISSUER_URI="http://localhost:8080/realms/tasks"
     export CLIENT_SECRET="tasks-secret"
     export SCAFFOLD_DIRECTORY="$PROJECT_ROOT/scaffold"
+    export INFLUXDB_URL="http://localhost:8086"
+    export INFLUXDB_TOKEN="tasks-token-secret"
+    export INFLUXDB_ORG="tasks"
+    export INFLUXDB_BUCKET="audit"
 
     export LD_LIBRARY_PATH="${libPath}:$LD_LIBRARY_PATH"
 
@@ -85,16 +91,31 @@ pkgs.mkShell {
 
     run-simulator() {
       echo ">>> Running simulator"
-      (${pkgs.python313}/bin/python3 "$PROJECT_ROOT/simulator")
+      if [ ! -d "$PROJECT_ROOT/simulator/venv" ]; then
+        ${python}/bin/python -m venv "$PROJECT_ROOT/simulator/venv"
+      fi
+      source "$PROJECT_ROOT/simulator/venv/bin/activate"
+      if [ -f "$PROJECT_ROOT/simulator/requirements.txt" ]; then
+        req_file="$PROJECT_ROOT/simulator/requirements.txt"
+        req_hash_file="$PROJECT_ROOT/simulator/venv/.requirements_hash"
+        current_hash=$(sha256sum "$req_file" | cut -d " " -f1)
+        if [ ! -f "$req_hash_file" ] || [ "$(cat "$req_hash_file")" != "$current_hash" ]; then
+          echo ">>> Installing simulator requirements..."
+          pip install --upgrade pip > /dev/null
+          pip install -r "$req_file"
+          echo "$current_hash" > "$req_hash_file"
+        fi
+      fi
+      (cd "$PROJECT_ROOT/simulator" && exec python main.py)
     }
 
     start-docker() {
-      echo ">>> Starting PostgreSQL, Redis and Keycloak via Docker..."
-      (cd "$PROJECT_ROOT" && ${dockerCompose}/bin/docker-compose -f $DOCKER_COMPOSE_FILE up -d postgres redis keycloak)
+      echo ">>> Starting PostgreSQL, Redis, Keycloak and InfluxDB via Docker..."
+      (cd "$PROJECT_ROOT" && ${dockerCompose}/bin/docker-compose -f $DOCKER_COMPOSE_FILE up -d postgres redis keycloak influxdb)
     }
 
     stop-docker() {
-      echo ">>> Stopping PostgreSQL, Redis and Keycloak..."
+      echo ">>> Stopping PostgreSQL, Redis, Keycloak and InfluxDB..."
       (cd "$PROJECT_ROOT" && ${dockerCompose}/bin/docker-compose -f $DOCKER_COMPOSE_FILE down)
     }
 
@@ -143,7 +164,7 @@ pkgs.mkShell {
     }
 
     run-dev-all() {
-      ${dockerCompose}/bin/docker-compose -f $DOCKER_COMPOSE_FILE ps --services | grep -vE "keycloak|postgres|redis" | xargs ${dockerCompose}/bin/docker-compose -f $DOCKER_COMPOSE_FILE stop
+      ${dockerCompose}/bin/docker-compose -f $DOCKER_COMPOSE_FILE ps --services | grep -vE "keycloak|postgres|redis|influxdb" | xargs ${dockerCompose}/bin/docker-compose -f $DOCKER_COMPOSE_FILE stop
       start-docker
       trap "echo '>>> Stopping all dev services...'; stop-docker; exit" SIGINT
 
@@ -160,7 +181,23 @@ pkgs.mkShell {
       stop-docker
     }
 
+    lint-dockerfiles() {
+      echo ">>> Linting all Dockerfiles with hadolint..."
+      ${hadolint}/bin/hadolint --failure-threshold warning \
+        "$PROJECT_ROOT/backend/Dockerfile" \
+        "$PROJECT_ROOT/simulator/Dockerfile" \
+        "$PROJECT_ROOT/web/Dockerfile" \
+        "$PROJECT_ROOT/proxy/Dockerfile"
+      local exit_code=$?
+      if [ $exit_code -eq 0 ]; then
+        echo ">>> All Dockerfiles passed hadolint checks"
+      else
+        echo ">>> Some Dockerfiles have warnings or errors"
+        return $exit_code
+      fi
+    }
+
     echo ">>> Environment ready."
-    echo "Commands: run-dev-backend, run-dev-web, run-dev-all, run-alembic, psql-dev, redis-cli-dev, clean-dev, start-docker, stop-docker, run-simulator"
+    echo "Commands: run-dev-backend, run-dev-web, run-dev-all, run-alembic, psql-dev, redis-cli-dev, clean-dev, start-docker, stop-docker, run-simulator, lint-dockerfiles"
   '';
 }

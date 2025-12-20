@@ -236,7 +236,7 @@ const Dashboard: NextPage = () => {
           </div>
         </div>
 
-        <div className="flex flex-col xl:flex-row gap-6 mt-4">
+        <div className="flex flex-col xl:flex-row gap-4 xl:gap-6 mt-4">
           <ContentPanel titleElement={translation('recentTasks')} description={translation('tasksUpdatedRecently')} className="xl:w-[calc(60%-14.4px)] flex-shrink-0">
             <div className="overflow-x-auto -mx-4 px-4 lg:mx-0 lg:px-0">
               <Table

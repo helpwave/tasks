@@ -52,6 +52,7 @@ export type TasksTranslationEntries = {
   'dischargePatient': string,
   'dischargePatientConfirmation': string,
   'dismiss': string,
+  'dismissAll': string,
   'diverse': string,
   'done': string,
   'dueDate': string,
@@ -91,11 +92,13 @@ export type TasksTranslationEntries = {
   'newPatient': string,
   'noClosedTasks': string,
   'noLocationsFound': string,
+  'noNotifications': string,
   'noOpenTasks': string,
   'noPatient': string,
   'nOrganization': (values: { count: number }) => string,
   'notAssigned': string,
   'notes': string,
+  'notifications': string,
   'nPatient': (values: { count: number }) => string,
   'nProperties': (values: { count: number }) => string,
   'nRoom': (values: { count: number }) => string,
@@ -143,6 +146,7 @@ export type TasksTranslationEntries = {
   'rooms': string,
   'save': string,
   'searchLocations': string,
+  'security': string,
   'selectAll': string,
   'selectAssignee': string,
   'selectClinic': string,
@@ -181,6 +185,8 @@ export type TasksTranslationEntries = {
   'waitingroom': string,
   'waitPatient': string,
   'wards': string,
+  'conflictDetected': string,
+  'overwrite': string,
 }
 
 export const tasksTranslation: Translation<TasksTranslationLocales, Partial<TasksTranslationEntries>> = {
@@ -229,6 +235,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'dischargePatient': `Patient entlassen`,
     'dischargePatientConfirmation': `Sind Sie sicher, dass Sie diesen Patienten entlassen möchten? Diese Aktion ändert den Status des Patienten.`,
     'dismiss': `Schließen`,
+    'dismissAll': `Alle verwerfen`,
     'diverse': `Divers`,
     'done': `Fertig`,
     'dueDate': `Fälligkeitsdatum`,
@@ -290,6 +297,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'newPatient': `Neuer Patient`,
     'noClosedTasks': `Keine erledigten Aufgaben`,
     'noLocationsFound': `Keine Standorte gefunden`,
+    'noNotifications': `Keine aktuellen Updates`,
     'noOpenTasks': `Keine offenen Aufgaben`,
     'noPatient': `Kein Patient`,
     'nOrganization': ({ count }): string => {
@@ -300,6 +308,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     },
     'notAssigned': `Nicht zugewiesen`,
     'notes': `Notizen`,
+    'notifications': `Benachrichtigungen`,
     'nPatient': ({ count }): string => {
       return TranslationGen.resolvePlural(count, {
         '=1': `${count} Patient`,
@@ -396,6 +405,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'rooms': `Zimmer`,
     'save': `Speichern`,
     'searchLocations': `Standorte suchen...`,
+    'security': `Sicherheit`,
     'selectAll': `Alle auswählen`,
     'selectAssignee': `Zuweisen an...`,
     'selectClinic': `Klinik auswählen`,
@@ -492,6 +502,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'collapseAll': `Collapse All`,
     'confirm': `Confirm`,
     'confirmSelection': `Confirm Selection`,
+    'conflictDetected': `Conflict Detected`,
     'create': `Create`,
     'createdAt': `Created at`,
     'createTask': `Create Task`,
@@ -511,6 +522,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'dischargePatient': `Discharge Patient`,
     'dischargePatientConfirmation': `Are you sure you want to discharge this patient? This action will change the patient state.`,
     'dismiss': `Dismiss`,
+    'dismissAll': `Dismiss All`,
     'diverse': `Diverse`,
     'done': `Done`,
     'dueDate': `Due Date`,
@@ -572,6 +584,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'newPatient': `New Patient`,
     'noClosedTasks': `No closed tasks`,
     'noLocationsFound': `No locations found`,
+    'noNotifications': `No recent updates`,
     'noOpenTasks': `No open tasks`,
     'noPatient': `No Patient`,
     'nOrganization': ({ count }): string => {
@@ -582,6 +595,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     },
     'notAssigned': `Not assigned`,
     'notes': `notes`,
+    'notifications': `Notifications`,
     'nPatient': ({ count }): string => {
       return TranslationGen.resolvePlural(count, {
         '=1': `${count} Patient`,
@@ -629,6 +643,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'openTasks': `Open Tasks`,
     'option': `Option`,
     'overview': `Overview`,
+    'overwrite': `Overwrite`,
     'pages.404.notFound': `404 - Page not found`,
     'pages.404.notFoundDescription1': `This is definitely not the page you're looking for`,
     'pages.404.notFoundDescription2': `Let me take you to the`,
@@ -677,6 +692,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'rooms': `Rooms`,
     'save': `Save`,
     'searchLocations': `Search locations...`,
+    'security': `Security`,
     'selectAll': `Select All`,
     'selectAssignee': `Assign to...`,
     'selectClinic': `Select Clinic`,

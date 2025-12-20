@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Annotated
 
 import strawberry
 from api.context import Info
+from api.types.base import ChecksumMixin
 from api.types.property import PropertyValueType
 from database import models
 from sqlalchemy import select
@@ -14,7 +15,7 @@ if TYPE_CHECKING:
 
 
 @strawberry.type
-class TaskType:
+class TaskType(ChecksumMixin):
     id: strawberry.ID
     title: str
     description: str | None
@@ -58,3 +59,7 @@ class TaskType:
         )
         result = await info.context.db.execute(query)
         return result.scalars().all()
+
+    @property
+    def _checksum_exclude(self) -> set[str]:
+        return {"creation_date", "update_date"}

@@ -69,7 +69,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null)
   const [taskDialogState, setTaskDialogState] = useState<TaskDialogState>({ isOpen: false })
   const [searchQuery, setSearchQuery] = useState('')
-  const [initialOpened, setInitialOpened] = useState(false)
+  const [openedTaskId, setOpenedTaskId] = useState<string | null>(null)
 
   useImperativeHandle(ref, () => ({
     openCreate: () => {
@@ -81,12 +81,14 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
   }))
 
   useEffect(() => {
-    if (initialTaskId && initialTasks.length > 0 && !initialOpened) {
+    if (initialTaskId && initialTasks.length > 0 && openedTaskId !== initialTaskId) {
       setTaskDialogState({ isOpen: true, taskId: initialTaskId })
-      setInitialOpened(true)
+      setOpenedTaskId(initialTaskId)
       onInitialTaskOpened?.()
+    } else if (!initialTaskId) {
+      setOpenedTaskId(null)
     }
-  }, [initialTaskId, initialTasks, initialOpened, onInitialTaskOpened])
+  }, [initialTaskId, initialTasks, openedTaskId, onInitialTaskOpened])
 
   const tasks = useMemo(() => {
     let data = initialTasks

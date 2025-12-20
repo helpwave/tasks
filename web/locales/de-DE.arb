@@ -308,5 +308,9 @@
   "surveyDescription": "Ihr Feedback ist wertvoll für uns. Bitte nehmen Sie sich einen Moment Zeit, um unsere Umfrage auszufüllen.",
   "installApp": "App installieren",
   "installAppDescription": "Installieren Sie helpwave tasks für eine bessere Erfahrung mit Offline-Unterstützung und schnellerem Zugriff.",
-  "install": "Installieren"
+  "install": "Installieren",
+  "noNotifications": "Keine aktuellen Updates",
+  "notifications": "Benachrichtigungen",
+  "dismissAll": "Alle verwerfen",
+  "security": "Sicherheit"
 }

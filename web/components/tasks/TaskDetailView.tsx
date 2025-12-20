@@ -332,7 +332,7 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
                     }}
                     onEditCompleted={(date) => {
                       updateLocalState({ dueDate: date })
-                      persistChanges({ dueDate: localToUTCWithSameTime(date) })
+                      persistChanges({ dueDate: date ? localToUTCWithSameTime(date) : null })
                     }}
                     onRemove={() => {
                       updateLocalState({ dueDate: null })
@@ -354,6 +354,19 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
                   />
                 )}
               </FormElementWrapper>
+
+              {isEditMode && taskId && (
+                <div className="pt-6 mt-6 border-t border-divider flex justify-end gap-2">
+                  <LoadingButton
+                    onClick={() => setIsDeleteDialogOpen(true)}
+                    isLoading={isDeleting}
+                    color="negative"
+                    coloringStyle="outline"
+                  >
+                    {translation('delete')}
+                  </LoadingButton>
+                </div>
+              )}
             </div>
           </Tab>
         </TabView>
@@ -379,19 +392,6 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
             disabled={!isFormValid}
           >
             {translation('create')}
-          </LoadingButton>
-        </div>
-      )}
-
-      {isEditMode && taskId && (
-        <div className="flex-none pt-4 mt-auto border-t border-divider flex justify-end gap-2">
-          <LoadingButton
-            onClick={() => setIsDeleteDialogOpen(true)}
-            isLoading={isDeleting}
-            color="neutral"
-            coloringStyle="outline"
-          >
-            {translation('delete')}
           </LoadingButton>
         </div>
       )}

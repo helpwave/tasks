@@ -59,7 +59,7 @@ export const SidePanel = ({ isOpen, onClose, title, children }: SidePanelProps) 
           onTransitionEnd={handleAnimationEnd}
         >
           <div className="flex h-full flex-col bg-surface text-on-surface shadow-xl">
-            <div className="flex items-center justify-between px-4 py-6 sm:px-6 border-b border-divider min-h-[80px]">
+            <div className="flex items-center justify-between px-4 py-3 sm:px-6 border-b border-divider min-h-[56px]">
               {title && <div className="text-lg font-medium flex-1">{title}</div>}
               <div className="ml-auto">
                 <Button color="neutral" layout="icon" coloringStyle="text" onClick={onClose}>

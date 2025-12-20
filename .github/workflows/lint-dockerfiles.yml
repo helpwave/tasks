@@ -1,0 +1,46 @@
+name: Lint Dockerfiles
+
+on:
+  push:
+    branches:
+      - '*'
+    paths:
+      - '**/Dockerfile'
+      - '.github/workflows/lint-dockerfiles.yml'
+  pull_request:
+    paths:
+      - '**/Dockerfile'
+      - '.github/workflows/lint-dockerfiles.yml'
+
+jobs:
+  hadolint:
+    name: Lint Dockerfiles
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run hadolint on backend
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: backend/Dockerfile
+          failure-threshold: warning
+
+      - name: Run hadolint on proxy
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: proxy/Dockerfile
+          failure-threshold: warning
+
+      - name: Run hadolint on simulator
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: simulator/Dockerfile
+          failure-threshold: warning
+
+      - name: Run hadolint on web
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: web/Dockerfile
+          failure-threshold: warning
+

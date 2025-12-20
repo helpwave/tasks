@@ -42,6 +42,18 @@ services:
     image: redis:8.4
     command: redis-server --requirepass password
 
+  influxdb:
+    image: influxdb:2.7
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: "setup"
+      DOCKER_INFLUXDB_INIT_USERNAME: "admin"
+      DOCKER_INFLUXDB_INIT_PASSWORD: "password"
+      DOCKER_INFLUXDB_INIT_ORG: "tasks"
+      DOCKER_INFLUXDB_INIT_BUCKET: "audit"
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: "tasks-token-secret"
+    volumes:
+      - "influxdb-data:/var/lib/influxdb2"
+
   backend:
     image: ghcr.io/helpwave/tasks-backend:latest
     environment:
@@ -60,11 +72,17 @@ services:
       
       ENV: "development"
       SCAFFOLD_DIRECTORY: "/scaffold"
+
+      INFLUXDB_URL: "http://influxdb:8086"
+      INFLUXDB_TOKEN: "tasks-token-secret"
+      INFLUXDB_ORG: "tasks"
+      INFLUXDB_BUCKET: "audit"
     volumes:
       - "./scaffold:/scaffold:ro"
     depends_on:
       - postgres
       - redis
+      - influxdb
 
   web:
     image: ghcr.io/helpwave/tasks-web:latest
@@ -90,6 +108,18 @@ services:
       - backend
       - web
 
+  simulator:
+    image: ghcr.io/helpwave/tasks-simulator:latest
+    environment:
+      KEYCLOAK_URL: "http://keycloak:8080/keycloak"
+      API_URL: "http://backend:80/graphql"
+      REALM: "tasks"
+      CLIENT_ID: "tasks-web"
+    depends_on:
+      - backend
+      - keycloak
+
 volumes:
   keycloak-data:
   postgres-data:
+  influxdb-data:

@@ -16,7 +16,7 @@ import {
 import type { HightideTranslationLocales, ThemeType } from '@helpwave/hightide'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { useAuth } from '@/hooks/useAuth'
-import { LogOut, MonitorCog, MoonIcon, SunIcon, Trash2, ClipboardList } from 'lucide-react'
+import { LogOut, MonitorCog, MoonIcon, SunIcon, Trash2, ClipboardList, Shield } from 'lucide-react'
 import clsx from 'clsx'
 import { removeUser } from '@/api/auth/authService'
 import { useQueryClient } from '@tanstack/react-query'
@@ -208,6 +208,18 @@ const SettingsPage: NextPage = () => {
           <div className="flex-col-6">
             <h2 className="typography-title-md border-b border-divider pb-2">{translation('account')}</h2>
             <div className="flex-row-4 flex-wrap">
+              <Button
+                color="neutral"
+                coloringStyle="outline"
+                onClick={() => {
+                  const accountUrl = `${config.auth.issuer}/account`
+                  window.open(accountUrl, '_blank', 'noopener,noreferrer')
+                }}
+                startIcon={<Shield className="w-4 h-4" />}
+              >
+                {translation('security') ?? 'Security'}
+              </Button>
+
               <Button
                 color="neutral"
                 coloringStyle="outline"

@@ -57,15 +57,18 @@ type ExtendedUpdatePatientInput = UpdatePatientInput & {
   teamIds?: string[],
 }
 
-const toISODate = (d: Date | string): string => {
+const toISODate = (d: Date | string | null | undefined): string | null => {
+  if (!d) return null
   const date = typeof d === 'string' ? new Date(d) : d
+  if (!(date instanceof Date) || isNaN(date.getTime())) return null
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')
   const day = String(date.getDate()).padStart(2, '0')
   return `${year}-${month}-${day}`
 }
 
-export const localToUTCWithSameTime = (d: Date) => {
+export const localToUTCWithSameTime = (d: Date | null | undefined): Date | null => {
+  if (!d) return null
   return new Date(Date.UTC(
     d.getFullYear(),
     d.getMonth(),
@@ -306,9 +309,9 @@ export const PatientDetailView = ({
       delete cleanedUpdates.clinicId
     }
     if (cleanedUpdates.positionId === '' || cleanedUpdates.positionId === undefined) {
-      delete cleanedUpdates.positionId
+      cleanedUpdates.positionId = null
     }
-    if (cleanedUpdates.teamIds === undefined || (Array.isArray(cleanedUpdates.teamIds) && cleanedUpdates.teamIds.length === 0)) {
+    if (cleanedUpdates.teamIds === undefined) {
       delete cleanedUpdates.teamIds
     }
 
@@ -557,7 +560,7 @@ export const PatientDetailView = ({
         <TabView className="h-full flex-col-0">
           {isEditMode && (
             <Tab label={translation('tasks')} className="h-full overflow-y-auto pr-2">
-              <div className="flex flex-col gap-4 pt-4 pb-24">
+              <div className="flex flex-col gap-4 pt-4">
                 <div className="mb-2">
                   <Button
                     startIcon={<PlusIcon />}
@@ -621,7 +624,7 @@ export const PatientDetailView = ({
           )}
 
           <Tab label={translation('patientData')} className="flex-col-6 px-1 pt-4 h-full overflow-x-visible overflow-y-auto">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-24">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormElementWrapper
                 label={translation('firstName')}
                 error={firstnameError || undefined}
@@ -698,8 +701,12 @@ export const PatientDetailView = ({
                     }
                   }}
                   onEditCompleted={(date) => {
-                    updateLocalState({ birthdate: toISODate(date) })
-                    persistChanges({ birthdate: toISODate(localToUTCWithSameTime(date)) })
+                    if (date) {
+                      const utcDate = localToUTCWithSameTime(date)
+                      const isoDate = utcDate ? toISODate(utcDate) : null
+                      updateLocalState({ birthdate: isoDate })
+                      persistChanges({ birthdate: isoDate })
+                    }
                   }}
                   onRemove={() => {
                     updateLocalState({ birthdate: null })
@@ -911,6 +918,18 @@ export const PatientDetailView = ({
                 </div>
               )}
             </FormElementWrapper>
+
+            {isEditMode && patientId && patientData?.patient && patientData.patient.state !== PatientState.Dead && (
+              <div className="pt-6 mt-6 border-t border-divider flex justify-end gap-2">
+                <Button
+                  onClick={() => setIsMarkDeadDialogOpen(true)}
+                  color="negative"
+                  coloringStyle="outline"
+                >
+                  {translation('markPatientDead')}
+                </Button>
+              </div>
+            )}
           </Tab>
 
         </TabView>
@@ -925,18 +944,6 @@ export const PatientDetailView = ({
           >
             {translation('create')}
           </LoadingButton>
-        </div>
-      )}
-
-      {isEditMode && patientId && patientData?.patient && patientData.patient.state !== PatientState.Dead && (
-        <div className="flex-none pt-4 mt-auto border-t border-divider flex justify-end gap-2">
-          <Button
-            onClick={() => setIsMarkDeadDialogOpen(true)}
-            color="negative"
-            coloringStyle="text"
-          >
-            {translation('markPatientDead')}
-          </Button>
         </div>
       )}
 

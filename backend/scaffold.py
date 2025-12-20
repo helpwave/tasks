@@ -29,13 +29,13 @@ async def load_scaffold_data() -> None:
     async with async_session() as session:
         result = await session.execute(select(LocationNode).limit(1))
         existing_location = result.scalar_one_or_none()
-        
+
         if existing_location:
             logger.info("Location nodes already exist in database, skipping scaffold loading")
             return
 
         json_files = list(scaffold_path.glob("*.json"))
-        
+
         if not json_files:
             logger.info(f"No JSON files found in {SCAFFOLD_DIRECTORY}, skipping scaffold loading")
             return
@@ -46,7 +46,7 @@ async def load_scaffold_data() -> None:
             try:
                 with open(json_file, "r", encoding="utf-8") as f:
                     data = json.load(f)
-                
+
                 if isinstance(data, list):
                     for item in data:
                         await _create_location_tree(session, item, None)
@@ -54,7 +54,7 @@ async def load_scaffold_data() -> None:
                     await _create_location_tree(session, data, None)
                 else:
                     logger.warning(f"Invalid JSON structure in {json_file}, expected list or object")
-                
+
                 await session.commit()
                 logger.info(f"Successfully loaded scaffold data from {json_file}")
             except json.JSONDecodeError as e:
@@ -106,4 +106,3 @@ async def _create_location_tree(
         await _create_location_tree(session, child_data, location_id)
 
     return location_id
-

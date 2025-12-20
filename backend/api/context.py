@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import strawberry
 from auth import get_user_payload
@@ -10,9 +10,6 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.requests import HTTPConnection
 from strawberry.fastapi import BaseContext
-
-if TYPE_CHECKING:
-    from database.models.user import User
 
 
 class Context(BaseContext):
@@ -41,7 +38,7 @@ async def get_context(
         lastname = user_payload.get("family_name")
         email = user_payload.get("email")
         picture = user_payload.get("picture")
-        
+
         # Extract organizations from OIDC token (can be array or single value)
         organizations_raw = user_payload.get("organization")
         organizations = None

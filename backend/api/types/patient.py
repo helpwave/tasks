@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Annotated
 import strawberry
 from api.context import Info
 from api.inputs import PatientState, Sex
+from api.types.base import ChecksumMixin
 from api.types.property import PropertyValueType
 from database import models
 from sqlalchemy import select
@@ -15,7 +16,7 @@ if TYPE_CHECKING:
 
 
 @strawberry.type
-class PatientType:
+class PatientType(ChecksumMixin):
     id: strawberry.ID
     firstname: str
     lastname: str

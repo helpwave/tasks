@@ -38,6 +38,7 @@ function MyApp({
         <QueryClientProvider client={queryClient}>
           <Head>
             <title>{titleWrapper()}</title>
+            <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes, viewport-fit=cover" />
             <style
               dangerouslySetInnerHTML={{
                 __html: `
