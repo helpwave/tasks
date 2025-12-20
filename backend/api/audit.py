@@ -88,13 +88,13 @@ def audit_log(activity_name: str | None = None):
         info_param_index = None
         if "info" in param_names:
             info_param_index = param_names.index("info")
-        
+
         @wraps(func)
         async def wrapper(*args: Any, **kwargs: Any) -> Any:
             logger.debug(f"Audit decorator called for function: {func.__name__}, args count: {len(args)}, kwargs: {list(kwargs.keys())}, param_names: {param_names}")
-            
+
             info = None
-            
+
             if "info" in kwargs:
                 info = kwargs["info"]
                 logger.debug(f"Found Info object in kwargs for {func.__name__}")
@@ -123,7 +123,7 @@ def audit_log(activity_name: str | None = None):
             if not info:
                 logger.warning(f"Audit decorator: No Info object found for {func.__name__}, skipping audit log. Args: {[type(a).__name__ if a is not None else 'None' for a in args]}, Kwargs keys: {list(kwargs.keys())}, info_param_index: {info_param_index}")
                 return await func(*args, **kwargs)
-            
+
             if not hasattr(info, "context"):
                 logger.warning(f"Audit decorator: Info object found but no context attribute for {func.__name__}, skipping audit log")
                 return await func(*args, **kwargs)
@@ -204,7 +204,7 @@ def audit_log(activity_name: str | None = None):
 
             audit_context = {}
             payload = {}
-            
+
             for key, value in kwargs.items():
                 if key != "info":
                     try:
@@ -212,7 +212,7 @@ def audit_log(activity_name: str | None = None):
                     except Exception as e:
                         logger.debug(f"Error serializing {key}: {e}")
                         payload[key] = str(value)
-            
+
             audit_context["payload"] = payload
 
             payload_json = json.dumps(payload, default=str)
@@ -242,4 +242,3 @@ def audit_log(activity_name: str | None = None):
         return wrapper
 
     return decorator
-

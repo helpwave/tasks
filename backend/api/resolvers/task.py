@@ -8,7 +8,7 @@ from api.context import Info
 from api.inputs import CreateTaskInput, UpdateTaskInput
 from api.types.task import TaskType
 from database import models
-from database.session import publish_to_redis
+from database.session import publish_to_redis, redis_client
 from sqlalchemy import desc, select
 
 from .utils import process_properties

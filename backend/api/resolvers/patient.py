@@ -6,7 +6,7 @@ from api.context import Info
 from api.inputs import CreatePatientInput, PatientState, UpdatePatientInput
 from api.types.patient import PatientType
 from database import models
-from database.session import publish_to_redis
+from database.session import publish_to_redis, redis_client
 from sqlalchemy import select
 from sqlalchemy.orm import aliased, selectinload
 
@@ -73,7 +73,7 @@ class PatientQuery:
             selectinload(models.Patient.tasks),
             selectinload(models.Patient.teams),
         )
-        
+
         if states:
             state_values = [s.value for s in states]
             query = query.where(models.Patient.state.in_(state_values))
@@ -147,7 +147,7 @@ class PatientMutation:
     ) -> PatientType:
         db = info.context.db
         initial_state = data.state.value if data.state else PatientState.WAIT.value
-        
+
         clinic_result = await db.execute(
             select(models.LocationNode).where(
                 models.LocationNode.id == data.clinic_id,

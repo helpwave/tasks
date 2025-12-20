@@ -31,8 +31,8 @@ jobs:
         run: pip install flake8
 
       - name: Run flake8 on backend
-        run: flake8 backend --ignore=E501
+        run: flake8 backend --ignore=E501,W503 --exclude=venv,__pycache__,migrations
 
       - name: Run flake8 on simulator
-        run: flake8 simulator --ignore=E501
+        run: flake8 simulator --ignore=E501,W503 --exclude=venv,__pycache__
 
