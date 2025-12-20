@@ -1,20 +1,20 @@
-from typing import List, Optional
-from graphql_client import GraphQLClient
+import random
+
 from config import logger
 from data import RandomDataGenerator
-import random
+from graphql_client import GraphQLClient
 
 
 class LocationManager:
     def __init__(self, client: GraphQLClient):
         self.client = client
-        self.all_locations: List[dict] = []
-        self.locations: List[str] = []
-        self.beds: List[str] = []
-        self.rooms: List[str] = []
-        self.teams: List[str] = []
-        self.wards: List[str] = []
-        self.clinics: List[str] = []
+        self.all_locations: list[dict] = []
+        self.locations: list[str] = []
+        self.beds: list[str] = []
+        self.rooms: list[str] = []
+        self.teams: list[str] = []
+        self.wards: list[str] = []
+        self.clinics: list[str] = []
 
     def _log_errors(self, context: str, response: dict) -> None:
         if "errors" in response:
@@ -41,7 +41,9 @@ class LocationManager:
         self.all_locations = data.get("locationNodes", [])
 
         self.locations = [
-            loc["id"] for loc in self.all_locations if loc["kind"] in ["BED", "ROOM"]
+            loc["id"]
+            for loc in self.all_locations
+            if loc["kind"] in ["BED", "ROOM"]
         ]
         self.beds = [
             loc["id"] for loc in self.all_locations if loc["kind"] == "BED"
@@ -61,11 +63,11 @@ class LocationManager:
 
         logger.info(
             f"Locations loaded: {len(self.beds)} beds, {len(self.rooms)} rooms, "
-            f"{len(self.teams)} teams, {len(self.wards)} wards, {len(self.clinics)} clinics"
+            f"{len(self.teams)} teams, {len(self.wards)} wards, {len(self.clinics)} clinics",
         )
 
     def print_structure(self) -> None:
-        logger.info("\n" + "=" * 60)
+        logger.info("=" * 60)
         logger.info("LOCATION STRUCTURE")
         logger.info("=" * 60)
 
@@ -94,15 +96,22 @@ class LocationManager:
                 "ROOM": "🚪",
                 "BED": "🛏️",
             }.get(node["kind"], "📍")
-            print(f"{prefix}{connector}{kind_icon} {node['title']} ({node['kind']})")
+            print(
+                f"{prefix}{connector}{kind_icon} {node['title']} ({node['kind']})",
+            )
 
-            children = sorted(children_map[node_id], key=lambda cid: nodes[cid]["title"])
+            children = sorted(
+                children_map[node_id],
+                key=lambda cid: nodes[cid]["title"],
+            )
             for i, child_id in enumerate(children):
                 is_last_child = i == len(children) - 1
                 new_prefix = prefix + ("    " if is_last else "│   ")
                 print_tree(child_id, new_prefix, is_last_child)
 
-        for i, root_id in enumerate(sorted(roots, key=lambda rid: nodes[rid]["title"])):
+        for i, root_id in enumerate(
+            sorted(roots, key=lambda rid: nodes[rid]["title"]),
+        ):
             print_tree(root_id, "", i == len(roots) - 1)
         print("\n")
 
@@ -110,9 +119,11 @@ class LocationManager:
         self,
         title: str,
         kind: str,
-        parent_id: Optional[str] = None,
-    ) -> Optional[str]:
-        logger.debug(f"Location creation requested: {title} ({kind}) - not implemented via API")
+        parent_id: str | None = None,
+    ) -> str | None:
+        logger.debug(
+            f"Location creation requested: {title} ({kind}) - not implemented via API",
+        )
         return None
 
     def create_rooms_and_beds(
@@ -140,25 +151,27 @@ class LocationManager:
 
         logger.warning(
             "No locations found. Locations should be created via scaffold data "
-            "(see backend/scaffold.py). The simulator will work with existing locations only."
+            "(see backend/scaffold.py). The simulator will work with existing locations only.",
         )
         self.load_locations()
 
-    def add_team_to_ward(self, ward_id: Optional[str] = None) -> Optional[str]:
+    def add_team_to_ward(self, ward_id: str | None = None) -> str | None:
         if not ward_id:
             if not self.wards:
                 logger.warning("No wards available to add team to")
                 return None
             ward_id = random.choice(self.wards)
 
-        # Get ward info
-        ward = next((loc for loc in self.all_locations if loc["id"] == ward_id), None)
+        ward = next(
+            (loc for loc in self.all_locations if loc["id"] == ward_id),
+            None,
+        )
         if not ward:
             return None
 
-        # Generate team name
         available_teams = [
-            name for name in RandomDataGenerator.team_names
+            name
+            for name in RandomDataGenerator.team_names
             if not any(
                 loc["title"] == name and loc.get("parentId") == ward_id
                 for loc in self.all_locations
@@ -171,21 +184,21 @@ class LocationManager:
 
         logger.info(
             f"Would add new team '{team_name}' to ward '{ward['title']}' "
-            f"(location creation via API not available - use scaffold data)"
+            f"(location creation via API not available - use scaffold data)",
         )
         return None
 
-    def get_random_bed(self) -> Optional[str]:
+    def get_random_bed(self) -> str | None:
         if not self.beds:
             return None
         return random.choice(self.beds)
 
-    def get_random_room(self) -> Optional[str]:
+    def get_random_room(self) -> str | None:
         if not self.rooms:
             return None
         return random.choice(self.rooms)
 
-    def get_random_location(self) -> Optional[str]:
+    def get_random_location(self) -> str | None:
         if not self.locations:
             return None
         return random.choice(self.locations)

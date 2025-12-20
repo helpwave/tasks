@@ -88,8 +88,10 @@ class PatientManager:
 
     def create_patient(self, admit_directly: bool = False) -> Tuple[Optional[str], Optional[str]]:
         if not self.location_manager.clinics:
-            logger.warning("No clinics available to assign patient")
-            return None, None
+            self.location_manager.load_locations()
+            if not self.location_manager.clinics:
+                logger.warning("No clinics available to assign patient")
+                return None, None
 
         first, last = RandomDataGenerator.get_name()
         diagnosis = TreatmentPlanner.get_random_diagnosis()

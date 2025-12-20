@@ -16,11 +16,11 @@ FROM python:${PY_VERSION}-alpine
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
+ENV USE_DIRECT_GRANT=true
 
 COPY --from=builder /build/venv /usr/local/
 COPY . /app
 
 WORKDIR /app
 
-CMD ["python", "-m", "simulator"]
-
+CMD ["python", "main.py"]

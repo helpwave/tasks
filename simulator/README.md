@@ -8,7 +8,7 @@ This script is designed solely for development and testing environments to mimic
 
 ## Features
 
-- **Authentication**: Implements OpenID Connect Authorization Code flow with a local callback server.
+- **Authentication**: Supports both interactive (browser-based) and non-interactive (direct grant) authentication flows.
 - **Location Management**: Displays hospital structure and manages location hierarchies.
 - **Patient Simulation**:
   - Creates new patients in waiting room or admits them directly.
@@ -33,12 +33,24 @@ This script is designed solely for development and testing environments to mimic
 KEYCLOAK_URL=http://localhost:8080
 API_URL=http://localhost:8000/graphql
 REALM=tasks
-CLIENT_ID=tasks-web
+USE_DIRECT_GRANT=false  # Set to "true" for non-interactive authentication
+CLIENT_ID=tasks-web  # Automatically set to "admin-cli" when USE_DIRECT_GRANT=true
+CLIENT_SECRET=  # Optional, required if client is confidential
+USERNAME=  # Required when USE_DIRECT_GRANT=true
+PASSWORD=  # Required when USE_DIRECT_GRANT=true
 INFLUXDB_URL=http://localhost:8086
 INFLUXDB_TOKEN=tasks-token-secret
 INFLUXDB_ORG=tasks
 INFLUXDB_BUCKET=audit
 ```
+
+### Authentication Modes
+
+The simulator supports two authentication modes:
+
+1. **Interactive (Default)**: Browser-based OAuth2 Authorization Code flow with a local callback server. This is the default mode and requires no additional configuration.
+
+2. **Non-Interactive**: Set `USE_DIRECT_GRANT=true` along with `USERNAME` and `PASSWORD` environment variables. The simulator will authenticate using the direct grant (resource owner password credentials) flow without opening a browser. This mode is automatically enabled in Docker containers.
 
 ## Usage
 
@@ -93,7 +105,9 @@ The simulator is split into multiple modules:
 
 ## How It Works
 
-1. Authenticates with Keycloak using OAuth2 Authorization Code flow
+1. Authenticates with Keycloak using either:
+   - Interactive: OAuth2 Authorization Code flow (default) - opens browser
+   - Non-Interactive: Direct Grant flow (if USE_DIRECT_GRANT=true and USERNAME/PASSWORD are set) - no browser required
 2. Loads current state (locations, patients, tasks, users)
 3. Displays the location structure hierarchy
 4. Creates initial patients (some in waiting room, some admitted)

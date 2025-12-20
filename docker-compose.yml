@@ -114,6 +114,9 @@ services:
       KEYCLOAK_URL: "http://keycloak:8080/keycloak"
       API_URL: "http://backend:80/graphql"
       REALM: "tasks"
+      USE_DIRECT_GRANT: "true"
+      USERNAME: "test"
+      PASSWORD: "test"
       CLIENT_ID: "tasks-web"
     depends_on:
       - backend

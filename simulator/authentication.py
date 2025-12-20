@@ -1,15 +1,20 @@
+import threading
+import time
 import webbrowser
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import Any
 from urllib.parse import parse_qs, urlparse
-import threading
+
 import requests
 from config import (
     CALLBACK_PORT,
     CLIENT_ID,
+    CLIENT_SECRET,
     KEYCLOAK_URL,
+    PASSWORD,
     REALM,
     REDIRECT_URI,
+    USERNAME,
     logger,
 )
 
@@ -96,3 +101,79 @@ class InteractiveAuthenticator:
         token_data = response.json()
         logger.info("Authentication successful")
         return token_data["access_token"]
+
+
+class DirectGrantAuthenticator:
+    def __init__(self, session: requests.Session):
+        self.session = session
+
+    def login(self) -> str:
+        if not USERNAME or not PASSWORD:
+            raise Exception(
+                "USERNAME and PASSWORD environment variables are required for non-interactive authentication",
+            )
+
+        logger.info("Authenticating with username/password...")
+
+        token_url = (
+            f"{KEYCLOAK_URL}/realms/{REALM}/protocol/openid-connect/token"
+        )
+        data = {
+            "grant_type": "password",
+            "client_id": CLIENT_ID,
+            "username": USERNAME,
+            "password": PASSWORD,
+            "scope": "openid profile email organization",
+        }
+
+        if CLIENT_SECRET:
+            data["client_secret"] = CLIENT_SECRET
+
+        max_retries = 5
+        retry_delay = 2
+
+        for attempt in range(max_retries):
+            try:
+                response = self.session.post(token_url, data=data, timeout=10)
+
+                if response.status_code == 200:
+                    token_data = response.json()
+                    logger.info("Authentication successful")
+                    return token_data["access_token"]
+
+                if response.status_code == 503 or response.status_code == 502:
+                    if attempt < max_retries - 1:
+                        logger.warning(
+                            f"Keycloak not ready (HTTP {response.status_code}). "
+                            f"Retrying in {retry_delay} seconds... (attempt {attempt + 1}/{max_retries})",
+                        )
+                        time.sleep(retry_delay)
+                        continue
+
+                try:
+                    error_data = response.json()
+                    error_msg = error_data.get(
+                        "error_description",
+                        error_data.get("error", "Unknown error"),
+                    )
+                except Exception:
+                    error_msg = (
+                        f"HTTP {response.status_code}: {response.text[:100]}"
+                    )
+
+                raise Exception(
+                    f"Authentication failed: {error_msg}. "
+                    f"Make sure the client '{CLIENT_ID}' has 'Direct Access Grants' enabled in Keycloak "
+                    f"and that USERNAME/PASSWORD are correct.",
+                )
+            except requests.exceptions.RequestException as e:
+                if attempt < max_retries - 1:
+                    logger.warning(
+                        f"Connection error during authentication: {e}. "
+                        f"Retrying in {retry_delay} seconds... (attempt {attempt + 1}/{max_retries})",
+                    )
+                    time.sleep(retry_delay)
+                    continue
+                raise
+
+        raise Exception("Authentication failed after multiple retries")

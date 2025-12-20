@@ -1,6 +1,6 @@
 from typing import Optional
-from authentication import InteractiveAuthenticator
-from config import API_URL, logger
+from authentication import DirectGrantAuthenticator, InteractiveAuthenticator
+from config import API_URL, PASSWORD, USE_DIRECT_GRANT, USERNAME, logger
 import requests
 
 
@@ -8,7 +8,10 @@ class GraphQLClient:
     def __init__(self):
         self.token: Optional[str] = None
         self.session = requests.Session()
-        self.authenticator = InteractiveAuthenticator(self.session)
+        if USE_DIRECT_GRANT and USERNAME and PASSWORD:
+            self.authenticator = DirectGrantAuthenticator(self.session)
+        else:
+            self.authenticator = InteractiveAuthenticator(self.session)
 
     def query(self, query: str, variables: dict = None) -> dict:
         if not self.token:
