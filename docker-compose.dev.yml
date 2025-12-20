@@ -103,6 +103,17 @@ services:
     depends_on:
       - backend
 
+  simulator:
+    build: simulator
+    environment:
+      KEYCLOAK_URL: "http://keycloak:8080"
+      API_URL: "http://backend:80/graphql"
+      REALM: "tasks"
+      CLIENT_ID: "tasks-web"
+    depends_on:
+      - backend
+      - keycloak
+
 volumes:
   keycloak-data:
   postgres-data:

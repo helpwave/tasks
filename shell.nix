@@ -89,7 +89,22 @@ pkgs.mkShell {
 
     run-simulator() {
       echo ">>> Running simulator"
-      (${pkgs.python313}/bin/python3 "$PROJECT_ROOT/simulator")
+      if [ ! -d "$PROJECT_ROOT/simulator/venv" ]; then
+        ${python}/bin/python -m venv "$PROJECT_ROOT/simulator/venv"
+      fi
+      source "$PROJECT_ROOT/simulator/venv/bin/activate"
+      if [ -f "$PROJECT_ROOT/simulator/requirements.txt" ]; then
+        req_file="$PROJECT_ROOT/simulator/requirements.txt"
+        req_hash_file="$PROJECT_ROOT/simulator/venv/.requirements_hash"
+        current_hash=$(sha256sum "$req_file" | cut -d " " -f1)
+        if [ ! -f "$req_hash_file" ] || [ "$(cat "$req_hash_file")" != "$current_hash" ]; then
+          echo ">>> Installing simulator requirements..."
+          pip install --upgrade pip > /dev/null
+          pip install -r "$req_file"
+          echo "$current_hash" > "$req_hash_file"
+        fi
+      fi
+      (cd "$PROJECT_ROOT/simulator" && exec python -m simulator)
     }
 
     start-docker() {

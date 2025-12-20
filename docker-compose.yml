@@ -108,6 +108,17 @@ services:
       - backend
       - web
 
+  simulator:
+    image: ghcr.io/helpwave/tasks-simulator:latest
+    environment:
+      KEYCLOAK_URL: "http://keycloak:8080/keycloak"
+      API_URL: "http://backend:80/graphql"
+      REALM: "tasks"
+      CLIENT_ID: "tasks-web"
+    depends_on:
+      - backend
+      - keycloak
+
 volumes:
   keycloak-data:
   postgres-data:

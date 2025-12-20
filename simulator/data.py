@@ -86,6 +86,11 @@ class RandomDataGenerator:
         "Rapid Response",
         "Surgical Team A",
         "Consultant Group",
+        "Emergency Team",
+        "Day Shift",
+        "Evening Shift",
+        "Weekend Team",
+        "Specialist Team",
     ]
 
     @staticmethod
