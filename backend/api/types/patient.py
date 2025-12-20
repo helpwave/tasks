@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Annotated
 import strawberry
 from api.context import Info
 from api.inputs import PatientState, Sex
-from api.types.base import ChecksumMixin
+from api.types.base import calculate_checksum_for_instance
 from api.types.property import PropertyValueType
 from database import models
 from sqlalchemy import select
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 
 @strawberry.type
-class PatientType(ChecksumMixin):
+class PatientType:
     id: strawberry.ID
     firstname: str
     lastname: str
@@ -157,3 +157,7 @@ class PatientType(ChecksumMixin):
         )
         result = await info.context.db.execute(query)
         return result.scalars().all()
+
+    @strawberry.field
+    def checksum(self) -> str:
+        return calculate_checksum_for_instance(self)
