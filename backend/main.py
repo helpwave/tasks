@@ -52,6 +52,12 @@ app.add_exception_handler(
 app.include_router(auth.router)
 app.include_router(graphql_app, prefix="/graphql")
 
+
+@app.get("/health")
+async def health_check():
+    return {"status": "ok"}
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,

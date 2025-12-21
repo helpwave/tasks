@@ -271,7 +271,7 @@ jobs:
           echo "Waiting for backend to start..."
           sleep 5
           for i in {1..60}; do
-            if curl -f -s http://localhost:8000/docs > /dev/null 2>&1 || curl -f -s http://localhost:8000/graphql -X POST -H "Content-Type: application/json" -d '{"query":"{ __typename }"}' > /dev/null 2>&1; then
+            if curl -f -s http://localhost:8000/health > /dev/null 2>&1; then
               echo "Backend is ready!"
               exit 0
             fi
