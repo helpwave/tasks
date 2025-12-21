@@ -269,29 +269,35 @@ jobs:
       - name: Wait for backend
         run: |
           echo "Waiting for backend to start..."
+          sleep 5
           for i in {1..60}; do
-            if curl -f -s http://localhost:8000/graphql -X POST -H "Content-Type: application/json" -d '{"query":"{ __typename }"}' > /dev/null 2>&1; then
+            if curl -f -s http://localhost:8000/docs > /dev/null 2>&1 || curl -f -s http://localhost:8000/graphql -X POST -H "Content-Type: application/json" -d '{"query":"{ __typename }"}' > /dev/null 2>&1; then
               echo "Backend is ready!"
               exit 0
             fi
+            echo "Attempt $i/60: Backend not ready yet..."
             sleep 2
           done
-          echo "Backend failed to start"
-          cat /tmp/backend.log || true
+          echo "Backend failed to start after 120 seconds"
+          echo "=== Backend Log ==="
+          cat /tmp/backend.log || echo "No backend log found"
           exit 1
 
       - name: Wait for frontend
         run: |
           echo "Waiting for frontend to start..."
+          sleep 5
           for i in {1..60}; do
             if curl -f -s http://localhost:3000 > /dev/null 2>&1; then
               echo "Frontend is ready!"
               exit 0
             fi
+            echo "Attempt $i/60: Frontend not ready yet..."
             sleep 2
           done
-          echo "Frontend failed to start"
-          cat /tmp/frontend.log || true
+          echo "Frontend failed to start after 120 seconds"
+          echo "=== Frontend Log ==="
+          cat /tmp/frontend.log || echo "No frontend log found"
           exit 1
 
       - name: Run E2E tests
