@@ -9,8 +9,9 @@ test.describe('Tasks', () => {
     await page.waitForLoadState('networkidle');
   });
 
-  test('should display tasks page', async ({ page }) => {
-    await page.goto('/tasks');
+  test('should display tasks page', async ({ page, baseURL: configBaseURL }) => {
+    const baseUrl = configBaseURL || baseURL;
+    await page.goto(`${baseUrl}/tasks`);
     await page.waitForLoadState('networkidle');
     await expect(page.locator('body')).toBeVisible();
   });
@@ -28,20 +29,22 @@ test.describe('Tasks', () => {
     }
   });
 
-  test('should handle page load without errors', async ({ page }) => {
+  test('should handle page load without errors', async ({ page, baseURL: configBaseURL }) => {
     const errors: string[] = [];
     page.on('pageerror', (error) => {
       errors.push(error.message);
     });
 
-    await page.goto('/tasks');
+    const baseUrl = configBaseURL || baseURL;
+    await page.goto(`${baseUrl}/tasks`);
     await page.waitForLoadState('networkidle');
     
     expect(errors).toHaveLength(0);
   });
 
-  test('should have accessible page structure', async ({ page }) => {
-    await page.goto('/tasks');
+  test('should have accessible page structure', async ({ page, baseURL: configBaseURL }) => {
+    const baseUrl = configBaseURL || baseURL;
+    await page.goto(`${baseUrl}/tasks`);
     await page.waitForLoadState('networkidle');
     
     const mainContent = page.locator('main, [role="main"], body');

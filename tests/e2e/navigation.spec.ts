@@ -9,18 +9,21 @@ test.describe('Navigation', () => {
     await page.waitForLoadState('networkidle');
   });
 
-  test('should navigate between pages', async ({ page }) => {
+  test('should navigate between pages', async ({ page, baseURL: configBaseURL }) => {
+    const baseUrl = configBaseURL || baseURL;
     const pages = ['/tasks', '/patients', '/properties'];
     
     for (const path of pages) {
-      await page.goto(path);
+      const fullUrl = `${baseUrl}${path}`;
+      await page.goto(fullUrl);
       await page.waitForLoadState('networkidle');
       await expect(page.locator('body')).toBeVisible();
     }
   });
 
-  test('should handle 404 page', async ({ page }) => {
-    await page.goto('/non-existent-page');
+  test('should handle 404 page', async ({ page, baseURL: configBaseURL }) => {
+    const baseUrl = configBaseURL || baseURL;
+    await page.goto(`${baseUrl}/non-existent-page`);
     await page.waitForLoadState('networkidle');
     
     const body = page.locator('body');
@@ -28,11 +31,11 @@ test.describe('Navigation', () => {
   });
 
   test('should maintain state during navigation', async ({ page, baseURL: configBaseURL }) => {
-    const url = configBaseURL || baseURL;
-    await page.goto(url);
+    const baseUrl = configBaseURL || baseURL;
+    await page.goto(baseUrl);
     await page.waitForLoadState('networkidle');
     
-    await page.goto('/tasks');
+    await page.goto(`${baseUrl}/tasks`);
     await page.waitForLoadState('networkidle');
     
     await page.goBack();
