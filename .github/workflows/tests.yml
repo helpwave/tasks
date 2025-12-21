@@ -227,6 +227,54 @@ jobs:
         run: npx playwright install --with-deps chromium
         continue-on-error: true
 
+      - name: Run database migrations
+        working-directory: backend
+        run: |
+          pip install alembic
+          alembic upgrade head
+        env:
+          DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/test
+
+      - name: Start backend server
+        working-directory: backend
+        run: |
+          uvicorn main:app --host 0.0.0.0 --port 8000 &
+        env:
+          DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/test
+          REDIS_URL: redis://localhost:6379
+          ISSUER_URI: http://localhost:8080/realms/tasks
+          PUBLIC_ISSUER_URI: http://localhost:8080/realms/tasks
+          CLIENT_ID: tasks-backend
+          CLIENT_SECRET: tasks-secret
+          ENV: test
+          INFLUXDB_URL: http://localhost:8086
+          INFLUXDB_TOKEN: test-token
+          INFLUXDB_ORG: test
+          INFLUXDB_BUCKET: test
+
+      - name: Build frontend
+        working-directory: web
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:8000/graphql
+
+      - name: Start frontend server
+        working-directory: web
+        run: |
+          npm start &
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:8000/graphql
+
+      - name: Wait for backend
+        run: |
+          timeout 120 bash -c 'until curl -f -s http://localhost:8000/graphql -X POST -H "Content-Type: application/json" -d "{\"query\":\"{ __typename }\"}" > /dev/null 2>&1; do sleep 2; done'
+          echo "Backend is ready"
+
+      - name: Wait for frontend
+        run: |
+          timeout 120 bash -c 'until curl -f -s http://localhost:3000 > /dev/null 2>&1; do sleep 2; done'
+          echo "Frontend is ready"
+
       - name: Run E2E tests
         working-directory: tests
         env:
