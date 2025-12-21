@@ -237,8 +237,11 @@ jobs:
       - name: Start backend server
         working-directory: backend
         run: |
-          nohup uvicorn main:app --host 0.0.0.0 --port 8000 > /tmp/backend.log 2>&1 &
-          echo $! > /tmp/backend.pid
+          uvicorn main:app --host 0.0.0.0 --port 8000 > /tmp/backend.log 2>&1 &
+          BACKEND_PID=$!
+          echo $BACKEND_PID > /tmp/backend.pid
+          echo "Backend started with PID: $BACKEND_PID"
+          sleep 3
         env:
           DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/test
           REDIS_URL: redis://localhost:6379
@@ -261,8 +264,11 @@ jobs:
       - name: Start frontend server
         working-directory: web
         run: |
-          nohup npm start > /tmp/frontend.log 2>&1 &
-          echo $! > /tmp/frontend.pid
+          npm start > /tmp/frontend.log 2>&1 &
+          FRONTEND_PID=$!
+          echo $FRONTEND_PID > /tmp/frontend.pid
+          echo "Frontend started with PID: $FRONTEND_PID"
+          sleep 3
         env:
           NEXT_PUBLIC_API_URL: http://localhost:8000/graphql
 
@@ -308,7 +314,10 @@ jobs:
         working-directory: tests
         env:
           E2E_BASE_URL: http://localhost:3000
-        run: npx playwright test
+          CI: true
+        run: |
+          echo "E2E_BASE_URL is set to: $E2E_BASE_URL"
+          npx playwright test
 
       - name: Upload Playwright report
         if: always()

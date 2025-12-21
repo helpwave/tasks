@@ -11,6 +11,7 @@ export default defineConfig({
     baseURL: process.env.E2E_BASE_URL || 'http://localhost:3000',
     trace: 'on-first-retry',
   },
+  timeout: 30000,
   projects: [
     {
       name: 'chromium',
