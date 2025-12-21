@@ -42,6 +42,7 @@ pkgs.mkShell {
     netcat
     pkgs.gcc
     hadolint
+    pkgs.act
   ];
 
   venvDir = "./backend/venv";

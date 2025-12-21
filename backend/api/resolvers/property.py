@@ -24,9 +24,10 @@ class PropertyDefinitionQuery:
 
 
 @strawberry.type
-class PropertyDefinitionMutation(BaseMutationResolver[models.PropertyDefinition]):
-    def __init__(self):
-        super().__init__(models.PropertyDefinition, "property_definition")
+class PropertyDefinitionMutation(
+    BaseMutationResolver[models.PropertyDefinition]
+):
+    pass
 
     @strawberry.mutation
     async def create_property_definition(
@@ -45,7 +46,9 @@ class PropertyDefinitionMutation(BaseMutationResolver[models.PropertyDefinition]
             is_active=data.is_active,
             allowed_entities=entities_str,
         )
-        return await self.create_and_notify(info, defn)
+        return await BaseMutationResolver.create_and_notify(
+            info, defn, models.PropertyDefinition, "property_definition"
+        )
 
     @strawberry.mutation
     async def update_property_definition(
@@ -54,8 +57,11 @@ class PropertyDefinitionMutation(BaseMutationResolver[models.PropertyDefinition]
         id: strawberry.ID,
         data: UpdatePropertyDefinitionInput,
     ) -> PropertyDefinitionType:
-        repo = self.get_repository(info.context.db)
-        defn = await repo.get_by_id_or_raise(id, "Property Definition not found")
+        db = info.context.db
+        repo = BaseMutationResolver.get_repository(db, models.PropertyDefinition)
+        defn = await repo.get_by_id_or_raise(
+            id, "Property Definition not found"
+        )
 
         if data.name is not None:
             defn.name = data.name
@@ -70,7 +76,9 @@ class PropertyDefinitionMutation(BaseMutationResolver[models.PropertyDefinition]
                 [e.value for e in data.allowed_entities],
             )
 
-        return await self.update_and_notify(info, defn)
+        return await BaseMutationResolver.update_and_notify(
+            info, defn, models.PropertyDefinition, "property_definition"
+        )
 
     @strawberry.mutation
     async def delete_property_definition(
@@ -78,10 +86,13 @@ class PropertyDefinitionMutation(BaseMutationResolver[models.PropertyDefinition]
         info: Info,
         id: strawberry.ID,
     ) -> bool:
-        repo = self.get_repository(info.context.db)
+        db = info.context.db
+        repo = BaseMutationResolver.get_repository(db, models.PropertyDefinition)
         defn = await repo.get_by_id(id)
         if not defn:
             return False
 
-        await self.delete_entity(info, defn)
+        await BaseMutationResolver.delete_entity(
+            info, defn, models.PropertyDefinition, "property_definition"
+        )
         return True

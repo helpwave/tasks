@@ -19,11 +19,15 @@ async def load_scaffold_data() -> None:
 
     scaffold_path = Path(SCAFFOLD_DIRECTORY)
     if not scaffold_path.exists():
-        logger.warning(f"Scaffold directory {SCAFFOLD_DIRECTORY} does not exist, skipping")
+        logger.warning(
+            f"Scaffold directory {SCAFFOLD_DIRECTORY} does not exist, skipping"
+        )
         return
 
     if not scaffold_path.is_dir():
-        logger.warning(f"Scaffold path {SCAFFOLD_DIRECTORY} is not a directory, skipping")
+        logger.warning(
+            f"Scaffold path {SCAFFOLD_DIRECTORY} is not a directory, skipping"
+        )
         return
 
     async with async_session() as session:
@@ -31,16 +35,22 @@ async def load_scaffold_data() -> None:
         existing_location = result.scalar_one_or_none()
 
         if existing_location:
-            logger.info("Location nodes already exist in database, skipping scaffold loading")
+            logger.info(
+                "Location nodes already exist in database, skipping scaffold loading"
+            )
             return
 
         json_files = list(scaffold_path.glob("*.json"))
 
         if not json_files:
-            logger.info(f"No JSON files found in {SCAFFOLD_DIRECTORY}, skipping scaffold loading")
+            logger.info(
+                f"No JSON files found in {SCAFFOLD_DIRECTORY}, skipping scaffold loading"
+            )
             return
 
-        logger.info(f"Loading scaffold data from {len(json_files)} JSON file(s) in {SCAFFOLD_DIRECTORY}")
+        logger.info(
+            f"Loading scaffold data from {len(json_files)} JSON file(s) in {SCAFFOLD_DIRECTORY}"
+        )
 
         for json_file in json_files:
             try:
@@ -53,15 +63,21 @@ async def load_scaffold_data() -> None:
                 elif isinstance(data, dict):
                     await _create_location_tree(session, data, None)
                 else:
-                    logger.warning(f"Invalid JSON structure in {json_file}, expected list or object")
+                    logger.warning(
+                        f"Invalid JSON structure in {json_file}, expected list or object"
+                    )
 
                 await session.commit()
-                logger.info(f"Successfully loaded scaffold data from {json_file}")
+                logger.info(
+                    f"Successfully loaded scaffold data from {json_file}"
+                )
             except json.JSONDecodeError as e:
                 logger.error(f"Failed to parse JSON file {json_file}: {e}")
                 await session.rollback()
             except Exception as e:
-                logger.error(f"Error loading scaffold data from {json_file}: {e}")
+                logger.error(
+                    f"Error loading scaffold data from {json_file}: {e}"
+                )
                 await session.rollback()
 
 

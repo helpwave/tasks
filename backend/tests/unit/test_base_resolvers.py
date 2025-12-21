@@ -28,10 +28,16 @@ async def test_base_query_resolver_get_all(db_session, sample_task):
 
 
 @pytest.mark.asyncio
-async def test_base_mutation_resolver_create_and_notify(db_session, sample_patient):
+async def test_base_mutation_resolver_create_and_notify(
+    db_session, sample_patient
+):
     resolver = BaseMutationResolver(Task, "task")
     info = MockInfo(db_session)
-    new_task = Task(title="New Task", description="Description", patient_id=sample_patient.id)
+    new_task = Task(
+        title="New Task",
+        description="Description",
+        patient_id=sample_patient.id,
+    )
     result = await resolver.create_and_notify(info, new_task)
     assert result.id is not None
     assert result.title == "New Task"
@@ -39,7 +45,9 @@ async def test_base_mutation_resolver_create_and_notify(db_session, sample_patie
 
 
 @pytest.mark.asyncio
-async def test_base_mutation_resolver_update_and_notify(db_session, sample_task):
+async def test_base_mutation_resolver_update_and_notify(
+    db_session, sample_task
+):
     resolver = BaseMutationResolver(Task, "task")
     info = MockInfo(db_session)
     sample_task.title = "Updated Title"

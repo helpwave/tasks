@@ -1,5 +1,9 @@
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
+from sqlalchemy.ext.asyncio import (
+    AsyncSession,
+    create_async_engine,
+    async_sessionmaker,
+)
 from sqlalchemy.pool import StaticPool
 
 from database.models.base import Base
@@ -60,7 +64,9 @@ async def sample_location(db_session: AsyncSession) -> LocationNode:
 
 
 @pytest.fixture
-async def sample_patient(db_session: AsyncSession, sample_location: LocationNode) -> Patient:
+async def sample_patient(
+    db_session: AsyncSession, sample_location: LocationNode
+) -> Patient:
     from datetime import date
 
     patient = Patient(
@@ -79,7 +85,9 @@ async def sample_patient(db_session: AsyncSession, sample_location: LocationNode
 
 
 @pytest.fixture
-async def sample_task(db_session: AsyncSession, sample_patient: Patient) -> Task:
+async def sample_task(
+    db_session: AsyncSession, sample_patient: Patient
+) -> Task:
     task = Task(
         id="task-1",
         title="Test Task",

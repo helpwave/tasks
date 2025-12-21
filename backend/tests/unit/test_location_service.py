@@ -39,7 +39,9 @@ async def test_get_locations_by_ids(db_session, sample_location):
     db_session.add(location2)
     await db_session.commit()
 
-    results = await service.get_locations_by_ids([sample_location.id, "location-2"])
+    results = await service.get_locations_by_ids(
+        [sample_location.id, "location-2"]
+    )
     assert len(results) == 2
 
 

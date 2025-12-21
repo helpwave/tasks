@@ -53,10 +53,8 @@ class TaskQuery:
 
 @strawberry.type
 class TaskMutation(BaseMutationResolver[models.Task]):
-    def __init__(self):
-        super().__init__(models.Task, "task")
-
-    def _get_property_service(self, db) -> PropertyService:
+    @staticmethod
+    def _get_property_service(db) -> PropertyService:
         return PropertyService(db)
 
     @strawberry.mutation
@@ -71,12 +69,16 @@ class TaskMutation(BaseMutationResolver[models.Task]):
         )
 
         if data.properties:
-            property_service = self._get_property_service(info.context.db)
-            await property_service.process_properties(new_task, data.properties, "task")
+            property_service = TaskMutation._get_property_service(info.context.db)
+            await property_service.process_properties(
+                new_task, data.properties, "task"
+            )
 
-        return await self.create_and_notify(
+        return await BaseMutationResolver.create_and_notify(
             info,
             new_task,
+            models.Task,
+            "task",
             "patient" if new_task.patient_id else None,
             new_task.patient_id if new_task.patient_id else None,
         )
@@ -89,7 +91,8 @@ class TaskMutation(BaseMutationResolver[models.Task]):
         id: strawberry.ID,
         data: UpdateTaskInput,
     ) -> TaskType:
-        repo = self.get_repository(info.context.db)
+        db = info.context.db
+        repo = BaseMutationResolver.get_repository(db, models.Task)
         task = await repo.get_by_id_or_raise(id, "Task not found")
 
         if data.checksum:
@@ -103,29 +106,42 @@ class TaskMutation(BaseMutationResolver[models.Task]):
             task.done = data.done
 
         if data.due_date is not strawberry.UNSET:
-            task.due_date = normalize_datetime_to_utc(data.due_date) if data.due_date else None
+            task.due_date = (
+                normalize_datetime_to_utc(data.due_date)
+                if data.due_date
+                else None
+            )
 
         if data.properties:
-            property_service = self._get_property_service(info.context.db)
-            await property_service.process_properties(task, data.properties, "task")
+            property_service = TaskMutation._get_property_service(db)
+            await property_service.process_properties(
+                task, data.properties, "task"
+            )
 
-        return await self.update_and_notify(
+        return await BaseMutationResolver.update_and_notify(
             info,
             task,
+            models.Task,
+            "task",
             "patient",
             task.patient_id,
         )
 
+    @staticmethod
     async def _update_task_field(
-        self,
         info: Info,
         id: strawberry.ID,
         field_updater,
     ) -> TaskType:
-        repo = self.get_repository(info.context.db)
+        from api.services.notifications import notify_entity_update
+        db = info.context.db
+        repo = BaseMutationResolver.get_repository(db, models.Task)
         task = await repo.get_by_id_or_raise(id, "Task not found")
         field_updater(task)
-        return await self.update_and_notify(info, task, "patient", task.patient_id)
+        await BaseMutationResolver.update_and_notify(
+            info, task, models.Task, "task", "patient", task.patient_id
+        )
+        return task
 
     @strawberry.mutation
     @audit_log("assign_task")
@@ -135,7 +151,7 @@ class TaskMutation(BaseMutationResolver[models.Task]):
         id: strawberry.ID,
         user_id: strawberry.ID,
     ) -> TaskType:
-        return await self._update_task_field(
+        return await TaskMutation._update_task_field(
             info,
             id,
             lambda task: setattr(task, "assignee_id", user_id),
@@ -144,7 +160,7 @@ class TaskMutation(BaseMutationResolver[models.Task]):
     @strawberry.mutation
     @audit_log("unassign_task")
     async def unassign_task(self, info: Info, id: strawberry.ID) -> TaskType:
-        return await self._update_task_field(
+        return await TaskMutation._update_task_field(
             info,
             id,
             lambda task: setattr(task, "assignee_id", None),
@@ -153,7 +169,7 @@ class TaskMutation(BaseMutationResolver[models.Task]):
     @strawberry.mutation
     @audit_log("complete_task")
     async def complete_task(self, info: Info, id: strawberry.ID) -> TaskType:
-        return await self._update_task_field(
+        return await TaskMutation._update_task_field(
             info,
             id,
             lambda task: setattr(task, "done", True),
@@ -162,7 +178,7 @@ class TaskMutation(BaseMutationResolver[models.Task]):
     @strawberry.mutation
     @audit_log("reopen_task")
     async def reopen_task(self, info: Info, id: strawberry.ID) -> TaskType:
-        return await self._update_task_field(
+        return await TaskMutation._update_task_field(
             info,
             id,
             lambda task: setattr(task, "done", False),
@@ -171,24 +187,26 @@ class TaskMutation(BaseMutationResolver[models.Task]):
     @strawberry.mutation
     @audit_log("delete_task")
     async def delete_task(self, info: Info, id: strawberry.ID) -> bool:
-        repo = self.get_repository(info.context.db)
+        db = info.context.db
+        repo = BaseMutationResolver.get_repository(db, models.Task)
         task = await repo.get_by_id(id)
         if not task:
             return False
 
         patient_id = task.patient_id
-        await self.delete_entity(info, task, "patient", patient_id)
+        await BaseMutationResolver.delete_entity(
+            info, task, models.Task, "task", "patient", patient_id
+        )
         return True
 
 
 @strawberry.type
 class TaskSubscription(BaseSubscriptionResolver):
-    def __init__(self):
-        super().__init__("task")
-
     @strawberry.subscription
-    async def task_created(self, info: Info) -> AsyncGenerator[strawberry.ID, None]:
-        async for task_id in self.entity_created(info):
+    async def task_created(
+        self, info: Info
+    ) -> AsyncGenerator[strawberry.ID, None]:
+        async for task_id in BaseSubscriptionResolver.entity_created(info, "task"):
             yield task_id
 
     @strawberry.subscription
@@ -197,10 +215,12 @@ class TaskSubscription(BaseSubscriptionResolver):
         info: Info,
         task_id: strawberry.ID | None = None,
     ) -> AsyncGenerator[strawberry.ID, None]:
-        async for updated_id in self.entity_updated(info, task_id):
+        async for updated_id in BaseSubscriptionResolver.entity_updated(info, "task", task_id):
             yield updated_id
 
     @strawberry.subscription
-    async def task_deleted(self, info: Info) -> AsyncGenerator[strawberry.ID, None]:
-        async for task_id in self.entity_deleted(info):
+    async def task_deleted(
+        self, info: Info
+    ) -> AsyncGenerator[strawberry.ID, None]:
+        async for task_id in BaseSubscriptionResolver.entity_deleted(info, "task"):
             yield task_id

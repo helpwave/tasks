@@ -78,7 +78,9 @@ class TaskManager:
         elif self.current_user_id and random.random() > 0.3:
             assignee_id = self.current_user_id
 
-        due_date = (datetime.now() + timedelta(hours=random.randint(1, 48))).isoformat()
+        due_date = (
+            datetime.now() + timedelta(hours=random.randint(1, 48))
+        ).isoformat()
 
         mutation = """
             mutation CreateTask($title: String!, $patientId: ID!, $assigneeId: ID, $dueDate: DateTime) {
@@ -116,18 +118,24 @@ class TaskManager:
             assignee_info = task.get("assignee")
             assignee_msg = ""
             if assignee_info:
-                assignee_msg = f" assigned to {assignee_info.get('username', 'user')}"
+                assignee_msg = (
+                    f" assigned to {assignee_info.get('username', 'user')}"
+                )
             else:
                 assignee_msg = " (unassigned)"
 
             due_date_str = task.get("dueDate", due_date)
-            logger.info(f"Created task '{title}'{assignee_msg} due {due_date_str}")
+            logger.info(
+                f"Created task '{title}'{assignee_msg} due {due_date_str}"
+            )
             return tid
         else:
             self._log_errors("create_task", response)
             return None
 
-    def create_treatment_tasks(self, patient_id: str, diagnosis: str) -> List[str]:
+    def create_treatment_tasks(
+        self, patient_id: str, diagnosis: str
+    ) -> List[str]:
         treatments = TreatmentPlanner.get_treatments_for_diagnosis(diagnosis)
         task_ids = []
 
@@ -157,7 +165,9 @@ class TaskManager:
                     done
                 }
             }
-        """ % ("completeTask" if complete else "reopenTask")
+        """ % (
+            "completeTask" if complete else "reopenTask"
+        )
 
         response = self.client.query(mutation, {"id": tid})
 

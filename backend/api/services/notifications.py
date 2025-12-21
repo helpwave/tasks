@@ -9,7 +9,9 @@ async def notify_entity_update(
 ) -> None:
     await publish_to_redis(f"{entity_type}_updated", str(entity_id))
     if related_entity_type and related_entity_id:
-        await publish_to_redis(f"{related_entity_type}_updated", str(related_entity_id))
+        await publish_to_redis(
+            f"{related_entity_type}_updated", str(related_entity_id)
+        )
 
 
 async def notify_entity_created(entity_type: str, entity_id: str) -> None:
@@ -24,4 +26,6 @@ async def notify_entity_deleted(
 ) -> None:
     await publish_to_redis(f"{entity_type}_deleted", str(entity_id))
     if related_entity_type and related_entity_id:
-        await publish_to_redis(f"{related_entity_type}_updated", str(related_entity_id))
+        await publish_to_redis(
+            f"{related_entity_type}_updated", str(related_entity_id)
+        )

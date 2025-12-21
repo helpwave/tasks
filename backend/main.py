@@ -23,6 +23,7 @@ async def lifespan(app: FastAPI):
     yield
     logger.info("Shutting down application...")
 
+
 schema = Schema(
     query=Query,
     mutation=Mutation,

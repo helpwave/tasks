@@ -10,9 +10,13 @@ class LocationService:
         self.db = db
         self.validator = LocationValidator()
 
-    async def get_location_by_id(self, location_id: str) -> models.LocationNode | None:
+    async def get_location_by_id(
+        self, location_id: str
+    ) -> models.LocationNode | None:
         result = await self.db.execute(
-            select(models.LocationNode).where(models.LocationNode.id == location_id),
+            select(models.LocationNode).where(
+                models.LocationNode.id == location_id
+            ),
         )
         return result.scalars().first()
 
@@ -35,7 +39,9 @@ class LocationService:
         if not location_ids:
             return []
         result = await self.db.execute(
-            select(models.LocationNode).where(models.LocationNode.id.in_(location_ids)),
+            select(models.LocationNode).where(
+                models.LocationNode.id.in_(location_ids)
+            ),
         )
         return list(result.scalars().all())
 

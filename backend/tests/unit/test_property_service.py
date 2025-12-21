@@ -17,8 +17,11 @@ async def test_process_properties_for_patient(db_session, sample_patient):
 
     from database.models.property import PropertyValue
     from sqlalchemy import select
+
     result = await db_session.execute(
-        select(PropertyValue).where(PropertyValue.patient_id == sample_patient.id)
+        select(PropertyValue).where(
+            PropertyValue.patient_id == sample_patient.id
+        )
     )
     prop_values = result.scalars().all()
     assert len(prop_values) == 1
@@ -39,6 +42,7 @@ async def test_process_properties_for_task(db_session, sample_task):
 
     from database.models.property import PropertyValue
     from sqlalchemy import select
+
     result = await db_session.execute(
         select(PropertyValue).where(PropertyValue.task_id == sample_task.id)
     )
@@ -55,8 +59,11 @@ async def test_process_properties_empty_list(db_session, sample_patient):
 
     from database.models.property import PropertyValue
     from sqlalchemy import select
+
     result = await db_session.execute(
-        select(PropertyValue).where(PropertyValue.patient_id == sample_patient.id)
+        select(PropertyValue).where(
+            PropertyValue.patient_id == sample_patient.id
+        )
     )
     prop_values = result.scalars().all()
     assert len(prop_values) == 0
@@ -76,8 +83,11 @@ async def test_process_properties_multi_select(db_session, sample_patient):
 
     from database.models.property import PropertyValue
     from sqlalchemy import select
+
     result = await db_session.execute(
-        select(PropertyValue).where(PropertyValue.patient_id == sample_patient.id)
+        select(PropertyValue).where(
+            PropertyValue.patient_id == sample_patient.id
+        )
     )
     prop_values = result.scalars().all()
     assert len(prop_values) == 1

@@ -17,7 +17,9 @@ class BaseRepository(Generic[ModelType]):
         )
         return result.scalars().first()
 
-    async def get_by_id_or_raise(self, id: str, error_message: str = "Entity not found") -> ModelType:
+    async def get_by_id_or_raise(
+        self, id: str, error_message: str = "Entity not found"
+    ) -> ModelType:
         entity = await self.get_by_id(id)
         if not entity:
             raise Exception(error_message)

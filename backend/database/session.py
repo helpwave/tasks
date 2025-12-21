@@ -20,11 +20,17 @@ redis_client = redis.from_url(REDIS_URL, decode_responses=True)
 
 async def publish_to_redis(channel: str, message: str) -> None:
     try:
-        logger.info(f"Publishing to Redis: channel={channel}, message={message}")
+        logger.info(
+            f"Publishing to Redis: channel={channel}, message={message}"
+        )
         await redis_client.publish(channel, message)
-        logger.debug(f"Successfully published to Redis: channel={channel}, message={message}")
+        logger.debug(
+            f"Successfully published to Redis: channel={channel}, message={message}"
+        )
     except Exception as e:
-        logger.error(f"Failed to publish to Redis: channel={channel}, message={message}, error={e}")
+        logger.error(
+            f"Failed to publish to Redis: channel={channel}, message={message}, error={e}"
+        )
 
 
 async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
