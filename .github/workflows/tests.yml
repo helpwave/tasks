@@ -230,7 +230,6 @@ jobs:
       - name: Run database migrations
         working-directory: backend
         run: |
-          pip install alembic
           alembic upgrade head
         env:
           DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/test
