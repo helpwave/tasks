@@ -80,6 +80,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/checkout@v4
+
       - name: Start Keycloak
         run: |
           docker run -d --name keycloak \
@@ -89,12 +91,15 @@ jobs:
             -e KC_HEALTH_ENABLED=true \
             -e KC_METRICS_ENABLED=true \
             -e KC_DB=dev-file \
+            -v ${{ github.workspace }}/keycloak:/opt/keycloak/data/import:ro \
             quay.io/keycloak/keycloak:25.0 \
-            start-dev
+            start-dev --import-realm
 
       - name: Wait for Keycloak to be ready
         run: |
-          timeout 60s bash -c 'until curl -f http://localhost:8080/health/ready; do sleep 5; done'
+          echo "Waiting for Keycloak to be ready..."
+          timeout 120s bash -c 'until curl -f -s http://localhost:8080/health/ready > /dev/null 2>&1; do sleep 2; done'
+          echo "Keycloak is ready"
 
       - uses: actions/checkout@v4
 
