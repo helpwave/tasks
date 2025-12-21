@@ -4,7 +4,7 @@ This project uses GitHub Actions for CI/CD. You can run these workflows locally 
 
 ## Workflow Overview
 
-### Main Workflow: `tests.yml`
+### Main Workflow: `tests.yml` ⭐ **RECOMMENDED**
 **Primary workflow for all tests and linting**
 - Runs on: `push` and `pull_request` to `main` and `develop`
 - Jobs:
@@ -13,16 +13,17 @@ This project uses GitHub Actions for CI/CD. You can run these workflows locally 
   - `frontend-lint` - Lints TypeScript/JavaScript frontend code
   - `backend-tests` - Runs backend unit and integration tests (Python 3.11, 3.12, 3.13)
   - `frontend-tests` - Runs frontend type checking
-  - `e2e-tests` - Runs end-to-end tests with Playwright
+  - `e2e-tests` - Runs end-to-end tests with Playwright (includes proper dependency installation)
   - `build` - Builds the frontend application
 
 **Use this workflow for:**
-- Full CI/CD pipeline
-- Comprehensive testing
-- Pull request validation
+- ✅ Full CI/CD pipeline
+- ✅ Comprehensive testing
+- ✅ Pull request validation
+- ✅ **E2E tests (properly configured with dependencies)**
 
 ### Secondary Workflow: `e2e-tests.yml`
-**Standalone E2E test workflow**
+**Standalone E2E test workflow (legacy/alternative)**
 - Runs on: `push`, `pull_request` to `main` and `develop`, and `workflow_dispatch`
 - Single job: `e2e` - Runs only E2E tests
 
@@ -31,7 +32,7 @@ This project uses GitHub Actions for CI/CD. You can run these workflows locally 
 - Manual E2E testing via workflow_dispatch
 - Focused E2E test debugging
 
-**Note:** The main `tests.yml` workflow is recommended for most use cases as it includes all tests and linting.
+**Note:** The main `tests.yml` workflow is **recommended** for most use cases as it includes all tests, linting, and properly configured E2E tests with dependency installation.
 
 ## Prerequisites
 
