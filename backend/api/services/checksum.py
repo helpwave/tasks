@@ -18,4 +18,3 @@ def validate_checksum(
             f"CONFLICT: {entity_name} data has been modified. "
             f"Expected checksum: {current_checksum}, Got: {provided_checksum}"
         )
-

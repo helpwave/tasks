@@ -69,5 +69,3 @@ async def test_delete(db_session, sample_task):
     await repo.delete(sample_task)
     result = await repo.get_by_id(task_id)
     assert result is None
-
-

@@ -98,4 +98,3 @@ class BaseSubscriptionResolver:
     async def entity_deleted(self, info: Info) -> AsyncGenerator[strawberry.ID, None]:
         async for entity_id in create_redis_subscription(f"{self.entity_name}_deleted"):
             yield entity_id
-

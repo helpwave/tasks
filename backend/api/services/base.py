@@ -50,5 +50,3 @@ class BaseService:
     async def commit_and_refresh(self, entity) -> None:
         await self.db.commit()
         await self.db.refresh(entity)
-
-

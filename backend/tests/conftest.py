@@ -91,4 +91,3 @@ async def sample_task(db_session: AsyncSession, sample_patient: Patient) -> Task
     await db_session.commit()
     await db_session.refresh(task)
     return task
-

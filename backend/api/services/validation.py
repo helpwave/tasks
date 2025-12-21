@@ -27,5 +27,3 @@ class LocationValidator:
                 f"{field_name} must be a location of kind CLINIC, TEAM, PRACTICE, "
                 f"or HOSPITAL, but got {location.kind}"
             )
-
-

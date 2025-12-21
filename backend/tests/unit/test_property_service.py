@@ -82,4 +82,3 @@ async def test_process_properties_multi_select(db_session, sample_patient):
     prop_values = result.scalars().all()
     assert len(prop_values) == 1
     assert prop_values[0].multi_select_values == "option1,option2,option3"
-

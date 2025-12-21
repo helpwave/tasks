@@ -17,5 +17,3 @@ async def create_redis_subscription(
                     yield message_id
     finally:
         await pubsub.close()
-
-

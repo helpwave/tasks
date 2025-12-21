@@ -96,5 +96,3 @@ async def test_validate_and_get_teams_missing(db_session):
 
     with pytest.raises(Exception, match="not found"):
         await service.validate_and_get_teams(["team-1", "non-existent"])
-
-

@@ -85,5 +85,3 @@ async def test_task_mutation_delete_task(db_session, sample_task):
     query = TaskQuery()
     task = await query.task(info, task_id)
     assert task is None
-
-

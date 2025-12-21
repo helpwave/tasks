@@ -25,4 +25,3 @@ async def notify_entity_deleted(
     await publish_to_redis(f"{entity_type}_deleted", str(entity_id))
     if related_entity_type and related_entity_id:
         await publish_to_redis(f"{related_entity_type}_updated", str(related_entity_id))
-

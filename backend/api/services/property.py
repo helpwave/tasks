@@ -40,4 +40,3 @@ class PropertyService:
                 prop_value.task_id = entity.id
 
             self.db.add(prop_value)
-

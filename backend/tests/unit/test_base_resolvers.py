@@ -51,8 +51,7 @@ async def test_base_mutation_resolver_delete_entity(db_session, sample_task):
     resolver = BaseMutationResolver(Task, "task")
     info = MockInfo(db_session)
     await resolver.delete_entity(info, sample_task)
-    
+
     repo = resolver.get_repository(db_session)
     result = await repo.get_by_id(sample_task.id)
     assert result is None
-

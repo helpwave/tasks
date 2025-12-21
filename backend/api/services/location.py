@@ -77,5 +77,3 @@ class LocationService:
         for team in teams:
             self.validator.validate_team_kind(team, "team_ids")
         return teams
-
-

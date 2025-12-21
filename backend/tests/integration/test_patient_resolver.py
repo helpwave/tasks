@@ -73,4 +73,3 @@ async def test_patient_mutation_discharge_patient(db_session, sample_patient):
     mutation = PatientMutation()
     result = await mutation.discharge_patient(info, sample_patient.id)
     assert result.state == PatientState.DISCHARGED.value
-

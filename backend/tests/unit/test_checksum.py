@@ -19,5 +19,3 @@ async def test_validate_checksum_invalid(db_session, sample_task):
 @pytest.mark.asyncio
 async def test_validate_checksum_none(db_session, sample_task):
     validate_checksum(sample_task, None, "Task")
-
-
