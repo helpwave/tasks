@@ -1,7 +1,7 @@
 # helpwave tasks
 
 [![Tests](https://github.com/helpwave/tasks/actions/workflows/tests.yml/badge.svg)](https://github.com/helpwave/tasks/actions/workflows/tests.yml)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-MPL2-blue.svg)](LICENSE)
 
 **helpwave tasks** is a modern, open-source task and ward-management platform tailored for healthcare - designed to bring clarity, efficiency and structure to hospitals, wards and clinical workflows.
 
