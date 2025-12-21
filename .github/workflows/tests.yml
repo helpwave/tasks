@@ -269,18 +269,22 @@ jobs:
       - name: Wait for backend
         run: |
           echo "Waiting for backend to start..."
-          sleep 5
+          sleep 10
           for i in {1..60}; do
             if curl -f -s http://localhost:8000/health > /dev/null 2>&1; then
               echo "Backend is ready!"
               exit 0
             fi
-            echo "Attempt $i/60: Backend not ready yet..."
+            if [ $i -le 10 ]; then
+              echo "Attempt $i/60: Backend not ready yet..."
+            fi
             sleep 2
           done
           echo "Backend failed to start after 120 seconds"
           echo "=== Backend Log ==="
           cat /tmp/backend.log || echo "No backend log found"
+          echo "=== Checking if process is running ==="
+          ps aux | grep uvicorn || echo "No uvicorn process found"
           exit 1
 
       - name: Wait for frontend

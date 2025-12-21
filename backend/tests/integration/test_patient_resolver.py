@@ -31,12 +31,14 @@ async def test_patient_query_patients(db_session, sample_patient):
 @pytest.mark.asyncio
 async def test_patient_mutation_create_patient(db_session, sample_location):
     from api.inputs import CreatePatientInput
+    from datetime import date
 
     info = MockInfo(db_session)
     mutation = PatientMutation()
     input_data = CreatePatientInput(
         firstname="Jane",
         lastname="Doe",
+        birthdate=date(1990, 1, 1),
         sex=Sex.FEMALE,
         clinic_id=sample_location.id,
     )
