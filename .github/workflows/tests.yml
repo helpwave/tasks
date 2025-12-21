@@ -101,8 +101,6 @@ jobs:
           timeout 120s bash -c 'until curl -f -s http://localhost:8080/health/ready > /dev/null 2>&1; do sleep 2; done'
           echo "Keycloak is ready"
 
-      - uses: actions/checkout@v4
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
