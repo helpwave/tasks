@@ -91,8 +91,6 @@ jobs:
           --health-timeout 10s
           --health-retries 30
           --health-start-period 40s
-          --entrypoint /opt/keycloak/bin/kc.sh
-          start-dev
         ports:
           - 8080:8080
 
