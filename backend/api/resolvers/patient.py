@@ -5,11 +5,13 @@ from api.audit import audit_log
 from api.context import Info
 from api.inputs import CreatePatientInput, PatientState, UpdatePatientInput
 from api.resolvers.base import BaseMutationResolver, BaseSubscriptionResolver
+from api.services.authorization import AuthorizationService
 from api.services.checksum import validate_checksum
 from api.services.location import LocationService
 from api.services.property import PropertyService
 from api.types.patient import PatientType
 from database import models
+from graphql import GraphQLError
 from sqlalchemy import select
 from sqlalchemy.orm import aliased, selectinload
 
@@ -31,7 +33,15 @@ class PatientQuery:
                 selectinload(models.Patient.teams),
             ),
         )
-        return result.scalars().first()
+        patient = result.scalars().first()
+        if patient:
+            auth_service = AuthorizationService(info.context.db)
+            if not await auth_service.can_access_patient(info.context.user, patient, info.context):
+                raise GraphQLError(
+                    "Forbidden: You do not have access to this patient",
+                    extensions={"code": "FORBIDDEN"},
+                )
+        return patient
 
     @strawberry.field
     async def patients(
@@ -88,6 +98,14 @@ class PatientQuery:
                 .distinct()
             )
 
+        auth_service = AuthorizationService(info.context.db)
+        accessible_location_ids = await auth_service.get_user_accessible_location_ids(
+            info.context.user, info.context
+        )
+        query = auth_service.filter_patients_by_access(
+            info.context.user, query, accessible_location_ids
+        )
+
         result = await info.context.db.execute(query)
         return result.scalars().all()
 
@@ -105,6 +123,13 @@ class PatientQuery:
                 selectinload(models.Patient.teams),
             )
             .limit(limit)
+        )
+        auth_service = AuthorizationService(info.context.db)
+        accessible_location_ids = await auth_service.get_user_accessible_location_ids(
+            info.context.user, info.context
+        )
+        query = auth_service.filter_patients_by_access(
+            info.context.user, query, accessible_location_ids
         )
         result = await info.context.db.execute(query)
         return result.scalars().all()
@@ -133,13 +158,41 @@ class PatientMutation(BaseMutationResolver[models.Patient]):
             data.state.value if data.state else PatientState.WAIT.value
         )
 
+        auth_service = AuthorizationService(db)
+        accessible_location_ids = await auth_service.get_user_accessible_location_ids(
+            info.context.user, info.context
+        )
+        
+        if not accessible_location_ids:
+            raise GraphQLError(
+                "Forbidden: You do not have access to create patients",
+                extensions={"code": "FORBIDDEN"},
+            )
+
+        if data.clinic_id not in accessible_location_ids:
+            raise GraphQLError(
+                "Forbidden: You do not have access to this clinic",
+                extensions={"code": "FORBIDDEN"},
+            )
+
         await location_service.validate_and_get_clinic(data.clinic_id)
 
         if data.position_id:
+            if data.position_id not in accessible_location_ids:
+                raise GraphQLError(
+                    "Forbidden: You do not have access to this position",
+                    extensions={"code": "FORBIDDEN"},
+                )
             await location_service.validate_and_get_position(data.position_id)
 
         teams = []
         if data.team_ids:
+            for team_id in data.team_ids:
+                if team_id not in accessible_location_ids:
+                    raise GraphQLError(
+                        "Forbidden: You do not have access to one or more teams",
+                        extensions={"code": "FORBIDDEN"},
+                    )
             teams = await location_service.validate_and_get_teams(
                 data.team_ids
             )
@@ -159,11 +212,22 @@ class PatientMutation(BaseMutationResolver[models.Patient]):
             new_patient.teams = teams
 
         if data.assigned_location_ids:
+            for loc_id in data.assigned_location_ids:
+                if loc_id not in accessible_location_ids:
+                    raise GraphQLError(
+                        "Forbidden: You do not have access to one or more assigned locations",
+                        extensions={"code": "FORBIDDEN"},
+                    )
             locations = await location_service.get_locations_by_ids(
                 data.assigned_location_ids
             )
             new_patient.assigned_locations = locations
         elif data.assigned_location_id:
+            if data.assigned_location_id not in accessible_location_ids:
+                raise GraphQLError(
+                    "Forbidden: You do not have access to this assigned location",
+                    extensions={"code": "FORBIDDEN"},
+                )
             location = await location_service.get_location_by_id(
                 data.assigned_location_id
             )
@@ -204,6 +268,13 @@ class PatientMutation(BaseMutationResolver[models.Patient]):
         if not patient:
             raise Exception("Patient not found")
 
+        auth_service = AuthorizationService(db)
+        if not await auth_service.can_access_patient(info.context.user, patient, info.context):
+            raise GraphQLError(
+                "Forbidden: You do not have access to this patient",
+                extensions={"code": "FORBIDDEN"},
+            )
+
         if data.checksum:
             validate_checksum(patient, data.checksum, "Patient")
 
@@ -217,8 +288,16 @@ class PatientMutation(BaseMutationResolver[models.Patient]):
             patient.sex = data.sex.value
 
         location_service = PatientMutation._get_location_service(db)
+        accessible_location_ids = await auth_service.get_user_accessible_location_ids(
+            info.context.user
+        )
 
         if data.clinic_id is not None:
+            if data.clinic_id not in accessible_location_ids:
+                raise GraphQLError(
+                    "Forbidden: You do not have access to this clinic",
+                    extensions={"code": "FORBIDDEN"},
+                )
             await location_service.validate_and_get_clinic(data.clinic_id)
             patient.clinic_id = data.clinic_id
 
@@ -226,6 +305,11 @@ class PatientMutation(BaseMutationResolver[models.Patient]):
             if data.position_id is None:
                 patient.position_id = None
             else:
+                if data.position_id not in accessible_location_ids:
+                    raise GraphQLError(
+                        "Forbidden: You do not have access to this position",
+                        extensions={"code": "FORBIDDEN"},
+                    )
                 await location_service.validate_and_get_position(
                     data.position_id
                 )
@@ -235,16 +319,33 @@ class PatientMutation(BaseMutationResolver[models.Patient]):
             if data.team_ids is None or len(data.team_ids) == 0:
                 patient.teams = []
             else:
+                for team_id in data.team_ids:
+                    if team_id not in accessible_location_ids:
+                        raise GraphQLError(
+                            "Forbidden: You do not have access to one or more teams",
+                            extensions={"code": "FORBIDDEN"},
+                        )
                 patient.teams = await location_service.validate_and_get_teams(
                     data.team_ids
                 )
 
         if data.assigned_location_ids is not None:
+            for loc_id in data.assigned_location_ids:
+                if loc_id not in accessible_location_ids:
+                    raise GraphQLError(
+                        "Forbidden: You do not have access to one or more assigned locations",
+                        extensions={"code": "FORBIDDEN"},
+                    )
             locations = await location_service.get_locations_by_ids(
                 data.assigned_location_ids
             )
             patient.assigned_locations = locations
         elif data.assigned_location_id is not None:
+            if data.assigned_location_id not in accessible_location_ids:
+                raise GraphQLError(
+                    "Forbidden: You do not have access to this assigned location",
+                    extensions={"code": "FORBIDDEN"},
+                )
             location = await location_service.get_location_by_id(
                 data.assigned_location_id
             )
@@ -269,6 +370,14 @@ class PatientMutation(BaseMutationResolver[models.Patient]):
         patient = await repo.get_by_id(id)
         if not patient:
             return False
+
+        auth_service = AuthorizationService(info.context.db)
+        if not await auth_service.can_access_patient(info.context.user, patient, info.context):
+            raise GraphQLError(
+                "Forbidden: You do not have access to this patient",
+                extensions={"code": "FORBIDDEN"},
+            )
+
         await BaseMutationResolver.delete_entity(
             info, patient, models.Patient, "patient"
         )
@@ -293,6 +402,14 @@ class PatientMutation(BaseMutationResolver[models.Patient]):
         patient = result.scalars().first()
         if not patient:
             raise Exception("Patient not found")
+
+        auth_service = AuthorizationService(db)
+        if not await auth_service.can_access_patient(info.context.user, patient, info.context):
+            raise GraphQLError(
+                "Forbidden: You do not have access to this patient",
+                extensions={"code": "FORBIDDEN"},
+            )
+
         patient.state = state.value
         await BaseMutationResolver.update_and_notify(
             info, patient, models.Patient, "patient"

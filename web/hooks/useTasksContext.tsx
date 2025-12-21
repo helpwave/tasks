@@ -8,6 +8,7 @@ type User = {
   id: string,
   name: string,
   avatarUrl?: string | null,
+  organizations?: string | null,
 }
 
 type LocationNode = {
@@ -32,6 +33,7 @@ export type TasksContextState = {
   selectedLocationId?: string,
   sidebar: SidebarContextType,
   user?: User,
+  rootLocations?: LocationNode[],
 }
 
 export type TasksContextType = TasksContextState & {
@@ -76,7 +78,8 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
       user: data?.me ? {
         id: data.me.id,
         name: data.me.name,
-        avatarUrl: data.me.avatarUrl
+        avatarUrl: data.me.avatarUrl,
+        organizations: data.me.organizations ?? null
       } : undefined,
       myTasksCount: data?.me?.tasks?.filter(t => !t.done).length ?? 0,
       totalPatientsCount,
@@ -87,6 +90,7 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
       teams: data?.teams,
       wards: data?.wards,
       clinics: data?.clinics,
+      rootLocations: data?.me?.rootLocations?.map(loc => ({ id: loc.id, title: loc.title })) ?? [],
     }))
   }, [data])
 

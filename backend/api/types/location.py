@@ -63,3 +63,12 @@ class LocationNodeType:
             ),
         )
         return result.scalars().all()
+
+    @strawberry.field
+    async def organization_ids(self, info: Info) -> list[str]:
+        result = await info.context.db.execute(
+            select(models.location_organizations.c.organization_id).where(
+                models.location_organizations.c.location_id == self.id,
+            ),
+        )
+        return [row[0] for row in result.all()]

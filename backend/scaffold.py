@@ -5,7 +5,8 @@ from typing import Any
 
 from api.inputs import LocationType
 from config import LOGGER, SCAFFOLD_DIRECTORY
-from database.models.location import LocationNode
+from database.models.location import LocationNode, location_organizations
+from database.models.user import User
 from database.session import async_session
 from sqlalchemy import select
 
@@ -71,6 +72,7 @@ async def load_scaffold_data() -> None:
                 logger.info(
                     f"Successfully loaded scaffold data from {json_file}"
                 )
+                await _assign_clinics_to_users(session)
             except json.JSONDecodeError as e:
                 logger.error(f"Failed to parse JSON file {json_file}: {e}")
                 await session.rollback()
@@ -118,7 +120,78 @@ async def _create_location_tree(
         location_id = location.id
         logger.debug(f"Created location '{name}' ({location_type.value})")
 
+    organization_ids = data.get("organization_ids", [])
+    if organization_ids:
+        for org_id in organization_ids:
+            stmt = select(location_organizations).where(
+                location_organizations.c.location_id == location_id,
+                location_organizations.c.organization_id == org_id,
+            )
+            result = await session.execute(stmt)
+            existing_org = result.first()
+            if not existing_org:
+                await session.execute(
+                    location_organizations.insert().values(
+                        location_id=location_id, organization_id=org_id
+                    )
+                )
+                logger.debug(
+                    f"Assigned organization '{org_id}' to location '{name}'"
+                )
+
     for child_data in children:
         await _create_location_tree(session, child_data, location_id)
 
     return location_id
+
+
+async def _assign_clinics_to_users(session: Any) -> None:
+    result = await session.execute(select(User))
+    users = result.scalars().all()
+
+    for user in users:
+        if not user.organizations:
+            continue
+
+        org_ids = [
+            org_id.strip()
+            for org_id in user.organizations.split(",")
+            if org_id.strip()
+        ]
+
+        for org_id in org_ids:
+            clinic_result = await session.execute(
+                select(LocationNode)
+                .join(
+                    location_organizations,
+                    LocationNode.id == location_organizations.c.location_id,
+                )
+                .where(
+                    LocationNode.kind == "CLINIC",
+                    location_organizations.c.organization_id == org_id,
+                )
+                .limit(1)
+            )
+            clinic = clinic_result.scalar_one_or_none()
+
+            if clinic:
+                from database.models.user import user_root_locations
+
+                existing_result = await session.execute(
+                    select(user_root_locations).where(
+                        user_root_locations.c.user_id == user.id,
+                        user_root_locations.c.location_id == clinic.id,
+                    )
+                )
+                existing = existing_result.first()
+                if not existing:
+                    await session.execute(
+                        user_root_locations.insert().values(
+                            user_id=user.id, location_id=clinic.id
+                        )
+                    )
+                    logger.info(
+                        f"Assigned clinic '{clinic.title}' to user '{user.username}' based on organization '{org_id}'"
+                    )
+
+    await session.commit()

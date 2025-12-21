@@ -4,11 +4,19 @@ import uuid
 from typing import TYPE_CHECKING
 
 from database.models.base import Base
-from sqlalchemy import ForeignKey, String
+from sqlalchemy import Column, ForeignKey, String, Table
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 if TYPE_CHECKING:
     from .patient import Patient
+    from .user import User
+
+location_organizations = Table(
+    "location_organizations",
+    Base.metadata,
+    Column("location_id", ForeignKey("location_nodes.id"), primary_key=True),
+    Column("organization_id", String, primary_key=True),
+)
 
 
 class LocationNode(Base):
@@ -59,4 +67,9 @@ class LocationNode(Base):
         "Patient",
         secondary="patient_teams",
         back_populates="teams",
+    )
+    root_users: Mapped[list[User]] = relationship(
+        "User",
+        secondary="user_root_locations",
+        back_populates="root_locations",
     )

@@ -1,8 +1,10 @@
 import strawberry
 from api.context import Info
 from api.inputs import LocationType
+from api.services.authorization import AuthorizationService
 from api.types.location import LocationNodeType
 from database import models
+from graphql import GraphQLError
 from sqlalchemy import select
 
 
@@ -10,9 +12,18 @@ from sqlalchemy import select
 class LocationQuery:
     @strawberry.field
     async def location_roots(self, info: Info) -> list[LocationNodeType]:
+        auth_service = AuthorizationService(info.context.db)
+        accessible_location_ids = await auth_service.get_user_accessible_location_ids(
+            info.context.user, info.context
+        )
+        
+        if not accessible_location_ids:
+            return []
+        
         result = await info.context.db.execute(
             select(models.LocationNode).where(
                 models.LocationNode.parent_id.is_(None),
+                models.LocationNode.id.in_(accessible_location_ids),
             ),
         )
         return result.scalars().all()
@@ -26,7 +37,20 @@ class LocationQuery:
         result = await info.context.db.execute(
             select(models.LocationNode).where(models.LocationNode.id == id),
         )
-        return result.scalars().first()
+        location = result.scalars().first()
+        
+        if location:
+            auth_service = AuthorizationService(info.context.db)
+            accessible_location_ids = await auth_service.get_user_accessible_location_ids(
+                info.context.user, info.context
+            )
+            if location.id not in accessible_location_ids:
+                raise GraphQLError(
+                    "Forbidden: You do not have access to this location",
+                    extensions={"code": "FORBIDDEN"},
+                )
+        
+        return location
 
     @strawberry.field
     async def location_nodes(
@@ -39,8 +63,22 @@ class LocationQuery:
         order_by_name: bool = False,
     ) -> list[LocationNodeType]:
         db = info.context.db
+        
+        auth_service = AuthorizationService(db)
+        accessible_location_ids = await auth_service.get_user_accessible_location_ids(
+            info.context.user, info.context
+        )
+        
+        if not accessible_location_ids:
+            return []
 
         if recursive and parent_id:
+            if parent_id not in accessible_location_ids:
+                raise GraphQLError(
+                    "Forbidden: You do not have access to this location",
+                    extensions={"code": "FORBIDDEN"},
+                )
+            
             cte = (
                 select(models.LocationNode)
                 .where(models.LocationNode.id == parent_id)
@@ -52,10 +90,17 @@ class LocationQuery:
                 models.LocationNode.parent_id == cte.c.id,
             )
             cte = cte.union_all(parent)
-            query = select(cte)
+            query = select(cte).where(cte.c.id.in_(accessible_location_ids))
         else:
-            query = select(models.LocationNode)
+            query = select(models.LocationNode).where(
+                models.LocationNode.id.in_(accessible_location_ids)
+            )
             if parent_id:
+                if parent_id not in accessible_location_ids:
+                    raise GraphQLError(
+                        "Forbidden: You do not have access to this location",
+                        extensions={"code": "FORBIDDEN"},
+                    )
                 query = query.where(models.LocationNode.parent_id == parent_id)
 
         if kind:

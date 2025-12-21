@@ -226,6 +226,8 @@ export const PatientDetailView = ({
   const [selectedTeams, setSelectedTeams] = useState<LocationNodeType[]>([])
   const [isMarkDeadDialogOpen, setIsMarkDeadDialogOpen] = useState(false)
   const [isDischargeDialogOpen, setIsDischargeDialogOpen] = useState(false)
+  const [isLocationChangeConfirmOpen, setIsLocationChangeConfirmOpen] = useState(false)
+  const [pendingLocationUpdate, setPendingLocationUpdate] = useState<(() => void) | null>(null)
 
   // Validation state for required fields
   const [firstnameError, setFirstnameError] = useState<string | null>(null)
@@ -432,16 +434,30 @@ export const PatientDetailView = ({
       setSelectedClinic(clinic)
       updateLocalState({ clinicId: clinic.id } as Partial<ExtendedCreatePatientInput>)
       if (isEditMode) {
-        persistChanges({ clinicId: clinic.id } as Partial<ExtendedUpdatePatientInput>)
+        const updateFn = () => {
+          persistChanges({ clinicId: clinic.id } as Partial<UpdatePatientInput>)
+          setIsLocationChangeConfirmOpen(false)
+          setPendingLocationUpdate(null)
+        }
+        setPendingLocationUpdate(() => updateFn)
+        setIsLocationChangeConfirmOpen(true)
+      } else {
+        validateClinic(clinic)
       }
-      validateClinic(clinic)
     } else {
       setSelectedClinic(null)
       updateLocalState({ clinicId: undefined } as Partial<ExtendedCreatePatientInput>)
       if (isEditMode) {
-        persistChanges({ clinicId: undefined } as Partial<ExtendedUpdatePatientInput>)
+        const updateFn = () => {
+          persistChanges({ clinicId: undefined } as Partial<UpdatePatientInput>)
+          setIsLocationChangeConfirmOpen(false)
+          setPendingLocationUpdate(null)
+        }
+        setPendingLocationUpdate(() => updateFn)
+        setIsLocationChangeConfirmOpen(true)
+      } else {
+        validateClinic(null)
       }
-      validateClinic(null)
     }
     setIsClinicDialogOpen(false)
   }
@@ -451,11 +467,31 @@ export const PatientDetailView = ({
     if (position) {
       setSelectedPosition(position)
       updateLocalState({ positionId: position.id } as Partial<ExtendedCreatePatientInput>)
-      persistChanges({ positionId: position.id } as Partial<ExtendedUpdatePatientInput>)
+      if (isEditMode) {
+        const updateFn = () => {
+          persistChanges({ positionId: position.id } as Partial<ExtendedUpdatePatientInput>)
+          setIsLocationChangeConfirmOpen(false)
+          setPendingLocationUpdate(null)
+        }
+        setPendingLocationUpdate(() => updateFn)
+        setIsLocationChangeConfirmOpen(true)
+      } else {
+        persistChanges({ positionId: position.id } as Partial<ExtendedUpdatePatientInput>)
+      }
     } else {
       setSelectedPosition(null)
       updateLocalState({ positionId: undefined } as Partial<ExtendedCreatePatientInput>)
-      persistChanges({ positionId: undefined } as Partial<ExtendedUpdatePatientInput>)
+      if (isEditMode) {
+        const updateFn = () => {
+          persistChanges({ positionId: undefined } as Partial<ExtendedUpdatePatientInput>)
+          setIsLocationChangeConfirmOpen(false)
+          setPendingLocationUpdate(null)
+        }
+        setPendingLocationUpdate(() => updateFn)
+        setIsLocationChangeConfirmOpen(true)
+      } else {
+        persistChanges({ positionId: undefined } as Partial<ExtendedUpdatePatientInput>)
+      }
     }
     setIsPositionDialogOpen(false)
   }
@@ -464,7 +500,17 @@ export const PatientDetailView = ({
     setSelectedTeams(locations)
     const teamIds = locations.map(loc => loc.id)
     updateLocalState({ teamIds } as Partial<ExtendedCreatePatientInput>)
-    persistChanges({ teamIds } as Partial<ExtendedUpdatePatientInput>)
+    if (isEditMode) {
+      const updateFn = () => {
+        persistChanges({ teamIds } as Partial<ExtendedUpdatePatientInput>)
+        setIsLocationChangeConfirmOpen(false)
+        setPendingLocationUpdate(null)
+      }
+      setPendingLocationUpdate(() => updateFn)
+      setIsLocationChangeConfirmOpen(true)
+    } else {
+      persistChanges({ teamIds } as Partial<ExtendedUpdatePatientInput>)
+    }
     setIsTeamsDialogOpen(false)
   }
 
@@ -1059,6 +1105,22 @@ export const PatientDetailView = ({
         }}
         titleElement={translation('dischargePatient')}
         description={translation('dischargePatientConfirmation')}
+        confirmType="neutral"
+      />
+
+      <ConfirmDialog
+        isOpen={isLocationChangeConfirmOpen}
+        onCancel={() => {
+          setIsLocationChangeConfirmOpen(false)
+          setPendingLocationUpdate(null)
+        }}
+        onConfirm={() => {
+          if (pendingLocationUpdate) {
+            pendingLocationUpdate()
+          }
+        }}
+        titleElement={translation('updateLocation')}
+        description={translation('updateLocationConfirmation')}
         confirmType="neutral"
       />
 

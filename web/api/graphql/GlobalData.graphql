@@ -6,6 +6,12 @@ query GetGlobalData {
     firstname
     lastname
     avatarUrl
+    organizations
+    rootLocations {
+      id
+      title
+      kind
+    }
     tasks {
       id
       done

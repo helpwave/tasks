@@ -204,7 +204,9 @@ type HeaderProps = HTMLAttributes<HTMLHeadElement> & {
 
 export const Header = ({ onMenuClick, isMenuOpen, ...props }: HeaderProps) => {
   const router = useRouter()
-  const { user } = useTasksContext()
+  const { user, rootLocations } = useTasksContext()
+
+  const organizations = user?.organizations ? user.organizations.split(',').map(org => org.trim()).filter(org => org.length > 0) : []
 
   return (
     <header
@@ -226,6 +228,22 @@ export const Header = ({ onMenuClick, isMenuOpen, ...props }: HeaderProps) => {
         </Button>
       </div>
       <div className="flex-row-2 justify-end">
+        {organizations.length > 0 && (
+          <div className="flex-row-1 items-center gap-x-1 hidden sm:flex">
+            <Building2 className="size-4 text-description" />
+            <span className="typography-label-sm text-description">
+              {organizations.join(', ')}
+            </span>
+          </div>
+        )}
+        {rootLocations && rootLocations.length > 0 && (
+          <div className="flex-row-1 items-center gap-x-1 hidden sm:flex">
+            <Building2 className="size-4 text-description" />
+            <span className="typography-label-sm text-description">
+              {rootLocations.map(loc => loc.title).join(', ')}
+            </span>
+          </div>
+        )}
         <div className="flex-row-0">
           <Notifications />
         </div>
