@@ -9,24 +9,62 @@ import type { ColumnDef } from '@tanstack/table-core'
 import { EditIcon, PlusIcon } from 'lucide-react'
 import { SidePanel } from '@/components/layout/SidePanel'
 import type { Property } from '@/components/PropertyList'
-import { exampleProperties } from '@/components/PropertyList'
-import { useQuery } from '@tanstack/react-query'
 import { PropertyDetailView } from '@/components/properties/PropertyDetailView'
+import { useGetPropertyDefinitionsQuery, FieldType, PropertyEntity } from '@/api/gql/generated'
 
 const PropertiesPage: NextPage = () => {
   const translation = useTasksTranslation()
   const [isPanelOpen, setIsPanelOpen] = useState(false)
   const [selected, setSelected] = useState<Property>()
 
-  const { data, refetch } = useQuery({
-    queryKey: ['properties'],
-    queryFn: async () => {
-      return exampleProperties
+  const mapFieldTypeFromBackend = (fieldType: FieldType): Property['fieldType'] => {
+    const mapping: Record<FieldType, Property['fieldType']> = {
+      [FieldType.FieldTypeText]: 'text',
+      [FieldType.FieldTypeNumber]: 'number',
+      [FieldType.FieldTypeCheckbox]: 'checkbox',
+      [FieldType.FieldTypeDate]: 'date',
+      [FieldType.FieldTypeDateTime]: 'dateTime',
+      [FieldType.FieldTypeSelect]: 'singleSelect',
+      [FieldType.FieldTypeMultiSelect]: 'multiSelect',
+      [FieldType.FieldTypeUnspecified]: 'text',
     }
-  })
+    return mapping[fieldType] || 'text'
+  }
+
+  const mapSubjectTypeFromBackend = (entity: PropertyEntity): Property['subjectType'] => {
+    return entity === PropertyEntity.Patient ? 'patient' : 'task'
+  }
+
+  const { data: propertyDefinitionsData, refetch } = useGetPropertyDefinitionsQuery()
+
+  const data = propertyDefinitionsData?.propertyDefinitions?.map(def => ({
+    id: def.id,
+    name: def.name,
+    description: def.description || undefined,
+    subjectType: mapSubjectTypeFromBackend(def.allowedEntities[0] || PropertyEntity.Patient),
+    fieldType: mapFieldTypeFromBackend(def.fieldType),
+    isArchived: !def.isActive,
+    selectData: (def.fieldType === FieldType.FieldTypeSelect || def.fieldType === FieldType.FieldTypeMultiSelect) && def.options.length > 0 ? {
+      isAllowingFreetext: false,
+      options: def.options.map((opt, idx) => ({
+        id: `${def.id}-opt-${idx}`,
+        name: opt,
+        description: undefined,
+        isCustom: false,
+      })),
+    } : undefined,
+  } as Property)) || []
 
   const handleEdit = (value: Property) => {
-    setSelected(value)
+    // Convert frontend Property to format expected by PropertyDetailView
+    setSelected({
+      ...value,
+      // Ensure selectData is properly formatted
+      selectData: value.selectData ? {
+        ...value.selectData,
+        options: value.selectData.options || [],
+      } : undefined,
+    })
     setIsPanelOpen(true)
   }
 

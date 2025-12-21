@@ -141,6 +141,8 @@ export type TasksTranslationEntries = {
   'recentPatients': string,
   'recentTasks': string,
   'rEdit': (values: { name: string }) => string,
+  'removeProperty': string,
+  'removePropertyConfirmation': string,
   'retakeSurvey': string,
   'returnHome': string,
   'rooms': string,
@@ -400,6 +402,8 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'rEdit': ({ name }): string => {
       return `${name} ändern`
     },
+    'removeProperty': `Eigenschaft entfernen`,
+    'removePropertyConfirmation': `Sind Sie sicher, dass Sie diese Eigenschaft entfernen möchten? Diese Aktion kann nicht rückgängig gemacht werden.`,
     'retakeSurvey': `Umfrage erneut durchführen`,
     'returnHome': `Zur Homepage`,
     'rooms': `Zimmer`,
@@ -687,6 +691,8 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'rEdit': ({ name }): string => {
       return `Update ${name}`
     },
+    'removeProperty': `Remove Property`,
+    'removePropertyConfirmation': `Are you sure you want to remove this property? This action cannot be undone.`,
     'retakeSurvey': `Retake Survey`,
     'returnHome': `Return Home`,
     'rooms': `Rooms`,

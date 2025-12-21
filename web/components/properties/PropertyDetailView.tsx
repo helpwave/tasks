@@ -11,9 +11,14 @@ import {
 } from '@helpwave/hightide'
 import type { Property, PropertyFieldType, PropertySelectOption, PropertySubjectType } from '@/components/PropertyList'
 import { propertyFieldTypeList, propertySubjectTypeList } from '@/components/PropertyList'
-import { useMutation } from '@tanstack/react-query'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { PlusIcon, XIcon } from 'lucide-react'
+import {
+  useCreatePropertyDefinitionMutation,
+  useUpdatePropertyDefinitionMutation,
+  FieldType,
+  PropertyEntity
+} from '@/api/gql/generated'
 
 interface PropertyDetailViewProps {
   id?: string,
@@ -51,41 +56,115 @@ export const PropertyDetailView = ({
   })
 
   useEffect(() => {
-    if (initialData) {
-      setFormData(prev => ({ ...prev, ...initialData }))
-    }
-  }, [initialData])
+    if (initialData && !isEditMode) {
+      const isSelectType = initialData.fieldType === 'multiSelect' || initialData.fieldType === 'singleSelect'
+      const selectData = isSelectType && !initialData.selectData && initialData.fieldType ? {
+        isAllowingFreetext: false,
+        options: [],
+      } : initialData.selectData
 
-  const { mutate: createProperty, isLoading } = useMutation({
-    mutationFn: ({ data: property }: { data: Property }) => {
-      return new Promise(() => property)
-    },
+      setFormData(prev => ({
+        ...prev,
+        ...initialData,
+        selectData,
+      }))
+    } else if (initialData && isEditMode && id && initialData.id === id) {
+      const isSelectType = initialData.fieldType === 'multiSelect' || initialData.fieldType === 'singleSelect'
+      const selectData = isSelectType && !initialData.selectData && initialData.fieldType ? {
+        isAllowingFreetext: false,
+        options: [],
+      } : initialData.selectData
+
+      setFormData(prev => {
+        if (prev.id === id && prev.selectData?.options && selectData?.options) {
+          const existingOptionNames = new Set(prev.selectData.options.map(o => o.name))
+          const newOptionNames = new Set(selectData.options.map(o => o.name))
+          const optionsChanged = prev.selectData.options.length !== selectData.options.length ||
+            !prev.selectData.options.every(o => newOptionNames.has(o.name)) ||
+            !selectData.options.every(o => existingOptionNames.has(o.name))
+
+          if (!optionsChanged) {
+            return prev
+          }
+        }
+        return {
+          ...prev,
+          ...initialData,
+          selectData,
+        }
+      })
+    }
+  }, [initialData, isEditMode, id])
+
+  const mapFieldTypeToBackend = (fieldType: PropertyFieldType): FieldType => {
+    const mapping: Record<PropertyFieldType, FieldType> = {
+      text: FieldType.FieldTypeText,
+      number: FieldType.FieldTypeNumber,
+      checkbox: FieldType.FieldTypeCheckbox,
+      date: FieldType.FieldTypeDate,
+      dateTime: FieldType.FieldTypeDateTime,
+      singleSelect: FieldType.FieldTypeSelect,
+      multiSelect: FieldType.FieldTypeMultiSelect,
+    }
+    return mapping[fieldType]
+  }
+
+  const mapSubjectTypeToBackend = (subjectType: PropertySubjectType): PropertyEntity => {
+    return subjectType === 'patient' ? PropertyEntity.Patient : PropertyEntity.Task
+  }
+
+  const { mutate: createProperty, isLoading: isCreating } = useCreatePropertyDefinitionMutation({
     onSuccess: () => {
       onSuccess()
       onClose()
     }
   })
 
-  const { mutate: updateProperty } = useMutation({
-    mutationFn: ({ data: property }: { id: string, data: Partial<Property> }) => {
-      return new Promise(() => property)
-    },
+  const { mutate: updateProperty, isLoading: isUpdating } = useUpdatePropertyDefinitionMutation({
     onSuccess: () => {
       onSuccess()
     }
   })
+
+  const isLoading = isCreating || isUpdating
 
   const updateLocal = (updates: Partial<Property>) =>
     setFormData(prev => ({ ...prev, ...updates }))
 
   const persist = (updates: Partial<Property>) => {
     if (!isEditMode || !id) return
-    updateProperty({ id, data: updates })
+
+    const backendUpdates: Record<string, unknown> = {}
+    if (updates.name !== undefined) backendUpdates['name'] = updates.name
+    if (updates.description !== undefined) backendUpdates['description'] = updates.description
+    if (updates.isArchived !== undefined) backendUpdates['isActive'] = !updates.isArchived
+    if (updates.fieldType !== undefined) backendUpdates['fieldType'] = mapFieldTypeToBackend(updates.fieldType)
+    if (updates.subjectType !== undefined) {
+      backendUpdates['allowedEntities'] = [mapSubjectTypeToBackend(updates.subjectType)]
+    }
+    if (updates.selectData?.options !== undefined) {
+      backendUpdates['options'] = updates.selectData.options.map(opt => opt.name)
+    }
+
+    updateProperty({
+      id,
+      data: backendUpdates
+    })
   }
 
   const handleCreate = () => {
     if (!formData.name.trim()) return
-    createProperty({ data: formData })
+
+    const createData = {
+      name: formData.name,
+      description: formData.description || null,
+      fieldType: mapFieldTypeToBackend(formData.fieldType),
+      allowedEntities: [mapSubjectTypeToBackend(formData.subjectType)],
+      options: formData.selectData?.options.map(opt => opt.name) || null,
+      isActive: !formData.isArchived,
+    }
+
+    createProperty({ data: createData })
   }
 
   const isSelectType = formData.fieldType === 'multiSelect' || formData.fieldType === 'singleSelect'
@@ -165,14 +244,17 @@ export const PropertyDetailView = ({
                     <Input
                       value={option.name}
                       onChangeText={value => {
-                        const update = {
-                          selectData: formData.selectData ? {
-                            ...formData.selectData,
-                            options: formData.selectData.options
-                              .map(entry => entry.id === option.id ? { ...entry, name: value } : entry)
-                          } : undefined
-                        }
-                        updateLocal(update)
+                        setFormData(prev => {
+                          if (!prev.selectData) return prev
+                          return {
+                            ...prev,
+                            selectData: {
+                              ...prev.selectData,
+                              options: prev.selectData.options
+                                .map(entry => entry.id === option.id ? { ...entry, name: value } : entry)
+                            }
+                          }
+                        })
                       }}
                       onEditCompleted={value => {
                         const update = {
@@ -217,21 +299,31 @@ export const PropertyDetailView = ({
                       })
                     }}
                     onEditCompleted={name => {
+                      if (!name.trim()) return
                       const option = {
                         ...newOption,
-                        name
+                        id: `temp-${Date.now()}-${Math.random()}`,
+                        name: name.trim()
                       }
-                      const update = {
-                        selectData: formData.selectData ? {
-                          ...formData.selectData,
-                          options: [...formData.selectData.options, option]
-                        } : {
-                          options: [option],
-                          isAllowingFreetext: false,
+                      setFormData(prev => {
+                        const update = {
+                          selectData: prev.selectData ? {
+                            ...prev.selectData,
+                            options: [...prev.selectData.options, option]
+                          } : {
+                            options: [option],
+                            isAllowingFreetext: false,
+                          }
                         }
-                      }
-                      updateLocal(update)
-                      persist(update)
+                        const updatedFormData = {
+                          ...prev,
+                          ...update
+                        }
+                        setTimeout(() => {
+                          persist(update)
+                        }, 0)
+                        return updatedFormData
+                      })
                       setNewOption({
                         id: '',
                         name: '',
@@ -249,17 +341,31 @@ export const PropertyDetailView = ({
                     className="absolute right-3 top-2 rounded"
                     disabled={!newOption.name}
                     onClick={() => {
-                      const update = {
-                        selectData: formData.selectData ? {
-                          ...formData.selectData,
-                          options: [...formData.selectData.options, newOption]
-                        } : {
-                          options: [newOption],
-                          isAllowingFreetext: false,
-                        }
+                      if (!newOption.name.trim()) return
+                      const option = {
+                        ...newOption,
+                        id: `temp-${Date.now()}-${Math.random()}`,
+                        name: newOption.name.trim()
                       }
-                      updateLocal(update)
-                      persist(update)
+                      setFormData(prev => {
+                        const update = {
+                          selectData: prev.selectData ? {
+                            ...prev.selectData,
+                            options: [...prev.selectData.options, option]
+                          } : {
+                            options: [option],
+                            isAllowingFreetext: false,
+                          }
+                        }
+                        const updatedFormData = {
+                          ...prev,
+                          ...update
+                        }
+                        setTimeout(() => {
+                          persist(update)
+                        }, 0)
+                        return updatedFormData
+                      })
                       setNewOption({
                         id: '',
                         name: '',

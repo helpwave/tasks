@@ -44,6 +44,8 @@ import { TaskDetailView } from '@/components/tasks/TaskDetailView'
 import { SmartDate } from '@/utils/date'
 import { formatLocationPath, formatLocationPathFromId } from '@/utils/location'
 import { useGetLocationsQuery } from '@/api/gql/generated'
+import type { PropertyValueInput } from '@/api/gql/generated'
+import { PropertyList } from '@/components/PropertyList'
 
 type ExtendedCreatePatientInput = CreatePatientInput & {
   clinicId?: string,
@@ -106,9 +108,9 @@ function TaskCard({ task, onToggleDone, ...props }: TaskCardProps) {
   return (
     <button
       {...props}
-      className="border-2 p-3 rounded-lg text-left w-full transition-colors hover:border-primary bg-transparent"
+      className="border-2 p-5 rounded-lg text-left w-full transition-colors hover:border-primary bg-transparent"
     >
-      <div className="flex items-start gap-3 w-full">
+      <div className="flex items-start gap-4 w-full">
         <div onClick={(e) => e.stopPropagation()}>
           <CheckboxUncontrolled
             checked={task.done}
@@ -120,14 +122,14 @@ function TaskCard({ task, onToggleDone, ...props }: TaskCardProps) {
           <div className="flex items-center justify-between gap-2">
             <div
               className={clsx(
-                'font-semibold',
+                'font-semibold text-lg',
                 { 'line-through text-description': task.done }
               )}
             >
               {task.title}
             </div>
             {task.assignee && (
-              <div className="flex items-center gap-1 text-xs text-description shrink-0">
+              <div className="flex items-center gap-1.5 text-base text-description shrink-0">
                 <Avatar
                   fullyRounded={true}
                   size="sm"
@@ -141,12 +143,12 @@ function TaskCard({ task, onToggleDone, ...props }: TaskCardProps) {
             )}
           </div>
           {descriptionPreview && !task.done && (
-            <div className="text-sm text-description mt-1">{descriptionPreview}</div>
+            <div className="text-base text-description mt-2">{descriptionPreview}</div>
           )}
           {task.dueDate && !task.done && (
-            <div className="flex items-center gap-1 mt-2 text-xs text-warning">
-              <Clock className="size-3" />
-              <SmartDate date={new Date(task.dueDate)} mode="relative" showTime={false} />
+            <div className="flex items-center gap-2 mt-3 text-base text-orange-600 dark:text-orange-500">
+              <Clock className="size-5" />
+              <SmartDate date={new Date(task.dueDate)} mode="relative" showTime={true} />
             </div>
           )}
         </div>
@@ -619,6 +621,91 @@ export const PatientDetailView = ({
                     </div>
                   )}
                 </div>
+              </div>
+            </Tab>
+          )}
+
+          {isEditMode && (
+            <Tab label={translation('properties')} className="h-full overflow-y-auto pr-2">
+              <div className="flex flex-col gap-4 pt-4">
+                <PropertyList
+                  subjectId={patientId!}
+                  subjectType="patient"
+                  propertyValues={patientData?.patient?.properties?.map(p => ({
+                    definition: {
+                      id: p.definition.id,
+                      name: p.definition.name,
+                      description: p.definition.description,
+                      fieldType: p.definition.fieldType,
+                      isActive: p.definition.isActive,
+                      allowedEntities: p.definition.allowedEntities,
+                      options: p.definition.options,
+                    },
+                    textValue: p.textValue,
+                    numberValue: p.numberValue,
+                    booleanValue: p.booleanValue,
+                    dateValue: p.dateValue,
+                    dateTimeValue: p.dateTimeValue,
+                    selectValue: p.selectValue,
+                    multiSelectValues: p.multiSelectValues,
+                  }))}
+                  onPropertyValueChange={(definitionId, value) => {
+                    const existingProperties = patientData?.patient?.properties?.map(p => ({
+                      definitionId: p.definition.id,
+                      textValue: p.textValue,
+                      numberValue: p.numberValue,
+                      booleanValue: p.booleanValue,
+                      dateValue: p.dateValue,
+                      dateTimeValue: p.dateTimeValue,
+                      selectValue: p.selectValue,
+                      multiSelectValues: p.multiSelectValues,
+                    })) || []
+
+                    const propertyExists = existingProperties.some(p => p.definitionId === definitionId)
+
+                    const isValueEmpty = (!value.textValue || value.textValue.trim() === '') &&
+                      (value.numberValue === undefined || value.numberValue === null) &&
+                      (value.boolValue === undefined || value.boolValue === null) &&
+                      !value.dateValue &&
+                      !value.dateTimeValue &&
+                      (!value.singleSelectValue || value.singleSelectValue.trim() === '') &&
+                      (!value.multiSelectValue || (Array.isArray(value.multiSelectValue) && value.multiSelectValue.length === 0))
+
+                    if (isValueEmpty && propertyExists) {
+                      const updatedProperties = existingProperties.filter(p => p.definitionId !== definitionId)
+
+                      updatePatient({
+                        id: patientId!,
+                        data: {
+                          properties: updatedProperties,
+                        },
+                      })
+                    } else if (!isValueEmpty || !propertyExists) {
+                      const propertyInput: PropertyValueInput = {
+                        definitionId,
+                        textValue: value.textValue || null,
+                        numberValue: value.numberValue ?? null,
+                        booleanValue: value.boolValue ?? null,
+                        dateValue: value.dateValue && !isNaN(value.dateValue.getTime()) ? value.dateValue.toISOString().split('T')[0] : null,
+                        dateTimeValue: value.dateTimeValue && !isNaN(value.dateTimeValue.getTime()) ? value.dateTimeValue.toISOString() : null,
+                        selectValue: value.singleSelectValue || null,
+                        multiSelectValues: (value.multiSelectValue && value.multiSelectValue.length > 0) ? value.multiSelectValue : null,
+                      }
+
+                      const updatedProperties = [
+                        ...existingProperties.filter(p => p.definitionId !== definitionId),
+                        propertyInput,
+                      ]
+
+                      updatePatient({
+                        id: patientId!,
+                        data: {
+                          properties: updatedProperties,
+                        },
+                      })
+                    }
+                  }}
+                />
               </div>
             </Tab>
           )}

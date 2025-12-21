@@ -1,0 +1,24 @@
+query GetPropertyDefinitions {
+  propertyDefinitions {
+    id
+    name
+    description
+    fieldType
+    isActive
+    allowedEntities
+    options
+  }
+}
+
+query GetPropertiesForSubject($subjectId: ID!, $subjectType: PropertyEntity!) {
+  propertyDefinitions {
+    id
+    name
+    description
+    fieldType
+    isActive
+    allowedEntities
+    options
+  }
+}
+

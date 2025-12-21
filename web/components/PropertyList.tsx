@@ -1,9 +1,9 @@
-import { LoadingAndErrorComponent, LoadingAnimation, Menu, MenuItem } from '@helpwave/hightide'
+import { LoadingAndErrorComponent, LoadingAnimation, Menu, MenuItem, ConfirmDialog } from '@helpwave/hightide'
 import { Plus } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
-import { useQuery } from '@tanstack/react-query'
 import { PropertyEntry } from '@/components/PropertyEntry'
+import { useGetPropertyDefinitionsQuery, FieldType, PropertyEntity } from '@/api/gql/generated'
 
 export const propertyFieldTypeList = ['multiSelect', 'singleSelect', 'number', 'text', 'date', 'dateTime', 'checkbox'] as const
 export type PropertyFieldType = typeof propertyFieldTypeList[number]
@@ -199,40 +199,162 @@ export const exampleAttachedProperties: AttachedProperty[] = [
 export type PropertyListProps = {
   subjectId: string,
   subjectType: PropertySubjectType,
+  propertyValues?: Array<{
+    definition: {
+      id: string,
+      name: string,
+      description?: string | null,
+      fieldType: string,
+      isActive: boolean,
+      allowedEntities: string[],
+      options: string[],
+    },
+    textValue?: string | null,
+    numberValue?: number | null,
+    booleanValue?: boolean | null,
+    dateValue?: string | null,
+    dateTimeValue?: string | null,
+    selectValue?: string | null,
+    multiSelectValues?: string[] | null,
+  }>,
+  onPropertyValueChange?: (definitionId: string, value: PropertyValue) => void,
 }
 
-/**
- * A component for listing properties for a subject
- */
+const mapFieldTypeFromBackend = (fieldType: FieldType): PropertyFieldType => {
+  const mapping: Record<FieldType, PropertyFieldType> = {
+    [FieldType.FieldTypeText]: 'text',
+    [FieldType.FieldTypeNumber]: 'number',
+    [FieldType.FieldTypeCheckbox]: 'checkbox',
+    [FieldType.FieldTypeDate]: 'date',
+    [FieldType.FieldTypeDateTime]: 'dateTime',
+    [FieldType.FieldTypeSelect]: 'singleSelect',
+    [FieldType.FieldTypeMultiSelect]: 'multiSelect',
+    [FieldType.FieldTypeUnspecified]: 'text',
+  }
+  return mapping[fieldType] || 'text'
+}
+
+const mapSubjectTypeFromBackend = (entity: PropertyEntity): PropertySubjectType => {
+  return entity === PropertyEntity.Patient ? 'patient' : 'task'
+}
+
 export const PropertyList = ({
   subjectId,
-  subjectType
+  subjectType,
+  propertyValues = [],
+  onPropertyValueChange
 }: PropertyListProps) => {
   const translation = useTasksTranslation()
-  const {
-    data,
-    isLoading,
-    isError
-  } = useQuery({
-    queryKey: ['property', subjectType, subjectId],
-    queryFn: () => {
-      return {
-        attached: exampleAttachedProperties,
-        available: exampleProperties.slice(9)
-      }
-    }
-  })
 
-  const [attachedProperties, setAttachedProperties] = useState<AttachedProperty[]>([])
+  const { data: propertyDefinitionsData, isLoading: isLoadingDefinitions, isError: isErrorDefinitions } = useGetPropertyDefinitionsQuery()
+
+  const availableProperties = useMemo(() => {
+    if (!propertyDefinitionsData?.propertyDefinitions) return []
+
+    const entity = subjectType === 'patient' ? PropertyEntity.Patient : PropertyEntity.Task
+
+    return propertyDefinitionsData.propertyDefinitions
+      .filter(def => def.isActive && def.allowedEntities.includes(entity))
+      .map(def => ({
+        id: def.id,
+        name: def.name,
+        description: def.description || undefined,
+        subjectType: mapSubjectTypeFromBackend(def.allowedEntities[0] || PropertyEntity.Patient),
+        fieldType: mapFieldTypeFromBackend(def.fieldType),
+        isArchived: !def.isActive,
+        selectData: (def.fieldType === FieldType.FieldTypeSelect || def.fieldType === FieldType.FieldTypeMultiSelect) && def.options.length > 0 ? {
+          isAllowingFreetext: false,
+          options: def.options.map((opt, idx) => ({
+            id: `${def.id}-opt-${idx}`,
+            name: opt,
+            description: undefined,
+            isCustom: false,
+          })),
+        } : undefined,
+      } as Property))
+  }, [propertyDefinitionsData, subjectType])
+
+  const attachedProperties = useMemo(() => {
+    if (!propertyValues || propertyValues.length === 0) return []
+
+    const seenDefinitionIds = new Map<string, typeof propertyValues[0]>()
+    propertyValues.forEach(pv => {
+      const defId = pv.definition.id
+      if (!seenDefinitionIds.has(defId)) {
+        seenDefinitionIds.set(defId, pv)
+      }
+    })
+
+    return Array.from(seenDefinitionIds.values()).map(pv => {
+      const def = pv.definition
+      const property: Property = {
+        id: def.id,
+        name: def.name,
+        description: def.description || undefined,
+        subjectType: mapSubjectTypeFromBackend(def.allowedEntities[0] as PropertyEntity || PropertyEntity.Patient),
+        fieldType: mapFieldTypeFromBackend(def.fieldType as FieldType),
+        isArchived: !def.isActive,
+        selectData: (def.fieldType === FieldType.FieldTypeSelect || def.fieldType === FieldType.FieldTypeMultiSelect) && def.options.length > 0 ? {
+          isAllowingFreetext: false,
+          options: def.options.map((opt, idx) => ({
+            id: `${def.id}-opt-${idx}`,
+            name: opt,
+            description: undefined,
+            isCustom: false,
+          })),
+        } : undefined,
+      }
+
+      const value: PropertyValue = {
+        textValue: pv.textValue || undefined,
+        numberValue: pv.numberValue || undefined,
+        boolValue: pv.booleanValue || undefined,
+        dateValue: pv.dateValue ? (() => {
+          const date = new Date(pv.dateValue)
+          return !isNaN(date.getTime()) ? date : undefined
+        })() : undefined,
+        dateTimeValue: pv.dateTimeValue ? (() => {
+          const date = new Date(pv.dateTimeValue)
+          return !isNaN(date.getTime()) ? date : undefined
+        })() : undefined,
+        singleSelectValue: pv.selectValue || undefined,
+        multiSelectValue: pv.multiSelectValues || undefined,
+      }
+
+      return {
+        property,
+        subjectId,
+        value,
+      } as AttachedProperty
+    }).sort((a, b) => a.property.name.localeCompare(b.property.name))
+  }, [propertyValues, subjectId])
+
+  const [localPropertyValues, setLocalPropertyValues] = useState<Map<string, PropertyValue>>(new Map())
+  const [propertyToRemove, setPropertyToRemove] = useState<string | null>(null)
 
   useEffect(() => {
-    if (data) {
-      setAttachedProperties(
-        data?.attached.sort((a, b) =>
-          a.property.name.localeCompare(b.property.name)) ?? []
-      )
+    const newMap = new Map<string, PropertyValue>()
+    attachedProperties.forEach(ap => {
+      newMap.set(ap.property.id, ap.value)
+    })
+    setLocalPropertyValues(newMap)
+  }, [attachedProperties])
+
+  const isLoading = isLoadingDefinitions
+  const isError = isErrorDefinitions
+
+  const handleRemoveConfirm = () => {
+    if (propertyToRemove && onPropertyValueChange) {
+      const emptyValue: PropertyValue = {}
+      onPropertyValueChange(propertyToRemove, emptyValue)
+      setLocalPropertyValues(prev => {
+        const newMap = new Map(prev)
+        newMap.delete(propertyToRemove)
+        return newMap
+      })
     }
-  }, [data])
+    setPropertyToRemove(null)
+  }
 
   return (
     <LoadingAndErrorComponent
@@ -241,35 +363,41 @@ export const PropertyList = ({
       className="min-h-48"
     >
       <div className="flex-col-2">
-        {attachedProperties.map((attachedProperty, index) => (
-          <PropertyEntry
-            key={index}
-            value={attachedProperty.value}
-            name={attachedProperty.property.name}
-            fieldType={attachedProperty.property.fieldType}
-            selectData={attachedProperty.property.selectData ?
-              {
-                onAddOption: () => {
-                  // TODO add call
-                },
-                options: attachedProperty.property.selectData.options,
-              } : undefined
-            }
-            onChange={value => setAttachedProperties(prevState => {
-              return prevState.map(entry =>
-                // TODO consider a better comparison as ids might be the same across different subjects types
-                attachedProperty.property.id === entry.property.id ?
-                  { ...entry, value } : entry)
-            })}
-            onEditComplete={() => {
-              // TODO updater call
-            }}
-            onRemove={() => {
-              // TODO remove call
-            }}
-          />
-        ))}
-        {data?.available && data.available.length > 0 && (
+        {attachedProperties.map((attachedProperty, index) => {
+          const localValue = localPropertyValues.get(attachedProperty.property.id) || attachedProperty.value
+
+          return (
+            <PropertyEntry
+              key={index}
+              value={localValue}
+              name={attachedProperty.property.name}
+              fieldType={attachedProperty.property.fieldType}
+              selectData={attachedProperty.property.selectData ?
+                {
+                  onAddOption: () => {
+                  },
+                  options: attachedProperty.property.selectData.options,
+                } : undefined
+              }
+              onChange={value => {
+                setLocalPropertyValues(prev => {
+                  const newMap = new Map(prev)
+                  newMap.set(attachedProperty.property.id, value)
+                  return newMap
+                })
+              }}
+              onEditComplete={(value) => {
+                if (onPropertyValueChange) {
+                  onPropertyValueChange(attachedProperty.property.id, value)
+                }
+              }}
+              onRemove={() => {
+                setPropertyToRemove(attachedProperty.property.id)
+              }}
+            />
+          )
+        })}
+        {availableProperties.length > 0 && (
           <Menu<HTMLDivElement>
             trigger={({ toggleOpen }, ref) => (
               <div
@@ -290,24 +418,60 @@ export const PropertyList = ({
                 hasError={isError}
                 loadingComponent={<LoadingAnimation classname="min-h-20" />}
               >
-                {/* TODO searchbar here, possibly in a new component for list search */}
-                {data?.available.map(property => (
-                  <MenuItem
-                    key={property.id}
-                    onClick={() => {
-                      // TODO handle new property added
-                      close()
-                    }}
-                    className="rounded-md cursor-pointer"
-                  >
-                    {property.name}
-                  </MenuItem>
-                ))}
+                {availableProperties
+                  .filter(prop => !attachedProperties.some(attached => attached.property.id === prop.id))
+                  .map(property => {
+                    const getDefaultValue = (): PropertyValue => {
+                      switch (property.fieldType) {
+                        case 'text':
+                          return { textValue: '' }
+                        case 'number':
+                          return { numberValue: undefined }
+                        case 'checkbox':
+                          return { boolValue: false }
+                        case 'date':
+                        case 'dateTime':
+                          return {}
+                        case 'singleSelect':
+                          return property.selectData?.options && property.selectData.options.length > 0
+                            ? { singleSelectValue: property.selectData.options[0]?.id || undefined }
+                            : {}
+                        case 'multiSelect':
+                          return { multiSelectValue: [] }
+                        default:
+                          return {}
+                      }
+                    }
+
+                    return (
+                      <MenuItem
+                        key={property.id}
+                        onClick={() => {
+                          if (onPropertyValueChange) {
+                            const defaultValue = getDefaultValue()
+                            onPropertyValueChange(property.id, defaultValue)
+                          }
+                          close()
+                        }}
+                        className="rounded-md cursor-pointer"
+                      >
+                        {property.name}
+                      </MenuItem>
+                    )
+                  })}
               </LoadingAndErrorComponent>
             )}
           </Menu>
         )}
       </div>
+      <ConfirmDialog
+        isOpen={propertyToRemove !== null}
+        onCancel={() => setPropertyToRemove(null)}
+        onConfirm={handleRemoveConfirm}
+        titleElement={translation('removeProperty')}
+        description={translation('removePropertyConfirmation')}
+        confirmType="negative"
+      />
     </LoadingAndErrorComponent>
   )
 }

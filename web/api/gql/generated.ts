@@ -458,7 +458,7 @@ export type GetPatientQueryVariables = Exact<{
 }>;
 
 
-export type GetPatientQuery = { __typename?: 'Query', patient?: { __typename?: 'PatientType', id: string, firstname: string, lastname: string, birthdate: any, sex: Sex, state: PatientState, checksum: string, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string } | null, assignedLocations: Array<{ __typename?: 'LocationNodeType', id: string, title: string }>, clinic: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null } | null } | null }, position?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null } | null } | null } | null, teams: Array<{ __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null } | null } | null }>, tasks: Array<{ __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, dueDate?: any | null, updateDate?: any | null, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null } | null }> } | null };
+export type GetPatientQuery = { __typename?: 'Query', patient?: { __typename?: 'PatientType', id: string, firstname: string, lastname: string, birthdate: any, sex: Sex, state: PatientState, checksum: string, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string } | null, assignedLocations: Array<{ __typename?: 'LocationNodeType', id: string, title: string }>, clinic: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null } | null } | null }, position?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null } | null } | null } | null, teams: Array<{ __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null } | null } | null }>, tasks: Array<{ __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, dueDate?: any | null, updateDate?: any | null, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null } | null }>, properties: Array<{ __typename?: 'PropertyValueType', textValue?: string | null, numberValue?: number | null, booleanValue?: boolean | null, dateValue?: any | null, dateTimeValue?: any | null, selectValue?: string | null, multiSelectValues?: Array<string> | null, definition: { __typename?: 'PropertyDefinitionType', id: string, name: string, description?: string | null, fieldType: FieldType, isActive: boolean, allowedEntities: Array<PropertyEntity>, options: Array<string> } }> } | null };
 
 export type GetPatientsQueryVariables = Exact<{
   locationId?: InputMaybe<Scalars['ID']['input']>;
@@ -473,7 +473,7 @@ export type GetTaskQueryVariables = Exact<{
 }>;
 
 
-export type GetTaskQuery = { __typename?: 'Query', task?: { __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, dueDate?: any | null, checksum: string, patient: { __typename?: 'PatientType', id: string, name: string }, assignee?: { __typename?: 'UserType', id: string, name: string } | null } | null };
+export type GetTaskQuery = { __typename?: 'Query', task?: { __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, dueDate?: any | null, checksum: string, patient: { __typename?: 'PatientType', id: string, name: string }, assignee?: { __typename?: 'UserType', id: string, name: string } | null, properties: Array<{ __typename?: 'PropertyValueType', textValue?: string | null, numberValue?: number | null, booleanValue?: boolean | null, dateValue?: any | null, dateTimeValue?: any | null, selectValue?: string | null, multiSelectValues?: Array<string> | null, definition: { __typename?: 'PropertyDefinitionType', id: string, name: string, description?: string | null, fieldType: FieldType, isActive: boolean, allowedEntities: Array<PropertyEntity>, options: Array<string> } }> } | null };
 
 export type GetUsersQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -527,6 +527,41 @@ export type WaitPatientMutationVariables = Exact<{
 
 
 export type WaitPatientMutation = { __typename?: 'Mutation', waitPatient: { __typename?: 'PatientType', id: string, state: PatientState } };
+
+export type CreatePropertyDefinitionMutationVariables = Exact<{
+  data: CreatePropertyDefinitionInput;
+}>;
+
+
+export type CreatePropertyDefinitionMutation = { __typename?: 'Mutation', createPropertyDefinition: { __typename?: 'PropertyDefinitionType', id: string, name: string, description?: string | null, fieldType: FieldType, isActive: boolean, allowedEntities: Array<PropertyEntity>, options: Array<string> } };
+
+export type UpdatePropertyDefinitionMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  data: UpdatePropertyDefinitionInput;
+}>;
+
+
+export type UpdatePropertyDefinitionMutation = { __typename?: 'Mutation', updatePropertyDefinition: { __typename?: 'PropertyDefinitionType', id: string, name: string, description?: string | null, fieldType: FieldType, isActive: boolean, allowedEntities: Array<PropertyEntity>, options: Array<string> } };
+
+export type DeletePropertyDefinitionMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeletePropertyDefinitionMutation = { __typename?: 'Mutation', deletePropertyDefinition: boolean };
+
+export type GetPropertyDefinitionsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetPropertyDefinitionsQuery = { __typename?: 'Query', propertyDefinitions: Array<{ __typename?: 'PropertyDefinitionType', id: string, name: string, description?: string | null, fieldType: FieldType, isActive: boolean, allowedEntities: Array<PropertyEntity>, options: Array<string> }> };
+
+export type GetPropertiesForSubjectQueryVariables = Exact<{
+  subjectId: Scalars['ID']['input'];
+  subjectType: PropertyEntity;
+}>;
+
+
+export type GetPropertiesForSubjectQuery = { __typename?: 'Query', propertyDefinitions: Array<{ __typename?: 'PropertyDefinitionType', id: string, name: string, description?: string | null, fieldType: FieldType, isActive: boolean, allowedEntities: Array<PropertyEntity>, options: Array<string> }> };
 
 export type PatientCreatedSubscriptionVariables = Exact<{ [key: string]: never; }>;
 
@@ -917,6 +952,24 @@ export const GetPatientDocument = `
         avatarUrl
       }
     }
+    properties {
+      definition {
+        id
+        name
+        description
+        fieldType
+        isActive
+        allowedEntities
+        options
+      }
+      textValue
+      numberValue
+      booleanValue
+      dateValue
+      dateTimeValue
+      selectValue
+      multiSelectValues
+    }
   }
 }
     `;
@@ -1091,6 +1144,24 @@ export const GetTaskDocument = `
     assignee {
       id
       name
+    }
+    properties {
+      definition {
+        id
+        name
+        description
+        fieldType
+        isActive
+        allowedEntities
+        options
+      }
+      textValue
+      numberValue
+      booleanValue
+      dateValue
+      dateTimeValue
+      selectValue
+      multiSelectValues
     }
   }
 }
@@ -1379,6 +1450,139 @@ export const useWaitPatientMutation = <
       {
     mutationKey: ['WaitPatient'],
     mutationFn: (variables?: WaitPatientMutationVariables) => fetcher<WaitPatientMutation, WaitPatientMutationVariables>(WaitPatientDocument, variables)(),
+    ...options
+  }
+    )};
+
+export const CreatePropertyDefinitionDocument = `
+    mutation CreatePropertyDefinition($data: CreatePropertyDefinitionInput!) {
+  createPropertyDefinition(data: $data) {
+    id
+    name
+    description
+    fieldType
+    isActive
+    allowedEntities
+    options
+  }
+}
+    `;
+
+export const useCreatePropertyDefinitionMutation = <
+      TError = unknown,
+      TContext = unknown
+    >(options?: UseMutationOptions<CreatePropertyDefinitionMutation, TError, CreatePropertyDefinitionMutationVariables, TContext>) => {
+    
+    return useMutation<CreatePropertyDefinitionMutation, TError, CreatePropertyDefinitionMutationVariables, TContext>(
+      {
+    mutationKey: ['CreatePropertyDefinition'],
+    mutationFn: (variables?: CreatePropertyDefinitionMutationVariables) => fetcher<CreatePropertyDefinitionMutation, CreatePropertyDefinitionMutationVariables>(CreatePropertyDefinitionDocument, variables)(),
+    ...options
+  }
+    )};
+
+export const UpdatePropertyDefinitionDocument = `
+    mutation UpdatePropertyDefinition($id: ID!, $data: UpdatePropertyDefinitionInput!) {
+  updatePropertyDefinition(id: $id, data: $data) {
+    id
+    name
+    description
+    fieldType
+    isActive
+    allowedEntities
+    options
+  }
+}
+    `;
+
+export const useUpdatePropertyDefinitionMutation = <
+      TError = unknown,
+      TContext = unknown
+    >(options?: UseMutationOptions<UpdatePropertyDefinitionMutation, TError, UpdatePropertyDefinitionMutationVariables, TContext>) => {
+    
+    return useMutation<UpdatePropertyDefinitionMutation, TError, UpdatePropertyDefinitionMutationVariables, TContext>(
+      {
+    mutationKey: ['UpdatePropertyDefinition'],
+    mutationFn: (variables?: UpdatePropertyDefinitionMutationVariables) => fetcher<UpdatePropertyDefinitionMutation, UpdatePropertyDefinitionMutationVariables>(UpdatePropertyDefinitionDocument, variables)(),
+    ...options
+  }
+    )};
+
+export const DeletePropertyDefinitionDocument = `
+    mutation DeletePropertyDefinition($id: ID!) {
+  deletePropertyDefinition(id: $id)
+}
+    `;
+
+export const useDeletePropertyDefinitionMutation = <
+      TError = unknown,
+      TContext = unknown
+    >(options?: UseMutationOptions<DeletePropertyDefinitionMutation, TError, DeletePropertyDefinitionMutationVariables, TContext>) => {
+    
+    return useMutation<DeletePropertyDefinitionMutation, TError, DeletePropertyDefinitionMutationVariables, TContext>(
+      {
+    mutationKey: ['DeletePropertyDefinition'],
+    mutationFn: (variables?: DeletePropertyDefinitionMutationVariables) => fetcher<DeletePropertyDefinitionMutation, DeletePropertyDefinitionMutationVariables>(DeletePropertyDefinitionDocument, variables)(),
+    ...options
+  }
+    )};
+
+export const GetPropertyDefinitionsDocument = `
+    query GetPropertyDefinitions {
+  propertyDefinitions {
+    id
+    name
+    description
+    fieldType
+    isActive
+    allowedEntities
+    options
+  }
+}
+    `;
+
+export const useGetPropertyDefinitionsQuery = <
+      TData = GetPropertyDefinitionsQuery,
+      TError = unknown
+    >(
+      variables?: GetPropertyDefinitionsQueryVariables,
+      options?: Omit<UseQueryOptions<GetPropertyDefinitionsQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetPropertyDefinitionsQuery, TError, TData>['queryKey'] }
+    ) => {
+    
+    return useQuery<GetPropertyDefinitionsQuery, TError, TData>(
+      {
+    queryKey: variables === undefined ? ['GetPropertyDefinitions'] : ['GetPropertyDefinitions', variables],
+    queryFn: fetcher<GetPropertyDefinitionsQuery, GetPropertyDefinitionsQueryVariables>(GetPropertyDefinitionsDocument, variables),
+    ...options
+  }
+    )};
+
+export const GetPropertiesForSubjectDocument = `
+    query GetPropertiesForSubject($subjectId: ID!, $subjectType: PropertyEntity!) {
+  propertyDefinitions {
+    id
+    name
+    description
+    fieldType
+    isActive
+    allowedEntities
+    options
+  }
+}
+    `;
+
+export const useGetPropertiesForSubjectQuery = <
+      TData = GetPropertiesForSubjectQuery,
+      TError = unknown
+    >(
+      variables: GetPropertiesForSubjectQueryVariables,
+      options?: Omit<UseQueryOptions<GetPropertiesForSubjectQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetPropertiesForSubjectQuery, TError, TData>['queryKey'] }
+    ) => {
+    
+    return useQuery<GetPropertiesForSubjectQuery, TError, TData>(
+      {
+    queryKey: ['GetPropertiesForSubject', variables],
+    queryFn: fetcher<GetPropertiesForSubjectQuery, GetPropertiesForSubjectQueryVariables>(GetPropertiesForSubjectDocument, variables),
     ...options
   }
     )};
