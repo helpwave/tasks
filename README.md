@@ -117,6 +117,47 @@ Once the development environment is running:
 - **keycloak/** - Keycloak realm configuration
 - **scaffold/** - Initial data for hospital structure
 
+## Testing
+
+### Running Tests Locally
+
+**Backend Tests:**
+```bash
+cd backend
+python -m pytest tests/unit -v
+python -m pytest tests/integration -v
+```
+
+**Frontend Linting:**
+```bash
+cd web
+npm run lint
+```
+
+**E2E Tests:**
+```bash
+cd tests
+npm install
+npx playwright test
+```
+
+### Running GitHub Actions Locally
+
+You can run GitHub Actions workflows locally using [act](https://github.com/nektos/act). See [.github/workflows/README.md](.github/workflows/README.md) for detailed instructions.
+
+Quick start:
+```bash
+# Install act (requires Docker)
+brew install act  # macOS
+# or download from https://github.com/nektos/act/releases
+
+# Run all workflows
+act
+
+# Run specific job
+act -j backend-tests
+```
+
 ## Docker Images
 
 All components are containerized and available on GitHub Container Registry:

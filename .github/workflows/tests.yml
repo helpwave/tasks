@@ -155,9 +155,14 @@ jobs:
         working-directory: web
         run: npm ci
 
+      - name: Install E2E test dependencies
+        working-directory: tests
+        run: npm ci
+
       - name: Install Playwright browsers
         working-directory: tests
         run: npx playwright install --with-deps chromium
+        continue-on-error: true
 
       - name: Run E2E tests
         working-directory: tests

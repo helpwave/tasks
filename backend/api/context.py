@@ -39,7 +39,6 @@ async def get_context(
         email = user_payload.get("email")
         picture = user_payload.get("picture")
 
-        # Extract organizations from OIDC token (can be array or single value)
         organizations_raw = user_payload.get("organization")
         organizations = None
         if organizations_raw:
