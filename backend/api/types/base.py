@@ -41,7 +41,10 @@ def _is_safe_to_serialize(value: Any) -> bool:
         return True
     if hasattr(value, "__class__"):
         class_name = value.__class__.__name__
-        if any(x in class_name for x in ["InstrumentedList", "AppenderQuery", "Query", "Session"]):
+        if any(
+            x in class_name
+            for x in ["InstrumentedList", "AppenderQuery", "Query", "Session"]
+        ):
             return False
     if hasattr(value, "__iter__") and not isinstance(value, (str, bytes)):
         return False

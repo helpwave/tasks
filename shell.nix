@@ -42,6 +42,7 @@ pkgs.mkShell {
     netcat
     pkgs.gcc
     hadolint
+    pkgs.act
   ];
 
   venvDir = "./backend/venv";
@@ -197,7 +198,12 @@ pkgs.mkShell {
       fi
     }
 
+    run-act() {
+      echo ">>> Running GitHub Actions locally with act..."
+      ${pkgs.act}/bin/act "$@"
+    }
+
     echo ">>> Environment ready."
-    echo "Commands: run-dev-backend, run-dev-web, run-dev-all, run-alembic, psql-dev, redis-cli-dev, clean-dev, start-docker, stop-docker, run-simulator, lint-dockerfiles"
+    echo "Commands: run-dev-backend, run-dev-web, run-dev-all, run-alembic, psql-dev, redis-cli-dev, clean-dev, start-docker, stop-docker, run-simulator, lint-dockerfiles, run-act"
   '';
 }

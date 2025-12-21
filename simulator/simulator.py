@@ -12,7 +12,9 @@ class ClinicSimulator:
     def __init__(self):
         self.client = GraphQLClient()
         self.location_manager = LocationManager(self.client)
-        self.patient_manager = PatientManager(self.client, self.location_manager)
+        self.patient_manager = PatientManager(
+            self.client, self.location_manager
+        )
         self.task_manager = TaskManager(self.client)
         self.user_id: Optional[str] = None
 
@@ -56,7 +58,9 @@ class ClinicSimulator:
         logger.info("Creating initial patients...")
         while len(self.patient_manager.patient_ids) < 5:
             admit_directly = random.random() < 0.4
-            patient_id, diagnosis = self.patient_manager.create_patient(admit_directly=admit_directly)
+            patient_id, diagnosis = self.patient_manager.create_patient(
+                admit_directly=admit_directly
+            )
 
             if patient_id and diagnosis:
                 self.task_manager.create_treatment_tasks(patient_id, diagnosis)
@@ -88,8 +92,8 @@ class ClinicSimulator:
                 logger.info("Simulation stopped by user.")
                 break
             except Exception as e:
-                logger.error(f"Error in simulation loop: {e}")
-                time.sleep(5)
+                logger.error(f"Error in simulation loop: {e}", exc_info=True)
+                raise
 
     def _action_create_task(self) -> None:
         if not self.patient_manager.patient_ids:
@@ -102,7 +106,9 @@ class ClinicSimulator:
 
     def _action_create_patient(self) -> None:
         admit_directly = random.random() < 0.3
-        patient_id, diagnosis = self.patient_manager.create_patient(admit_directly=admit_directly)
+        patient_id, diagnosis = self.patient_manager.create_patient(
+            admit_directly=admit_directly
+        )
         if patient_id and diagnosis:
             self.task_manager.create_treatment_tasks(patient_id, diagnosis)
 

@@ -22,7 +22,10 @@ class GraphQLClient:
                 if "errors" in error_data:
                     for error in error_data["errors"]:
                         message = error.get("message", "").lower()
-                        if "unauthenticated" in message or "not authenticated" in message:
+                        if (
+                            "unauthenticated" in message
+                            or "not authenticated" in message
+                        ):
                             return True
             except Exception:
                 pass

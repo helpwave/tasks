@@ -1,5 +1,8 @@
 # helpwave tasks
 
+[![Tests](https://github.com/helpwave/tasks/actions/workflows/tests.yml/badge.svg)](https://github.com/helpwave/tasks/actions/workflows/tests.yml)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 **helpwave tasks** is a modern, open-source task and ward-management platform tailored for healthcare - designed to bring clarity, efficiency and structure to hospitals, wards and clinical workflows.
 
 ## Quick Start
@@ -116,6 +119,47 @@ Once the development environment is running:
 - **proxy/** - Nginx reverse proxy for production deployments
 - **keycloak/** - Keycloak realm configuration
 - **scaffold/** - Initial data for hospital structure
+
+## Testing
+
+### Running Tests Locally
+
+**Backend Tests:**
+```bash
+cd backend
+python -m pytest tests/unit -v
+python -m pytest tests/integration -v
+```
+
+**Frontend Linting:**
+```bash
+cd web
+npm run lint
+```
+
+**E2E Tests:**
+```bash
+cd tests
+npm install
+npx playwright test
+```
+
+### Running GitHub Actions Locally
+
+You can run GitHub Actions workflows locally using [act](https://github.com/nektos/act). See [.github/workflows/README.md](.github/workflows/README.md) for detailed instructions.
+
+Quick start:
+```bash
+# Install act (requires Docker)
+brew install act  # macOS
+# or download from https://github.com/nektos/act/releases
+
+# Run all workflows
+act
+
+# Run specific job
+act -j backend-tests
+```
 
 ## Docker Images
 

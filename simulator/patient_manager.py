@@ -8,7 +8,9 @@ import random
 
 
 class PatientManager:
-    def __init__(self, client: GraphQLClient, location_manager: LocationManager):
+    def __init__(
+        self, client: GraphQLClient, location_manager: LocationManager
+    ):
         self.client = client
         self.location_manager = location_manager
         self.patient_ids: List[str] = []
@@ -86,7 +88,9 @@ class PatientManager:
         else:
             self._log_errors("ensure_diagnosis_property", response)
 
-    def create_patient(self, admit_directly: bool = False) -> Tuple[Optional[str], Optional[str]]:
+    def create_patient(
+        self, admit_directly: bool = False
+    ) -> Tuple[Optional[str], Optional[str]]:
         if not self.location_manager.clinics:
             self.location_manager.load_locations()
             if not self.location_manager.clinics:
@@ -147,7 +151,9 @@ class PatientManager:
             self.patient_ids.append(pid)
 
             state_msg = "admitted" if admit_directly else "in waiting room"
-            logger.info(f"Created patient {first} {last} ({state_msg}) - Diagnosis: {diagnosis}")
+            logger.info(
+                f"Created patient {first} {last} ({state_msg}) - Diagnosis: {diagnosis}"
+            )
 
             self.ensure_diagnosis_property()
             if self.diagnosis_property_id:
@@ -175,7 +181,7 @@ class PatientManager:
                         "textValue": diagnosis,
                     }
                 ]
-            }
+            },
         }
 
         response = self.client.query(mutation, variables)
@@ -201,7 +207,9 @@ class PatientManager:
         if "errors" in response:
             for error in response["errors"]:
                 if "Patient not found" in error.get("message", ""):
-                    logger.warning(f"Patient {patient_id} not found. Removing from list.")
+                    logger.warning(
+                        f"Patient {patient_id} not found. Removing from list."
+                    )
                     if patient_id in self.patient_ids:
                         self.patient_ids.remove(patient_id)
                     return False
@@ -233,7 +241,9 @@ class PatientManager:
         if "errors" in response:
             for error in response["errors"]:
                 if "Patient not found" in error.get("message", ""):
-                    logger.warning(f"Patient {patient_id} not found. Removing from list.")
+                    logger.warning(
+                        f"Patient {patient_id} not found. Removing from list."
+                    )
                     if patient_id in self.patient_ids:
                         self.patient_ids.remove(patient_id)
                     return False
@@ -277,7 +287,9 @@ class PatientManager:
         if "errors" in response:
             for error in response["errors"]:
                 if "Patient not found" in error.get("message", ""):
-                    logger.warning(f"Patient {patient_id} not found. Removing from list.")
+                    logger.warning(
+                        f"Patient {patient_id} not found. Removing from list."
+                    )
                     if patient_id in self.patient_ids:
                         self.patient_ids.remove(patient_id)
                     return False
@@ -292,7 +304,9 @@ class PatientManager:
             return True
         return False
 
-    def update_patient_position(self, patient_id: Optional[str] = None) -> bool:
+    def update_patient_position(
+        self, patient_id: Optional[str] = None
+    ) -> bool:
         if not patient_id:
             if not self.patient_ids:
                 return False
@@ -321,7 +335,9 @@ class PatientManager:
         if "errors" in response:
             for error in response["errors"]:
                 if "Patient not found" in error.get("message", ""):
-                    logger.warning(f"Patient {patient_id} not found. Removing from list.")
+                    logger.warning(
+                        f"Patient {patient_id} not found. Removing from list."
+                    )
                     if patient_id in self.patient_ids:
                         self.patient_ids.remove(patient_id)
                     return False
@@ -332,6 +348,8 @@ class PatientManager:
         if data and data.get("updatePatient"):
             position = data["updatePatient"].get("position")
             position_name = position["title"] if position else "none"
-            logger.info(f"Updated patient {patient_id} position to {position_name}")
+            logger.info(
+                f"Updated patient {patient_id} position to {position_name}"
+            )
             return True
         return False

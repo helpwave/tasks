@@ -3,43 +3,15 @@ from collections.abc import AsyncGenerator
 import strawberry
 from api.audit import audit_log
 from api.context import Info
-from api.inputs import CreatePatientInput, PatientState, Sex, UpdatePatientInput
+from api.inputs import CreatePatientInput, PatientState, UpdatePatientInput
+from api.resolvers.base import BaseMutationResolver, BaseSubscriptionResolver
+from api.services.checksum import validate_checksum
+from api.services.location import LocationService
+from api.services.property import PropertyService
 from api.types.patient import PatientType
 from database import models
-from database.session import publish_to_redis, redis_client
 from sqlalchemy import select
 from sqlalchemy.orm import aliased, selectinload
-
-from .utils import process_properties
-
-
-def validate_location_kind(location: models.LocationNode, expected_kind: str, field_name: str) -> None:
-    """Validate that a location has the expected kind."""
-    if location.kind.upper() != expected_kind.upper():
-        raise Exception(
-            f"{field_name} must be a location of kind {expected_kind}, "
-            f"but got {location.kind}"
-        )
-
-
-def validate_position_kind(location: models.LocationNode, field_name: str) -> None:
-    """Validate that a location is a valid position type."""
-    allowed_kinds = {"HOSPITAL", "PRACTICE", "CLINIC", "WARD", "BED", "ROOM"}
-    if location.kind.upper() not in allowed_kinds:
-        raise Exception(
-            f"{field_name} must be a location of kind HOSPITAL, PRACTICE, CLINIC, "
-            f"WARD, BED, or ROOM, but got {location.kind}"
-        )
-
-
-def validate_team_kind(location: models.LocationNode, field_name: str) -> None:
-    """Validate that a location is a valid team type."""
-    allowed_kinds = {"CLINIC", "TEAM", "PRACTICE", "HOSPITAL"}
-    if location.kind.upper() not in allowed_kinds:
-        raise Exception(
-            f"{field_name} must be a location of kind CLINIC, TEAM, PRACTICE, "
-            f"or HOSPITAL, but got {location.kind}"
-        )
 
 
 @strawberry.type
@@ -78,7 +50,9 @@ class PatientQuery:
             state_values = [s.value for s in states]
             query = query.where(models.Patient.state.in_(state_values))
         else:
-            query = query.where(models.Patient.state == PatientState.ADMITTED.value)
+            query = query.where(
+                models.Patient.state == PatientState.ADMITTED.value
+            )
         if location_node_id:
             cte = (
                 select(models.LocationNode.id)
@@ -137,7 +111,15 @@ class PatientQuery:
 
 
 @strawberry.type
-class PatientMutation:
+class PatientMutation(BaseMutationResolver[models.Patient]):
+    @staticmethod
+    def _get_property_service(db) -> PropertyService:
+        return PropertyService(db)
+
+    @staticmethod
+    def _get_location_service(db) -> LocationService:
+        return LocationService(db)
+
     @strawberry.mutation
     @audit_log("create_patient")
     async def create_patient(
@@ -146,44 +128,21 @@ class PatientMutation:
         data: CreatePatientInput,
     ) -> PatientType:
         db = info.context.db
-        initial_state = data.state.value if data.state else PatientState.WAIT.value
-
-        clinic_result = await db.execute(
-            select(models.LocationNode).where(
-                models.LocationNode.id == data.clinic_id,
-            ),
+        location_service = PatientMutation._get_location_service(db)
+        initial_state = (
+            data.state.value if data.state else PatientState.WAIT.value
         )
-        clinic = clinic_result.scalars().first()
-        if not clinic:
-            raise Exception(f"Clinic location with id {data.clinic_id} not found")
-        validate_location_kind(clinic, "CLINIC", "clinic_id")
 
-        position = None
+        await location_service.validate_and_get_clinic(data.clinic_id)
+
         if data.position_id:
-            position_result = await db.execute(
-                select(models.LocationNode).where(
-                    models.LocationNode.id == data.position_id,
-                ),
-            )
-            position = position_result.scalars().first()
-            if not position:
-                raise Exception(f"Position location with id {data.position_id} not found")
-            validate_position_kind(position, "position_id")
+            await location_service.validate_and_get_position(data.position_id)
 
         teams = []
         if data.team_ids:
-            teams_result = await db.execute(
-                select(models.LocationNode).where(
-                    models.LocationNode.id.in_(data.team_ids),
-                ),
+            teams = await location_service.validate_and_get_teams(
+                data.team_ids
             )
-            teams = list(teams_result.scalars().all())
-            if len(teams) != len(data.team_ids):
-                found_ids = {t.id for t in teams}
-                missing_ids = set(data.team_ids) - found_ids
-                raise Exception(f"Team locations with ids {missing_ids} not found")
-            for team in teams:
-                validate_team_kind(team, "team_ids")
 
         new_patient = models.Patient(
             firstname=data.firstname,
@@ -200,36 +159,28 @@ class PatientMutation:
             new_patient.teams = teams
 
         if data.assigned_location_ids:
-            result = await db.execute(
-                select(models.LocationNode).where(
-                    models.LocationNode.id.in_(data.assigned_location_ids),
-                ),
+            locations = await location_service.get_locations_by_ids(
+                data.assigned_location_ids
             )
-            locations = result.scalars().all()
-            new_patient.assigned_locations = list(locations)
+            new_patient.assigned_locations = locations
         elif data.assigned_location_id:
-            result = await db.execute(
-                select(models.LocationNode).where(
-                    models.LocationNode.id == data.assigned_location_id,
-                ),
+            location = await location_service.get_location_by_id(
+                data.assigned_location_id
             )
-            location = result.scalars().first()
-            if location:
-                new_patient.assigned_locations = [location]
+            new_patient.assigned_locations = [location] if location else []
 
         if data.properties:
-            await process_properties(
-                db,
-                new_patient,
-                data.properties,
-                "patient",
+            property_service = PatientMutation._get_property_service(db)
+            await property_service.process_properties(
+                new_patient, data.properties, "patient"
             )
 
-        db.add(new_patient)
-        await db.commit()
-
+        repo = BaseMutationResolver.get_repository(db, models.Patient)
+        await repo.create(new_patient)
         await db.refresh(new_patient, ["assigned_locations", "teams"])
-        await publish_to_redis("patient_created", new_patient.id)
+        await BaseMutationResolver.create_and_notify(
+            info, new_patient, models.Patient, "patient"
+        )
         return new_patient
 
     @strawberry.mutation
@@ -254,22 +205,7 @@ class PatientMutation:
             raise Exception("Patient not found")
 
         if data.checksum:
-            patient_type = PatientType(
-                id=patient.id,
-                firstname=patient.firstname,
-                lastname=patient.lastname,
-                birthdate=patient.birthdate,
-                sex=Sex(patient.sex),
-                state=PatientState(patient.state),
-                assigned_location_id=patient.assigned_location_id,
-                clinic_id=patient.clinic_id,
-                position_id=patient.position_id,
-            )
-            current_checksum = patient_type.checksum
-            if data.checksum != current_checksum:
-                raise Exception(
-                    f"CONFLICT: Patient data has been modified. Expected checksum: {current_checksum}, Got: {data.checksum}"
-                )
+            validate_checksum(patient, data.checksum, "Patient")
 
         if data.firstname is not None:
             patient.firstname = data.firstname
@@ -280,197 +216,130 @@ class PatientMutation:
         if data.sex is not None:
             patient.sex = data.sex.value
 
+        location_service = PatientMutation._get_location_service(db)
+
         if data.clinic_id is not None:
-            clinic_result = await db.execute(
-                select(models.LocationNode).where(
-                    models.LocationNode.id == data.clinic_id,
-                ),
-            )
-            clinic = clinic_result.scalars().first()
-            if not clinic:
-                raise Exception(f"Clinic location with id {data.clinic_id} not found")
-            validate_location_kind(clinic, "CLINIC", "clinic_id")
+            await location_service.validate_and_get_clinic(data.clinic_id)
             patient.clinic_id = data.clinic_id
 
         if data.position_id is not strawberry.UNSET:
             if data.position_id is None:
                 patient.position_id = None
             else:
-                position_result = await db.execute(
-                    select(models.LocationNode).where(
-                        models.LocationNode.id == data.position_id,
-                    ),
+                await location_service.validate_and_get_position(
+                    data.position_id
                 )
-                position = position_result.scalars().first()
-                if not position:
-                    raise Exception(f"Position location with id {data.position_id} not found")
-                validate_position_kind(position, "position_id")
                 patient.position_id = data.position_id
 
         if data.team_ids is not strawberry.UNSET:
             if data.team_ids is None or len(data.team_ids) == 0:
                 patient.teams = []
             else:
-                teams_result = await db.execute(
-                    select(models.LocationNode).where(
-                        models.LocationNode.id.in_(data.team_ids),
-                    ),
+                patient.teams = await location_service.validate_and_get_teams(
+                    data.team_ids
                 )
-                teams = list(teams_result.scalars().all())
-                if len(teams) != len(data.team_ids):
-                    found_ids = {t.id for t in teams}
-                    missing_ids = set(data.team_ids) - found_ids
-                    raise Exception(f"Team locations with ids {missing_ids} not found")
-                for team in teams:
-                    validate_team_kind(team, "team_ids")
-                patient.teams = teams
 
         if data.assigned_location_ids is not None:
-            result = await db.execute(
-                select(models.LocationNode).where(
-                    models.LocationNode.id.in_(data.assigned_location_ids),
-                ),
+            locations = await location_service.get_locations_by_ids(
+                data.assigned_location_ids
             )
-            locations = result.scalars().all()
-            patient.assigned_locations = list(locations)
+            patient.assigned_locations = locations
         elif data.assigned_location_id is not None:
-            result = await db.execute(
-                select(models.LocationNode).where(
-                    models.LocationNode.id == data.assigned_location_id,
-                ),
+            location = await location_service.get_location_by_id(
+                data.assigned_location_id
             )
-            location = result.scalars().first()
-            if location:
-                patient.assigned_locations = [location]
-            else:
-                patient.assigned_locations = []
+            patient.assigned_locations = [location] if location else []
 
         if data.properties:
-            await process_properties(db, patient, data.properties, "patient")
+            property_service = PatientMutation._get_property_service(db)
+            await property_service.process_properties(
+                patient, data.properties, "patient"
+            )
 
-        await db.commit()
+        await BaseMutationResolver.update_and_notify(
+            info, patient, models.Patient, "patient"
+        )
         await db.refresh(patient, ["assigned_locations", "teams"])
-        await publish_to_redis("patient_updated", patient.id)
         return patient
 
     @strawberry.mutation
     @audit_log("delete_patient")
     async def delete_patient(self, info: Info, id: strawberry.ID) -> bool:
+        repo = BaseMutationResolver.get_repository(info.context.db, models.Patient)
+        patient = await repo.get_by_id(id)
+        if not patient:
+            return False
+        await BaseMutationResolver.delete_entity(
+            info, patient, models.Patient, "patient"
+        )
+        return True
+
+    @staticmethod
+    async def _update_patient_state(
+        info: Info,
+        id: strawberry.ID,
+        state: PatientState,
+    ) -> PatientType:
+        from api.services.notifications import notify_entity_update
         db = info.context.db
         result = await db.execute(
-            select(models.Patient).where(models.Patient.id == id),
+            select(models.Patient)
+            .where(models.Patient.id == id)
+            .options(
+                selectinload(models.Patient.assigned_locations),
+                selectinload(models.Patient.teams),
+            ),
         )
         patient = result.scalars().first()
         if not patient:
-            return False
-        await db.delete(patient)
-        await db.commit()
-        return True
+            raise Exception("Patient not found")
+        patient.state = state.value
+        await BaseMutationResolver.update_and_notify(
+            info, patient, models.Patient, "patient"
+        )
+        await db.refresh(patient, ["assigned_locations"])
+        await notify_entity_update("patient_state_changed", patient.id)
+        return patient
 
     @strawberry.mutation
     @audit_log("admit_patient")
-    async def admit_patient(self, info: Info, id: strawberry.ID) -> PatientType:
-        db = info.context.db
-        result = await db.execute(
-            select(models.Patient)
-            .where(models.Patient.id == id)
-            .options(
-                selectinload(models.Patient.assigned_locations),
-                selectinload(models.Patient.teams),
-            ),
+    async def admit_patient(
+        self, info: Info, id: strawberry.ID
+    ) -> PatientType:
+        return await PatientMutation._update_patient_state(
+            info, id, PatientState.ADMITTED
         )
-        patient = result.scalars().first()
-        if not patient:
-            raise Exception("Patient not found")
-        patient.state = PatientState.ADMITTED.value
-        await db.commit()
-        await db.refresh(patient, ["assigned_locations"])
-        await publish_to_redis("patient_updated", patient.id)
-        await publish_to_redis("patient_state_changed", patient.id)
-        return patient
 
     @strawberry.mutation
     @audit_log("discharge_patient")
-    async def discharge_patient(self, info: Info, id: strawberry.ID) -> PatientType:
-        db = info.context.db
-        result = await db.execute(
-            select(models.Patient)
-            .where(models.Patient.id == id)
-            .options(
-                selectinload(models.Patient.assigned_locations),
-                selectinload(models.Patient.teams),
-            ),
+    async def discharge_patient(
+        self, info: Info, id: strawberry.ID
+    ) -> PatientType:
+        return await PatientMutation._update_patient_state(
+            info, id, PatientState.DISCHARGED
         )
-        patient = result.scalars().first()
-        if not patient:
-            raise Exception("Patient not found")
-        patient.state = PatientState.DISCHARGED.value
-        await db.commit()
-        await db.refresh(patient, ["assigned_locations"])
-        await publish_to_redis("patient_updated", patient.id)
-        await publish_to_redis("patient_state_changed", patient.id)
-        return patient
 
     @strawberry.mutation
     @audit_log("mark_patient_dead")
-    async def mark_patient_dead(self, info: Info, id: strawberry.ID) -> PatientType:
-        db = info.context.db
-        result = await db.execute(
-            select(models.Patient)
-            .where(models.Patient.id == id)
-            .options(
-                selectinload(models.Patient.assigned_locations),
-                selectinload(models.Patient.teams),
-            ),
-        )
-        patient = result.scalars().first()
-        if not patient:
-            raise Exception("Patient not found")
-        patient.state = PatientState.DEAD.value
-        await db.commit()
-        await db.refresh(patient, ["assigned_locations"])
-        await publish_to_redis("patient_updated", patient.id)
-        await publish_to_redis("patient_state_changed", patient.id)
-        return patient
+    async def mark_patient_dead(
+        self, info: Info, id: strawberry.ID
+    ) -> PatientType:
+        return await PatientMutation._update_patient_state(info, id, PatientState.DEAD)
 
     @strawberry.mutation
     @audit_log("wait_patient")
     async def wait_patient(self, info: Info, id: strawberry.ID) -> PatientType:
-        db = info.context.db
-        result = await db.execute(
-            select(models.Patient)
-            .where(models.Patient.id == id)
-            .options(
-                selectinload(models.Patient.assigned_locations),
-                selectinload(models.Patient.teams),
-            ),
-        )
-        patient = result.scalars().first()
-        if not patient:
-            raise Exception("Patient not found")
-        patient.state = PatientState.WAIT.value
-        await db.commit()
-        await db.refresh(patient, ["assigned_locations"])
-        await publish_to_redis("patient_updated", patient.id)
-        await publish_to_redis("patient_state_changed", patient.id)
-        return patient
+        return await PatientMutation._update_patient_state(info, id, PatientState.WAIT)
 
 
 @strawberry.type
-class PatientSubscription:
+class PatientSubscription(BaseSubscriptionResolver):
     @strawberry.subscription
     async def patient_created(
-        self,
-        info: Info,
+        self, info: Info
     ) -> AsyncGenerator[strawberry.ID, None]:
-        pubsub = redis_client.pubsub()
-        await pubsub.subscribe("patient_created")
-        try:
-            async for message in pubsub.listen():
-                if message["type"] == "message":
-                    yield message["data"]
-        finally:
-            await pubsub.close()
+        async for patient_id in BaseSubscriptionResolver.entity_created(info, "patient"):
+            yield patient_id
 
     @strawberry.subscription
     async def patient_updated(
@@ -478,16 +347,8 @@ class PatientSubscription:
         info: Info,
         patient_id: strawberry.ID | None = None,
     ) -> AsyncGenerator[strawberry.ID, None]:
-        pubsub = redis_client.pubsub()
-        await pubsub.subscribe("patient_updated")
-        try:
-            async for message in pubsub.listen():
-                if message["type"] == "message":
-                    patient_id_str = message["data"]
-                    if patient_id is None or patient_id_str == patient_id:
-                        yield patient_id_str
-        finally:
-            await pubsub.close()
+        async for updated_id in BaseSubscriptionResolver.entity_updated(info, "patient", patient_id):
+            yield updated_id
 
     @strawberry.subscription
     async def patient_state_changed(
@@ -495,13 +356,9 @@ class PatientSubscription:
         info: Info,
         patient_id: strawberry.ID | None = None,
     ) -> AsyncGenerator[strawberry.ID, None]:
-        pubsub = redis_client.pubsub()
-        await pubsub.subscribe("patient_state_changed")
-        try:
-            async for message in pubsub.listen():
-                if message["type"] == "message":
-                    patient_id_str = message["data"]
-                    if patient_id is None or patient_id_str == patient_id:
-                        yield patient_id_str
-        finally:
-            await pubsub.close()
+        from api.services.subscription import create_redis_subscription
+
+        async for updated_id in create_redis_subscription(
+            "patient_state_changed", patient_id
+        ):
+            yield updated_id
