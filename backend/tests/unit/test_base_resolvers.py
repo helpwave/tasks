@@ -13,7 +13,7 @@ class MockInfo:
 async def test_base_query_resolver_get_by_id(db_session, sample_task):
     resolver = BaseQueryResolver(Task)
     info = MockInfo(db_session)
-    result = await resolver.get_by_id(info, sample_task.id)
+    result = await resolver._get_by_id_impl(info, sample_task.id)
     assert result is not None
     assert result.id == sample_task.id
 
@@ -22,19 +22,20 @@ async def test_base_query_resolver_get_by_id(db_session, sample_task):
 async def test_base_query_resolver_get_all(db_session, sample_task):
     resolver = BaseQueryResolver(Task)
     info = MockInfo(db_session)
-    results = await resolver.get_all(info)
+    results = await resolver._get_all_impl(info)
     assert len(results) >= 1
     assert any(t.id == sample_task.id for t in results)
 
 
 @pytest.mark.asyncio
-async def test_base_mutation_resolver_create_and_notify(db_session):
+async def test_base_mutation_resolver_create_and_notify(db_session, sample_patient):
     resolver = BaseMutationResolver(Task, "task")
     info = MockInfo(db_session)
-    new_task = Task(title="New Task", description="Description")
+    new_task = Task(title="New Task", description="Description", patient_id=sample_patient.id)
     result = await resolver.create_and_notify(info, new_task)
     assert result.id is not None
     assert result.title == "New Task"
+    assert result.patient_id == sample_patient.id
 
 
 @pytest.mark.asyncio

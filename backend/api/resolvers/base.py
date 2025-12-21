@@ -18,15 +18,21 @@ class BaseQueryResolver(Generic[ModelType]):
     def get_repository(self, db: AsyncSession) -> BaseRepository[ModelType]:
         return BaseRepository(db, self.model)
 
-    @strawberry.field
-    async def get_by_id(self, info: Info, id: strawberry.ID) -> ModelType | None:
+    async def _get_by_id_impl(self, info: Info, id: strawberry.ID) -> ModelType | None:
         repo = self.get_repository(info.context.db)
         return await repo.get_by_id(id)
 
-    @strawberry.field
-    async def get_all(self, info: Info) -> list[ModelType]:
+    async def _get_all_impl(self, info: Info) -> list[ModelType]:
         repo = self.get_repository(info.context.db)
         return await repo.get_all()
+
+    @strawberry.field
+    async def get_by_id(self, info: Info, id: strawberry.ID) -> ModelType | None:
+        return await self._get_by_id_impl(info, id)
+
+    @strawberry.field
+    async def get_all(self, info: Info) -> list[ModelType]:
+        return await self._get_all_impl(info)
 
 
 class BaseMutationResolver(Generic[ModelType]):
