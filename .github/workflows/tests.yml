@@ -77,25 +77,24 @@ jobs:
           --health-retries 5
         ports:
           - 6379:6379
-      keycloak:
-        image: quay.io/keycloak/keycloak:25.0
-        env:
-          KEYCLOAK_ADMIN: admin
-          KEYCLOAK_ADMIN_PASSWORD: admin
-          KC_HEALTH_ENABLED: true
-          KC_METRICS_ENABLED: true
-          KC_DB: dev-file
-        options: >-
-          --health-cmd "curl -f http://localhost:8080/health/ready || exit 1"
-          --health-interval 10s
-          --health-timeout 10s
-          --health-retries 30
-          --health-start-period 40s
-          "--entrypoint /bin/sh -c '/opt/keycloak/bin/kc.sh start-dev'"
-        ports:
-          - 8080:8080
-
     steps:
+      - uses: actions/checkout@v4
+
+      - name: Start Keycloak
+        run: |
+          docker run -d --name keycloak \
+            -p 8080:8080 \
+            -e KEYCLOAK_ADMIN=admin \
+            -e KEYCLOAK_ADMIN_PASSWORD=admin \
+            -e KC_HEALTH_ENABLED=true \
+            -e KC_METRICS_ENABLED=true \
+            -e KC_DB=dev-file \
+            quay.io/keycloak/keycloak:25.0 \
+            start-dev
+
+      - name: Wait for Keycloak to be ready
+        run: |
+          timeout 60s bash -c 'until curl -f http://localhost:8080/health/ready; do sleep 5; done'
       - uses: actions/checkout@v4
 
       - name: Set up Python
