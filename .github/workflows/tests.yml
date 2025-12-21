@@ -95,6 +95,7 @@ jobs:
       - name: Wait for Keycloak to be ready
         run: |
           timeout 60s bash -c 'until curl -f http://localhost:8080/health/ready; do sleep 5; done'
+
       - uses: actions/checkout@v4
 
       - name: Set up Python
