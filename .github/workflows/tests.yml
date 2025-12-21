@@ -611,5 +611,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: frontend-build
-          path: web/.next
+          path: web/build
           retention-days: 7
