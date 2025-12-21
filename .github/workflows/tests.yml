@@ -84,15 +84,16 @@ jobs:
           KEYCLOAK_ADMIN_PASSWORD: admin
           KC_HEALTH_ENABLED: true
           KC_METRICS_ENABLED: true
+          KC_DB: dev-file
         options: >-
           --health-cmd "curl -f http://localhost:8080/health/ready || exit 1"
           --health-interval 10s
           --health-timeout 10s
           --health-retries 30
           --health-start-period 40s
+          --entrypoint /opt/keycloak/bin/kc.sh start-dev
         ports:
           - 8080:8080
-        command: start-dev
 
     steps:
       - uses: actions/checkout@v4
