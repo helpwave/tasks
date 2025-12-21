@@ -133,7 +133,6 @@ class TaskMutation(BaseMutationResolver[models.Task]):
         id: strawberry.ID,
         field_updater,
     ) -> TaskType:
-        from api.services.notifications import notify_entity_update
         db = info.context.db
         repo = BaseMutationResolver.get_repository(db, models.Task)
         task = await repo.get_by_id_or_raise(id, "Task not found")

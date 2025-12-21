@@ -21,16 +21,7 @@ class MyDocument extends Document {
               defer
             />
           ) : (
-            <script
-              src="/env-config.js"
-              defer
-              onError={(e) => {
-                console.warn('Failed to load env-config.js, using empty config');
-                if (typeof window !== 'undefined' && !window.__ENV) {
-                  window.__ENV = {};
-                }
-              }}
-            />
+            <script src="/env-config.js" defer />
           )}
           <meta name="og:title" property="og:title" content="helpwave tasks" />
           <meta name="description" content="The first open-source team management platform for healthcare workers" />
