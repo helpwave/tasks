@@ -1,5 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const baseURL = process.env.E2E_BASE_URL || 'http://localhost:3000';
+
 export default defineConfig({
   testDir: './tests/e2e',
   fullyParallel: true,
@@ -8,7 +10,7 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: 'html',
   use: {
-    baseURL: process.env.E2E_BASE_URL || 'http://localhost:3000',
+    baseURL: baseURL,
     trace: 'on-first-retry',
   },
   timeout: 30000,
@@ -20,7 +22,7 @@ export default defineConfig({
   ],
   webServer: process.env.CI ? undefined : {
     command: 'cd web && npm run dev',
-    url: 'http://localhost:3000',
+    url: baseURL,
     reuseExistingServer: true,
   },
 });
