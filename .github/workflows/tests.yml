@@ -310,6 +310,13 @@ jobs:
           cat /tmp/frontend.log || echo "No frontend log found"
           exit 1
 
+      - name: Verify servers are running
+        run: |
+          echo "=== Verifying servers ==="
+          curl -f -s http://localhost:8000/health && echo "✓ Backend is running" || echo "✗ Backend is not running"
+          curl -f -s http://localhost:3000 && echo "✓ Frontend is running" || echo "✗ Frontend is not running"
+          ps aux | grep -E "(uvicorn|node)" | grep -v grep || echo "No server processes found"
+
       - name: Run E2E tests
         working-directory: tests
         env:
@@ -317,6 +324,8 @@ jobs:
           CI: true
         run: |
           echo "E2E_BASE_URL is set to: $E2E_BASE_URL"
+          echo "Testing connection to frontend..."
+          curl -f -s http://localhost:3000 > /dev/null && echo "Frontend is accessible" || echo "Frontend is not accessible"
           npx playwright test
 
       - name: Upload Playwright report
