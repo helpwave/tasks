@@ -1,8 +1,11 @@
 import { test, expect } from '@playwright/test';
 
+const baseURL = process.env.E2E_BASE_URL || 'http://localhost:3000';
+
 test.describe('Tasks', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+  test.beforeEach(async ({ page, baseURL: configBaseURL }) => {
+    const url = configBaseURL || baseURL;
+    await page.goto(url);
     await page.waitForLoadState('networkidle');
   });
 
@@ -12,8 +15,9 @@ test.describe('Tasks', () => {
     await expect(page.locator('body')).toBeVisible();
   });
 
-  test('should navigate to tasks page from home', async ({ page }) => {
-    await page.goto('/');
+  test('should navigate to tasks page from home', async ({ page, baseURL: configBaseURL }) => {
+    const url = configBaseURL || baseURL;
+    await page.goto(url);
     await page.waitForLoadState('networkidle');
     
     const tasksLink = page.locator('a[href*="/tasks"]').first();

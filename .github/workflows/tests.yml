@@ -313,8 +313,23 @@ jobs:
       - name: Verify servers are running
         run: |
           echo "=== Verifying servers ==="
-          curl -f -s http://localhost:8000/health && echo "✓ Backend is running" || echo "✗ Backend is not running"
-          curl -f -s http://localhost:3000 && echo "✓ Frontend is running" || echo "✗ Frontend is not running"
+          if curl -f -s http://localhost:8000/health > /dev/null 2>&1; then
+            echo "✓ Backend is running"
+          else
+            echo "✗ Backend is not running"
+            echo "Backend log:"
+            tail -20 /tmp/backend.log || echo "No backend log"
+            exit 1
+          fi
+          if curl -f -s http://localhost:3000 > /dev/null 2>&1; then
+            echo "✓ Frontend is running"
+          else
+            echo "✗ Frontend is not running"
+            echo "Frontend log:"
+            tail -20 /tmp/frontend.log || echo "No frontend log"
+            exit 1
+          fi
+          echo "=== Server processes ==="
           ps aux | grep -E "(uvicorn|node)" | grep -v grep || echo "No server processes found"
 
       - name: Run E2E tests

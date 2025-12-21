@@ -1,21 +1,26 @@
 import { test, expect } from '@playwright/test';
 
+const baseURL = process.env.E2E_BASE_URL || 'http://localhost:3000';
+
 test.describe('Authentication', () => {
-  test('should display login page', async ({ page }) => {
-    await page.goto('/');
+  test('should display login page', async ({ page, baseURL: configBaseURL }) => {
+    const url = configBaseURL || baseURL;
+    await page.goto(url);
     await expect(page).toHaveTitle(/tasks/i);
   });
 
-  test('should handle authentication flow', async ({ page }) => {
-    await page.goto('/');
+  test('should handle authentication flow', async ({ page, baseURL: configBaseURL }) => {
+    const url = configBaseURL || baseURL;
+    await page.goto(url);
     await page.waitForLoadState('networkidle');
     
     const body = page.locator('body');
     await expect(body).toBeVisible();
   });
 
-  test('should handle unauthenticated access gracefully', async ({ page }) => {
-    await page.goto('/');
+  test('should handle unauthenticated access gracefully', async ({ page, baseURL: configBaseURL }) => {
+    const url = configBaseURL || baseURL;
+    await page.goto(url);
     await page.waitForLoadState('networkidle');
     
     const errors: string[] = [];
@@ -27,15 +32,16 @@ test.describe('Authentication', () => {
     expect(errors.length).toBeLessThanOrEqual(0);
   });
 
-  test('should have proper page metadata', async ({ page }) => {
-    await page.goto('/');
+  test('should have proper page metadata', async ({ page, baseURL: configBaseURL }) => {
+    const url = configBaseURL || baseURL;
+    await page.goto(url);
     await page.waitForLoadState('networkidle');
     
     const title = await page.title();
     expect(title).toBeTruthy();
   });
 
-  test('should load without console errors', async ({ page }) => {
+  test('should load without console errors', async ({ page, baseURL: configBaseURL }) => {
     const consoleErrors: string[] = [];
     page.on('console', (msg) => {
       if (msg.type() === 'error') {
@@ -43,7 +49,8 @@ test.describe('Authentication', () => {
       }
     });
 
-    await page.goto('/');
+    const url = configBaseURL || baseURL;
+    await page.goto(url);
     await page.waitForLoadState('networkidle');
     
     const criticalErrors = consoleErrors.filter(

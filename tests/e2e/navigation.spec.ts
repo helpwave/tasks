@@ -1,8 +1,11 @@
 import { test, expect } from '@playwright/test';
 
+const baseURL = process.env.E2E_BASE_URL || 'http://localhost:3000';
+
 test.describe('Navigation', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+  test.beforeEach(async ({ page, baseURL: configBaseURL }) => {
+    const url = configBaseURL || baseURL;
+    await page.goto(url);
     await page.waitForLoadState('networkidle');
   });
 
@@ -24,8 +27,9 @@ test.describe('Navigation', () => {
     await expect(body).toBeVisible();
   });
 
-  test('should maintain state during navigation', async ({ page }) => {
-    await page.goto('/');
+  test('should maintain state during navigation', async ({ page, baseURL: configBaseURL }) => {
+    const url = configBaseURL || baseURL;
+    await page.goto(url);
     await page.waitForLoadState('networkidle');
     
     await page.goto('/tasks');

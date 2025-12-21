@@ -80,10 +80,17 @@ jobs:
           npm start &
         env:
           NEXT_PUBLIC_API_URL: http://localhost:8000/graphql
-      - name: Wait for services
+      - name: Wait for backend
         run: |
-          timeout 60 bash -c 'until curl -f http://localhost:8000/graphql; do sleep 2; done'
-          timeout 60 bash -c 'until curl -f http://localhost:3000; do sleep 2; done'
+          echo "Waiting for backend to start..."
+          timeout 120 bash -c 'until curl -f -s http://localhost:8000/health > /dev/null 2>&1; do sleep 2; done'
+          echo "Backend is ready!"
+
+      - name: Wait for frontend
+        run: |
+          echo "Waiting for frontend to start..."
+          timeout 120 bash -c 'until curl -f -s http://localhost:3000 > /dev/null 2>&1; do sleep 2; done'
+          echo "Frontend is ready!"
       - name: Run E2E tests
         run: |
           npx playwright test
