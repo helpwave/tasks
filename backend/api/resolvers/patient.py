@@ -169,7 +169,7 @@ class PatientMutation(BaseMutationResolver[models.Patient]):
             )
             new_patient.assigned_locations = [location] if location else []
 
-        if data.properties:
+        if data.properties is not None:
             property_service = PatientMutation._get_property_service(db)
             await property_service.process_properties(
                 new_patient, data.properties, "patient"
@@ -250,7 +250,7 @@ class PatientMutation(BaseMutationResolver[models.Patient]):
             )
             patient.assigned_locations = [location] if location else []
 
-        if data.properties:
+        if data.properties is not None:
             property_service = PatientMutation._get_property_service(db)
             await property_service.process_properties(
                 patient, data.properties, "patient"

@@ -68,7 +68,7 @@ class TaskMutation(BaseMutationResolver[models.Task]):
             due_date=normalize_datetime_to_utc(data.due_date),
         )
 
-        if data.properties:
+        if data.properties is not None:
             property_service = TaskMutation._get_property_service(info.context.db)
             await property_service.process_properties(
                 new_task, data.properties, "task"
@@ -112,7 +112,7 @@ class TaskMutation(BaseMutationResolver[models.Task]):
                 else None
             )
 
-        if data.properties:
+        if data.properties is not None:
             property_service = TaskMutation._get_property_service(db)
             await property_service.process_properties(
                 task, data.properties, "task"

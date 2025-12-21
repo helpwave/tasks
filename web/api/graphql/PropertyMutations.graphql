@@ -1,0 +1,28 @@
+mutation CreatePropertyDefinition($data: CreatePropertyDefinitionInput!) {
+  createPropertyDefinition(data: $data) {
+    id
+    name
+    description
+    fieldType
+    isActive
+    allowedEntities
+    options
+  }
+}
+
+mutation UpdatePropertyDefinition($id: ID!, $data: UpdatePropertyDefinitionInput!) {
+  updatePropertyDefinition(id: $id, data: $data) {
+    id
+    name
+    description
+    fieldType
+    isActive
+    allowedEntities
+    options
+  }
+}
+
+mutation DeletePropertyDefinition($id: ID!) {
+  deletePropertyDefinition(id: $id)
+}
+
