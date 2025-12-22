@@ -99,3 +99,27 @@ async def sample_task(
     await db_session.commit()
     await db_session.refresh(task)
     return task
+
+
+@pytest.fixture
+async def sample_user_with_location_access(
+    db_session: AsyncSession, sample_user: User, sample_location: LocationNode
+) -> User:
+    from database.models.user import user_root_locations
+    from sqlalchemy import select, insert
+
+    result = await db_session.execute(
+        select(user_root_locations).where(
+            user_root_locations.c.user_id == sample_user.id,
+            user_root_locations.c.location_id == sample_location.id,
+        )
+    )
+    existing = result.first()
+    if not existing:
+        stmt = insert(user_root_locations).values(
+            user_id=sample_user.id, location_id=sample_location.id
+        )
+        await db_session.execute(stmt)
+        await db_session.commit()
+    await db_session.refresh(sample_user)
+    return sample_user
