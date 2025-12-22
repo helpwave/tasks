@@ -6,7 +6,6 @@ from api.context import Info
 from api.inputs import CreateTaskInput, UpdateTaskInput
 from api.resolvers.base import BaseMutationResolver, BaseSubscriptionResolver
 from api.services.authorization import AuthorizationService
-from api.services.base import BaseRepository
 from api.services.checksum import validate_checksum
 from api.services.datetime import normalize_datetime_to_utc
 from api.services.property import PropertyService
@@ -44,45 +43,45 @@ class TaskQuery:
         assignee_id: strawberry.ID | None = None,
     ) -> list[TaskType]:
         auth_service = AuthorizationService(info.context.db)
-        
+
         if patient_id:
             if not await auth_service.can_access_patient_id(info.context.user, patient_id, info.context):
                 raise GraphQLError(
                     "Forbidden: You do not have access to this patient's tasks",
                     extensions={"code": "FORBIDDEN"},
                 )
-            
+
             query = select(models.Task).options(
                 selectinload(models.Task.patient).selectinload(models.Patient.assigned_locations)
             ).where(models.Task.patient_id == patient_id)
-            
+
             if assignee_id:
                 query = query.where(models.Task.assignee_id == assignee_id)
-            
+
             result = await info.context.db.execute(query)
             return result.scalars().all()
-        
+
         accessible_location_ids = await auth_service.get_user_accessible_location_ids(
             info.context.user, info.context
         )
-        
+
         if not accessible_location_ids:
             return []
-        
+
         patient_locations = aliased(models.patient_locations)
         patient_teams = aliased(models.patient_teams)
-        
+
         cte = (
             select(models.LocationNode.id)
             .where(models.LocationNode.id.in_(accessible_location_ids))
             .cte(name="accessible_locations", recursive=True)
         )
-        
+
         children = select(models.LocationNode.id).join(
             cte, models.LocationNode.parent_id == cte.c.id
         )
         cte = cte.union_all(children)
-        
+
         query = (
             select(models.Task)
             .options(
@@ -112,10 +111,10 @@ class TaskQuery:
             )
             .distinct()
         )
-        
+
         if assignee_id:
             query = query.where(models.Task.assignee_id == assignee_id)
-        
+
         result = await info.context.db.execute(query)
         return result.scalars().all()
 
@@ -129,24 +128,24 @@ class TaskQuery:
         accessible_location_ids = await auth_service.get_user_accessible_location_ids(
             info.context.user, info.context
         )
-        
+
         if not accessible_location_ids:
             return []
-        
+
         patient_locations = aliased(models.patient_locations)
         patient_teams = aliased(models.patient_teams)
-        
+
         cte = (
             select(models.LocationNode.id)
             .where(models.LocationNode.id.in_(accessible_location_ids))
             .cte(name="accessible_locations", recursive=True)
         )
-        
+
         children = select(models.LocationNode.id).join(
             cte, models.LocationNode.parent_id == cte.c.id
         )
         cte = cte.union_all(children)
-        
+
         query = (
             select(models.Task)
             .options(
@@ -178,7 +177,7 @@ class TaskQuery:
             .limit(limit)
             .distinct()
         )
-        
+
         result = await info.context.db.execute(query)
         return result.scalars().all()
 

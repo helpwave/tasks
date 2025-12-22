@@ -162,7 +162,7 @@ class PatientMutation(BaseMutationResolver[models.Patient]):
         accessible_location_ids = await auth_service.get_user_accessible_location_ids(
             info.context.user, info.context
         )
-        
+
         if not accessible_location_ids:
             raise GraphQLError(
                 "Forbidden: You do not have access to create patients",

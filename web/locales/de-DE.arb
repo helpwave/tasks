@@ -301,6 +301,8 @@
   "deleteTaskConfirmation": "Sind Sie sicher, dass Sie diese Aufgabe löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
   "markPatientDeadConfirmation": "Sind Sie sicher, dass Sie diesen Patienten als verstorben markieren möchten?",
   "dischargePatientConfirmation": "Sind Sie sicher, dass Sie diesen Patienten entlassen möchten? Diese Aktion ändert den Status des Patienten.",
+  "updateLocation": "Standort aktualisieren",
+  "updateLocationConfirmation": "Sind Sie sicher, dass Sie den Standort des Patienten aktualisieren möchten?",
   "removeProperty": "Eigenschaft entfernen",
   "removePropertyConfirmation": "Sind Sie sicher, dass Sie diese Eigenschaft entfernen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
   "openSurvey": "Umfrage öffnen",

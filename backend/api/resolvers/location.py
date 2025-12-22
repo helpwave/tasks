@@ -16,10 +16,10 @@ class LocationQuery:
         accessible_location_ids = await auth_service.get_user_accessible_location_ids(
             info.context.user, info.context
         )
-        
+
         if not accessible_location_ids:
             return []
-        
+
         result = await info.context.db.execute(
             select(models.LocationNode).where(
                 models.LocationNode.parent_id.is_(None),
@@ -38,7 +38,7 @@ class LocationQuery:
             select(models.LocationNode).where(models.LocationNode.id == id),
         )
         location = result.scalars().first()
-        
+
         if location:
             auth_service = AuthorizationService(info.context.db)
             accessible_location_ids = await auth_service.get_user_accessible_location_ids(
@@ -49,7 +49,7 @@ class LocationQuery:
                     "Forbidden: You do not have access to this location",
                     extensions={"code": "FORBIDDEN"},
                 )
-        
+
         return location
 
     @strawberry.field
@@ -63,12 +63,12 @@ class LocationQuery:
         order_by_name: bool = False,
     ) -> list[LocationNodeType]:
         db = info.context.db
-        
+
         auth_service = AuthorizationService(db)
         accessible_location_ids = await auth_service.get_user_accessible_location_ids(
             info.context.user, info.context
         )
-        
+
         if not accessible_location_ids:
             return []
 
@@ -78,7 +78,7 @@ class LocationQuery:
                     "Forbidden: You do not have access to this location",
                     extensions={"code": "FORBIDDEN"},
                 )
-            
+
             cte = (
                 select(models.LocationNode)
                 .where(models.LocationNode.id == parent_id)

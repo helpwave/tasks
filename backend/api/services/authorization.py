@@ -1,4 +1,3 @@
-import asyncio
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased, selectinload
@@ -15,10 +14,10 @@ class AuthorizationService:
     ) -> set[str]:
         if context and hasattr(context, '_accessible_location_ids') and context._accessible_location_ids is not None:
             return context._accessible_location_ids
-        
+
         if not context or not hasattr(context, '_accessible_location_ids_lock'):
             return await self._compute_accessible_location_ids(user, context)
-        
+
         async with context._accessible_location_ids_lock:
             if context._accessible_location_ids is not None:
                 return context._accessible_location_ids
@@ -61,10 +60,10 @@ class AuthorizationService:
         result = await self.db.execute(select(cte.c.id))
         rows = result.fetchall()
         accessible_ids = {row[0] for row in rows}
-        
+
         if context:
             context._accessible_location_ids = accessible_ids
-        
+
         return accessible_ids
 
     async def can_access_patient(
