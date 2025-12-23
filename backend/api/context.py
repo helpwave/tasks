@@ -102,7 +102,6 @@ async def get_context(
                         lastname=lastname,
                         title="User",
                         avatar_url=picture,
-                        organizations=organizations,
                     )
                     session.add(new_user)
                     await session.commit()
@@ -127,7 +126,6 @@ async def get_context(
                 or db_user.lastname != lastname
                 or db_user.email != email
                 or db_user.avatar_url != picture
-                or db_user.organizations != organizations
             ):
                 db_user.username = username
                 db_user.firstname = firstname
@@ -135,7 +133,6 @@ async def get_context(
                 db_user.email = email
                 if picture:
                     db_user.avatar_url = picture
-                db_user.organizations = organizations
                 session.add(db_user)
                 await session.commit()
                 await session.refresh(db_user)

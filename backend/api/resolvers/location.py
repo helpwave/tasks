@@ -16,16 +16,12 @@ class LocationQuery:
         accessible_location_ids = await auth_service.get_user_accessible_location_ids(
             info.context.user, info.context
         )
-
+        
         if not accessible_location_ids:
             return []
-
+        
         result = await info.context.db.execute(
             select(models.LocationNode)
-            .join(
-                models.location_organizations,
-                models.LocationNode.id == models.location_organizations.c.location_id,
-            )
             .where(
                 models.LocationNode.parent_id.is_(None),
                 models.LocationNode.id.in_(accessible_location_ids),
