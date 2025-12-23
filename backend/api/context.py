@@ -101,7 +101,6 @@ async def get_context(
                         lastname=lastname,
                         title="User",
                         avatar_url=picture,
-                        organizations=organizations,
                     )
                     session.add(new_user)
                     await session.commit()
@@ -120,7 +119,6 @@ async def get_context(
                 or db_user.lastname != lastname
                 or db_user.email != email
                 or db_user.avatar_url != picture
-                or db_user.organizations != organizations
             ):
                 db_user.username = username
                 db_user.firstname = firstname
@@ -128,7 +126,6 @@ async def get_context(
                 db_user.email = email
                 if picture:
                     db_user.avatar_url = picture
-                db_user.organizations = organizations
                 session.add(db_user)
                 await session.commit()
                 await session.refresh(db_user)
@@ -142,6 +139,8 @@ async def get_context(
 async def _update_user_root_locations(
     session: AsyncSession, user: User, organizations: str | None
 ) -> None:
+    from database.models.location import location_organizations
+
     organization_ids: list[str] = []
     if organizations:
         organization_ids = [
@@ -152,22 +151,19 @@ async def _update_user_root_locations(
 
     if organization_ids:
         result = await session.execute(
-            select(LocationNode).where(LocationNode.id.in_(organization_ids))
+            select(LocationNode)
+            .join(
+                location_organizations,
+                LocationNode.id == location_organizations.c.location_id,
+            )
+            .where(
+                LocationNode.kind == "CLINIC",
+                location_organizations.c.organization_id.in_(organization_ids),
+            )
+            .distinct()
         )
         found_locations = result.scalars().all()
         root_location_ids = [loc.id for loc in found_locations]
-
-        found_ids = {loc.id for loc in found_locations}
-        for org_id in organization_ids:
-            if org_id not in found_ids:
-                new_location = LocationNode(
-                    id=org_id,
-                    title=f"Organization {org_id[:8]}",
-                    kind="CLINIC",
-                    parent_id=None,
-                )
-                session.add(new_location)
-                root_location_ids.append(org_id)
 
     if not root_location_ids:
         personal_org_title = f"{user.username}'s Organization"

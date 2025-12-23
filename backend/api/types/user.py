@@ -19,7 +19,6 @@ class UserType:
     lastname: str | None
     title: str | None
     avatar_url: str | None
-    organizations: str | None
 
     @strawberry.field
     def name(self) -> str:

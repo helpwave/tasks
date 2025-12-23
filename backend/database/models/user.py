@@ -37,7 +37,6 @@ class User(Base):
         nullable=True,
         default="https://cdn.helpwave.de/boringavatar.svg",
     )
-    organizations: Mapped[str | None] = mapped_column(String, nullable=True)
 
     tasks: Mapped[list[Task]] = relationship("Task", back_populates="assignee")
     root_locations: Mapped[list[LocationNode]] = relationship(
