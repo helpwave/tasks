@@ -101,10 +101,6 @@ class UserType:
                 models.user_root_locations,
                 models.LocationNode.id == models.user_root_locations.c.location_id,
             )
-            .join(
-                models.location_organizations,
-                models.LocationNode.id == models.location_organizations.c.location_id,
-            )
             .where(models.user_root_locations.c.user_id == self.id)
             .where(models.LocationNode.parent_id.is_(None))
             .distinct()
