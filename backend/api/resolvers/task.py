@@ -102,7 +102,6 @@ class TaskQuery:
         else:
             root_cte = cte
         
->>>>>>> 7eb41e8 (Make root location picker multiselect with LocationSelectionDialog filter by organizations and improve error handling)
         query = (
             select(models.Task)
             .options(
