@@ -171,7 +171,8 @@ export const PatientDetailView = ({
   initialCreateData = {}
 }: PatientDetailViewProps) => {
   const translation = useTasksTranslation()
-  const { selectedLocationId } = useTasksContext()
+  const { selectedLocationId, selectedRootLocationIds, rootLocations } = useTasksContext()
+  const firstSelectedRootLocationId = selectedRootLocationIds && selectedRootLocationIds.length > 0 ? selectedRootLocationIds[0] : undefined
   const queryClient = useQueryClient()
   const [taskId, setTaskId] = useState<string | null>(null)
   const [isCreatingTask, setIsCreatingTask] = useState(false)
@@ -255,6 +256,22 @@ export const PatientDetailView = ({
       setSelectedTeams((teams || []) as LocationNodeType[])
     }
   }, [patientData])
+
+  useEffect(() => {
+    if (!isEditMode && firstSelectedRootLocationId && locationsData?.locationNodes && !formData.clinicId) {
+      const selectedRootLocation = locationsData.locationNodes.find(
+        loc => loc.id === firstSelectedRootLocationId && loc.kind === 'CLINIC'
+      )
+      if (selectedRootLocation) {
+        const clinicLocation = selectedRootLocation as LocationNodeType
+        setSelectedClinic(clinicLocation)
+        setFormData(prev => ({
+          ...prev,
+          clinicId: clinicLocation.id,
+        }))
+      }
+    }
+  }, [isEditMode, firstSelectedRootLocationId, locationsData, formData.clinicId])
 
   const { mutate: createPatient, isLoading: isCreating } = useCreatePatientMutation({
     onSuccess: () => {

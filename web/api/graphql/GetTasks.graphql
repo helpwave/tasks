@@ -1,0 +1,42 @@
+query GetTasks($rootLocationIds: [ID!], $assigneeId: ID) {
+  tasks(rootLocationIds: $rootLocationIds, assigneeId: $assigneeId) {
+    id
+    title
+    description
+    done
+    dueDate
+    creationDate
+    updateDate
+    patient {
+      id
+      name
+      assignedLocation {
+        id
+        title
+        parent {
+          id
+          title
+        }
+      }
+      assignedLocations {
+        id
+        title
+        kind
+        parent {
+          id
+          title
+          parent {
+            id
+            title
+          }
+        }
+      }
+    }
+    assignee {
+      id
+      name
+      avatarUrl
+    }
+  }
+}
+

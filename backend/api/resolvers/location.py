@@ -21,10 +21,16 @@ class LocationQuery:
             return []
 
         result = await info.context.db.execute(
-            select(models.LocationNode).where(
+            select(models.LocationNode)
+            .join(
+                models.location_organizations,
+                models.LocationNode.id == models.location_organizations.c.location_id,
+            )
+            .where(
                 models.LocationNode.parent_id.is_(None),
                 models.LocationNode.id.in_(accessible_location_ids),
-            ),
+            )
+            .distinct()
         )
         return result.scalars().all()
 
@@ -46,7 +52,7 @@ class LocationQuery:
             )
             if location.id not in accessible_location_ids:
                 raise GraphQLError(
-                    "Forbidden: You do not have access to this location",
+                    "Insufficient permission. Please contact an administrator if you believe this is an error.",
                     extensions={"code": "FORBIDDEN"},
                 )
 
@@ -75,7 +81,7 @@ class LocationQuery:
         if recursive and parent_id:
             if parent_id not in accessible_location_ids:
                 raise GraphQLError(
-                    "Forbidden: You do not have access to this location",
+                    "Insufficient permission. Please contact an administrator if you believe this is an error.",
                     extensions={"code": "FORBIDDEN"},
                 )
 
@@ -98,7 +104,7 @@ class LocationQuery:
             if parent_id:
                 if parent_id not in accessible_location_ids:
                     raise GraphQLError(
-                        "Forbidden: You do not have access to this location",
+                        "Insufficient permission. Please contact an administrator if you believe this is an error.",
                         extensions={"code": "FORBIDDEN"},
                     )
                 query = query.where(models.LocationNode.parent_id == parent_id)

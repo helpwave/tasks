@@ -1,15 +1,28 @@
 from __future__ import annotations
 
 import uuid
+from enum import Enum
 from typing import TYPE_CHECKING
 
 from database.models.base import Base
-from sqlalchemy import Column, ForeignKey, String, Table
+from sqlalchemy import Column, ForeignKey, String, Table, Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 if TYPE_CHECKING:
     from .patient import Patient
     from .user import User
+
+
+class LocationTypeEnum(str, Enum):
+    HOSPITAL = "HOSPITAL"
+    PRACTICE = "PRACTICE"
+    CLINIC = "CLINIC"
+    TEAM = "TEAM"
+    WARD = "WARD"
+    ROOM = "ROOM"
+    BED = "BED"
+    OTHER = "OTHER"
+
 
 location_organizations = Table(
     "location_organizations",
@@ -28,7 +41,9 @@ class LocationNode(Base):
         default=lambda: str(uuid.uuid4()),
     )
     title: Mapped[str] = mapped_column(String)
-    kind: Mapped[str] = mapped_column(String)
+    kind: Mapped[LocationTypeEnum] = mapped_column(
+        SQLEnum(LocationTypeEnum, native_enum=False, length=50)
+    )
     parent_id: Mapped[str | None] = mapped_column(
         ForeignKey("location_nodes.id"),
         nullable=True,

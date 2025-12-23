@@ -120,22 +120,29 @@ async def _create_location_tree(
 
     organization_ids = data.get("organization_ids", [])
     if organization_ids:
-        for org_id in organization_ids:
-            stmt = select(location_organizations).where(
-                location_organizations.c.location_id == location_id,
-                location_organizations.c.organization_id == org_id,
+        allowed_types_for_orgs = {"HOSPITAL", "CLINIC", "PRACTICE", "TEAM"}
+        if location_type.value not in allowed_types_for_orgs:
+            logger.warning(
+                f"Organization IDs can only be assigned to HOSPITAL, CLINIC, PRACTICE, or TEAM. "
+                f"Skipping organization assignment for location '{name}' (type: {location_type.value})"
             )
-            result = await session.execute(stmt)
-            existing_org = result.first()
-            if not existing_org:
-                await session.execute(
-                    location_organizations.insert().values(
-                        location_id=location_id, organization_id=org_id
+        else:
+            for org_id in organization_ids:
+                stmt = select(location_organizations).where(
+                    location_organizations.c.location_id == location_id,
+                    location_organizations.c.organization_id == org_id,
+                )
+                result = await session.execute(stmt)
+                existing_org = result.first()
+                if not existing_org:
+                    await session.execute(
+                        location_organizations.insert().values(
+                            location_id=location_id, organization_id=org_id
+                        )
                     )
-                )
-                logger.debug(
-                    f"Assigned organization '{org_id}' to location '{name}'"
-                )
+                    logger.debug(
+                        f"Assigned organization '{org_id}' to location '{name}'"
+                    )
 
     for child_data in children:
         await _create_location_tree(session, child_data, location_id)

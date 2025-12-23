@@ -12,6 +12,8 @@ import {
   Expandable,
   LoadingContainer,
   MarkdownInterpreter,
+  Select,
+  SelectOption,
   useLocalStorage
 } from '@helpwave/hightide'
 import { getConfig } from '@/utils/config'
@@ -35,6 +37,8 @@ import { useRouter } from 'next/router'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { hashString } from '@/utils/hash'
 import { useSwipeGesture } from '@/hooks/useSwipeGesture'
+import { LocationChips } from '@/components/patients/LocationChips'
+import { LocationSelectionDialog } from '@/components/locations/LocationSelectionDialog'
 
 export const StagingDisclaimerDialog = () => {
   const config = getConfig()
@@ -204,8 +208,21 @@ type HeaderProps = HTMLAttributes<HTMLHeadElement> & {
 
 export const Header = ({ onMenuClick, isMenuOpen, ...props }: HeaderProps) => {
   const router = useRouter()
-  const { user, rootLocations } = useTasksContext()
+  const { user, rootLocations, selectedRootLocationIds, update } = useTasksContext()
+  const translation = useTasksTranslation()
+  const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false)
 
+  const selectedRootLocations = rootLocations?.filter(loc => selectedRootLocationIds?.includes(loc.id)) || []
+  const firstSelectedRootLocation = selectedRootLocations[0]
+
+  const handleRootLocationSelect = (locations: Array<{ id: string; title: string; kind?: string }>) => {
+    if (locations.length === 0) return
+    update(prevState => ({
+      ...prevState,
+      selectedRootLocationIds: locations.map(loc => loc.id),
+    }))
+    setIsLocationPickerOpen(false)
+  }
   return (
     <header
       {...props}
@@ -225,13 +242,34 @@ export const Header = ({ onMenuClick, isMenuOpen, ...props }: HeaderProps) => {
           {isMenuOpen ? <X className="size-6" /> : <MenuIcon className="size-6" />}
         </Button>
       </div>
-      <div className="flex-row-2 justify-end">
+      <div className="flex-row-2 justify-end items-center gap-x-2">
         {rootLocations && rootLocations.length > 0 && (
           <div className="flex-row-1 items-center gap-x-1 hidden sm:flex">
-            <Building2 className="size-4 text-description" />
-            <span className="typography-label-sm text-description">
-              {rootLocations.map(loc => loc.title).join(', ')}
-            </span>
+            <Button
+              onClick={() => setIsLocationPickerOpen(true)}
+              color="neutral"
+              coloringStyle="outline"
+              className="min-w-40"
+            >
+              {selectedRootLocations.length > 0
+                ? selectedRootLocations.length === 1
+                  ? firstSelectedRootLocation?.title
+                  : `${selectedRootLocations.length} ${translation('locations') || 'locations'}`
+                : translation('selectLocation') || 'Select Location'}
+            </Button>
+            <LocationSelectionDialog
+              isOpen={isLocationPickerOpen}
+              onClose={() => setIsLocationPickerOpen(false)}
+              onSelect={handleRootLocationSelect}
+              initialSelectedIds={selectedRootLocationIds || []}
+              multiSelect={true}
+              useCase="default"
+            />
+          </div>
+        )}
+        {selectedRootLocations.length > 0 && (
+          <div className="flex-row-1 items-center gap-x-1 hidden sm:flex">
+            <LocationChips locations={selectedRootLocations} disableLink={true} />
           </div>
         )}
         <div className="flex-row-0">

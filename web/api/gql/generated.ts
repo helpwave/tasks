@@ -308,6 +308,7 @@ export type QueryPatientArgs = {
 
 export type QueryPatientsArgs = {
   locationNodeId?: InputMaybe<Scalars['ID']['input']>;
+  rootLocationIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   states?: InputMaybe<Array<PatientState>>;
 };
 
@@ -330,6 +331,7 @@ export type QueryTaskArgs = {
 export type QueryTasksArgs = {
   assigneeId?: InputMaybe<Scalars['ID']['input']>;
   patientId?: InputMaybe<Scalars['ID']['input']>;
+  rootLocationIds?: InputMaybe<Array<Scalars['ID']['input']>>;
 };
 
 
@@ -463,6 +465,7 @@ export type GetPatientQuery = { __typename?: 'Query', patient?: { __typename?: '
 
 export type GetPatientsQueryVariables = Exact<{
   locationId?: InputMaybe<Scalars['ID']['input']>;
+  rootLocationIds?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
   states?: InputMaybe<Array<PatientState> | PatientState>;
 }>;
 
@@ -475,6 +478,14 @@ export type GetTaskQueryVariables = Exact<{
 
 
 export type GetTaskQuery = { __typename?: 'Query', task?: { __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, dueDate?: any | null, checksum: string, patient: { __typename?: 'PatientType', id: string, name: string }, assignee?: { __typename?: 'UserType', id: string, name: string } | null, properties: Array<{ __typename?: 'PropertyValueType', textValue?: string | null, numberValue?: number | null, booleanValue?: boolean | null, dateValue?: any | null, dateTimeValue?: any | null, selectValue?: string | null, multiSelectValues?: Array<string> | null, definition: { __typename?: 'PropertyDefinitionType', id: string, name: string, description?: string | null, fieldType: FieldType, isActive: boolean, allowedEntities: Array<PropertyEntity>, options: Array<string> } }> } | null };
+
+export type GetTasksQueryVariables = Exact<{
+  rootLocationIds?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
+  assigneeId?: InputMaybe<Scalars['ID']['input']>;
+}>;
+
+
+export type GetTasksQuery = { __typename?: 'Query', tasks: Array<{ __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, dueDate?: any | null, creationDate: any, updateDate?: any | null, patient: { __typename?: 'PatientType', id: string, name: string, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null, assignedLocations: Array<{ __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null }> }, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null } | null }> };
 
 export type GetUsersQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -992,8 +1003,12 @@ export const useGetPatientQuery = <
     )};
 
 export const GetPatientsDocument = `
-    query GetPatients($locationId: ID, $states: [PatientState!]) {
-  patients(locationNodeId: $locationId, states: $states) {
+    query GetPatients($locationId: ID, $rootLocationIds: [ID!], $states: [PatientState!]) {
+  patients(
+    locationNodeId: $locationId
+    rootLocationIds: $rootLocationIds
+    states: $states
+  ) {
     id
     name
     firstname
@@ -1180,6 +1195,66 @@ export const useGetTaskQuery = <
       {
     queryKey: ['GetTask', variables],
     queryFn: fetcher<GetTaskQuery, GetTaskQueryVariables>(GetTaskDocument, variables),
+    ...options
+  }
+    )};
+
+export const GetTasksDocument = `
+    query GetTasks($rootLocationIds: [ID!], $assigneeId: ID) {
+  tasks(rootLocationIds: $rootLocationIds, assigneeId: $assigneeId) {
+    id
+    title
+    description
+    done
+    dueDate
+    creationDate
+    updateDate
+    patient {
+      id
+      name
+      assignedLocation {
+        id
+        title
+        parent {
+          id
+          title
+        }
+      }
+      assignedLocations {
+        id
+        title
+        kind
+        parent {
+          id
+          title
+          parent {
+            id
+            title
+          }
+        }
+      }
+    }
+    assignee {
+      id
+      name
+      avatarUrl
+    }
+  }
+}
+    `;
+
+export const useGetTasksQuery = <
+      TData = GetTasksQuery,
+      TError = unknown
+    >(
+      variables?: GetTasksQueryVariables,
+      options?: Omit<UseQueryOptions<GetTasksQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetTasksQuery, TError, TData>['queryKey'] }
+    ) => {
+    
+    return useQuery<GetTasksQuery, TError, TData>(
+      {
+    queryKey: variables === undefined ? ['GetTasks'] : ['GetTasks', variables],
+    queryFn: fetcher<GetTasksQuery, GetTasksQueryVariables>(GetTasksDocument, variables),
     ...options
   }
     )};

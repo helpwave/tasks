@@ -1,5 +1,5 @@
-query GetPatients($locationId: ID, $states: [PatientState!]) {
-  patients(locationNodeId: $locationId, states: $states) {
+query GetPatients($locationId: ID, $rootLocationIds: [ID!], $states: [PatientState!]) {
+  patients(locationNodeId: $locationId, rootLocationIds: $rootLocationIds, states: $states) {
     id
     name
     firstname

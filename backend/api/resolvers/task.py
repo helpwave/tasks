@@ -30,7 +30,7 @@ class TaskQuery:
             auth_service = AuthorizationService(info.context.db)
             if not await auth_service.can_access_patient(info.context.user, task.patient, info.context):
                 raise GraphQLError(
-                    "Forbidden: You do not have access to this task",
+                    "Insufficient permission. Please contact an administrator if you believe this is an error.",
                     extensions={"code": "FORBIDDEN"},
                 )
         return task
@@ -41,13 +41,14 @@ class TaskQuery:
         info: Info,
         patient_id: strawberry.ID | None = None,
         assignee_id: strawberry.ID | None = None,
+        root_location_ids: list[strawberry.ID] | None = None,
     ) -> list[TaskType]:
         auth_service = AuthorizationService(info.context.db)
 
         if patient_id:
             if not await auth_service.can_access_patient_id(info.context.user, patient_id, info.context):
                 raise GraphQLError(
-                    "Forbidden: You do not have access to this patient's tasks",
+                    "Insufficient permission. Please contact an administrator if you believe this is an error.",
                     extensions={"code": "FORBIDDEN"},
                 )
 
@@ -81,7 +82,27 @@ class TaskQuery:
             cte, models.LocationNode.parent_id == cte.c.id
         )
         cte = cte.union_all(children)
-
+        
+        if root_location_ids:
+            invalid_ids = [lid for lid in root_location_ids if lid not in accessible_location_ids]
+            if invalid_ids:
+                raise GraphQLError(
+                    "Insufficient permission. Please contact an administrator if you believe this is an error.",
+                    extensions={"code": "FORBIDDEN"},
+                )
+            root_cte = (
+                select(models.LocationNode.id)
+                .where(models.LocationNode.id.in_(root_location_ids))
+                .cte(name="root_location_descendants", recursive=True)
+            )
+            root_children = select(models.LocationNode.id).join(
+                root_cte, models.LocationNode.parent_id == root_cte.c.id
+            )
+            root_cte = root_cte.union_all(root_children)
+        else:
+            root_cte = cte
+        
+>>>>>>> 7eb41e8 (Make root location picker multiselect with LocationSelectionDialog filter by organizations and improve error handling)
         query = (
             select(models.Task)
             .options(
@@ -97,17 +118,17 @@ class TaskQuery:
                 models.Patient.id == patient_teams.c.patient_id,
             )
             .where(
-                (models.Patient.clinic_id.in_(select(cte.c.id)))
+                (models.Patient.clinic_id.in_(select(root_cte.c.id)))
                 | (
                     models.Patient.position_id.isnot(None)
-                    & models.Patient.position_id.in_(select(cte.c.id))
+                    & models.Patient.position_id.in_(select(root_cte.c.id))
                 )
                 | (
                     models.Patient.assigned_location_id.isnot(None)
-                    & models.Patient.assigned_location_id.in_(select(cte.c.id))
+                    & models.Patient.assigned_location_id.in_(select(root_cte.c.id))
                 )
-                | (patient_locations.c.location_id.in_(select(cte.c.id)))
-                | (patient_teams.c.location_id.in_(select(cte.c.id)))
+                | (patient_locations.c.location_id.in_(select(root_cte.c.id)))
+                | (patient_teams.c.location_id.in_(select(root_cte.c.id)))
             )
             .distinct()
         )
@@ -194,7 +215,7 @@ class TaskMutation(BaseMutationResolver[models.Task]):
         auth_service = AuthorizationService(info.context.db)
         if not await auth_service.can_access_patient_id(info.context.user, data.patient_id, info.context):
             raise GraphQLError(
-                "Forbidden: You do not have access to create tasks for this patient",
+                "Insufficient permission. Please contact an administrator if you believe this is an error.",
                 extensions={"code": "FORBIDDEN"},
             )
 
@@ -243,7 +264,7 @@ class TaskMutation(BaseMutationResolver[models.Task]):
             auth_service = AuthorizationService(db)
             if not await auth_service.can_access_patient(info.context.user, task.patient, info.context):
                 raise GraphQLError(
-                    "Forbidden: You do not have access to this task",
+                    "Insufficient permission. Please contact an administrator if you believe this is an error.",
                     extensions={"code": "FORBIDDEN"},
                 )
 
@@ -299,7 +320,7 @@ class TaskMutation(BaseMutationResolver[models.Task]):
             auth_service = AuthorizationService(db)
             if not await auth_service.can_access_patient(info.context.user, task.patient, info.context):
                 raise GraphQLError(
-                    "Forbidden: You do not have access to this task",
+                    "Insufficient permission. Please contact an administrator if you believe this is an error.",
                     extensions={"code": "FORBIDDEN"},
                 )
 
@@ -367,7 +388,7 @@ class TaskMutation(BaseMutationResolver[models.Task]):
             auth_service = AuthorizationService(db)
             if not await auth_service.can_access_patient(info.context.user, task.patient, info.context):
                 raise GraphQLError(
-                    "Forbidden: You do not have access to this task",
+                    "Insufficient permission. Please contact an administrator if you believe this is an error.",
                     extensions={"code": "FORBIDDEN"},
                 )
 

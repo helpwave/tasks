@@ -3,10 +3,11 @@ from typing import Any
 
 import strawberry
 from auth import get_user_payload
-from database.models.location import LocationNode
+from database.models.location import LocationNode, location_organizations
 from database.models.user import User, user_root_locations
 from database.session import get_db_session
 from fastapi import Depends
+from graphql import GraphQLError
 from sqlalchemy import delete, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -101,6 +102,7 @@ async def get_context(
                         lastname=lastname,
                         title="User",
                         avatar_url=picture,
+                        organizations=organizations,
                     )
                     session.add(new_user)
                     await session.commit()
@@ -112,6 +114,12 @@ async def get_context(
                         select(User).where(User.id == user_id),
                     )
                     db_user = result.scalars().first()
+                except Exception as e:
+                    await session.rollback()
+                    raise GraphQLError(
+                        "Failed to create user. Please contact an administrator if you believe this is an error.",
+                        extensions={"code": "INTERNAL_SERVER_ERROR"},
+                    ) from e
 
             if db_user and (
                 db_user.username != username
@@ -119,6 +127,7 @@ async def get_context(
                 or db_user.lastname != lastname
                 or db_user.email != email
                 or db_user.avatar_url != picture
+                or db_user.organizations != organizations
             ):
                 db_user.username = username
                 db_user.firstname = firstname
@@ -126,12 +135,19 @@ async def get_context(
                 db_user.email = email
                 if picture:
                     db_user.avatar_url = picture
+                db_user.organizations = organizations
                 session.add(db_user)
                 await session.commit()
                 await session.refresh(db_user)
 
             if db_user:
-                await _update_user_root_locations(session, db_user, organizations)
+                try:
+                    await _update_user_root_locations(session, db_user, organizations)
+                except Exception as e:
+                    raise GraphQLError(
+                        "Failed to update user root locations. Please contact an administrator if you believe this is an error.",
+                        extensions={"code": "INTERNAL_SERVER_ERROR"},
+                    ) from e
 
     return Context(db=session, user=db_user)
 
@@ -156,15 +172,38 @@ async def _update_user_root_locations(
                 location_organizations,
                 LocationNode.id == location_organizations.c.location_id,
             )
-            .where(
-                LocationNode.kind == "CLINIC",
-                location_organizations.c.organization_id.in_(organization_ids),
-            )
-            .distinct()
+            .where(location_organizations.c.organization_id.in_(organization_ids))
         )
         found_locations = result.scalars().all()
         root_location_ids = [loc.id for loc in found_locations]
 
+        found_org_ids = set()
+        for loc in found_locations:
+            org_result = await session.execute(
+                select(location_organizations.c.organization_id).where(
+                    location_organizations.c.location_id == loc.id,
+                    location_organizations.c.organization_id.in_(organization_ids)
+                )
+            )
+            found_org_ids.update(row[0] for row in org_result.all())
+
+        for org_id in organization_ids:
+            if org_id not in found_org_ids:
+                new_location = LocationNode(
+                    title=f"Organization {org_id[:8]}",
+                    kind="CLINIC",
+                    parent_id=None,
+                )
+                session.add(new_location)
+                await session.flush()
+                await session.refresh(new_location)
+                
+                await session.execute(
+                    location_organizations.insert().values(
+                        location_id=new_location.id, organization_id=org_id
+                    )
+                )
+                root_location_ids.append(new_location.id)
     if not root_location_ids:
         personal_org_title = f"{user.username}'s Organization"
         result = await session.execute(

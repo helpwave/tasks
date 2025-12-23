@@ -69,12 +69,12 @@ class CreatePatientInput:
     sex: Sex
     assigned_location_id: strawberry.ID | None = None
     assigned_location_ids: list[strawberry.ID] | None = None
-    clinic_id: strawberry.ID  # Required: location node from kind CLINIC
+    clinic_id: strawberry.ID
     position_id: strawberry.ID | None = (
-        None  # Optional: location node from type hospital, practice, clinic, ward, bed or room
+        None
     )
     team_ids: list[strawberry.ID] | None = (
-        None  # Array: location nodes from type clinic, team, practice, hospital
+        None
     )
     properties: list[PropertyValueInput] | None = None
     state: PatientState | None = None
