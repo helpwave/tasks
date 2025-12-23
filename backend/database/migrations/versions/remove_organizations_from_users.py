@@ -1,7 +1,7 @@
 """Remove organizations field from users table.
 
 Revision ID: remove_organizations_from_users
-Revises: add_user_root_locations
+Revises: add_location_organizations_table
 Create Date: 2025-01-16 12:00:00.000000
 """
 
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = "remove_organizations_from_users"
-down_revision: Union[str, Sequence[str], None] = "add_user_root_locations"
+down_revision: Union[str, Sequence[str], None] = "add_location_organizations_table"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
