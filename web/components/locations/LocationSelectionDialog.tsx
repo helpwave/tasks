@@ -26,6 +26,7 @@ export type LocationPickerUseCase =
   | 'clinic'
   | 'position'
   | 'teams'
+  | 'root'
 
 interface LocationSelectionDialogProps {
   isOpen: boolean,
@@ -178,22 +179,132 @@ export const LocationSelectionDialog = ({
 
   const hasInitialized = useRef(false)
 
+  // Helper function to get all descendant IDs of a node (recursively)
+  const getAllDescendantIds = useMemo(() => {
+    if (!data?.locationNodes) return () => new Set<string>()
+    const nodes = data.locationNodes as LocationNodeType[]
+
+    return (nodeId: string): Set<string> => {
+      const descendants = new Set<string>()
+      const queue = [nodeId]
+
+      while (queue.length > 0) {
+        const currentId = queue.shift()!
+        const children = nodes.filter(n => n.parentId === currentId)
+        children.forEach(child => {
+          descendants.add(child.id)
+          queue.push(child.id)
+        })
+      }
+
+      return descendants
+    }
+  }, [data?.locationNodes])
+
+  // Helper function to get all ancestor IDs of a node (recursively)
+  const getAllAncestorIds = useMemo(() => {
+    if (!data?.locationNodes) return () => new Set<string>()
+    const nodes = data.locationNodes as LocationNodeType[]
+
+    return (nodeId: string): Set<string> => {
+      const ancestors = new Set<string>()
+      let current: LocationNodeType | undefined = nodes.find(n => n.id === nodeId)
+
+      while (current?.parentId) {
+        ancestors.add(current.parentId)
+        current = nodes.find(n => n.id === current.parentId)
+      }
+
+      return ancestors
+    }
+  }, [data?.locationNodes])
+
+  // Simplify selection: prefer children over parents (most specific selection wins)
+  const simplifySelection = useMemo(() => {
+    if (!data?.locationNodes || useCase !== 'root') {
+      return (ids: string[]): string[] => ids
+    }
+    const nodes = data.locationNodes as LocationNodeType[]
+    
+    return (ids: string[]): string[] => {
+      if (ids.length === 0) return ids
+      
+      const idSet = new Set(ids)
+      const simplified = new Set<string>()
+      
+      // First pass: prefer children over parents
+      // If both a parent and child are selected, keep only the child
+      for (const id of ids) {
+        let current: LocationNodeType | undefined = nodes.find(n => n.id === id)
+        let hasAncestorSelected = false
+        
+        // Check if any ancestor is also selected
+        while (current?.parentId) {
+          if (idSet.has(current.parentId)) {
+            hasAncestorSelected = true
+            break
+          }
+          current = nodes.find(n => n.id === current?.parentId)
+        }
+        
+        // Only add if no ancestor is selected (child wins over parent)
+        if (!hasAncestorSelected) {
+          simplified.add(id)
+        }
+      }
+      
+      // Second pass: remove descendants of selected nodes (parent includes children)
+      const finalSet = new Set<string>()
+      for (const id of simplified) {
+        // Check if this node has any descendants in the simplified set
+        const descendants = getAllDescendantIds(id)
+        const hasDescendantInSimplified = Array.from(descendants).some(descId => simplified.has(descId))
+        
+        // Only add if no descendant is in simplified set (child wins over parent)
+        if (!hasDescendantInSimplified) {
+          finalSet.add(id)
+        }
+      }
+      
+      return Array.from(finalSet)
+    }
+  }, [data?.locationNodes, useCase, getAllDescendantIds])
+
   useEffect(() => {
     if (isOpen) {
-      setSelectedIds(new Set(initialSelectedIds))
+      // Simplify initial selection when dialog opens
+      const simplifiedIds = simplifySelection(initialSelectedIds)
+      setSelectedIds(new Set(simplifiedIds))
       setExpandedIds(new Set())
       hasInitialized.current = true
     } else {
       hasInitialized.current = false
     }
-  }, [isOpen, initialSelectedIds])
+  }, [isOpen, initialSelectedIds, simplifySelection])
 
   const matchesFilter = useMemo(() => {
     if (useCase === 'default') {
       return () => true
     }
 
-    if (useCase === 'clinic') {
+    if (useCase === 'root') {
+      // Only hospitals, practices, clinics, and teams are selectable for root locations
+      const allowedKinds = new Set<string>([
+        LocationType.Hospital,
+        LocationType.Practice,
+        LocationType.Clinic,
+        LocationType.Team,
+        'HOSPITAL',
+        'PRACTICE',
+        'CLINIC',
+        'TEAM',
+      ])
+      return (node: LocationNodeType) => {
+        const kindStr = node.kind.toString().toUpperCase()
+        return allowedKinds.has(node.kind as LocationType) ||
+               allowedKinds.has(kindStr)
+      }
+    } else if (useCase === 'clinic') {
       return (node: LocationNodeType) => {
         const kindStr = node.kind.toString().toUpperCase()
         return kindStr === 'CLINIC' || node.kind === LocationType.Clinic
@@ -320,6 +431,18 @@ export const LocationSelectionDialog = ({
       if (useCase === 'clinic' || !multiSelect) {
         newSet.clear()
       }
+      
+      // Simplification logic: only for root useCase
+      if (useCase === 'root') {
+        // Remove all descendants of this node (parent includes children)
+        const descendants = getAllDescendantIds(node.id)
+        descendants.forEach(descId => newSet.delete(descId))
+        
+        // Remove all ancestors of this node (child replaces parent)
+        const ancestors = getAllAncestorIds(node.id)
+        ancestors.forEach(ancId => newSet.delete(ancId))
+      }
+      
       newSet.add(node.id)
     } else {
       newSet.delete(node.id)

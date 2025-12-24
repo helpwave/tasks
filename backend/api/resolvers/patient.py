@@ -68,18 +68,23 @@ class PatientQuery:
         accessible_location_ids = await auth_service.get_user_accessible_location_ids(
             info.context.user, info.context
         )
+        
+        # If user has no accessible locations, return empty list
+        if not accessible_location_ids:
+            return []
+        
         query = auth_service.filter_patients_by_access(
             info.context.user, query, accessible_location_ids
         )
 
         filter_cte = None
         if root_location_ids:
-            invalid_ids = [lid for lid in root_location_ids if lid not in accessible_location_ids]
-            if invalid_ids:
-                raise GraphQLError(
-                    "Insufficient permission. Please contact an administrator if you believe this is an error.",
-                    extensions={"code": "FORBIDDEN"},
-                )
+            # Filter to only include root_location_ids that the user has access to
+            valid_root_location_ids = [lid for lid in root_location_ids if lid in accessible_location_ids]
+            if not valid_root_location_ids:
+                # If none of the requested root_location_ids are accessible, return empty list
+                return []
+            root_location_ids = valid_root_location_ids
             filter_cte = (
                 select(models.LocationNode.id)
                 .where(models.LocationNode.id.in_(root_location_ids))
@@ -101,7 +106,7 @@ class PatientQuery:
             )
             filter_cte = filter_cte.union_all(parent)
 
-        if filter_cte:
+        if filter_cte is not None:
             patient_locations_filter = aliased(models.patient_locations)
             patient_teams_filter = aliased(models.patient_teams)
             

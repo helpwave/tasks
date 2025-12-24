@@ -22,3 +22,15 @@ subscription TaskDeleted {
   taskDeleted
 }
 
+subscription LocationNodeUpdated($locationId: ID) {
+  locationNodeUpdated(locationId: $locationId)
+}
+
+subscription LocationNodeCreated {
+  locationNodeCreated
+}
+
+subscription LocationNodeDeleted {
+  locationNodeDeleted
+}
+

@@ -12,8 +12,6 @@ import {
   Expandable,
   LoadingContainer,
   MarkdownInterpreter,
-  Select,
-  SelectOption,
   useLocalStorage
 } from '@helpwave/hightide'
 import { getConfig } from '@/utils/config'
@@ -211,12 +209,40 @@ export const Header = ({ onMenuClick, isMenuOpen, ...props }: HeaderProps) => {
   const { user, rootLocations, selectedRootLocationIds, update } = useTasksContext()
   const translation = useTasksTranslation()
   const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false)
+  const [selectedLocationsCache, setSelectedLocationsCache] = useState<Array<{ id: string; title: string; kind?: string }>>([])
 
-  const selectedRootLocations = rootLocations?.filter(loc => selectedRootLocationIds?.includes(loc.id)) || []
+  // Update cache when rootLocations change and contain the selected IDs
+  useEffect(() => {
+    if (rootLocations && selectedRootLocationIds && selectedRootLocationIds.length > 0) {
+      const foundInRoot = rootLocations.filter(loc => selectedRootLocationIds.includes(loc.id))
+      if (foundInRoot.length > 0) {
+        // Update cache with locations from rootLocations if they match
+        const cacheIds = new Set(selectedLocationsCache.map(loc => loc.id))
+        const selectedIds = new Set(selectedRootLocationIds)
+        if (cacheIds.size === selectedIds.size && Array.from(cacheIds).every(id => selectedIds.has(id))) {
+          // Cache matches, update it with rootLocations data
+          setSelectedLocationsCache(foundInRoot.map(loc => ({ id: loc.id, title: loc.title, kind: loc.kind })))
+        } else if (selectedLocationsCache.length === 0) {
+          // No cache, use rootLocations
+          setSelectedLocationsCache(foundInRoot.map(loc => ({ id: loc.id, title: loc.title, kind: loc.kind })))
+        }
+      }
+    } else if (!selectedRootLocationIds || selectedRootLocationIds.length === 0) {
+      // Clear cache when selection is cleared
+      setSelectedLocationsCache([])
+    }
+  }, [rootLocations, selectedRootLocationIds])
+
+  // Use cached locations if available, otherwise fall back to rootLocations
+  const selectedRootLocations = selectedLocationsCache.length > 0 
+    ? selectedLocationsCache 
+    : (rootLocations?.filter(loc => selectedRootLocationIds?.includes(loc.id)) || [])
   const firstSelectedRootLocation = selectedRootLocations[0]
 
   const handleRootLocationSelect = (locations: Array<{ id: string; title: string; kind?: string }>) => {
     if (locations.length === 0) return
+    // Cache the selected locations so we can display them even if they're not in rootLocations
+    setSelectedLocationsCache(locations)
     update(prevState => ({
       ...prevState,
       selectedRootLocationIds: locations.map(loc => loc.id),
@@ -254,7 +280,9 @@ export const Header = ({ onMenuClick, isMenuOpen, ...props }: HeaderProps) => {
               {selectedRootLocations.length > 0
                 ? selectedRootLocations.length === 1
                   ? firstSelectedRootLocation?.title
-                  : `${selectedRootLocations.length} ${translation('locations') || 'locations'}`
+                  : selectedRootLocations.length === 2
+                    ? `${selectedRootLocations[0].title}, ${selectedRootLocations[1].title}`
+                    : `${selectedRootLocations[0].title} +${selectedRootLocations.length - 1}`
                 : translation('selectLocation') || 'Select Location'}
             </Button>
             <LocationSelectionDialog
@@ -263,13 +291,8 @@ export const Header = ({ onMenuClick, isMenuOpen, ...props }: HeaderProps) => {
               onSelect={handleRootLocationSelect}
               initialSelectedIds={selectedRootLocationIds || []}
               multiSelect={true}
-              useCase="default"
+              useCase="root"
             />
-          </div>
-        )}
-        {selectedRootLocations.length > 0 && (
-          <div className="flex-row-1 items-center gap-x-1 hidden sm:flex">
-            <LocationChips locations={selectedRootLocations} disableLink={true} />
           </div>
         )}
         <div className="flex-row-0">

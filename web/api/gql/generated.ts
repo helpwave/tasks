@@ -428,6 +428,7 @@ export type UserType = {
   id: Scalars['ID']['output'];
   lastname?: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
+  organizations?: Maybe<Scalars['String']['output']>;
   rootLocations: Array<LocationNodeType>;
   tasks: Array<TaskType>;
   title?: Maybe<Scalars['String']['output']>;
@@ -495,7 +496,7 @@ export type GetUsersQuery = { __typename?: 'Query', users: Array<{ __typename?: 
 export type GetGlobalDataQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetGlobalDataQuery = { __typename?: 'Query', me?: { __typename?: 'UserType', id: string, username: string, name: string, firstname?: string | null, lastname?: string | null, avatarUrl?: string | null, rootLocations: Array<{ __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType }>, tasks: Array<{ __typename?: 'TaskType', id: string, done: boolean }> } | null, wards: Array<{ __typename?: 'LocationNodeType', id: string, title: string }>, teams: Array<{ __typename?: 'LocationNodeType', id: string, title: string }>, clinics: Array<{ __typename?: 'LocationNodeType', id: string, title: string }>, patients: Array<{ __typename?: 'PatientType', id: string, state: PatientState, assignedLocation?: { __typename?: 'LocationNodeType', id: string } | null }>, waitingPatients: Array<{ __typename?: 'PatientType', id: string, state: PatientState }> };
+export type GetGlobalDataQuery = { __typename?: 'Query', me?: { __typename?: 'UserType', id: string, username: string, name: string, firstname?: string | null, lastname?: string | null, avatarUrl?: string | null, organizations?: string | null, rootLocations: Array<{ __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType }>, tasks: Array<{ __typename?: 'TaskType', id: string, done: boolean }> } | null, wards: Array<{ __typename?: 'LocationNodeType', id: string, title: string }>, teams: Array<{ __typename?: 'LocationNodeType', id: string, title: string }>, clinics: Array<{ __typename?: 'LocationNodeType', id: string, title: string }>, patients: Array<{ __typename?: 'PatientType', id: string, state: PatientState, assignedLocation?: { __typename?: 'LocationNodeType', id: string } | null }>, waitingPatients: Array<{ __typename?: 'PatientType', id: string, state: PatientState }> };
 
 export type CreatePatientMutationVariables = Exact<{
   data: CreatePatientInput;
@@ -1294,6 +1295,7 @@ export const GetGlobalDataDocument = `
     firstname
     lastname
     avatarUrl
+    organizations
     rootLocations {
       id
       title

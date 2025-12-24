@@ -241,7 +241,8 @@ export const PatientDetailView = ({
     if (patientData?.patient) {
       const patient = patientData.patient
       const { firstname, lastname, sex, birthdate, assignedLocations, clinic, position, teams } = patient
-      setFormData({
+      setFormData(prev => ({
+        ...prev,
         firstname,
         lastname,
         sex,
@@ -250,7 +251,7 @@ export const PatientDetailView = ({
         clinicId: clinic?.id || undefined,
         positionId: position?.id || undefined,
         teamIds: teams?.map(t => t.id) || undefined,
-      } as CreatePatientInput & { clinicId?: string, positionId?: string, teamIds?: string[] })
+      } as CreatePatientInput & { clinicId?: string, positionId?: string, teamIds?: string[] }))
       setSelectedClinic(clinic ? (clinic as LocationNodeType) : null)
       setSelectedPosition(position ? (position as LocationNodeType) : null)
       setSelectedTeams((teams || []) as LocationNodeType[])
@@ -258,20 +259,33 @@ export const PatientDetailView = ({
   }, [patientData])
 
   useEffect(() => {
-    if (!isEditMode && firstSelectedRootLocationId && locationsData?.locationNodes && !formData.clinicId) {
-      const selectedRootLocation = locationsData.locationNodes.find(
-        loc => loc.id === firstSelectedRootLocationId && loc.kind === 'CLINIC'
-      )
-      if (selectedRootLocation) {
-        const clinicLocation = selectedRootLocation as LocationNodeType
+    if (!isEditMode && locationsData?.locationNodes && !formData.clinicId) {
+      // Try to find a CLINIC in the selected root locations first
+      let clinicLocation: LocationNodeType | undefined
+      if (firstSelectedRootLocationId) {
+        const selectedRootLocation = locationsData.locationNodes.find(
+          loc => loc.id === firstSelectedRootLocationId && loc.kind === 'CLINIC'
+        )
+        if (selectedRootLocation) {
+          clinicLocation = selectedRootLocation as LocationNodeType
+        }
+      }
+      // If no CLINIC found in selected, try first root location that is a CLINIC
+      if (!clinicLocation && rootLocations && rootLocations.length > 0) {
+        const firstClinic = rootLocations.find(loc => loc.kind === 'CLINIC')
+        if (firstClinic) {
+          clinicLocation = firstClinic as LocationNodeType
+        }
+      }
+      if (clinicLocation) {
         setSelectedClinic(clinicLocation)
         setFormData(prev => ({
           ...prev,
-          clinicId: clinicLocation.id,
+          clinicId: clinicLocation!.id,
         }))
       }
     }
-  }, [isEditMode, firstSelectedRootLocationId, locationsData, formData.clinicId])
+  }, [isEditMode, firstSelectedRootLocationId, locationsData, formData.clinicId, rootLocations])
 
   const { mutate: createPatient, isLoading: isCreating } = useCreatePatientMutation({
     onSuccess: () => {
