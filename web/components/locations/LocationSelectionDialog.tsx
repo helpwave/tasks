@@ -200,7 +200,7 @@ export const LocationSelectionDialog = ({
     }
   }, [data?.locationNodes])
 
-  const _getAllAncestorIds = useMemo(() => {
+  const _unused_getAllAncestorIds = useMemo(() => {
     if (!data?.locationNodes) return () => new Set<string>()
     const nodes = data.locationNodes as LocationNodeType[]
 
@@ -220,7 +220,7 @@ export const LocationSelectionDialog = ({
     }
   }, [data?.locationNodes])
 
-  const _simplifySelection = useMemo(() => {
+  const _unused_simplifySelection = useMemo(() => {
     return (ids: string[]): string[] => ids
   }, [])
 

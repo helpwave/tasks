@@ -10,7 +10,6 @@ import {
   Button,
   Dialog,
   Expandable,
-  LoadingContainer,
   MarkdownInterpreter,
   useLocalStorage
 } from '@helpwave/hightide'
