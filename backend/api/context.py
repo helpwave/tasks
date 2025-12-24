@@ -1,5 +1,4 @@
 import asyncio
-import logging
 from typing import Any
 
 import strawberry
@@ -82,19 +81,7 @@ async def get_context(
         email = user_payload.get("email")
         picture = user_payload.get("picture")
 
-        logger = logging.getLogger(__name__)
         organizations_raw = user_payload.get("organization")
-
-        if organizations_raw is None:
-            scope = user_payload.get("scope", "")
-            has_org_scope = "organization" in scope.split() if scope else False
-            logger.warning(
-                f"Organization claim not found in token for user {user_payload.get('sub', 'unknown')}. "
-                f"Has organization scope: {has_org_scope}. "
-                f"Token scope: {scope}. "
-                f"Available claims: {sorted(user_payload.keys())}"
-            )
-
         organizations = None
         if organizations_raw:
             if isinstance(organizations_raw, list):
