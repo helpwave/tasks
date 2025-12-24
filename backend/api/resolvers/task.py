@@ -82,7 +82,7 @@ class TaskQuery:
             cte, models.LocationNode.parent_id == cte.c.id
         )
         cte = cte.union_all(children)
-        
+
         if root_location_ids:
             invalid_ids = [lid for lid in root_location_ids if lid not in accessible_location_ids]
             if invalid_ids:
@@ -101,7 +101,7 @@ class TaskQuery:
             root_cte = root_cte.union_all(root_children)
         else:
             root_cte = cte
-        
+
         query = (
             select(models.Task)
             .options(

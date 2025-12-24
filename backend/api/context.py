@@ -84,7 +84,7 @@ async def get_context(
 
         logger = logging.getLogger(__name__)
         organizations_raw = user_payload.get("organization")
-        
+
         if organizations_raw is None:
             scope = user_payload.get("scope", "")
             has_org_scope = "organization" in scope.split() if scope else False
@@ -94,7 +94,7 @@ async def get_context(
                 f"Token scope: {scope}. "
                 f"Available claims: {sorted(user_payload.keys())}"
             )
-        
+
         organizations = None
         if organizations_raw:
             if isinstance(organizations_raw, list):
@@ -157,7 +157,7 @@ async def get_context(
 
             if db_user:
                 try:
-                    
+
                     await _update_user_root_locations(
                         session,
                         db_user,
@@ -185,17 +185,9 @@ async def _update_user_root_locations(
             if org_id.strip()
         ]
 
-    logger = logging.getLogger(__name__)
-
     root_location_ids: list[str] = []
 
     if organization_ids:
-        org_check = await session.execute(
-            select(location_organizations.c.organization_id, location_organizations.c.location_id)
-            .where(location_organizations.c.organization_id.in_(organization_ids))
-        )
-        org_entries = org_check.all()
-        
         result = await session.execute(
             select(LocationNode)
             .join(
@@ -239,8 +231,7 @@ async def _update_user_root_locations(
                     ),
                 )
                 root_location_ids.append(new_location.id)
-    
-    
+
     if not root_location_ids:
         personal_org_title = f"{user.username}'s Organization"
         result = await session.execute(

@@ -68,11 +68,11 @@ class PatientQuery:
         accessible_location_ids = await auth_service.get_user_accessible_location_ids(
             info.context.user, info.context
         )
-        
+
         # If user has no accessible locations, return empty list
         if not accessible_location_ids:
             return []
-        
+
         query = auth_service.filter_patients_by_access(
             info.context.user, query, accessible_location_ids
         )
@@ -109,7 +109,7 @@ class PatientQuery:
         if filter_cte is not None:
             patient_locations_filter = aliased(models.patient_locations)
             patient_teams_filter = aliased(models.patient_teams)
-            
+
             query = (
                 query.outerjoin(
                     patient_locations_filter,

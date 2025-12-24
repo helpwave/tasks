@@ -3,7 +3,6 @@ from typing import TYPE_CHECKING, Annotated
 import strawberry
 from database import models
 from sqlalchemy import select
-from sqlalchemy.orm import aliased, selectinload
 
 if TYPE_CHECKING:
     from api.types.location import LocationNodeType
@@ -37,31 +36,31 @@ class UserType:
         info,
     ) -> list[Annotated["TaskType", strawberry.lazy("api.types.task")]]:
         from api.services.authorization import AuthorizationService
-        
+
         auth_service = AuthorizationService(info.context.db)
         accessible_location_ids = await auth_service.get_user_accessible_location_ids(
             info.context.user, info.context
         )
-        
+
         if not accessible_location_ids:
             return []
-        
+
         from sqlalchemy.orm import aliased
         patient_locations = aliased(models.patient_locations)
         patient_teams = aliased(models.patient_teams)
-        
+
         from sqlalchemy import select
         cte = (
             select(models.LocationNode.id)
             .where(models.LocationNode.id.in_(accessible_location_ids))
             .cte(name="accessible_locations", recursive=True)
         )
-        
+
         children = select(models.LocationNode.id).join(
             cte, models.LocationNode.parent_id == cte.c.id
         )
         cte = cte.union_all(children)
-        
+
         query = (
             select(models.Task)
             .join(models.Patient, models.Task.patient_id == models.Patient.id)
@@ -91,7 +90,7 @@ class UserType:
             )
             .distinct()
         )
-        
+
         result = await info.context.db.execute(query)
         return result.scalars().all()
 
@@ -102,7 +101,7 @@ class UserType:
     ) -> list[Annotated["LocationNodeType", strawberry.lazy("api.types.location")]]:
         import logging
         logger = logging.getLogger(__name__)
-        
+
         # First check what's in user_root_locations table
         user_root_check = await info.context.db.execute(
             select(models.user_root_locations.c.location_id).where(
@@ -111,7 +110,7 @@ class UserType:
         )
         user_root_location_ids = [row[0] for row in user_root_check.all()]
         logger.info(f"User {self.id} has {len(user_root_location_ids)} entries in user_root_locations: {user_root_location_ids}")
-        
+
         result = await info.context.db.execute(
             select(models.LocationNode)
             .join(
@@ -123,7 +122,7 @@ class UserType:
         )
         locations = result.scalars().all()
         logger.info(f"User {self.id} root_locations query returned {len(locations)} locations: {[loc.id for loc in locations]}")
-        
+
         # If we have user_root_locations entries but no locations returned, check if locations exist
         if user_root_location_ids and not locations:
             location_check = await info.context.db.execute(
@@ -137,5 +136,5 @@ class UserType:
                 f"Checking if locations exist: {[loc.id for loc in existing_locations]} "
                 f"with parent_ids: {[loc.parent_id for loc in existing_locations]}"
             )
-        
+
         return locations

@@ -20,10 +20,10 @@ class LocationQuery:
         accessible_location_ids = await auth_service.get_user_accessible_location_ids(
             info.context.user, info.context
         )
-        
+
         if not accessible_location_ids:
             return []
-        
+
         result = await info.context.db.execute(
             select(models.LocationNode)
             .where(
