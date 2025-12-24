@@ -18,6 +18,12 @@ export type Scalars = {
   DateTime: { input: any; output: any; }
 };
 
+export type CreateLocationNodeInput = {
+  kind: LocationType;
+  parentId?: InputMaybe<Scalars['ID']['input']>;
+  title: Scalars['String']['input'];
+};
+
 export type CreatePatientInput = {
   assignedLocationId?: InputMaybe<Scalars['ID']['input']>;
   assignedLocationIds?: InputMaybe<Array<Scalars['ID']['input']>>;
@@ -90,9 +96,11 @@ export type Mutation = {
   admitPatient: PatientType;
   assignTask: TaskType;
   completeTask: TaskType;
+  createLocationNode: LocationNodeType;
   createPatient: PatientType;
   createPropertyDefinition: PropertyDefinitionType;
   createTask: TaskType;
+  deleteLocationNode: Scalars['Boolean']['output'];
   deletePatient: Scalars['Boolean']['output'];
   deletePropertyDefinition: Scalars['Boolean']['output'];
   deleteTask: Scalars['Boolean']['output'];
@@ -100,6 +108,7 @@ export type Mutation = {
   markPatientDead: PatientType;
   reopenTask: TaskType;
   unassignTask: TaskType;
+  updateLocationNode: LocationNodeType;
   updatePatient: PatientType;
   updatePropertyDefinition: PropertyDefinitionType;
   updateTask: TaskType;
@@ -123,6 +132,11 @@ export type MutationCompleteTaskArgs = {
 };
 
 
+export type MutationCreateLocationNodeArgs = {
+  data: CreateLocationNodeInput;
+};
+
+
 export type MutationCreatePatientArgs = {
   data: CreatePatientInput;
 };
@@ -135,6 +149,11 @@ export type MutationCreatePropertyDefinitionArgs = {
 
 export type MutationCreateTaskArgs = {
   data: CreateTaskInput;
+};
+
+
+export type MutationDeleteLocationNodeArgs = {
+  id: Scalars['ID']['input'];
 };
 
 
@@ -169,6 +188,12 @@ export type MutationReopenTaskArgs = {
 
 
 export type MutationUnassignTaskArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type MutationUpdateLocationNodeArgs = {
+  data: UpdateLocationNodeInput;
   id: Scalars['ID']['input'];
 };
 
@@ -347,12 +372,20 @@ export enum Sex {
 
 export type Subscription = {
   __typename?: 'Subscription';
+  locationNodeCreated: Scalars['ID']['output'];
+  locationNodeDeleted: Scalars['ID']['output'];
+  locationNodeUpdated: Scalars['ID']['output'];
   patientCreated: Scalars['ID']['output'];
   patientStateChanged: Scalars['ID']['output'];
   patientUpdated: Scalars['ID']['output'];
   taskCreated: Scalars['ID']['output'];
   taskDeleted: Scalars['ID']['output'];
   taskUpdated: Scalars['ID']['output'];
+};
+
+
+export type SubscriptionLocationNodeUpdatedArgs = {
+  locationId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 
@@ -385,6 +418,12 @@ export type TaskType = {
   properties: Array<PropertyValueType>;
   title: Scalars['String']['output'];
   updateDate?: Maybe<Scalars['DateTime']['output']>;
+};
+
+export type UpdateLocationNodeInput = {
+  kind?: InputMaybe<LocationType>;
+  parentId?: InputMaybe<Scalars['ID']['input']>;
+  title?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdatePatientInput = {
@@ -493,10 +532,12 @@ export type GetUsersQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type GetUsersQuery = { __typename?: 'Query', users: Array<{ __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null }> };
 
-export type GetGlobalDataQueryVariables = Exact<{ [key: string]: never; }>;
+export type GetGlobalDataQueryVariables = Exact<{
+  rootLocationIds?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
+}>;
 
 
-export type GetGlobalDataQuery = { __typename?: 'Query', me?: { __typename?: 'UserType', id: string, username: string, name: string, firstname?: string | null, lastname?: string | null, avatarUrl?: string | null, organizations?: string | null, rootLocations: Array<{ __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType }>, tasks: Array<{ __typename?: 'TaskType', id: string, done: boolean }> } | null, wards: Array<{ __typename?: 'LocationNodeType', id: string, title: string }>, teams: Array<{ __typename?: 'LocationNodeType', id: string, title: string }>, clinics: Array<{ __typename?: 'LocationNodeType', id: string, title: string }>, patients: Array<{ __typename?: 'PatientType', id: string, state: PatientState, assignedLocation?: { __typename?: 'LocationNodeType', id: string } | null }>, waitingPatients: Array<{ __typename?: 'PatientType', id: string, state: PatientState }> };
+export type GetGlobalDataQuery = { __typename?: 'Query', me?: { __typename?: 'UserType', id: string, username: string, name: string, firstname?: string | null, lastname?: string | null, avatarUrl?: string | null, organizations?: string | null, rootLocations: Array<{ __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType }>, tasks: Array<{ __typename?: 'TaskType', id: string, done: boolean }> } | null, wards: Array<{ __typename?: 'LocationNodeType', id: string, title: string, parentId?: string | null }>, teams: Array<{ __typename?: 'LocationNodeType', id: string, title: string, parentId?: string | null }>, clinics: Array<{ __typename?: 'LocationNodeType', id: string, title: string, parentId?: string | null }>, patients: Array<{ __typename?: 'PatientType', id: string, state: PatientState, assignedLocation?: { __typename?: 'LocationNodeType', id: string } | null }>, waitingPatients: Array<{ __typename?: 'PatientType', id: string, state: PatientState }> };
 
 export type CreatePatientMutationVariables = Exact<{
   data: CreatePatientInput;
@@ -611,6 +652,23 @@ export type TaskDeletedSubscriptionVariables = Exact<{ [key: string]: never; }>;
 
 
 export type TaskDeletedSubscription = { __typename?: 'Subscription', taskDeleted: string };
+
+export type LocationNodeUpdatedSubscriptionVariables = Exact<{
+  locationId?: InputMaybe<Scalars['ID']['input']>;
+}>;
+
+
+export type LocationNodeUpdatedSubscription = { __typename?: 'Subscription', locationNodeUpdated: string };
+
+export type LocationNodeCreatedSubscriptionVariables = Exact<{ [key: string]: never; }>;
+
+
+export type LocationNodeCreatedSubscription = { __typename?: 'Subscription', locationNodeCreated: string };
+
+export type LocationNodeDeletedSubscriptionVariables = Exact<{ [key: string]: never; }>;
+
+
+export type LocationNodeDeletedSubscription = { __typename?: 'Subscription', locationNodeDeleted: string };
 
 export type CreateTaskMutationVariables = Exact<{
   data: CreateTaskInput;
@@ -1287,7 +1345,7 @@ export const useGetUsersQuery = <
     )};
 
 export const GetGlobalDataDocument = `
-    query GetGlobalData {
+    query GetGlobalData($rootLocationIds: [ID!]) {
   me {
     id
     username
@@ -1309,23 +1367,26 @@ export const GetGlobalDataDocument = `
   wards: locationNodes(kind: WARD) {
     id
     title
+    parentId
   }
   teams: locationNodes(kind: TEAM) {
     id
     title
+    parentId
   }
   clinics: locationNodes(kind: CLINIC) {
     id
     title
+    parentId
   }
-  patients {
+  patients(rootLocationIds: $rootLocationIds) {
     id
     state
     assignedLocation {
       id
     }
   }
-  waitingPatients: patients(states: [WAIT]) {
+  waitingPatients: patients(states: [WAIT], rootLocationIds: $rootLocationIds) {
     id
     state
   }
@@ -1698,6 +1759,21 @@ export const TaskUpdatedDocument = `
 export const TaskDeletedDocument = `
     subscription TaskDeleted {
   taskDeleted
+}
+    `;
+export const LocationNodeUpdatedDocument = `
+    subscription LocationNodeUpdated($locationId: ID) {
+  locationNodeUpdated(locationId: $locationId)
+}
+    `;
+export const LocationNodeCreatedDocument = `
+    subscription LocationNodeCreated {
+  locationNodeCreated
+}
+    `;
+export const LocationNodeDeletedDocument = `
+    subscription LocationNodeDeleted {
+  locationNodeDeleted
 }
     `;
 export const CreateTaskDocument = `

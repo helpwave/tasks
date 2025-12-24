@@ -12,10 +12,10 @@ import { useTasksContext } from '@/hooks/useTasksContext'
 const TasksPage: NextPage = () => {
   const translation = useTasksTranslation()
   const router = useRouter()
-  const { selectedRootLocationId, user } = useTasksContext()
+  const { selectedRootLocationIds, user } = useTasksContext()
   const { data: queryData, refetch } = useGetTasksQuery(
     {
-      rootLocationId: selectedRootLocationId,
+      rootLocationIds: selectedRootLocationIds,
       assigneeId: user?.id,
     },
     {

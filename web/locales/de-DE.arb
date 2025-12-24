@@ -250,6 +250,8 @@
   "collapseAll": "Alle einklappen",
   "assignedLocation": "Zugewiesener Standort",
   "selectLocation": "Standort auswählen",
+  "selectRootLocation": "Stammstandort auswählen",
+  "selectRootLocationDescription": "Wählen Sie die Stammstandorte aus, die Ihren zugänglichen Bereich definieren. Es können nur Krankenhäuser, Praxen, Kliniken und Teams ausgewählt werden. Die Auswahl eines übergeordneten Standorts umfasst alle untergeordneten Standorte.",
   "locations": "Standorte",
   "organizations": "Organisationen",
   "selectOrganization": "Organisation auswählen",

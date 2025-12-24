@@ -250,6 +250,8 @@
   "collapseAll": "Collapse All",
   "assignedLocation": "Assigned Location",
   "selectLocation": "Select Location",
+  "selectRootLocation": "Select Root Location",
+  "selectRootLocationDescription": "Select the root locations that define your accessible scope. Only hospitals, practices, clinics, and teams can be selected. Selecting a parent location includes all its children.",
   "locations": "locations",
   "organizations": "Organizations",
   "selectOrganization": "Select Organization",

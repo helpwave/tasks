@@ -179,7 +179,6 @@ export const LocationSelectionDialog = ({
 
   const hasInitialized = useRef(false)
 
-  // Helper function to get all descendant IDs of a node (recursively)
   const getAllDescendantIds = useMemo(() => {
     if (!data?.locationNodes) return () => new Set<string>()
     const nodes = data.locationNodes as LocationNodeType[]
@@ -201,8 +200,7 @@ export const LocationSelectionDialog = ({
     }
   }, [data?.locationNodes])
 
-  // Helper function to get all ancestor IDs of a node (recursively)
-  const getAllAncestorIds = useMemo(() => {
+  const _getAllAncestorIds = useMemo(() => {
     if (!data?.locationNodes) return () => new Set<string>()
     const nodes = data.locationNodes as LocationNodeType[]
 
@@ -212,75 +210,29 @@ export const LocationSelectionDialog = ({
 
       while (current?.parentId) {
         ancestors.add(current.parentId)
-        current = nodes.find(n => n.id === current.parentId)
+        const parentId = current.parentId
+        const parent = nodes.find(n => n.id === parentId)
+        if (!parent) break
+        current = parent
       }
 
       return ancestors
     }
   }, [data?.locationNodes])
 
-  // Simplify selection: prefer children over parents (most specific selection wins)
-  const simplifySelection = useMemo(() => {
-    if (!data?.locationNodes || useCase !== 'root') {
-      return (ids: string[]): string[] => ids
-    }
-    const nodes = data.locationNodes as LocationNodeType[]
-    
-    return (ids: string[]): string[] => {
-      if (ids.length === 0) return ids
-      
-      const idSet = new Set(ids)
-      const simplified = new Set<string>()
-      
-      // First pass: prefer children over parents
-      // If both a parent and child are selected, keep only the child
-      for (const id of ids) {
-        let current: LocationNodeType | undefined = nodes.find(n => n.id === id)
-        let hasAncestorSelected = false
-        
-        // Check if any ancestor is also selected
-        while (current?.parentId) {
-          if (idSet.has(current.parentId)) {
-            hasAncestorSelected = true
-            break
-          }
-          current = nodes.find(n => n.id === current?.parentId)
-        }
-        
-        // Only add if no ancestor is selected (child wins over parent)
-        if (!hasAncestorSelected) {
-          simplified.add(id)
-        }
-      }
-      
-      // Second pass: remove descendants of selected nodes (parent includes children)
-      const finalSet = new Set<string>()
-      for (const id of simplified) {
-        // Check if this node has any descendants in the simplified set
-        const descendants = getAllDescendantIds(id)
-        const hasDescendantInSimplified = Array.from(descendants).some(descId => simplified.has(descId))
-        
-        // Only add if no descendant is in simplified set (child wins over parent)
-        if (!hasDescendantInSimplified) {
-          finalSet.add(id)
-        }
-      }
-      
-      return Array.from(finalSet)
-    }
-  }, [data?.locationNodes, useCase, getAllDescendantIds])
+  const _simplifySelection = useMemo(() => {
+    return (ids: string[]): string[] => ids
+  }, [])
 
   useEffect(() => {
     if (isOpen) {
-      // Simplify initial selection when dialog opens
-      const simplifiedIds = simplifySelection(initialSelectedIds)
-      setSelectedIds(new Set(simplifiedIds))
+      setSelectedIds(new Set(initialSelectedIds))
       setExpandedIds(new Set())
       hasInitialized.current = true
     } else {
       hasInitialized.current = false
     }
-  }, [isOpen, initialSelectedIds, simplifySelection])
+  }, [isOpen, initialSelectedIds])
 
   const matchesFilter = useMemo(() => {
     if (useCase === 'default') {
@@ -288,7 +240,6 @@ export const LocationSelectionDialog = ({
     }
 
     if (useCase === 'root') {
-      // Only hospitals, practices, clinics, and teams are selectable for root locations
       const allowedKinds = new Set<string>([
         LocationType.Hospital,
         LocationType.Practice,
@@ -427,22 +378,11 @@ export const LocationSelectionDialog = ({
   const handleToggleSelect = (node: LocationNodeType, checked: boolean) => {
     const newSet = new Set(selectedIds)
     if (checked) {
-      // For clinic useCase, enforce exactly one selection (clear all first)
       if (useCase === 'clinic' || !multiSelect) {
         newSet.clear()
       }
-      
-      // Simplification logic: only for root useCase
-      if (useCase === 'root') {
-        // Remove all descendants of this node (parent includes children)
-        const descendants = getAllDescendantIds(node.id)
-        descendants.forEach(descId => newSet.delete(descId))
-        
-        // Remove all ancestors of this node (child replaces parent)
-        const ancestors = getAllAncestorIds(node.id)
-        ancestors.forEach(ancId => newSet.delete(ancId))
-      }
-      
+
+
       newSet.add(node.id)
     } else {
       newSet.delete(node.id)
@@ -474,7 +414,9 @@ export const LocationSelectionDialog = ({
     if (!data?.locationNodes) return
     if (selectedIds.size === 0) return
     const nodes = data.locationNodes as LocationNodeType[]
-    const selectedNodes = nodes.filter(n => selectedIds.has(n.id))
+
+    const finalSelectedIds = Array.from(selectedIds)
+    const selectedNodes = nodes.filter(n => finalSelectedIds.includes(n.id))
     onSelect(selectedNodes)
     onClose()
   }
@@ -499,6 +441,7 @@ export const LocationSelectionDialog = ({
           {useCase === 'clinic' ? translation('pickClinic') :
            useCase === 'position' ? translation('pickPosition') :
            useCase === 'teams' ? translation('pickTeams') :
+           useCase === 'root' ? translation('selectRootLocation') :
            translation('selectLocation')}
         </div>
       )}
@@ -506,6 +449,7 @@ export const LocationSelectionDialog = ({
         useCase === 'clinic' ? translation('pickClinicDescription') :
         useCase === 'position' ? translation('pickPositionDescription') :
         useCase === 'teams' ? translation('pickTeamsDescription') :
+        useCase === 'root' ? translation('selectRootLocationDescription') :
         translation('selectLocationDescription')
       }
       className="w-[600px] h-[80vh] flex flex-col max-w-full"
@@ -531,7 +475,7 @@ export const LocationSelectionDialog = ({
             </Button>
           </div>
 
-          {multiSelect && (
+          {multiSelect && useCase !== 'root' && (
             <div className="flex gap-1 border-l border-divider pl-2">
               <Button layout="icon" size="small" onClick={handleSelectAll} title={translation('selectAll')}>
                 <CheckSquare className="size-4" />

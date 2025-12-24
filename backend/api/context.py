@@ -82,28 +82,22 @@ async def get_context(
         email = user_payload.get("email")
         picture = user_payload.get("picture")
 
-        # Debug: Log available keys in token to help diagnose missing organization claim
         logger = logging.getLogger(__name__)
         organizations_raw = user_payload.get("organization")
         
         if organizations_raw is None:
-            # Check if organization scope is in the token
             scope = user_payload.get("scope", "")
             has_org_scope = "organization" in scope.split() if scope else False
-            # Use warning level so it's visible in logs
             logger.warning(
                 f"Organization claim not found in token for user {user_payload.get('sub', 'unknown')}. "
                 f"Has organization scope: {has_org_scope}. "
                 f"Token scope: {scope}. "
                 f"Available claims: {sorted(user_payload.keys())}"
             )
-            # Also print to console for immediate visibility
-            print(f"WARNING: Organization claim missing. Scope: {scope}, Available claims: {sorted(user_payload.keys())}")
         
         organizations = None
         if organizations_raw:
             if isinstance(organizations_raw, list):
-                # Filter out empty strings and None values
                 org_list = [str(org) for org in organizations_raw if org]
                 if org_list:
                     organizations = ",".join(org_list)
@@ -163,13 +157,6 @@ async def get_context(
 
             if db_user:
                 try:
-                    # Debug output
-                    if organizations is None:
-                        print(f"WARNING: organizations is None for user {db_user.id} ({db_user.username})")
-                        print(f"Token payload keys: {sorted(user_payload.keys())}")
-                        print(f"Token scope: {user_payload.get('scope', 'N/A')}")
-                    else:
-                        print(f"Organizations for user {db_user.id}: {organizations}")
                     
                     await _update_user_root_locations(
                         session,
@@ -199,19 +186,15 @@ async def _update_user_root_locations(
         ]
 
     logger = logging.getLogger(__name__)
-    logger.info(f"Updating root locations for user {user.id} with organizations: {organization_ids}")
 
     root_location_ids: list[str] = []
 
     if organization_ids:
-        logger.info(f"Looking up locations for organization IDs: {organization_ids}")
-        # First check if any location_organizations entries exist
         org_check = await session.execute(
             select(location_organizations.c.organization_id, location_organizations.c.location_id)
             .where(location_organizations.c.organization_id.in_(organization_ids))
         )
         org_entries = org_check.all()
-        logger.info(f"Found {len(org_entries)} location_organizations entries: {[(row[0], row[1]) for row in org_entries]}")
         
         result = await session.execute(
             select(LocationNode)
@@ -225,7 +208,6 @@ async def _update_user_root_locations(
         )
         found_locations = result.scalars().all()
         root_location_ids = [loc.id for loc in found_locations]
-        logger.info(f"Found {len(found_locations)} existing locations for organizations: {[loc.id for loc in found_locations]}")
 
         found_org_ids = set()
         for loc in found_locations:
@@ -257,9 +239,7 @@ async def _update_user_root_locations(
                     ),
                 )
                 root_location_ids.append(new_location.id)
-                logger.info(f"Created new location {new_location.id} for organization {org_id}")
     
-    logger.info(f"Total root location IDs: {root_location_ids}")
     
     if not root_location_ids:
         personal_org_title = f"{user.username}'s Organization"
@@ -281,7 +261,6 @@ async def _update_user_root_locations(
             await session.flush()
 
         root_location_ids = [personal_location.id]
-        logger.info(f"Using personal location: {personal_location.id}")
 
     await session.execute(
         delete(user_root_locations).where(
@@ -300,7 +279,5 @@ async def _update_user_root_locations(
             index_elements=["user_id", "location_id"],
         )
         await session.execute(stmt)
-        logger.info(f"Inserted {len(root_location_ids)} root locations for user {user.id}: {root_location_ids}")
 
     await session.commit()
-    logger.info(f"Root locations update completed for user {user.id}")

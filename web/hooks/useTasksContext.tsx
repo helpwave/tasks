@@ -1,10 +1,53 @@
 import type { Dispatch, SetStateAction } from 'react'
 import { createContext, type PropsWithChildren, useContext, useEffect, useRef, useState } from 'react'
 import { usePathname } from 'next/navigation'
-import { useGetGlobalDataQuery, useLocationNodeUpdatedSubscription } from '@/api/gql/generated'
+import { useGetGlobalDataQuery, useGetLocationsQuery } from '@/api/gql/generated'
 import { useQueryClient } from '@tanstack/react-query'
 import { useAuth } from './useAuth'
 import { useLocalStorage } from '@helpwave/hightide'
+
+function filterLocationsByRootSubtree(
+  locations: Array<{ id: string, title: string, parentId?: string | null }>,
+  selectedRootLocationIds: string[],
+  rootLocations: Array<{ id: string, title: string, kind?: string }>,
+  allLocations?: Array<{ id: string, title: string, parentId?: string | null }>
+): Array<{ id: string, title: string, kind?: string }> {
+  if (!selectedRootLocationIds || selectedRootLocationIds.length === 0) {
+    return []
+  }
+
+  const rootLocationSet = new Set(selectedRootLocationIds)
+  const allLocationsMap = new Map<string, { id: string, title: string, parentId?: string | null }>()
+
+  if (allLocations) {
+    allLocations.forEach(loc => allLocationsMap.set(loc.id, loc))
+  }
+  locations.forEach(loc => allLocationsMap.set(loc.id, loc))
+  rootLocations.forEach(loc => allLocationsMap.set(loc.id, { id: loc.id, title: loc.title, parentId: null }))
+
+  const isDescendantOfRoot = (locationId: string): boolean => {
+    if (rootLocationSet.has(locationId)) {
+      return true
+    }
+
+    let current = allLocationsMap.get(locationId)
+    const visited = new Set<string>()
+
+    while (current?.parentId && !visited.has(current.id)) {
+      visited.add(current.id)
+      if (rootLocationSet.has(current.parentId)) {
+        return true
+      }
+      current = allLocationsMap.get(current.parentId)
+    }
+
+    return false
+  }
+
+  return locations
+    .filter(loc => isDescendantOfRoot(loc.id))
+    .map(loc => ({ id: loc.id, title: loc.title }))
+}
 
 type User = {
   id: string,
@@ -73,36 +116,48 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
     selectedRootLocationIds: storedSelectedRootLocationIds.length > 0 ? storedSelectedRootLocationIds : undefined,
   })
 
-  const { data } = useGetGlobalDataQuery(undefined, {
-    enabled: !isAuthLoading && !!identity,
-    refetchInterval: 5000,
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
-  })
+  const { data: allLocationsData } = useGetLocationsQuery(
+    {},
+    {
+      enabled: !isAuthLoading && !!identity,
+      refetchInterval: 30000,
+      refetchOnWindowFocus: true,
+    }
+  )
 
-  // Subscribe to location updates and invalidate all queries when locations change
-  // Note: This will be available after running codegen
-  // useLocationNodeUpdatedSubscription(
-  //   { locationId: undefined },
-  //   {
-  //     enabled: !isAuthLoading && !!identity,
-  //     onData: () => {
-  //       // Invalidate all queries when a location is updated
-  //       queryClient.invalidateQueries()
-  //     },
-  //   }
-  // )
+  const selectedRootLocationIdsForQuery = state.selectedRootLocationIds && state.selectedRootLocationIds.length > 0
+    ? state.selectedRootLocationIds
+    : undefined
 
-  // Track previous root location IDs to detect changes
+  const { data } = useGetGlobalDataQuery(
+    {
+      rootLocationIds: selectedRootLocationIdsForQuery
+    },
+    {
+      enabled: !isAuthLoading && !!identity,
+      refetchInterval: 5000,
+      refetchOnWindowFocus: true,
+      refetchOnMount: true,
+    }
+  )
+
+
   const prevRootLocationIdsRef = useRef<string>('')
+  const prevSelectedRootLocationIdsRef = useRef<string>('')
 
-  // Invalidate all queries when root locations change (this handles location node updates)
+  useEffect(() => {
+    const currentSelectedIds = (state.selectedRootLocationIds || []).sort().join(',')
+    if (prevSelectedRootLocationIdsRef.current !== currentSelectedIds) {
+      prevSelectedRootLocationIdsRef.current = currentSelectedIds
+      queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
+    }
+  }, [state.selectedRootLocationIds, queryClient])
+
   useEffect(() => {
     if (data?.me?.rootLocations) {
       const currentRootLocationIds = data.me.rootLocations.map(loc => loc.id).sort().join(',')
-      
+
       if (prevRootLocationIdsRef.current && prevRootLocationIdsRef.current !== currentRootLocationIds) {
-        // Root locations changed, invalidate all queries to reload global state
         queryClient.invalidateQueries()
       }
       prevRootLocationIdsRef.current = currentRootLocationIds
@@ -113,45 +168,14 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
     const totalPatientsCount = data?.patients?.length ?? 0
     const waitingPatientsCount = data?.waitingPatients?.length ?? 0
     const rootLocations = data?.me?.rootLocations?.map(loc => ({ id: loc.id, title: loc.title, kind: loc.kind })) ?? []
-    
-    // Debug logging - use console.log so it's always visible
-    console.log('[DEBUG] useTasksContext - data?.me:', data?.me)
-    if (data?.me?.organizations) {
-      console.log('[DEBUG] Organizations (raw):', data.me.organizations)
-      console.log('[DEBUG] Organizations (parsed):', data.me.organizations.split(',').map(org => org.trim()))
-    }
-    console.log('[DEBUG] Root Locations count:', rootLocations.length)
-    if (rootLocations.length > 0) {
-      console.log('[DEBUG] Root Locations:', rootLocations)
-    } else {
-      console.log('[DEBUG] No root locations found. data?.me?.rootLocations:', data?.me?.rootLocations)
-    }
-    
+
     setState(prevState => {
       let selectedRootLocationIds = prevState.selectedRootLocationIds || []
-      
-      if (rootLocations.length > 0) {
-        const validIds = selectedRootLocationIds.filter(id => rootLocations.find(loc => loc.id === id))
-        // If no valid IDs and no localStorage state, auto-select only the first root location
-        if (validIds.length === 0 && storedSelectedRootLocationIds.length === 0) {
-          // Auto-select first root location if none selected and no localStorage state
-          selectedRootLocationIds = [rootLocations[0].id]
-          console.log('[DEBUG] Auto-selected first root location (no localStorage):', rootLocations[0].id)
-        } else if (validIds.length === 0 && storedSelectedRootLocationIds.length > 0) {
-          // If localStorage has values but they're not valid, clear localStorage and use first
-          selectedRootLocationIds = [rootLocations[0].id]
-          setStoredSelectedRootLocationIds([])
-          console.log('[DEBUG] Cleared invalid localStorage, auto-selected first root location:', rootLocations[0].id)
-        } else {
-          selectedRootLocationIds = validIds
-        }
-      } else if (selectedRootLocationIds.length > 0) {
-        // If we have selected IDs but no root locations, clear the selection
-        // This happens when locations are removed or user's organizations change
-        console.log('[DEBUG] Clearing selectedRootLocationIds because rootLocations is empty')
-        selectedRootLocationIds = []
+
+      if (rootLocations.length > 0 && selectedRootLocationIds.length === 0 && storedSelectedRootLocationIds.length === 0) {
+        selectedRootLocationIds = [rootLocations[0]!.id]
       }
-      
+
       return {
         ...prevState,
         user: data?.me ? {
@@ -166,19 +190,32 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
         locationPatientsCount: prevState.selectedLocationId
           ? data?.patients?.filter(p => p.assignedLocation?.id === prevState.selectedLocationId).length ?? 0
           : totalPatientsCount,
-        teams: data?.teams,
-        wards: data?.wards,
-        clinics: data?.clinics,
+        teams: filterLocationsByRootSubtree(
+          data?.teams || [],
+          selectedRootLocationIds,
+          rootLocations,
+          allLocationsData?.locationNodes
+        ),
+        wards: filterLocationsByRootSubtree(
+          data?.wards || [],
+          selectedRootLocationIds,
+          rootLocations,
+          allLocationsData?.locationNodes
+        ),
+        clinics: filterLocationsByRootSubtree(
+          data?.clinics || [],
+          selectedRootLocationIds,
+          rootLocations,
+          allLocationsData?.locationNodes
+        ),
         rootLocations,
         selectedRootLocationIds,
       }
     })
-  }, [data])
+  }, [data, storedSelectedRootLocationIds, allLocationsData])
 
-  // Use refs to track what we last wrote to localStorage to avoid loops
   const lastWrittenLocationIdsRef = useRef<string[] | undefined>(undefined)
 
-  // Separate effect to sync state changes to localStorage
   useEffect(() => {
     if (state.selectedRootLocationIds !== undefined) {
       const currentIds = state.selectedRootLocationIds
@@ -189,7 +226,7 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
       }
     }
   }, [state.selectedRootLocationIds, setStoredSelectedRootLocationIds])
-  
+
   const updateState: Dispatch<SetStateAction<TasksContextState>> = (updater) => {
     setState(prevState => {
       const newState = typeof updater === 'function' ? updater(prevState) : updater
