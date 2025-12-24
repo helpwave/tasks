@@ -179,50 +179,6 @@ export const LocationSelectionDialog = ({
 
   const hasInitialized = useRef(false)
 
-  const getAllDescendantIds = useMemo(() => {
-    if (!data?.locationNodes) return () => new Set<string>()
-    const nodes = data.locationNodes as LocationNodeType[]
-
-    return (nodeId: string): Set<string> => {
-      const descendants = new Set<string>()
-      const queue = [nodeId]
-
-      while (queue.length > 0) {
-        const currentId = queue.shift()!
-        const children = nodes.filter(n => n.parentId === currentId)
-        children.forEach(child => {
-          descendants.add(child.id)
-          queue.push(child.id)
-        })
-      }
-
-      return descendants
-    }
-  }, [data?.locationNodes])
-
-  const _unused_getAllAncestorIds = useMemo(() => {
-    if (!data?.locationNodes) return () => new Set<string>()
-    const nodes = data.locationNodes as LocationNodeType[]
-
-    return (nodeId: string): Set<string> => {
-      const ancestors = new Set<string>()
-      let current: LocationNodeType | undefined = nodes.find(n => n.id === nodeId)
-
-      while (current?.parentId) {
-        ancestors.add(current.parentId)
-        const parentId = current.parentId
-        const parent = nodes.find(n => n.id === parentId)
-        if (!parent) break
-        current = parent
-      }
-
-      return ancestors
-    }
-  }, [data?.locationNodes])
-
-  const _unused_simplifySelection = useMemo(() => {
-    return (ids: string[]): string[] => ids
-  }, [])
 
   useEffect(() => {
     if (isOpen) {
