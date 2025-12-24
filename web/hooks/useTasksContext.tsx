@@ -172,6 +172,12 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
     setState(prevState => {
       let selectedRootLocationIds = prevState.selectedRootLocationIds || []
 
+      if (data?.me?.organizations) {
+        console.log(`[Organization] User ${data.me.id} has organizations: ${data.me.organizations}`)
+      } else {
+        console.log(`[Organization] User ${data?.me?.id || 'unknown'} has no organizations`)
+      }
+
       if (rootLocations.length > 0 && selectedRootLocationIds.length === 0 && storedSelectedRootLocationIds.length === 0) {
         selectedRootLocationIds = [rootLocations[0]!.id]
       }

@@ -62,17 +62,40 @@ The organization scope should be included in the default client scopes for `task
 
 ### Adding Users to Organizations
 
-To assign a user to one or more organizations:
+In newer versions of Keycloak (25+), the **Attributes** tab is hidden by default due to the Declarative User Profile feature. You have two options to add organization attributes to users:
 
-1. Navigate to **Users** in the left sidebar
-2. Select the user you want to configure (or create a new user)
-3. Go to the **Attributes** tab
-4. Click **Add** to add a new attribute
-5. Set the **Key** to: `organization`
-6. Set the **Value** to a comma-separated list of organization IDs (e.g., `test-org-1,test-org-2`)
-7. Click **Save**
+#### Option 1: Enable Unmanaged Attributes (Shows Attributes Tab)
 
-**Note**: The organization attribute is multivalued, so you can add multiple values. Each value should be a single organization ID. For multiple organizations, add them as separate attribute entries or use a comma-separated string.
+1. Navigate to **Realm Settings** in the left sidebar
+2. Go to the **User Profile** tab
+3. Toggle **Unmanaged Attributes** to **ON**
+4. Click **Save**
+5. Navigate to **Users** in the left sidebar
+6. Select the user you want to configure (or create a new user)
+7. Go to the **Attributes** tab (now visible)
+8. Click **Add** to add a new attribute
+9. Set the **Key** to: `organization`
+10. Set the **Value** to a comma-separated list of organization IDs (e.g., `test-org-1,test-org-2`)
+11. Click **Save**
+
+#### Option 2: Configure via User Profile (Recommended for newer Keycloak versions)
+
+1. Navigate to **Realm Settings** in the left sidebar
+2. Go to the **User Profile** tab
+3. Click **Create attribute** or find the **organization** attribute if it already exists
+4. Configure the attribute:
+   - **Name**: `organization`
+   - **Display name**: `Organization`
+   - **Multivalued**: Enabled (to allow multiple organization values)
+   - **Permissions**: Set as needed (e.g., **View** for users, **Edit** for admins)
+5. Click **Save**
+6. Navigate to **Users** in the left sidebar
+7. Select the user you want to configure (or create a new user)
+8. The **organization** field should now be visible in the user form
+9. If **Multivalued** is enabled, you will see multiple input boxes - enter one organization ID per box (e.g., `test-org-1` in the first box, `test-org-2` in the second box)
+10. Click **Save**
+
+**Note**: When **Multivalued** is enabled, Keycloak provides separate input boxes for each organization value. You do not need to use comma-separated values. Each input box should contain a single organization ID. If **Multivalued** is disabled, you can use a comma-separated string in a single input box.
 
 ### Verifying Organization Claim in Tokens
 

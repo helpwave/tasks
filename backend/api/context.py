@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from typing import Any
 
 import strawberry
@@ -82,6 +83,11 @@ async def get_context(
         picture = user_payload.get("picture")
 
         organizations_raw = user_payload.get("organization")
+        logger = logging.getLogger(__name__)
+        if organizations_raw:
+            logger.info(f"Organization claim found for user {user_payload.get('sub', 'unknown')}: {organizations_raw}")
+        else:
+            logger.info(f"No organization claim found for user {user_payload.get('sub', 'unknown')}")
         organizations = None
         if organizations_raw:
             if isinstance(organizations_raw, list):
