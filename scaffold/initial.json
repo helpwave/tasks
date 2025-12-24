@@ -2,14 +2,15 @@
   {
     "name": "helpwave Krankenhaus",
     "type": "HOSPITAL",
+    "organization_ids": ["global"],
     "children": [
       {
         "name": "Cardiology",
         "type": "CLINIC",
-        "organization_ids": ["test-org-1"],
+        "organization_ids": ["org-cardiology"],
         "children": [
-          { "name": "Cardio-Diagnostics Team", "type": "TEAM" },
-          { "name": "Interventional Team", "type": "TEAM" },
+          { "name": "Cardio-Diagnostics Team", "type": "TEAM", "organization_ids": ["org-cardio-diagnostics-team"] },
+          { "name": "Interventional Team", "type": "TEAM", "organization_ids": ["org-interventional-team"] },
           {
             "name": "Ward C1",
             "type": "WARD",
@@ -37,10 +38,10 @@
       {
         "name": "Orthopedics",
         "type": "CLINIC",
-        "organization_ids": ["test-org-2"],
+        "organization_ids": ["org-orthopedics"],
         "children": [
-          { "name": "Surgical Excellence Team", "type": "TEAM" },
-          { "name": "Physio-Support Team", "type": "TEAM" },
+          { "name": "Surgical Excellence Team", "type": "TEAM", "organization_ids": ["org-surgical-excellence-team"] },
+          { "name": "Physio-Support Team", "type": "TEAM", "organization_ids": ["org-physio-support-team"] },
           {
             "name": "Ward O2",
             "type": "WARD",
@@ -74,8 +75,9 @@
       {
         "name": "Neurology",
         "type": "CLINIC",
+        "organization_ids": ["org-neurology"],
         "children": [
-          { "name": "Stroke Response Team", "type": "TEAM" },
+          { "name": "Stroke Response Team", "type": "TEAM", "organization_ids": ["org-stroke-response-team"] },
           {
             "name": "Ward N1",
             "type": "WARD",

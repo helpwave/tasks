@@ -402,7 +402,7 @@
     "notBefore" : 0,
     "groups" : [ ],
     "attributes" : {
-      "organization" : [ "test-org-1", "test-org-2" ]
+      "organization" : [ "global" ]
     }
   }, {
     "id" : "15d5c9b3-2d30-4a0d-9c2d-ed3212d5e2db",
@@ -428,7 +428,7 @@
     "notBefore" : 0,
     "groups" : [ ],
     "attributes" : {
-      "organization" : [ "test-org-2" ]
+      "organization" : [ "org-cardiology", "org-orthopedics" ]
     }
   } ],
   "scopeMappings" : [ {
@@ -2213,7 +2213,7 @@
   },
   "keycloakVersion" : "26.4.7",
   "userManagedAccessAllowed" : false,
-  "organizationsEnabled" : false,
+  "organizationsEnabled" : true,
   "verifiableCredentialsEnabled" : false,
   "adminPermissionsEnabled" : false,
   "clientProfiles" : {

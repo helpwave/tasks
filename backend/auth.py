@@ -83,6 +83,13 @@ def get_public_key(token: str) -> Any:
 
 
 def verify_token(token: str) -> dict:
+    """
+    Verifies and decodes the access token JWT.
+    Reads claims directly from the access token payload (not from /userinfo endpoint).
+    The token is obtained from either:
+    - Authorization header (Bearer token)
+    - Cookie named 'access_token'
+    """
     try:
         public_key = get_public_key(token)
 
