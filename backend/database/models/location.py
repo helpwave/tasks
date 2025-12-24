@@ -1,14 +1,35 @@
 from __future__ import annotations
 
 import uuid
+from enum import Enum
 from typing import TYPE_CHECKING
 
 from database.models.base import Base
-from sqlalchemy import ForeignKey, String
+from sqlalchemy import Column, ForeignKey, String, Table, Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 if TYPE_CHECKING:
     from .patient import Patient
+    from .user import User
+
+
+class LocationTypeEnum(str, Enum):
+    HOSPITAL = "HOSPITAL"
+    PRACTICE = "PRACTICE"
+    CLINIC = "CLINIC"
+    TEAM = "TEAM"
+    WARD = "WARD"
+    ROOM = "ROOM"
+    BED = "BED"
+    OTHER = "OTHER"
+
+
+location_organizations = Table(
+    "location_organizations",
+    Base.metadata,
+    Column("location_id", ForeignKey("location_nodes.id"), primary_key=True),
+    Column("organization_id", String, primary_key=True),
+)
 
 
 class LocationNode(Base):
@@ -20,7 +41,9 @@ class LocationNode(Base):
         default=lambda: str(uuid.uuid4()),
     )
     title: Mapped[str] = mapped_column(String)
-    kind: Mapped[str] = mapped_column(String)
+    kind: Mapped[LocationTypeEnum] = mapped_column(
+        SQLEnum(LocationTypeEnum, native_enum=False, length=50)
+    )
     parent_id: Mapped[str | None] = mapped_column(
         ForeignKey("location_nodes.id"),
         nullable=True,
@@ -59,4 +82,9 @@ class LocationNode(Base):
         "Patient",
         secondary="patient_teams",
         back_populates="teams",
+    )
+    root_users: Mapped[list[User]] = relationship(
+        "User",
+        secondary="user_root_locations",
+        back_populates="root_locations",
     )

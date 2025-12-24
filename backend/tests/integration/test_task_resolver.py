@@ -5,13 +5,13 @@ from database.models.task import Task
 
 
 class MockInfo:
-    def __init__(self, db):
-        self.context = Context(db=db)
+    def __init__(self, db, user=None):
+        self.context = Context(db=db, user=user)
 
 
 @pytest.mark.asyncio
-async def test_task_query_get_task(db_session, sample_task):
-    info = MockInfo(db_session)
+async def test_task_query_get_task(db_session, sample_task, sample_user_with_location_access):
+    info = MockInfo(db_session, sample_user_with_location_access)
     query = TaskQuery()
     result = await query.task(info, sample_task.id)
     assert result is not None
@@ -20,8 +20,8 @@ async def test_task_query_get_task(db_session, sample_task):
 
 
 @pytest.mark.asyncio
-async def test_task_query_tasks_by_patient(db_session, sample_patient):
-    info = MockInfo(db_session)
+async def test_task_query_tasks_by_patient(db_session, sample_patient, sample_user_with_location_access):
+    info = MockInfo(db_session, sample_user_with_location_access)
     task1 = Task(title="Task 1", patient_id=sample_patient.id)
     task2 = Task(title="Task 2", patient_id=sample_patient.id)
     db_session.add(task1)
@@ -37,10 +37,10 @@ async def test_task_query_tasks_by_patient(db_session, sample_patient):
 
 
 @pytest.mark.asyncio
-async def test_task_mutation_create_task(db_session, sample_patient):
+async def test_task_mutation_create_task(db_session, sample_patient, sample_user_with_location_access):
     from api.inputs import CreateTaskInput
 
-    info = MockInfo(db_session)
+    info = MockInfo(db_session, sample_user_with_location_access)
     mutation = TaskMutation()
     input_data = CreateTaskInput(
         title="New Task",
@@ -54,10 +54,10 @@ async def test_task_mutation_create_task(db_session, sample_patient):
 
 
 @pytest.mark.asyncio
-async def test_task_mutation_update_task(db_session, sample_task):
+async def test_task_mutation_update_task(db_session, sample_task, sample_user_with_location_access):
     from api.inputs import UpdateTaskInput
 
-    info = MockInfo(db_session)
+    info = MockInfo(db_session, sample_user_with_location_access)
     mutation = TaskMutation()
     input_data = UpdateTaskInput(title="Updated Title")
     result = await mutation.update_task(info, sample_task.id, input_data)
@@ -66,8 +66,8 @@ async def test_task_mutation_update_task(db_session, sample_task):
 
 
 @pytest.mark.asyncio
-async def test_task_mutation_complete_task(db_session, sample_task):
-    info = MockInfo(db_session)
+async def test_task_mutation_complete_task(db_session, sample_task, sample_user_with_location_access):
+    info = MockInfo(db_session, sample_user_with_location_access)
     mutation = TaskMutation()
     result = await mutation.complete_task(info, sample_task.id)
     assert result.done is True
@@ -75,8 +75,8 @@ async def test_task_mutation_complete_task(db_session, sample_task):
 
 
 @pytest.mark.asyncio
-async def test_task_mutation_delete_task(db_session, sample_task):
-    info = MockInfo(db_session)
+async def test_task_mutation_delete_task(db_session, sample_task, sample_user_with_location_access):
+    info = MockInfo(db_session, sample_user_with_location_access)
     mutation = TaskMutation()
     task_id = sample_task.id
     result = await mutation.delete_task(info, task_id)

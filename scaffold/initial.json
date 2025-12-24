@@ -6,6 +6,7 @@
       {
         "name": "Cardiology",
         "type": "CLINIC",
+        "organization_ids": ["test-org-1"],
         "children": [
           { "name": "Cardio-Diagnostics Team", "type": "TEAM" },
           { "name": "Interventional Team", "type": "TEAM" },
@@ -36,6 +37,7 @@
       {
         "name": "Orthopedics",
         "type": "CLINIC",
+        "organization_ids": ["test-org-2"],
         "children": [
           { "name": "Surgical Excellence Team", "type": "TEAM" },
           { "name": "Physio-Support Team", "type": "TEAM" },

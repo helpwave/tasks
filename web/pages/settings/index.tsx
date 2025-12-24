@@ -16,7 +16,7 @@ import {
 import type { HightideTranslationLocales, ThemeType } from '@helpwave/hightide'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { useAuth } from '@/hooks/useAuth'
-import { LogOut, MonitorCog, MoonIcon, SunIcon, Trash2, ClipboardList, Shield, TableProperties } from 'lucide-react'
+import { LogOut, MonitorCog, MoonIcon, SunIcon, Trash2, ClipboardList, Shield, TableProperties, Building2 } from 'lucide-react'
 import { useRouter } from 'next/router'
 import clsx from 'clsx'
 import { removeUser } from '@/api/auth/authService'
@@ -111,6 +111,28 @@ const SettingsPage: NextPage = () => {
               <span className="typography-body-sm text-description">{user?.id}</span>
             </div>
           </section>
+
+          {/* Organizations Section */}
+          {user?.organizations && (
+            <div className="flex-col-6">
+              <h2 className="typography-title-md border-b border-divider pb-2">{translation('organizations') || 'Organizations'}</h2>
+              <div className="flex-row-2 items-center gap-x-2 flex-wrap">
+                <Building2 className="size-4 text-description" />
+                <div className="flex-row-2 items-center gap-x-2 flex-wrap">
+                  {user.organizations.split(',').map((org, index) => {
+                    const trimmedOrg = org.trim()
+                    if (!trimmedOrg) return null
+                    return (
+                      <span key={index} className="typography-body-sm text-description">
+                        {trimmedOrg}
+                        {index < user.organizations!.split(',').length - 1 && <span className="mx-1">,</span>}
+                      </span>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* System / Management */}
           <div className="flex-col-6">

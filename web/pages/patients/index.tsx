@@ -10,14 +10,15 @@ import { useRouter } from 'next/router'
 const PatientsPage: NextPage = () => {
   const translation = useTasksTranslation()
   const router = useRouter()
-  const { selectedLocationId } = useTasksContext()
+  const { selectedRootLocationIds } = useTasksContext()
   const patientId = router.query['patientId'] as string | undefined
+  const firstSelectedRootLocationId = selectedRootLocationIds && selectedRootLocationIds.length > 0 ? selectedRootLocationIds[0] : undefined
 
   return (
     <Page pageTitle={titleWrapper(translation('patients'))}>
       <ContentPanel titleElement={translation('patients')}>
         <PatientList
-          locationId={selectedLocationId}
+          locationId={firstSelectedRootLocationId}
           initialPatientId={patientId}
           onInitialPatientOpened={() => router.replace('/patients', undefined, { shallow: true })}
         />

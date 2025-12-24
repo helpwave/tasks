@@ -4,11 +4,19 @@ import uuid
 from typing import TYPE_CHECKING
 
 from database.models.base import Base
-from sqlalchemy import String
+from sqlalchemy import Column, ForeignKey, String, Table
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 if TYPE_CHECKING:
+    from .location import LocationNode
     from .task import Task
+
+user_root_locations = Table(
+    "user_root_locations",
+    Base.metadata,
+    Column("user_id", ForeignKey("users.id"), primary_key=True),
+    Column("location_id", ForeignKey("location_nodes.id"), primary_key=True),
+)
 
 
 class User(Base):
@@ -29,6 +37,10 @@ class User(Base):
         nullable=True,
         default="https://cdn.helpwave.de/boringavatar.svg",
     )
-    organizations: Mapped[str | None] = mapped_column(String, nullable=True)
 
     tasks: Mapped[list[Task]] = relationship("Task", back_populates="assignee")
+    root_locations: Mapped[list[LocationNode]] = relationship(
+        "LocationNode",
+        secondary=user_root_locations,
+        back_populates="root_users",
+    )

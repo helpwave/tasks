@@ -1,4 +1,4 @@
-query GetGlobalData {
+query GetGlobalData($rootLocationIds: [ID!]) {
   me {
     id
     username
@@ -6,6 +6,12 @@ query GetGlobalData {
     firstname
     lastname
     avatarUrl
+    organizations
+    rootLocations {
+      id
+      title
+      kind
+    }
     tasks {
       id
       done
@@ -14,23 +20,26 @@ query GetGlobalData {
   wards: locationNodes(kind: WARD) {
     id
     title
+    parentId
   }
   teams: locationNodes(kind: TEAM) {
     id
     title
+    parentId
   }
   clinics: locationNodes(kind: CLINIC) {
     id
     title
+    parentId
   }
-  patients {
+  patients(rootLocationIds: $rootLocationIds) {
     id
     state
     assignedLocation {
       id
     }
   }
-  waitingPatients: patients(states: [WAIT]) {
+  waitingPatients: patients(states: [WAIT], rootLocationIds: $rootLocationIds) {
     id
     state
   }

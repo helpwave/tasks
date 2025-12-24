@@ -5,14 +5,19 @@ import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
 import { TaskList, type TaskViewModel } from '@/components/tasks/TaskList'
 import { useMemo } from 'react'
-import { useGetMyTasksQuery } from '@/api/gql/generated'
+import { useGetTasksQuery } from '@/api/gql/generated'
 import { useRouter } from 'next/router'
+import { useTasksContext } from '@/hooks/useTasksContext'
 
 const TasksPage: NextPage = () => {
   const translation = useTasksTranslation()
   const router = useRouter()
-  const { data: queryData, refetch } = useGetMyTasksQuery(
-    undefined,
+  const { selectedRootLocationIds, user } = useTasksContext()
+  const { data: queryData, refetch } = useGetTasksQuery(
+    {
+      rootLocationIds: selectedRootLocationIds,
+      assigneeId: user?.id,
+    },
     {
       refetchInterval: 5000,
       refetchOnWindowFocus: true,
@@ -22,9 +27,9 @@ const TasksPage: NextPage = () => {
   const taskId = router.query['taskId'] as string | undefined
 
   const tasks: TaskViewModel[] = useMemo(() => {
-    if (!queryData?.me?.tasks) return []
+    if (!queryData?.tasks) return []
 
-    return queryData.me.tasks.map((task) => ({
+    return queryData.tasks.map((task) => ({
       id: task.id,
       name: task.title,
       description: task.description || undefined,

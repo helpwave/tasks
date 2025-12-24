@@ -26,6 +26,7 @@ export type LocationPickerUseCase =
   | 'clinic'
   | 'position'
   | 'teams'
+  | 'root'
 
 interface LocationSelectionDialogProps {
   isOpen: boolean,
@@ -48,11 +49,13 @@ interface LocationTreeItemProps {
 
 const getKindStyles = (kind: string) => {
   const k = kind.toUpperCase()
-  if (k.includes('CLINIC')) return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
-  if (k.includes('WARD')) return 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300'
-  if (k.includes('TEAM')) return 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
-  if (k.includes('ROOM')) return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
-  if (k.includes('BED')) return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
+  if (k === 'HOSPITAL') return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+  if (k === 'PRACTICE') return 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300'
+  if (k === 'CLINIC') return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+  if (k === 'TEAM') return 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
+  if (k === 'WARD') return 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300'
+  if (k === 'ROOM') return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
+  if (k === 'BED') return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
   return 'bg-surface-subdued text-text-tertiary'
 }
 
@@ -176,6 +179,7 @@ export const LocationSelectionDialog = ({
 
   const hasInitialized = useRef(false)
 
+
   useEffect(() => {
     if (isOpen) {
       setSelectedIds(new Set(initialSelectedIds))
@@ -191,7 +195,23 @@ export const LocationSelectionDialog = ({
       return () => true
     }
 
-    if (useCase === 'clinic') {
+    if (useCase === 'root') {
+      const allowedKinds = new Set<string>([
+        LocationType.Hospital,
+        LocationType.Practice,
+        LocationType.Clinic,
+        LocationType.Team,
+        'HOSPITAL',
+        'PRACTICE',
+        'CLINIC',
+        'TEAM',
+      ])
+      return (node: LocationNodeType) => {
+        const kindStr = node.kind.toString().toUpperCase()
+        return allowedKinds.has(node.kind as LocationType) ||
+               allowedKinds.has(kindStr)
+      }
+    } else if (useCase === 'clinic') {
       return (node: LocationNodeType) => {
         const kindStr = node.kind.toString().toUpperCase()
         return kindStr === 'CLINIC' || node.kind === LocationType.Clinic
@@ -314,10 +334,11 @@ export const LocationSelectionDialog = ({
   const handleToggleSelect = (node: LocationNodeType, checked: boolean) => {
     const newSet = new Set(selectedIds)
     if (checked) {
-      // For clinic useCase, enforce exactly one selection (clear all first)
       if (useCase === 'clinic' || !multiSelect) {
         newSet.clear()
       }
+
+
       newSet.add(node.id)
     } else {
       newSet.delete(node.id)
@@ -347,8 +368,11 @@ export const LocationSelectionDialog = ({
 
   const handleConfirm = () => {
     if (!data?.locationNodes) return
+    if (selectedIds.size === 0) return
     const nodes = data.locationNodes as LocationNodeType[]
-    const selectedNodes = nodes.filter(n => selectedIds.has(n.id))
+
+    const finalSelectedIds = Array.from(selectedIds)
+    const selectedNodes = nodes.filter(n => finalSelectedIds.includes(n.id))
     onSelect(selectedNodes)
     onClose()
   }
@@ -373,6 +397,7 @@ export const LocationSelectionDialog = ({
           {useCase === 'clinic' ? translation('pickClinic') :
            useCase === 'position' ? translation('pickPosition') :
            useCase === 'teams' ? translation('pickTeams') :
+           useCase === 'root' ? translation('selectRootLocation') :
            translation('selectLocation')}
         </div>
       )}
@@ -380,6 +405,7 @@ export const LocationSelectionDialog = ({
         useCase === 'clinic' ? translation('pickClinicDescription') :
         useCase === 'position' ? translation('pickPositionDescription') :
         useCase === 'teams' ? translation('pickTeamsDescription') :
+        useCase === 'root' ? translation('selectRootLocationDescription') :
         translation('selectLocationDescription')
       }
       className="w-[600px] h-[80vh] flex flex-col max-w-full"
@@ -405,7 +431,7 @@ export const LocationSelectionDialog = ({
             </Button>
           </div>
 
-          {multiSelect && (
+          {multiSelect && useCase !== 'root' && (
             <div className="flex gap-1 border-l border-divider pl-2">
               <Button layout="icon" size="small" onClick={handleSelectAll} title={translation('selectAll')}>
                 <CheckSquare className="size-4" />
@@ -451,7 +477,7 @@ export const LocationSelectionDialog = ({
         </Button>
         <Button
           onClick={handleConfirm}
-          disabled={useCase === 'clinic' && selectedIds.size !== 1}
+          disabled={selectedIds.size === 0 || (useCase === 'clinic' && selectedIds.size !== 1)}
         >
           {translation('confirmSelection')} ({selectedIds.size})
         </Button>

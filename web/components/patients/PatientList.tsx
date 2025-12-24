@@ -8,6 +8,7 @@ import { SmartDate } from '@/utils/date'
 import { LocationChips } from '@/components/patients/LocationChips'
 import { PatientStateChip } from '@/components/patients/PatientStateChip'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
+import { useTasksContext } from '@/hooks/useTasksContext'
 import type { ColumnDef } from '@tanstack/table-core'
 
 type PatientViewModel = {
@@ -38,6 +39,7 @@ type PatientListProps = {
 
 export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ locationId, initialPatientId, onInitialPatientOpened, acceptedStates }, ref) => {
   const translation = useTasksTranslation()
+  const { selectedRootLocationIds } = useTasksContext()
   const [isPanelOpen, setIsPanelOpen] = useState(false)
   const [selectedPatient, setSelectedPatient] = useState<PatientViewModel | undefined>(undefined)
   const [searchQuery, setSearchQuery] = useState('')
@@ -46,6 +48,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ locat
   const { data: queryData, refetch } = useGetPatientsQuery(
     {
       locationId: locationId,
+      rootLocationIds: selectedRootLocationIds && selectedRootLocationIds.length > 0 ? selectedRootLocationIds : undefined,
       states: acceptedStates
     },
     {

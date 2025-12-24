@@ -10,7 +10,6 @@ import {
   Button,
   Dialog,
   Expandable,
-  LoadingContainer,
   MarkdownInterpreter,
   useLocalStorage
 } from '@helpwave/hightide'
@@ -33,8 +32,10 @@ import { Notifications } from '@/components/Notifications'
 import { TasksLogo } from '@/components/TasksLogo'
 import { useRouter } from 'next/router'
 import { useTasksContext } from '@/hooks/useTasksContext'
+import { useGetLocationsQuery } from '@/api/gql/generated'
 import { hashString } from '@/utils/hash'
 import { useSwipeGesture } from '@/hooks/useSwipeGesture'
+import { LocationSelectionDialog } from '@/components/locations/LocationSelectionDialog'
 
 export const StagingDisclaimerDialog = () => {
   const config = getConfig()
@@ -204,8 +205,69 @@ type HeaderProps = HTMLAttributes<HTMLHeadElement> & {
 
 export const Header = ({ onMenuClick, isMenuOpen, ...props }: HeaderProps) => {
   const router = useRouter()
-  const { user } = useTasksContext()
+  const { user, rootLocations, selectedRootLocationIds, update } = useTasksContext()
+  const translation = useTasksTranslation()
+  const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false)
+  const [selectedLocationsCache, setSelectedLocationsCache] = useState<Array<{ id: string, title: string, kind?: string }>>([])
 
+  const { data: locationsData } = useGetLocationsQuery(
+    {},
+    {
+      enabled: !!selectedRootLocationIds && selectedRootLocationIds.length > 0,
+      refetchInterval: 30000,
+      refetchOnWindowFocus: true,
+    }
+  )
+
+  useEffect(() => {
+    if (selectedRootLocationIds && selectedRootLocationIds.length > 0) {
+      const foundInRoot = rootLocations?.filter(loc => selectedRootLocationIds.includes(loc.id)) || []
+
+      if (foundInRoot.length === selectedRootLocationIds.length) {
+        setSelectedLocationsCache(foundInRoot.map(loc => ({ id: loc.id, title: loc.title, kind: loc.kind })))
+      } else if (locationsData?.locationNodes) {
+        const allLocations = locationsData.locationNodes
+        const foundLocations: Array<{ id: string, title: string, kind?: string }> = []
+        for (const id of selectedRootLocationIds) {
+          const inRoot = rootLocations?.find(loc => loc.id === id)
+          if (inRoot) {
+            foundLocations.push({ id: inRoot.id, title: inRoot.title, kind: inRoot.kind })
+          } else {
+            const inAll = allLocations.find(loc => loc.id === id)
+            if (inAll) {
+              foundLocations.push({ id: inAll.id, title: inAll.title, kind: inAll.kind })
+            }
+          }
+        }
+
+        if (foundLocations.length > 0) {
+          setSelectedLocationsCache(foundLocations)
+        }
+      } else if (foundInRoot.length > 0) {
+        setSelectedLocationsCache(foundInRoot.map(loc => ({ id: loc.id, title: loc.title, kind: loc.kind })))
+      }
+    } else {
+      setSelectedLocationsCache([])
+    }
+  }, [rootLocations, selectedRootLocationIds, locationsData])
+
+  const selectedRootLocations = selectedLocationsCache.length > 0
+    ? selectedLocationsCache
+    : (rootLocations?.filter(loc => selectedRootLocationIds?.includes(loc.id)) || [])
+  const firstSelectedRootLocation = selectedRootLocations[0]
+
+  const handleRootLocationSelect = (locations: Array<{ id: string, title: string, kind?: string }>) => {
+    if (locations.length === 0) return
+    const locationIds = locations.map(loc => loc.id)
+    setSelectedLocationsCache(locations)
+    update(prevState => {
+      return {
+        ...prevState,
+        selectedRootLocationIds: locationIds,
+      }
+    })
+    setIsLocationPickerOpen(false)
+  }
   return (
     <header
       {...props}
@@ -225,7 +287,33 @@ export const Header = ({ onMenuClick, isMenuOpen, ...props }: HeaderProps) => {
           {isMenuOpen ? <X className="size-6" /> : <MenuIcon className="size-6" />}
         </Button>
       </div>
-      <div className="flex-row-2 justify-end">
+      <div className="flex-row-2 justify-end items-center gap-x-2">
+        {rootLocations && rootLocations.length > 0 && (
+          <div className="flex-row-1 items-center gap-x-1 hidden sm:flex">
+            <Button
+              onClick={() => setIsLocationPickerOpen(true)}
+              color="neutral"
+              coloringStyle="outline"
+              className="min-w-40"
+            >
+              {selectedRootLocations.length > 0
+                ? selectedRootLocations.length === 1
+                  ? firstSelectedRootLocation?.title
+                  : selectedRootLocations.length === 2
+                    ? `${selectedRootLocations[0]?.title ?? ''}, ${selectedRootLocations[1]?.title ?? ''}`
+                    : `${selectedRootLocations[0]?.title ?? ''} +${selectedRootLocations.length - 1}`
+                : translation('selectLocation') || 'Select Location'}
+            </Button>
+            <LocationSelectionDialog
+              isOpen={isLocationPickerOpen}
+              onClose={() => setIsLocationPickerOpen(false)}
+              onSelect={handleRootLocationSelect}
+              initialSelectedIds={selectedRootLocationIds || []}
+              multiSelect={true}
+              useCase="root"
+            />
+          </div>
+        )}
         <div className="flex-row-0">
           <Notifications />
         </div>
@@ -342,89 +430,89 @@ export const Sidebar = ({ isOpen, onClose, ...props }: SidebarProps) => {
             {context?.totalPatientsCount !== undefined && (<span className="text-description">{context.totalPatientsCount}</span>)}
           </SidebarLink>
 
-          <Expandable
-            label={(
-              <div className="flex-row-2">
-                <Users className="size-5" />
-                {translation('teams')}
-              </div>
-            )}
-            headerClassName="!px-2.5 !py-1.5 hover:bg-black/30"
-            contentClassName="!px-0 !pb-0 gap-y-0"
-            className="!shadow-none"
-            isExpanded={context.sidebar.isShowingTeams}
-            onChange={isExpanded => context.update(prevState => ({
-              ...prevState,
-              sidebar: {
-                ...prevState.sidebar,
-                isShowingTeams: isExpanded,
-              }
-            }))}
-          >
-            {!context?.teams ? (
-              <LoadingContainer className="w-full h-10" />
-            ) : context.teams.map(team => (
-              <SidebarLink key={team.id} href={`${locationRoute}/${team.id}`} className="pl-9.5" onClick={onClose}>
-                {team.title}
-              </SidebarLink>
-            ))}
-          </Expandable>
+          {context?.teams && context.teams.length > 0 && (
+            <Expandable
+              label={(
+                <div className="flex-row-2">
+                  <Users className="size-5" />
+                  {translation('teams')}
+                </div>
+              )}
+              headerClassName="!px-2.5 !py-1.5 hover:bg-black/30"
+              contentClassName="!px-0 !pb-0 gap-y-0"
+              className="!shadow-none"
+              isExpanded={context.sidebar.isShowingTeams}
+              onChange={isExpanded => context.update(prevState => ({
+                ...prevState,
+                sidebar: {
+                  ...prevState.sidebar,
+                  isShowingTeams: isExpanded,
+                }
+              }))}
+            >
+              {context.teams.map(team => (
+                <SidebarLink key={team.id} href={`${locationRoute}/${team.id}`} className="pl-9.5" onClick={onClose}>
+                  {team.title}
+                </SidebarLink>
+              ))}
+            </Expandable>
+          )}
 
-          <Expandable
-            label={(
-              <div className="flex-row-2">
-                <Building2 className="size-5" />
-                {translation('wards')}
-              </div>
-            )}
-            headerClassName="!px-2.5 !py-1.5 hover:bg-black/30"
-            contentClassName="!px-0 !pb-0 gap-y-0"
-            className="!shadow-none"
-            isExpanded={context.sidebar.isShowingWards}
-            onChange={isExpanded => context.update(prevState => ({
-              ...prevState,
-              sidebar: {
-                ...prevState.sidebar,
-                isShowingWards: isExpanded,
-              }
-            }))}
-          >
-            {!context?.wards ? (
-              <LoadingContainer className="w-full h-10" />
-            ) : context.wards.map(ward => (
-              <SidebarLink key={ward.id} href={`${locationRoute}/${ward.id}`} className="pl-9.5" onClick={onClose}>
-                {ward.title}
-              </SidebarLink>
-            ))}
-          </Expandable>
+          {context?.wards && context.wards.length > 0 && (
+            <Expandable
+              label={(
+                <div className="flex-row-2">
+                  <Building2 className="size-5" />
+                  {translation('wards')}
+                </div>
+              )}
+              headerClassName="!px-2.5 !py-1.5 hover:bg-black/30"
+              contentClassName="!px-0 !pb-0 gap-y-0"
+              className="!shadow-none"
+              isExpanded={context.sidebar.isShowingWards}
+              onChange={isExpanded => context.update(prevState => ({
+                ...prevState,
+                sidebar: {
+                  ...prevState.sidebar,
+                  isShowingWards: isExpanded,
+                }
+              }))}
+            >
+              {context.wards.map(ward => (
+                <SidebarLink key={ward.id} href={`${locationRoute}/${ward.id}`} className="pl-9.5" onClick={onClose}>
+                  {ward.title}
+                </SidebarLink>
+              ))}
+            </Expandable>
+          )}
 
-          <Expandable
-            label={(
-              <div className="flex-row-2">
-                <Hospital className="size-5" />
-                {translation('clinics')}
-              </div>
-            )}
-            headerClassName="!px-2.5 !py-1.5 hover:bg-black/30"
-            contentClassName="!px-0 !pb-0 gap-y-0"
-            className="!shadow-none"
-            isExpanded={context.sidebar.isShowingClinics}
-            onChange={isExpanded => context.update(prevState => ({
-              ...prevState,
-              sidebar: {
-                ...prevState.sidebar,
-                isShowingClinics: isExpanded,
-              }
-            }))}
-          >
-            {!context?.clinics ? (
-              <LoadingContainer className="w-full h-10" />
-            ) : context.clinics.map(clinic => (
-              <SidebarLink key={clinic.id} href={`${locationRoute}/${clinic.id}`} className="pl-9.5" onClick={onClose}>
-                {clinic.title}
-              </SidebarLink>
-            ))}
-          </Expandable>
+          {context?.clinics && context.clinics.length > 0 && (
+            <Expandable
+              label={(
+                <div className="flex-row-2">
+                  <Hospital className="size-5" />
+                  {translation('clinics')}
+                </div>
+              )}
+              headerClassName="!px-2.5 !py-1.5 hover:bg-black/30"
+              contentClassName="!px-0 !pb-0 gap-y-0"
+              className="!shadow-none"
+              isExpanded={context.sidebar.isShowingClinics}
+              onChange={isExpanded => context.update(prevState => ({
+                ...prevState,
+                sidebar: {
+                  ...prevState.sidebar,
+                  isShowingClinics: isExpanded,
+                }
+              }))}
+            >
+              {context.clinics.map(clinic => (
+                <SidebarLink key={clinic.id} href={`${locationRoute}/${clinic.id}`} className="pl-9.5" onClick={onClose}>
+                  {clinic.title}
+                </SidebarLink>
+              ))}
+            </Expandable>
+          )}
         </nav>
       </aside>
     </>
