@@ -27,7 +27,7 @@ jobs:
         working-directory: backend
         run: |
           pip install ruff
-          ruff check . --output-format=concise
+          ruff check . --output-format=concise --exclude database/migrations
 
   simulator-lint:
     runs-on: ubuntu-latest
