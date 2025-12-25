@@ -197,15 +197,13 @@ export const SurveyModal = () => {
   )
 }
 
-
-type HeaderProps = HTMLAttributes<HTMLHeadElement> & {
-  onMenuClick?: () => void,
-  isMenuOpen?: boolean,
+type RootLocationSelectorProps = {
+  className?: string,
+  onSelect?: () => void,
 }
 
-export const Header = ({ onMenuClick, isMenuOpen, ...props }: HeaderProps) => {
-  const router = useRouter()
-  const { user, rootLocations, selectedRootLocationIds, update } = useTasksContext()
+const RootLocationSelector = ({ className, onSelect }: RootLocationSelectorProps) => {
+  const { rootLocations, selectedRootLocationIds, update } = useTasksContext()
   const translation = useTasksTranslation()
   const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false)
   const [selectedLocationsCache, setSelectedLocationsCache] = useState<Array<{ id: string, title: string, kind?: string }>>([])
@@ -267,7 +265,50 @@ export const Header = ({ onMenuClick, isMenuOpen, ...props }: HeaderProps) => {
       }
     })
     setIsLocationPickerOpen(false)
+    onSelect?.()
   }
+
+  if (!rootLocations || rootLocations.length === 0) {
+    return null
+  }
+
+  return (
+    <div className={clsx('flex-row-1 items-center gap-x-1', className)}>
+      <Button
+        onClick={() => setIsLocationPickerOpen(true)}
+        color="neutral"
+        coloringStyle="outline"
+        className="min-w-40 w-full"
+      >
+        {selectedRootLocations.length > 0
+          ? selectedRootLocations.length === 1
+            ? firstSelectedRootLocation?.title
+            : selectedRootLocations.length === 2
+              ? `${selectedRootLocations[0]?.title ?? ''}, ${selectedRootLocations[1]?.title ?? ''}`
+              : `${selectedRootLocations[0]?.title ?? ''} +${selectedRootLocations.length - 1}`
+          : translation('selectLocation') || 'Select Location'}
+      </Button>
+      <LocationSelectionDialog
+        isOpen={isLocationPickerOpen}
+        onClose={() => setIsLocationPickerOpen(false)}
+        onSelect={handleRootLocationSelect}
+        initialSelectedIds={selectedRootLocationIds || []}
+        multiSelect={true}
+        useCase="root"
+      />
+    </div>
+  )
+}
+
+type HeaderProps = HTMLAttributes<HTMLHeadElement> & {
+  onMenuClick?: () => void,
+  isMenuOpen?: boolean,
+}
+
+export const Header = ({ onMenuClick, isMenuOpen, ...props }: HeaderProps) => {
+  const router = useRouter()
+  const { user } = useTasksContext()
+
   return (
     <header
       {...props}
@@ -288,32 +329,7 @@ export const Header = ({ onMenuClick, isMenuOpen, ...props }: HeaderProps) => {
         </Button>
       </div>
       <div className="flex-row-2 justify-end items-center gap-x-2">
-        {rootLocations && rootLocations.length > 0 && (
-          <div className="flex-row-1 items-center gap-x-1 hidden sm:flex">
-            <Button
-              onClick={() => setIsLocationPickerOpen(true)}
-              color="neutral"
-              coloringStyle="outline"
-              className="min-w-40"
-            >
-              {selectedRootLocations.length > 0
-                ? selectedRootLocations.length === 1
-                  ? firstSelectedRootLocation?.title
-                  : selectedRootLocations.length === 2
-                    ? `${selectedRootLocations[0]?.title ?? ''}, ${selectedRootLocations[1]?.title ?? ''}`
-                    : `${selectedRootLocations[0]?.title ?? ''} +${selectedRootLocations.length - 1}`
-                : translation('selectLocation') || 'Select Location'}
-            </Button>
-            <LocationSelectionDialog
-              isOpen={isLocationPickerOpen}
-              onClose={() => setIsLocationPickerOpen(false)}
-              onSelect={handleRootLocationSelect}
-              initialSelectedIds={selectedRootLocationIds || []}
-              multiSelect={true}
-              useCase="root"
-            />
-          </div>
-        )}
+        <RootLocationSelector className="hidden sm:flex" />
         <div className="flex-row-0">
           <Notifications />
         </div>
@@ -389,10 +405,11 @@ export const Sidebar = ({ isOpen, onClose, ...props }: SidebarProps) => {
             ? 'left-0 translate-x-0 lg:translate-x-0'
             : '-left-full lg:left-0 translate-x-0 lg:translate-x-0',
           !isOpen && 'pointer-events-none lg:pointer-events-auto',
+          'flex flex-col',
           props.className
         )}
       >
-        <nav className="flex-col-2 overflow-auto">
+        <nav className="flex-col-2 overflow-auto flex-1">
           <div className="flex items-center justify-between mb-8">
             <Link href="/" className="flex-row-1 text-primary items-center rounded-lg p-2" onClick={onClose}>
               <TasksLogo />
@@ -514,6 +531,9 @@ export const Sidebar = ({ isOpen, onClose, ...props }: SidebarProps) => {
             </Expandable>
           )}
         </nav>
+        <div className="mt-auto pt-4 border-t border-on-surface/20 sm:hidden">
+          <RootLocationSelector onSelect={onClose} />
+        </div>
       </aside>
     </>
   )

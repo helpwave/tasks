@@ -9,6 +9,7 @@ import { TaskDetailView } from '@/components/tasks/TaskDetailView'
 import { PatientDetailView } from '@/components/patients/PatientDetailView'
 import { LocationChips } from '@/components/patients/LocationChips'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
+import { useTasksContext } from '@/hooks/useTasksContext'
 import type { ColumnDef } from '@tanstack/table-core'
 
 export type TaskViewModel = {
@@ -63,6 +64,7 @@ const isCloseToDueDate = (dueDate: Date | undefined, done: boolean): boolean => 
 
 export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initialTasks, onRefetch, showAssignee = false, initialTaskId, onInitialTaskOpened }, ref) => {
   const translation = useTasksTranslation()
+  const { totalPatientsCount } = useTasksContext()
   const { mutate: completeTask } = useCompleteTaskMutation({ onSuccess: onRefetch })
   const { mutate: reopenTask } = useReopenTaskMutation({ onSuccess: onRefetch })
 
@@ -71,9 +73,13 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
   const [searchQuery, setSearchQuery] = useState('')
   const [openedTaskId, setOpenedTaskId] = useState<string | null>(null)
 
+  const hasPatients = (totalPatientsCount ?? 0) > 0
+
   useImperativeHandle(ref, () => ({
     openCreate: () => {
-      setTaskDialogState({ isOpen: true })
+      if (hasPatients) {
+        setTaskDialogState({ isOpen: true })
+      }
     },
     openTask: (taskId: string) => {
       setTaskDialogState({ isOpen: true, taskId })
@@ -268,6 +274,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
           startIcon={<PlusIcon/>}
           onClick={() => setTaskDialogState({ isOpen: true })}
           className="w-full sm:w-auto min-w-[13rem]"
+          disabled={!hasPatients}
         >
           {translation('addTask')}
         </Button>
