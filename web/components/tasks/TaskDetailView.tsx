@@ -215,90 +215,6 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
     <div className="flex flex-col h-full bg-surface">
       <div className="flex-grow overflow-hidden flex flex-col">
         <TabView className="h-full flex flex-col">
-          {isEditMode && (
-            <Tab label={translation('properties')} className="h-full overflow-y-auto pr-2">
-              <div className="flex flex-col gap-4 pt-4">
-                <PropertyList
-                  subjectId={taskId!}
-                  subjectType="task"
-                  propertyValues={taskData?.task?.properties?.map(p => ({
-                    definition: {
-                      id: p.definition.id,
-                      name: p.definition.name,
-                      description: p.definition.description,
-                      fieldType: p.definition.fieldType,
-                      isActive: p.definition.isActive,
-                      allowedEntities: p.definition.allowedEntities,
-                      options: p.definition.options,
-                    },
-                    textValue: p.textValue,
-                    numberValue: p.numberValue,
-                    booleanValue: p.booleanValue,
-                    dateValue: p.dateValue,
-                    dateTimeValue: p.dateTimeValue,
-                    selectValue: p.selectValue,
-                    multiSelectValues: p.multiSelectValues,
-                  }))}
-                  onPropertyValueChange={(definitionId, value) => {
-                    const existingProperties = taskData?.task?.properties?.map(p => ({
-                      definitionId: p.definition.id,
-                      textValue: p.textValue,
-                      numberValue: p.numberValue,
-                      booleanValue: p.booleanValue,
-                      dateValue: p.dateValue,
-                      dateTimeValue: p.dateTimeValue,
-                      selectValue: p.selectValue,
-                      multiSelectValues: p.multiSelectValues,
-                    })) || []
-
-                    const propertyExists = existingProperties.some(p => p.definitionId === definitionId)
-
-                    const isValueEmpty = (!value.textValue || value.textValue.trim() === '') &&
-                      (value.numberValue === undefined || value.numberValue === null) &&
-                      (value.boolValue === undefined || value.boolValue === null) &&
-                      !value.dateValue &&
-                      !value.dateTimeValue &&
-                      (!value.singleSelectValue || value.singleSelectValue.trim() === '') &&
-                      (!value.multiSelectValue || (Array.isArray(value.multiSelectValue) && value.multiSelectValue.length === 0))
-
-                    if (isValueEmpty && propertyExists) {
-                      const updatedProperties = existingProperties.filter(p => p.definitionId !== definitionId)
-
-                      updateTask({
-                        id: taskId!,
-                        data: {
-                          properties: updatedProperties,
-                        },
-                      })
-                    } else if (!isValueEmpty || !propertyExists) {
-                      const propertyInput: PropertyValueInput = {
-                        definitionId,
-                        textValue: value.textValue || null,
-                        numberValue: value.numberValue ?? null,
-                        booleanValue: value.boolValue ?? null,
-                        dateValue: value.dateValue && !isNaN(value.dateValue.getTime()) ? value.dateValue.toISOString().split('T')[0] : null,
-                        dateTimeValue: value.dateTimeValue && !isNaN(value.dateTimeValue.getTime()) ? value.dateTimeValue.toISOString() : null,
-                        selectValue: value.singleSelectValue || null,
-                        multiSelectValues: (value.multiSelectValue && value.multiSelectValue.length > 0) ? value.multiSelectValue : null,
-                      }
-
-                      const updatedProperties = [
-                        ...existingProperties.filter(p => p.definitionId !== definitionId),
-                        propertyInput,
-                      ]
-
-                      updateTask({
-                        id: taskId!,
-                        data: {
-                          properties: updatedProperties,
-                        },
-                      })
-                    }
-                  }}
-                />
-              </div>
-            </Tab>
-          )}
           <Tab label={translation('overview')} className="h-full overflow-y-auto pr-2">
             <div className="flex flex-col gap-6 pt-4 pb-24">
               <div className="flex items-center gap-3 ml-4">
@@ -455,6 +371,91 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
               )}
             </div>
           </Tab>
+          {isEditMode && (
+            <Tab label={translation('properties')} className="h-full overflow-y-auto pr-2">
+              <div className="flex flex-col gap-4 pt-4">
+                <PropertyList
+                  subjectId={taskId!}
+                  subjectType="task"
+                  fullWidthAddButton={true}
+                  propertyValues={taskData?.task?.properties?.map(p => ({
+                    definition: {
+                      id: p.definition.id,
+                      name: p.definition.name,
+                      description: p.definition.description,
+                      fieldType: p.definition.fieldType,
+                      isActive: p.definition.isActive,
+                      allowedEntities: p.definition.allowedEntities,
+                      options: p.definition.options,
+                    },
+                    textValue: p.textValue,
+                    numberValue: p.numberValue,
+                    booleanValue: p.booleanValue,
+                    dateValue: p.dateValue,
+                    dateTimeValue: p.dateTimeValue,
+                    selectValue: p.selectValue,
+                    multiSelectValues: p.multiSelectValues,
+                  }))}
+                  onPropertyValueChange={(definitionId, value) => {
+                    const existingProperties = taskData?.task?.properties?.map(p => ({
+                      definitionId: p.definition.id,
+                      textValue: p.textValue,
+                      numberValue: p.numberValue,
+                      booleanValue: p.booleanValue,
+                      dateValue: p.dateValue,
+                      dateTimeValue: p.dateTimeValue,
+                      selectValue: p.selectValue,
+                      multiSelectValues: p.multiSelectValues,
+                    })) || []
+
+                    const propertyExists = existingProperties.some(p => p.definitionId === definitionId)
+
+                    const isValueEmpty = (!value.textValue || value.textValue.trim() === '') &&
+                      (value.numberValue === undefined || value.numberValue === null) &&
+                      (value.boolValue === undefined || value.boolValue === null) &&
+                      !value.dateValue &&
+                      !value.dateTimeValue &&
+                      (!value.singleSelectValue || value.singleSelectValue.trim() === '') &&
+                      (!value.multiSelectValue || (Array.isArray(value.multiSelectValue) && value.multiSelectValue.length === 0))
+
+                    if (isValueEmpty && propertyExists) {
+                      const updatedProperties = existingProperties.filter(p => p.definitionId !== definitionId)
+
+                      updateTask({
+                        id: taskId!,
+                        data: {
+                          properties: updatedProperties,
+                        },
+                      })
+                    } else if (!isValueEmpty || !propertyExists) {
+                      const propertyInput: PropertyValueInput = {
+                        definitionId,
+                        textValue: value.textValue || null,
+                        numberValue: value.numberValue ?? null,
+                        booleanValue: value.boolValue ?? null,
+                        dateValue: value.dateValue && !isNaN(value.dateValue.getTime()) ? value.dateValue.toISOString().split('T')[0] : null,
+                        dateTimeValue: value.dateTimeValue && !isNaN(value.dateTimeValue.getTime()) ? value.dateTimeValue.toISOString() : null,
+                        selectValue: value.singleSelectValue || null,
+                        multiSelectValues: (value.multiSelectValue && value.multiSelectValue.length > 0) ? value.multiSelectValue : null,
+                      }
+
+                      const updatedProperties = [
+                        ...existingProperties.filter(p => p.definitionId !== definitionId),
+                        propertyInput,
+                      ]
+
+                      updateTask({
+                        id: taskId!,
+                        data: {
+                          properties: updatedProperties,
+                        },
+                      })
+                    }
+                  }}
+                />
+              </div>
+            </Tab>
+          )}
         </TabView>
       </div>
 

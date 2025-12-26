@@ -708,6 +708,7 @@ export const PatientDetailView = ({
                 <PropertyList
                   subjectId={patientId!}
                   subjectType="patient"
+                  fullWidthAddButton={true}
                   propertyValues={patientData?.patient?.properties?.map(p => ({
                     definition: {
                       id: p.definition.id,

@@ -1,6 +1,6 @@
-import { LoadingAndErrorComponent, LoadingAnimation, Menu, MenuItem, ConfirmDialog } from '@helpwave/hightide'
+import { LoadingAndErrorComponent, LoadingAnimation, Menu, MenuItem, ConfirmDialog, Button } from '@helpwave/hightide'
 import { Plus } from 'lucide-react'
-import { useMemo, useState, useEffect } from 'react'
+import React, { useMemo, useState, useEffect } from 'react'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { PropertyEntry } from '@/components/PropertyEntry'
 import { useGetPropertyDefinitionsQuery, FieldType, PropertyEntity } from '@/api/gql/generated'
@@ -218,6 +218,7 @@ export type PropertyListProps = {
     multiSelectValues?: string[] | null,
   }>,
   onPropertyValueChange?: (definitionId: string, value: PropertyValue) => void,
+  fullWidthAddButton?: boolean,
 }
 
 const mapFieldTypeFromBackend = (fieldType: FieldType): PropertyFieldType => {
@@ -242,7 +243,8 @@ export const PropertyList = ({
   subjectId,
   subjectType,
   propertyValues = [],
-  onPropertyValueChange
+  onPropertyValueChange,
+  fullWidthAddButton = false,
 }: PropertyListProps) => {
   const translation = useTasksTranslation()
 
@@ -397,71 +399,151 @@ export const PropertyList = ({
             />
           )
         })}
-        {availableProperties.length > 0 && (
-          <Menu<HTMLDivElement>
-            trigger={({ toggleOpen }, ref) => (
-              <div
-                ref={ref}
-                className="flex-row-4 px-4 py-2 items-center border-2 border-dashed bg-property-title-background text-property-title-text hover:border-primary rounded-xl cursor-pointer"
-                onClick={toggleOpen}
+        {fullWidthAddButton && (
+          <div className="w-full">
+            {availableProperties.length > 0 ? (
+              <Menu<HTMLButtonElement>
+                trigger={({ toggleOpen }, ref) => (
+                  <Button
+                    ref={ref}
+                    startIcon={<Plus size={20} />}
+                    onClick={toggleOpen}
+                    className="w-full"
+                  >
+                    {translation('addProperty')}
+                  </Button>
+                )}
+                menuClassName="min-w-[200px] p-2 "
+                alignmentVertical="topOutside"
               >
-                <Plus size={20} />
-                <span>{translation('addProperty')}</span>
-              </div>
-            )}
-            menuClassName="min-w-[200px] p-2 "
-            alignmentVertical="topOutside"
-          >
-            {({ close }) => (
-              <LoadingAndErrorComponent
-                isLoading={isLoading}
-                hasError={isError}
-                loadingComponent={<LoadingAnimation classname="min-h-20" />}
-              >
-                {availableProperties
-                  .filter(prop => !attachedProperties.some(attached => attached.property.id === prop.id))
-                  .map(property => {
-                    const getDefaultValue = (): PropertyValue => {
-                      switch (property.fieldType) {
-                        case 'text':
-                          return { textValue: '' }
-                        case 'number':
-                          return { numberValue: undefined }
-                        case 'checkbox':
-                          return { boolValue: false }
-                        case 'date':
-                        case 'dateTime':
-                          return {}
-                        case 'singleSelect':
-                          return property.selectData?.options && property.selectData.options.length > 0
-                            ? { singleSelectValue: property.selectData.options[0]?.id || undefined }
-                            : {}
-                        case 'multiSelect':
-                          return { multiSelectValue: [] }
-                        default:
-                          return {}
+              {({ close }) => (
+                <LoadingAndErrorComponent
+                  isLoading={isLoading}
+                  hasError={isError}
+                  loadingComponent={<LoadingAnimation classname="min-h-20" />}
+                >
+                  {availableProperties
+                    .filter(prop => !attachedProperties.some(attached => attached.property.id === prop.id))
+                    .map(property => {
+                      const getDefaultValue = (): PropertyValue => {
+                        switch (property.fieldType) {
+                          case 'text':
+                            return { textValue: '' }
+                          case 'number':
+                            return { numberValue: undefined }
+                          case 'checkbox':
+                            return { boolValue: false }
+                          case 'date':
+                          case 'dateTime':
+                            return {}
+                          case 'singleSelect':
+                            return property.selectData?.options && property.selectData.options.length > 0
+                              ? { singleSelectValue: property.selectData.options[0]?.id || undefined }
+                              : {}
+                          case 'multiSelect':
+                            return { multiSelectValue: [] }
+                          default:
+                            return {}
+                        }
                       }
-                    }
 
-                    return (
-                      <MenuItem
-                        key={property.id}
-                        onClick={() => {
-                          if (onPropertyValueChange) {
-                            const defaultValue = getDefaultValue()
-                            onPropertyValueChange(property.id, defaultValue)
-                          }
-                          close()
-                        }}
-                        className="rounded-md cursor-pointer"
-                      >
-                        {property.name}
-                      </MenuItem>
-                    )
-                  })}
-              </LoadingAndErrorComponent>
+                      return (
+                        <MenuItem
+                          key={property.id}
+                          onClick={() => {
+                            if (onPropertyValueChange) {
+                              const defaultValue = getDefaultValue()
+                              onPropertyValueChange(property.id, defaultValue)
+                            }
+                            close()
+                          }}
+                          className="rounded-md cursor-pointer"
+                        >
+                          {property.name}
+                        </MenuItem>
+                      )
+                    })}
+                </LoadingAndErrorComponent>
+              )}
+              </Menu>
+            ) : (
+              <Button
+                startIcon={<Plus size={20} />}
+                disabled={true}
+                className="w-full"
+              >
+                {translation('addProperty')}
+              </Button>
             )}
-          </Menu>
+          </div>
+        )}
+        {!fullWidthAddButton && (
+          availableProperties.length > 0 && (
+            <Menu<HTMLDivElement>
+              trigger={({ toggleOpen }, ref) => (
+                <div
+                  ref={ref as React.RefObject<HTMLDivElement>}
+                  className="flex-row-4 px-4 py-2 items-center border-2 border-dashed bg-property-title-background text-property-title-text hover:border-primary rounded-xl cursor-pointer"
+                  onClick={toggleOpen}
+                >
+                  <Plus size={20} />
+                  <span>{translation('addProperty')}</span>
+                </div>
+              )}
+              menuClassName="min-w-[200px] p-2 "
+              alignmentVertical="topOutside"
+            >
+              {({ close }) => (
+                <LoadingAndErrorComponent
+                  isLoading={isLoading}
+                  hasError={isError}
+                  loadingComponent={<LoadingAnimation classname="min-h-20" />}
+                >
+                  {availableProperties
+                    .filter(prop => !attachedProperties.some(attached => attached.property.id === prop.id))
+                    .map(property => {
+                      const getDefaultValue = (): PropertyValue => {
+                        switch (property.fieldType) {
+                          case 'text':
+                            return { textValue: '' }
+                          case 'number':
+                            return { numberValue: undefined }
+                          case 'checkbox':
+                            return { boolValue: false }
+                          case 'date':
+                          case 'dateTime':
+                            return {}
+                          case 'singleSelect':
+                            return property.selectData?.options && property.selectData.options.length > 0
+                              ? { singleSelectValue: property.selectData.options[0]?.id || undefined }
+                              : {}
+                          case 'multiSelect':
+                            return { multiSelectValue: [] }
+                          default:
+                            return {}
+                        }
+                      }
+
+                      return (
+                        <MenuItem
+                          key={property.id}
+                          onClick={() => {
+                            if (onPropertyValueChange) {
+                              const defaultValue = getDefaultValue()
+                              onPropertyValueChange(property.id, defaultValue)
+                            }
+                            close()
+                          }}
+                          className="rounded-md cursor-pointer"
+                        >
+                          {property.name}
+                        </MenuItem>
+                      )
+                    })}
+                </LoadingAndErrorComponent>
+              )}
+            </Menu>
+          )
         )}
       </div>
       <ConfirmDialog

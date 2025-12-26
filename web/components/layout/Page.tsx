@@ -249,10 +249,18 @@ const RootLocationSelector = ({ className, onSelect }: RootLocationSelectorProps
     }
   }, [rootLocations, selectedRootLocationIds, locationsData])
 
+  // Auto-open dialog if no location is selected
+  useEffect(() => {
+    if (rootLocations && rootLocations.length > 0 && (!selectedRootLocationIds || selectedRootLocationIds.length === 0)) {
+      setIsLocationPickerOpen(true)
+    }
+  }, [rootLocations, selectedRootLocationIds])
+
   const selectedRootLocations = selectedLocationsCache.length > 0
     ? selectedLocationsCache
     : (rootLocations?.filter(loc => selectedRootLocationIds?.includes(loc.id)) || [])
   const firstSelectedRootLocation = selectedRootLocations[0]
+  const hasNoLocationSelected = !selectedRootLocationIds || selectedRootLocationIds.length === 0
 
   const handleRootLocationSelect = (locations: Array<{ id: string, title: string, kind?: string }>) => {
     if (locations.length === 0) return
@@ -276,7 +284,7 @@ const RootLocationSelector = ({ className, onSelect }: RootLocationSelectorProps
     <div className={clsx('flex-row-1 items-center gap-x-1', className)}>
       <Button
         onClick={() => setIsLocationPickerOpen(true)}
-        color="neutral"
+        color={hasNoLocationSelected ? 'negative' : 'neutral'}
         coloringStyle="outline"
         className="min-w-40 w-full"
       >
