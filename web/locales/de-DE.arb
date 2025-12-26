@@ -80,6 +80,46 @@
       }
     }
   },
+  "dashboardWelcomeMorning": "Guten Morgen, {name}",
+  "@dashboardWelcomeMorning": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "dashboardWelcomeNoon": "Guten Mittag, {name}",
+  "@dashboardWelcomeNoon": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "dashboardWelcomeAfternoon": "Guten Nachmittag, {name}",
+  "@dashboardWelcomeAfternoon": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "dashboardWelcomeEvening": "Guten Abend, {name}",
+  "@dashboardWelcomeEvening": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "dashboardWelcomeNight": "Gute Nacht, {name}",
+  "@dashboardWelcomeNight": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
   "taskStatus": "{status, select, overdue{Überfällig} upcoming{Anstehend} done{Fertig} other{-}}",
   "@taskStatus": {
     "placeholders": {
@@ -270,6 +310,7 @@
   "chooseLanguage": "Sprache wählen",
   "chooseTheme": "Design wählen",
   "done": "Fertig",
+  "showDone": "Erledigte anzeigen",
   "profile": "Profil",
   "patientData": "Daten",
   "clickToAdd": "Klicken um hinzuzufügen",

@@ -6,14 +6,16 @@ import {
   useCreateTaskMutation,
   useDeleteTaskMutation,
   useGetPatientsQuery,
+  useGetPropertyDefinitionsQuery,
   useGetTaskQuery,
   useGetUsersQuery,
   useUnassignTaskMutation,
-  useUpdateTaskMutation
+  useUpdateTaskMutation,
+  PropertyEntity
 } from '@/api/gql/generated'
 import {
   Button,
-  CheckboxUncontrolled,
+  Checkbox,
   ConfirmDialog,
   DateTimeInput,
   FormElementWrapper,
@@ -75,6 +77,15 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
       refetchOnWindowFocus: true,
     }
   )
+
+  const { data: propertyDefinitionsData } = useGetPropertyDefinitionsQuery()
+
+  const hasAvailableProperties = useMemo(() => {
+    if (!propertyDefinitionsData?.propertyDefinitions) return false
+    return propertyDefinitionsData.propertyDefinitions.some(
+      def => def.isActive && def.allowedEntities.includes(PropertyEntity.Task)
+    )
+  }, [propertyDefinitionsData])
 
   const { mutate: createTask, isLoading: isCreating } = useCreateTaskMutation({
     onSuccess: () => {
@@ -219,7 +230,7 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
             <div className="flex flex-col gap-6 pt-4 pb-24">
               <div className="flex items-center gap-3 ml-4">
                 {isEditMode && (
-                  <CheckboxUncontrolled
+                  <Checkbox
                     id="task-done"
                     checked={formData.done || false}
                     onCheckedChange={(checked) => {
@@ -371,7 +382,7 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
               )}
             </div>
           </Tab>
-          {isEditMode && (
+          {isEditMode && hasAvailableProperties && (
             <Tab label={translation('properties')} className="h-full overflow-y-auto pr-2">
               <div className="flex flex-col gap-4 pt-4">
                 <PropertyList

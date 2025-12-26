@@ -31,6 +31,15 @@ const isCloseToDueDate = (dueDate: Date | undefined | null, done: boolean): bool
   return dueTime > now && dueTime - now <= oneHour
 }
 
+const getGreetingKey = (): string => {
+  const hour = new Date().getHours()
+  if (hour >= 6 && hour < 12) return 'dashboardWelcomeMorning'
+  if (hour >= 12 && hour < 14) return 'dashboardWelcomeNoon'
+  if (hour >= 14 && hour < 18) return 'dashboardWelcomeAfternoon'
+  if (hour >= 18 && hour < 23) return 'dashboardWelcomeEvening'
+  return 'dashboardWelcomeNight'
+}
+
 const Dashboard: NextPage = () => {
   const translation = useTasksTranslation()
   const { user, myTasksCount, totalPatientsCount } = useTasksContext()
@@ -192,7 +201,7 @@ const Dashboard: NextPage = () => {
             image={user?.avatarUrl ? { avatarUrl: user.avatarUrl, alt: user.name } : undefined}
           />
           <div className="flex-col-1">
-            <h1 className="typography-title-lg">{translation('dashboardWelcome', { name: user?.name ?? '' })}</h1>
+            <h1 className="typography-title-lg">{translation(getGreetingKey() as 'dashboardWelcomeMorning' | 'dashboardWelcomeNoon' | 'dashboardWelcomeAfternoon' | 'dashboardWelcomeEvening' | 'dashboardWelcomeNight', { name: user?.name ?? '' })}</h1>
             <p className="typography-body text-description">{translation('dashboardWelcomeDescription')}</p>
           </div>
         </div>

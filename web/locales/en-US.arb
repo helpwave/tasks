@@ -80,6 +80,46 @@
       }
     }
   },
+  "dashboardWelcomeMorning": "Good Morning, {name}",
+  "@dashboardWelcomeMorning": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "dashboardWelcomeNoon": "Good Afternoon, {name}",
+  "@dashboardWelcomeNoon": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "dashboardWelcomeAfternoon": "Good Afternoon, {name}",
+  "@dashboardWelcomeAfternoon": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "dashboardWelcomeEvening": "Good Evening, {name}",
+  "@dashboardWelcomeEvening": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "dashboardWelcomeNight": "Good Night, {name}",
+  "@dashboardWelcomeNight": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
   "taskStatus": "{status, select, overdue{Overdue} upcoming{Upcoming} done{Done} other{-}}",
   "@taskStatus": {
     "placeholders": {
@@ -270,6 +310,7 @@
   "chooseLanguage": "Choose Language",
   "chooseTheme": "Choose Theme",
   "done": "Done",
+  "showDone": "Show done",
   "patientData": "Data",
   "clickToAdd": "Click to add",
   "rClickToAdd": "Click to add {name}",
