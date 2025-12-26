@@ -1,6 +1,6 @@
 import { useMemo, useState, forwardRef, useImperativeHandle, useEffect } from 'react'
 import { Table, Chip, FillerRowElement, Button, SearchBar, ProgressIndicator, Tooltip } from '@helpwave/hightide'
-import { PlusIcon } from 'lucide-react'
+import { PlusIcon, Table as TableIcon, LayoutGrid } from 'lucide-react'
 import { useGetPatientsQuery, Sex, type GetPatientsQuery, type TaskType, type PatientState } from '@/api/gql/generated'
 import { SidePanel } from '@/components/layout/SidePanel'
 import { PatientDetailView } from '@/components/patients/PatientDetailView'
@@ -9,9 +9,11 @@ import { LocationChips } from '@/components/patients/LocationChips'
 import { PatientStateChip } from '@/components/patients/PatientStateChip'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { useTasksContext } from '@/hooks/useTasksContext'
+import { usePatientViewToggle } from '@/hooks/useViewToggle'
+import { PatientCardView } from '@/components/patients/PatientCardView'
 import type { ColumnDef } from '@tanstack/table-core'
 
-type PatientViewModel = {
+export type PatientViewModel = {
   id: string,
   name: string,
   firstname: string,
@@ -40,6 +42,7 @@ type PatientListProps = {
 export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ locationId, initialPatientId, onInitialPatientOpened, acceptedStates }, ref) => {
   const translation = useTasksTranslation()
   const { selectedRootLocationIds } = useTasksContext()
+  const { viewType, toggleView } = usePatientViewToggle()
   const [isPanelOpen, setIsPanelOpen] = useState(false)
   const [selectedPatient, setSelectedPatient] = useState<PatientViewModel | undefined>(undefined)
   const [searchQuery, setSearchQuery] = useState('')
@@ -241,26 +244,66 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ locat
             onSearch={() => null}
           />
         </div>
-        <Button
-          startIcon={<PlusIcon />}
-          onClick={() => {
-            setSelectedPatient(undefined)
-            setIsPanelOpen(true)
-          }}
-          className="w-full sm:w-auto min-w-[13rem]"
-        >
-          {translation('addPatient')}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Tooltip tooltip="Table View" position="top">
+            <Button
+              layout="icon"
+              color={viewType === 'table' ? 'primary' : 'neutral'}
+              coloringStyle={viewType === 'table' ? undefined : 'text'}
+              onClick={() => toggleView('table')}
+            >
+              <TableIcon className="size-5" />
+            </Button>
+          </Tooltip>
+          <Tooltip tooltip="Card View" position="top">
+            <Button
+              layout="icon"
+              color={viewType === 'card' ? 'primary' : 'neutral'}
+              coloringStyle={viewType === 'card' ? undefined : 'text'}
+              onClick={() => toggleView('card')}
+            >
+              <LayoutGrid className="size-5" />
+            </Button>
+          </Tooltip>
+          <Button
+            startIcon={<PlusIcon />}
+            onClick={() => {
+              setSelectedPatient(undefined)
+              setIsPanelOpen(true)
+            }}
+            className="w-full sm:w-auto min-w-[13rem]"
+          >
+            {translation('addPatient')}
+          </Button>
+        </div>
       </div>
-      <div className="overflow-x-auto -mx-4 px-4 lg:mx-0 lg:pl-0 lg:pr-4">
-        <Table
-          className="w-full h-full cursor-pointer min-w-[800px]"
-          data={patients}
-          columns={columns}
-          fillerRow={() => (<FillerRowElement className="min-h-12" />)}
-          onRowClick={(row) => handleEdit(row.original)}
-        />
-      </div>
+      {viewType === 'table' ? (
+        <div className="overflow-x-auto -mx-4 px-4 lg:mx-0 lg:pl-0 lg:pr-4">
+          <Table
+            className="w-full h-full cursor-pointer min-w-[800px]"
+            data={patients}
+            columns={columns}
+            fillerRow={() => (<FillerRowElement className="min-h-12" />)}
+            onRowClick={(row) => handleEdit(row.original)}
+          />
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 -mx-4 px-4 lg:mx-0 lg:pl-0 lg:pr-4">
+          {patients.length === 0 ? (
+            <div className="col-span-full text-center text-description py-8">
+              {translation('noPatient')}
+            </div>
+          ) : (
+            patients.map((patient) => (
+              <PatientCardView
+                key={patient.id}
+                patient={patient}
+                onClick={handleEdit}
+              />
+            ))
+          )}
+        </div>
+      )}
       <SidePanel
         isOpen={isPanelOpen}
         onClose={handleClose}

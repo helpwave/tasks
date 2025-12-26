@@ -1,6 +1,6 @@
 import { useMemo, useState, forwardRef, useImperativeHandle, useEffect } from 'react'
-import { Avatar, Button, CheckboxUncontrolled, FillerRowElement, SearchBar, Table } from '@helpwave/hightide'
-import { PlusIcon } from 'lucide-react'
+import { Avatar, Button, Checkbox, CheckboxUncontrolled, FillerRowElement, SearchBar, Table, Tooltip } from '@helpwave/hightide'
+import { PlusIcon, Table as TableIcon, LayoutGrid } from 'lucide-react'
 import { useCompleteTaskMutation, useReopenTaskMutation } from '@/api/gql/generated'
 import clsx from 'clsx'
 import { SmartDate } from '@/utils/date'
@@ -10,6 +10,8 @@ import { PatientDetailView } from '@/components/patients/PatientDetailView'
 import { LocationChips } from '@/components/patients/LocationChips'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { useTasksContext } from '@/hooks/useTasksContext'
+import { useTaskViewToggle } from '@/hooks/useViewToggle'
+import { TaskCardView } from '@/components/tasks/TaskCardView'
 import type { ColumnDef } from '@tanstack/table-core'
 
 export type TaskViewModel = {
@@ -62,9 +64,12 @@ const isCloseToDueDate = (dueDate: Date | undefined, done: boolean): boolean => 
   return dueTime > now && dueTime - now <= oneHour
 }
 
+const STORAGE_KEY_SHOW_DONE = 'task-show-done'
+
 export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initialTasks, onRefetch, showAssignee = false, initialTaskId, onInitialTaskOpened }, ref) => {
   const translation = useTasksTranslation()
   const { totalPatientsCount } = useTasksContext()
+  const { viewType, toggleView } = useTaskViewToggle()
   const { mutate: completeTask } = useCompleteTaskMutation({ onSuccess: onRefetch })
   const { mutate: reopenTask } = useReopenTaskMutation({ onSuccess: onRefetch })
 
@@ -72,6 +77,27 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
   const [taskDialogState, setTaskDialogState] = useState<TaskDialogState>({ isOpen: false })
   const [searchQuery, setSearchQuery] = useState('')
   const [openedTaskId, setOpenedTaskId] = useState<string | null>(null)
+  const [showDone, setShowDone] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem(STORAGE_KEY_SHOW_DONE)
+      if (stored === 'true') {
+        return true
+      }
+      if (stored === 'false') {
+        return false
+      }
+    }
+    return false
+  })
+
+  const handleShowDoneChange = (checked: boolean) => {
+    setShowDone(() => {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(STORAGE_KEY_SHOW_DONE, String(checked))
+      }
+      return checked
+    })
+  }
 
   const hasPatients = (totalPatientsCount ?? 0) > 0
 
@@ -99,6 +125,10 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
   const tasks = useMemo(() => {
     let data = initialTasks
 
+    if (!showDone) {
+      data = data.filter(t => !t.done)
+    }
+
     if (searchQuery) {
       const lowerQuery = searchQuery.toLowerCase()
       data = data.filter(t =>
@@ -106,8 +136,18 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
         t.patient?.name.toLowerCase().includes(lowerQuery))
     }
 
-    return data
-  }, [initialTasks, searchQuery])
+    return [...data].sort((a, b) => {
+      if (a.done !== b.done) {
+        return a.done ? 1 : -1
+      }
+
+      if (!a.dueDate && !b.dueDate) return 0
+      if (!a.dueDate) return 1
+      if (!b.dueDate) return -1
+
+      return a.dueDate.getTime() - b.dueDate.getTime()
+    })
+  }, [initialTasks, searchQuery, showDone])
 
   const columns = useMemo<ColumnDef<TaskViewModel>[]>(
     () => {
@@ -168,17 +208,6 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
               />
             )
           },
-          minSize: 150,
-          size: 150,
-          maxSize: 200,
-        },
-        {
-          id: 'updateDate',
-          header: 'Update Date',
-          accessorKey: 'updateDate',
-          cell: ({ row }) => (
-            <SmartDate date={row.original.updateDate} mode="relative"/>
-          ),
           minSize: 150,
           size: 150,
           maxSize: 200,
@@ -259,6 +288,14 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
     [translation, completeTask, reopenTask, showAssignee]
   )
 
+  const handleToggleDone = (taskId: string, done: boolean) => {
+    if (!done) {
+      completeTask({ id: taskId })
+    } else {
+      reopenTask({ id: taskId })
+    }
+  }
+
   return (
     <div className="flex flex-col h-full gap-4">
       <div className="flex flex-col sm:flex-row justify-between w-full gap-4 -mx-4 px-4 lg:mx-0 lg:pl-0 lg:pr-4">
@@ -270,33 +307,82 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
             onSearch={() => null}
           />
         </div>
-        <Button
-          startIcon={<PlusIcon/>}
-          onClick={() => setTaskDialogState({ isOpen: true })}
-          className="w-full sm:w-auto min-w-[13rem]"
-          disabled={!hasPatients}
-        >
-          {translation('addTask')}
-        </Button>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2">
+            <Checkbox
+              checked={showDone}
+              onCheckedChange={handleShowDoneChange}
+            />
+            <span className="text-sm text-description">{translation('showDone') || 'Show done'}</span>
+          </div>
+          <Tooltip tooltip="Table View" position="top">
+            <Button
+              layout="icon"
+              color={viewType === 'table' ? 'primary' : 'neutral'}
+              coloringStyle={viewType === 'table' ? undefined : 'text'}
+              onClick={() => toggleView('table')}
+            >
+              <TableIcon className="size-5" />
+            </Button>
+          </Tooltip>
+          <Tooltip tooltip="Card View" position="top">
+            <Button
+              layout="icon"
+              color={viewType === 'card' ? 'primary' : 'neutral'}
+              coloringStyle={viewType === 'card' ? undefined : 'text'}
+              onClick={() => toggleView('card')}
+            >
+              <LayoutGrid className="size-5" />
+            </Button>
+          </Tooltip>
+          <Button
+            startIcon={<PlusIcon/>}
+            onClick={() => setTaskDialogState({ isOpen: true })}
+            className="w-full sm:w-auto min-w-[13rem]"
+            disabled={!hasPatients}
+          >
+            {translation('addTask')}
+          </Button>
+        </div>
       </div>
-      <div className="overflow-x-auto -mx-4 px-4 lg:mx-0 lg:pl-0 lg:pr-4">
-        <Table
-          className="w-full h-full cursor-pointer min-w-[800px]"
-          data={tasks}
-          columns={columns}
-          fillerRow={() => (
-            <FillerRowElement className="min-h-12"/>
+      {viewType === 'table' ? (
+        <div className="overflow-x-auto -mx-4 px-4 lg:mx-0 lg:pl-0 lg:pr-4">
+          <Table
+            className="w-full h-full cursor-pointer min-w-[800px]"
+            data={tasks}
+            columns={columns}
+            fillerRow={() => (
+              <FillerRowElement className="min-h-12"/>
+            )}
+            initialState={{
+              sorting: [
+                { id: 'done', desc: false },
+                { id: 'dueDate', desc: false },
+              ]
+            }}
+            enableMultiSort={true}
+            onRowClick={row => setTaskDialogState({ isOpen: true, taskId: row.original.id })}
+          />
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 -mx-4 px-4 lg:mx-0 lg:pl-0 lg:pr-4">
+          {tasks.length === 0 ? (
+            <div className="col-span-full text-center text-description py-8">
+              {translation('noOpenTasks')}
+            </div>
+          ) : (
+            tasks.map((task) => (
+              <TaskCardView
+                key={task.id}
+                task={task}
+                onToggleDone={handleToggleDone}
+                onClick={(t) => setTaskDialogState({ isOpen: true, taskId: t.id })}
+                showAssignee={showAssignee}
+              />
+            ))
           )}
-          initialState={{
-            sorting: [
-              { id: 'done', desc: false },
-              { id: 'dueDate', desc: false },
-            ]
-          }}
-          enableMultiSort={true}
-          onRowClick={row => setTaskDialogState({ isOpen: true, taskId: row.original.id })}
-        />
-      </div>
+        </div>
+      )}
       <SidePanel
         title={taskDialogState.taskId ? translation('editTask') : translation('createTask')}
         isOpen={taskDialogState.isOpen}

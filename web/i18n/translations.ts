@@ -42,7 +42,12 @@ export type TasksTranslationEntries = {
   'currentTime': string,
   'dashboard': string,
   'dashboardWelcome': (values: { name: string }) => string,
+  'dashboardWelcomeAfternoon': (values: { name: string }) => string,
   'dashboardWelcomeDescription': string,
+  'dashboardWelcomeEvening': (values: { name: string }) => string,
+  'dashboardWelcomeMorning': (values: { name: string }) => string,
+  'dashboardWelcomeNight': (values: { name: string }) => string,
+  'dashboardWelcomeNoon': (values: { name: string }) => string,
   'delete': string,
   'deleteTaskConfirmation': string,
   'description': string,
@@ -167,6 +172,7 @@ export type TasksTranslationEntries = {
   'settings': string,
   'settingsDescription': string,
   'sex': string,
+  'showDone': string,
   'sPropertySubjectType': (values: { subject: string }) => string,
   'sPropertyType': (values: { type: string }) => string,
   'stagingModalDisclaimerMarkdown': string,
@@ -235,7 +241,22 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'dashboardWelcome': ({ name }): string => {
       return `Guten Morgen, ${name}`
     },
+    'dashboardWelcomeAfternoon': ({ name }): string => {
+      return `Guten Nachmittag, ${name}`
+    },
     'dashboardWelcomeDescription': `Hier ist, was heute passiert.`,
+    'dashboardWelcomeEvening': ({ name }): string => {
+      return `Guten Abend, ${name}`
+    },
+    'dashboardWelcomeMorning': ({ name }): string => {
+      return `Guten Morgen, ${name}`
+    },
+    'dashboardWelcomeNight': ({ name }): string => {
+      return `Gute Nacht, ${name}`
+    },
+    'dashboardWelcomeNoon': ({ name }): string => {
+      return `Guten Mittag, ${name}`
+    },
     'delete': `Löschen`,
     'deleteTaskConfirmation': `Sind Sie sicher, dass Sie diese Aufgabe löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.`,
     'description': `Beschreibung`,
@@ -436,6 +457,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'settings': `Einstellungen`,
     'settingsDescription': `Hier kannst du die App Konfiguration ändern.`,
     'sex': `Geschlecht`,
+    'showDone': `Erledigte anzeigen`,
     'sPropertySubjectType': ({ subject }): string => {
       return TranslationGen.resolveSelect(subject, {
         'patient': `Patient`,
@@ -532,7 +554,22 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'dashboardWelcome': ({ name }): string => {
       return `Good Morning, ${name}`
     },
+    'dashboardWelcomeAfternoon': ({ name }): string => {
+      return `Good Afternoon, ${name}`
+    },
     'dashboardWelcomeDescription': `Here is what is happening today.`,
+    'dashboardWelcomeEvening': ({ name }): string => {
+      return `Good Evening, ${name}`
+    },
+    'dashboardWelcomeMorning': ({ name }): string => {
+      return `Good Morning, ${name}`
+    },
+    'dashboardWelcomeNight': ({ name }): string => {
+      return `Good Night, ${name}`
+    },
+    'dashboardWelcomeNoon': ({ name }): string => {
+      return `Good Afternoon, ${name}`
+    },
     'delete': `Delete`,
     'deleteTaskConfirmation': `Are you sure you want to delete this task? This action cannot be undone.`,
     'description': `Description`,
@@ -733,6 +770,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'settings': `Settings`,
     'settingsDescription': `Here you can change the app configuration.`,
     'sex': `Sex`,
+    'showDone': `Show done`,
     'sPropertySubjectType': ({ subject }): string => {
       return TranslationGen.resolveSelect(subject, {
         'patient': `Patient`,

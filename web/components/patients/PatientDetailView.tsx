@@ -3,23 +3,23 @@ import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import type { CreatePatientInput, LocationNodeType, UpdatePatientInput } from '@/api/gql/generated'
 import {
   PatientState,
+  PropertyEntity,
   Sex,
   useAdmitPatientMutation,
   useCompleteTaskMutation,
   useCreatePatientMutation,
   useDischargePatientMutation,
   useGetPatientQuery,
+  useGetPropertyDefinitionsQuery,
   useMarkPatientDeadMutation,
   useReopenTaskMutation,
   useUpdatePatientMutation,
   useWaitPatientMutation
 } from '@/api/gql/generated'
 import { useQueryClient } from '@tanstack/react-query'
-import type { ButtonProps } from '@helpwave/hightide'
 import {
-  Avatar,
   Button,
-  CheckboxUncontrolled,
+  Checkbox,
   ConfirmDialog,
   DateTimeInput,
   FormElementWrapper,
@@ -34,14 +34,14 @@ import {
   Tooltip
 } from '@helpwave/hightide'
 import { useTasksContext } from '@/hooks/useTasksContext'
-import { CheckCircle2, ChevronDown, Circle, Clock, PlusIcon, XIcon, Building2, Locate, Users } from 'lucide-react'
+import { CheckCircle2, ChevronDown, Circle, PlusIcon, XIcon, Building2, Locate, Users } from 'lucide-react'
 import { PatientStateChip } from '@/components/patients/PatientStateChip'
 import { LocationChips } from '@/components/patients/LocationChips'
 import { LocationSelectionDialog } from '@/components/locations/LocationSelectionDialog'
 import clsx from 'clsx'
 import { SidePanel } from '@/components/layout/SidePanel'
 import { TaskDetailView } from '@/components/tasks/TaskDetailView'
-import { SmartDate } from '@/utils/date'
+import { TaskCardView } from '@/components/tasks/TaskCardView'
 import { formatLocationPath, formatLocationPathFromId } from '@/utils/location'
 import { useGetLocationsQuery } from '@/api/gql/generated'
 import type { PropertyValueInput } from '@/api/gql/generated'
@@ -88,74 +88,6 @@ const getDefaultBirthdate = () => {
   return toISODate(d)
 }
 
-type TaskCardProps = ButtonProps & {
-  task: {
-    id: string,
-    title: string,
-    description?: string | null,
-    done: boolean,
-    dueDate?: string | null,
-    assignee?: { id: string, name: string, avatarUrl?: string | null } | null,
-  },
-  onToggleDone: (done: boolean) => void,
-}
-
-function TaskCard({ task, onToggleDone, ...props }: TaskCardProps) {
-  const descriptionPreview = task.description && task.description.length > 80
-    ? task.description.slice(0, 80) + '...'
-    : task.description
-
-  return (
-    <button
-      {...props}
-      className="border-2 p-5 rounded-lg text-left w-full transition-colors hover:border-primary bg-transparent"
-    >
-      <div className="flex items-start gap-4 w-full">
-        <div onClick={(e) => e.stopPropagation()}>
-          <CheckboxUncontrolled
-            checked={task.done}
-            onCheckedChange={(checked) => onToggleDone(!checked)}
-            className="rounded-full mt-0.5"
-          />
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between gap-2">
-            <div
-              className={clsx(
-                'font-semibold text-lg',
-                { 'line-through text-description': task.done }
-              )}
-            >
-              {task.title}
-            </div>
-            {task.assignee && (
-              <div className="flex items-center gap-1.5 text-base text-description shrink-0">
-                <Avatar
-                  fullyRounded={true}
-                  size="sm"
-                  image={{
-                    avatarUrl: task.assignee.avatarUrl || 'https://cdn.helpwave.de/boringavatar.svg',
-                    alt: task.assignee.name
-                  }}
-                />
-                <span>{task.assignee.name}</span>
-              </div>
-            )}
-          </div>
-          {descriptionPreview && !task.done && (
-            <div className="text-base text-description mt-2">{descriptionPreview}</div>
-          )}
-          {task.dueDate && !task.done && (
-            <div className="flex items-center gap-2 mt-3 text-base text-orange-600 dark:text-orange-500">
-              <Clock className="size-5" />
-              <SmartDate date={new Date(task.dueDate)} mode="relative" showTime={true} />
-            </div>
-          )}
-        </div>
-      </div>
-    </button>
-  )
-}
 
 interface PatientDetailViewProps {
   patientId?: string,
@@ -195,6 +127,15 @@ export const PatientDetailView = ({
       refetchOnWindowFocus: true,
     }
   )
+
+  const { data: propertyDefinitionsData } = useGetPropertyDefinitionsQuery()
+
+  const hasAvailableProperties = useMemo(() => {
+    if (!propertyDefinitionsData?.propertyDefinitions) return false
+    return propertyDefinitionsData.propertyDefinitions.some(
+      def => def.isActive && def.allowedEntities.includes(PropertyEntity.Patient)
+    )
+  }, [propertyDefinitionsData])
 
   const locationsMap = useMemo(() => {
     if (!locationsData?.locationNodes) return new Map()
@@ -533,14 +474,24 @@ export const PatientDetailView = ({
     updateLocalState({ teamIds } as Partial<ExtendedCreatePatientInput>)
     if (isEditMode) {
       const updateFn = () => {
-        persistChanges({ teamIds } as Partial<ExtendedUpdatePatientInput>)
+        // Preserve positionId when updating teams
+        const updates: Partial<ExtendedUpdatePatientInput> = {
+          teamIds,
+          ...(formData.positionId ? { positionId: formData.positionId } : {})
+        }
+        persistChanges(updates)
         setIsLocationChangeConfirmOpen(false)
         setPendingLocationUpdate(null)
       }
       setPendingLocationUpdate(() => updateFn)
       setIsLocationChangeConfirmOpen(true)
     } else {
-      persistChanges({ teamIds } as Partial<ExtendedUpdatePatientInput>)
+      // Preserve positionId when updating teams
+      const updates: Partial<ExtendedUpdatePatientInput> = {
+        teamIds,
+        ...(formData.positionId ? { positionId: formData.positionId } : {})
+      }
+      persistChanges(updates)
     }
     setIsTeamsDialogOpen(false)
   }
@@ -663,11 +614,13 @@ export const PatientDetailView = ({
                       {openTasks.length === 0 &&
                         <div className="text-description italic">{translation('noOpenTasks')}</div>}
                       {openTasks.map(task => (
-                        <TaskCard
+                        <TaskCardView
                           key={task.id}
                           task={task}
-                          onClick={() => setTaskId(task.id)}
-                          onToggleDone={(done) => handleToggleDone(task.id, done)}
+                          onClick={(t) => setTaskId(t.id)}
+                          onToggleDone={(taskId, done) => handleToggleDone(taskId, done)}
+                          showPatient={false}
+                          showAssignee={!!task.assignee}
                         />
                       ))}
                     </div>
@@ -688,11 +641,13 @@ export const PatientDetailView = ({
                       {closedTasks.length === 0 &&
                         <div className="text-description italic">{translation('noClosedTasks')}</div>}
                       {closedTasks.map(task => (
-                        <TaskCard
+                        <TaskCardView
                           key={task.id}
                           task={task}
-                          onClick={() => setTaskId(task.id)}
-                          onToggleDone={(done) => handleToggleDone(task.id, done)}
+                          onClick={(t) => setTaskId(t.id)}
+                          onToggleDone={(taskId, done) => handleToggleDone(taskId, done)}
+                          showPatient={false}
+                          showAssignee={!!task.assignee}
                         />
                       ))}
                     </div>
@@ -702,7 +657,7 @@ export const PatientDetailView = ({
             </Tab>
           )}
 
-          {isEditMode && (
+          {isEditMode && hasAvailableProperties && (
             <Tab label={translation('properties')} className="h-full overflow-y-auto pr-2">
               <div className="flex flex-col gap-4 pt-4">
                 <PropertyList
@@ -913,7 +868,7 @@ export const PatientDetailView = ({
               <FormElementWrapper label="">
                 {() => (
                   <div className="flex items-center gap-2">
-                    <CheckboxUncontrolled
+                    <Checkbox
                       checked={isWaiting}
                       onCheckedChange={setIsWaiting}
                     />
