@@ -171,7 +171,6 @@ export const PatientDetailView = ({
   const [isLocationChangeConfirmOpen, setIsLocationChangeConfirmOpen] = useState(false)
   const [pendingLocationUpdate, setPendingLocationUpdate] = useState<(() => void) | null>(null)
 
-  // Validation state for required fields
   const [firstnameError, setFirstnameError] = useState<string | null>(null)
   const [lastnameError, setLastnameError] = useState<string | null>(null)
   const [clinicError, setClinicError] = useState<string | null>(null)
@@ -201,7 +200,6 @@ export const PatientDetailView = ({
 
   useEffect(() => {
     if (!isEditMode && locationsData?.locationNodes && !formData.clinicId) {
-      // Try to find a CLINIC in the selected root locations first
       let clinicLocation: LocationNodeType | undefined
       if (firstSelectedRootLocationId) {
         const selectedRootLocation = locationsData.locationNodes.find(
@@ -211,7 +209,6 @@ export const PatientDetailView = ({
           clinicLocation = selectedRootLocation as LocationNodeType
         }
       }
-      // If no CLINIC found in selected, try first root location that is a CLINIC
       if (!clinicLocation && rootLocations && rootLocations.length > 0) {
         const firstClinic = rootLocations.find(loc => loc.kind === 'CLINIC')
         if (firstClinic) {
@@ -303,7 +300,6 @@ export const PatientDetailView = ({
     setFormData(prev => ({ ...prev, ...updates }))
   }
 
-  // Validation functions
   const validateFirstname = (value: string): boolean => {
     if (!value || !value.trim()) {
       setFirstnameError(translation('firstName') + ' is required')
@@ -350,9 +346,8 @@ export const PatientDetailView = ({
     return true
   }
 
-  // Check if form is valid (for create mode)
   const isFormValid = useMemo(() => {
-    if (isEditMode) return true // Edit mode doesn't need validation for submission
+    if (isEditMode) return true
     const firstnameValid = formData.firstname?.trim() || false
     const lastnameValid = formData.lastname?.trim() || false
     const clinicValid = !!selectedClinic?.id
@@ -362,7 +357,6 @@ export const PatientDetailView = ({
   }, [formData.firstname, formData.lastname, formData.birthdate, formData.sex, selectedClinic, isEditMode])
 
   const handleSubmit = () => {
-    // Validate all required fields
     const firstnameValid = validateFirstname(formData.firstname || '')
     const lastnameValid = validateLastname(formData.lastname || '')
     const clinicValid = validateClinic()
@@ -474,7 +468,6 @@ export const PatientDetailView = ({
     updateLocalState({ teamIds } as Partial<ExtendedCreatePatientInput>)
     if (isEditMode) {
       const updateFn = () => {
-        // Preserve positionId when updating teams
         const updates: Partial<ExtendedUpdatePatientInput> = {
           teamIds,
           ...(formData.positionId ? { positionId: formData.positionId } : {})
@@ -486,7 +479,6 @@ export const PatientDetailView = ({
       setPendingLocationUpdate(() => updateFn)
       setIsLocationChangeConfirmOpen(true)
     } else {
-      // Preserve positionId when updating teams
       const updates: Partial<ExtendedUpdatePatientInput> = {
         teamIds,
         ...(formData.positionId ? { positionId: formData.positionId } : {})
@@ -813,7 +805,6 @@ export const PatientDetailView = ({
                   mode="date"
                   required={true}
                   onValueChange={(date) => {
-                    // TODO fix this later when hightide use UTC strings only
                     const dateStr = toISODate(date)
                     updateLocalState({ birthdate: dateStr })
                     if (isShowingError) {

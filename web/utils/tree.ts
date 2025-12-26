@@ -2,9 +2,6 @@ export type TreeNode<T> = T & {
   children: TreeNode<T>[],
 }
 
-/**
- * transform a flat list of items with parentId into a recursive tree structure
- */
 export const buildTree = <T extends { id: string, parentId?: string | null | undefined }>(
   items: T[]
 ): TreeNode<T>[] => {

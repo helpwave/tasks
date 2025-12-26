@@ -5,6 +5,7 @@ import { SmartDate } from '@/utils/date'
 import { LocationChips } from '@/components/patients/LocationChips'
 import type { TaskViewModel } from './TaskList'
 import { useRouter } from 'next/router'
+import { useCompleteTaskMutation, useReopenTaskMutation } from '@/api/gql/generated'
 
 type FlexibleTask = {
   id: string,
@@ -33,10 +34,11 @@ type FlexibleTask = {
 
 type TaskCardViewProps = {
   task: FlexibleTask | TaskViewModel,
-  onToggleDone: (taskId: string, done: boolean) => void,
+  onToggleDone?: (taskId: string, done: boolean) => void,
   onClick: (task: FlexibleTask | TaskViewModel) => void,
   showAssignee?: boolean,
   showPatient?: boolean,
+  onRefetch?: () => void,
 }
 
 const isOverdue = (dueDate: Date | undefined, done: boolean): boolean => {
@@ -58,11 +60,14 @@ const toDate = (date: Date | string | null | undefined): Date | undefined => {
   return new Date(date)
 }
 
-export const TaskCardView = ({ task, onToggleDone, onClick, showAssignee: _showAssignee = false, showPatient = true }: TaskCardViewProps) => {
+export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showAssignee: _showAssignee = false, showPatient = true, onRefetch }: TaskCardViewProps) => {
   const router = useRouter()
   const flexibleTask = task as FlexibleTask
   const taskName = task.name || flexibleTask.title || ''
   const descriptionPreview = task.description
+
+  const { mutate: completeTask } = useCompleteTaskMutation({ onSuccess: onRefetch })
+  const { mutate: reopenTask } = useReopenTaskMutation({ onSuccess: onRefetch })
 
   const dueDate = toDate(task.dueDate)
   const overdue = dueDate ? isOverdue(dueDate, task.done) : false
@@ -83,6 +88,14 @@ export const TaskCardView = ({ task, onToggleDone, onClick, showAssignee: _showA
     }
   }
 
+  const handleToggleDone = (checked: boolean) => {
+    if (!checked) {
+      completeTask({ id: task.id })
+    } else {
+      reopenTask({ id: task.id })
+    }
+  }
+
   return (
     <button
       onClick={() => onClick(task)}
@@ -92,7 +105,7 @@ export const TaskCardView = ({ task, onToggleDone, onClick, showAssignee: _showA
         <div onClick={(e) => e.stopPropagation()}>
           <CheckboxUncontrolled
             checked={task.done}
-            onCheckedChange={(checked) => onToggleDone(task.id, !checked)}
+            onCheckedChange={handleToggleDone}
             className="rounded-full mt-0.5 shrink-0"
           />
         </div>

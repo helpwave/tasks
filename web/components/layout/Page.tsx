@@ -249,7 +249,6 @@ const RootLocationSelector = ({ className, onSelect }: RootLocationSelectorProps
     }
   }, [rootLocations, selectedRootLocationIds, locationsData])
 
-  // Auto-open dialog if no location is selected
   useEffect(() => {
     if (rootLocations && rootLocations.length > 0 && (!selectedRootLocationIds || selectedRootLocationIds.length === 0)) {
       setIsLocationPickerOpen(true)

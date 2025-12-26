@@ -90,7 +90,6 @@ export const InstallPrompt = () => {
 
   const handleDismiss = () => {
     setIsOpen(false)
-    // Don't show again for this session
     sessionStorage.setItem('pwa-prompt-dismissed', 'true')
   }
 

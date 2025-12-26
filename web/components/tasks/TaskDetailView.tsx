@@ -136,7 +136,6 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
         done: taskData.task.done || false
       })
     } else if (initialPatientId && !taskId) {
-      // Set initial patient ID when creating a new task
       setFormData(prev => ({ ...prev, patientId: initialPatientId }))
     }
   }, [taskData, initialPatientId, taskId])

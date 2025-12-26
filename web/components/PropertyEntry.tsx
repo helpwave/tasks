@@ -26,9 +26,6 @@ type PropertyEntryProps = {
 }
 
 // TODO move to hightide
-/**
- * A component for displaying a PropertyEntry
- */
 export const PropertyEntry = ({
                                 value,
                                 name,
@@ -124,8 +121,6 @@ export const PropertyEntry = ({
             onChange(newProperty)
             onEditComplete(newProperty)
           }}
-          // TODO handle onAddNew once it exists
-          // onAddNew={selectData?.onAddOption}
         >
           {selectData?.options.map(option => (
             <SelectOption key={option.id} value={option.id}>

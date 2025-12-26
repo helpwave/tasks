@@ -99,7 +99,6 @@ const SettingsPage: NextPage = () => {
         description={translation('settingsDescription')}
       >
         <div className="flex flex-col gap-y-12">
-          {/* Profile Section */}
           <section className="flex-row-4 items-center p-4 bg-surface-1 rounded-lg border border-divider">
             <Avatar
               size="xl"
@@ -112,7 +111,6 @@ const SettingsPage: NextPage = () => {
             </div>
           </section>
 
-          {/* Organizations Section */}
           {user?.organizations && (
             <div className="flex-col-6">
               <h2 className="typography-title-md border-b border-divider pb-2">{translation('organizations') || 'Organizations'}</h2>
@@ -134,7 +132,6 @@ const SettingsPage: NextPage = () => {
             </div>
           )}
 
-          {/* System / Management */}
           <div className="flex-col-6">
             <h2 className="typography-title-md border-b border-divider pb-2">{translation('system')}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -155,12 +152,10 @@ const SettingsPage: NextPage = () => {
             </div>
           </div>
 
-          {/* Preferences */}
           <div className="flex-col-6">
             <h2 className="typography-title-md border-b border-divider pb-2">{translation('preferences')}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 max-w-200">
 
-              {/* Language */}
               <div className="flex-col-2">
                 <span className="typography-label-lg">{translation('language')}</span>
                 <Select
@@ -179,7 +174,6 @@ const SettingsPage: NextPage = () => {
                 </Select>
               </div>
 
-              {/* Theme */}
               <div className="flex-col-2">
                 <span className="typography-label-lg">{translation('themes', { count: 1 })}</span>
                 <Select
@@ -209,7 +203,6 @@ const SettingsPage: NextPage = () => {
             </div>
           </div>
 
-          {/* Survey */}
           {(config.onboardingSurveyUrl || config.weeklySurveyUrl) && (
             <div className="flex-col-6">
               <h2 className="typography-title-md border-b border-divider pb-2">{translation('feedback')}</h2>
@@ -226,7 +219,6 @@ const SettingsPage: NextPage = () => {
             </div>
           )}
 
-          {/* Account / Danger Zone */}
           <div className="flex-col-6">
             <h2 className="typography-title-md border-b border-divider pb-2">{translation('account')}</h2>
             <div className="flex-row-4 flex-wrap">

@@ -26,9 +26,7 @@ type AuthContextType = AuthState & {
 const AuthContext = createContext<AuthContextType | null>(null)
 
 type AuthProviderProps = PropsWithChildren & {
-  /** These URLs try to log in, but ignore failures */
   unprotectedURLs?: string[],
-  /** These URLs ignore authentication completely */
   ignoredURLs?: string[],
 }
 

@@ -56,10 +56,8 @@ const PropertiesPage: NextPage = () => {
   } as Property)) || []
 
   const handleEdit = (value: Property) => {
-    // Convert frontend Property to format expected by PropertyDetailView
     setSelected({
       ...value,
-      // Ensure selectData is properly formatted
       selectData: value.selectData ? {
         ...value.selectData,
         options: value.selectData.options || [],

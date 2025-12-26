@@ -378,6 +378,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
                 onToggleDone={handleToggleDone}
                 onClick={(t) => setTaskDialogState({ isOpen: true, taskId: t.id })}
                 showAssignee={showAssignee}
+                onRefetch={onRefetch}
               />
             ))
           )}
