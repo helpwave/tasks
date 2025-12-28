@@ -874,7 +874,7 @@ export const PatientDetailView = ({
               return (
                 <FormElementWrapper label={translation('patientActions')}>
                   {() => (
-                    <div className="flex gap-2 flex-wrap">
+                    <div className="flex gap-4 flex-wrap">
                       {patient.state !== PatientState.Admitted && (
                         <Button
                           onClick={() => admitPatient({ id: patientId })}

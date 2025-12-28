@@ -363,5 +363,9 @@
   "noNotifications": "Keine aktuellen Updates",
   "notifications": "Benachrichtigungen",
   "dismissAll": "Alle verwerfen",
-  "security": "Sicherheit"
+  "security": "Sicherheit",
+  "shiftHandover": "Schichtübergabe",
+  "shiftHandoverDescription": "Wählen Sie einen Benutzer aus, um alle Ihnen zugewiesenen offenen Aufgaben zu übertragen.",
+  "confirmShiftHandover": "Schichtübergabe bestätigen",
+  "confirmShiftHandoverDescription": "Sind Sie sicher, dass Sie alle offenen Aufgaben an den ausgewählten Benutzer übertragen möchten?"
 }

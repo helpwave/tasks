@@ -1,7 +1,7 @@
 import { useMemo, useState, forwardRef, useImperativeHandle, useEffect } from 'react'
-import { Avatar, Button, Checkbox, CheckboxUncontrolled, FillerRowElement, SearchBar, Table, Tooltip } from '@helpwave/hightide'
-import { PlusIcon, Table as TableIcon, LayoutGrid } from 'lucide-react'
-import { useCompleteTaskMutation, useReopenTaskMutation } from '@/api/gql/generated'
+import { Avatar, Button, Checkbox, CheckboxUncontrolled, ConfirmDialog, Dialog, FillerRowElement, SearchBar, Select, SelectOption, Table, Tooltip } from '@helpwave/hightide'
+import { PlusIcon, Table as TableIcon, LayoutGrid, UserCheck } from 'lucide-react'
+import { useAssignTaskMutation, useCompleteTaskMutation, useGetUsersQuery, useReopenTaskMutation } from '@/api/gql/generated'
 import clsx from 'clsx'
 import { SmartDate } from '@/utils/date'
 import { SidePanel } from '@/components/layout/SidePanel'
@@ -102,15 +102,23 @@ const STORAGE_KEY_SHOW_DONE = 'task-show-done'
 
 export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initialTasks, onRefetch, showAssignee = false, initialTaskId, onInitialTaskOpened }, ref) => {
   const translation = useTasksTranslation()
-  const { totalPatientsCount } = useTasksContext()
+  const { totalPatientsCount, user } = useTasksContext()
   const { viewType, toggleView } = useTaskViewToggle()
   const { mutate: completeTask } = useCompleteTaskMutation({ onSuccess: onRefetch })
   const { mutate: reopenTask } = useReopenTaskMutation({ onSuccess: onRefetch })
+  const { mutate: assignTask } = useAssignTaskMutation({ onSuccess: onRefetch })
+  const { data: usersData } = useGetUsersQuery(undefined, {
+    refetchInterval: 15000,
+    refetchOnWindowFocus: true,
+  })
 
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null)
   const [taskDialogState, setTaskDialogState] = useState<TaskDialogState>({ isOpen: false })
   const [searchQuery, setSearchQuery] = useState('')
   const [openedTaskId, setOpenedTaskId] = useState<string | null>(null)
+  const [isHandoverDialogOpen, setIsHandoverDialogOpen] = useState(false)
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
+  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false)
   const [showDone, setShowDone] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem(STORAGE_KEY_SHOW_DONE)
@@ -182,6 +190,40 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
       return a.dueDate.getTime() - b.dueDate.getTime()
     })
   }, [initialTasks, searchQuery, showDone])
+
+  const openTasks = useMemo(() => {
+    return initialTasks.filter(t => !t.done && t.assignee?.id === user?.id)
+  }, [initialTasks, user?.id])
+
+  const users = useMemo(() => {
+    return usersData?.users?.filter(u => u.id !== user?.id) || []
+  }, [usersData, user?.id])
+
+  const canHandover = openTasks.length > 0 && users.length > 0
+
+  const handleHandoverClick = () => {
+    if (!canHandover) {
+      return
+    }
+    setIsHandoverDialogOpen(true)
+  }
+
+  const handleUserSelect = (userId: string) => {
+    setSelectedUserId(userId)
+    setIsHandoverDialogOpen(false)
+    setIsConfirmDialogOpen(true)
+  }
+
+  const handleConfirmHandover = () => {
+    if (!selectedUserId) return
+
+    openTasks.forEach(task => {
+      assignTask({ id: task.id, userId: selectedUserId })
+    })
+
+    setIsConfirmDialogOpen(false)
+    setSelectedUserId(null)
+  }
 
   const columns = useMemo<ColumnDef<TaskViewModel>[]>(
     () => {
@@ -339,7 +381,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
 
   return (
     <div className="flex flex-col h-full gap-4">
-      <div className="flex flex-col sm:flex-row justify-between w-full gap-4 -mx-4 px-4 lg:mx-0 lg:pl-0 lg:pr-4">
+      <div className="flex flex-col sm:flex-row justify-between w-full gap-4">
         <div className="w-full sm:max-w-md">
           <SearchBar
             placeholder={translation('search')}
@@ -348,38 +390,51 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
             onSearch={() => null}
           />
         </div>
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2">
-            <Checkbox
-              checked={showDone}
-              onCheckedChange={handleShowDoneChange}
-            />
-            <span className="text-sm text-description">{translation('showDone') || 'Show done'}</span>
+        <div className="flex flex-wrap items-center gap-4 w-full sm:w-auto sm:ml-auto lg:pr-4">
+          <div className="flex items-center justify-between gap-4 w-full sm:w-auto">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                checked={showDone}
+                onCheckedChange={handleShowDoneChange}
+              />
+              <span className="text-sm text-description whitespace-nowrap">{translation('showDone') || 'Show done'}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Tooltip tooltip="Table View" position="top">
+                <Button
+                  layout="icon"
+                  color={viewType === 'table' ? 'primary' : 'neutral'}
+                  coloringStyle={viewType === 'table' ? undefined : 'text'}
+                  onClick={() => toggleView('table')}
+                >
+                  <TableIcon className="size-5" />
+                </Button>
+              </Tooltip>
+              <Tooltip tooltip="Card View" position="top">
+                <Button
+                  layout="icon"
+                  color={viewType === 'card' ? 'primary' : 'neutral'}
+                  coloringStyle={viewType === 'card' ? undefined : 'text'}
+                  onClick={() => toggleView('card')}
+                >
+                  <LayoutGrid className="size-5" />
+                </Button>
+              </Tooltip>
+            </div>
           </div>
-          <Tooltip tooltip="Table View" position="top">
+          {canHandover && (
             <Button
-              layout="icon"
-              color={viewType === 'table' ? 'primary' : 'neutral'}
-              coloringStyle={viewType === 'table' ? undefined : 'text'}
-              onClick={() => toggleView('table')}
+              startIcon={<UserCheck className="size-5"/>}
+              onClick={handleHandoverClick}
+              className="w-full sm:w-auto flex-shrink-0"
             >
-              <TableIcon className="size-5" />
+              {translation('shiftHandover') || 'Shift Handover'}
             </Button>
-          </Tooltip>
-          <Tooltip tooltip="Card View" position="top">
-            <Button
-              layout="icon"
-              color={viewType === 'card' ? 'primary' : 'neutral'}
-              coloringStyle={viewType === 'card' ? undefined : 'text'}
-              onClick={() => toggleView('card')}
-            >
-              <LayoutGrid className="size-5" />
-            </Button>
-          </Tooltip>
+          )}
           <Button
             startIcon={<PlusIcon/>}
             onClick={() => setTaskDialogState({ isOpen: true })}
-            className="w-full sm:w-auto min-w-[13rem]"
+            className="w-full sm:w-auto min-w-[13rem] flex-shrink-0"
             disabled={!hasPatients}
           >
             {translation('addTask')}
@@ -452,6 +507,38 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
           />
         )}
       </SidePanel>
+      <Dialog
+        isOpen={isHandoverDialogOpen}
+        onClose={() => {
+          setIsHandoverDialogOpen(false)
+          setSelectedUserId(null)
+        }}
+        titleElement={translation('shiftHandover') || 'Shift Handover'}
+        description={translation('shiftHandoverDescription') || `Select a user to transfer all ${openTasks.length} open task${openTasks.length !== 1 ? 's' : ''} assigned to you.`}
+      >
+        <div className="flex flex-col gap-4">
+          <Select
+            value={selectedUserId || ''}
+            onValueChanged={handleUserSelect}
+          >
+            {users.map(u => (
+              <SelectOption key={u.id} value={u.id}>
+                {u.name}
+              </SelectOption>
+            ))}
+          </Select>
+        </div>
+      </Dialog>
+      <ConfirmDialog
+        isOpen={isConfirmDialogOpen}
+        onCancel={() => {
+          setIsConfirmDialogOpen(false)
+          setSelectedUserId(null)
+        }}
+        onConfirm={handleConfirmHandover}
+        titleElement={translation('confirmShiftHandover') || 'Confirm Shift Handover'}
+        description={translation('confirmShiftHandoverDescription') || `Are you sure you want to transfer ${openTasks.length} open task${openTasks.length !== 1 ? 's' : ''} to ${users.find(u => u.id === selectedUserId)?.name || 'the selected user'}?`}
+      />
     </div>
   )
 })

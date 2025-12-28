@@ -235,7 +235,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ locat
 
   return (
     <div className="flex flex-col h-full gap-4">
-      <div className="flex flex-col sm:flex-row justify-between w-full gap-4 -mx-4 px-4 lg:mx-0 lg:pl-0 lg:pr-4">
+      <div className="flex flex-col sm:flex-row justify-between w-full gap-4">
         <div className="w-full sm:max-w-md">
           <SearchBar
             placeholder={translation('search')}
@@ -244,34 +244,36 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ locat
             onSearch={() => null}
           />
         </div>
-        <div className="flex items-center gap-2">
-          <Tooltip tooltip="Table View" position="top">
-            <Button
-              layout="icon"
-              color={viewType === 'table' ? 'primary' : 'neutral'}
-              coloringStyle={viewType === 'table' ? undefined : 'text'}
-              onClick={() => toggleView('table')}
-            >
-              <TableIcon className="size-5" />
-            </Button>
-          </Tooltip>
-          <Tooltip tooltip="Card View" position="top">
-            <Button
-              layout="icon"
-              color={viewType === 'card' ? 'primary' : 'neutral'}
-              coloringStyle={viewType === 'card' ? undefined : 'text'}
-              onClick={() => toggleView('card')}
-            >
-              <LayoutGrid className="size-5" />
-            </Button>
-          </Tooltip>
+        <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto sm:ml-auto lg:pr-4">
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <Tooltip tooltip="Table View" position="top">
+              <Button
+                layout="icon"
+                color={viewType === 'table' ? 'primary' : 'neutral'}
+                coloringStyle={viewType === 'table' ? undefined : 'text'}
+                onClick={() => toggleView('table')}
+              >
+                <TableIcon className="size-5" />
+              </Button>
+            </Tooltip>
+            <Tooltip tooltip="Card View" position="top">
+              <Button
+                layout="icon"
+                color={viewType === 'card' ? 'primary' : 'neutral'}
+                coloringStyle={viewType === 'card' ? undefined : 'text'}
+                onClick={() => toggleView('card')}
+              >
+                <LayoutGrid className="size-5" />
+              </Button>
+            </Tooltip>
+          </div>
           <Button
             startIcon={<PlusIcon />}
             onClick={() => {
               setSelectedPatient(undefined)
               setIsPanelOpen(true)
             }}
-            className="w-full sm:w-auto min-w-[13rem]"
+            className="w-full sm:w-auto min-w-[13rem] flex-shrink-0"
           >
             {translation('addPatient')}
           </Button>
