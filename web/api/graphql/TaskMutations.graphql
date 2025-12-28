@@ -25,6 +25,8 @@ mutation UpdateTask($id: ID!, $data: UpdateTaskInput!) {
     description
     done
     dueDate
+    priority
+    estimatedTime
     updateDate
     checksum
     assignee {

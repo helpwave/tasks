@@ -394,7 +394,10 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
                       updateLocalState({ estimatedTime: isNaN(value as number) ? null : value })
                     }}
                     onBlur={() => {
-                      persistChanges({ estimatedTime: formData.estimatedTime })
+                      persistChanges({ 
+                        estimatedTime: formData.estimatedTime,
+                        priority: formData.priority 
+                      })
                     }}
                   />
                 )}
