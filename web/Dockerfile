@@ -21,7 +21,11 @@ ENV HOSTNAME="0.0.0.0"
 RUN apk add --no-cache libcap=2.77-r0 && \
     setcap 'cap_net_bind_service=+ep' /usr/local/bin/node && \
     addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 nextjs
+    adduser --system --uid 1001 nextjs && \
+    mkdir -p /feedback && \
+    chown nextjs:nodejs /feedback
+
+ENV FEEDBACK_DIR=/feedback
 
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/build/standalone ./

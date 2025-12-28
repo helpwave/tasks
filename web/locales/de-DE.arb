@@ -374,5 +374,24 @@
       "priority": {}
     }
   },
-  "priorityNone": "Keine"
+  "priorityLabel": "Priorität",
+  "priorityNone": "Keine",
+  "deletePatient": "Patient löschen",
+  "deletePatientConfirmation": "Sind Sie sicher, dass Sie diesen Patienten löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
+  "feedbackDescription": "Teilen Sie Ihr Feedback, melden Sie Fehler oder schlagen Sie Verbesserungen vor.",
+  "url": "URL",
+  "enterFeedback": "Geben Sie hier Ihr Feedback ein...",
+  "startRecording": "Aufnahme starten",
+  "stopRecording": "Aufnahme stoppen",
+  "submit": "Absenden",
+  "username": "Benutzername",
+  "anonymous": "Anonym",
+  "withName": "Mit Namen (für Nachfragen)",
+  "enterName": "Geben Sie Ihren Namen ein...",
+  "users": "Benutzer",
+  "showTeamTasks": "Team-Aufgaben anzeigen",
+  "showAllTasks": "Alle Aufgaben anzeigen",
+  "errorOccurred": "Ein Fehler ist aufgetreten",
+  "estimatedTime": "Geschätzte Zeit (Minuten)",
+  "submitAnonymously": "Anonym absenden"
 }

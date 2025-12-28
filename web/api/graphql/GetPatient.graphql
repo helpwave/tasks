@@ -92,6 +92,11 @@ query GetPatient($id: ID!) {
         name
         avatarUrl
       }
+      assigneeTeam {
+        id
+        title
+        kind
+      }
     }
     properties {
       definition {

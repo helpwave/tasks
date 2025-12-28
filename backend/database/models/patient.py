@@ -5,7 +5,7 @@ from datetime import date
 from typing import TYPE_CHECKING
 
 from database.models.base import Base
-from sqlalchemy import Column, ForeignKey, String, Table
+from sqlalchemy import Boolean, Column, ForeignKey, String, Table
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 if TYPE_CHECKING:
@@ -41,6 +41,7 @@ class Patient(Base):
     birthdate: Mapped[date] = mapped_column()
     sex: Mapped[str] = mapped_column(String)
     state: Mapped[str] = mapped_column(String, default="WAIT")
+    deleted: Mapped[bool] = mapped_column(Boolean, default=False)
     assigned_location_id: Mapped[str | None] = mapped_column(
         ForeignKey("location_nodes.id"),
         nullable=True,

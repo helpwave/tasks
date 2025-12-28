@@ -27,6 +27,7 @@ class PatientQuery:
         result = await info.context.db.execute(
             select(models.Patient)
             .where(models.Patient.id == id)
+            .where(models.Patient.deleted == False)
             .options(
                 selectinload(models.Patient.assigned_locations),
                 selectinload(models.Patient.tasks),
@@ -55,7 +56,7 @@ class PatientQuery:
             selectinload(models.Patient.assigned_locations),
             selectinload(models.Patient.tasks),
             selectinload(models.Patient.teams),
-        )
+        ).where(models.Patient.deleted == False)
 
         if states:
             state_values = [s.value for s in states]
@@ -151,6 +152,7 @@ class PatientQuery:
                 selectinload(models.Patient.tasks),
                 selectinload(models.Patient.teams),
             )
+            .where(models.Patient.deleted == False)
             .limit(limit)
         )
         auth_service = AuthorizationService(info.context.db)
@@ -395,19 +397,29 @@ class PatientMutation(BaseMutationResolver[models.Patient]):
     @strawberry.mutation
     @audit_log("delete_patient")
     async def delete_patient(self, info: Info, id: strawberry.ID) -> bool:
-        repo = BaseMutationResolver.get_repository(info.context.db, models.Patient)
-        patient = await repo.get_by_id(id)
+        db = info.context.db
+        result = await db.execute(
+            select(models.Patient)
+            .where(models.Patient.id == id)
+            .where(models.Patient.deleted == False)
+            .options(
+                selectinload(models.Patient.assigned_locations),
+                selectinload(models.Patient.teams),
+            ),
+        )
+        patient = result.scalars().first()
         if not patient:
             return False
 
-        auth_service = AuthorizationService(info.context.db)
+        auth_service = AuthorizationService(db)
         if not await auth_service.can_access_patient(info.context.user, patient, info.context):
             raise GraphQLError(
                 "Forbidden: You do not have access to this patient",
                 extensions={"code": "FORBIDDEN"},
             )
 
-        await BaseMutationResolver.delete_entity(
+        patient.deleted = True
+        await BaseMutationResolver.update_and_notify(
             info, patient, models.Patient, "patient"
         )
         return True

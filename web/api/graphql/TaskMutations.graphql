@@ -82,3 +82,25 @@ mutation ReopenTask($id: ID!) {
     updateDate
   }
 }
+
+mutation AssignTaskToTeam($id: ID!, $teamId: ID!) {
+  assignTaskToTeam(id: $id, teamId: $teamId) {
+    id
+    assigneeTeam {
+      id
+      title
+      kind
+    }
+  }
+}
+
+mutation UnassignTaskFromTeam($id: ID!) {
+  unassignTaskFromTeam(id: $id) {
+    id
+    assigneeTeam {
+      id
+      title
+      kind
+    }
+  }
+}

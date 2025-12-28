@@ -49,6 +49,7 @@ export type CreatePropertyDefinitionInput = {
 
 export type CreateTaskInput = {
   assigneeId?: InputMaybe<Scalars['ID']['input']>;
+  assigneeTeamId?: InputMaybe<Scalars['ID']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
   dueDate?: InputMaybe<Scalars['DateTime']['input']>;
   estimatedTime?: InputMaybe<Scalars['Int']['input']>;
@@ -97,6 +98,7 @@ export type Mutation = {
   __typename?: 'Mutation';
   admitPatient: PatientType;
   assignTask: TaskType;
+  assignTaskToTeam: TaskType;
   completeTask: TaskType;
   createLocationNode: LocationNodeType;
   createPatient: PatientType;
@@ -110,6 +112,7 @@ export type Mutation = {
   markPatientDead: PatientType;
   reopenTask: TaskType;
   unassignTask: TaskType;
+  unassignTaskFromTeam: TaskType;
   updateLocationNode: LocationNodeType;
   updatePatient: PatientType;
   updatePropertyDefinition: PropertyDefinitionType;
@@ -126,6 +129,12 @@ export type MutationAdmitPatientArgs = {
 export type MutationAssignTaskArgs = {
   id: Scalars['ID']['input'];
   userId: Scalars['ID']['input'];
+};
+
+
+export type MutationAssignTaskToTeamArgs = {
+  id: Scalars['ID']['input'];
+  teamId: Scalars['ID']['input'];
 };
 
 
@@ -190,6 +199,11 @@ export type MutationReopenTaskArgs = {
 
 
 export type MutationUnassignTaskArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type MutationUnassignTaskFromTeamArgs = {
   id: Scalars['ID']['input'];
 };
 
@@ -357,6 +371,7 @@ export type QueryTaskArgs = {
 
 export type QueryTasksArgs = {
   assigneeId?: InputMaybe<Scalars['ID']['input']>;
+  assigneeTeamId?: InputMaybe<Scalars['ID']['input']>;
   patientId?: InputMaybe<Scalars['ID']['input']>;
   rootLocationIds?: InputMaybe<Array<Scalars['ID']['input']>>;
 };
@@ -416,6 +431,8 @@ export type TaskType = {
   __typename?: 'TaskType';
   assignee?: Maybe<UserType>;
   assigneeId?: Maybe<Scalars['ID']['output']>;
+  assigneeTeam?: Maybe<LocationNodeType>;
+  assigneeTeamId?: Maybe<Scalars['ID']['output']>;
   checksum: Scalars['String']['output'];
   creationDate: Scalars['DateTime']['output'];
   description?: Maybe<Scalars['String']['output']>;
@@ -461,6 +478,7 @@ export type UpdatePropertyDefinitionInput = {
 
 export type UpdateTaskInput = {
   assigneeId?: InputMaybe<Scalars['ID']['input']>;
+  assigneeTeamId?: InputMaybe<Scalars['ID']['input']>;
   checksum?: InputMaybe<Scalars['String']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
   done?: InputMaybe<Scalars['Boolean']['input']>;
@@ -514,7 +532,7 @@ export type GetPatientQueryVariables = Exact<{
 }>;
 
 
-export type GetPatientQuery = { __typename?: 'Query', patient?: { __typename?: 'PatientType', id: string, firstname: string, lastname: string, birthdate: any, sex: Sex, state: PatientState, checksum: string, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string } | null, assignedLocations: Array<{ __typename?: 'LocationNodeType', id: string, title: string }>, clinic: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null } | null } | null }, position?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null } | null } | null } | null, teams: Array<{ __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null } | null } | null }>, tasks: Array<{ __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, dueDate?: any | null, priority?: string | null, estimatedTime?: number | null, updateDate?: any | null, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null } | null }>, properties: Array<{ __typename?: 'PropertyValueType', textValue?: string | null, numberValue?: number | null, booleanValue?: boolean | null, dateValue?: any | null, dateTimeValue?: any | null, selectValue?: string | null, multiSelectValues?: Array<string> | null, definition: { __typename?: 'PropertyDefinitionType', id: string, name: string, description?: string | null, fieldType: FieldType, isActive: boolean, allowedEntities: Array<PropertyEntity>, options: Array<string> } }> } | null };
+export type GetPatientQuery = { __typename?: 'Query', patient?: { __typename?: 'PatientType', id: string, firstname: string, lastname: string, birthdate: any, sex: Sex, state: PatientState, checksum: string, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string } | null, assignedLocations: Array<{ __typename?: 'LocationNodeType', id: string, title: string }>, clinic: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null } | null } | null }, position?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null } | null } | null } | null, teams: Array<{ __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null } | null } | null }>, tasks: Array<{ __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, dueDate?: any | null, priority?: string | null, estimatedTime?: number | null, updateDate?: any | null, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null } | null, assigneeTeam?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType } | null }>, properties: Array<{ __typename?: 'PropertyValueType', textValue?: string | null, numberValue?: number | null, booleanValue?: boolean | null, dateValue?: any | null, dateTimeValue?: any | null, selectValue?: string | null, multiSelectValues?: Array<string> | null, definition: { __typename?: 'PropertyDefinitionType', id: string, name: string, description?: string | null, fieldType: FieldType, isActive: boolean, allowedEntities: Array<PropertyEntity>, options: Array<string> } }> } | null };
 
 export type GetPatientsQueryVariables = Exact<{
   locationId?: InputMaybe<Scalars['ID']['input']>;
@@ -523,22 +541,23 @@ export type GetPatientsQueryVariables = Exact<{
 }>;
 
 
-export type GetPatientsQuery = { __typename?: 'Query', patients: Array<{ __typename?: 'PatientType', id: string, name: string, firstname: string, lastname: string, birthdate: any, sex: Sex, state: PatientState, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null, assignedLocations: Array<{ __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null } | null }>, clinic: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null } | null } | null }, position?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null } | null } | null } | null, teams: Array<{ __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null } | null } | null }>, tasks: Array<{ __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, dueDate?: any | null, priority?: string | null, estimatedTime?: number | null, creationDate: any, updateDate?: any | null, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null } | null }>, properties: Array<{ __typename?: 'PropertyValueType', textValue?: string | null, definition: { __typename?: 'PropertyDefinitionType', name: string } }> }> };
+export type GetPatientsQuery = { __typename?: 'Query', patients: Array<{ __typename?: 'PatientType', id: string, name: string, firstname: string, lastname: string, birthdate: any, sex: Sex, state: PatientState, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null, assignedLocations: Array<{ __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null } | null }>, clinic: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null } | null } | null }, position?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null } | null } | null } | null, teams: Array<{ __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null } | null } | null }>, tasks: Array<{ __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, dueDate?: any | null, priority?: string | null, estimatedTime?: number | null, creationDate: any, updateDate?: any | null, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null } | null, assigneeTeam?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType } | null }>, properties: Array<{ __typename?: 'PropertyValueType', textValue?: string | null, definition: { __typename?: 'PropertyDefinitionType', name: string } }> }> };
 
 export type GetTaskQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type GetTaskQuery = { __typename?: 'Query', task?: { __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, dueDate?: any | null, priority?: string | null, estimatedTime?: number | null, checksum: string, patient: { __typename?: 'PatientType', id: string, name: string }, assignee?: { __typename?: 'UserType', id: string, name: string } | null, properties: Array<{ __typename?: 'PropertyValueType', textValue?: string | null, numberValue?: number | null, booleanValue?: boolean | null, dateValue?: any | null, dateTimeValue?: any | null, selectValue?: string | null, multiSelectValues?: Array<string> | null, definition: { __typename?: 'PropertyDefinitionType', id: string, name: string, description?: string | null, fieldType: FieldType, isActive: boolean, allowedEntities: Array<PropertyEntity>, options: Array<string> } }> } | null };
+export type GetTaskQuery = { __typename?: 'Query', task?: { __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, dueDate?: any | null, priority?: string | null, estimatedTime?: number | null, checksum: string, patient: { __typename?: 'PatientType', id: string, name: string }, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null } | null, assigneeTeam?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType } | null, properties: Array<{ __typename?: 'PropertyValueType', textValue?: string | null, numberValue?: number | null, booleanValue?: boolean | null, dateValue?: any | null, dateTimeValue?: any | null, selectValue?: string | null, multiSelectValues?: Array<string> | null, definition: { __typename?: 'PropertyDefinitionType', id: string, name: string, description?: string | null, fieldType: FieldType, isActive: boolean, allowedEntities: Array<PropertyEntity>, options: Array<string> } }> } | null };
 
 export type GetTasksQueryVariables = Exact<{
   rootLocationIds?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
   assigneeId?: InputMaybe<Scalars['ID']['input']>;
+  assigneeTeamId?: InputMaybe<Scalars['ID']['input']>;
 }>;
 
 
-export type GetTasksQuery = { __typename?: 'Query', tasks: Array<{ __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, dueDate?: any | null, priority?: string | null, estimatedTime?: number | null, creationDate: any, updateDate?: any | null, patient: { __typename?: 'PatientType', id: string, name: string, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null, assignedLocations: Array<{ __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null }> }, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null } | null }> };
+export type GetTasksQuery = { __typename?: 'Query', tasks: Array<{ __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, dueDate?: any | null, priority?: string | null, estimatedTime?: number | null, creationDate: any, updateDate?: any | null, patient: { __typename?: 'PatientType', id: string, name: string, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null, assignedLocations: Array<{ __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null }> }, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null } | null, assigneeTeam?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType } | null }> };
 
 export type GetUsersQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -594,6 +613,13 @@ export type WaitPatientMutationVariables = Exact<{
 
 
 export type WaitPatientMutation = { __typename?: 'Mutation', waitPatient: { __typename?: 'PatientType', id: string, state: PatientState } };
+
+export type DeletePatientMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeletePatientMutation = { __typename?: 'Mutation', deletePatient: boolean };
 
 export type CreatePropertyDefinitionMutationVariables = Exact<{
   data: CreatePropertyDefinitionInput;
@@ -733,6 +759,21 @@ export type ReopenTaskMutationVariables = Exact<{
 
 
 export type ReopenTaskMutation = { __typename?: 'Mutation', reopenTask: { __typename?: 'TaskType', id: string, done: boolean, updateDate?: any | null } };
+
+export type AssignTaskToTeamMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  teamId: Scalars['ID']['input'];
+}>;
+
+
+export type AssignTaskToTeamMutation = { __typename?: 'Mutation', assignTaskToTeam: { __typename?: 'TaskType', id: string, assigneeTeam?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType } | null } };
+
+export type UnassignTaskFromTeamMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type UnassignTaskFromTeamMutation = { __typename?: 'Mutation', unassignTaskFromTeam: { __typename?: 'TaskType', id: string, assigneeTeam?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType } | null } };
 
 
 
@@ -1039,6 +1080,11 @@ export const GetPatientDocument = `
         name
         avatarUrl
       }
+      assigneeTeam {
+        id
+        title
+        kind
+      }
     }
     properties {
       definition {
@@ -1195,6 +1241,11 @@ export const GetPatientsDocument = `
         name
         avatarUrl
       }
+      assigneeTeam {
+        id
+        title
+        kind
+      }
     }
     properties {
       definition {
@@ -1240,6 +1291,12 @@ export const GetTaskDocument = `
     assignee {
       id
       name
+      avatarUrl
+    }
+    assigneeTeam {
+      id
+      title
+      kind
     }
     properties {
       definition {
@@ -1280,8 +1337,12 @@ export const useGetTaskQuery = <
     )};
 
 export const GetTasksDocument = `
-    query GetTasks($rootLocationIds: [ID!], $assigneeId: ID) {
-  tasks(rootLocationIds: $rootLocationIds, assigneeId: $assigneeId) {
+    query GetTasks($rootLocationIds: [ID!], $assigneeId: ID, $assigneeTeamId: ID) {
+  tasks(
+    rootLocationIds: $rootLocationIds
+    assigneeId: $assigneeId
+    assigneeTeamId: $assigneeTeamId
+  ) {
     id
     title
     description
@@ -1320,6 +1381,11 @@ export const GetTasksDocument = `
       id
       name
       avatarUrl
+    }
+    assigneeTeam {
+      id
+      title
+      kind
     }
   }
 }
@@ -1617,6 +1683,25 @@ export const useWaitPatientMutation = <
       {
     mutationKey: ['WaitPatient'],
     mutationFn: (variables?: WaitPatientMutationVariables) => fetcher<WaitPatientMutation, WaitPatientMutationVariables>(WaitPatientDocument, variables)(),
+    ...options
+  }
+    )};
+
+export const DeletePatientDocument = `
+    mutation DeletePatient($id: ID!) {
+  deletePatient(id: $id)
+}
+    `;
+
+export const useDeletePatientMutation = <
+      TError = unknown,
+      TContext = unknown
+    >(options?: UseMutationOptions<DeletePatientMutation, TError, DeletePatientMutationVariables, TContext>) => {
+    
+    return useMutation<DeletePatientMutation, TError, DeletePatientMutationVariables, TContext>(
+      {
+    mutationKey: ['DeletePatient'],
+    mutationFn: (variables?: DeletePatientMutationVariables) => fetcher<DeletePatientMutation, DeletePatientMutationVariables>(DeletePatientDocument, variables)(),
     ...options
   }
     )};
@@ -1985,6 +2070,58 @@ export const useReopenTaskMutation = <
       {
     mutationKey: ['ReopenTask'],
     mutationFn: (variables?: ReopenTaskMutationVariables) => fetcher<ReopenTaskMutation, ReopenTaskMutationVariables>(ReopenTaskDocument, variables)(),
+    ...options
+  }
+    )};
+
+export const AssignTaskToTeamDocument = `
+    mutation AssignTaskToTeam($id: ID!, $teamId: ID!) {
+  assignTaskToTeam(id: $id, teamId: $teamId) {
+    id
+    assigneeTeam {
+      id
+      title
+      kind
+    }
+  }
+}
+    `;
+
+export const useAssignTaskToTeamMutation = <
+      TError = unknown,
+      TContext = unknown
+    >(options?: UseMutationOptions<AssignTaskToTeamMutation, TError, AssignTaskToTeamMutationVariables, TContext>) => {
+    
+    return useMutation<AssignTaskToTeamMutation, TError, AssignTaskToTeamMutationVariables, TContext>(
+      {
+    mutationKey: ['AssignTaskToTeam'],
+    mutationFn: (variables?: AssignTaskToTeamMutationVariables) => fetcher<AssignTaskToTeamMutation, AssignTaskToTeamMutationVariables>(AssignTaskToTeamDocument, variables)(),
+    ...options
+  }
+    )};
+
+export const UnassignTaskFromTeamDocument = `
+    mutation UnassignTaskFromTeam($id: ID!) {
+  unassignTaskFromTeam(id: $id) {
+    id
+    assigneeTeam {
+      id
+      title
+      kind
+    }
+  }
+}
+    `;
+
+export const useUnassignTaskFromTeamMutation = <
+      TError = unknown,
+      TContext = unknown
+    >(options?: UseMutationOptions<UnassignTaskFromTeamMutation, TError, UnassignTaskFromTeamMutationVariables, TContext>) => {
+    
+    return useMutation<UnassignTaskFromTeamMutation, TError, UnassignTaskFromTeamMutationVariables, TContext>(
+      {
+    mutationKey: ['UnassignTaskFromTeam'],
+    mutationFn: (variables?: UnassignTaskFromTeamMutationVariables) => fetcher<UnassignTaskFromTeamMutation, UnassignTaskFromTeamMutationVariables>(UnassignTaskFromTeamDocument, variables)(),
     ...options
   }
     )};

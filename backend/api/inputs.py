@@ -110,6 +110,7 @@ class CreateTaskInput:
     description: str | None = None
     due_date: datetime | None = None
     assignee_id: strawberry.ID | None = None
+    assignee_team_id: strawberry.ID | None = None
     previous_task_ids: list[strawberry.ID] | None = None
     properties: list[PropertyValueInput] | None = None
     priority: TaskPriority | None = None
@@ -123,6 +124,7 @@ class UpdateTaskInput:
     done: bool | None = None
     due_date: datetime | None = strawberry.UNSET
     assignee_id: strawberry.ID | None = None
+    assignee_team_id: strawberry.ID | None = strawberry.UNSET
     previous_task_ids: list[strawberry.ID] | None = None
     properties: list[PropertyValueInput] | None = None
     checksum: str | None = None
