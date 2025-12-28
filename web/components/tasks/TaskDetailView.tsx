@@ -129,39 +129,40 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
 
   useEffect(() => {
     if (taskData?.task && isEditMode) {
+      const task = taskData.task
       setFormData(prev => {
-        const newPriority = (taskData.task.priority as TaskPriority | null) || null
-        const newEstimatedTime = taskData.task.estimatedTime ?? null
-        const newDueDate = taskData.task.dueDate ? new Date(taskData.task.dueDate) : null
-        
+        const newPriority = (task.priority as TaskPriority | null) || null
+        const newEstimatedTime = task.estimatedTime ?? null
+        const newDueDate = task.dueDate ? new Date(task.dueDate) : null
+
         if (
-          prev.title === taskData.task.title &&
-          prev.description === (taskData.task.description || '') &&
-          prev.patientId === (taskData.task.patient?.id || '') &&
-          prev.assigneeId === (taskData.task.assignee?.id || null) &&
+          prev.title === task.title &&
+          prev.description === (task.description || '') &&
+          prev.patientId === (task.patient?.id || '') &&
+          prev.assigneeId === (task.assignee?.id || null) &&
           prev.dueDate?.getTime() === newDueDate?.getTime() &&
           prev.priority === newPriority &&
           prev.estimatedTime === newEstimatedTime &&
-          prev.done === taskData.task.done
+          prev.done === task.done
         ) {
           return prev
         }
-        
+
         return {
-          title: taskData.task.title,
-          description: taskData.task.description || '',
-          patientId: taskData.task.patient?.id || '',
-          assigneeId: taskData.task.assignee?.id || null,
+          title: task.title,
+          description: task.description || '',
+          patientId: task.patient?.id || '',
+          assigneeId: task.assignee?.id || null,
           dueDate: newDueDate,
           priority: newPriority,
           estimatedTime: newEstimatedTime,
-          done: taskData.task.done || false
+          done: task.done || false
         }
       })
     } else if (initialPatientId && !taskId) {
       setFormData(prev => ({ ...prev, patientId: initialPatientId }))
     }
-  }, [taskData?.task?.updateDate, isEditMode, initialPatientId, taskId])
+  }, [taskData?.task, isEditMode, initialPatientId, taskId])
 
   const updateLocalState = (updates: Partial<CreateTaskInput>) => {
     setFormData(prev => ({ ...prev, ...updates }))
@@ -206,14 +207,14 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
               ...prev,
               ...(updates.title !== undefined && { title: data.updateTask.title }),
               ...(updates.description !== undefined && { description: data.updateTask.description || '' }),
-              ...(updates.dueDate !== undefined && { 
-                dueDate: data.updateTask.dueDate ? new Date(data.updateTask.dueDate) : null 
+              ...(updates.dueDate !== undefined && {
+                dueDate: data.updateTask.dueDate ? new Date(data.updateTask.dueDate) : null
               }),
-              ...(updates.priority !== undefined && { 
-                priority: (data.updateTask.priority as TaskPriority | null) || null 
+              ...(updates.priority !== undefined && {
+                priority: (data.updateTask.priority as TaskPriority | null) || null
               }),
-              ...(updates.estimatedTime !== undefined && { 
-                estimatedTime: data.updateTask.estimatedTime ?? null 
+              ...(updates.estimatedTime !== undefined && {
+                estimatedTime: data.updateTask.estimatedTime ?? null
               }),
               ...(updates.done !== undefined && { done: data.updateTask.done || false }),
             }))
@@ -433,9 +434,9 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
                       updateLocalState({ estimatedTime: isNaN(value as number) ? null : value })
                     }}
                     onBlur={() => {
-                      persistChanges({ 
+                      persistChanges({
                         estimatedTime: formData.estimatedTime,
-                        priority: formData.priority 
+                        priority: formData.priority
                       })
                     }}
                   />
