@@ -115,8 +115,16 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
               ...data.updateTask,
               patient: data.updateTask.patient || oldData.task.patient,
               assignee: data.updateTask.assignee || oldData.task.assignee,
-              priority: data.updateTask.priority !== undefined ? data.updateTask.priority : oldData.task.priority,
-              estimatedTime: data.updateTask.estimatedTime !== undefined ? data.updateTask.estimatedTime : oldData.task.estimatedTime,
+            }
+            if ('priority' in data.updateTask) {
+              mergedTask.priority = data.updateTask.priority
+            } else {
+              mergedTask.priority = oldData.task.priority
+            }
+            if ('estimatedTime' in data.updateTask) {
+              mergedTask.estimatedTime = data.updateTask.estimatedTime
+            } else {
+              mergedTask.estimatedTime = oldData.task.estimatedTime
             }
             if (oldData.task.properties) {
               mergedTask.properties = oldData.task.properties
@@ -189,6 +197,7 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
         }
 
         const hasDirtyFields = dirtyFieldsRef.current.size > 0 || Array.from(fieldUpdateTimestampsRef.current.values()).some(ts => (updateTime - ts) < GRACE_PERIOD_MS)
+
         if (hasDirtyFields) {
           const merged: Partial<CreateTaskInput & { done: boolean }> = {
             title: shouldPreserveField('title') ? prev.title : task.title,
@@ -203,14 +212,19 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
           return { ...prev, ...merged }
         }
 
+        const priorityChanged = prev.priority !== newPriority
+        const estimatedTimeChanged = prev.estimatedTime !== newEstimatedTime
+        const shouldPreservePriority = shouldPreserveField('priority')
+        const shouldPreserveEstimatedTime = shouldPreserveField('estimatedTime')
+
         if (
           prev.title === task.title &&
           prev.description === (task.description || '') &&
           prev.patientId === (task.patient?.id || '') &&
           prev.assigneeId === (task.assignee?.id || null) &&
           prev.dueDate?.getTime() === newDueDate?.getTime() &&
-          prev.priority === newPriority &&
-          prev.estimatedTime === newEstimatedTime &&
+          (priorityChanged ? shouldPreservePriority : prev.priority === newPriority) &&
+          (estimatedTimeChanged ? shouldPreserveEstimatedTime : prev.estimatedTime === newEstimatedTime) &&
           prev.done === task.done
         ) {
           return prev
@@ -222,8 +236,8 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
           patientId: task.patient?.id || '',
           assigneeId: task.assignee?.id || null,
           dueDate: newDueDate,
-          priority: newPriority,
-          estimatedTime: newEstimatedTime,
+          priority: shouldPreservePriority ? prev.priority : newPriority,
+          estimatedTime: shouldPreserveEstimatedTime ? prev.estimatedTime : newEstimatedTime,
           done: task.done || false
         }
       })
