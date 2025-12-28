@@ -57,6 +57,7 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
 
   const dirtyFieldsRef = useRef<Set<string>>(new Set())
   const lastServerUpdateRef = useRef<number>(0)
+  const fieldUpdateTimestampsRef = useRef<Map<string, number>>(new Map())
 
   const { data: taskData, isLoading: isLoadingTask, refetch } = useGetTaskQuery(
     { id: taskId! },
@@ -101,7 +102,7 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
   })
 
   const { mutate: updateTask } = useUpdateTaskMutation({
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
       if (data?.updateTask && taskId) {
         queryClient.setQueryData<GetTaskQuery>(
           ['GetTask', { id: taskId }],
@@ -114,6 +115,8 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
               ...data.updateTask,
               patient: data.updateTask.patient || oldData.task.patient,
               assignee: data.updateTask.assignee || oldData.task.assignee,
+              priority: data.updateTask.priority !== undefined ? data.updateTask.priority : oldData.task.priority,
+              estimatedTime: data.updateTask.estimatedTime !== undefined ? data.updateTask.estimatedTime : oldData.task.estimatedTime,
             }
             if (oldData.task.properties) {
               mergedTask.properties = oldData.task.properties
@@ -121,8 +124,16 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
             return { task: mergedTask } as GetTaskQuery
           }
         )
-        lastServerUpdateRef.current = Date.now()
-        dirtyFieldsRef.current.clear()
+        const now = Date.now()
+        lastServerUpdateRef.current = now
+        if (variables?.data) {
+          Object.keys(variables.data).forEach(key => {
+            if (variables.data[key as keyof UpdateTaskInput] !== undefined) {
+              fieldUpdateTimestampsRef.current.set(key, now)
+              dirtyFieldsRef.current.delete(key)
+            }
+          })
+        }
       }
       onSuccess()
     }
@@ -158,6 +169,7 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
     if (taskData?.task && isEditMode) {
       const task = taskData.task
       const updateTime = Date.now()
+      const GRACE_PERIOD_MS = 5000
 
       if (updateTime <= lastServerUpdateRef.current + 100) {
         return
@@ -168,17 +180,25 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
         const newEstimatedTime = task.estimatedTime ?? null
         const newDueDate = task.dueDate ? new Date(task.dueDate) : null
 
-        const hasDirtyFields = dirtyFieldsRef.current.size > 0
+        const shouldPreserveField = (fieldName: string): boolean => {
+          const lastUpdate = fieldUpdateTimestampsRef.current.get(fieldName)
+          if (lastUpdate && (updateTime - lastUpdate) < GRACE_PERIOD_MS) {
+            return true
+          }
+          return dirtyFieldsRef.current.has(fieldName)
+        }
+
+        const hasDirtyFields = dirtyFieldsRef.current.size > 0 || Array.from(fieldUpdateTimestampsRef.current.values()).some(ts => (updateTime - ts) < GRACE_PERIOD_MS)
         if (hasDirtyFields) {
           const merged: Partial<CreateTaskInput & { done: boolean }> = {
-            title: dirtyFieldsRef.current.has('title') ? prev.title : task.title,
-            description: dirtyFieldsRef.current.has('description') ? prev.description : (task.description || ''),
-            patientId: dirtyFieldsRef.current.has('patientId') ? prev.patientId : (task.patient?.id || ''),
-            assigneeId: dirtyFieldsRef.current.has('assigneeId') ? prev.assigneeId : (task.assignee?.id || null),
-            dueDate: dirtyFieldsRef.current.has('dueDate') ? prev.dueDate : newDueDate,
-            priority: dirtyFieldsRef.current.has('priority') ? prev.priority : newPriority,
-            estimatedTime: dirtyFieldsRef.current.has('estimatedTime') ? prev.estimatedTime : newEstimatedTime,
-            done: dirtyFieldsRef.current.has('done') ? prev.done : (task.done || false),
+            title: shouldPreserveField('title') ? prev.title : task.title,
+            description: shouldPreserveField('description') ? prev.description : (task.description || ''),
+            patientId: shouldPreserveField('patientId') ? prev.patientId : (task.patient?.id || ''),
+            assigneeId: shouldPreserveField('assigneeId') ? prev.assigneeId : (task.assignee?.id || null),
+            dueDate: shouldPreserveField('dueDate') ? prev.dueDate : newDueDate,
+            priority: shouldPreserveField('priority') ? prev.priority : newPriority,
+            estimatedTime: shouldPreserveField('estimatedTime') ? prev.estimatedTime : newEstimatedTime,
+            done: shouldPreserveField('done') ? prev.done : (task.done || false),
           }
           return { ...prev, ...merged }
         }
@@ -258,15 +278,19 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
         }
       })
 
+      const now = Date.now()
+      Object.keys(updates).forEach(key => {
+        if (updates[key as keyof UpdateTaskInput] !== undefined) {
+          fieldUpdateTimestampsRef.current.set(key, now)
+        }
+      })
+
       updateTask({
         id: taskId,
         data: updates as UpdateTaskInput
       }, {
         onSuccess: (data) => {
           if (data?.updateTask) {
-            const updatedFields = Object.keys(updates)
-            updatedFields.forEach(field => dirtyFieldsRef.current.delete(field))
-
             setFormData(prev => ({
               ...prev,
               ...(updates.title !== undefined && { title: data.updateTask.title }),
@@ -283,7 +307,6 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
               ...(updates.done !== undefined && { done: data.updateTask.done || false }),
               patientId: data.updateTask.patient?.id || prev.patientId,
             }))
-            lastServerUpdateRef.current = Date.now()
           }
         }
       })
