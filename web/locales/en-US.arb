@@ -364,5 +364,9 @@
   "noNotifications": "No recent updates",
   "notifications": "Notifications",
   "dismissAll": "Dismiss All",
-  "security": "Security"
+  "security": "Security",
+  "shiftHandover": "Shift Handover",
+  "shiftHandoverDescription": "Select a user to transfer all open tasks assigned to you.",
+  "confirmShiftHandover": "Confirm Shift Handover",
+  "confirmShiftHandoverDescription": "Are you sure you want to transfer all open tasks to the selected user?"
 }

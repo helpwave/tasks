@@ -35,6 +35,8 @@ export type TasksTranslationEntries = {
   'collapseAll': string,
   'confirm': string,
   'confirmSelection': string,
+  'confirmShiftHandover': string,
+  'confirmShiftHandoverDescription': string,
   'create': string,
   'createdAt': string,
   'createTask': string,
@@ -172,6 +174,8 @@ export type TasksTranslationEntries = {
   'settings': string,
   'settingsDescription': string,
   'sex': string,
+  'shiftHandover': string,
+  'shiftHandoverDescription': string,
   'showDone': string,
   'sPropertySubjectType': (values: { subject: string }) => string,
   'sPropertyType': (values: { type: string }) => string,
@@ -232,6 +236,8 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'collapseAll': `Alle einklappen`,
     'confirm': `Bestätigen`,
     'confirmSelection': `Auswahl bestätigen`,
+    'confirmShiftHandover': `Schichtübergabe bestätigen`,
+    'confirmShiftHandoverDescription': `Sind Sie sicher, dass Sie alle offenen Aufgaben an den ausgewählten Benutzer übertragen möchten?`,
     'create': `Erstellen`,
     'createdAt': `Erstellt am`,
     'createTask': `Aufgabe erstellen`,
@@ -457,6 +463,8 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'settings': `Einstellungen`,
     'settingsDescription': `Hier kannst du die App Konfiguration ändern.`,
     'sex': `Geschlecht`,
+    'shiftHandover': `Schichtübergabe`,
+    'shiftHandoverDescription': `Wählen Sie einen Benutzer aus, um alle Ihnen zugewiesenen offenen Aufgaben zu übertragen.`,
     'showDone': `Erledigte anzeigen`,
     'sPropertySubjectType': ({ subject }): string => {
       return TranslationGen.resolveSelect(subject, {
@@ -544,6 +552,8 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'collapseAll': `Collapse All`,
     'confirm': `Confirm`,
     'confirmSelection': `Confirm Selection`,
+    'confirmShiftHandover': `Confirm Shift Handover`,
+    'confirmShiftHandoverDescription': `Are you sure you want to transfer all open tasks to the selected user?`,
     'conflictDetected': `Conflict Detected`,
     'create': `Create`,
     'createdAt': `Created at`,
@@ -770,6 +780,8 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'settings': `Settings`,
     'settingsDescription': `Here you can change the app configuration.`,
     'sex': `Sex`,
+    'shiftHandover': `Shift Handover`,
+    'shiftHandoverDescription': `Select a user to transfer all open tasks assigned to you.`,
     'showDone': `Show done`,
     'sPropertySubjectType': ({ subject }): string => {
       return TranslationGen.resolveSelect(subject, {
