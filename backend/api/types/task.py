@@ -25,6 +25,8 @@ class TaskType:
     update_date: datetime | None
     assignee_id: strawberry.ID | None
     patient_id: strawberry.ID
+    priority: str | None
+    estimated_time: int | None
 
     @strawberry.field
     async def assignee(

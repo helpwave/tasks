@@ -5,6 +5,8 @@ query GetTasks($rootLocationIds: [ID!], $assigneeId: ID) {
     description
     done
     dueDate
+    priority
+    estimatedTime
     creationDate
     updateDate
     patient {

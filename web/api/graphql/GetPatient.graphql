@@ -84,6 +84,8 @@ query GetPatient($id: ID!) {
       description
       done
       dueDate
+      priority
+      estimatedTime
       updateDate
       assignee {
         id

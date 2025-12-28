@@ -7,6 +7,8 @@ query GetMyTasks {
       description
       done
       dueDate
+      priority
+      estimatedTime
       creationDate
       updateDate
       patient {

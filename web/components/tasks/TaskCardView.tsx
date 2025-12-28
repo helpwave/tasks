@@ -14,6 +14,8 @@ type FlexibleTask = {
   description?: string | null,
   done: boolean,
   dueDate?: Date | string | null,
+  priority?: string | null,
+  estimatedTime?: number | null,
   updateDate?: Date | string | null,
   patient?: {
     id: string,
@@ -111,13 +113,24 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
         </div>
         <div className={clsx('flex-1 min-w-0 overflow-hidden', { 'pb-16': showPatient })}>
           <div className="flex items-center justify-between gap-2 mb-2 flex-wrap min-w-0">
-            <div
-              className={clsx(
-                'font-semibold text-lg min-w-0 flex-1 truncate',
-                { 'line-through text-description': task.done }
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              {(task as FlexibleTask).priority && (
+                <div className={clsx(
+                  'w-2 h-2 rounded-full shrink-0',
+                  (task as FlexibleTask).priority === 'P1' ? 'bg-red-500' :
+                  (task as FlexibleTask).priority === 'P2' ? 'bg-orange-500' :
+                  (task as FlexibleTask).priority === 'P3' ? 'bg-yellow-500' :
+                  (task as FlexibleTask).priority === 'P4' ? 'bg-blue-500' : ''
+                )} />
               )}
-            >
-              {taskName}
+              <div
+                className={clsx(
+                  'font-semibold text-lg min-w-0 flex-1 truncate',
+                  { 'line-through text-description': task.done }
+                )}
+              >
+                {taskName}
+              </div>
             </div>
             {task.assignee && (
               <div className="flex items-center gap-1.5 text-base text-description shrink-0 min-w-0">
@@ -156,12 +169,24 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
           )}
         </div>
       )}
-      {dueDate && (
-        <div className={clsx('absolute bottom-5 right-5 flex items-center gap-2 text-sm text-description', dueDateColorClass)}>
-          <Clock className="size-4" />
-          <SmartDate date={dueDate} mode="relative" showTime={true} />
-        </div>
-      )}
+      <div className="absolute bottom-5 right-5 flex items-center gap-3 text-sm text-description">
+        {(task as FlexibleTask).estimatedTime && (
+          <div className="flex items-center gap-1">
+            <Clock className="size-4" />
+            <span>
+              {(task as FlexibleTask).estimatedTime! < 60
+                ? `${(task as FlexibleTask).estimatedTime}m`
+                : `${Math.floor((task as FlexibleTask).estimatedTime! / 60)}h ${(task as FlexibleTask).estimatedTime! % 60}m`}
+            </span>
+          </div>
+        )}
+        {dueDate && (
+          <div className={clsx('flex items-center gap-2', dueDateColorClass)}>
+            <Clock className="size-4" />
+            <SmartDate date={dueDate} mode="relative" showTime={true} />
+          </div>
+        )}
+      </div>
     </button>
   )
 }

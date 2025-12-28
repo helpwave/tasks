@@ -20,6 +20,8 @@ export type TaskViewModel = {
   description?: string,
   updateDate: Date,
   dueDate?: Date,
+  priority?: string | null,
+  estimatedTime?: number | null,
   patient?: {
     id: string,
     name: string,
@@ -62,6 +64,38 @@ const isCloseToDueDate = (dueDate: Date | undefined, done: boolean): boolean => 
   const dueTime = dueDate.getTime()
   const oneHour = 60 * 60 * 1000
   return dueTime > now && dueTime - now <= oneHour
+}
+
+const getPriorityColor = (priority: string | null | undefined): string => {
+  if (!priority) return ''
+  switch (priority) {
+    case 'P1':
+      return 'border-l-4 border-l-red-500'
+    case 'P2':
+      return 'border-l-4 border-l-orange-500'
+    case 'P3':
+      return 'border-l-4 border-l-yellow-500'
+    case 'P4':
+      return 'border-l-4 border-l-blue-500'
+    default:
+      return ''
+  }
+}
+
+const getPriorityDotColor = (priority: string | null | undefined): string => {
+  if (!priority) return ''
+  switch (priority) {
+    case 'P1':
+      return 'bg-red-500'
+    case 'P2':
+      return 'bg-orange-500'
+    case 'P3':
+      return 'bg-yellow-500'
+    case 'P4':
+      return 'bg-blue-500'
+    default:
+      return ''
+  }
 }
 
 const STORAGE_KEY_SHOW_DONE = 'task-show-done'
@@ -181,7 +215,14 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
           header: translation('title'),
           accessorKey: 'name',
           cell: ({ row }) => {
-            return row.original.name
+            return (
+              <div className="flex items-center gap-2">
+                {row.original.priority && (
+                  <div className={clsx('w-2 h-2 rounded-full shrink-0', getPriorityDotColor(row.original.priority))} />
+                )}
+                <span>{row.original.name}</span>
+              </div>
+            )
           },
           minSize: 200,
           size: Number.MAX_SAFE_INTEGER,
@@ -372,14 +413,15 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
             </div>
           ) : (
             tasks.map((task) => (
-              <TaskCardView
-                key={task.id}
-                task={task}
-                onToggleDone={handleToggleDone}
-                onClick={(t) => setTaskDialogState({ isOpen: true, taskId: t.id })}
-                showAssignee={showAssignee}
-                onRefetch={onRefetch}
-              />
+              <div key={task.id} className={clsx(getPriorityColor(task.priority))}>
+                <TaskCardView
+                  task={task}
+                  onToggleDone={handleToggleDone}
+                  onClick={(t) => setTaskDialogState({ isOpen: true, taskId: t.id })}
+                  showAssignee={showAssignee}
+                  onRefetch={onRefetch}
+                />
+              </div>
             ))
           )}
         </div>

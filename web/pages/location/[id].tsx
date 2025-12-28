@@ -68,6 +68,8 @@ const LocationPage: NextPage = () => {
         description: task.description || undefined,
         updateDate: task.updateDate ? new Date(task.updateDate) : new Date(task.creationDate),
         dueDate: task.dueDate ? new Date(task.dueDate) : undefined,
+        priority: task.priority || null,
+        estimatedTime: task.estimatedTime ?? null,
         done: task.done,
         patient: {
           id: patient.id,

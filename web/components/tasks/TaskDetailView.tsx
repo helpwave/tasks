@@ -1,6 +1,7 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useRef } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
-import type { CreateTaskInput, UpdateTaskInput } from '@/api/gql/generated'
+import type { CreateTaskInput, UpdateTaskInput, TaskPriority } from '@/api/gql/generated'
 import {
   useAssignTaskMutation,
   useCreateTaskMutation,
@@ -11,7 +12,8 @@ import {
   useGetUsersQuery,
   useUnassignTaskMutation,
   useUpdateTaskMutation,
-  PropertyEntity
+  PropertyEntity,
+  type GetTaskQuery
 } from '@/api/gql/generated'
 import {
   Button,
@@ -45,12 +47,17 @@ interface TaskDetailViewProps {
 export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }: TaskDetailViewProps) => {
   const translation = useTasksTranslation()
   const { selectedLocationId } = useTasksContext()
+  const queryClient = useQueryClient()
   const [isShowingPatientDialog, setIsShowingPatientDialog] = useState<boolean>(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState<boolean>(false)
   const isEditMode = !!taskId
 
   const [titleError, setTitleError] = useState<string | null>(null)
   const [patientIdError, setPatientIdError] = useState<string | null>(null)
+
+  const dirtyFieldsRef = useRef<Set<string>>(new Set())
+  const lastServerUpdateRef = useRef<number>(0)
+  const fieldUpdateTimestampsRef = useRef<Map<string, number>>(new Map())
 
   const { data: taskData, isLoading: isLoadingTask, refetch } = useGetTaskQuery(
     { id: taskId! },
@@ -95,8 +102,47 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
   })
 
   const { mutate: updateTask } = useUpdateTaskMutation({
-    onSuccess: () => {
-      refetch()
+    onSuccess: (data, variables) => {
+      if (data?.updateTask && taskId) {
+        queryClient.setQueryData<GetTaskQuery>(
+          ['GetTask', { id: taskId }],
+          (oldData) => {
+            if (!oldData?.task) {
+              return { task: data.updateTask } as GetTaskQuery
+            }
+            const mergedTask = {
+              ...oldData.task,
+              ...data.updateTask,
+              patient: data.updateTask.patient || oldData.task.patient,
+              assignee: data.updateTask.assignee || oldData.task.assignee,
+            }
+            if ('priority' in data.updateTask) {
+              mergedTask.priority = data.updateTask.priority
+            } else {
+              mergedTask.priority = oldData.task.priority
+            }
+            if ('estimatedTime' in data.updateTask) {
+              mergedTask.estimatedTime = data.updateTask.estimatedTime
+            } else {
+              mergedTask.estimatedTime = oldData.task.estimatedTime
+            }
+            if (oldData.task.properties) {
+              mergedTask.properties = oldData.task.properties
+            }
+            return { task: mergedTask } as GetTaskQuery
+          }
+        )
+        const now = Date.now()
+        lastServerUpdateRef.current = now
+        if (variables?.data) {
+          Object.keys(variables.data).forEach(key => {
+            if (variables.data[key as keyof UpdateTaskInput] !== undefined) {
+              fieldUpdateTimestampsRef.current.set(key, now)
+              dirtyFieldsRef.current.delete(key)
+            }
+          })
+        }
+      }
       onSuccess()
     }
   })
@@ -122,25 +168,92 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
     patientId: initialPatientId || '',
     assigneeId: null,
     dueDate: null,
+    priority: null,
+    estimatedTime: null,
     done: false,
   })
 
   useEffect(() => {
-    if (taskData?.task) {
-      setFormData({
-        title: taskData.task.title,
-        description: taskData.task.description || '',
-        patientId: taskData.task.patient?.id || '',
-        assigneeId: taskData.task.assignee?.id || null,
-        dueDate: taskData.task.dueDate ? new Date(taskData.task.dueDate) : null,
-        done: taskData.task.done || false
+    if (taskData?.task && isEditMode) {
+      const task = taskData.task
+      const updateTime = Date.now()
+      const GRACE_PERIOD_MS = 5000
+
+      if (updateTime <= lastServerUpdateRef.current + 100) {
+        return
+      }
+
+      setFormData(prev => {
+        const newPriority = (task.priority as TaskPriority | null) || null
+        const newEstimatedTime = task.estimatedTime ?? null
+        const newDueDate = task.dueDate ? new Date(task.dueDate) : null
+
+        const shouldPreserveField = (fieldName: string): boolean => {
+          const lastUpdate = fieldUpdateTimestampsRef.current.get(fieldName)
+          if (lastUpdate && (updateTime - lastUpdate) < GRACE_PERIOD_MS) {
+            return true
+          }
+          return dirtyFieldsRef.current.has(fieldName)
+        }
+
+        const hasDirtyFields = dirtyFieldsRef.current.size > 0 || Array.from(fieldUpdateTimestampsRef.current.values()).some(ts => (updateTime - ts) < GRACE_PERIOD_MS)
+
+        if (hasDirtyFields) {
+          const merged: Partial<CreateTaskInput & { done: boolean }> = {
+            title: shouldPreserveField('title') ? prev.title : task.title,
+            description: shouldPreserveField('description') ? prev.description : (task.description || ''),
+            patientId: shouldPreserveField('patientId') ? prev.patientId : (task.patient?.id || ''),
+            assigneeId: shouldPreserveField('assigneeId') ? prev.assigneeId : (task.assignee?.id || null),
+            dueDate: shouldPreserveField('dueDate') ? prev.dueDate : newDueDate,
+            priority: shouldPreserveField('priority') ? prev.priority : newPriority,
+            estimatedTime: shouldPreserveField('estimatedTime') ? prev.estimatedTime : newEstimatedTime,
+            done: shouldPreserveField('done') ? prev.done : (task.done || false),
+          }
+          return { ...prev, ...merged }
+        }
+
+        const priorityChanged = prev.priority !== newPriority
+        const estimatedTimeChanged = prev.estimatedTime !== newEstimatedTime
+        const shouldPreservePriority = shouldPreserveField('priority')
+        const shouldPreserveEstimatedTime = shouldPreserveField('estimatedTime')
+
+        if (
+          prev.title === task.title &&
+          prev.description === (task.description || '') &&
+          prev.patientId === (task.patient?.id || '') &&
+          prev.assigneeId === (task.assignee?.id || null) &&
+          prev.dueDate?.getTime() === newDueDate?.getTime() &&
+          (priorityChanged ? shouldPreservePriority : prev.priority === newPriority) &&
+          (estimatedTimeChanged ? shouldPreserveEstimatedTime : prev.estimatedTime === newEstimatedTime) &&
+          prev.done === task.done
+        ) {
+          return prev
+        }
+
+        return {
+          title: task.title,
+          description: task.description || '',
+          patientId: task.patient?.id || '',
+          assigneeId: task.assignee?.id || null,
+          dueDate: newDueDate,
+          priority: shouldPreservePriority ? prev.priority : newPriority,
+          estimatedTime: shouldPreserveEstimatedTime ? prev.estimatedTime : newEstimatedTime,
+          done: task.done || false
+        }
       })
     } else if (initialPatientId && !taskId) {
       setFormData(prev => ({ ...prev, patientId: initialPatientId }))
     }
-  }, [taskData, initialPatientId, taskId])
+  }, [taskData?.task, isEditMode, initialPatientId, taskId])
 
-  const updateLocalState = (updates: Partial<CreateTaskInput>) => {
+  const updateLocalState = (updates: Partial<CreateTaskInput>, markDirty = false) => {
+    if (markDirty) {
+      Object.keys(updates).forEach(key => {
+        if (updates[key as keyof CreateTaskInput] !== undefined) {
+          dirtyFieldsRef.current.add(key)
+        }
+      })
+    }
     setFormData(prev => ({ ...prev, ...updates }))
   }
 
@@ -173,9 +286,43 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
     if (isEditMode && taskId) {
       if (updates.title !== undefined && !updates.title?.trim()) return
 
+      Object.keys(updates).forEach(key => {
+        if (updates[key as keyof UpdateTaskInput] !== undefined) {
+          dirtyFieldsRef.current.add(key)
+        }
+      })
+
+      const now = Date.now()
+      Object.keys(updates).forEach(key => {
+        if (updates[key as keyof UpdateTaskInput] !== undefined) {
+          fieldUpdateTimestampsRef.current.set(key, now)
+        }
+      })
+
       updateTask({
         id: taskId,
         data: updates as UpdateTaskInput
+      }, {
+        onSuccess: (data) => {
+          if (data?.updateTask) {
+            setFormData(prev => ({
+              ...prev,
+              ...(updates.title !== undefined && { title: data.updateTask.title }),
+              ...(updates.description !== undefined && { description: data.updateTask.description || '' }),
+              ...(updates.dueDate !== undefined && {
+                dueDate: data.updateTask.dueDate ? new Date(data.updateTask.dueDate) : null
+              }),
+              ...(updates.priority !== undefined && {
+                priority: (data.updateTask.priority as TaskPriority | null) || null
+              }),
+              ...(updates.estimatedTime !== undefined && {
+                estimatedTime: data.updateTask.estimatedTime ?? null
+              }),
+              ...(updates.done !== undefined && { done: data.updateTask.done || false }),
+              patientId: data.updateTask.patient?.id || prev.patientId,
+            }))
+          }
+        }
       })
     }
   }
@@ -209,8 +356,10 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
         description: formData.description,
         assigneeId: formData.assigneeId,
         dueDate: formData.dueDate,
+        priority: (formData.priority as TaskPriority | null) || undefined,
+        estimatedTime: formData.estimatedTime,
         properties: formData.properties
-      } as CreateTaskInput
+      } as CreateTaskInput & { priority?: TaskPriority | null, estimatedTime?: number | null }
     })
   }
 
@@ -259,7 +408,7 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
                         placeholder={translation('taskTitlePlaceholder')}
                         required
                         onChange={e => {
-                          updateLocalState({ title: e.target.value })
+                          updateLocalState({ title: e.target.value }, true)
                           if (isShowingError) {
                             validateTitle(e.target.value)
                           }
@@ -340,7 +489,7 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
                     date={formData.dueDate ? new Date(formData.dueDate) : undefined}
                     mode="dateTime"
                     onValueChange={(date) => {
-                      updateLocalState({ dueDate: date })
+                      updateLocalState({ dueDate: date }, true)
                     }}
                     onEditCompleted={(date) => {
                       updateLocalState({ dueDate: date })
@@ -354,13 +503,56 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
                 )}
               </FormElementWrapper>
 
+              <FormElementWrapper label="Priority">
+                {({ isShowingError: _1, setIsShowingError: _2, ...bag }) => (
+                  <Select
+                    {...bag}
+                    value={formData.priority || 'none'}
+                    onValueChanged={(value) => {
+                      const priorityValue = value === 'none' ? null : (value as TaskPriority)
+                      updateLocalState({ priority: priorityValue }, true)
+                      persistChanges({ priority: priorityValue })
+                    }}
+                  >
+                    <SelectOption value="none">None</SelectOption>
+                    <SelectOption value="P1">P1</SelectOption>
+                    <SelectOption value="P2">P2</SelectOption>
+                    <SelectOption value="P3">P3</SelectOption>
+                    <SelectOption value="P4">P4</SelectOption>
+                  </Select>
+                )}
+              </FormElementWrapper>
+
+              <FormElementWrapper label="Estimated Time (minutes)">
+                {({ isShowingError: _1, setIsShowingError: _2, ...bag }) => (
+                  <Input
+                    {...bag}
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={formData.estimatedTime?.toString() || ''}
+                    placeholder="e.g. 30"
+                    onChange={(e) => {
+                      const value = e.target.value === '' ? null : parseInt(e.target.value, 10)
+                      updateLocalState({ estimatedTime: isNaN(value as number) ? null : value }, true)
+                    }}
+                    onBlur={() => {
+                      persistChanges({
+                        estimatedTime: formData.estimatedTime,
+                        priority: formData.priority
+                      })
+                    }}
+                  />
+                )}
+              </FormElementWrapper>
+
               <FormElementWrapper label={translation('description')}>
                 {({ isShowingError: _1, setIsShowingError: _2, ...bag }) => (
                   <Textarea
                     {...bag}
                     value={formData.description || ''}
                     placeholder={translation('descriptionPlaceholder')}
-                    onChange={e => updateLocalState({ description: e.target.value })}
+                    onChange={e => updateLocalState({ description: e.target.value }, true)}
                     onBlur={() => persistChanges({ description: formData.description })}
                     minLength={4}
                   />

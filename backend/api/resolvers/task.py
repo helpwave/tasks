@@ -224,6 +224,8 @@ class TaskMutation(BaseMutationResolver[models.Task]):
             patient_id=data.patient_id,
             assignee_id=data.assignee_id,
             due_date=normalize_datetime_to_utc(data.due_date),
+            priority=data.priority.value if data.priority else None,
+            estimated_time=data.estimated_time,
         )
 
         if data.properties is not None:
@@ -283,6 +285,12 @@ class TaskMutation(BaseMutationResolver[models.Task]):
                 if data.due_date
                 else None
             )
+
+        if data.priority is not strawberry.UNSET:
+            task.priority = data.priority.value if data.priority else None
+
+        if data.estimated_time is not strawberry.UNSET:
+            task.estimated_time = data.estimated_time
 
         if data.properties is not None:
             property_service = TaskMutation._get_property_service(db)
