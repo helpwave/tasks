@@ -26,7 +26,8 @@ import {
   Users,
   Clock,
   Menu as MenuIcon,
-  X
+  X,
+  MessageSquare
 } from 'lucide-react'
 import { Notifications } from '@/components/Notifications'
 import { TasksLogo } from '@/components/TasksLogo'
@@ -36,6 +37,7 @@ import { useGetLocationsQuery } from '@/api/gql/generated'
 import { hashString } from '@/utils/hash'
 import { useSwipeGesture } from '@/hooks/useSwipeGesture'
 import { LocationSelectionDialog } from '@/components/locations/LocationSelectionDialog'
+import { FeedbackDialog } from '@/components/FeedbackDialog'
 
 export const StagingDisclaimerDialog = () => {
   const config = getConfig()
@@ -315,49 +317,58 @@ type HeaderProps = HTMLAttributes<HTMLHeadElement> & {
 export const Header = ({ onMenuClick, isMenuOpen, ...props }: HeaderProps) => {
   const router = useRouter()
   const { user } = useTasksContext()
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false)
 
   return (
-    <header
-      {...props}
-      className={clsx(
-        'flex-row-8 items-center justify-between z-10',
-        props.className
-      )}
-    >
-      <div className="flex-col-0 pl-4 lg:pl-0">
-        <Button
-          layout="icon"
-          color="neutral"
-          coloringStyle="text"
-          onClick={onMenuClick}
-          className="lg:hidden"
-        >
-          {isMenuOpen ? <X className="size-6" /> : <MenuIcon className="size-6" />}
-        </Button>
-      </div>
-      <div className="flex-row-2 justify-end items-center gap-x-2">
-        <RootLocationSelector className="hidden sm:flex" />
-        <div className="flex-row-0">
-          <Notifications />
-        </div>
-        <div className="flex-row-0">
-          <Button coloringStyle="text" layout="icon" color="neutral" onClick={() => router.push('/settings')}>
-            <SettingsIcon />
+    <>
+      <header
+        {...props}
+        className={clsx(
+          'flex-row-8 items-center justify-between z-10',
+          props.className
+        )}
+      >
+        <div className="flex-col-0 pl-4 lg:pl-0">
+          <Button
+            layout="icon"
+            color="neutral"
+            coloringStyle="text"
+            onClick={onMenuClick}
+            className="lg:hidden"
+          >
+            {isMenuOpen ? <X className="size-6" /> : <MenuIcon className="size-6" />}
           </Button>
         </div>
-        <div className="flex-row-1.5 items-center gap-x-1.75">
-          <span className="hidden sm:inline typography-title-sm">{user?.name}</span>
-          <Avatar
-            size="lg"
-            fullyRounded={true}
-            image={user?.avatarUrl ? {
-              avatarUrl: user.avatarUrl,
-              alt: user.name
-            } : undefined}
-          />
+        <div className="flex-row-2 justify-end items-center gap-x-2">
+          <RootLocationSelector className="hidden sm:flex" />
+          <div className="flex-row-0">
+            <Notifications />
+          </div>
+          <div className="flex-row-0">
+            <Button coloringStyle="text" layout="icon" color="neutral" onClick={() => setIsFeedbackOpen(true)}>
+              <MessageSquare />
+            </Button>
+          </div>
+          <div className="flex-row-0">
+            <Button coloringStyle="text" layout="icon" color="neutral" onClick={() => router.push('/settings')}>
+              <SettingsIcon />
+            </Button>
+          </div>
+          <div className="flex-row-1.5 items-center gap-x-1.75">
+            <span className="hidden sm:inline typography-title-sm">{user?.name}</span>
+            <Avatar
+              size="lg"
+              fullyRounded={true}
+              image={user?.avatarUrl ? {
+                avatarUrl: user.avatarUrl,
+                alt: user.name
+              } : undefined}
+            />
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
+      <FeedbackDialog isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} />
+    </>
   )
 }
 

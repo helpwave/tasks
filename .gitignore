@@ -11,3 +11,7 @@
 coverage.xml
 .coverage
 htmlcov/
+
+# feedback
+**/feedback/
+feedback/

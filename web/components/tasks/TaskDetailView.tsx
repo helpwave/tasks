@@ -4,13 +4,16 @@ import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import type { CreateTaskInput, UpdateTaskInput, TaskPriority } from '@/api/gql/generated'
 import {
   useAssignTaskMutation,
+  useAssignTaskToTeamMutation,
   useCreateTaskMutation,
   useDeleteTaskMutation,
+  useGetLocationsQuery,
   useGetPatientsQuery,
   useGetPropertyDefinitionsQuery,
   useGetTaskQuery,
   useGetUsersQuery,
   useUnassignTaskMutation,
+  useUnassignTaskFromTeamMutation,
   useUpdateTaskMutation,
   PropertyEntity,
   type GetTaskQuery
@@ -85,6 +88,19 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
     }
   )
 
+  const { data: locationsData } = useGetLocationsQuery(
+    undefined,
+    {
+      refetchInterval: 30000,
+      refetchOnWindowFocus: true,
+    }
+  )
+
+  const teams = useMemo(() => {
+    if (!locationsData?.locationNodes) return []
+    return locationsData.locationNodes.filter(loc => loc.kind === 'TEAM')
+  }, [locationsData])
+
   const { data: propertyDefinitionsData } = useGetPropertyDefinitionsQuery()
 
   const hasAvailableProperties = useMemo(() => {
@@ -148,11 +164,31 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
   })
 
   const { mutate: assignTask } = useAssignTaskMutation({
-    onSuccess: () => onSuccess()
+    onSuccess: () => {
+      refetch()
+      onSuccess()
+    }
   })
 
   const { mutate: unassignTask } = useUnassignTaskMutation({
-    onSuccess: () => onSuccess()
+    onSuccess: () => {
+      refetch()
+      onSuccess()
+    }
+  })
+
+  const { mutate: assignTaskToTeam } = useAssignTaskToTeamMutation({
+    onSuccess: () => {
+      refetch()
+      onSuccess()
+    }
+  })
+
+  const { mutate: unassignTaskFromTeam } = useUnassignTaskFromTeamMutation({
+    onSuccess: () => {
+      refetch()
+      onSuccess()
+    }
   })
 
   const { mutate: deleteTask, isLoading: isDeleting } = useDeleteTaskMutation({
@@ -162,11 +198,12 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
     }
   })
 
-  const [formData, setFormData] = useState<Partial<CreateTaskInput & { done: boolean }>>({
+  const [formData, setFormData] = useState<Partial<CreateTaskInput & { done: boolean, assigneeTeamId?: string | null }>>({
     title: '',
     description: '',
     patientId: initialPatientId || '',
     assigneeId: null,
+    assigneeTeamId: null,
     dueDate: null,
     priority: null,
     estimatedTime: null,
@@ -199,11 +236,12 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
         const hasDirtyFields = dirtyFieldsRef.current.size > 0 || Array.from(fieldUpdateTimestampsRef.current.values()).some(ts => (updateTime - ts) < GRACE_PERIOD_MS)
 
         if (hasDirtyFields) {
-          const merged: Partial<CreateTaskInput & { done: boolean }> = {
+          const merged: Partial<CreateTaskInput & { done: boolean, assigneeTeamId?: string | null }> = {
             title: shouldPreserveField('title') ? prev.title : task.title,
             description: shouldPreserveField('description') ? prev.description : (task.description || ''),
             patientId: shouldPreserveField('patientId') ? prev.patientId : (task.patient?.id || ''),
             assigneeId: shouldPreserveField('assigneeId') ? prev.assigneeId : (task.assignee?.id || null),
+            assigneeTeamId: shouldPreserveField('assigneeTeamId') ? prev.assigneeTeamId : (task.assigneeTeam?.id || null),
             dueDate: shouldPreserveField('dueDate') ? prev.dueDate : newDueDate,
             priority: shouldPreserveField('priority') ? prev.priority : newPriority,
             estimatedTime: shouldPreserveField('estimatedTime') ? prev.estimatedTime : newEstimatedTime,
@@ -222,6 +260,7 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
           prev.description === (task.description || '') &&
           prev.patientId === (task.patient?.id || '') &&
           prev.assigneeId === (task.assignee?.id || null) &&
+          prev.assigneeTeamId === (task.assigneeTeam?.id || null) &&
           prev.dueDate?.getTime() === newDueDate?.getTime() &&
           (priorityChanged ? shouldPreservePriority : prev.priority === newPriority) &&
           (estimatedTimeChanged ? shouldPreserveEstimatedTime : prev.estimatedTime === newEstimatedTime) &&
@@ -235,6 +274,7 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
           description: task.description || '',
           patientId: task.patient?.id || '',
           assigneeId: task.assignee?.id || null,
+          assigneeTeamId: task.assigneeTeam?.id || null,
           dueDate: newDueDate,
           priority: shouldPreservePriority ? prev.priority : newPriority,
           estimatedTime: shouldPreserveEstimatedTime ? prev.estimatedTime : newEstimatedTime,
@@ -328,15 +368,30 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
   }
 
   const handleAssigneeChange = (value: string) => {
-    const newAssigneeId = value === 'unassigned' ? null : value
+    if (value === 'unassigned') {
+      updateLocalState({ assigneeId: null, assigneeTeamId: null })
+      if (isEditMode && taskId) {
+        if (taskData?.task?.assigneeTeam) {
+          unassignTaskFromTeam({ id: taskId })
+        } else {
+          unassignTask({ id: taskId })
+        }
+      }
+      return
+    }
 
-    updateLocalState({ assigneeId: newAssigneeId })
+    const isTeam = value.startsWith('team:')
+    const assigneeId = isTeam ? value.replace('team:', '') : value
 
-    if (isEditMode && taskId) {
-      if (newAssigneeId) {
-        assignTask({ id: taskId, userId: newAssigneeId })
-      } else {
-        unassignTask({ id: taskId })
+    if (isTeam) {
+      updateLocalState({ assigneeId: null, assigneeTeamId: assigneeId })
+      if (isEditMode && taskId) {
+        assignTaskToTeam({ id: taskId, teamId: assigneeId })
+      }
+    } else {
+      updateLocalState({ assigneeId, assigneeTeamId: null })
+      if (isEditMode && taskId) {
+        assignTask({ id: taskId, userId: assigneeId })
       }
     }
   }
@@ -355,6 +410,7 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
         patientId: formData.patientId,
         description: formData.description,
         assigneeId: formData.assigneeId,
+        assigneeTeamId: formData.assigneeTeamId,
         dueDate: formData.dueDate,
         priority: (formData.priority as TaskPriority | null) || undefined,
         estimatedTime: formData.estimatedTime,
@@ -466,20 +522,40 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
               </FormElementWrapper>
 
               <FormElementWrapper label={translation('assignedTo')}>
-                {({ isShowingError: _1, setIsShowingError: _2, ...bag }) => (
-                  <Select
-                    {...bag}
-                    value={formData.assigneeId || 'unassigned'}
-                    onValueChanged={handleAssigneeChange}
-                  >
-                    <SelectOption value="unassigned">{translation('unassigned')}</SelectOption>
-                    {users.map(u => (
-                      <SelectOption key={u.id} value={u.id}>
-                        {u.name}
-                      </SelectOption>
-                    ))}
-                  </Select>
-                )}
+                {({ isShowingError: _1, setIsShowingError: _2, ...bag }) => {
+                  const currentAssigneeValue = taskData?.task?.assigneeTeam?.id
+                    ? `team:${taskData.task.assigneeTeam.id}`
+                    : (formData.assigneeId || taskData?.task?.assignee?.id || 'unassigned')
+                  return (
+                    <Select
+                      {...bag}
+                      value={currentAssigneeValue}
+                      onValueChanged={handleAssigneeChange}
+                    >
+                      <SelectOption value="unassigned">{translation('unassigned')}</SelectOption>
+                      {users.length > 0 && (
+                        <>
+                          <div className="px-2 py-1 text-xs font-semibold text-description">{translation('users') ?? 'Users'}</div>
+                          {users.map(u => (
+                            <SelectOption key={u.id} value={u.id}>
+                              {u.name}
+                            </SelectOption>
+                          ))}
+                        </>
+                      )}
+                      {teams.length > 0 && (
+                        <>
+                          <div className="px-2 py-1 text-xs font-semibold text-description">{translation('teams')}</div>
+                          {teams.map(team => (
+                            <SelectOption key={team.id} value={`team:${team.id}`}>
+                              {team.title}
+                            </SelectOption>
+                          ))}
+                        </>
+                      )}
+                    </Select>
+                  )
+                }}
               </FormElementWrapper>
 
               <FormElementWrapper label={translation('dueDate')}>
@@ -503,27 +579,64 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
                 )}
               </FormElementWrapper>
 
-              <FormElementWrapper label="Priority">
-                {({ isShowingError: _1, setIsShowingError: _2, ...bag }) => (
-                  <Select
-                    {...bag}
-                    value={formData.priority || 'none'}
-                    onValueChanged={(value) => {
-                      const priorityValue = value === 'none' ? null : (value as TaskPriority)
-                      updateLocalState({ priority: priorityValue }, true)
-                      persistChanges({ priority: priorityValue })
-                    }}
-                  >
-                    <SelectOption value="none">{translation('priorityNone')}</SelectOption>
-                    <SelectOption value="P1">{translation('priority', { priority: 'P1' })}</SelectOption>
-                    <SelectOption value="P2">{translation('priority', { priority: 'P2' })}</SelectOption>
-                    <SelectOption value="P3">{translation('priority', { priority: 'P3' })}</SelectOption>
-                    <SelectOption value="P4">{translation('priority', { priority: 'P4' })}</SelectOption>
-                  </Select>
-                )}
+              <FormElementWrapper label={translation('priorityLabel') ?? 'Priority'}>
+                {({ isShowingError: _1, setIsShowingError: _2, ...bag }) => {
+                  const getPriorityDotColor = (priority: string | null | undefined): string => {
+                    if (!priority) return ''
+                    switch (priority) {
+                      case 'P1':
+                        return 'bg-green-500'
+                      case 'P2':
+                        return 'bg-blue-500'
+                      case 'P3':
+                        return 'bg-orange-500'
+                      case 'P4':
+                        return 'bg-red-500'
+                      default:
+                        return ''
+                    }
+                  }
+                  return (
+                    <Select
+                      {...bag}
+                      value={formData.priority || 'none'}
+                      onValueChanged={(value) => {
+                        const priorityValue = value === 'none' ? null : (value as TaskPriority)
+                        updateLocalState({ priority: priorityValue }, true)
+                        persistChanges({ priority: priorityValue })
+                      }}
+                    >
+                      <SelectOption value="none">{translation('priorityNone')}</SelectOption>
+                      <SelectOption value="P1">
+                        <div className="flex items-center gap-2">
+                          <span className={`w-2 h-2 rounded-full ${getPriorityDotColor('P1')}`} />
+                          <span>{translation('priority', { priority: 'P1' })}</span>
+                        </div>
+                      </SelectOption>
+                      <SelectOption value="P2">
+                        <div className="flex items-center gap-2">
+                          <span className={`w-2 h-2 rounded-full ${getPriorityDotColor('P2')}`} />
+                          <span>{translation('priority', { priority: 'P2' })}</span>
+                        </div>
+                      </SelectOption>
+                      <SelectOption value="P3">
+                        <div className="flex items-center gap-2">
+                          <span className={`w-2 h-2 rounded-full ${getPriorityDotColor('P3')}`} />
+                          <span>{translation('priority', { priority: 'P3' })}</span>
+                        </div>
+                      </SelectOption>
+                      <SelectOption value="P4">
+                        <div className="flex items-center gap-2">
+                          <span className={`w-2 h-2 rounded-full ${getPriorityDotColor('P4')}`} />
+                          <span>{translation('priority', { priority: 'P4' })}</span>
+                        </div>
+                      </SelectOption>
+                    </Select>
+                  )
+                }}
               </FormElementWrapper>
 
-              <FormElementWrapper label="Estimated Time (minutes)">
+              <FormElementWrapper label={translation('estimatedTime') ?? 'Estimated Time (minutes)'}>
                 {({ isShowingError: _1, setIsShowingError: _2, ...bag }) => (
                   <Input
                     {...bag}

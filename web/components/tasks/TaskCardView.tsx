@@ -1,5 +1,5 @@
 import { Avatar, Button, CheckboxUncontrolled } from '@helpwave/hightide'
-import { Clock, User } from 'lucide-react'
+import { Clock, User, Users } from 'lucide-react'
 import clsx from 'clsx'
 import { SmartDate } from '@/utils/date'
 import { LocationChips } from '@/components/patients/LocationChips'
@@ -31,6 +31,10 @@ type FlexibleTask = {
     name: string,
     avatarURL?: string | null,
     avatarUrl?: string | null,
+  } | null,
+  assigneeTeam?: {
+    id: string,
+    title: string,
   } | null,
 }
 
@@ -100,9 +104,17 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
   }
 
   return (
-    <button
+    <div
       onClick={() => onClick(task)}
-      className={clsx('border-2 p-5 rounded-lg text-left w-full transition-colors hover:border-primary relative bg-[rgba(255,255,255,1)] dark:bg-[rgba(55,65,81,1)] overflow-hidden', borderColorClass, className)}
+      className={clsx('border-2 p-5 rounded-lg text-left w-full transition-colors hover:border-primary relative bg-[rgba(255,255,255,1)] dark:bg-[rgba(55,65,81,1)] overflow-hidden cursor-pointer', borderColorClass, className)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onClick(task)
+        }
+      }}
     >
       <div className="flex items-start gap-4 w-full min-w-0">
         <div onClick={(e) => e.stopPropagation()}>
@@ -112,8 +124,8 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
             className="rounded-full mt-0.5 shrink-0"
           />
         </div>
-        <div className={clsx('flex-1 min-w-0 overflow-hidden', { 'pb-16': showPatient })}>
-          <div className="flex items-center justify-between gap-2 mb-2 flex-wrap min-w-0">
+        <div className={clsx('flex-1 min-w-0 overflow-hidden', { 'pb-16': showPatient, 'pb-12': !showPatient })}>
+          <div className={clsx('flex items-center justify-between gap-2 flex-wrap min-w-0', { 'mb-2': showPatient, 'mb-4': !showPatient })}>
             <div className="flex items-center gap-2 min-w-0 flex-1">
               {(task as FlexibleTask).priority && (
                 <div className={clsx(
@@ -133,7 +145,13 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
                 {taskName}
               </div>
             </div>
-            {task.assignee && (
+            {task.assigneeTeam && (
+              <div className="flex items-center gap-1.5 text-base text-description shrink-0 min-w-0">
+                <Users className="size-5 text-description" />
+                <span className="truncate max-w-[150px]">{task.assigneeTeam.title}</span>
+              </div>
+            )}
+            {!task.assigneeTeam && task.assignee && (
               <div className="flex items-center gap-1.5 text-base text-description shrink-0 min-w-0">
                 <Avatar
                   fullyRounded={true}
@@ -148,7 +166,7 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
             )}
           </div>
           {descriptionPreview && (
-            <div className="text-base text-description mb-2 line-clamp-2">{descriptionPreview}</div>
+            <div className={clsx('text-base text-description line-clamp-2', { 'mb-2': showPatient, 'mb-4': !showPatient })}>{descriptionPreview}</div>
           )}
         </div>
       </div>
@@ -170,7 +188,7 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
           )}
         </div>
       )}
-      <div className="absolute bottom-5 right-5 flex items-center gap-3 text-sm text-description">
+      <div className={clsx('absolute right-5 flex items-center gap-3 text-sm text-description', { 'bottom-5': showPatient, 'bottom-6': !showPatient })}>
         {(task as FlexibleTask).estimatedTime && (
           <div className="flex items-center gap-1">
             <Clock className="size-4" />
@@ -188,7 +206,7 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
           </div>
         )}
       </div>
-    </button>
+    </div>
   )
 }
 

@@ -100,6 +100,8 @@ services:
     environment:
       RUNTIME_ISSUER_URI: "http://localhost:8080/realms/tasks"
       RUNTIME_CLIENT_ID: "tasks-web"
+    volumes:
+      - "./feedback:/feedback"
     depends_on:
       - backend
 

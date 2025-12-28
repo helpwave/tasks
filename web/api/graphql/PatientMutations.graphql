@@ -96,3 +96,7 @@ mutation WaitPatient($id: ID!) {
     state
   }
 }
+
+mutation DeletePatient($id: ID!) {
+  deletePatient(id: $id)
+}

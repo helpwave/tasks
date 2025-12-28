@@ -110,6 +110,11 @@ query GetPatients($locationId: ID, $rootLocationIds: [ID!], $states: [PatientSta
         name
         avatarUrl
       }
+      assigneeTeam {
+        id
+        title
+        kind
+      }
     }
     properties {
       definition {

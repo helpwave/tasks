@@ -8,6 +8,7 @@ import {
   useAdmitPatientMutation,
   useCompleteTaskMutation,
   useCreatePatientMutation,
+  useDeletePatientMutation,
   useDischargePatientMutation,
   useGetPatientQuery,
   useGetPropertyDefinitionsQuery,
@@ -168,6 +169,7 @@ export const PatientDetailView = ({
   const [selectedTeams, setSelectedTeams] = useState<LocationNodeType[]>([])
   const [isMarkDeadDialogOpen, setIsMarkDeadDialogOpen] = useState(false)
   const [isDischargeDialogOpen, setIsDischargeDialogOpen] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isLocationChangeConfirmOpen, setIsLocationChangeConfirmOpen] = useState(false)
   const [pendingLocationUpdate, setPendingLocationUpdate] = useState<(() => void) | null>(null)
 
@@ -270,6 +272,14 @@ export const PatientDetailView = ({
       queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
       onSuccess()
       refetch()
+    }
+  })
+
+  const { mutate: deletePatient } = useDeletePatientMutation({
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
+      onSuccess()
+      onClose()
     }
   })
 
@@ -612,7 +622,7 @@ export const PatientDetailView = ({
                           onClick={(t) => setTaskId(t.id)}
                           onToggleDone={(taskId, done) => handleToggleDone(taskId, done)}
                           showPatient={false}
-                          showAssignee={!!task.assignee}
+                          showAssignee={!!(task.assignee || task.assigneeTeam)}
                         />
                       ))}
                     </div>
@@ -639,7 +649,7 @@ export const PatientDetailView = ({
                           onClick={(t) => setTaskId(t.id)}
                           onToggleDone={(taskId, done) => handleToggleDone(taskId, done)}
                           showPatient={false}
-                          showAssignee={!!task.assignee}
+                          showAssignee={!!(task.assignee || task.assigneeTeam)}
                         />
                       ))}
                     </div>
@@ -1030,14 +1040,23 @@ export const PatientDetailView = ({
               )}
             </FormElementWrapper>
 
-            {isEditMode && patientId && patientData?.patient && patientData.patient.state !== PatientState.Dead && (
+            {isEditMode && patientId && patientData?.patient && (
               <div className="pt-6 mt-6 border-t border-divider flex justify-end gap-2">
+                {patientData.patient.state !== PatientState.Dead && (
+                  <Button
+                    onClick={() => setIsMarkDeadDialogOpen(true)}
+                    color="negative"
+                    coloringStyle="outline"
+                  >
+                    {translation('markPatientDead')}
+                  </Button>
+                )}
                 <Button
-                  onClick={() => setIsMarkDeadDialogOpen(true)}
+                  onClick={() => setIsDeleteDialogOpen(true)}
                   color="negative"
                   coloringStyle="outline"
                 >
-                  {translation('markPatientDead')}
+                  {translation('deletePatient') ?? 'Delete Patient'}
                 </Button>
               </div>
             )}
@@ -1084,6 +1103,20 @@ export const PatientDetailView = ({
         titleElement={translation('dischargePatient')}
         description={translation('dischargePatientConfirmation')}
         confirmType="neutral"
+      />
+
+      <ConfirmDialog
+        isOpen={isDeleteDialogOpen}
+        onCancel={() => setIsDeleteDialogOpen(false)}
+        onConfirm={() => {
+          if (patientId) {
+            deletePatient({ id: patientId })
+          }
+          setIsDeleteDialogOpen(false)
+        }}
+        titleElement={translation('deletePatient') ?? 'Delete Patient'}
+        description={translation('deletePatientConfirmation') ?? 'Are you sure you want to delete this patient? This action cannot be undone.'}
+        confirmType="negative"
       />
 
       <ConfirmDialog

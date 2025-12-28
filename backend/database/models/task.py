@@ -9,6 +9,7 @@ from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Table
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 if TYPE_CHECKING:
+    from .location import LocationNode
     from .patient import Patient
     from .property import PropertyValue
     from .user import User
@@ -43,6 +44,10 @@ class Task(Base):
         ForeignKey("users.id"),
         nullable=True,
     )
+    assignee_team_id: Mapped[str | None] = mapped_column(
+        ForeignKey("location_nodes.id"),
+        nullable=True,
+    )
     patient_id: Mapped[str] = mapped_column(ForeignKey("patients.id"))
     priority: Mapped[str | None] = mapped_column(String, nullable=True)
     estimated_time: Mapped[int | None] = mapped_column(Integer, nullable=True)
@@ -50,6 +55,10 @@ class Task(Base):
     assignee: Mapped[User | None] = relationship(
         "User",
         back_populates="tasks",
+    )
+    assignee_team: Mapped["LocationNode | None"] = relationship(
+        "LocationNode",
+        foreign_keys=[assignee_team_id],
     )
     patient: Mapped[Patient] = relationship("Patient", back_populates="tasks")
     properties: Mapped[list[PropertyValue]] = relationship(

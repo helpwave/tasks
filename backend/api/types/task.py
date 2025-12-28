@@ -10,6 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 if TYPE_CHECKING:
+    from api.types.location import LocationNodeType
     from api.types.patient import PatientType
     from api.types.user import UserType
 
@@ -24,6 +25,7 @@ class TaskType:
     creation_date: datetime
     update_date: datetime | None
     assignee_id: strawberry.ID | None
+    assignee_team_id: strawberry.ID | None
     patient_id: strawberry.ID
     priority: str | None
     estimated_time: int | None
@@ -38,6 +40,18 @@ class TaskType:
             return None
         result = await info.context.db.execute(
             select(models.User).where(models.User.id == self.assignee_id),
+        )
+        return result.scalars().first()
+
+    @strawberry.field
+    async def assignee_team(
+        self,
+        info: Info,
+    ) -> Annotated["LocationNodeType", strawberry.lazy("api.types.location")] | None:
+        if not self.assignee_team_id:
+            return None
+        result = await info.context.db.execute(
+            select(models.LocationNode).where(models.LocationNode.id == self.assignee_team_id),
         )
         return result.scalars().first()
 

@@ -15,6 +15,12 @@ query GetTask($id: ID!) {
     assignee {
       id
       name
+      avatarUrl
+    }
+    assigneeTeam {
+      id
+      title
+      kind
     }
     properties {
       definition {

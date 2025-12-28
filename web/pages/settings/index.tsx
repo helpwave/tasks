@@ -1,4 +1,5 @@
 import type { NextPage } from 'next'
+import { useState } from 'react'
 import { Page } from '@/components/layout/Page'
 import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
@@ -16,7 +17,7 @@ import {
 import type { HightideTranslationLocales, ThemeType } from '@helpwave/hightide'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { useAuth } from '@/hooks/useAuth'
-import { LogOut, MonitorCog, MoonIcon, SunIcon, Trash2, ClipboardList, Shield, TableProperties, Building2 } from 'lucide-react'
+import { LogOut, MonitorCog, MoonIcon, SunIcon, Trash2, ClipboardList, Shield, TableProperties, Building2, MessageSquareText } from 'lucide-react'
 import { useRouter } from 'next/router'
 import clsx from 'clsx'
 import { removeUser } from '@/api/auth/authService'
@@ -24,6 +25,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { hashString } from '@/utils/hash'
 import { getConfig } from '@/utils/config'
 import { useLocalStorage } from '@helpwave/hightide'
+import { FeedbackDialog } from '@/components/FeedbackDialog'
 
 type ThemeIconProps = {
   theme: ThemeType,
@@ -55,6 +57,7 @@ const SettingsPage: NextPage = () => {
   const queryClient = useQueryClient()
   const config = getConfig()
   const router = useRouter()
+  const [isFeedbackDialogOpen, setIsFeedbackDialogOpen] = useState(false)
 
   const {
     setValue: setOnboardingSurveyCompleted
@@ -203,10 +206,10 @@ const SettingsPage: NextPage = () => {
             </div>
           </div>
 
-          {(config.onboardingSurveyUrl || config.weeklySurveyUrl) && (
-            <div className="flex-col-6">
-              <h2 className="typography-title-md border-b border-divider pb-2">{translation('feedback')}</h2>
-              <div className="flex-row-4 flex-wrap">
+          <div className="flex-col-6">
+            <h2 className="typography-title-md border-b border-divider pb-2">{translation('feedback')}</h2>
+            <div className="flex-row-4 flex-wrap">
+              {(config.onboardingSurveyUrl || config.weeklySurveyUrl) && (
                 <Button
                   color="neutral"
                   coloringStyle="outline"
@@ -215,9 +218,17 @@ const SettingsPage: NextPage = () => {
                 >
                   {translation('retakeSurvey')}
                 </Button>
-              </div>
+              )}
+              <Button
+                color="neutral"
+                coloringStyle="outline"
+                onClick={() => setIsFeedbackDialogOpen(true)}
+                startIcon={<MessageSquareText className="w-4 h-4" />}
+              >
+                {translation('feedback')}
+              </Button>
             </div>
-          )}
+          </div>
 
           <div className="flex-col-6">
             <h2 className="typography-title-md border-b border-divider pb-2">{translation('account')}</h2>
@@ -255,6 +266,7 @@ const SettingsPage: NextPage = () => {
           </div>
         </div>
       </ContentPanel>
+      <FeedbackDialog isOpen={isFeedbackDialogOpen} onClose={() => setIsFeedbackDialogOpen(false)} hideUrl={true} />
     </Page>
   )
 }

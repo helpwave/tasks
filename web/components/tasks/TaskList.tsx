@@ -1,6 +1,6 @@
 import { useMemo, useState, forwardRef, useImperativeHandle, useEffect } from 'react'
 import { Avatar, Button, Checkbox, CheckboxUncontrolled, ConfirmDialog, Dialog, FillerRowElement, SearchBar, Select, SelectOption, Table, Tooltip } from '@helpwave/hightide'
-import { PlusIcon, Table as TableIcon, LayoutGrid, UserCheck } from 'lucide-react'
+import { PlusIcon, Table as TableIcon, LayoutGrid, UserCheck, Users } from 'lucide-react'
 import { useAssignTaskMutation, useCompleteTaskMutation, useGetUsersQuery, useReopenTaskMutation } from '@/api/gql/generated'
 import clsx from 'clsx'
 import { SmartDate } from '@/utils/date'
@@ -32,6 +32,7 @@ export type TaskViewModel = {
     }>,
   },
   assignee?: { id: string, name: string, avatarURL?: string | null },
+  assigneeTeam?: { id: string, title: string },
   done: boolean,
 }
 
@@ -51,6 +52,7 @@ type TaskListProps = {
   showAssignee?: boolean,
   initialTaskId?: string,
   onInitialTaskOpened?: () => void,
+  headerActions?: React.ReactNode,
 }
 
 const isOverdue = (dueDate: Date | undefined, done: boolean): boolean => {
@@ -100,7 +102,7 @@ const getPriorityDotColor = (priority: string | null | undefined): string => {
 
 const STORAGE_KEY_SHOW_DONE = 'task-show-done'
 
-export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initialTasks, onRefetch, showAssignee = false, initialTaskId, onInitialTaskOpened }, ref) => {
+export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initialTasks, onRefetch, showAssignee = false, initialTaskId, onInitialTaskOpened, headerActions }, ref) => {
   const translation = useTasksTranslation()
   const { totalPatientsCount, user } = useTasksContext()
   const { viewType, toggleView } = useTaskViewToggle()
@@ -336,10 +338,11 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
         cols.push({
           id: 'assignee',
           header: translation('assignedTo'),
-          accessorFn: ({ assignee }) => assignee?.name,
+          accessorFn: ({ assignee, assigneeTeam }) => assignee?.name || assigneeTeam?.title,
           cell: ({ row }) => {
             const assignee = row.original.assignee
-            if (!assignee) {
+            const assigneeTeam = row.original.assigneeTeam
+            if (!assignee && !assigneeTeam) {
               return (
                 <span className="text-description">
                   {translation('notAssigned')}
@@ -347,17 +350,34 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
               )
             }
 
+            if (assigneeTeam) {
+              return (
+                <div className="flex-row-2 items-center">
+                  <Users className="size-5 text-description" />
+                  <span>{assigneeTeam.title}</span>
+                </div>
+              )
+            }
+
+            if (assignee) {
+              return (
+                <div className="flex-row-2 items-center">
+                  <Avatar
+                    fullyRounded={true}
+                    image={{
+                      avatarUrl: assignee.avatarURL || 'https://cdn.helpwave.de/boringavatar.svg',
+                      alt: assignee.name
+                    }}
+                  />
+                  <span>{assignee.name}</span>
+                </div>
+              )
+            }
+
             return (
-              <div className="flex-row-2 items-center">
-                <Avatar
-                  fullyRounded={true}
-                  image={{
-                    avatarUrl: assignee.avatarURL || 'https://cdn.helpwave.de/boringavatar.svg',
-                    alt: assignee.name
-                  }}
-                />
-                <span>{assignee.name}</span>
-              </div>
+              <span className="text-description">
+                {translation('notAssigned')}
+              </span>
             )
           },
           minSize: 200,
@@ -422,6 +442,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
               </Tooltip>
             </div>
           </div>
+          {headerActions}
           {canHandover && (
             <Button
               startIcon={<UserCheck className="size-5"/>}

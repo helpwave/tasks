@@ -3,17 +3,18 @@ import { Page } from '@/components/layout/Page'
 import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
-import { LoadingContainer, Tab, TabView } from '@helpwave/hightide'
+import { Button, LoadingContainer, Tab, TabView } from '@helpwave/hightide'
 import { PatientList } from '@/components/patients/PatientList'
 import { TaskList, type TaskViewModel } from '@/components/tasks/TaskList'
-import { useGetLocationNodeQuery, useGetPatientsQuery } from '@/api/gql/generated'
-import { useMemo } from 'react'
+import { useGetLocationNodeQuery, useGetPatientsQuery, useGetTasksQuery } from '@/api/gql/generated'
+import { useMemo, useState } from 'react'
 import { useRouter } from 'next/router'
 
 const TeamPage: NextPage = () => {
   const translation = useTasksTranslation()
   const router = useRouter()
   const id = Array.isArray(router.query['id']) ? router.query['id'][0] : router.query['id']
+  const [showAllTasks, setShowAllTasks] = useState(false)
 
   const { data: locationData, isLoading: isLoadingLocation, isError: isLocationError } = useGetLocationNodeQuery(
     { id: id! },
@@ -24,7 +25,7 @@ const TeamPage: NextPage = () => {
     }
   )
 
-  const { data: patientsData, refetch: refetchPatients, isLoading: isLoadingPatients } = useGetPatientsQuery(
+  const { refetch: refetchPatients, isLoading: isLoadingPatients } = useGetPatientsQuery(
     { locationId: id },
     {
       enabled: !!id,
@@ -34,35 +35,56 @@ const TeamPage: NextPage = () => {
     }
   )
 
+  const { data: tasksData, refetch: refetchTasks, isLoading: isLoadingTasks } = useGetTasksQuery(
+    {
+      assigneeTeamId: showAllTasks ? undefined : id,
+      rootLocationIds: undefined,
+    },
+    {
+      enabled: !!id,
+      refetchInterval: 5000,
+      refetchOnWindowFocus: true,
+      refetchOnMount: true,
+    }
+  )
+
   const tasks: TaskViewModel[] = useMemo(() => {
-    if (!patientsData?.patients) return []
+    if (!tasksData?.tasks) return []
 
-    return patientsData.patients.flatMap(patient => {
-      if (!patient.tasks) return []
+    return tasksData.tasks.map(task => ({
+      id: task.id,
+      name: task.title,
+      description: task.description || undefined,
+      updateDate: task.updateDate ? new Date(task.updateDate) : new Date(task.creationDate),
+      dueDate: task.dueDate ? new Date(task.dueDate) : undefined,
+      priority: task.priority || null,
+      estimatedTime: task.estimatedTime ?? null,
+      done: task.done,
+      patient: task.patient
+        ? {
+          id: task.patient.id,
+          name: task.patient.name,
+          locations: task.patient.assignedLocations || []
+        }
+        : undefined,
+      assignee: task.assignee
+        ? { id: task.assignee.id, name: task.assignee.name, avatarURL: task.assignee.avatarUrl }
+        : undefined,
+      assigneeTeam: task.assigneeTeam
+        ? { id: task.assigneeTeam.id, title: task.assigneeTeam.title }
+        : undefined,
+    }))
+  }, [tasksData])
 
-      return patient.tasks.map(task => ({
-        id: task.id,
-        name: task.title,
-        description: task.description || undefined,
-        updateDate: task.updateDate ? new Date(task.updateDate) : new Date(task.creationDate),
-        dueDate: task.dueDate ? new Date(task.dueDate) : undefined,
-        priority: task.priority || null,
-        estimatedTime: task.estimatedTime ?? null,
-        done: task.done,
-        patient: {
-          id: patient.id,
-          name: patient.name,
-          locations: patient.assignedLocations || []
-        },
-        assignee: task.assignee
-          ? { id: task.assignee.id, name: task.assignee.name, avatarURL: task.assignee.avatarUrl }
-          : undefined,
-      }))
-    })
-  }, [patientsData])
-
-  const isLoading = isLoadingLocation || isLoadingPatients
+  const isLoading = isLoadingLocation || isLoadingPatients || (showAllTasks && isLoadingTasks)
   const isError = isLocationError || !id
+
+  const handleRefetch = () => {
+    refetchPatients()
+    if (showAllTasks) {
+      refetchTasks()
+    }
+  }
 
   return (
     <Page pageTitle={titleWrapper(translation('teams'))}>
@@ -85,8 +107,18 @@ const TeamPage: NextPage = () => {
             <Tab label={translation('tasks')}>
               <TaskList
                 tasks={tasks}
-                onRefetch={refetchPatients}
+                onRefetch={handleRefetch}
                 showAssignee={true}
+                headerActions={(
+                  <Button
+                    onClick={() => setShowAllTasks(!showAllTasks)}
+                    color="neutral"
+                    coloringStyle="outline"
+                    className="w-full sm:w-auto flex-shrink-0"
+                  >
+                    {showAllTasks ? translation('showTeamTasks') ?? 'Show Team Tasks' : translation('showAllTasks') ?? 'Show All Tasks'}
+                  </Button>
+                )}
               />
             </Tab>
           </TabView>

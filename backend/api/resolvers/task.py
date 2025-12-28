@@ -41,6 +41,7 @@ class TaskQuery:
         info: Info,
         patient_id: strawberry.ID | None = None,
         assignee_id: strawberry.ID | None = None,
+        assignee_team_id: strawberry.ID | None = None,
         root_location_ids: list[strawberry.ID] | None = None,
     ) -> list[TaskType]:
         auth_service = AuthorizationService(info.context.db)
@@ -58,6 +59,8 @@ class TaskQuery:
 
             if assignee_id:
                 query = query.where(models.Task.assignee_id == assignee_id)
+            if assignee_team_id:
+                query = query.where(models.Task.assignee_team_id == assignee_team_id)
 
             result = await info.context.db.execute(query)
             return result.scalars().all()
@@ -134,6 +137,8 @@ class TaskQuery:
 
         if assignee_id:
             query = query.where(models.Task.assignee_id == assignee_id)
+        if assignee_team_id:
+            query = query.where(models.Task.assignee_team_id == assignee_team_id)
 
         result = await info.context.db.execute(query)
         return result.scalars().all()
@@ -218,11 +223,18 @@ class TaskMutation(BaseMutationResolver[models.Task]):
                 extensions={"code": "FORBIDDEN"},
             )
 
+        if data.assignee_id and data.assignee_team_id:
+            raise GraphQLError(
+                "Cannot assign both a user and a team. Please assign either a user or a team.",
+                extensions={"code": "BAD_REQUEST"},
+            )
+
         new_task = models.Task(
             title=data.title,
             description=data.description,
             patient_id=data.patient_id,
             assignee_id=data.assignee_id,
+            assignee_team_id=data.assignee_team_id if not data.assignee_id else None,
             due_date=normalize_datetime_to_utc(data.due_date),
             priority=data.priority.value if data.priority else None,
             estimated_time=data.estimated_time,
@@ -292,6 +304,19 @@ class TaskMutation(BaseMutationResolver[models.Task]):
         if data.estimated_time is not strawberry.UNSET:
             task.estimated_time = data.estimated_time
 
+        if data.assignee_id is not None and data.assignee_team_id is not strawberry.UNSET and data.assignee_team_id is not None:
+            raise GraphQLError(
+                "Cannot assign both a user and a team. Please assign either a user or a team.",
+                extensions={"code": "BAD_REQUEST"},
+            )
+
+        if data.assignee_id is not None:
+            task.assignee_id = data.assignee_id
+            task.assignee_team_id = None
+        elif data.assignee_team_id is not strawberry.UNSET:
+            task.assignee_team_id = data.assignee_team_id
+            task.assignee_id = None
+
         if data.properties is not None:
             property_service = TaskMutation._get_property_service(db)
             await property_service.process_properties(
@@ -348,7 +373,10 @@ class TaskMutation(BaseMutationResolver[models.Task]):
         return await TaskMutation._update_task_field(
             info,
             id,
-            lambda task: setattr(task, "assignee_id", user_id),
+            lambda task: (
+                setattr(task, "assignee_id", user_id),
+                setattr(task, "assignee_team_id", None)
+            ),
         )
 
     @strawberry.mutation
@@ -357,7 +385,39 @@ class TaskMutation(BaseMutationResolver[models.Task]):
         return await TaskMutation._update_task_field(
             info,
             id,
-            lambda task: setattr(task, "assignee_id", None),
+            lambda task: (
+                setattr(task, "assignee_id", None),
+                setattr(task, "assignee_team_id", None)
+            ),
+        )
+
+    @strawberry.mutation
+    @audit_log("assign_task_to_team")
+    async def assign_task_to_team(
+        self,
+        info: Info,
+        id: strawberry.ID,
+        team_id: strawberry.ID,
+    ) -> TaskType:
+        return await TaskMutation._update_task_field(
+            info,
+            id,
+            lambda task: (
+                setattr(task, "assignee_id", None),
+                setattr(task, "assignee_team_id", team_id)
+            ),
+        )
+
+    @strawberry.mutation
+    @audit_log("unassign_task_from_team")
+    async def unassign_task_from_team(self, info: Info, id: strawberry.ID) -> TaskType:
+        return await TaskMutation._update_task_field(
+            info,
+            id,
+            lambda task: (
+                setattr(task, "assignee_id", None),
+                setattr(task, "assignee_team_id", None)
+            ),
         )
 
     @strawberry.mutation
