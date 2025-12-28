@@ -21,15 +21,15 @@ ENV HOSTNAME="0.0.0.0"
 RUN apk add --no-cache libcap=2.77-r0 && \
     setcap 'cap_net_bind_service=+ep' /usr/local/bin/node && \
     addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 nextjs && \
+    adduser --system --uid 1001 tasks && \
     mkdir -p /feedback && \
-    chown nextjs:nodejs /feedback
+    chown tasks:nodejs /feedback
 
 ENV FEEDBACK_DIR=/feedback
 
-COPY --from=builder --chown=nextjs:nodejs /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/build/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/build/static ./build/static
+COPY --from=builder --chown=tasks:nodejs /app/public ./public
+COPY --from=builder --chown=tasks:nodejs /app/build/standalone ./
+COPY --from=builder --chown=tasks:nodejs /app/build/static ./build/static
 
 RUN printf "#!/bin/sh\n\
 echo \"window.__ENV = {\" > /app/public/env-config.js\n\
@@ -41,7 +41,7 @@ done\n\
 echo \"}\" >> /app/public/env-config.js\n\
 exec \"\$@\"\n" > /app/entrypoint.sh && chmod +x /app/entrypoint.sh
 
-USER nextjs
+USER tasks
 EXPOSE 80
 ENTRYPOINT ["/app/entrypoint.sh"]
 CMD ["node", "server.js"]

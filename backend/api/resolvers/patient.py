@@ -27,7 +27,7 @@ class PatientQuery:
         result = await info.context.db.execute(
             select(models.Patient)
             .where(models.Patient.id == id)
-            .where(models.Patient.deleted == False)
+            .where(models.Patient.deleted.is_(False))
             .options(
                 selectinload(models.Patient.assigned_locations),
                 selectinload(models.Patient.tasks),
@@ -56,7 +56,7 @@ class PatientQuery:
             selectinload(models.Patient.assigned_locations),
             selectinload(models.Patient.tasks),
             selectinload(models.Patient.teams),
-        ).where(models.Patient.deleted == False)
+        ).where(models.Patient.deleted.is_(False))
 
         if states:
             state_values = [s.value for s in states]
@@ -152,7 +152,7 @@ class PatientQuery:
                 selectinload(models.Patient.tasks),
                 selectinload(models.Patient.teams),
             )
-            .where(models.Patient.deleted == False)
+            .where(models.Patient.deleted.is_(False))
             .limit(limit)
         )
         auth_service = AuthorizationService(info.context.db)
@@ -401,7 +401,7 @@ class PatientMutation(BaseMutationResolver[models.Patient]):
         result = await db.execute(
             select(models.Patient)
             .where(models.Patient.id == id)
-            .where(models.Patient.deleted == False)
+            .where(models.Patient.deleted.is_(False))
             .options(
                 selectinload(models.Patient.assigned_locations),
                 selectinload(models.Patient.teams),

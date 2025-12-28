@@ -10,6 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 if TYPE_CHECKING:
+    from api.types.location import LocationNodeType
     from api.types.patient import PatientType
     from api.types.user import UserType
 
@@ -47,8 +48,6 @@ class TaskType:
         self,
         info: Info,
     ) -> Annotated["LocationNodeType", strawberry.lazy("api.types.location")] | None:
-        from api.types.location import LocationNodeType
-
         if not self.assignee_team_id:
             return None
         result = await info.context.db.execute(
