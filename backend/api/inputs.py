@@ -126,8 +126,8 @@ class UpdateTaskInput:
     previous_task_ids: list[strawberry.ID] | None = None
     properties: list[PropertyValueInput] | None = None
     checksum: str | None = None
-    priority: TaskPriority | None = None
-    estimated_time: int | None = None
+    priority: TaskPriority | None = strawberry.UNSET
+    estimated_time: int | None = strawberry.UNSET
 
 
 @strawberry.input
