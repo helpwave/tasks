@@ -29,6 +29,10 @@ mutation UpdateTask($id: ID!, $data: UpdateTaskInput!) {
     estimatedTime
     updateDate
     checksum
+    patient {
+      id
+      name
+    }
     assignee {
       id
       name

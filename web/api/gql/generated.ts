@@ -696,7 +696,7 @@ export type UpdateTaskMutationVariables = Exact<{
 }>;
 
 
-export type UpdateTaskMutation = { __typename?: 'Mutation', updateTask: { __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, dueDate?: any | null, priority?: string | null, estimatedTime?: number | null, updateDate?: any | null, checksum: string, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null } | null } };
+export type UpdateTaskMutation = { __typename?: 'Mutation', updateTask: { __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, dueDate?: any | null, priority?: string | null, estimatedTime?: number | null, updateDate?: any | null, checksum: string, patient: { __typename?: 'PatientType', id: string, name: string }, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null } | null } };
 
 export type AssignTaskMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -1846,6 +1846,10 @@ export const UpdateTaskDocument = `
     estimatedTime
     updateDate
     checksum
+    patient {
+      id
+      name
+    }
     assignee {
       id
       name

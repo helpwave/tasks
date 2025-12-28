@@ -12,7 +12,8 @@ import {
   useGetUsersQuery,
   useUnassignTaskMutation,
   useUpdateTaskMutation,
-  PropertyEntity
+  PropertyEntity,
+  type GetTaskQuery
 } from '@/api/gql/generated'
 import {
   Button,
@@ -102,9 +103,23 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
   const { mutate: updateTask } = useUpdateTaskMutation({
     onSuccess: (data) => {
       if (data?.updateTask && taskId) {
-        queryClient.setQueryData(
+        queryClient.setQueryData<GetTaskQuery>(
           ['GetTask', { id: taskId }],
-          { task: data.updateTask }
+          (oldData) => {
+            if (!oldData?.task) {
+              return { task: data.updateTask } as GetTaskQuery
+            }
+            const mergedTask = {
+              ...oldData.task,
+              ...data.updateTask,
+              patient: data.updateTask.patient || oldData.task.patient,
+              assignee: data.updateTask.assignee || oldData.task.assignee,
+            }
+            if (oldData.task.properties) {
+              mergedTask.properties = oldData.task.properties
+            }
+            return { task: mergedTask } as GetTaskQuery
+          }
         )
         lastServerUpdateRef.current = Date.now()
         dirtyFieldsRef.current.clear()
@@ -266,6 +281,7 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
                 estimatedTime: data.updateTask.estimatedTime ?? null
               }),
               ...(updates.done !== undefined && { done: data.updateTask.done || false }),
+              patientId: data.updateTask.patient?.id || prev.patientId,
             }))
             lastServerUpdateRef.current = Date.now()
           }
