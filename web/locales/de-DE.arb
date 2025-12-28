@@ -367,5 +367,12 @@
   "shiftHandover": "Schichtübergabe",
   "shiftHandoverDescription": "Wählen Sie einen Benutzer aus, um alle Ihnen zugewiesenen offenen Aufgaben zu übertragen.",
   "confirmShiftHandover": "Schichtübergabe bestätigen",
-  "confirmShiftHandoverDescription": "Sind Sie sicher, dass Sie alle offenen Aufgaben an den ausgewählten Benutzer übertragen möchten?"
+  "confirmShiftHandoverDescription": "Sind Sie sicher, dass Sie alle offenen Aufgaben an den ausgewählten Benutzer übertragen möchten?",
+  "priority": "{priority, select, P1{Normal} P2{Mittel} P3{Hoch} P4{Kritisch} other{-}}",
+  "@priority": {
+    "placeholders": {
+      "priority": {}
+    }
+  },
+  "priorityNone": "Keine"
 }

@@ -41,6 +41,7 @@ type TaskCardViewProps = {
   showAssignee?: boolean,
   showPatient?: boolean,
   onRefetch?: () => void,
+  className?: string,
 }
 
 const isOverdue = (dueDate: Date | undefined, done: boolean): boolean => {
@@ -62,7 +63,7 @@ const toDate = (date: Date | string | null | undefined): Date | undefined => {
   return new Date(date)
 }
 
-export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showAssignee: _showAssignee = false, showPatient = true, onRefetch }: TaskCardViewProps) => {
+export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showAssignee: _showAssignee = false, showPatient = true, onRefetch, className }: TaskCardViewProps) => {
   const router = useRouter()
   const flexibleTask = task as FlexibleTask
   const taskName = task.name || flexibleTask.title || ''
@@ -101,7 +102,7 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
   return (
     <button
       onClick={() => onClick(task)}
-      className={clsx('border-2 p-5 rounded-lg text-left w-full transition-colors hover:border-primary relative bg-[rgba(255,255,255,1)] dark:bg-[rgba(55,65,81,1)] overflow-hidden', borderColorClass)}
+      className={clsx('border-2 p-5 rounded-lg text-left w-full transition-colors hover:border-primary relative bg-[rgba(255,255,255,1)] dark:bg-[rgba(55,65,81,1)] overflow-hidden', borderColorClass, className)}
     >
       <div className="flex items-start gap-4 w-full min-w-0">
         <div onClick={(e) => e.stopPropagation()}>
@@ -117,10 +118,10 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
               {(task as FlexibleTask).priority && (
                 <div className={clsx(
                   'w-2 h-2 rounded-full shrink-0',
-                  (task as FlexibleTask).priority === 'P1' ? 'bg-red-500' :
-                  (task as FlexibleTask).priority === 'P2' ? 'bg-orange-500' :
-                  (task as FlexibleTask).priority === 'P3' ? 'bg-yellow-500' :
-                  (task as FlexibleTask).priority === 'P4' ? 'bg-blue-500' : ''
+                  (task as FlexibleTask).priority === 'P1' ? 'bg-green-500' :
+                  (task as FlexibleTask).priority === 'P2' ? 'bg-blue-500' :
+                  (task as FlexibleTask).priority === 'P3' ? 'bg-orange-500' :
+                  (task as FlexibleTask).priority === 'P4' ? 'bg-red-500' : ''
                 )} />
               )}
               <div

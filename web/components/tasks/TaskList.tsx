@@ -70,13 +70,13 @@ const getPriorityColor = (priority: string | null | undefined): string => {
   if (!priority) return ''
   switch (priority) {
     case 'P1':
-      return 'border-l-4 border-l-red-500'
+      return 'border-l-4 border-l-green-500'
     case 'P2':
-      return 'border-l-4 border-l-orange-500'
-    case 'P3':
-      return 'border-l-4 border-l-yellow-500'
-    case 'P4':
       return 'border-l-4 border-l-blue-500'
+    case 'P3':
+      return 'border-l-4 border-l-orange-500'
+    case 'P4':
+      return 'border-l-4 border-l-red-500'
     default:
       return ''
   }
@@ -86,13 +86,13 @@ const getPriorityDotColor = (priority: string | null | undefined): string => {
   if (!priority) return ''
   switch (priority) {
     case 'P1':
-      return 'bg-red-500'
+      return 'bg-green-500'
     case 'P2':
-      return 'bg-orange-500'
-    case 'P3':
-      return 'bg-yellow-500'
-    case 'P4':
       return 'bg-blue-500'
+    case 'P3':
+      return 'bg-orange-500'
+    case 'P4':
+      return 'bg-red-500'
     default:
       return ''
   }
@@ -468,15 +468,15 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
             </div>
           ) : (
             tasks.map((task) => (
-              <div key={task.id} className={clsx(getPriorityColor(task.priority))}>
-                <TaskCardView
-                  task={task}
-                  onToggleDone={handleToggleDone}
-                  onClick={(t) => setTaskDialogState({ isOpen: true, taskId: t.id })}
-                  showAssignee={showAssignee}
-                  onRefetch={onRefetch}
-                />
-              </div>
+              <TaskCardView
+                key={task.id}
+                task={task}
+                onToggleDone={handleToggleDone}
+                onClick={(t) => setTaskDialogState({ isOpen: true, taskId: t.id })}
+                showAssignee={showAssignee}
+                onRefetch={onRefetch}
+                className={getPriorityColor(task.priority)}
+              />
             ))
           )}
         </div>

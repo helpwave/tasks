@@ -368,5 +368,12 @@
   "shiftHandover": "Shift Handover",
   "shiftHandoverDescription": "Select a user to transfer all open tasks assigned to you.",
   "confirmShiftHandover": "Confirm Shift Handover",
-  "confirmShiftHandoverDescription": "Are you sure you want to transfer all open tasks to the selected user?"
+  "confirmShiftHandoverDescription": "Are you sure you want to transfer all open tasks to the selected user?",
+  "priority": "{priority, select, P1{Normal} P2{Medium} P3{High} P4{Critical} other{-}}",
+  "@priority": {
+    "placeholders": {
+      "priority": {}
+    }
+  },
+  "priorityNone": "None"
 }

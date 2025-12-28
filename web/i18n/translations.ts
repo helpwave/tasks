@@ -138,6 +138,8 @@ export type TasksTranslationEntries = {
   'place': string,
   'position': string,
   'preferences': string,
+  'priority': (values: { priority: string }) => string,
+  'priorityNone': string,
   'privacy': string,
   'private': string,
   'profile': string,
@@ -421,6 +423,16 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'place': `Ort`,
     'position': `Position`,
     'preferences': `Präferenzen`,
+    'priority': ({ priority }): string => {
+      return TranslationGen.resolveSelect(priority, {
+        'P1': `Normal`,
+        'P2': `Mittel`,
+        'P3': `Hoch`,
+        'P4': `Kritisch`,
+        'other': `-`,
+      })
+    },
+    'priorityNone': `Keine`,
     'privacy': `Datenschutz`,
     'private': `Privat`,
     'profile': `Profil`,
@@ -739,6 +751,16 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'place': `Place`,
     'position': `Position`,
     'preferences': `Preferences`,
+    'priority': ({ priority }): string => {
+      return TranslationGen.resolveSelect(priority, {
+        'P1': `Normal`,
+        'P2': `Medium`,
+        'P3': `High`,
+        'P4': `Critical`,
+        'other': `-`,
+      })
+    },
+    'priorityNone': `None`,
     'privacy': `Privacy`,
     'private': `private`,
     'properties': `Properties`,

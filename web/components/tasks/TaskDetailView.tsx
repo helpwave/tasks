@@ -514,11 +514,11 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
                       persistChanges({ priority: priorityValue })
                     }}
                   >
-                    <SelectOption value="none">None</SelectOption>
-                    <SelectOption value="P1">P1</SelectOption>
-                    <SelectOption value="P2">P2</SelectOption>
-                    <SelectOption value="P3">P3</SelectOption>
-                    <SelectOption value="P4">P4</SelectOption>
+                    <SelectOption value="none">{translation('priorityNone')}</SelectOption>
+                    <SelectOption value="P1">{translation('priority', { priority: 'P1' })}</SelectOption>
+                    <SelectOption value="P2">{translation('priority', { priority: 'P2' })}</SelectOption>
+                    <SelectOption value="P3">{translation('priority', { priority: 'P3' })}</SelectOption>
+                    <SelectOption value="P4">{translation('priority', { priority: 'P4' })}</SelectOption>
                   </Select>
                 )}
               </FormElementWrapper>
