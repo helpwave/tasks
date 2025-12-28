@@ -128,21 +128,40 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
   })
 
   useEffect(() => {
-    if (taskData?.task) {
-      setFormData({
-        title: taskData.task.title,
-        description: taskData.task.description || '',
-        patientId: taskData.task.patient?.id || '',
-        assigneeId: taskData.task.assignee?.id || null,
-        dueDate: taskData.task.dueDate ? new Date(taskData.task.dueDate) : null,
-        priority: (taskData.task.priority as TaskPriority | null) || null,
-        estimatedTime: taskData.task.estimatedTime ?? null,
-        done: taskData.task.done || false
+    if (taskData?.task && isEditMode) {
+      setFormData(prev => {
+        const newPriority = (taskData.task.priority as TaskPriority | null) || null
+        const newEstimatedTime = taskData.task.estimatedTime ?? null
+        const newDueDate = taskData.task.dueDate ? new Date(taskData.task.dueDate) : null
+        
+        if (
+          prev.title === taskData.task.title &&
+          prev.description === (taskData.task.description || '') &&
+          prev.patientId === (taskData.task.patient?.id || '') &&
+          prev.assigneeId === (taskData.task.assignee?.id || null) &&
+          prev.dueDate?.getTime() === newDueDate?.getTime() &&
+          prev.priority === newPriority &&
+          prev.estimatedTime === newEstimatedTime &&
+          prev.done === taskData.task.done
+        ) {
+          return prev
+        }
+        
+        return {
+          title: taskData.task.title,
+          description: taskData.task.description || '',
+          patientId: taskData.task.patient?.id || '',
+          assigneeId: taskData.task.assignee?.id || null,
+          dueDate: newDueDate,
+          priority: newPriority,
+          estimatedTime: newEstimatedTime,
+          done: taskData.task.done || false
+        }
       })
     } else if (initialPatientId && !taskId) {
       setFormData(prev => ({ ...prev, patientId: initialPatientId }))
     }
-  }, [taskData, initialPatientId, taskId])
+  }, [taskData?.task?.updateDate, isEditMode, initialPatientId, taskId])
 
   const updateLocalState = (updates: Partial<CreateTaskInput>) => {
     setFormData(prev => ({ ...prev, ...updates }))
@@ -180,6 +199,26 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
       updateTask({
         id: taskId,
         data: updates as UpdateTaskInput
+      }, {
+        onSuccess: (data) => {
+          if (data?.updateTask) {
+            setFormData(prev => ({
+              ...prev,
+              ...(updates.title !== undefined && { title: data.updateTask.title }),
+              ...(updates.description !== undefined && { description: data.updateTask.description || '' }),
+              ...(updates.dueDate !== undefined && { 
+                dueDate: data.updateTask.dueDate ? new Date(data.updateTask.dueDate) : null 
+              }),
+              ...(updates.priority !== undefined && { 
+                priority: (data.updateTask.priority as TaskPriority | null) || null 
+              }),
+              ...(updates.estimatedTime !== undefined && { 
+                estimatedTime: data.updateTask.estimatedTime ?? null 
+              }),
+              ...(updates.done !== undefined && { done: data.updateTask.done || false }),
+            }))
+          }
+        }
       })
     }
   }
