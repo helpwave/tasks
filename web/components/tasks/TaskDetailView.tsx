@@ -1,4 +1,5 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useRef } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import type { CreateTaskInput, UpdateTaskInput, TaskPriority } from '@/api/gql/generated'
 import {
@@ -45,12 +46,16 @@ interface TaskDetailViewProps {
 export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }: TaskDetailViewProps) => {
   const translation = useTasksTranslation()
   const { selectedLocationId } = useTasksContext()
+  const queryClient = useQueryClient()
   const [isShowingPatientDialog, setIsShowingPatientDialog] = useState<boolean>(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState<boolean>(false)
   const isEditMode = !!taskId
 
   const [titleError, setTitleError] = useState<string | null>(null)
   const [patientIdError, setPatientIdError] = useState<string | null>(null)
+
+  const dirtyFieldsRef = useRef<Set<string>>(new Set())
+  const lastServerUpdateRef = useRef<number>(0)
 
   const { data: taskData, isLoading: isLoadingTask, refetch } = useGetTaskQuery(
     { id: taskId! },
@@ -95,8 +100,15 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
   })
 
   const { mutate: updateTask } = useUpdateTaskMutation({
-    onSuccess: () => {
-      refetch()
+    onSuccess: (data) => {
+      if (data?.updateTask && taskId) {
+        queryClient.setQueryData(
+          ['GetTask', { id: taskId }],
+          { task: data.updateTask }
+        )
+        lastServerUpdateRef.current = Date.now()
+        dirtyFieldsRef.current.clear()
+      }
       onSuccess()
     }
   })
@@ -130,10 +142,31 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
   useEffect(() => {
     if (taskData?.task && isEditMode) {
       const task = taskData.task
+      const updateTime = Date.now()
+
+      if (updateTime <= lastServerUpdateRef.current + 100) {
+        return
+      }
+
       setFormData(prev => {
         const newPriority = (task.priority as TaskPriority | null) || null
         const newEstimatedTime = task.estimatedTime ?? null
         const newDueDate = task.dueDate ? new Date(task.dueDate) : null
+
+        const hasDirtyFields = dirtyFieldsRef.current.size > 0
+        if (hasDirtyFields) {
+          const merged: Partial<CreateTaskInput & { done: boolean }> = {
+            title: dirtyFieldsRef.current.has('title') ? prev.title : task.title,
+            description: dirtyFieldsRef.current.has('description') ? prev.description : (task.description || ''),
+            patientId: dirtyFieldsRef.current.has('patientId') ? prev.patientId : (task.patient?.id || ''),
+            assigneeId: dirtyFieldsRef.current.has('assigneeId') ? prev.assigneeId : (task.assignee?.id || null),
+            dueDate: dirtyFieldsRef.current.has('dueDate') ? prev.dueDate : newDueDate,
+            priority: dirtyFieldsRef.current.has('priority') ? prev.priority : newPriority,
+            estimatedTime: dirtyFieldsRef.current.has('estimatedTime') ? prev.estimatedTime : newEstimatedTime,
+            done: dirtyFieldsRef.current.has('done') ? prev.done : (task.done || false),
+          }
+          return { ...prev, ...merged }
+        }
 
         if (
           prev.title === task.title &&
@@ -164,7 +197,14 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
     }
   }, [taskData?.task, isEditMode, initialPatientId, taskId])
 
-  const updateLocalState = (updates: Partial<CreateTaskInput>) => {
+  const updateLocalState = (updates: Partial<CreateTaskInput>, markDirty = false) => {
+    if (markDirty) {
+      Object.keys(updates).forEach(key => {
+        if (updates[key as keyof CreateTaskInput] !== undefined) {
+          dirtyFieldsRef.current.add(key)
+        }
+      })
+    }
     setFormData(prev => ({ ...prev, ...updates }))
   }
 
@@ -197,12 +237,21 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
     if (isEditMode && taskId) {
       if (updates.title !== undefined && !updates.title?.trim()) return
 
+      Object.keys(updates).forEach(key => {
+        if (updates[key as keyof UpdateTaskInput] !== undefined) {
+          dirtyFieldsRef.current.add(key)
+        }
+      })
+
       updateTask({
         id: taskId,
         data: updates as UpdateTaskInput
       }, {
         onSuccess: (data) => {
           if (data?.updateTask) {
+            const updatedFields = Object.keys(updates)
+            updatedFields.forEach(field => dirtyFieldsRef.current.delete(field))
+
             setFormData(prev => ({
               ...prev,
               ...(updates.title !== undefined && { title: data.updateTask.title }),
@@ -218,6 +267,7 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
               }),
               ...(updates.done !== undefined && { done: data.updateTask.done || false }),
             }))
+            lastServerUpdateRef.current = Date.now()
           }
         }
       })
@@ -305,7 +355,7 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
                         placeholder={translation('taskTitlePlaceholder')}
                         required
                         onChange={e => {
-                          updateLocalState({ title: e.target.value })
+                          updateLocalState({ title: e.target.value }, true)
                           if (isShowingError) {
                             validateTitle(e.target.value)
                           }
@@ -386,7 +436,7 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
                     date={formData.dueDate ? new Date(formData.dueDate) : undefined}
                     mode="dateTime"
                     onValueChange={(date) => {
-                      updateLocalState({ dueDate: date })
+                      updateLocalState({ dueDate: date }, true)
                     }}
                     onEditCompleted={(date) => {
                       updateLocalState({ dueDate: date })
@@ -407,7 +457,7 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
                     value={formData.priority || 'none'}
                     onValueChanged={(value) => {
                       const priorityValue = value === 'none' ? null : (value as TaskPriority)
-                      updateLocalState({ priority: priorityValue })
+                      updateLocalState({ priority: priorityValue }, true)
                       persistChanges({ priority: priorityValue })
                     }}
                   >
@@ -431,7 +481,7 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
                     placeholder="e.g. 30"
                     onChange={(e) => {
                       const value = e.target.value === '' ? null : parseInt(e.target.value, 10)
-                      updateLocalState({ estimatedTime: isNaN(value as number) ? null : value })
+                      updateLocalState({ estimatedTime: isNaN(value as number) ? null : value }, true)
                     }}
                     onBlur={() => {
                       persistChanges({
@@ -449,7 +499,7 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
                     {...bag}
                     value={formData.description || ''}
                     placeholder={translation('descriptionPlaceholder')}
-                    onChange={e => updateLocalState({ description: e.target.value })}
+                    onChange={e => updateLocalState({ description: e.target.value }, true)}
                     onBlur={() => persistChanges({ description: formData.description })}
                     minLength={4}
                   />
