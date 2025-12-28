@@ -92,7 +92,6 @@ services:
       RUNTIME_REDIRECT_URI: "http://localhost/auth/callback"
       RUNTIME_POST_LOGOUT_REDIRECT_URI: "http://localhost/"
       RUNTIME_CLIENT_ID: "tasks-web"
-      FEEDBACK_DIR: "/feedback"
     volumes:
       - "./feedback:/feedback"
     depends_on:
