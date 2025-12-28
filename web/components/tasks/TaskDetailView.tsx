@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
-import type { CreateTaskInput, UpdateTaskInput } from '@/api/gql/generated'
+import type { CreateTaskInput, UpdateTaskInput, TaskPriority } from '@/api/gql/generated'
 import {
   useAssignTaskMutation,
   useCreateTaskMutation,
@@ -122,6 +122,8 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
     patientId: initialPatientId || '',
     assigneeId: null,
     dueDate: null,
+    priority: null,
+    estimatedTime: null,
     done: false,
   })
 
@@ -133,6 +135,8 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
         patientId: taskData.task.patient?.id || '',
         assigneeId: taskData.task.assignee?.id || null,
         dueDate: taskData.task.dueDate ? new Date(taskData.task.dueDate) : null,
+        priority: (taskData.task.priority as TaskPriority | null) || null,
+        estimatedTime: taskData.task.estimatedTime ?? null,
         done: taskData.task.done || false
       })
     } else if (initialPatientId && !taskId) {
@@ -209,8 +213,10 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
         description: formData.description,
         assigneeId: formData.assigneeId,
         dueDate: formData.dueDate,
+        priority: (formData.priority as TaskPriority | null) || undefined,
+        estimatedTime: formData.estimatedTime,
         properties: formData.properties
-      } as CreateTaskInput
+      } as CreateTaskInput & { priority?: TaskPriority | null, estimatedTime?: number | null }
     })
   }
 
@@ -349,6 +355,46 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
                     onRemove={() => {
                       updateLocalState({ dueDate: null })
                       persistChanges({ dueDate: null })
+                    }}
+                  />
+                )}
+              </FormElementWrapper>
+
+              <FormElementWrapper label="Priority">
+                {({ isShowingError: _1, setIsShowingError: _2, ...bag }) => (
+                  <Select
+                    {...bag}
+                    value={formData.priority || 'none'}
+                    onValueChanged={(value) => {
+                      const priorityValue = value === 'none' ? null : (value as TaskPriority)
+                      updateLocalState({ priority: priorityValue })
+                      persistChanges({ priority: priorityValue })
+                    }}
+                  >
+                    <SelectOption value="none">None</SelectOption>
+                    <SelectOption value="P1">P1</SelectOption>
+                    <SelectOption value="P2">P2</SelectOption>
+                    <SelectOption value="P3">P3</SelectOption>
+                    <SelectOption value="P4">P4</SelectOption>
+                  </Select>
+                )}
+              </FormElementWrapper>
+
+              <FormElementWrapper label="Estimated Time (minutes)">
+                {({ isShowingError: _1, setIsShowingError: _2, ...bag }) => (
+                  <Input
+                    {...bag}
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={formData.estimatedTime?.toString() || ''}
+                    placeholder="e.g. 30"
+                    onChange={(e) => {
+                      const value = e.target.value === '' ? null : parseInt(e.target.value, 10)
+                      updateLocalState({ estimatedTime: isNaN(value as number) ? null : value })
+                    }}
+                    onBlur={() => {
+                      persistChanges({ estimatedTime: formData.estimatedTime })
                     }}
                   />
                 )}

@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 
 from database.models.base import Base
-from sqlalchemy import Boolean, Column, ForeignKey, String, Table
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Table
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 if TYPE_CHECKING:
@@ -44,6 +44,8 @@ class Task(Base):
         nullable=True,
     )
     patient_id: Mapped[str] = mapped_column(ForeignKey("patients.id"))
+    priority: Mapped[str | None] = mapped_column(String, nullable=True)
+    estimated_time: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     assignee: Mapped[User | None] = relationship(
         "User",

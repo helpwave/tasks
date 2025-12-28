@@ -49,6 +49,14 @@ class PatientState(Enum):
     DEAD = "DEAD"
 
 
+@strawberry.enum
+class TaskPriority(Enum):
+    P1 = "P1"
+    P2 = "P2"
+    P3 = "P3"
+    P4 = "P4"
+
+
 @strawberry.input
 class PropertyValueInput:
     definition_id: strawberry.ID
@@ -104,6 +112,8 @@ class CreateTaskInput:
     assignee_id: strawberry.ID | None = None
     previous_task_ids: list[strawberry.ID] | None = None
     properties: list[PropertyValueInput] | None = None
+    priority: TaskPriority | None = None
+    estimated_time: int | None = None
 
 
 @strawberry.input
@@ -116,6 +126,8 @@ class UpdateTaskInput:
     previous_task_ids: list[strawberry.ID] | None = None
     properties: list[PropertyValueInput] | None = None
     checksum: str | None = None
+    priority: TaskPriority | None = None
+    estimated_time: int | None = None
 
 
 @strawberry.input

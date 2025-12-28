@@ -5,6 +5,8 @@ query GetTask($id: ID!) {
     description
     done
     dueDate
+    priority
+    estimatedTime
     checksum
     patient {
       id
