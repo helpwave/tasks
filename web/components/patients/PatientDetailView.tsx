@@ -406,9 +406,13 @@ export const PatientDetailView = ({
 
   const handleClinicSelect = (locations: LocationNodeType[]) => {
     const clinic = locations[0]
+    const currentPositionId = formData.positionId
     if (clinic) {
       setSelectedClinic(clinic)
-      updateLocalState({ clinicId: clinic.id } as Partial<ExtendedCreatePatientInput>)
+      updateLocalState({
+        clinicId: clinic.id,
+        positionId: currentPositionId
+      } as Partial<ExtendedCreatePatientInput>)
       if (isEditMode) {
         const updateFn = () => {
           persistChanges({ clinicId: clinic.id } as Partial<UpdatePatientInput>)
@@ -422,7 +426,10 @@ export const PatientDetailView = ({
       }
     } else {
       setSelectedClinic(null)
-      updateLocalState({ clinicId: undefined } as Partial<ExtendedCreatePatientInput>)
+      updateLocalState({
+        clinicId: undefined,
+        positionId: currentPositionId
+      } as Partial<ExtendedCreatePatientInput>)
       if (isEditMode) {
         const updateFn = () => {
           persistChanges({ clinicId: undefined } as Partial<UpdatePatientInput>)
@@ -696,49 +703,28 @@ export const PatientDetailView = ({
                       multiSelectValues: p.multiSelectValues,
                     })) || []
 
-                    const propertyExists = existingProperties.some(p => p.definitionId === definitionId)
-
-                    const isValueEmpty = (!value.textValue || value.textValue.trim() === '') &&
-                      (value.numberValue === undefined || value.numberValue === null) &&
-                      (value.boolValue === undefined || value.boolValue === null) &&
-                      !value.dateValue &&
-                      !value.dateTimeValue &&
-                      (!value.singleSelectValue || value.singleSelectValue.trim() === '') &&
-                      (!value.multiSelectValue || (Array.isArray(value.multiSelectValue) && value.multiSelectValue.length === 0))
-
-                    if (isValueEmpty && propertyExists) {
-                      const updatedProperties = existingProperties.filter(p => p.definitionId !== definitionId)
-
-                      updatePatient({
-                        id: patientId!,
-                        data: {
-                          properties: updatedProperties,
-                        },
-                      })
-                    } else if (!isValueEmpty || !propertyExists) {
-                      const propertyInput: PropertyValueInput = {
-                        definitionId,
-                        textValue: value.textValue || null,
-                        numberValue: value.numberValue ?? null,
-                        booleanValue: value.boolValue ?? null,
-                        dateValue: value.dateValue && !isNaN(value.dateValue.getTime()) ? value.dateValue.toISOString().split('T')[0] : null,
-                        dateTimeValue: value.dateTimeValue && !isNaN(value.dateTimeValue.getTime()) ? value.dateTimeValue.toISOString() : null,
-                        selectValue: value.singleSelectValue || null,
-                        multiSelectValues: (value.multiSelectValue && value.multiSelectValue.length > 0) ? value.multiSelectValue : null,
-                      }
-
-                      const updatedProperties = [
-                        ...existingProperties.filter(p => p.definitionId !== definitionId),
-                        propertyInput,
-                      ]
-
-                      updatePatient({
-                        id: patientId!,
-                        data: {
-                          properties: updatedProperties,
-                        },
-                      })
+                    const propertyInput: PropertyValueInput = {
+                      definitionId,
+                      textValue: value.textValue || null,
+                      numberValue: value.numberValue ?? null,
+                      booleanValue: value.boolValue ?? null,
+                      dateValue: value.dateValue && !isNaN(value.dateValue.getTime()) ? value.dateValue.toISOString().split('T')[0] : null,
+                      dateTimeValue: value.dateTimeValue && !isNaN(value.dateTimeValue.getTime()) ? value.dateTimeValue.toISOString() : null,
+                      selectValue: value.singleSelectValue || null,
+                      multiSelectValues: (value.multiSelectValue && value.multiSelectValue.length > 0) ? value.multiSelectValue : null,
                     }
+
+                    const updatedProperties = [
+                      ...existingProperties.filter(p => p.definitionId !== definitionId),
+                      propertyInput,
+                    ]
+
+                    updatePatient({
+                      id: patientId!,
+                      data: {
+                        properties: updatedProperties,
+                      },
+                    })
                   }}
                 />
               </div>

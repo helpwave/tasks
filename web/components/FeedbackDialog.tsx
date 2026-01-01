@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { Dialog, Button, Textarea, FormElementWrapper, Checkbox } from '@helpwave/hightide'
-import { useTasksTranslation } from '@/i18n/useTasksTranslation'
+import { useTasksTranslation, useLocale } from '@/i18n/useTasksTranslation'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { Mic, Pause } from 'lucide-react'
 import clsx from 'clsx'
@@ -13,7 +13,7 @@ interface FeedbackDialogProps {
 
 interface SpeechRecognitionEvent {
   resultIndex: number,
-  results: Array<Array<{ transcript: string }>>,
+  results: Array<Array<{ transcript: string, isFinal?: boolean }>>,
 }
 
 interface SpeechRecognitionErrorEvent {
@@ -33,6 +33,7 @@ interface SpeechRecognitionInstance {
 
 export const FeedbackDialog = ({ isOpen, onClose, hideUrl = false }: FeedbackDialogProps) => {
   const translation = useTasksTranslation()
+  const { locale } = useLocale()
   const { user } = useTasksContext()
   const [feedback, setFeedback] = useState('')
   const [isRecording, setIsRecording] = useState(false)
@@ -40,6 +41,8 @@ export const FeedbackDialog = ({ isOpen, onClose, hideUrl = false }: FeedbackDia
   const [isAnonymous, setIsAnonymous] = useState(false)
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null)
   const isRecordingRef = useRef(false)
+  const finalTranscriptRef = useRef('')
+  const lastFinalLengthRef = useRef(0)
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -53,17 +56,42 @@ export const FeedbackDialog = ({ isOpen, onClose, hideUrl = false }: FeedbackDia
         const recognition = new SpeechRecognition()
         recognition.continuous = true
         recognition.interimResults = true
-        recognition.lang = navigator.language || 'en-US'
+        recognition.lang = locale || navigator.language || 'en-US'
 
         recognition.onresult = (event: SpeechRecognitionEvent) => {
-          let transcript = ''
-          for (let i = event.resultIndex; i < event.results.length; i++) {
+          let interimTranscript = ''
+          let hasNewFinal = false
+
+          for (let i = event.resultIndex; i < event.results.length; ++i) {
             const result = event.results[i]
             if (result && result[0]) {
-              transcript += result[0].transcript
+              const transcript = result[0].transcript
+              const isFinal = result[0].isFinal ?? false
+
+              if (isFinal) {
+                finalTranscriptRef.current += transcript + ' '
+                hasNewFinal = true
+              } else {
+                interimTranscript += transcript
+              }
             }
           }
-          setFeedback(prev => prev + transcript)
+
+          if (hasNewFinal) {
+            lastFinalLengthRef.current = finalTranscriptRef.current.length
+          }
+
+          const hasExistingFinal = finalTranscriptRef.current.trim().length > 0
+          const hasInterim = interimTranscript.length > 0
+          const noNewFinal = !hasNewFinal
+
+          const needsParagraphBreak = hasExistingFinal && hasInterim && noNewFinal
+
+          const displayText = needsParagraphBreak
+            ? finalTranscriptRef.current.trim() + '\n\n' + interimTranscript
+            : (finalTranscriptRef.current + interimTranscript).trim()
+
+          setFeedback(displayText)
         }
 
         recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
@@ -90,12 +118,14 @@ export const FeedbackDialog = ({ isOpen, onClose, hideUrl = false }: FeedbackDia
           } else {
             setIsRecording(false)
           }
+          lastFinalLengthRef.current = finalTranscriptRef.current.length
+          setFeedback(finalTranscriptRef.current.trim())
         }
 
         recognitionRef.current = recognition
       }
     }
-  }, [])
+  }, [locale])
 
   const handleToggleRecording = () => {
     if (!recognitionRef.current) return
@@ -105,6 +135,8 @@ export const FeedbackDialog = ({ isOpen, onClose, hideUrl = false }: FeedbackDia
       recognitionRef.current.stop()
       setIsRecording(false)
     } else {
+      finalTranscriptRef.current = ''
+      lastFinalLengthRef.current = 0
       isRecordingRef.current = true
       recognitionRef.current.start()
       setIsRecording(true)
@@ -115,6 +147,8 @@ export const FeedbackDialog = ({ isOpen, onClose, hideUrl = false }: FeedbackDia
     if (!isOpen) {
       setFeedback('')
       setIsAnonymous(false)
+      finalTranscriptRef.current = ''
+      lastFinalLengthRef.current = 0
       if (recognitionRef.current && isRecording) {
         isRecordingRef.current = false
         recognitionRef.current.stop()
@@ -243,5 +277,3 @@ export const FeedbackDialog = ({ isOpen, onClose, hideUrl = false }: FeedbackDia
     </Dialog>
   )
 }
-
-

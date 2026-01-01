@@ -723,49 +723,28 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
                       multiSelectValues: p.multiSelectValues,
                     })) || []
 
-                    const propertyExists = existingProperties.some(p => p.definitionId === definitionId)
-
-                    const isValueEmpty = (!value.textValue || value.textValue.trim() === '') &&
-                      (value.numberValue === undefined || value.numberValue === null) &&
-                      (value.boolValue === undefined || value.boolValue === null) &&
-                      !value.dateValue &&
-                      !value.dateTimeValue &&
-                      (!value.singleSelectValue || value.singleSelectValue.trim() === '') &&
-                      (!value.multiSelectValue || (Array.isArray(value.multiSelectValue) && value.multiSelectValue.length === 0))
-
-                    if (isValueEmpty && propertyExists) {
-                      const updatedProperties = existingProperties.filter(p => p.definitionId !== definitionId)
-
-                      updateTask({
-                        id: taskId!,
-                        data: {
-                          properties: updatedProperties,
-                        },
-                      })
-                    } else if (!isValueEmpty || !propertyExists) {
-                      const propertyInput: PropertyValueInput = {
-                        definitionId,
-                        textValue: value.textValue || null,
-                        numberValue: value.numberValue ?? null,
-                        booleanValue: value.boolValue ?? null,
-                        dateValue: value.dateValue && !isNaN(value.dateValue.getTime()) ? value.dateValue.toISOString().split('T')[0] : null,
-                        dateTimeValue: value.dateTimeValue && !isNaN(value.dateTimeValue.getTime()) ? value.dateTimeValue.toISOString() : null,
-                        selectValue: value.singleSelectValue || null,
-                        multiSelectValues: (value.multiSelectValue && value.multiSelectValue.length > 0) ? value.multiSelectValue : null,
-                      }
-
-                      const updatedProperties = [
-                        ...existingProperties.filter(p => p.definitionId !== definitionId),
-                        propertyInput,
-                      ]
-
-                      updateTask({
-                        id: taskId!,
-                        data: {
-                          properties: updatedProperties,
-                        },
-                      })
+                    const propertyInput: PropertyValueInput = {
+                      definitionId,
+                      textValue: value.textValue || null,
+                      numberValue: value.numberValue ?? null,
+                      booleanValue: value.boolValue ?? null,
+                      dateValue: value.dateValue && !isNaN(value.dateValue.getTime()) ? value.dateValue.toISOString().split('T')[0] : null,
+                      dateTimeValue: value.dateTimeValue && !isNaN(value.dateTimeValue.getTime()) ? value.dateTimeValue.toISOString() : null,
+                      selectValue: value.singleSelectValue || null,
+                      multiSelectValues: (value.multiSelectValue && value.multiSelectValue.length > 0) ? value.multiSelectValue : null,
                     }
+
+                    const updatedProperties = [
+                      ...existingProperties.filter(p => p.definitionId !== definitionId),
+                      propertyInput,
+                    ]
+
+                    updateTask({
+                      id: taskId!,
+                      data: {
+                        properties: updatedProperties,
+                      },
+                    })
                   }}
                 />
               </div>

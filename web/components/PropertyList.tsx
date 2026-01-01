@@ -1,6 +1,6 @@
 import { LoadingAndErrorComponent, LoadingAnimation, Menu, MenuItem, ConfirmDialog, Button } from '@helpwave/hightide'
 import { Plus } from 'lucide-react'
-import React, { useMemo, useState, useEffect } from 'react'
+import React, { useMemo, useState, useEffect, useRef } from 'react'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { PropertyEntry } from '@/components/PropertyEntry'
 import { useGetPropertyDefinitionsQuery, FieldType, PropertyEntity } from '@/api/gql/generated'
@@ -333,13 +333,34 @@ export const PropertyList = ({
 
   const [localPropertyValues, setLocalPropertyValues] = useState<Map<string, PropertyValue>>(new Map())
   const [propertyToRemove, setPropertyToRemove] = useState<string | null>(null)
+  const previousAttachedPropertiesRef = useRef<Map<string, PropertyValue>>(new Map())
 
   useEffect(() => {
-    const newMap = new Map<string, PropertyValue>()
-    attachedProperties.forEach(ap => {
-      newMap.set(ap.property.id, ap.value)
+    setLocalPropertyValues(prev => {
+      const newMap = new Map(prev)
+      const currentAttachedMap = new Map<string, PropertyValue>()
+
+      attachedProperties.forEach(ap => {
+        currentAttachedMap.set(ap.property.id, ap.value)
+      })
+
+      currentAttachedMap.forEach((attachedValue, propertyId) => {
+        const localValue = newMap.get(propertyId)
+        const previousAttachedValue = previousAttachedPropertiesRef.current.get(propertyId)
+
+        if (!localValue) {
+          newMap.set(propertyId, attachedValue)
+        } else if (previousAttachedValue) {
+          const localMatchesPrevious = JSON.stringify(localValue) === JSON.stringify(previousAttachedValue)
+          if (localMatchesPrevious) {
+            newMap.set(propertyId, attachedValue)
+          }
+        }
+      })
+
+      previousAttachedPropertiesRef.current = currentAttachedMap
+      return newMap
     })
-    setLocalPropertyValues(newMap)
   }, [attachedProperties])
 
   const isLoading = isLoadingDefinitions
