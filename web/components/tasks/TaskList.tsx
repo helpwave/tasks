@@ -1,6 +1,6 @@
 import { useMemo, useState, forwardRef, useImperativeHandle, useEffect } from 'react'
 import { Avatar, Button, Checkbox, CheckboxUncontrolled, ConfirmDialog, Dialog, FillerRowElement, SearchBar, Select, SelectOption, Table, Tooltip } from '@helpwave/hightide'
-import { PlusIcon, Table as TableIcon, LayoutGrid, UserCheck, Users } from 'lucide-react'
+import { PlusIcon, Table as TableIcon, LayoutGrid, UserCheck, Users, Printer } from 'lucide-react'
 import { useAssignTaskMutation, useCompleteTaskMutation, useGetUsersQuery, useReopenTaskMutation } from '@/api/gql/generated'
 import clsx from 'clsx'
 import { SmartDate } from '@/utils/date'
@@ -109,10 +109,24 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
   const { mutate: completeTask } = useCompleteTaskMutation({ onSuccess: onRefetch })
   const { mutate: reopenTask } = useReopenTaskMutation({ onSuccess: onRefetch })
   const { mutate: assignTask } = useAssignTaskMutation({ onSuccess: onRefetch })
+  const [isPrinting, setIsPrinting] = useState(false)
   const { data: usersData } = useGetUsersQuery(undefined, {
-    refetchInterval: 15000,
-    refetchOnWindowFocus: true,
+    refetchInterval: isPrinting ? false : 15000,
+    refetchOnWindowFocus: !isPrinting,
   })
+
+  useEffect(() => {
+    const handleBeforePrint = () => setIsPrinting(true)
+    const handleAfterPrint = () => setIsPrinting(false)
+
+    window.addEventListener('beforeprint', handleBeforePrint)
+    window.addEventListener('afterprint', handleAfterPrint)
+
+    return () => {
+      window.removeEventListener('beforeprint', handleBeforePrint)
+      window.removeEventListener('afterprint', handleAfterPrint)
+    }
+  }, [])
 
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null)
   const [taskDialogState, setTaskDialogState] = useState<TaskDialogState>({ isOpen: false })
@@ -399,9 +413,13 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
     }
   }
 
+  const handlePrint = () => {
+    window.print()
+  }
+
   return (
-    <div className="flex flex-col h-full gap-4">
-      <div className="flex flex-col sm:flex-row justify-between w-full gap-4">
+    <div className="flex flex-col h-full gap-4 print-container">
+      <div className="flex flex-col sm:flex-row justify-between w-full gap-4 print-header">
         <div className="w-full sm:max-w-md">
           <SearchBar
             placeholder={translation('search')}
@@ -452,6 +470,19 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
               {translation('shiftHandover') || 'Shift Handover'}
             </Button>
           )}
+          {viewType === 'table' && (
+            <Tooltip tooltip="Print" position="top">
+              <Button
+                layout="icon"
+                color="neutral"
+                coloringStyle="text"
+                onClick={handlePrint}
+                className="print-button"
+              >
+                <Printer className="size-5" />
+              </Button>
+            </Tooltip>
+          )}
           <Button
             startIcon={<PlusIcon/>}
             onClick={() => setTaskDialogState({ isOpen: true })}
@@ -463,9 +494,9 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
         </div>
       </div>
       {viewType === 'table' ? (
-        <div className="overflow-x-auto -mx-4 px-4 lg:mx-0 lg:pl-0 lg:pr-4">
+        <div className="overflow-x-auto -mx-4 px-4 lg:mx-0 lg:pl-0 lg:pr-4 print-content">
           <Table
-            className="w-full h-full cursor-pointer min-w-[800px]"
+            className="w-full h-full cursor-pointer min-w-[800px] print-table"
             data={tasks}
             columns={columns}
             fillerRow={() => (
@@ -482,7 +513,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
           />
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 -mx-4 px-4 lg:mx-0 lg:pl-0 lg:pr-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 -mx-4 px-4 lg:mx-0 lg:pl-0 lg:pr-4 print-content">
           {tasks.length === 0 ? (
             <div className="col-span-full text-center text-description py-8">
               {translation('noOpenTasks')}

@@ -12,7 +12,7 @@ import { useTasksContext } from '@/hooks/useTasksContext'
 const TasksPage: NextPage = () => {
   const translation = useTasksTranslation()
   const router = useRouter()
-  const { selectedRootLocationIds, user } = useTasksContext()
+  const { selectedRootLocationIds, user, myTasksCount } = useTasksContext()
   const { data: queryData, refetch } = useGetTasksQuery(
     {
       rootLocationIds: selectedRootLocationIds,
@@ -55,7 +55,7 @@ const TasksPage: NextPage = () => {
     <Page pageTitle={titleWrapper(translation('myTasks'))}>
       <ContentPanel
         titleElement={translation('myTasks')}
-        description={translation('nTask', { count: tasks.length })}
+        description={myTasksCount !== undefined ? translation('nTask', { count: myTasksCount }) : undefined}
       >
         <TaskList
           tasks={tasks}

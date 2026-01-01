@@ -87,29 +87,43 @@ const LocationTreeItem = ({
   }
 
   const labelContent = (
-    <div
-      className={`flex items-center gap-3 w-fit py-2 ${isSelectable ? 'cursor-pointer' : 'cursor-default'} group`}
-      onClick={(e) => {
-        if (isSelectable) {
-          e.stopPropagation()
-          handleCheck(!isSelected)
-        }
-      }}
-    >
+    <div className="flex items-center gap-3 w-full min-w-0">
       {isSelectable && (
-        <Checkbox
-          checked={isSelected}
-          indeterminate={isIndeterminate}
-          onCheckedChange={handleCheck}
+        <div
+          onClick={(e) => {
+            e.stopPropagation()
+            handleCheck(!isSelected)
+          }}
+          onMouseDown={(e) => e.stopPropagation()}
           className="flex-shrink-0"
-          onClick={(e) => e.stopPropagation()}
-        />
+        >
+          <Checkbox
+            checked={isSelected}
+            indeterminate={isIndeterminate}
+            onCheckedChange={handleCheck}
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+          />
+        </div>
       )}
-      <div className="flex-grow flex items-center gap-2 select-none">
-        <span className={`text-text-primary font-medium ${isSelectable ? 'group-hover:text-text-primary' : 'opacity-75'} transition-colors`}>
+      <div
+        className={`flex-grow flex items-center gap-2 select-none min-w-0 ${isSelectable ? 'cursor-pointer' : 'cursor-default'} group`}
+        onClick={(e) => {
+          if (isSelectable) {
+            e.stopPropagation()
+            handleCheck(!isSelected)
+          }
+        }}
+        onMouseDown={(e) => {
+          if (isSelectable) {
+            e.stopPropagation()
+          }
+        }}
+      >
+        <span className={`text-text-primary font-medium ${isSelectable ? 'group-hover:text-text-primary' : 'opacity-75'} transition-colors truncate`}>
           {node.title}
         </span>
-        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider ${getKindStyles(node.kind)}`}>
+        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider flex-shrink-0 ${getKindStyles(node.kind)}`}>
           {node.kind}
         </span>
       </div>
@@ -131,9 +145,11 @@ const LocationTreeItem = ({
         label={labelContent}
         clickOnlyOnHeader={true}
         isExpanded={isExpanded}
-        onChange={(isOpen) => onExpandToggle(node.id, isOpen)}
+        onChange={(isOpen) => {
+          onExpandToggle(node.id, isOpen)
+        }}
         className="!shadow-none !bg-transparent !rounded-none"
-        headerClassName="px-2 hover:bg-surface-hover rounded-lg transition-colors !text-text-primary hover:!text-text-primary flex-row-reverse justify-end"
+        headerClassName="px-2 hover:bg-surface-hover rounded-lg transition-colors !text-text-primary hover:!text-text-primary flex-row-reverse justify-end cursor-pointer"
         contentExpandedClassName="!max-h-none !overflow-visible border-l-2 border-divider ml-5 pl-2 pr-0 mt-1"
       >
         <div className="flex flex-col gap-1">

@@ -1,6 +1,6 @@
 import { useMemo, useState, forwardRef, useImperativeHandle, useEffect } from 'react'
 import { Table, Chip, FillerRowElement, Button, SearchBar, ProgressIndicator, Tooltip } from '@helpwave/hightide'
-import { PlusIcon, Table as TableIcon, LayoutGrid } from 'lucide-react'
+import { PlusIcon, Table as TableIcon, LayoutGrid, Printer } from 'lucide-react'
 import { useGetPatientsQuery, Sex, type GetPatientsQuery, type TaskType, type PatientState } from '@/api/gql/generated'
 import { SidePanel } from '@/components/layout/SidePanel'
 import { PatientDetailView } from '@/components/patients/PatientDetailView'
@@ -48,6 +48,8 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ locat
   const [searchQuery, setSearchQuery] = useState('')
   const [openedPatientId, setOpenedPatientId] = useState<string | null>(null)
 
+  const [isPrinting, setIsPrinting] = useState(false)
+
   const { data: queryData, refetch } = useGetPatientsQuery(
     {
       locationId: locationId,
@@ -55,11 +57,24 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ locat
       states: acceptedStates
     },
     {
-      refetchInterval: 5000,
-      refetchOnWindowFocus: true,
+      refetchInterval: isPrinting ? false : 5000,
+      refetchOnWindowFocus: !isPrinting,
       refetchOnMount: true,
     }
   )
+
+  useEffect(() => {
+    const handleBeforePrint = () => setIsPrinting(true)
+    const handleAfterPrint = () => setIsPrinting(false)
+
+    window.addEventListener('beforeprint', handleBeforePrint)
+    window.addEventListener('afterprint', handleAfterPrint)
+
+    return () => {
+      window.removeEventListener('beforeprint', handleBeforePrint)
+      window.removeEventListener('afterprint', handleAfterPrint)
+    }
+  }, [])
 
   const patients: PatientViewModel[] = useMemo(() => {
     if (!queryData?.patients) return []
@@ -104,6 +119,19 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ locat
   }), [patients])
 
   useEffect(() => {
+    const handleBeforePrint = () => setIsPrinting(true)
+    const handleAfterPrint = () => setIsPrinting(false)
+
+    window.addEventListener('beforeprint', handleBeforePrint)
+    window.addEventListener('afterprint', handleAfterPrint)
+
+    return () => {
+      window.removeEventListener('beforeprint', handleBeforePrint)
+      window.removeEventListener('afterprint', handleAfterPrint)
+    }
+  }, [])
+
+  useEffect(() => {
     if (initialPatientId && patients.length > 0 && openedPatientId !== initialPatientId) {
       const patient = patients.find(p => p.id === initialPatientId)
       if (patient) {
@@ -125,6 +153,10 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ locat
   const handleClose = () => {
     setIsPanelOpen(false)
     setSelectedPatient(undefined)
+  }
+
+  const handlePrint = () => {
+    window.print()
   }
 
   const columns = useMemo<ColumnDef<PatientViewModel>[]>(() => [
@@ -234,8 +266,8 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ locat
   ], [translation])
 
   return (
-    <div className="flex flex-col h-full gap-4">
-      <div className="flex flex-col sm:flex-row justify-between w-full gap-4">
+    <div className="flex flex-col h-full gap-4 print-container">
+      <div className="flex flex-col sm:flex-row justify-between w-full gap-4 print-header">
         <div className="w-full sm:max-w-md">
           <SearchBar
             placeholder={translation('search')}
@@ -267,6 +299,19 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ locat
               </Button>
             </Tooltip>
           </div>
+          {viewType === 'table' && (
+            <Tooltip tooltip="Print" position="top">
+              <Button
+                layout="icon"
+                color="neutral"
+                coloringStyle="text"
+                onClick={handlePrint}
+                className="print-button"
+              >
+                <Printer className="size-5" />
+              </Button>
+            </Tooltip>
+          )}
           <Button
             startIcon={<PlusIcon />}
             onClick={() => {
@@ -280,9 +325,9 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ locat
         </div>
       </div>
       {viewType === 'table' ? (
-        <div className="overflow-x-auto -mx-4 px-4 lg:mx-0 lg:pl-0 lg:pr-4">
+        <div className="overflow-x-auto -mx-4 px-4 lg:mx-0 lg:pl-0 lg:pr-4 print-content">
           <Table
-            className="w-full h-full cursor-pointer min-w-[800px]"
+            className="w-full h-full cursor-pointer min-w-[800px] print-table"
             data={patients}
             columns={columns}
             fillerRow={() => (<FillerRowElement className="min-h-12" />)}
@@ -290,7 +335,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ locat
           />
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 -mx-4 px-4 lg:mx-0 lg:pl-0 lg:pr-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 -mx-4 px-4 lg:mx-0 lg:pl-0 lg:pr-4 print-content">
           {patients.length === 0 ? (
             <div className="col-span-full text-center text-description py-8">
               {translation('noPatient')}
