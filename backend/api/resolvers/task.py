@@ -105,6 +105,23 @@ class TaskQuery:
         else:
             root_cte = cte
 
+        team_location_cte = None
+        if assignee_team_id:
+            if assignee_team_id not in accessible_location_ids:
+                raise GraphQLError(
+                    "Insufficient permission. Please contact an administrator if you believe this is an error.",
+                    extensions={"code": "FORBIDDEN"},
+                )
+            team_location_cte = (
+                select(models.LocationNode.id)
+                .where(models.LocationNode.id == assignee_team_id)
+                .cte(name="team_location_descendants", recursive=True)
+            )
+            team_children = select(models.LocationNode.id).join(
+                team_location_cte, models.LocationNode.parent_id == team_location_cte.c.id
+            )
+            team_location_cte = team_location_cte.union_all(team_children)
+
         query = (
             select(models.Task)
             .options(
@@ -138,7 +155,9 @@ class TaskQuery:
         if assignee_id:
             query = query.where(models.Task.assignee_id == assignee_id)
         if assignee_team_id:
-            query = query.where(models.Task.assignee_team_id == assignee_team_id)
+            query = query.where(
+                models.Task.assignee_team_id.in_(select(team_location_cte.c.id))
+            )
 
         result = await info.context.db.execute(query)
         return result.scalars().all()

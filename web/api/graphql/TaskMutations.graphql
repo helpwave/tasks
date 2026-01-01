@@ -38,6 +38,24 @@ mutation UpdateTask($id: ID!, $data: UpdateTaskInput!) {
       name
       avatarUrl
     }
+    properties {
+      definition {
+        id
+        name
+        description
+        fieldType
+        isActive
+        allowedEntities
+        options
+      }
+      textValue
+      numberValue
+      booleanValue
+      dateValue
+      dateTimeValue
+      selectValue
+      multiSelectValues
+    }
   }
 }
 

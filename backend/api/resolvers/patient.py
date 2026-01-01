@@ -79,11 +79,25 @@ class PatientQuery:
         )
 
         filter_cte = None
-        if root_location_ids:
-            # Filter to only include root_location_ids that the user has access to
+        if location_node_id:
+            if location_node_id not in accessible_location_ids:
+                raise GraphQLError(
+                    "Insufficient permission. Please contact an administrator if you believe this is an error.",
+                    extensions={"code": "FORBIDDEN"},
+                )
+            filter_cte = (
+                select(models.LocationNode.id)
+                .where(models.LocationNode.id == location_node_id)
+                .cte(name="location_descendants", recursive=True)
+            )
+            children = select(models.LocationNode.id).join(
+                filter_cte,
+                models.LocationNode.parent_id == filter_cte.c.id,
+            )
+            filter_cte = filter_cte.union_all(children)
+        elif root_location_ids:
             valid_root_location_ids = [lid for lid in root_location_ids if lid in accessible_location_ids]
             if not valid_root_location_ids:
-                # If none of the requested root_location_ids are accessible, return empty list
                 return []
             root_location_ids = valid_root_location_ids
             filter_cte = (
@@ -95,17 +109,6 @@ class PatientQuery:
                 filter_cte, models.LocationNode.parent_id == filter_cte.c.id
             )
             filter_cte = filter_cte.union_all(root_children)
-        elif location_node_id:
-            filter_cte = (
-                select(models.LocationNode.id)
-                .where(models.LocationNode.id == location_node_id)
-                .cte(name="location_descendants", recursive=True)
-            )
-            parent = select(models.LocationNode.id).join(
-                filter_cte,
-                models.LocationNode.parent_id == filter_cte.c.id,
-            )
-            filter_cte = filter_cte.union_all(parent)
 
         if filter_cte is not None:
             patient_locations_filter = aliased(models.patient_locations)
