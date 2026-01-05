@@ -120,7 +120,6 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
     {},
     {
       enabled: !isAuthLoading && !!identity,
-      refetchInterval: 30000,
       refetchOnWindowFocus: true,
     }
   )
@@ -135,12 +134,10 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
     },
     {
       enabled: !isAuthLoading && !!identity,
-      refetchInterval: 5000,
       refetchOnWindowFocus: true,
       refetchOnMount: true,
     }
   )
-
 
   const prevRootLocationIdsRef = useRef<string>('')
   const prevSelectedRootLocationIdsRef = useRef<string>('')
@@ -149,7 +146,19 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
     const currentSelectedIds = (state.selectedRootLocationIds || []).sort().join(',')
     if (prevSelectedRootLocationIdsRef.current !== currentSelectedIds) {
       prevSelectedRootLocationIdsRef.current = currentSelectedIds
-      queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
+
+      queryClient.invalidateQueries()
+      queryClient.removeQueries({
+        predicate: (query) => {
+          const queryKey = query.queryKey as unknown[]
+          const queryKeyStr = JSON.stringify(queryKey)
+          return queryKeyStr.includes('GetPatients') ||
+                 queryKeyStr.includes('GetTasks') ||
+                 queryKeyStr.includes('GetLocations') ||
+                 queryKeyStr.includes('GetGlobalData') ||
+                 queryKeyStr.includes('GetOverviewData')
+        }
+      })
     }
   }, [state.selectedRootLocationIds, queryClient])
 
@@ -171,7 +180,6 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
 
     setState(prevState => {
       let selectedRootLocationIds = prevState.selectedRootLocationIds || []
-
 
       if (rootLocations.length > 0 && selectedRootLocationIds.length === 0 && storedSelectedRootLocationIds.length === 0) {
         selectedRootLocationIds = [rootLocations[0]!.id]

@@ -3,6 +3,7 @@ from collections.abc import AsyncGenerator
 import strawberry
 from api.audit import audit_log
 from api.context import Info
+from api.decorators.pagination import apply_pagination
 from api.inputs import CreateTaskInput, UpdateTaskInput
 from api.resolvers.base import BaseMutationResolver, BaseSubscriptionResolver
 from api.services.authorization import AuthorizationService
@@ -43,6 +44,8 @@ class TaskQuery:
         assignee_id: strawberry.ID | None = None,
         assignee_team_id: strawberry.ID | None = None,
         root_location_ids: list[strawberry.ID] | None = None,
+        limit: int | None = None,
+        offset: int | None = None,
     ) -> list[TaskType]:
         auth_service = AuthorizationService(info.context.db)
 
@@ -61,6 +64,8 @@ class TaskQuery:
                 query = query.where(models.Task.assignee_id == assignee_id)
             if assignee_team_id:
                 query = query.where(models.Task.assignee_team_id == assignee_team_id)
+
+            query = apply_pagination(query, limit=limit, offset=offset)
 
             result = await info.context.db.execute(query)
             return result.scalars().all()
@@ -158,6 +163,8 @@ class TaskQuery:
             query = query.where(
                 models.Task.assignee_team_id.in_(select(team_location_cte.c.id))
             )
+
+        query = apply_pagination(query, limit=limit, offset=offset)
 
         result = await info.context.db.execute(query)
         return result.scalars().all()
@@ -265,7 +272,7 @@ class TaskMutation(BaseMutationResolver[models.Task]):
                 new_task, data.properties, "task"
             )
 
-        return await BaseMutationResolver.create_and_notify(
+        task = await BaseMutationResolver.create_and_notify(
             info,
             new_task,
             models.Task,
@@ -273,6 +280,15 @@ class TaskMutation(BaseMutationResolver[models.Task]):
             "patient" if new_task.patient_id else None,
             new_task.patient_id if new_task.patient_id else None,
         )
+        if task.patient_id:
+            from api.audit import AuditLogger
+            AuditLogger.log_activity(
+                case_id=task.patient_id,
+                activity_name="task_created",
+                user_id=info.context.user.id if info.context.user else None,
+                context={"payload": {"task_id": task.id, "task_title": task.title}},
+            )
+        return task
 
     @strawberry.mutation
     @audit_log("update_task")
@@ -442,11 +458,20 @@ class TaskMutation(BaseMutationResolver[models.Task]):
     @strawberry.mutation
     @audit_log("complete_task")
     async def complete_task(self, info: Info, id: strawberry.ID) -> TaskType:
-        return await TaskMutation._update_task_field(
+        task = await TaskMutation._update_task_field(
             info,
             id,
             lambda task: setattr(task, "done", True),
         )
+        if task.patient_id:
+            from api.audit import AuditLogger
+            AuditLogger.log_activity(
+                case_id=task.patient_id,
+                activity_name="task_completed",
+                user_id=info.context.user.id if info.context.user else None,
+                context={"payload": {"task_id": task.id, "task_title": task.title}},
+            )
+        return task
 
     @strawberry.mutation
     @audit_log("reopen_task")
@@ -489,9 +514,57 @@ class TaskMutation(BaseMutationResolver[models.Task]):
 class TaskSubscription(BaseSubscriptionResolver):
     @strawberry.subscription
     async def task_created(
-        self, info: Info
+        self,
+        info: Info,
+        root_location_ids: list[strawberry.ID] | None = None,
     ) -> AsyncGenerator[strawberry.ID, None]:
-        async for task_id in BaseSubscriptionResolver.entity_created(info, "task"):
+        import logging
+
+        from api.services.subscription import (
+            task_belongs_to_root_locations,
+        )
+
+        logger = logging.getLogger(__name__)
+
+        root_location_ids_str = (
+            [str(lid) for lid in root_location_ids]
+            if root_location_ids
+            else None
+        )
+
+        logger.info(
+            f"[SUBSCRIPTION] Initializing task_created subscription: "
+            f"root_location_ids={root_location_ids_str}"
+        )
+
+        async for task_id in BaseSubscriptionResolver.entity_created(
+            info, "task"
+        ):
+            logger.info(
+                f"[SUBSCRIPTION] TaskSubscription received task_created event: "
+                f"task_id={task_id}, root_location_ids={root_location_ids_str}"
+            )
+            if root_location_ids_str:
+                belongs = await task_belongs_to_root_locations(
+                    info.context.db,
+                    str(task_id),
+                    root_location_ids_str,
+                )
+                if not belongs:
+                    logger.debug(
+                        f"[SUBSCRIPTION] TaskSubscription filtered out task_created event "
+                        f"(location mismatch): task_id={task_id}, "
+                        f"root_location_ids={root_location_ids_str}"
+                    )
+                    continue
+                logger.debug(
+                    f"[SUBSCRIPTION] TaskSubscription passed location filter: "
+                    f"task_id={task_id}, root_location_ids={root_location_ids_str}"
+                )
+            logger.info(
+                f"[SUBSCRIPTION] TaskSubscription yielding task_created event: "
+                f"task_id={task_id}"
+            )
             yield task_id
 
     @strawberry.subscription
@@ -499,13 +572,109 @@ class TaskSubscription(BaseSubscriptionResolver):
         self,
         info: Info,
         task_id: strawberry.ID | None = None,
+        root_location_ids: list[strawberry.ID] | None = None,
     ) -> AsyncGenerator[strawberry.ID, None]:
-        async for updated_id in BaseSubscriptionResolver.entity_updated(info, "task", task_id):
+        import logging
+
+        from api.services.subscription import (
+            task_belongs_to_root_locations,
+        )
+
+        logger = logging.getLogger(__name__)
+
+        root_location_ids_str = (
+            [str(lid) for lid in root_location_ids]
+            if root_location_ids
+            else None
+        )
+
+        logger.info(
+            f"[SUBSCRIPTION] Initializing task_updated subscription: "
+            f"task_id={task_id}, root_location_ids={root_location_ids_str}"
+        )
+
+        async for updated_id in BaseSubscriptionResolver.entity_updated(
+            info, "task", task_id
+        ):
+            logger.info(
+                f"[SUBSCRIPTION] TaskSubscription received task_updated event: "
+                f"updated_id={updated_id}, filter_task_id={task_id}, "
+                f"root_location_ids={root_location_ids_str}"
+            )
+            if root_location_ids_str:
+                belongs = await task_belongs_to_root_locations(
+                    info.context.db,
+                    str(updated_id),
+                    root_location_ids_str,
+                )
+                if not belongs:
+                    logger.debug(
+                        f"[SUBSCRIPTION] TaskSubscription filtered out task_updated event "
+                        f"(location mismatch): updated_id={updated_id}, "
+                        f"root_location_ids={root_location_ids_str}"
+                    )
+                    continue
+                logger.debug(
+                    f"[SUBSCRIPTION] TaskSubscription passed location filter: "
+                    f"updated_id={updated_id}, root_location_ids={root_location_ids_str}"
+                )
+            logger.info(
+                f"[SUBSCRIPTION] TaskSubscription yielding task_updated event: "
+                f"updated_id={updated_id}"
+            )
             yield updated_id
 
     @strawberry.subscription
     async def task_deleted(
-        self, info: Info
+        self,
+        info: Info,
+        root_location_ids: list[strawberry.ID] | None = None,
     ) -> AsyncGenerator[strawberry.ID, None]:
-        async for task_id in BaseSubscriptionResolver.entity_deleted(info, "task"):
+        import logging
+
+        from api.services.subscription import (
+            task_belongs_to_root_locations,
+        )
+
+        logger = logging.getLogger(__name__)
+
+        root_location_ids_str = (
+            [str(lid) for lid in root_location_ids]
+            if root_location_ids
+            else None
+        )
+
+        logger.info(
+            f"[SUBSCRIPTION] Initializing task_deleted subscription: "
+            f"root_location_ids={root_location_ids_str}"
+        )
+
+        async for task_id in BaseSubscriptionResolver.entity_deleted(
+            info, "task"
+        ):
+            logger.info(
+                f"[SUBSCRIPTION] TaskSubscription received task_deleted event: "
+                f"task_id={task_id}, root_location_ids={root_location_ids_str}"
+            )
+            if root_location_ids_str:
+                belongs = await task_belongs_to_root_locations(
+                    info.context.db,
+                    str(task_id),
+                    root_location_ids_str,
+                )
+                if not belongs:
+                    logger.debug(
+                        f"[SUBSCRIPTION] TaskSubscription filtered out task_deleted event "
+                        f"(location mismatch): task_id={task_id}, "
+                        f"root_location_ids={root_location_ids_str}"
+                    )
+                    continue
+                logger.debug(
+                    f"[SUBSCRIPTION] TaskSubscription passed location filter: "
+                    f"task_id={task_id}, root_location_ids={root_location_ids_str}"
+                )
+            logger.info(
+                f"[SUBSCRIPTION] TaskSubscription yielding task_deleted event: "
+                f"task_id={task_id}"
+            )
             yield task_id

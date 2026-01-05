@@ -5,31 +5,35 @@ import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
 import { TaskList, type TaskViewModel } from '@/components/tasks/TaskList'
 import { useMemo } from 'react'
-import { useGetTasksQuery } from '@/api/gql/generated'
+import { GetTasksDocument, type GetTasksQuery } from '@/api/gql/generated'
 import { useRouter } from 'next/router'
 import { useTasksContext } from '@/hooks/useTasksContext'
+import { usePaginatedGraphQLQuery } from '@/hooks/usePaginatedQuery'
 
 const TasksPage: NextPage = () => {
   const translation = useTasksTranslation()
   const router = useRouter()
   const { selectedRootLocationIds, user, myTasksCount } = useTasksContext()
-  const { data: queryData, refetch } = useGetTasksQuery(
-    {
+  const { data: tasksData, refetch } = usePaginatedGraphQLQuery<GetTasksQuery, GetTasksQuery['tasks'][0], { rootLocationIds?: string[], assigneeId?: string }>({
+    queryKey: ['GetTasks'],
+    document: GetTasksDocument,
+    baseVariables: {
       rootLocationIds: selectedRootLocationIds,
       assigneeId: user?.id,
     },
-    {
-      refetchInterval: 5000,
+    pageSize: 50,
+    extractItems: (result) => result.tasks,
+    mode: 'infinite',
+    enabled: !!selectedRootLocationIds && !!user,
       refetchOnWindowFocus: true,
       refetchOnMount: true,
-    }
-  )
+  })
   const taskId = router.query['taskId'] as string | undefined
 
   const tasks: TaskViewModel[] = useMemo(() => {
-    if (!queryData?.tasks) return []
+    if (!tasksData || tasksData.length === 0) return []
 
-    return queryData.tasks.map((task) => ({
+    return tasksData.map((task) => ({
       id: task.id,
       name: task.title,
       description: task.description || undefined,
@@ -49,7 +53,7 @@ const TasksPage: NextPage = () => {
         ? { id: task.assignee.id, name: task.assignee.name, avatarURL: task.assignee.avatarUrl }
         : undefined,
     }))
-  }, [queryData])
+  }, [tasksData])
 
   return (
     <Page pageTitle={titleWrapper(translation('myTasks'))}>

@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime, timezone
 from typing import Any
 
 import strawberry
@@ -107,6 +108,7 @@ async def get_context(
                         lastname=lastname,
                         title="User",
                         avatar_url=picture,
+                        last_online=datetime.now(timezone.utc),
                     )
                     session.add(new_user)
                     await session.commit()
@@ -143,8 +145,9 @@ async def get_context(
                 await session.refresh(db_user)
 
             if db_user:
+                db_user.last_online = datetime.now(timezone.utc)
+                session.add(db_user)
                 try:
-
                     await _update_user_root_locations(
                         session,
                         db_user,

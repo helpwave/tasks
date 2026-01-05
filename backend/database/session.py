@@ -20,17 +20,31 @@ redis_client = redis.from_url(REDIS_URL, decode_responses=True)
 
 async def publish_to_redis(channel: str, message: str) -> None:
     try:
-        logger.info(
-            f"Publishing to Redis: channel={channel}, message={message}"
+        logger.debug(
+            f"[SUBSCRIPTION] Publishing to Redis: channel={channel}, message={message}"
         )
         await redis_client.publish(channel, message)
         logger.debug(
-            f"Successfully published to Redis: channel={channel}, message={message}"
+            f"[SUBSCRIPTION] Successfully published to Redis: channel={channel}, message={message}"
         )
+    except RuntimeError as e:
+        error_str = str(e)
+        if "Event loop is closed" in error_str or "attached to a different loop" in error_str:
+            logger.warning(
+                f"[SUBSCRIPTION] Skipping Redis publish due to event loop issue: channel={channel}, message={message}, error={error_str}"
+            )
+            return
+        logger.error(
+            f"[SUBSCRIPTION] Failed to publish to Redis: channel={channel}, message={message}, error={error_str}",
+            exc_info=True
+        )
+        raise
     except Exception as e:
         logger.error(
-            f"Failed to publish to Redis: channel={channel}, message={message}, error={e}"
+            f"[SUBSCRIPTION] Failed to publish to Redis: channel={channel}, message={message}, error={e}",
+            exc_info=True
         )
+        raise
 
 
 async def get_db_session() -> AsyncGenerator[AsyncSession, None]:

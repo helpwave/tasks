@@ -43,20 +43,13 @@ const getGreetingKey = (): string => {
 const Dashboard: NextPage = () => {
   const translation = useTasksTranslation()
   const { user, myTasksCount, totalPatientsCount } = useTasksContext()
-  const { data, refetch } = useGetOverviewDataQuery(
-    undefined,
-    {
-      refetchInterval: 5000,
-      refetchOnWindowFocus: true,
-      refetchOnMount: true,
-    }
-  )
+  const { data } = useGetOverviewDataQuery(undefined, {})
 
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null)
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
 
-  const { mutate: completeTask } = useCompleteTaskMutation({ onSuccess: () => refetch() })
-  const { mutate: reopenTask } = useReopenTaskMutation({ onSuccess: () => refetch() })
+  const { mutate: completeTask } = useCompleteTaskMutation({})
+  const { mutate: reopenTask } = useReopenTaskMutation({})
 
   const recentPatients = useMemo(() => data?.recentPatients ?? [], [data])
   const recentTasks = useMemo(() => data?.recentTasks ?? [], [data])
@@ -280,7 +273,7 @@ const Dashboard: NextPage = () => {
             <PatientDetailView
               patientId={selectedPatientId}
               onClose={() => setSelectedPatientId(null)}
-              onSuccess={() => refetch()}
+              onSuccess={() => {}}
             />
           )}
         </SidePanel>
@@ -294,7 +287,7 @@ const Dashboard: NextPage = () => {
             <TaskDetailView
               taskId={selectedTaskId}
               onClose={() => setSelectedTaskId(null)}
-              onSuccess={() => refetch()}
+              onSuccess={() => {}}
             />
           )}
         </SidePanel>

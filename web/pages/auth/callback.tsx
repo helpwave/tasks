@@ -21,26 +21,25 @@ export default function AuthCallback() {
     const checkAuthCallback = async () => {
       if (searchParams.get('code') && searchParams.get('state')) {
         setHasProcessed(true)
-        console.debug('Processing OIDC callback...')
+
         try {
           await handleCallback()
           const redirect = searchParams.get('redirect_uri')
           const isValidRedirect = redirect && new URL(redirect).host === window.location.host
           const defaultRedirect = '/'
           if (!isValidRedirect) {
-            console.warn(`Redirect URL is invalid, redirecting to default route ${defaultRedirect}`)
+
             await router.push(defaultRedirect)
           } else {
-            console.info(`Redirecting to ${redirect ?? defaultRedirect}`)
+
             await router.push(redirect ?? defaultRedirect)
           }
-        } catch (error) {
-          console.error('OIDC callback error:', error)
+        } catch {
           setHasError(true)
         }
       }
     }
-    checkAuthCallback().catch(console.error)
+    checkAuthCallback().catch(() => {})
   }, [searchParams]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (

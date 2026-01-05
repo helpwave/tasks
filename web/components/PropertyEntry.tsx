@@ -50,10 +50,12 @@ export const PropertyEntry = ({
     case 'text':
       return (
         <TextProperty
-          {...commonProps}
-          value={value.textValue}
-          onChange={textValue => onChange({ ...value, textValue })}
-          onEditComplete={textValue => onEditComplete({ ...value, textValue })}
+          name={commonProps.name}
+          readOnly={commonProps.readOnly}
+          value={value.textValue ?? ''}
+          onChange={textValue => onChange({ ...value, textValue: textValue ?? '' })}
+          onEditComplete={textValue => onEditComplete({ ...value, textValue: textValue ?? '' })}
+          onRemove={onRemove}
         />
       )
     case 'number':
@@ -131,7 +133,7 @@ export const PropertyEntry = ({
         </MultiSelectProperty>
       )
     default:
-      console.error(`Unimplemented property type used for PropertyEntry: ${fieldType}`)
+
       return <></>
   }
 }

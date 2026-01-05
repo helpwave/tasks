@@ -1,6 +1,7 @@
 from typing import Any
 
 from api.types.base import calculate_checksum_for_instance
+from graphql import GraphQLError
 
 
 def validate_checksum(
@@ -14,7 +15,13 @@ def validate_checksum(
     current_checksum = calculate_checksum_for_instance(entity)
 
     if provided_checksum != current_checksum:
-        raise Exception(
+        raise GraphQLError(
             f"CONFLICT: {entity_name} data has been modified. "
-            f"Expected checksum: {current_checksum}, Got: {provided_checksum}"
+            f"Expected checksum: {current_checksum}, Got: {provided_checksum}",
+            extensions={
+                "code": "CONFLICT",
+                "expectedChecksum": current_checksum,
+                "gotChecksum": provided_checksum,
+                "entityName": entity_name,
+            },
         )

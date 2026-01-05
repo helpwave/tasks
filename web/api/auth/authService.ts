@@ -120,8 +120,7 @@ export const renewToken = async (): Promise<User | null> => {
       2,
       (error) => isAuthenticationServerUnavailable(error)
     )
-  } catch (error) {
-    console.warn('Silent token renewal failed:', error)
+  } catch {
     return null
   }
 }
@@ -161,7 +160,6 @@ export const restoreSession = async (): Promise<User | undefined> => {
       }
 
       if (user.expired) {
-        console.debug('Access token expired, attempting silent refresh...')
         const refreshedUser = await renewToken()
         const result = refreshedUser ?? undefined
         lastRestoreSessionResult = result
@@ -173,10 +171,8 @@ export const restoreSession = async (): Promise<User | undefined> => {
       lastRestoreSessionTime = now
       return user
     } catch (error) {
-      if (isAuthenticationServerUnavailable(error)) {
-        console.debug('Authentication server not ready yet, session restoration will retry:', error)
-      } else {
-        console.warn('Session restoration failed:', error)
+      if (!isAuthenticationServerUnavailable(error)) {
+        throw error
       }
       lastRestoreSessionResult = undefined
       lastRestoreSessionTime = now

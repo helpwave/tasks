@@ -1,7 +1,8 @@
 import { useMemo, useState, forwardRef, useImperativeHandle, useEffect } from 'react'
 import { Table, Chip, FillerRowElement, Button, SearchBar, ProgressIndicator, Tooltip } from '@helpwave/hightide'
 import { PlusIcon, Table as TableIcon, LayoutGrid, Printer } from 'lucide-react'
-import { useGetPatientsQuery, Sex, type GetPatientsQuery, type TaskType, type PatientState } from '@/api/gql/generated'
+import { GetPatientsDocument, Sex, type GetPatientsQuery, type TaskType, type PatientState } from '@/api/gql/generated'
+import { usePaginatedGraphQLQuery } from '@/hooks/usePaginatedQuery'
 import { SidePanel } from '@/components/layout/SidePanel'
 import { PatientDetailView } from '@/components/patients/PatientDetailView'
 import { SmartDate } from '@/utils/date'
@@ -33,13 +34,12 @@ export type PatientListRef = {
 }
 
 type PatientListProps = {
-  locationId?: string,
   initialPatientId?: string,
   onInitialPatientOpened?: () => void,
   acceptedStates?: PatientState[],
 }
 
-export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ locationId, initialPatientId, onInitialPatientOpened, acceptedStates }, ref) => {
+export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initialPatientId, onInitialPatientOpened, acceptedStates }, ref) => {
   const translation = useTasksTranslation()
   const { selectedRootLocationIds } = useTasksContext()
   const { viewType, toggleView } = usePatientViewToggle()
@@ -50,18 +50,20 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ locat
 
   const [isPrinting, setIsPrinting] = useState(false)
 
-  const { data: queryData, refetch } = useGetPatientsQuery(
-    {
-      locationId: locationId,
+  const { data: patientsData, refetch } = usePaginatedGraphQLQuery<GetPatientsQuery, GetPatientsQuery['patients'][0], { rootLocationIds?: string[], states?: PatientState[] }>({
+    queryKey: ['GetPatients'],
+    document: GetPatientsDocument,
+    baseVariables: {
       rootLocationIds: selectedRootLocationIds && selectedRootLocationIds.length > 0 ? selectedRootLocationIds : undefined,
       states: acceptedStates
     },
-    {
-      refetchInterval: isPrinting ? false : 5000,
+    pageSize: 50,
+    extractItems: (result) => result.patients,
+    mode: 'infinite',
+    enabled: !isPrinting,
       refetchOnWindowFocus: !isPrinting,
       refetchOnMount: true,
-    }
-  )
+  })
 
   useEffect(() => {
     const handleBeforePrint = () => setIsPrinting(true)
@@ -77,9 +79,9 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ locat
   }, [])
 
   const patients: PatientViewModel[] = useMemo(() => {
-    if (!queryData?.patients) return []
+    if (!patientsData || patientsData.length === 0) return []
 
-    let data = queryData.patients.map(p => ({
+    let data = patientsData.map(p => ({
       id: p.id,
       name: p.name,
       firstname: p.firstname,
@@ -102,7 +104,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ locat
     }
 
     return data
-  }, [queryData, searchQuery])
+  }, [patientsData, searchQuery])
 
   useImperativeHandle(ref, () => ({
     openCreate: () => {
@@ -277,6 +279,19 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ locat
           />
         </div>
         <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto sm:ml-auto lg:pr-4">
+          {viewType === 'table' && (
+            <Tooltip tooltip="Print" position="top">
+              <Button
+                layout="icon"
+                color="neutral"
+                coloringStyle="text"
+                onClick={handlePrint}
+                className="print-button"
+              >
+                <Printer className="size-5" />
+              </Button>
+            </Tooltip>
+          )}
           <div className="flex items-center gap-2 flex-shrink-0">
             <Tooltip tooltip="Table View" position="top">
               <Button
@@ -299,19 +314,6 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ locat
               </Button>
             </Tooltip>
           </div>
-          {viewType === 'table' && (
-            <Tooltip tooltip="Print" position="top">
-              <Button
-                layout="icon"
-                color="neutral"
-                coloringStyle="text"
-                onClick={handlePrint}
-                className="print-button"
-              >
-                <Printer className="size-5" />
-              </Button>
-            </Tooltip>
-          )}
           <Button
             startIcon={<PlusIcon />}
             onClick={() => {

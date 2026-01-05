@@ -1,5 +1,6 @@
 import strawberry
 
+from .audit import AuditQuery
 from .location import LocationMutation, LocationQuery, LocationSubscription
 from .patient import PatientMutation, PatientQuery, PatientSubscription
 from .property import PropertyDefinitionMutation, PropertyDefinitionQuery
@@ -14,6 +15,7 @@ class Query(
     LocationQuery,
     PropertyDefinitionQuery,
     UserQuery,
+    AuditQuery,
 ):
     pass
 

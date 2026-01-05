@@ -12,7 +12,10 @@ import { getConfig } from '@/utils/config'
 import '../globals.css'
 import { AuthProvider } from '@/hooks/useAuth'
 import { TasksContextProvider } from '@/hooks/useTasksContext'
+import { SubscriptionProvider } from '@/providers/SubscriptionProvider'
 import { InstallPrompt } from '@/components/pwa/InstallPrompt'
+import { registerServiceWorker, requestNotificationPermission } from '@/utils/pushNotifications'
+import { useEffect } from 'react'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -32,6 +35,16 @@ function MyApp({
   Component,
   pageProps
 }: AppProps) {
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      registerServiceWorker().then((registration) => {
+        if (registration) {
+          requestNotificationPermission().catch(() => {})
+        }
+      }).catch(() => {})
+    }
+  }, [])
+
   return (
     <LocaleProvider>
       <ThemeProvider>
@@ -56,8 +69,10 @@ function MyApp({
                       ]}
                     >
                       <TasksContextProvider>
-                        <Component {...pageProps} />
-                        <InstallPrompt />
+                        <SubscriptionProvider>
+                          <Component {...pageProps} />
+                          <InstallPrompt />
+                        </SubscriptionProvider>
                       </TasksContextProvider>
                     </AuthProvider>
                     {config.env === 'development' && <ReactQueryDevtools position="bottom-left" />}

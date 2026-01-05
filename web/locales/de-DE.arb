@@ -391,7 +391,11 @@
   "users": "Benutzer",
   "showTeamTasks": "Team-Aufgaben anzeigen",
   "showAllTasks": "Alle Aufgaben anzeigen",
+  "error": "Fehler",
   "errorOccurred": "Ein Fehler ist aufgetreten",
   "estimatedTime": "Geschätzte Zeit (Minuten)",
-  "submitAnonymously": "Anonym absenden"
+  "ok": "OK",
+  "submitAnonymously": "Anonym absenden",
+  "conflictDetected": "Konflikt erkannt",
+  "overwrite": "Überschreiben"
 }

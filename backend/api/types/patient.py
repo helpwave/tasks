@@ -26,6 +26,7 @@ class PatientType:
     assigned_location_id: strawberry.ID | None
     clinic_id: strawberry.ID
     position_id: strawberry.ID | None
+    description: str | None
 
     @strawberry.field
     def name(self) -> str:

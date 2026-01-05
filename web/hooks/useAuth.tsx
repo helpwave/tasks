@@ -30,7 +30,6 @@ type AuthProviderProps = PropsWithChildren & {
   ignoredURLs?: string[],
 }
 
-
 export const AuthProvider = ({
                                children,
                                unprotectedURLs = [],
@@ -58,10 +57,8 @@ export const AuthProvider = ({
         if (!isMounted) return
 
         if (identity) {
-          console.debug('Loaded identity')
           setAuthState({ identity, isLoading: false })
           onTokenExpiringCallback(async () => {
-            console.debug('Token expiring, refreshing...')
             const renewed = await renewToken()
             if (isMounted) {
               setAuthState({
@@ -72,24 +69,19 @@ export const AuthProvider = ({
           })
         } else {
           if (!isUnprotected) {
-            console.debug('No identity found, redirecting to login...')
             login(
               config.auth.redirect_uri +
               `?redirect_uri=${encodeURIComponent(window.location.href)}`
-            ).catch((error) => {
-              if (!error?.response?.status || error.response.status !== 400) {
-                console.error('Login redirect error:', error)
-              }
+            ).catch(() => {
             })
           } else {
-            console.debug('Unprotected route, clearing auth state...')
             removeUser()
               .then(() => {
                 if (isMounted) {
                   setAuthState({ isLoading: false })
                 }
               })
-              .catch(console.error)
+              .catch(() => {})
           }
         }
       })
@@ -102,28 +94,22 @@ export const AuthProvider = ({
 
         if (!isUnprotected) {
           if (isAuthenticationServerUnavailable) {
-            console.debug('Authentication server not ready, showing login page...')
             setAuthState({ isLoading: false })
           } else {
-            console.debug('Login error, redirecting to login...')
             login(
               config.auth.redirect_uri +
               `?redirect_uri=${encodeURIComponent(window.location.href)}`
-            ).catch((err) => {
-              if (!err?.response?.status || err.response.status !== 400) {
-                console.error('Login redirect error:', err)
-              }
+            ).catch(() => {
             })
           }
         } else {
-          console.debug('Login error on unprotected route, clearing auth state...')
           removeUser()
             .then(() => {
               if (isMounted) {
                 setAuthState({ isLoading: false })
               }
             })
-            .catch(console.error)
+            .catch(() => {})
         }
       })
 
@@ -135,7 +121,7 @@ export const AuthProvider = ({
   const logoutAndReset = useCallback(() => {
     logout()
       .then(() => removeUser().then(() => setAuthState({ isLoading: true, identity: undefined })))
-      .catch(console.error)
+      .catch(() => {})
   }, [])
 
   let content: ReactNode = children

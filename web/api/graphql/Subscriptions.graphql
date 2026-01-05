@@ -1,25 +1,25 @@
-subscription PatientCreated {
-  patientCreated
+subscription PatientCreated($rootLocationIds: [ID!]) {
+  patientCreated(rootLocationIds: $rootLocationIds)
 }
 
-subscription PatientUpdated($patientId: ID) {
-  patientUpdated(patientId: $patientId)
+subscription PatientUpdated($patientId: ID, $rootLocationIds: [ID!]) {
+  patientUpdated(patientId: $patientId, rootLocationIds: $rootLocationIds)
 }
 
-subscription PatientStateChanged($patientId: ID) {
-  patientStateChanged(patientId: $patientId)
+subscription PatientStateChanged($patientId: ID, $rootLocationIds: [ID!]) {
+  patientStateChanged(patientId: $patientId, rootLocationIds: $rootLocationIds)
 }
 
-subscription TaskCreated {
-  taskCreated
+subscription TaskCreated($rootLocationIds: [ID!]) {
+  taskCreated(rootLocationIds: $rootLocationIds)
 }
 
-subscription TaskUpdated($taskId: ID) {
-  taskUpdated(taskId: $taskId)
+subscription TaskUpdated($taskId: ID, $rootLocationIds: [ID!]) {
+  taskUpdated(taskId: $taskId, rootLocationIds: $rootLocationIds)
 }
 
-subscription TaskDeleted {
-  taskDeleted
+subscription TaskDeleted($rootLocationIds: [ID!]) {
+  taskDeleted(rootLocationIds: $rootLocationIds)
 }
 
 subscription LocationNodeUpdated($locationId: ID) {

@@ -49,6 +49,3 @@ export const useTaskViewToggle = () => {
   return { viewType, toggleView }
 }
 
-
-
-

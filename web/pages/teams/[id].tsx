@@ -20,7 +20,6 @@ const TeamPage: NextPage = () => {
     { id: id! },
     {
       enabled: !!id,
-      refetchInterval: 10000,
       refetchOnWindowFocus: true,
     }
   )
@@ -29,7 +28,6 @@ const TeamPage: NextPage = () => {
     { locationId: id },
     {
       enabled: !!id,
-      refetchInterval: 5000,
       refetchOnWindowFocus: true,
       refetchOnMount: true,
     }
@@ -42,7 +40,6 @@ const TeamPage: NextPage = () => {
     },
     {
       enabled: !!id,
-      refetchInterval: 5000,
       refetchOnWindowFocus: true,
       refetchOnMount: true,
     }
@@ -102,7 +99,7 @@ const TeamPage: NextPage = () => {
         {!isLoading && !isError && (
           <TabView>
             <Tab label={translation('patients')}>
-              <PatientList locationId={id} />
+              <PatientList />
             </Tab>
             <Tab label={translation('tasks')}>
               <TaskList

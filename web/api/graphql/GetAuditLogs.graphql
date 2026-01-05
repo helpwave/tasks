@@ -1,0 +1,10 @@
+query GetAuditLogs($caseId: ID!, $limit: Int, $offset: Int) {
+  auditLogs(caseId: $caseId, limit: $limit, offset: $offset) {
+    caseId
+    activity
+    userId
+    timestamp
+    context
+  }
+}
+
