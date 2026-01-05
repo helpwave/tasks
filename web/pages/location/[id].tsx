@@ -36,7 +36,6 @@ const LocationPage: NextPage = () => {
     { id: id! },
     {
       enabled: !!id,
-      refetchInterval: 10000,
       refetchOnWindowFocus: true,
     }
   )
@@ -47,7 +46,6 @@ const LocationPage: NextPage = () => {
     { locationId: id, rootLocationIds: selectedRootLocationIds && selectedRootLocationIds.length > 0 ? selectedRootLocationIds : undefined },
     {
       enabled: !!id && !isTeamLocation,
-      refetchInterval: 5000,
       refetchOnWindowFocus: true,
       refetchOnMount: true,
     }
@@ -60,7 +58,6 @@ const LocationPage: NextPage = () => {
     },
     {
       enabled: !!id && isTeamLocation,
-      refetchInterval: 5000,
       refetchOnWindowFocus: true,
       refetchOnMount: true,
     }
@@ -204,7 +201,7 @@ const LocationPage: NextPage = () => {
         {!isLoading && !isError && (
           <TabView>
             <Tab label={translation('patients')}>
-              <PatientList locationId={id} />
+              <PatientList />
             </Tab>
             <Tab label={translation('tasks')}>
               <TaskList

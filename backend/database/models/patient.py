@@ -54,6 +54,7 @@ class Patient(Base):
         ForeignKey("location_nodes.id"),
         nullable=True,
     )
+    description: Mapped[str | None] = mapped_column(String, nullable=True)
 
     assigned_locations: Mapped[list[LocationNode]] = relationship(
         "LocationNode",

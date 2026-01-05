@@ -24,7 +24,6 @@ export const Notifications = () => {
   const [isOpen, setIsOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const { data, refetch } = useGetOverviewDataQuery(undefined, {
-    refetchInterval: 10000,
     refetchOnWindowFocus: true,
   })
 

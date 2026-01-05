@@ -6,9 +6,10 @@ import { ContentPanel } from '@/components/layout/ContentPanel'
 import { LoadingContainer, Tab, TabView } from '@helpwave/hightide'
 import { PatientList } from '@/components/patients/PatientList'
 import { TaskList, type TaskViewModel } from '@/components/tasks/TaskList'
-import { useGetLocationNodeQuery, useGetPatientsQuery } from '@/api/gql/generated'
+import { useGetLocationNodeQuery, GetPatientsDocument, type GetPatientsQuery } from '@/api/gql/generated'
 import { useMemo } from 'react'
 import { useRouter } from 'next/router'
+import { usePaginatedGraphQLQuery } from '@/hooks/usePaginatedQuery'
 
 const WardPage: NextPage = () => {
   const translation = useTasksTranslation()
@@ -19,25 +20,26 @@ const WardPage: NextPage = () => {
     { id: id! },
     {
       enabled: !!id,
-      refetchInterval: 10000,
       refetchOnWindowFocus: true,
     }
   )
 
-  const { data: patientsData, refetch: refetchPatients, isLoading: isLoadingPatients } = useGetPatientsQuery(
-    { locationId: id },
-    {
+  const { data: patientsData, refetch: refetchPatients, isLoading: isLoadingPatients } = usePaginatedGraphQLQuery<GetPatientsQuery, GetPatientsQuery['patients'][0], { locationId?: string }>({
+    queryKey: ['GetPatients', 'ward', id],
+    document: GetPatientsDocument,
+    baseVariables: { locationId: id },
+    pageSize: 50,
+    extractItems: (result) => result.patients,
+    mode: 'infinite',
       enabled: !!id,
-      refetchInterval: 5000,
       refetchOnWindowFocus: true,
       refetchOnMount: true,
-    }
-  )
+  })
 
   const tasks: TaskViewModel[] = useMemo(() => {
-    if (!patientsData?.patients) return []
+    if (!patientsData || patientsData.length === 0) return []
 
-    return patientsData.patients.flatMap(patient => {
+    return patientsData.flatMap(patient => {
       if (!patient.tasks) return []
 
       return patient.tasks.map(task => ({
@@ -80,7 +82,7 @@ const WardPage: NextPage = () => {
         {!isLoading && !isError && (
           <TabView>
             <Tab label={translation('patients')}>
-              <PatientList locationId={id} />
+              <PatientList />
             </Tab>
             <Tab label={translation('tasks')}>
               <TaskList

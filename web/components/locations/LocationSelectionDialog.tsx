@@ -184,7 +184,6 @@ export const LocationSelectionDialog = ({
     {},
     {
       enabled: isOpen,
-      refetchInterval: 15000,
       refetchOnWindowFocus: true,
     }
   )
@@ -194,7 +193,6 @@ export const LocationSelectionDialog = ({
   const [searchQuery, setSearchQuery] = useState('')
 
   const hasInitialized = useRef(false)
-
 
   useEffect(() => {
     if (isOpen) {
@@ -353,7 +351,6 @@ export const LocationSelectionDialog = ({
       if (useCase === 'clinic' || !multiSelect) {
         newSet.clear()
       }
-
 
       newSet.add(node.id)
     } else {

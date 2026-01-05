@@ -86,6 +86,7 @@ class CreatePatientInput:
     )
     properties: list[PropertyValueInput] | None = None
     state: PatientState | None = None
+    description: str | None = None
 
 
 @strawberry.input
@@ -101,6 +102,7 @@ class UpdatePatientInput:
     team_ids: list[strawberry.ID] | None = strawberry.UNSET
     properties: list[PropertyValueInput] | None = None
     checksum: str | None = None
+    description: str | None = None
 
 
 @strawberry.input

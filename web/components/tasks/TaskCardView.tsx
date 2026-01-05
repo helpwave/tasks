@@ -6,6 +6,8 @@ import { LocationChips } from '@/components/patients/LocationChips'
 import type { TaskViewModel } from './TaskList'
 import { useRouter } from 'next/router'
 import { useCompleteTaskMutation, useReopenTaskMutation } from '@/api/gql/generated'
+import { useState } from 'react'
+import { UserInfoPopup } from '@/components/UserInfoPopup'
 
 type FlexibleTask = {
   id: string,
@@ -69,6 +71,7 @@ const toDate = (date: Date | string | null | undefined): Date | undefined => {
 
 export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showAssignee: _showAssignee = false, showPatient = true, onRefetch, className }: TaskCardViewProps) => {
   const router = useRouter()
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
   const flexibleTask = task as FlexibleTask
   const taskName = task.name || flexibleTask.title || ''
   const descriptionPreview = task.description
@@ -152,7 +155,13 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
               </div>
             )}
             {!task.assigneeTeam && task.assignee && (
-              <div className="flex items-center gap-1.5 text-base text-description shrink-0 min-w-0">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setSelectedUserId(task.assignee!.id)
+                }}
+                className="flex items-center gap-1.5 text-base text-description shrink-0 min-w-0 hover:opacity-75 transition-opacity"
+              >
                 <Avatar
                   fullyRounded={true}
                   size="sm"
@@ -162,7 +171,7 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
                   }}
                 />
                 <span className="truncate max-w-[150px]">{task.assignee.name}</span>
-              </div>
+              </button>
             )}
           </div>
           {descriptionPreview && (
@@ -206,10 +215,12 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
           </div>
         )}
       </div>
+      <UserInfoPopup
+        userId={selectedUserId}
+        isOpen={!!selectedUserId}
+        onClose={() => setSelectedUserId(null)}
+      />
     </div>
   )
 }
-
-
-
 

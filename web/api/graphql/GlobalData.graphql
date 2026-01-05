@@ -12,7 +12,7 @@ query GetGlobalData($rootLocationIds: [ID!]) {
       title
       kind
     }
-    tasks {
+    tasks(rootLocationIds: $rootLocationIds) {
       id
       done
     }

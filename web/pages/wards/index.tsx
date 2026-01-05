@@ -141,7 +141,7 @@ const WardCard = ({ ward }: WardCardProps) => {
     <div
       className="flex-col-4 p-4 border-1 border-secondary/40 hover:border-secondary bg-secondary/10 rounded-lg hover:cursor-pointer"
       onClick={() => {
-        router.push(`/location/${ward.id}`).catch(console.error)
+        router.push(`/location/${ward.id}`).catch(() => {})
       }}
     >
       <div className="flex-col-1">
@@ -202,7 +202,6 @@ const WardCard = ({ ward }: WardCardProps) => {
     </div>
   )
 }
-
 
 const WardsOverviewPage: NextPage = () => {
   const translation = useTasksTranslation()

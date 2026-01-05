@@ -3,11 +3,13 @@ from collections.abc import AsyncGenerator
 import strawberry
 from api.audit import audit_log
 from api.context import Info
+from api.decorators.pagination import apply_pagination
 from api.inputs import CreatePatientInput, PatientState, UpdatePatientInput
 from api.resolvers.base import BaseMutationResolver, BaseSubscriptionResolver
 from api.services.authorization import AuthorizationService
 from api.services.checksum import validate_checksum
 from api.services.location import LocationService
+from api.services.notifications import notify_entity_deleted
 from api.services.property import PropertyService
 from api.types.patient import PatientType
 from database import models
@@ -51,6 +53,8 @@ class PatientQuery:
         location_node_id: strawberry.ID | None = None,
         root_location_ids: list[strawberry.ID] | None = None,
         states: list[PatientState] | None = None,
+        limit: int | None = None,
+        offset: int | None = None,
     ) -> list[PatientType]:
         query = select(models.Patient).options(
             selectinload(models.Patient.assigned_locations),
@@ -70,7 +74,6 @@ class PatientQuery:
             info.context.user, info.context
         )
 
-        # If user has no accessible locations, return empty list
         if not accessible_location_ids:
             return []
 
@@ -138,6 +141,8 @@ class PatientQuery:
                 )
                 .distinct()
             )
+
+        query = apply_pagination(query, limit=limit, offset=offset)
 
         result = await info.context.db.execute(query)
         return result.scalars().all()
@@ -240,6 +245,7 @@ class PatientMutation(BaseMutationResolver[models.Patient]):
             assigned_location_id=data.assigned_location_id,
             clinic_id=data.clinic_id,
             position_id=data.position_id,
+            description=data.description,
         )
 
         if teams:
@@ -320,6 +326,8 @@ class PatientMutation(BaseMutationResolver[models.Patient]):
             patient.birthdate = data.birthdate
         if data.sex is not None:
             patient.sex = data.sex.value
+        if data.description is not None:
+            patient.description = data.description
 
         location_service = PatientMutation._get_location_service(db)
         accessible_location_ids = await auth_service.get_user_accessible_location_ids(
@@ -425,6 +433,7 @@ class PatientMutation(BaseMutationResolver[models.Patient]):
         await BaseMutationResolver.update_and_notify(
             info, patient, models.Patient, "patient"
         )
+        await notify_entity_deleted("patient", patient.id)
         return True
 
     @staticmethod
@@ -497,9 +506,57 @@ class PatientMutation(BaseMutationResolver[models.Patient]):
 class PatientSubscription(BaseSubscriptionResolver):
     @strawberry.subscription
     async def patient_created(
-        self, info: Info
+        self,
+        info: Info,
+        root_location_ids: list[strawberry.ID] | None = None,
     ) -> AsyncGenerator[strawberry.ID, None]:
-        async for patient_id in BaseSubscriptionResolver.entity_created(info, "patient"):
+        import logging
+
+        from api.services.subscription import (
+            patient_belongs_to_root_locations,
+        )
+
+        logger = logging.getLogger(__name__)
+
+        root_location_ids_str = (
+            [str(lid) for lid in root_location_ids]
+            if root_location_ids
+            else None
+        )
+
+        logger.info(
+            f"[SUBSCRIPTION] Initializing patient_created subscription: "
+            f"root_location_ids={root_location_ids_str}"
+        )
+
+        async for patient_id in BaseSubscriptionResolver.entity_created(
+            info, "patient"
+        ):
+            logger.info(
+                f"[SUBSCRIPTION] PatientSubscription received patient_created event: "
+                f"patient_id={patient_id}, root_location_ids={root_location_ids_str}"
+            )
+            if root_location_ids_str:
+                belongs = await patient_belongs_to_root_locations(
+                    info.context.db,
+                    str(patient_id),
+                    root_location_ids_str,
+                )
+                if not belongs:
+                    logger.debug(
+                        f"[SUBSCRIPTION] PatientSubscription filtered out patient_created event "
+                        f"(location mismatch): patient_id={patient_id}, "
+                        f"root_location_ids={root_location_ids_str}"
+                    )
+                    continue
+                logger.debug(
+                    f"[SUBSCRIPTION] PatientSubscription passed location filter: "
+                    f"patient_id={patient_id}, root_location_ids={root_location_ids_str}"
+                )
+            logger.info(
+                f"[SUBSCRIPTION] PatientSubscription yielding patient_created event: "
+                f"patient_id={patient_id}"
+            )
             yield patient_id
 
     @strawberry.subscription
@@ -507,8 +564,56 @@ class PatientSubscription(BaseSubscriptionResolver):
         self,
         info: Info,
         patient_id: strawberry.ID | None = None,
+        root_location_ids: list[strawberry.ID] | None = None,
     ) -> AsyncGenerator[strawberry.ID, None]:
-        async for updated_id in BaseSubscriptionResolver.entity_updated(info, "patient", patient_id):
+        import logging
+
+        from api.services.subscription import (
+            patient_belongs_to_root_locations,
+        )
+
+        logger = logging.getLogger(__name__)
+
+        root_location_ids_str = (
+            [str(lid) for lid in root_location_ids]
+            if root_location_ids
+            else None
+        )
+
+        logger.info(
+            f"[SUBSCRIPTION] Initializing patient_updated subscription: "
+            f"patient_id={patient_id}, root_location_ids={root_location_ids_str}"
+        )
+
+        async for updated_id in BaseSubscriptionResolver.entity_updated(
+            info, "patient", patient_id
+        ):
+            logger.info(
+                f"[SUBSCRIPTION] PatientSubscription received patient_updated event: "
+                f"updated_id={updated_id}, filter_patient_id={patient_id}, "
+                f"root_location_ids={root_location_ids_str}"
+            )
+            if root_location_ids_str:
+                belongs = await patient_belongs_to_root_locations(
+                    info.context.db,
+                    str(updated_id),
+                    root_location_ids_str,
+                )
+                if not belongs:
+                    logger.debug(
+                        f"[SUBSCRIPTION] PatientSubscription filtered out patient_updated event "
+                        f"(location mismatch): updated_id={updated_id}, "
+                        f"root_location_ids={root_location_ids_str}"
+                    )
+                    continue
+                logger.debug(
+                    f"[SUBSCRIPTION] PatientSubscription passed location filter: "
+                    f"updated_id={updated_id}, root_location_ids={root_location_ids_str}"
+                )
+            logger.info(
+                f"[SUBSCRIPTION] PatientSubscription yielding patient_updated event: "
+                f"updated_id={updated_id}"
+            )
             yield updated_id
 
     @strawberry.subscription
@@ -516,10 +621,111 @@ class PatientSubscription(BaseSubscriptionResolver):
         self,
         info: Info,
         patient_id: strawberry.ID | None = None,
+        root_location_ids: list[strawberry.ID] | None = None,
     ) -> AsyncGenerator[strawberry.ID, None]:
-        from api.services.subscription import create_redis_subscription
+        import logging
+
+        from api.services.subscription import (
+            create_redis_subscription,
+            patient_belongs_to_root_locations,
+        )
+
+        logger = logging.getLogger(__name__)
+
+        root_location_ids_str = (
+            [str(lid) for lid in root_location_ids]
+            if root_location_ids
+            else None
+        )
+
+        logger.info(
+            f"[SUBSCRIPTION] Initializing patient_state_changed subscription: "
+            f"patient_id={patient_id}, root_location_ids={root_location_ids_str}"
+        )
 
         async for updated_id in create_redis_subscription(
-            "patient_state_changed", patient_id
+            "patient_state_changed",
+            str(patient_id) if patient_id else None,
         ):
+            logger.info(
+                f"[SUBSCRIPTION] PatientSubscription received patient_state_changed event: "
+                f"updated_id={updated_id}, filter_patient_id={patient_id}, "
+                f"root_location_ids={root_location_ids_str}"
+            )
+            if root_location_ids_str:
+                belongs = await patient_belongs_to_root_locations(
+                    info.context.db,
+                    str(updated_id),
+                    root_location_ids_str,
+                )
+                if not belongs:
+                    logger.debug(
+                        f"[SUBSCRIPTION] PatientSubscription filtered out patient_state_changed event "
+                        f"(location mismatch): updated_id={updated_id}, "
+                        f"root_location_ids={root_location_ids_str}"
+                    )
+                    continue
+                logger.debug(
+                    f"[SUBSCRIPTION] PatientSubscription passed location filter: "
+                    f"updated_id={updated_id}, root_location_ids={root_location_ids_str}"
+                )
+            logger.info(
+                f"[SUBSCRIPTION] PatientSubscription yielding patient_state_changed event: "
+                f"updated_id={updated_id}"
+            )
             yield updated_id
+
+    @strawberry.subscription
+    async def patient_deleted(
+        self,
+        info: Info,
+        root_location_ids: list[strawberry.ID] | None = None,
+    ) -> AsyncGenerator[strawberry.ID, None]:
+        import logging
+
+        from api.services.subscription import (
+            patient_belongs_to_root_locations,
+        )
+
+        logger = logging.getLogger(__name__)
+
+        root_location_ids_str = (
+            [str(lid) for lid in root_location_ids]
+            if root_location_ids
+            else None
+        )
+
+        logger.info(
+            f"[SUBSCRIPTION] Initializing patient_deleted subscription: "
+            f"root_location_ids={root_location_ids_str}"
+        )
+
+        async for patient_id in BaseSubscriptionResolver.entity_deleted(
+            info, "patient"
+        ):
+            logger.info(
+                f"[SUBSCRIPTION] PatientSubscription received patient_deleted event: "
+                f"patient_id={patient_id}, root_location_ids={root_location_ids_str}"
+            )
+            if root_location_ids_str:
+                belongs = await patient_belongs_to_root_locations(
+                    info.context.db,
+                    str(patient_id),
+                    root_location_ids_str,
+                )
+                if not belongs:
+                    logger.debug(
+                        f"[SUBSCRIPTION] PatientSubscription filtered out patient_deleted event "
+                        f"(location mismatch): patient_id={patient_id}, "
+                        f"root_location_ids={root_location_ids_str}"
+                    )
+                    continue
+                logger.debug(
+                    f"[SUBSCRIPTION] PatientSubscription passed location filter: "
+                    f"patient_id={patient_id}, root_location_ids={root_location_ids_str}"
+                )
+            logger.info(
+                f"[SUBSCRIPTION] PatientSubscription yielding patient_deleted event: "
+                f"patient_id={patient_id}"
+            )
+            yield patient_id

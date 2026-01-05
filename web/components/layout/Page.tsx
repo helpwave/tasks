@@ -15,6 +15,7 @@ import {
 } from '@helpwave/hightide'
 import { getConfig } from '@/utils/config'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
+import { UserInfoPopup } from '@/components/UserInfoPopup'
 import clsx from 'clsx'
 import {
   Building2,
@@ -154,7 +155,7 @@ export const SurveyModal = () => {
       }
     }
 
-    setupSurvey().catch(console.error)
+    setupSurvey().catch(() => {})
   }, [config.onboardingSurveyUrl, config.weeklySurveyUrl, user?.id, onboardingSurveyCompleted, weeklySurveyLastCompleted, surveyLastDismissed, isSurveyOpen])
 
   const handleDismiss = () => {
@@ -214,7 +215,6 @@ const RootLocationSelector = ({ className, onSelect }: RootLocationSelectorProps
     {},
     {
       enabled: !!selectedRootLocationIds && selectedRootLocationIds.length > 0,
-      refetchInterval: 30000,
       refetchOnWindowFocus: true,
     }
   )
@@ -318,6 +318,7 @@ export const Header = ({ onMenuClick, isMenuOpen, ...props }: HeaderProps) => {
   const router = useRouter()
   const { user } = useTasksContext()
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false)
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
 
   return (
     <>
@@ -354,7 +355,10 @@ export const Header = ({ onMenuClick, isMenuOpen, ...props }: HeaderProps) => {
               <SettingsIcon />
             </Button>
           </div>
-          <div className="flex-row-1.5 items-center gap-x-1.75">
+          <button
+            onClick={() => user?.id && setSelectedUserId(user.id)}
+            className="flex-row-1.5 items-center gap-x-1.75 hover:opacity-75 transition-opacity"
+          >
             <span className="hidden sm:inline typography-title-sm">{user?.name}</span>
             <Avatar
               size="lg"
@@ -364,10 +368,15 @@ export const Header = ({ onMenuClick, isMenuOpen, ...props }: HeaderProps) => {
                 alt: user.name
               } : undefined}
             />
-          </div>
+          </button>
         </div>
       </header>
       <FeedbackDialog isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} />
+      <UserInfoPopup
+        userId={selectedUserId}
+        isOpen={!!selectedUserId}
+        onClose={() => setSelectedUserId(null)}
+      />
     </>
   )
 }
@@ -392,7 +401,6 @@ const SidebarLink = ({ children, ...props }: SidebarLinkProps) => {
     </Link>
   )
 }
-
 
 type SidebarProps = HTMLAttributes<HTMLDivElement> & {
   isOpen?: boolean,

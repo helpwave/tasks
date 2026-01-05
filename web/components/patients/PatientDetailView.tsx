@@ -1,23 +1,21 @@
 import { useEffect, useState, useMemo } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import type { CreatePatientInput, LocationNodeType, UpdatePatientInput } from '@/api/gql/generated'
 import {
   PatientState,
   PropertyEntity,
   Sex,
-  useAdmitPatientMutation,
-  useCompleteTaskMutation,
+  type FieldType,
   useCreatePatientMutation,
   useDeletePatientMutation,
-  useDischargePatientMutation,
   useGetPatientQuery,
-  useGetPropertyDefinitionsQuery,
-  useMarkPatientDeadMutation,
-  useReopenTaskMutation,
-  useUpdatePatientMutation,
-  useWaitPatientMutation
+  useGetPropertyDefinitionsQuery
 } from '@/api/gql/generated'
-import { useQueryClient } from '@tanstack/react-query'
+import { useAtomicMutation } from '@/hooks/useAtomicMutation'
+import { useSafeMutation } from '@/hooks/useSafeMutation'
+import { fetcher } from '@/api/gql/fetcher'
+import { UpdatePatientDocument, type UpdatePatientMutation, type UpdatePatientMutationVariables, AdmitPatientDocument, DischargePatientDocument, WaitPatientDocument, MarkPatientDeadDocument, type AdmitPatientMutation, type DischargePatientMutation, type WaitPatientMutation, type MarkPatientDeadMutation, type GetPatientQuery, type GetPatientsQuery, CompleteTaskDocument, ReopenTaskDocument, type CompleteTaskMutation, type ReopenTaskMutation, type CompleteTaskMutationVariables, type ReopenTaskMutationVariables } from '@/api/gql/generated'
 import {
   Button,
   Checkbox,
@@ -32,11 +30,13 @@ import {
   SelectOption,
   Tab,
   TabView,
+  Textarea,
   Tooltip
 } from '@helpwave/hightide'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { CheckCircle2, ChevronDown, Circle, PlusIcon, XIcon, Building2, Locate, Users } from 'lucide-react'
 import { PatientStateChip } from '@/components/patients/PatientStateChip'
+import { AuditLogTimeline } from '@/components/AuditLogTimeline'
 import { LocationChips } from '@/components/patients/LocationChips'
 import { LocationSelectionDialog } from '@/components/locations/LocationSelectionDialog'
 import clsx from 'clsx'
@@ -47,14 +47,9 @@ import { formatLocationPath, formatLocationPathFromId } from '@/utils/location'
 import { useGetLocationsQuery } from '@/api/gql/generated'
 import type { PropertyValueInput } from '@/api/gql/generated'
 import { PropertyList } from '@/components/PropertyList'
+import { ErrorDialog } from '@/components/ErrorDialog'
 
 type ExtendedCreatePatientInput = CreatePatientInput & {
-  clinicId?: string,
-  positionId?: string,
-  teamIds?: string[],
-}
-
-type ExtendedUpdatePatientInput = UpdatePatientInput & {
   clinicId?: string,
   positionId?: string,
   teamIds?: string[],
@@ -89,7 +84,6 @@ const getDefaultBirthdate = () => {
   return toISODate(d)
 }
 
-
 interface PatientDetailViewProps {
   patientId?: string,
   onClose: () => void,
@@ -104,19 +98,17 @@ export const PatientDetailView = ({
   initialCreateData = {}
 }: PatientDetailViewProps) => {
   const translation = useTasksTranslation()
+  const queryClient = useQueryClient()
   const { selectedLocationId, selectedRootLocationIds, rootLocations } = useTasksContext()
   const firstSelectedRootLocationId = selectedRootLocationIds && selectedRootLocationIds.length > 0 ? selectedRootLocationIds[0] : undefined
-  const queryClient = useQueryClient()
   const [taskId, setTaskId] = useState<string | null>(null)
   const [isCreatingTask, setIsCreatingTask] = useState(false)
   const isEditMode = !!patientId
 
-  const { data: patientData, isLoading: isLoadingPatient, refetch } = useGetPatientQuery(
+  const { data: patientData, isLoading: isLoadingPatient } = useGetPatientQuery(
     { id: patientId! },
     {
       enabled: isEditMode,
-      refetchInterval: 3000,
-      refetchOnWindowFocus: true,
       refetchOnMount: true,
     }
   )
@@ -124,7 +116,6 @@ export const PatientDetailView = ({
   const { data: locationsData } = useGetLocationsQuery(
     undefined,
     {
-      refetchInterval: 10000,
       refetchOnWindowFocus: true,
     }
   )
@@ -147,8 +138,63 @@ export const PatientDetailView = ({
     return map
   }, [locationsData])
 
-  const { mutate: completeTask } = useCompleteTaskMutation({ onSuccess: () => refetch() })
-  const { mutate: reopenTask } = useReopenTaskMutation({ onSuccess: () => refetch() })
+  const { mutate: completeTask } = useSafeMutation<CompleteTaskMutation, CompleteTaskMutationVariables>({
+    mutationFn: async (variables) => {
+      return fetcher<CompleteTaskMutation, CompleteTaskMutationVariables>(CompleteTaskDocument, variables)()
+    },
+    queryKey: ['GetPatient', { id: patientId }],
+    optimisticUpdate: (variables) => [
+      {
+        queryKey: ['GetPatient', { id: patientId }],
+        updateFn: (oldData: unknown) => {
+          const data = oldData as GetPatientQuery | undefined
+          if (!data?.patient) return oldData
+          return {
+            ...data,
+            patient: {
+              ...data.patient,
+              tasks: data.patient.tasks?.map(task => (
+                task.id === variables.id ? { ...task, done: true } : task
+              )) || []
+            }
+          }
+        }
+      }
+    ],
+    invalidateQueries: [['GetPatient', { id: patientId }], ['GetTasks'], ['GetPatients'], ['GetOverviewData'], ['GetGlobalData']],
+    onSuccess: () => {
+      onSuccess()
+    },
+  })
+
+  const { mutate: reopenTask } = useSafeMutation<ReopenTaskMutation, ReopenTaskMutationVariables>({
+    mutationFn: async (variables) => {
+      return fetcher<ReopenTaskMutation, ReopenTaskMutationVariables>(ReopenTaskDocument, variables)()
+    },
+    queryKey: ['GetPatient', { id: patientId }],
+    optimisticUpdate: (variables) => [
+      {
+        queryKey: ['GetPatient', { id: patientId }],
+        updateFn: (oldData: unknown) => {
+          const data = oldData as GetPatientQuery | undefined
+          if (!data?.patient) return oldData
+          return {
+            ...data,
+            patient: {
+              ...data.patient,
+              tasks: data.patient.tasks?.map(task => (
+                task.id === variables.id ? { ...task, done: false } : task
+              )) || []
+            }
+          }
+        }
+      }
+    ],
+    invalidateQueries: [['GetPatient', { id: patientId }], ['GetTasks'], ['GetPatients'], ['GetOverviewData'], ['GetGlobalData']],
+    onSuccess: () => {
+      onSuccess()
+    },
+  })
 
   const [formData, setFormData] = useState<CreatePatientInput>({
     firstname: '',
@@ -158,6 +204,7 @@ export const PatientDetailView = ({
     birthdate: getDefaultBirthdate(),
     state: PatientState.Wait,
     clinicId: undefined,
+    description: null,
     ...initialCreateData,
   } as CreatePatientInput & { clinicId?: string, positionId?: string, teamIds?: string[] })
   const [isWaiting, setIsWaiting] = useState(false)
@@ -170,8 +217,7 @@ export const PatientDetailView = ({
   const [isMarkDeadDialogOpen, setIsMarkDeadDialogOpen] = useState(false)
   const [isDischargeDialogOpen, setIsDischargeDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const [isLocationChangeConfirmOpen, setIsLocationChangeConfirmOpen] = useState(false)
-  const [pendingLocationUpdate, setPendingLocationUpdate] = useState<(() => void) | null>(null)
+  const [errorDialog, setErrorDialog] = useState<{ isOpen: boolean, message?: string }>({ isOpen: false })
 
   const [firstnameError, setFirstnameError] = useState<string | null>(null)
   const [lastnameError, setLastnameError] = useState<string | null>(null)
@@ -182,7 +228,7 @@ export const PatientDetailView = ({
   useEffect(() => {
     if (patientData?.patient) {
       const patient = patientData.patient
-      const { firstname, lastname, sex, birthdate, assignedLocations, clinic, position, teams } = patient
+      const { firstname, lastname, sex, birthdate, assignedLocations, clinic, position, teams, description } = patient
       setFormData(prev => ({
         ...prev,
         firstname,
@@ -193,6 +239,7 @@ export const PatientDetailView = ({
         clinicId: clinic?.id || undefined,
         positionId: position?.id || undefined,
         teamIds: teams?.map(t => t.id) || undefined,
+        description: description || null,
       } as CreatePatientInput & { clinicId?: string, positionId?: string, teamIds?: string[] }))
       setSelectedClinic(clinic ? (clinic as LocationNodeType) : null)
       setSelectedPosition(position ? (position as LocationNodeType) : null)
@@ -229,81 +276,399 @@ export const PatientDetailView = ({
 
   const { mutate: createPatient, isLoading: isCreating } = useCreatePatientMutation({
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
       onSuccess()
       onClose()
-    }
+    },
+    onError: (error) => {
+      setErrorDialog({ isOpen: true, message: error instanceof Error ? error.message : 'Failed to create patient' })
+    },
   })
 
-  const { mutate: updatePatient } = useUpdatePatientMutation({
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
-      onSuccess()
-      refetch()
-    }
+  const { updateField, flush } = useAtomicMutation<UpdatePatientMutation, { id: string, data: UpdatePatientInput }>({
+    mutationFn: async (variables) => {
+      return fetcher<UpdatePatientMutation, UpdatePatientMutationVariables>(
+        UpdatePatientDocument,
+        variables
+      )()
+    },
+    queryKey: ['GetPatient', { id: patientId }],
+    timeoutMs: 3000,
+    immediateFields: ['clinicId', 'positionId', 'teamIds', 'properties'] as unknown as (keyof { id: string, data: UpdatePatientInput })[],
+    onChangeFields: ['sex'] as unknown as (keyof { id: string, data: UpdatePatientInput })[],
+    onBlurFields: ['firstname', 'lastname', 'description', 'birthdate'] as unknown as (keyof { id: string, data: UpdatePatientInput })[],
+    onCloseFields: ['birthdate'] as unknown as (keyof { id: string, data: UpdatePatientInput })[],
+    getChecksum: (data) => data?.updatePatient?.checksum || null,
+    invalidateQueries: [
+      ['GetPatient', { id: patientId }],
+      ['GetPatients'],
+      ['GetOverviewData'],
+      ['GetGlobalData']
+    ],
+    optimisticUpdate: (variables) => {
+      const updates: Array<{ queryKey: unknown[], updateFn: (oldData: unknown) => unknown }> = []
+      type PatientType = NonNullable<NonNullable<ReturnType<typeof queryClient.getQueryData<GetPatientQuery>>>['patient']>
+
+      const updatePatientInQuery = (patient: PatientType, updateData: Partial<UpdatePatientInput>) => {
+        if (!patient) return patient
+
+        const updated: typeof patient = { ...patient }
+
+        if (updateData.firstname !== undefined) {
+          updated.firstname = updateData.firstname || ''
+        }
+        if (updateData.lastname !== undefined) {
+          updated.lastname = updateData.lastname || ''
+        }
+        if (updateData.sex !== undefined && updateData.sex !== null) {
+          updated.sex = updateData.sex
+        }
+        if (updateData.birthdate !== undefined) {
+          updated.birthdate = updateData.birthdate || null
+        }
+        if (updateData.description !== undefined) {
+          updated.description = updateData.description
+        }
+        if (updateData.clinicId !== undefined) {
+          if (updateData.clinicId === null || updateData.clinicId === undefined) {
+            updated.clinic = null as unknown as typeof patient.clinic
+          } else {
+            const clinicLocation = locationsData?.locationNodes?.find(loc => loc.id === updateData.clinicId)
+            if (clinicLocation) {
+              updated.clinic = {
+                ...clinicLocation,
+                __typename: 'LocationNodeType' as const,
+              } as typeof patient.clinic
+            }
+          }
+        }
+        if (updateData.positionId !== undefined) {
+          if (updateData.positionId === null) {
+            updated.position = null as typeof patient.position
+          } else {
+            const positionLocation = locationsData?.locationNodes?.find(loc => loc.id === updateData.positionId)
+            if (positionLocation) {
+              updated.position = {
+                ...positionLocation,
+                __typename: 'LocationNodeType' as const,
+              } as typeof patient.position
+            }
+          }
+        }
+        if (updateData.teamIds !== undefined) {
+          const teamLocations = locationsData?.locationNodes?.filter(loc => updateData.teamIds?.includes(loc.id)) || []
+          updated.teams = teamLocations.map(team => ({
+            ...team,
+            __typename: 'LocationNodeType' as const,
+          })) as typeof patient.teams
+        }
+        if (updateData.properties !== undefined && updateData.properties !== null) {
+          const propertyMap = new Map(updateData.properties.map(p => [p.definitionId, p]))
+          const existingPropertyIds = new Set(
+            patient.properties?.map(p => p.definition?.id).filter(Boolean) || []
+          )
+          const newPropertyIds = new Set(updateData.properties.map(p => p.definitionId))
+
+          const existingProperties = patient.properties
+            ? patient.properties
+                .filter(p => newPropertyIds.has(p.definition?.id))
+                .map(p => {
+                  const newProp = propertyMap.get(p.definition?.id)
+                  if (!newProp) return p
+                  return {
+                    ...p,
+                    textValue: newProp.textValue ?? p.textValue,
+                    numberValue: newProp.numberValue ?? p.numberValue,
+                    booleanValue: newProp.booleanValue ?? p.booleanValue,
+                    dateValue: newProp.dateValue ?? p.dateValue,
+                    dateTimeValue: newProp.dateTimeValue ?? p.dateTimeValue,
+                    selectValue: newProp.selectValue ?? p.selectValue,
+                    multiSelectValues: newProp.multiSelectValues ?? p.multiSelectValues,
+                  }
+                })
+            : []
+          const newProperties = updateData.properties
+            .filter(p => !existingPropertyIds.has(p.definitionId))
+            .map(p => {
+              const existingProperty = patient?.properties?.find(ep => ep.definition?.id === p.definitionId)
+              return {
+                __typename: 'PropertyValueType' as const,
+                  definition: existingProperty?.definition || {
+                    __typename: 'PropertyDefinitionType' as const,
+                    id: p.definitionId,
+                    name: '',
+                    description: null,
+                    fieldType: 'TEXT' as FieldType,
+                    isActive: true,
+                    allowedEntities: [],
+                    options: [],
+                  },
+                textValue: p.textValue,
+                numberValue: p.numberValue,
+                booleanValue: p.booleanValue,
+                dateValue: p.dateValue,
+                dateTimeValue: p.dateTimeValue,
+                selectValue: p.selectValue,
+                multiSelectValues: p.multiSelectValues,
+              }
+            })
+          updated.properties = [...existingProperties, ...newProperties]
+        }
+
+        return updated
+      }
+
+      updates.push({
+        queryKey: ['GetPatient', { id: patientId }],
+        updateFn: (oldData: unknown) => {
+          const data = oldData as GetPatientQuery | undefined
+          if (!data?.patient) return oldData
+          const updatedPatient = updatePatientInQuery(data.patient, variables.data || {})
+          return {
+            ...data,
+            patient: updatedPatient
+          }
+        }
+      })
+
+      const allGetPatientsQueries = queryClient.getQueryCache().getAll()
+        .filter(query => {
+          const key = query.queryKey
+          return Array.isArray(key) && key[0] === 'GetPatients'
+        })
+
+      for (const query of allGetPatientsQueries) {
+        updates.push({
+          queryKey: [...query.queryKey] as unknown[],
+          updateFn: (oldData: unknown) => {
+            const data = oldData as GetPatientsQuery | undefined
+            if (!data?.patients) return oldData
+            const patientIndex = data.patients.findIndex(p => p.id === patientId)
+            if (patientIndex === -1) return oldData
+            const patient = data.patients[patientIndex]
+            if (!patient) return oldData
+            const updatedPatient = updatePatientInQuery(patient as unknown as PatientType, variables.data || {})
+            if (!updatedPatient) return oldData
+            const updatedName = updatedPatient.firstname && updatedPatient.lastname
+              ? `${updatedPatient.firstname} ${updatedPatient.lastname}`.trim()
+              : updatedPatient.firstname || updatedPatient.lastname || patient.name || ''
+            const updateData = variables.data || {}
+            const updatedPatientForList: typeof data.patients[0] = {
+              ...patient,
+              firstname: updateData.firstname !== undefined ? (updateData.firstname || '') : patient.firstname,
+              lastname: updateData.lastname !== undefined ? (updateData.lastname || '') : patient.lastname,
+              name: updatedName,
+              sex: updateData.sex !== undefined && updateData.sex !== null ? updateData.sex : patient.sex,
+              birthdate: updateData.birthdate !== undefined ? (updateData.birthdate || null) : patient.birthdate,
+              ...('description' in patient && { description: updateData.description !== undefined ? updateData.description : (patient as unknown as PatientType & { description?: string | null }).description }),
+              clinic: updateData.clinicId !== undefined
+                ? (updateData.clinicId
+                    ? (locationsData?.locationNodes?.find(loc => loc.id === updateData.clinicId) as typeof patient.clinic || patient.clinic)
+                    : (null as unknown as typeof patient.clinic))
+                : patient.clinic,
+              position: updateData.positionId !== undefined
+                ? (updateData.positionId
+                    ? (locationsData?.locationNodes?.find(loc => loc.id === updateData.positionId) as typeof patient.position || patient.position)
+                    : (null as unknown as typeof patient.position))
+                : patient.position,
+              teams: updateData.teamIds !== undefined
+                ? (locationsData?.locationNodes?.filter(loc => updateData.teamIds?.includes(loc.id)).map(team => team as typeof patient.teams[0]) || patient.teams)
+                : patient.teams,
+              properties: updateData.properties !== undefined && updateData.properties !== null
+                ? (updatedPatient.properties || patient.properties)
+                : patient.properties,
+            }
+            return {
+              ...data,
+              patients: [
+                ...data.patients.slice(0, patientIndex),
+                updatedPatientForList,
+                ...data.patients.slice(patientIndex + 1)
+              ]
+            }
+          }
+        })
+      }
+
+      return updates
+    },
   })
 
-  const { mutate: admitPatient } = useAdmitPatientMutation({
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
-      onSuccess()
-      refetch()
+  useEffect(() => {
+    return () => {
+      if (isEditMode) {
+        flush()
+      }
     }
+  }, [isEditMode, flush])
+
+  const { mutate: admitPatient } = useSafeMutation<AdmitPatientMutation, { id: string }>({
+    mutationFn: async (variables) => {
+      return fetcher<AdmitPatientMutation, { id: string }>(AdmitPatientDocument, variables)()
+    },
+    queryKey: ['GetPatient', { id: patientId }],
+    optimisticUpdate: () => [
+      {
+        queryKey: ['GetPatient', { id: patientId }],
+        updateFn: (oldData: unknown) => {
+          const data = oldData as GetPatientQuery | undefined
+          if (!data?.patient) return oldData
+          return {
+            ...data,
+            patient: {
+              ...data.patient,
+              state: PatientState.Admitted
+            }
+          }
+        }
+      },
+      {
+        queryKey: ['GetPatients'],
+        updateFn: (oldData: unknown) => {
+          const data = oldData as GetPatientsQuery | undefined
+          if (!data?.patients) return oldData
+          return {
+            ...data,
+            patients: data.patients.map(p =>
+              p.id === patientId ? { ...p, state: PatientState.Admitted } : p)
+          }
+        }
+      }
+    ],
+    invalidateQueries: [['GetPatients'], ['GetGlobalData']],
+    onSuccess: () => {
+      onSuccess()
+    },
   })
 
-  const { mutate: dischargePatient } = useDischargePatientMutation({
+  const { mutate: dischargePatient } = useSafeMutation<DischargePatientMutation, { id: string }>({
+    mutationFn: async (variables) => {
+      return fetcher<DischargePatientMutation, { id: string }>(DischargePatientDocument, variables)()
+    },
+    queryKey: ['GetPatient', { id: patientId }],
+    optimisticUpdate: () => [
+      {
+        queryKey: ['GetPatient', { id: patientId }],
+        updateFn: (oldData: unknown) => {
+          const data = oldData as GetPatientQuery | undefined
+          if (!data?.patient) return oldData
+          return {
+            ...data,
+            patient: {
+              ...data.patient,
+              state: PatientState.Discharged
+            }
+          }
+        }
+      },
+      {
+        queryKey: ['GetPatients'],
+        updateFn: (oldData: unknown) => {
+          const data = oldData as GetPatientsQuery | undefined
+          if (!data?.patients) return oldData
+          return {
+            ...data,
+            patients: data.patients.map(p =>
+              p.id === patientId ? { ...p, state: PatientState.Discharged } : p)
+          }
+        }
+      }
+    ],
+    invalidateQueries: [['GetPatients'], ['GetGlobalData']],
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
       onSuccess()
-      refetch()
-    }
+    },
   })
 
-  const { mutate: markPatientDead } = useMarkPatientDeadMutation({
+  const { mutate: markPatientDead } = useSafeMutation<MarkPatientDeadMutation, { id: string }>({
+    mutationFn: async (variables) => {
+      return fetcher<MarkPatientDeadMutation, { id: string }>(MarkPatientDeadDocument, variables)()
+    },
+    queryKey: ['GetPatient', { id: patientId }],
+    optimisticUpdate: () => [
+      {
+        queryKey: ['GetPatient', { id: patientId }],
+        updateFn: (oldData: unknown) => {
+          const data = oldData as GetPatientQuery | undefined
+          if (!data?.patient) return oldData
+          return {
+            ...data,
+            patient: {
+              ...data.patient,
+              state: PatientState.Dead
+            }
+          }
+        }
+      },
+      {
+        queryKey: ['GetPatients'],
+        updateFn: (oldData: unknown) => {
+          const data = oldData as GetPatientsQuery | undefined
+          if (!data?.patients) return oldData
+          return {
+            ...data,
+            patients: data.patients.map(p =>
+              p.id === patientId ? { ...p, state: PatientState.Dead } : p)
+          }
+        }
+      }
+    ],
+    invalidateQueries: [['GetPatients'], ['GetGlobalData']],
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
       onSuccess()
-      refetch()
-    }
+    },
   })
 
-  const { mutate: waitPatient } = useWaitPatientMutation({
+  const { mutate: waitPatient } = useSafeMutation<WaitPatientMutation, { id: string }>({
+    mutationFn: async (variables) => {
+      return fetcher<WaitPatientMutation, { id: string }>(WaitPatientDocument, variables)()
+    },
+    queryKey: ['GetPatient', { id: patientId }],
+    optimisticUpdate: () => [
+      {
+        queryKey: ['GetPatient', { id: patientId }],
+        updateFn: (oldData: unknown) => {
+          const data = oldData as GetPatientQuery | undefined
+          if (!data?.patient) return oldData
+          return {
+            ...data,
+            patient: {
+              ...data.patient,
+              state: PatientState.Wait
+            }
+          }
+        }
+      },
+      {
+        queryKey: ['GetPatients'],
+        updateFn: (oldData: unknown) => {
+          const data = oldData as GetPatientsQuery | undefined
+          if (!data?.patients) return oldData
+          return {
+            ...data,
+            patients: data.patients.map(p =>
+              p.id === patientId ? { ...p, state: PatientState.Wait } : p)
+          }
+        }
+      }
+    ],
+    invalidateQueries: [['GetPatients'], ['GetGlobalData']],
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
       onSuccess()
-      refetch()
-    }
+    },
   })
 
   const { mutate: deletePatient } = useDeletePatientMutation({
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
       onSuccess()
       onClose()
-    }
+    },
   })
 
-  const persistChanges = (updates: Partial<UpdatePatientInput>) => {
+  const handleFieldUpdate = (updates: Partial<UpdatePatientInput>, triggerType?: 'onChange' | 'onBlur' | 'onClose') => {
+    if (!isEditMode || !patientId) return
     if (updates.firstname !== undefined && !updates.firstname?.trim()) return
     if (updates.lastname !== undefined && !updates.lastname?.trim()) return
-
-    const cleanedUpdates: Partial<UpdatePatientInput> = { ...updates }
-    if (cleanedUpdates.clinicId === '' || cleanedUpdates.clinicId === undefined) {
-      delete cleanedUpdates.clinicId
-    }
-    if (cleanedUpdates.positionId === '' || cleanedUpdates.positionId === undefined) {
-      cleanedUpdates.positionId = null
-    }
-    if (cleanedUpdates.teamIds === undefined) {
-      delete cleanedUpdates.teamIds
-    }
-
-    if (isEditMode && patientId && Object.keys(cleanedUpdates).length > 0) {
-      updatePatient({
-        id: patientId,
-        data: cleanedUpdates as UpdatePatientInput
-      })
-    }
+    updateField({ id: patientId, data: updates }, triggerType)
   }
 
   const updateLocalState = (updates: Partial<CreatePatientInput>) => {
@@ -406,38 +771,19 @@ export const PatientDetailView = ({
 
   const handleClinicSelect = (locations: LocationNodeType[]) => {
     const clinic = locations[0]
-    const currentPositionId = formData.positionId
     if (clinic) {
       setSelectedClinic(clinic)
-      updateLocalState({
-        clinicId: clinic.id,
-        positionId: currentPositionId
-      } as Partial<ExtendedCreatePatientInput>)
+      updateLocalState({ clinicId: clinic.id } as Partial<ExtendedCreatePatientInput>)
       if (isEditMode) {
-        const updateFn = () => {
-          persistChanges({ clinicId: clinic.id } as Partial<UpdatePatientInput>)
-          setIsLocationChangeConfirmOpen(false)
-          setPendingLocationUpdate(null)
-        }
-        setPendingLocationUpdate(() => updateFn)
-        setIsLocationChangeConfirmOpen(true)
+        handleFieldUpdate({ clinicId: clinic.id })
       } else {
         validateClinic(clinic)
       }
     } else {
       setSelectedClinic(null)
-      updateLocalState({
-        clinicId: undefined,
-        positionId: currentPositionId
-      } as Partial<ExtendedCreatePatientInput>)
+      updateLocalState({ clinicId: undefined } as Partial<ExtendedCreatePatientInput>)
       if (isEditMode) {
-        const updateFn = () => {
-          persistChanges({ clinicId: undefined } as Partial<UpdatePatientInput>)
-          setIsLocationChangeConfirmOpen(false)
-          setPendingLocationUpdate(null)
-        }
-        setPendingLocationUpdate(() => updateFn)
-        setIsLocationChangeConfirmOpen(true)
+        handleFieldUpdate({ clinicId: undefined })
       } else {
         validateClinic(null)
       }
@@ -451,29 +797,13 @@ export const PatientDetailView = ({
       setSelectedPosition(position)
       updateLocalState({ positionId: position.id } as Partial<ExtendedCreatePatientInput>)
       if (isEditMode) {
-        const updateFn = () => {
-          persistChanges({ positionId: position.id } as Partial<ExtendedUpdatePatientInput>)
-          setIsLocationChangeConfirmOpen(false)
-          setPendingLocationUpdate(null)
-        }
-        setPendingLocationUpdate(() => updateFn)
-        setIsLocationChangeConfirmOpen(true)
-      } else {
-        persistChanges({ positionId: position.id } as Partial<ExtendedUpdatePatientInput>)
+        handleFieldUpdate({ positionId: position.id })
       }
     } else {
       setSelectedPosition(null)
       updateLocalState({ positionId: undefined } as Partial<ExtendedCreatePatientInput>)
       if (isEditMode) {
-        const updateFn = () => {
-          persistChanges({ positionId: undefined } as Partial<ExtendedUpdatePatientInput>)
-          setIsLocationChangeConfirmOpen(false)
-          setPendingLocationUpdate(null)
-        }
-        setPendingLocationUpdate(() => updateFn)
-        setIsLocationChangeConfirmOpen(true)
-      } else {
-        persistChanges({ positionId: undefined } as Partial<ExtendedUpdatePatientInput>)
+        handleFieldUpdate({ positionId: null })
       }
     }
     setIsPositionDialogOpen(false)
@@ -484,23 +814,7 @@ export const PatientDetailView = ({
     const teamIds = locations.map(loc => loc.id)
     updateLocalState({ teamIds } as Partial<ExtendedCreatePatientInput>)
     if (isEditMode) {
-      const updateFn = () => {
-        const updates: Partial<ExtendedUpdatePatientInput> = {
-          teamIds,
-          ...(formData.positionId ? { positionId: formData.positionId } : {})
-        }
-        persistChanges(updates)
-        setIsLocationChangeConfirmOpen(false)
-        setPendingLocationUpdate(null)
-      }
-      setPendingLocationUpdate(() => updateFn)
-      setIsLocationChangeConfirmOpen(true)
-    } else {
-      const updates: Partial<ExtendedUpdatePatientInput> = {
-        teamIds,
-        ...(formData.positionId ? { positionId: formData.positionId } : {})
-      }
-      persistChanges(updates)
+      handleFieldUpdate({ teamIds })
     }
     setIsTeamsDialogOpen(false)
   }
@@ -523,9 +837,9 @@ export const PatientDetailView = ({
     })
   }
 
-  const tasks = patientData?.patient?.tasks || []
-  const openTasks = sortByDueDate(tasks.filter(t => !t.done))
-  const closedTasks = sortByDueDate(tasks.filter(t => t.done))
+  const tasks = useMemo(() => patientData?.patient?.tasks || [], [patientData?.patient?.tasks])
+  const openTasks = useMemo(() => sortByDueDate(tasks.filter(t => !t.done)), [tasks])
+  const closedTasks = useMemo(() => sortByDueDate(tasks.filter(t => t.done)), [tasks])
   const totalTasks = openTasks.length + closedTasks.length
   const taskProgress = totalTasks === 0 ? 0 : openTasks.length / totalTasks
 
@@ -559,8 +873,10 @@ export const PatientDetailView = ({
 
   const handleToggleDone = (taskId: string, done: boolean) => {
     if (done) {
+      setClosedExpanded(true)
       completeTask({ id: taskId })
     } else {
+      setOpenExpanded(true)
       reopenTask({ id: taskId })
     }
   }
@@ -703,9 +1019,15 @@ export const PatientDetailView = ({
                       multiSelectValues: p.multiSelectValues,
                     })) || []
 
+                    if (value === null) {
+                      const updatedProperties = existingProperties.filter(p => p.definitionId !== definitionId)
+                      handleFieldUpdate({ properties: updatedProperties })
+                      return
+                    }
+
                     const propertyInput: PropertyValueInput = {
                       definitionId,
-                      textValue: value.textValue || null,
+                      textValue: value.textValue !== undefined ? (value.textValue !== null && value.textValue.trim() !== '' ? value.textValue : '') : null,
                       numberValue: value.numberValue ?? null,
                       booleanValue: value.boolValue ?? null,
                       dateValue: value.dateValue && !isNaN(value.dateValue.getTime()) ? value.dateValue.toISOString().split('T')[0] : null,
@@ -719,12 +1041,7 @@ export const PatientDetailView = ({
                       propertyInput,
                     ]
 
-                    updatePatient({
-                      id: patientId!,
-                      data: {
-                        properties: updatedProperties,
-                      },
-                    })
+                    handleFieldUpdate({ properties: updatedProperties })
                   }}
                 />
               </div>
@@ -753,7 +1070,9 @@ export const PatientDetailView = ({
                     }}
                     onBlur={() => {
                       validateFirstname(formData.firstname || '')
-                      persistChanges({ firstname: formData.firstname })
+                      if (isEditMode) {
+                        handleFieldUpdate({ firstname: formData.firstname }, 'onBlur')
+                      }
                     }}
                   />
                 )}
@@ -778,7 +1097,9 @@ export const PatientDetailView = ({
                     }}
                     onBlur={() => {
                       validateLastname(formData.lastname || '')
-                      persistChanges({ lastname: formData.lastname })
+                      if (isEditMode) {
+                        handleFieldUpdate({ lastname: formData.lastname }, 'onBlur')
+                      }
                     }}
                   />
                 )}
@@ -812,20 +1133,22 @@ export const PatientDetailView = ({
                       const utcDate = localToUTCWithSameTime(date)
                       const isoDate = utcDate ? toISODate(utcDate) : null
                       updateLocalState({ birthdate: isoDate })
-                      persistChanges({ birthdate: isoDate })
+                      if (isEditMode) {
+                        handleFieldUpdate({ birthdate: isoDate }, 'onClose')
+                      }
                     }
                   }}
                   onRemove={() => {
                     updateLocalState({ birthdate: null })
-                    persistChanges({ birthdate: null })
-                    if (!isEditMode) {
+                    if (isEditMode) {
+                      handleFieldUpdate({ birthdate: null })
+                    } else {
                       validateBirthdate(null)
                     }
                   }}
                 />
               )}
             </FormElementWrapper>
-
 
             <FormElementWrapper
               label={translation('sex')}
@@ -838,7 +1161,9 @@ export const PatientDetailView = ({
                   value={formData.sex}
                   onValueChanged={(value) => {
                     updateLocalState({ sex: value as Sex })
-                    persistChanges({ sex: value as Sex })
+                    if (isEditMode) {
+                      handleFieldUpdate({ sex: value as Sex }, 'onChange')
+                    }
                     validateSex(value as Sex)
                   }}
                 >
@@ -848,6 +1173,22 @@ export const PatientDetailView = ({
                     </SelectOption>
                   ))}
                 </Select>
+              )}
+            </FormElementWrapper>
+
+            <FormElementWrapper label={translation('description')}>
+              {({ isShowingError: _1, setIsShowingError: _2, ...bag }) => (
+                <Textarea
+                  {...bag}
+                  value={formData.description || ''}
+                  placeholder={translation('descriptionPlaceholder')}
+                    onChange={e => updateLocalState({ description: e.target.value })}
+                    onBlur={() => {
+                      if (isEditMode) {
+                        handleFieldUpdate({ description: formData.description }, 'onBlur')
+                      }
+                    }}
+                />
               )}
             </FormElementWrapper>
 
@@ -932,9 +1273,10 @@ export const PatientDetailView = ({
                           setSelectedClinic(null)
                           updateLocalState({ clinicId: undefined } as Partial<ExtendedCreatePatientInput>)
                           if (isEditMode) {
-                            persistChanges({ clinicId: undefined } as Partial<ExtendedUpdatePatientInput>)
+                            handleFieldUpdate({ clinicId: undefined })
+                          } else {
+                            validateClinic(null)
                           }
-                          validateClinic(null)
                         }}
                         layout="icon"
                         color="neutral"
@@ -972,7 +1314,9 @@ export const PatientDetailView = ({
                         onClick={() => {
                           setSelectedPosition(null)
                           updateLocalState({ positionId: undefined } as Partial<ExtendedCreatePatientInput>)
-                          persistChanges({ positionId: undefined } as Partial<ExtendedUpdatePatientInput>)
+                          if (isEditMode) {
+                            handleFieldUpdate({ positionId: null })
+                          }
                         }}
                         layout="icon"
                         color="neutral"
@@ -1012,7 +1356,9 @@ export const PatientDetailView = ({
                         onClick={() => {
                           setSelectedTeams([])
                           updateLocalState({ teamIds: [] } as Partial<ExtendedCreatePatientInput>)
-                          persistChanges({ teamIds: [] } as Partial<ExtendedUpdatePatientInput>)
+                          if (isEditMode) {
+                            handleFieldUpdate({ teamIds: [] })
+                          }
                         }}
                         layout="icon"
                         color="neutral"
@@ -1048,6 +1394,11 @@ export const PatientDetailView = ({
             )}
           </Tab>
 
+          {isEditMode && patientId && (
+            <Tab label="Audit Log" className="flex-col-6 px-1 pt-4 h-full overflow-x-visible overflow-y-auto">
+              <AuditLogTimeline caseId={patientId} />
+            </Tab>
+          )}
         </TabView>
       </div>
 
@@ -1105,22 +1456,6 @@ export const PatientDetailView = ({
         confirmType="negative"
       />
 
-      <ConfirmDialog
-        isOpen={isLocationChangeConfirmOpen}
-        onCancel={() => {
-          setIsLocationChangeConfirmOpen(false)
-          setPendingLocationUpdate(null)
-        }}
-        onConfirm={() => {
-          if (pendingLocationUpdate) {
-            pendingLocationUpdate()
-          }
-        }}
-        titleElement={translation('updateLocation')}
-        description={translation('updateLocationConfirmation')}
-        confirmType="neutral"
-      />
-
       <LocationSelectionDialog
         isOpen={isClinicDialogOpen}
         onClose={() => setIsClinicDialogOpen(false)}
@@ -1157,7 +1492,7 @@ export const PatientDetailView = ({
           taskId={taskId}
           initialPatientId={isCreatingTask ? patientId : undefined}
           onSuccess={() => {
-            refetch().catch(console.error)
+            onSuccess()
             setIsCreatingTask(false)
           }}
           onClose={() => {
@@ -1166,6 +1501,11 @@ export const PatientDetailView = ({
           }}
         />
       </SidePanel>
+      <ErrorDialog
+        isOpen={errorDialog.isOpen}
+        onClose={() => setErrorDialog({ isOpen: false })}
+        message={errorDialog.message}
+      />
     </div>
   )
 }

@@ -108,12 +108,10 @@ export const SmartDate = ({ date, className, showTime = true, mode = 'relative' 
   )
 }
 
-
 type CurrentTimeProps = {
   className?: string,
   showDate?: boolean,
 }
-
 
 const formatCurrentTime = (date: Date, locale: string, showDate: boolean) => {
   const options: Intl.DateTimeFormatOptions = {
@@ -122,36 +120,29 @@ const formatCurrentTime = (date: Date, locale: string, showDate: boolean) => {
     second: '2-digit',
   }
 
-
   if (showDate) {
     options.year = 'numeric'
     options.month = '2-digit'
     options.day = '2-digit'
   }
 
-
   return new Intl.DateTimeFormat(locale, options).format(date)
 }
-
 
 export const CurrentTime = ({ className, showDate = false }: CurrentTimeProps) => {
   const { locale } = useLocale()
   const [now, setNow] = useState(() => new Date())
-
 
   useEffect(() => {
     const interval = setInterval(() => {
       setNow(new Date())
     }, 1000)
 
-
     return () => clearInterval(interval)
   }, [])
 
-
   const formatted = formatCurrentTime(now, locale, showDate)
   const formattedExpanded = formatCurrentTime(now, locale, true)
-
 
   return (
     <Tooltip tooltip={formattedExpanded} position="top">

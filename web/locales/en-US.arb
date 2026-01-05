@@ -392,7 +392,9 @@
   "users": "Users",
   "showTeamTasks": "Show Team Tasks",
   "showAllTasks": "Show All Tasks",
+  "error": "Error",
   "errorOccurred": "An error occurred",
   "estimatedTime": "Estimated Time (minutes)",
+  "ok": "OK",
   "submitAnonymously": "Submit anonymously"
 }

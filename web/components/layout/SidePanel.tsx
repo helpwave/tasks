@@ -26,7 +26,6 @@ export const SidePanel = ({ isOpen, onClose, title, children }: SidePanelProps) 
   }
   const zIndex = useZIndexRegister(isOpen)
 
-
   useFocusTrap({
     active: isOpen,
     container: ref,

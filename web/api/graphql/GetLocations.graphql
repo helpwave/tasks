@@ -1,5 +1,5 @@
-query GetLocations {
-  locationNodes {
+query GetLocations($limit: Int, $offset: Int) {
+  locationNodes(limit: $limit, offset: $offset) {
     id
     title
     kind

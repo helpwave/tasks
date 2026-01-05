@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import uuid
+from datetime import datetime
 from typing import TYPE_CHECKING
 
 from database.models.base import Base
-from sqlalchemy import Column, ForeignKey, String, Table
+from sqlalchemy import Column, DateTime, ForeignKey, String, Table
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 if TYPE_CHECKING:
@@ -36,6 +37,10 @@ class User(Base):
         String,
         nullable=True,
         default="https://cdn.helpwave.de/boringavatar.svg",
+    )
+    last_online: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
     )
 
     tasks: Mapped[list[Task]] = relationship("Task", back_populates="assignee")

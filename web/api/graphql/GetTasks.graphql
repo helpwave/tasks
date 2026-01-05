@@ -1,5 +1,5 @@
-query GetTasks($rootLocationIds: [ID!], $assigneeId: ID, $assigneeTeamId: ID) {
-  tasks(rootLocationIds: $rootLocationIds, assigneeId: $assigneeId, assigneeTeamId: $assigneeTeamId) {
+query GetTasks($rootLocationIds: [ID!], $assigneeId: ID, $assigneeTeamId: ID, $limit: Int, $offset: Int) {
+  tasks(rootLocationIds: $rootLocationIds, assigneeId: $assigneeId, assigneeTeamId: $assigneeTeamId, limit: $limit, offset: $offset) {
     id
     title
     description

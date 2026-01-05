@@ -3,6 +3,7 @@ from collections.abc import AsyncGenerator
 import strawberry
 from api.audit import audit_log
 from api.context import Info
+from api.decorators.pagination import apply_pagination
 from api.inputs import CreateLocationNodeInput, LocationType, UpdateLocationNodeInput
 from api.resolvers.base import BaseMutationResolver, BaseSubscriptionResolver
 from api.services.authorization import AuthorizationService
@@ -67,6 +68,8 @@ class LocationQuery:
         parent_id: strawberry.ID | None = None,
         recursive: bool = False,
         order_by_name: bool = False,
+        limit: int | None = None,
+        offset: int | None = None,
     ) -> list[LocationNodeType]:
         db = info.context.db
 
@@ -117,6 +120,8 @@ class LocationQuery:
 
         if order_by_name:
             query = query.order_by(models.LocationNode.title)
+
+        query = apply_pagination(query, limit=limit, offset=offset)
 
         result = await db.execute(query)
         return result.scalars().all()

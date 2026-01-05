@@ -1,4 +1,6 @@
+import logging
 from collections.abc import AsyncGenerator
+from datetime import datetime, timezone
 from typing import Generic, TypeVar
 
 import strawberry
@@ -10,9 +12,28 @@ from api.services.notifications import (
     notify_entity_update,
 )
 from api.services.subscription import create_redis_subscription
+from database import models
+from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+logger = logging.getLogger(__name__)
+
 ModelType = TypeVar("ModelType")
+
+
+async def update_user_last_online(db: AsyncSession, user_id: str | None) -> None:
+    if not user_id:
+        return
+    try:
+        await db.execute(
+            update(models.User)
+            .where(models.User.id == user_id)
+            .values(last_online=datetime.now(timezone.utc))
+        )
+        await db.commit()
+    except Exception as e:
+        logger.warning(f"Failed to update last_online for user {user_id}: {e}")
+        await db.rollback()
 
 
 class BaseQueryResolver(Generic[ModelType]):
@@ -102,9 +123,18 @@ class BaseSubscriptionResolver:
     async def entity_created(
         info: Info, entity_name: str
     ) -> AsyncGenerator[strawberry.ID, None]:
-        async for entity_id in create_redis_subscription(
-            f"{entity_name}_created"
-        ):
+        if info.context.user:
+            await update_user_last_online(info.context.db, info.context.user.id)
+        channel = f"{entity_name}_created"
+        logger.info(
+            f"[SUBSCRIPTION] Initializing entity_created subscription: "
+            f"entity_name={entity_name}, channel={channel}"
+        )
+        async for entity_id in create_redis_subscription(channel):
+            logger.info(
+                f"[SUBSCRIPTION] BaseSubscriptionResolver received entity_created event: "
+                f"entity_name={entity_name}, entity_id={entity_id}, channel={channel}"
+            )
             yield entity_id
 
     @staticmethod
@@ -113,16 +143,35 @@ class BaseSubscriptionResolver:
         entity_name: str,
         entity_id: strawberry.ID | None = None,
     ) -> AsyncGenerator[strawberry.ID, None]:
-        async for updated_id in create_redis_subscription(
-            f"{entity_name}_updated", entity_id
-        ):
+        if info.context.user:
+            await update_user_last_online(info.context.db, info.context.user.id)
+        channel = f"{entity_name}_updated"
+        logger.info(
+            f"[SUBSCRIPTION] Initializing entity_updated subscription: "
+            f"entity_name={entity_name}, entity_id={entity_id}, channel={channel}"
+        )
+        async for updated_id in create_redis_subscription(channel, str(entity_id) if entity_id else None):
+            logger.info(
+                f"[SUBSCRIPTION] BaseSubscriptionResolver received entity_updated event: "
+                f"entity_name={entity_name}, updated_id={updated_id}, "
+                f"filter_entity_id={entity_id}, channel={channel}"
+            )
             yield updated_id
 
     @staticmethod
     async def entity_deleted(
         info: Info, entity_name: str
     ) -> AsyncGenerator[strawberry.ID, None]:
-        async for entity_id in create_redis_subscription(
-            f"{entity_name}_deleted"
-        ):
+        if info.context.user:
+            await update_user_last_online(info.context.db, info.context.user.id)
+        channel = f"{entity_name}_deleted"
+        logger.info(
+            f"[SUBSCRIPTION] Initializing entity_deleted subscription: "
+            f"entity_name={entity_name}, channel={channel}"
+        )
+        async for entity_id in create_redis_subscription(channel):
+            logger.info(
+                f"[SUBSCRIPTION] BaseSubscriptionResolver received entity_deleted event: "
+                f"entity_name={entity_name}, entity_id={entity_id}, channel={channel}"
+            )
             yield entity_id

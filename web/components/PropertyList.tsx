@@ -1,6 +1,6 @@
 import { LoadingAndErrorComponent, LoadingAnimation, Menu, MenuItem, ConfirmDialog, Button } from '@helpwave/hightide'
 import { Plus } from 'lucide-react'
-import React, { useMemo, useState, useEffect, useRef } from 'react'
+import React, { useMemo, useState, useEffect } from 'react'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { PropertyEntry } from '@/components/PropertyEntry'
 import { useGetPropertyDefinitionsQuery, FieldType, PropertyEntity } from '@/api/gql/generated'
@@ -51,151 +51,6 @@ export type AttachedProperty = {
   value: PropertyValue,
 }
 
-export const exampleProperties: Property[] = [
-  {
-    id: 'p1',
-    subjectType: 'patient',
-    fieldType: 'text',
-    name: 'Allergies',
-    isArchived: false,
-  },
-  {
-    id: 'p2',
-    subjectType: 'patient',
-    fieldType: 'number',
-    name: 'Height (cm)',
-    isArchived: false,
-  },
-  {
-    id: 'p3',
-    subjectType: 'patient',
-    fieldType: 'number',
-    name: 'Weight (kg)',
-    isArchived: false,
-  },
-  {
-    id: 'p4',
-    subjectType: 'patient',
-    fieldType: 'checkbox',
-    name: 'Smoker',
-    isArchived: false,
-  },
-  {
-    id: 'p5',
-    subjectType: 'patient',
-    fieldType: 'date',
-    name: 'Date of Admission',
-    isArchived: false,
-  },
-  {
-    id: 'p6',
-    subjectType: 'patient',
-    fieldType: 'dateTime',
-    name: 'Last Checkup',
-    isArchived: false,
-  },
-  {
-    id: 'p7',
-    subjectType: 'patient',
-    fieldType: 'singleSelect',
-    name: 'Blood Type',
-    isArchived: false,
-    selectData: {
-      isAllowingFreetext: false,
-      options: [
-        { id: 'bt-a', name: 'A', isCustom: false },
-        { id: 'bt-b', name: 'B', isCustom: false },
-        { id: 'bt-ab', name: 'AB', isCustom: false },
-        { id: 'bt-o', name: 'O', isCustom: false },
-      ],
-    },
-  },
-  {
-    id: 'p8',
-    subjectType: 'patient',
-    fieldType: 'multiSelect',
-    name: 'Chronic Conditions',
-    isArchived: false,
-    selectData: {
-      isAllowingFreetext: true,
-      options: [
-        { id: 'cc-diabetes', name: 'Diabetes', isCustom: false },
-        { id: 'cc-asthma', name: 'Asthma', isCustom: false },
-      ],
-    },
-  },
-  {
-    id: 'p9',
-    subjectType: 'patient',
-    fieldType: 'text',
-    name: 'Primary Physician',
-    isArchived: false,
-  },
-  {
-    id: 'p10',
-    subjectType: 'patient',
-    fieldType: 'checkbox',
-    name: 'Requires Isolation',
-    isArchived: false,
-  },
-  {
-    id: 'p11',
-    subjectType: 'patient',
-    fieldType: 'text',
-    name: 'Insurance Number',
-    isArchived: false,
-  },
-]
-
-export const exampleAttachedProperties: AttachedProperty[] = [
-  {
-    property: exampleProperties[0]!,
-    subjectId: 'patient-1',
-    value: { textValue: 'Penicillin' },
-  },
-  {
-    property: exampleProperties[1]!,
-    subjectId: 'patient-1',
-    value: { numberValue: 175 },
-  },
-  {
-    property: exampleProperties[2]!,
-    subjectId: 'patient-1',
-    value: { numberValue: 72 },
-  },
-  {
-    property: exampleProperties[3]!,
-    subjectId: 'patient-1',
-    value: { boolValue: false },
-  },
-  {
-    property: exampleProperties[4]!,
-    subjectId: 'patient-1',
-    value: { dateValue: new Date('2025-01-10') },
-  },
-  {
-    property: exampleProperties[5]!,
-    subjectId: 'patient-1',
-    value: { dateTimeValue: new Date('2025-12-01T09:30:00Z') },
-  },
-  {
-    property: exampleProperties[6]!,
-    subjectId: 'patient-1',
-    value: { singleSelectValue: 'bt-o' },
-  },
-  {
-    property: exampleProperties[7]!,
-    subjectId: 'patient-1',
-    value: { multiSelectValue: ['cc-diabetes'] },
-  },
-  {
-    property: exampleProperties[8]!,
-    subjectId: 'patient-1',
-    value: { textValue: 'Dr. Smith' },
-  },
-]
-
-
 export type PropertyListProps = {
   subjectId: string,
   subjectType: PropertySubjectType,
@@ -217,7 +72,7 @@ export type PropertyListProps = {
     selectValue?: string | null,
     multiSelectValues?: string[] | null,
   }>,
-  onPropertyValueChange?: (definitionId: string, value: PropertyValue) => void,
+  onPropertyValueChange?: (definitionId: string, value: PropertyValue | null) => void,
   fullWidthAddButton?: boolean,
 }
 
@@ -247,6 +102,10 @@ export const PropertyList = ({
   fullWidthAddButton = false,
 }: PropertyListProps) => {
   const translation = useTasksTranslation()
+  const [localPropertyValues, setLocalPropertyValues] = useState<Map<string, PropertyValue>>(new Map())
+  const [propertyToRemove, setPropertyToRemove] = useState<string | null>(null)
+  const [removedPropertyIds, setRemovedPropertyIds] = useState<Set<string>>(new Set())
+  const [pendingAdditions, setPendingAdditions] = useState<Map<string, { property: Property, value: PropertyValue }>>(new Map())
 
   const { data: propertyDefinitionsData, isLoading: isLoadingDefinitions, isError: isErrorDefinitions } = useGetPropertyDefinitionsQuery()
 
@@ -293,7 +152,7 @@ export const PropertyList = ({
         id: def.id,
         name: def.name,
         description: def.description || undefined,
-        subjectType: mapSubjectTypeFromBackend(def.allowedEntities[0] as PropertyEntity || PropertyEntity.Patient),
+        subjectType: mapSubjectTypeFromBackend((def.allowedEntities && def.allowedEntities[0] ? def.allowedEntities[0] as PropertyEntity : PropertyEntity.Patient)),
         fieldType: mapFieldTypeFromBackend(def.fieldType as FieldType),
         isArchived: !def.isActive,
         selectData: (def.fieldType === FieldType.FieldTypeSelect || def.fieldType === FieldType.FieldTypeMultiSelect) && def.options.length > 0 ? {
@@ -308,7 +167,7 @@ export const PropertyList = ({
       }
 
       const value: PropertyValue = {
-        textValue: pv.textValue || undefined,
+        textValue: pv.textValue ?? undefined,
         numberValue: pv.numberValue || undefined,
         boolValue: pv.booleanValue || undefined,
         dateValue: pv.dateValue ? (() => {
@@ -331,53 +190,131 @@ export const PropertyList = ({
     }).sort((a, b) => a.property.name.localeCompare(b.property.name))
   }, [propertyValues, subjectId])
 
-  const [localPropertyValues, setLocalPropertyValues] = useState<Map<string, PropertyValue>>(new Map())
-  const [propertyToRemove, setPropertyToRemove] = useState<string | null>(null)
-  const previousAttachedPropertiesRef = useRef<Map<string, PropertyValue>>(new Map())
-
   useEffect(() => {
-    setLocalPropertyValues(prev => {
-      const newMap = new Map(prev)
-      const currentAttachedMap = new Map<string, PropertyValue>()
-
-      attachedProperties.forEach(ap => {
-        currentAttachedMap.set(ap.property.id, ap.value)
-      })
-
-      currentAttachedMap.forEach((attachedValue, propertyId) => {
-        const localValue = newMap.get(propertyId)
-        const previousAttachedValue = previousAttachedPropertiesRef.current.get(propertyId)
-
-        if (!localValue) {
-          newMap.set(propertyId, attachedValue)
-        } else if (previousAttachedValue) {
-          const localMatchesPrevious = JSON.stringify(localValue) === JSON.stringify(previousAttachedValue)
-          if (localMatchesPrevious) {
-            newMap.set(propertyId, attachedValue)
-          }
+    const currentPropertyIds = new Set(attachedProperties.map(ap => ap.property.id))
+    setRemovedPropertyIds(prev => {
+      const next = new Set(prev)
+      prev.forEach(id => {
+        if (!currentPropertyIds.has(id)) {
+          next.delete(id)
         }
       })
-
-      previousAttachedPropertiesRef.current = currentAttachedMap
-      return newMap
+      return next
+    })
+    setPendingAdditions(prev => {
+      const next = new Map(prev)
+      prev.forEach((_, id) => {
+        if (currentPropertyIds.has(id)) {
+          next.delete(id)
+        }
+      })
+      return next
     })
   }, [attachedProperties])
+
+  const displayedProperties = useMemo(() => {
+    const attachedPropertyIds = new Set(attachedProperties.map(ap => ap.property.id))
+    const attached = attachedProperties
+      .filter(ap => !removedPropertyIds.has(ap.property.id))
+      .map(ap => {
+        const localValue = localPropertyValues.get(ap.property.id)
+        return {
+          ...ap,
+          value: localValue || ap.value,
+        }
+    })
+
+    const pending = Array.from(pendingAdditions.values())
+      .filter(pa => !removedPropertyIds.has(pa.property.id) && !attachedPropertyIds.has(pa.property.id))
+      .map(pa => ({
+        property: pa.property,
+        subjectId,
+        value: localPropertyValues.get(pa.property.id) || pa.value,
+      }))
+
+    const allProperties = [...attached, ...pending]
+    const uniqueProperties = Array.from(
+      new Map(allProperties.map(prop => [prop.property.id, prop])).values()
+    )
+    return uniqueProperties.sort((a, b) => a.property.name.localeCompare(b.property.name))
+  }, [attachedProperties, localPropertyValues, removedPropertyIds, pendingAdditions, subjectId])
+
+  const handlePropertyChange = (propertyId: string, value: PropertyValue) => {
+    setLocalPropertyValues(prev => {
+      const newMap = new Map(prev)
+      newMap.set(propertyId, value)
+      return newMap
+    })
+
+    if (onPropertyValueChange) {
+      onPropertyValueChange(propertyId, value)
+    }
+  }
+
+  const handlePropertyRemove = (propertyId: string) => {
+    setRemovedPropertyIds(prev => new Set(prev).add(propertyId))
+    setLocalPropertyValues(prev => {
+      const newMap = new Map(prev)
+      newMap.delete(propertyId)
+      return newMap
+    })
+
+    if (onPropertyValueChange) {
+      onPropertyValueChange(propertyId, null)
+    }
+    setPropertyToRemove(null)
+  }
+
+  const handleRemoveConfirm = () => {
+    if (propertyToRemove) {
+      handlePropertyRemove(propertyToRemove)
+    }
+  }
+
+  const handleAddProperty = (property: Property) => {
+    const getDefaultValue = (): PropertyValue => {
+      switch (property.fieldType) {
+        case 'text':
+          return { textValue: '' }
+        case 'number':
+          return { numberValue: undefined }
+        case 'checkbox':
+          return { boolValue: false }
+        case 'date':
+        case 'dateTime':
+          return {}
+        case 'singleSelect':
+          return property.selectData?.options && property.selectData.options.length > 0
+            ? { singleSelectValue: property.selectData.options[0]?.id || undefined }
+            : {}
+        case 'multiSelect':
+          return { multiSelectValue: [] }
+        default:
+          return {}
+          }
+        }
+
+    const defaultValue = getDefaultValue()
+    setRemovedPropertyIds(prev => {
+      const next = new Set(prev)
+      next.delete(property.id)
+      return next
+    })
+    setPendingAdditions(prev => {
+      const next = new Map(prev)
+      next.set(property.id, { property, value: defaultValue })
+      return next
+    })
+    handlePropertyChange(property.id, defaultValue)
+  }
 
   const isLoading = isLoadingDefinitions
   const isError = isErrorDefinitions
 
-  const handleRemoveConfirm = () => {
-    if (propertyToRemove && onPropertyValueChange) {
-      const emptyValue: PropertyValue = {}
-      onPropertyValueChange(propertyToRemove, emptyValue)
-      setLocalPropertyValues(prev => {
-        const newMap = new Map(prev)
-        newMap.delete(propertyToRemove)
-        return newMap
-      })
-    }
-    setPropertyToRemove(null)
-  }
+  const unattachedProperties = availableProperties.filter(prop =>
+    !attachedProperties.some(attached => attached.property.id === prop.id) &&
+    !pendingAdditions.has(prop.id))
+  const hasUnattachedProperties = unattachedProperties.length > 0
 
   return (
     <LoadingAndErrorComponent
@@ -386,13 +323,10 @@ export const PropertyList = ({
       className="min-h-48"
     >
       <div className="flex-col-2">
-        {attachedProperties.map((attachedProperty, index) => {
-          const localValue = localPropertyValues.get(attachedProperty.property.id) || attachedProperty.value
-
-          return (
+        {displayedProperties.map((attachedProperty) => (
             <PropertyEntry
-              key={index}
-              value={localValue}
+            key={attachedProperty.property.id}
+            value={attachedProperty.value}
               name={attachedProperty.property.name}
               fieldType={attachedProperty.property.fieldType}
               selectData={attachedProperty.property.selectData ?
@@ -409,20 +343,17 @@ export const PropertyList = ({
                   return newMap
                 })
               }}
-              onEditComplete={(value) => {
-                if (onPropertyValueChange) {
-                  onPropertyValueChange(attachedProperty.property.id, value)
-                }
+            onEditComplete={value => {
+              handlePropertyChange(attachedProperty.property.id, value)
               }}
               onRemove={() => {
                 setPropertyToRemove(attachedProperty.property.id)
               }}
             />
-          )
-        })}
+        ))}
         {fullWidthAddButton && (
           <div className="w-full">
-            {availableProperties.length > 0 ? (
+            {hasUnattachedProperties ? (
               <Menu<HTMLButtonElement>
                 trigger={({ toggleOpen }, ref) => (
                   <Button
@@ -443,47 +374,18 @@ export const PropertyList = ({
                   hasError={isError}
                   loadingComponent={<LoadingAnimation classname="min-h-20" />}
                 >
-                  {availableProperties
-                    .filter(prop => !attachedProperties.some(attached => attached.property.id === prop.id))
-                    .map(property => {
-                      const getDefaultValue = (): PropertyValue => {
-                        switch (property.fieldType) {
-                          case 'text':
-                            return { textValue: '' }
-                          case 'number':
-                            return { numberValue: undefined }
-                          case 'checkbox':
-                            return { boolValue: false }
-                          case 'date':
-                          case 'dateTime':
-                            return {}
-                          case 'singleSelect':
-                            return property.selectData?.options && property.selectData.options.length > 0
-                              ? { singleSelectValue: property.selectData.options[0]?.id || undefined }
-                              : {}
-                          case 'multiSelect':
-                            return { multiSelectValue: [] }
-                          default:
-                            return {}
-                        }
-                      }
-
-                      return (
+                    {unattachedProperties.map(property => (
                         <MenuItem
                           key={property.id}
                           onClick={() => {
-                            if (onPropertyValueChange) {
-                              const defaultValue = getDefaultValue()
-                              onPropertyValueChange(property.id, defaultValue)
-                            }
+                          handleAddProperty(property)
                             close()
                           }}
                           className="rounded-md cursor-pointer"
                         >
                           {property.name}
                         </MenuItem>
-                      )
-                    })}
+                    ))}
                 </LoadingAndErrorComponent>
               )}
               </Menu>
@@ -498,8 +400,7 @@ export const PropertyList = ({
             )}
           </div>
         )}
-        {!fullWidthAddButton && (
-          availableProperties.length > 0 && (
+        {!fullWidthAddButton && hasUnattachedProperties && (
             <Menu<HTMLDivElement>
               trigger={({ toggleOpen }, ref) => (
                 <div
@@ -520,51 +421,21 @@ export const PropertyList = ({
                   hasError={isError}
                   loadingComponent={<LoadingAnimation classname="min-h-20" />}
                 >
-                  {availableProperties
-                    .filter(prop => !attachedProperties.some(attached => attached.property.id === prop.id))
-                    .map(property => {
-                      const getDefaultValue = (): PropertyValue => {
-                        switch (property.fieldType) {
-                          case 'text':
-                            return { textValue: '' }
-                          case 'number':
-                            return { numberValue: undefined }
-                          case 'checkbox':
-                            return { boolValue: false }
-                          case 'date':
-                          case 'dateTime':
-                            return {}
-                          case 'singleSelect':
-                            return property.selectData?.options && property.selectData.options.length > 0
-                              ? { singleSelectValue: property.selectData.options[0]?.id || undefined }
-                              : {}
-                          case 'multiSelect':
-                            return { multiSelectValue: [] }
-                          default:
-                            return {}
-                        }
-                      }
-
-                      return (
+                {unattachedProperties.map(property => (
                         <MenuItem
                           key={property.id}
                           onClick={() => {
-                            if (onPropertyValueChange) {
-                              const defaultValue = getDefaultValue()
-                              onPropertyValueChange(property.id, defaultValue)
-                            }
+                      handleAddProperty(property)
                             close()
                           }}
                           className="rounded-md cursor-pointer"
                         >
                           {property.name}
                         </MenuItem>
-                      )
-                    })}
+                ))}
                 </LoadingAndErrorComponent>
               )}
             </Menu>
-          )
         )}
       </div>
       <ConfirmDialog

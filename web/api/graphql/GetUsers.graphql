@@ -3,5 +3,6 @@ query GetUsers {
     id
     name
     avatarUrl
+    isOnline
   }
 }

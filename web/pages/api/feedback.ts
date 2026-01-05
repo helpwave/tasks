@@ -21,7 +21,7 @@ async function ensureDirectoryExists(dirPath: string) {
   }
 }
 
-ensureDirectoryExists(FEEDBACK_DIR).catch(console.error)
+ensureDirectoryExists(FEEDBACK_DIR).catch(() => {})
 
 async function readFeedbackFile(): Promise<FeedbackData[]> {
   try {
@@ -30,7 +30,7 @@ async function readFeedbackFile(): Promise<FeedbackData[]> {
     const fileContent = await fs.readFile(filePath, 'utf-8')
     const parsed = JSON.parse(fileContent)
     if (!Array.isArray(parsed)) {
-      console.warn('Feedback file does not contain an array, resetting to empty array')
+
       return []
     }
     return parsed
@@ -38,7 +38,7 @@ async function readFeedbackFile(): Promise<FeedbackData[]> {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
       return []
     }
-    console.error('Error reading feedback file:', error)
+
     return []
   }
 }
@@ -69,8 +69,7 @@ export default async function handler(
     await writeFeedbackFile(existingFeedback)
 
     return res.status(200).json({ success: true })
-  } catch (error) {
-    console.error('Error processing feedback:', error)
+  } catch {
     return res.status(500).json({ error: 'Internal server error' })
   }
 }

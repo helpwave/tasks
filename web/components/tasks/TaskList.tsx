@@ -12,6 +12,7 @@ import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { useTaskViewToggle } from '@/hooks/useViewToggle'
 import { TaskCardView } from '@/components/tasks/TaskCardView'
+import { UserInfoPopup } from '@/components/UserInfoPopup'
 import type { ColumnDef } from '@tanstack/table-core'
 
 export type TaskViewModel = {
@@ -111,7 +112,6 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
   const { mutate: assignTask } = useAssignTaskMutation({ onSuccess: onRefetch })
   const [isPrinting, setIsPrinting] = useState(false)
   const { data: usersData } = useGetUsersQuery(undefined, {
-    refetchInterval: isPrinting ? false : 15000,
     refetchOnWindowFocus: !isPrinting,
   })
 
@@ -129,6 +129,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
   }, [])
 
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null)
+  const [selectedUserPopupId, setSelectedUserPopupId] = useState<string | null>(null)
   const [taskDialogState, setTaskDialogState] = useState<TaskDialogState>({ isOpen: false })
   const [searchQuery, setSearchQuery] = useState('')
   const [openedTaskId, setOpenedTaskId] = useState<string | null>(null)
@@ -375,7 +376,10 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
 
             if (assignee) {
               return (
-                <div className="flex-row-2 items-center">
+                <button
+                  onClick={() => setSelectedUserPopupId(assignee.id)}
+                  className="flex-row-2 items-center hover:opacity-75 transition-opacity"
+                >
                   <Avatar
                     fullyRounded={true}
                     image={{
@@ -384,7 +388,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
                     }}
                   />
                   <span>{assignee.name}</span>
-                </div>
+                </button>
               )
             }
 
@@ -438,6 +442,19 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
               <span className="text-sm text-description whitespace-nowrap">{translation('showDone') || 'Show done'}</span>
             </div>
             <div className="flex items-center gap-2">
+              {viewType === 'table' && (
+                <Tooltip tooltip="Print" position="top">
+                  <Button
+                    layout="icon"
+                    color="neutral"
+                    coloringStyle="text"
+                    onClick={handlePrint}
+                    className="print-button"
+                  >
+                    <Printer className="size-5" />
+                  </Button>
+                </Tooltip>
+              )}
               <Tooltip tooltip="Table View" position="top">
                 <Button
                   layout="icon"
@@ -469,19 +486,6 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
             >
               {translation('shiftHandover') || 'Shift Handover'}
             </Button>
-          )}
-          {viewType === 'table' && (
-            <Tooltip tooltip="Print" position="top">
-              <Button
-                layout="icon"
-                color="neutral"
-                coloringStyle="text"
-                onClick={handlePrint}
-                className="print-button"
-              >
-                <Printer className="size-5" />
-              </Button>
-            </Tooltip>
           )}
           <Button
             startIcon={<PlusIcon/>}
@@ -590,6 +594,11 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
         onConfirm={handleConfirmHandover}
         titleElement={translation('confirmShiftHandover') || 'Confirm Shift Handover'}
         description={translation('confirmShiftHandoverDescription') || `Are you sure you want to transfer ${openTasks.length} open task${openTasks.length !== 1 ? 's' : ''} to ${users.find(u => u.id === selectedUserId)?.name || 'the selected user'}?`}
+      />
+      <UserInfoPopup
+        userId={selectedUserPopupId}
+        isOpen={!!selectedUserPopupId}
+        onClose={() => setSelectedUserPopupId(null)}
       />
     </div>
   )

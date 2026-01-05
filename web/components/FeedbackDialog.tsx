@@ -99,12 +99,10 @@ export const FeedbackDialog = ({ isOpen, onClose, hideUrl = false }: FeedbackDia
             return
           }
           if (event.error === 'aborted' || event.error === 'network') {
-            console.error('Speech recognition error:', event.error)
             isRecordingRef.current = false
             setIsRecording(false)
             return
           }
-          console.error('Speech recognition error:', event.error)
         }
 
         recognition.onend = () => {
@@ -190,11 +188,9 @@ export const FeedbackDialog = ({ isOpen, onClose, hideUrl = false }: FeedbackDia
         setFeedback('')
         setIsAnonymous(false)
         onClose()
-      } else {
-        console.error('Failed to submit feedback')
       }
-    } catch (error) {
-      console.error('Error submitting feedback:', error)
+    } catch {
+      void 0
     }
   }
 
