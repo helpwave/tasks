@@ -27,7 +27,6 @@ const TasksPage: NextPage = () => {
     enabled: !!selectedRootLocationIds && !!user,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
-    refetchInterval: 30000,
   })
   const taskId = router.query['taskId'] as string | undefined
 

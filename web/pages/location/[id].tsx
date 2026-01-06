@@ -48,7 +48,6 @@ const LocationPage: NextPage = () => {
       enabled: !!id && !isTeamLocation,
       refetchOnWindowFocus: true,
       refetchOnMount: true,
-      refetchInterval: 30000,
     }
   )
 
@@ -61,7 +60,6 @@ const LocationPage: NextPage = () => {
       enabled: !!id && isTeamLocation,
       refetchOnWindowFocus: true,
       refetchOnMount: true,
-      refetchInterval: 30000,
     }
   )
 

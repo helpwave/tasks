@@ -1,6 +1,6 @@
 import { useMemo, useState, forwardRef, useImperativeHandle, useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { Button, Checkbox, CheckboxUncontrolled, ConfirmDialog, Dialog, FillerRowElement, SearchBar, Table, Tooltip } from '@helpwave/hightide'
+import { Button, Checkbox, ConfirmDialog, Dialog, FillerRowElement, SearchBar, Table, Tooltip } from '@helpwave/hightide'
 import { PlusIcon, Table as TableIcon, LayoutGrid, UserCheck, Users, Printer } from 'lucide-react'
 import { useAssignTaskMutation, useAssignTaskToTeamMutation, useCompleteTaskMutation, useReopenTaskMutation, type GetGlobalDataQuery } from '@/api/gql/generated'
 import { AssigneeSelect } from './AssigneeSelect'
@@ -126,10 +126,21 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
           } : null
         })
       }
+      setOptimisticUpdates(prev => {
+        const next = new Map(prev)
+        next.set(variables.id, true)
+        return next
+      })
       return { previousData }
     },
     onSuccess: async () => {
+      setOptimisticUpdates(prev => {
+        const next = new Map(prev)
+        return next
+      })
       await queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
+      await queryClient.invalidateQueries({ queryKey: ['GetTasks'] })
+      await queryClient.invalidateQueries({ queryKey: ['GetPatients'] })
       onRefetch?.()
     },
     onError: (error, variables, context) => {
@@ -158,10 +169,21 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
           } : null
         })
       }
+      setOptimisticUpdates(prev => {
+        const next = new Map(prev)
+        next.set(variables.id, false)
+        return next
+      })
       return { previousData }
     },
     onSuccess: async () => {
+      setOptimisticUpdates(prev => {
+        const next = new Map(prev)
+        return next
+      })
       await queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
+      await queryClient.invalidateQueries({ queryKey: ['GetTasks'] })
+      await queryClient.invalidateQueries({ queryKey: ['GetPatients'] })
       onRefetch?.()
     },
     onError: (error, variables, context) => {
@@ -364,16 +386,23 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
           header: translation('status'),
           accessorKey: 'done',
           cell: ({ row }) => {
-            const isDone = row.original.done
+            const task = row.original
+            const optimisticDone = optimisticUpdates.get(task.id)
+            const displayDone = optimisticDone !== undefined ? optimisticDone : task.done
             return (
               <div onClick={(e) => e.stopPropagation()}>
-                <CheckboxUncontrolled
-                  checked={isDone}
+                <Checkbox
+                  checked={displayDone}
                   onCheckedChange={(checked) => {
+                    setOptimisticUpdates(prev => {
+                      const next = new Map(prev)
+                      next.set(task.id, checked)
+                      return next
+                    })
                     if (checked) {
-                      completeTask({ id: row.original.id })
+                      completeTask({ id: task.id })
                     } else {
-                      reopenTask({ id: row.original.id })
+                      reopenTask({ id: task.id })
                     }
                   }}
                   className={clsx('rounded-full')}
@@ -524,7 +553,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
 
       return cols
     },
-    [translation, completeTask, reopenTask, showAssignee]
+    [translation, completeTask, reopenTask, showAssignee, optimisticUpdates]
   )
 
   const handleToggleDone = (taskId: string, checked: boolean) => {

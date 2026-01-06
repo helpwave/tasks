@@ -109,7 +109,6 @@ export const PatientDetailView = ({
     {
       enabled: isEditMode,
       refetchOnMount: true,
-      refetchInterval: 30000,
     }
   )
 
@@ -175,6 +174,25 @@ export const PatientDetailView = ({
             } : null
           }
         }
+      },
+      {
+        queryKey: ['GetPatients'],
+        updateFn: (oldData: unknown) => {
+          const data = oldData as GetPatientsQuery | undefined
+          if (!data?.patients) return oldData
+          return {
+            ...data,
+            patients: data.patients.map(patient => {
+              if (patient.id === patientId && patient.tasks) {
+                return {
+                  ...patient,
+                  tasks: patient.tasks.map(task => task.id === variables.id ? { ...task, done: true } : task)
+                }
+              }
+              return patient
+            })
+          }
+        }
       }
     ],
     invalidateQueries: [['GetPatient', { id: patientId }], ['GetTasks'], ['GetPatients'], ['GetOverviewData'], ['GetGlobalData']],
@@ -224,6 +242,25 @@ export const PatientDetailView = ({
               ...data.me,
               tasks: data.me.tasks.map(task => task.id === variables.id ? { ...task, done: false } : task)
             } : null
+          }
+        }
+      },
+      {
+        queryKey: ['GetPatients'],
+        updateFn: (oldData: unknown) => {
+          const data = oldData as GetPatientsQuery | undefined
+          if (!data?.patients) return oldData
+          return {
+            ...data,
+            patients: data.patients.map(patient => {
+              if (patient.id === patientId && patient.tasks) {
+                return {
+                  ...patient,
+                  tasks: patient.tasks.map(task => task.id === variables.id ? { ...task, done: false } : task)
+                }
+              }
+              return patient
+            })
           }
         }
       }

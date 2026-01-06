@@ -137,7 +137,6 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
       enabled: !isAuthLoading && !!identity,
       refetchOnWindowFocus: true,
       refetchOnMount: true,
-      refetchInterval: 30000,
     }
   )
 

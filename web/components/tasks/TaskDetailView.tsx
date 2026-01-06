@@ -39,7 +39,8 @@ import {
   Textarea
 } from '@helpwave/hightide'
 import { useTasksContext } from '@/hooks/useTasksContext'
-import { User } from 'lucide-react'
+import { User, Flag } from 'lucide-react'
+import { SmartDate } from '@/utils/date'
 import { AssigneeSelect } from './AssigneeSelect'
 import { SidePanel } from '@/components/layout/SidePanel'
 import { localToUTCWithSameTime, PatientDetailView } from '@/components/patients/PatientDetailView'
@@ -101,6 +102,7 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
   const { mutate: createTask, isLoading: isCreating } = useCreateTaskMutation({
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
+      await queryClient.invalidateQueries({ queryKey: ['GetOverviewData'] })
       onSuccess()
       onClose()
     },
@@ -158,6 +160,7 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['GetTask', { id: taskId }] })
       await queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
+      await queryClient.invalidateQueries({ queryKey: ['GetOverviewData'] })
       const patientId = taskData?.task?.patient?.id
       if (patientId) {
         await queryClient.invalidateQueries({ queryKey: ['GetPatient', { id: patientId }] })
@@ -170,6 +173,7 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['GetTask', { id: taskId }] })
       await queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
+      await queryClient.invalidateQueries({ queryKey: ['GetOverviewData'] })
       const patientId = taskData?.task?.patient?.id
       if (patientId) {
         await queryClient.invalidateQueries({ queryKey: ['GetPatient', { id: patientId }] })
@@ -312,6 +316,13 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
   }
 
   const patients = patientsData?.patients || []
+
+  const expectedFinishDate = useMemo(() => {
+    if (!formData.dueDate || !formData.estimatedTime) return null
+    const finishDate = new Date(formData.dueDate)
+    finishDate.setMinutes(finishDate.getMinutes() + formData.estimatedTime)
+    return finishDate
+  }, [formData.dueDate, formData.estimatedTime])
 
   if (isEditMode && isLoadingTask) {
     return <LoadingContainer/>
@@ -537,6 +548,13 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
                   />
                 )}
               </FormElementWrapper>
+
+              {expectedFinishDate && (
+                <div className="flex items-center gap-2">
+                  <Flag className="size-4" />
+                  <SmartDate date={expectedFinishDate} mode="relative" showTime={true} />
+                </div>
+              )}
 
               <FormElementWrapper label={translation('description')}>
                 {({ isShowingError: _1, setIsShowingError: _2, ...bag }) => (

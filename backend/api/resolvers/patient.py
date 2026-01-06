@@ -14,7 +14,7 @@ from api.services.property import PropertyService
 from api.types.patient import PatientType
 from database import models
 from graphql import GraphQLError
-from sqlalchemy import select
+from sqlalchemy import desc, func, select
 from sqlalchemy.orm import aliased, selectinload
 
 
@@ -153,25 +153,43 @@ class PatientQuery:
         info: Info,
         limit: int = 5,
     ) -> list[PatientType]:
+        auth_service = AuthorizationService(info.context.db)
+        accessible_location_ids = await auth_service.get_user_accessible_location_ids(
+            info.context.user, info.context
+        )
+
+        if not accessible_location_ids:
+            return []
+
+        max_task_update_date = (
+            select(
+                func.max(models.Task.update_date).label("max_update_date"),
+                models.Task.patient_id.label("patient_id"),
+            )
+            .group_by(models.Task.patient_id)
+            .subquery()
+        )
+
         query = (
-            select(models.Patient)
+            select(models.Patient, max_task_update_date.c.max_update_date)
             .options(
                 selectinload(models.Patient.assigned_locations),
                 selectinload(models.Patient.tasks),
                 selectinload(models.Patient.teams),
             )
+            .outerjoin(
+                max_task_update_date,
+                models.Patient.id == max_task_update_date.c.patient_id,
+            )
             .where(models.Patient.deleted.is_(False))
+            .order_by(desc(max_task_update_date.c.max_update_date), desc(models.Patient.id))
             .limit(limit)
-        )
-        auth_service = AuthorizationService(info.context.db)
-        accessible_location_ids = await auth_service.get_user_accessible_location_ids(
-            info.context.user, info.context
         )
         query = auth_service.filter_patients_by_access(
             info.context.user, query, accessible_location_ids
         )
         result = await info.context.db.execute(query)
-        return result.scalars().all()
+        return [row[0] for row in result.all()]
 
 
 @strawberry.type

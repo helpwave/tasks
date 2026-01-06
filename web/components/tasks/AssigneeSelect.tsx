@@ -36,7 +36,6 @@ export const AssigneeSelect = ({
   const searchInputId = useMemo(() => id ? `${id}-search` : `assignee-select-search-${Math.random().toString(36).substr(2, 9)}`, [id])
 
   const { data: usersData } = useGetUsersQuery(undefined, {
-    refetchInterval: 30000,
   })
   const { data: locationsData } = useGetLocationsQuery(undefined, {})
 
@@ -159,7 +158,7 @@ export const AssigneeSelect = ({
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className={clsx(
-          'flex items-center gap-2 justify-between w-full h-10 px-3 text-left border border-divider rounded-md bg-white dark:bg-gray-800 text-on-surface hover:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-primary transition-colors overflow-hidden',
+          'flex items-center gap-2 justify-between w-full h-10 px-3 text-left border-2 border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-on-surface hover:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-primary transition-colors overflow-hidden ml-0.5',
           className
         )}
       >
@@ -167,7 +166,7 @@ export const AssigneeSelect = ({
           {getDisplayAvatar()}
           <span className="truncate">{getDisplayValue()}</span>
         </div>
-        <ChevronDown className={clsx('size-4 ml-2 flex-shrink-0 transition-transform', isOpen && 'rotate-180')} />
+        <ChevronDown className={clsx('size-6 ml-2 flex-shrink-0 transition-transform', isOpen && 'rotate-180')} />
       </button>
       {isOpen && triggerRect && createPortal(
         <div

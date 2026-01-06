@@ -1,13 +1,13 @@
 import { Button, Checkbox } from '@helpwave/hightide'
 import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
-import { Clock, User, Users } from 'lucide-react'
+import { Clock, User, Users, Flag } from 'lucide-react'
 import clsx from 'clsx'
 import { SmartDate } from '@/utils/date'
 import { LocationChips } from '@/components/patients/LocationChips'
 import type { TaskViewModel } from './TaskList'
 import { useRouter } from 'next/router'
 import { useCompleteTaskMutation, useReopenTaskMutation, type GetGlobalDataQuery } from '@/api/gql/generated'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { UserInfoPopup } from '@/components/UserInfoPopup'
 import { useQueryClient } from '@tanstack/react-query'
 import { useTasksContext } from '@/hooks/useTasksContext'
@@ -123,6 +123,7 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
       pendingCheckedRef.current = null
       setOptimisticDone(null)
       await queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
+      await queryClient.invalidateQueries({ queryKey: ['GetOverviewData'] })
       onRefetch?.()
     },
     onError: (error, variables, context) => {
@@ -155,6 +156,7 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
       pendingCheckedRef.current = null
       setOptimisticDone(null)
       await queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
+      await queryClient.invalidateQueries({ queryKey: ['GetOverviewData'] })
       onRefetch?.()
     },
     onError: (error, variables, context) => {
@@ -172,6 +174,13 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
   const closeToDue = dueDate ? isCloseToDueDate(dueDate, task.done) : false
   const dueDateColorClass = overdue ? '!text-red-500' : closeToDue ? '!text-orange-500' : ''
   const assigneeAvatarUrl = task.assignee?.avatarURL || (flexibleTask.assignee?.avatarUrl)
+
+  const expectedFinishDate = useMemo(() => {
+    if (!dueDate || !flexibleTask.estimatedTime) return null
+    const finishDate = new Date(dueDate)
+    finishDate.setMinutes(finishDate.getMinutes() + flexibleTask.estimatedTime)
+    return finishDate
+  }, [dueDate, flexibleTask.estimatedTime])
 
   const borderColorClass = overdue
     ? 'border-red-500'
@@ -298,21 +307,29 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
           )}
         </div>
       )}
-      <div className={clsx('absolute right-5 flex items-center gap-3 text-sm text-description', { 'bottom-5': showPatient, 'bottom-6': !showPatient })}>
-        {(task as FlexibleTask).estimatedTime && (
-          <div className="flex items-center gap-1">
-            <Clock className="size-4" />
-            <span>
-              {(task as FlexibleTask).estimatedTime! < 60
-                ? `${(task as FlexibleTask).estimatedTime}m`
-                : `${Math.floor((task as FlexibleTask).estimatedTime! / 60)}h ${(task as FlexibleTask).estimatedTime! % 60}m`}
-            </span>
-          </div>
-        )}
-        {dueDate && (
-          <div className={clsx('flex items-center gap-2', dueDateColorClass)}>
-            <Clock className="size-4" />
-            <SmartDate date={dueDate} mode="relative" showTime={true} />
+      <div className={clsx('absolute right-5 flex flex-col items-end gap-2 text-sm text-description', { 'bottom-5': showPatient, 'bottom-6': !showPatient })}>
+        <div className="flex items-center gap-3">
+          {(task as FlexibleTask).estimatedTime && (
+            <div className="flex items-center gap-1">
+              <Clock className="size-4" />
+              <span>
+                {(task as FlexibleTask).estimatedTime! < 60
+                  ? `${(task as FlexibleTask).estimatedTime}m`
+                  : `${Math.floor((task as FlexibleTask).estimatedTime! / 60)}h ${(task as FlexibleTask).estimatedTime! % 60}m`}
+              </span>
+            </div>
+          )}
+          {dueDate && (
+            <div className={clsx('flex items-center gap-2', dueDateColorClass)}>
+              <Clock className="size-4" />
+              <SmartDate date={dueDate} mode="relative" showTime={true} />
+            </div>
+          )}
+        </div>
+        {expectedFinishDate && (
+          <div className="flex items-center gap-2 text-xs">
+            <Flag className="size-4" />
+            <SmartDate date={expectedFinishDate} mode="relative" showTime={true} />
           </div>
         )}
       </div>

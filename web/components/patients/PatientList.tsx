@@ -63,7 +63,6 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
     enabled: !isPrinting,
     refetchOnWindowFocus: !isPrinting,
     refetchOnMount: true,
-    refetchInterval: !isPrinting ? 30000 : false,
   })
 
   useEffect(() => {
