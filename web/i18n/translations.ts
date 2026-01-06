@@ -38,6 +38,7 @@ export type TasksTranslationEntries = {
   'confirmSelection': string,
   'confirmShiftHandover': string,
   'confirmShiftHandoverDescription': string,
+  'confirmShiftHandoverDescriptionWithName': (values: { taskCount: number, name: string }) => string,
   'conflictDetected': string,
   'create': string,
   'createdAt': string,
@@ -113,6 +114,7 @@ export type TasksTranslationEntries = {
   'noNotifications': string,
   'noOpenTasks': string,
   'noPatient': string,
+  'noResultsFound': string,
   'nOrganization': (values: { count: number }) => string,
   'notAssigned': string,
   'notes': string,
@@ -172,6 +174,7 @@ export type TasksTranslationEntries = {
   'rooms': string,
   'save': string,
   'searchLocations': string,
+  'searchUsersOrTeams': string,
   'security': string,
   'selectAll': string,
   'selectAssignee': string,
@@ -263,6 +266,16 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'confirmSelection': `Auswahl bestätigen`,
     'confirmShiftHandover': `Schichtübergabe bestätigen`,
     'confirmShiftHandoverDescription': `Sind Sie sicher, dass Sie alle offenen Aufgaben an den ausgewählten Benutzer übertragen möchten?`,
+    'confirmShiftHandoverDescriptionWithName': ({ taskCount, name }): string => {
+      let _out: string = ''
+      _out += `Sind Sie sicher, dass Sie `
+      _out += TranslationGen.resolvePlural(taskCount, {
+        '=1': `${taskCount} offene Aufgabe`,
+        'other': `${taskCount} offene Aufgaben`,
+      })
+      _out += ` an ${name} übertragen möchten?`
+      return _out
+    },
     'conflictDetected': `Konflikt erkannt`,
     'create': `Erstellen`,
     'createdAt': `Erstellt am`,
@@ -372,6 +385,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'noNotifications': `Keine aktuellen Updates`,
     'noOpenTasks': `Keine offenen Aufgaben`,
     'noPatient': `Kein Patient`,
+    'noResultsFound': `Keine Ergebnisse gefunden`,
     'nOrganization': ({ count }): string => {
       return TranslationGen.resolvePlural(count, {
         '=1': `${count} Organisation`,
@@ -493,6 +507,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'rooms': `Zimmer`,
     'save': `Speichern`,
     'searchLocations': `Standorte suchen...`,
+    'searchUsersOrTeams': `Benutzer oder Teams suchen...`,
     'security': `Sicherheit`,
     'selectAll': `Alle auswählen`,
     'selectAssignee': `Zuweisen an...`,
@@ -613,6 +628,16 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'confirmSelection': `Confirm Selection`,
     'confirmShiftHandover': `Confirm Shift Handover`,
     'confirmShiftHandoverDescription': `Are you sure you want to transfer all open tasks to the selected user?`,
+    'confirmShiftHandoverDescriptionWithName': ({ taskCount, name }): string => {
+      let _out: string = ''
+      _out += `Are you sure you want to transfer `
+      _out += TranslationGen.resolvePlural(taskCount, {
+        '=1': `${taskCount} open task`,
+        'other': `${taskCount} open tasks`,
+      })
+      _out += ` to ${name}?`
+      return _out
+    },
     'conflictDetected': `Conflict Detected`,
     'create': `Create`,
     'createdAt': `Created at`,
@@ -722,6 +747,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'noNotifications': `No recent updates`,
     'noOpenTasks': `No open tasks`,
     'noPatient': `No Patient`,
+    'noResultsFound': `No results found`,
     'nOrganization': ({ count }): string => {
       return TranslationGen.resolvePlural(count, {
         '=1': `${count} Organization`,
@@ -842,6 +868,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'rooms': `Rooms`,
     'save': `Save`,
     'searchLocations': `Search locations...`,
+    'searchUsersOrTeams': `Search users or teams...`,
     'security': `Security`,
     'selectAll': `Select All`,
     'selectAssignee': `Assign to...`,

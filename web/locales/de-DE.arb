@@ -281,10 +281,12 @@
   "newPatient": "Neuer Patient",
   "selectLocationDescription": "Bitte wählen Sie den zugewiesenen Standort für den Patienten aus.",
   "searchLocations": "Standorte suchen...",
+  "searchUsersOrTeams": "Benutzer oder Teams suchen...",
   "selectAll": "Alle auswählen",
   "deselectAll": "Auswahl aufheben",
   "loading": "Laden...",
   "noLocationsFound": "Keine Standorte gefunden",
+  "noResultsFound": "Keine Ergebnisse gefunden",
   "confirmSelection": "Auswahl bestätigen",
   "expandAll": "Alle ausklappen",
   "collapseAll": "Alle einklappen",
@@ -368,6 +370,17 @@
   "shiftHandoverDescription": "Wählen Sie einen Benutzer aus, um alle Ihnen zugewiesenen offenen Aufgaben zu übertragen.",
   "confirmShiftHandover": "Schichtübergabe bestätigen",
   "confirmShiftHandoverDescription": "Sind Sie sicher, dass Sie alle offenen Aufgaben an den ausgewählten Benutzer übertragen möchten?",
+  "confirmShiftHandoverDescriptionWithName": "Sind Sie sicher, dass Sie {taskCount, plural, =1{# offene Aufgabe} other{# offene Aufgaben}} an {name} übertragen möchten?",
+  "@confirmShiftHandoverDescriptionWithName": {
+    "placeholders": {
+      "taskCount": {
+        "type": "number"
+      },
+      "name": {
+        "type": "string"
+      }
+    }
+  },
   "priority": "{priority, select, P1{Normal} P2{Mittel} P3{Hoch} P4{Kritisch} other{-}}",
   "@priority": {
     "placeholders": {

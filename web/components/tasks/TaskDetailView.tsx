@@ -18,6 +18,7 @@ import {
   useUnassignTaskMutation,
   useUnassignTaskFromTeamMutation,
   UpdateTaskDocument,
+  type GetTaskQuery,
   type PropertyValueInput,
   type UpdateTaskMutation,
   type UpdateTaskMutationVariables
@@ -26,7 +27,6 @@ import { useQueryClient } from '@tanstack/react-query'
 import {
   Button,
   Checkbox,
-  ConfirmDialog,
   DateTimeInput,
   FormElementWrapper,
   Input,
@@ -61,7 +61,6 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
   const queryClient = useQueryClient()
   const { selectedRootLocationIds } = useTasksContext()
   const [isShowingPatientDialog, setIsShowingPatientDialog] = useState<boolean>(false)
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState<boolean>(false)
   const [errorDialog, setErrorDialog] = useState<{ isOpen: boolean, message?: string }>({ isOpen: false })
   const isEditMode = !!taskId
 
@@ -86,8 +85,8 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
     }
   )
 
-  useGetUsersQuery(undefined, {})
-  useGetLocationsQuery(undefined, {})
+  const { data: usersData } = useGetUsersQuery(undefined, {})
+  const { data: locationsData } = useGetLocationsQuery(undefined, {})
 
 
   const { data: propertyDefinitionsData } = useGetPropertyDefinitionsQuery()
@@ -129,6 +128,35 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
   })
 
   const { mutate: assignTask } = useAssignTaskMutation({
+    onMutate: async (variables) => {
+      if (!taskId) return
+      await queryClient.cancelQueries({ queryKey: ['GetTask', { id: taskId }] })
+      const previousData = queryClient.getQueryData<GetTaskQuery>(['GetTask', { id: taskId }])
+      const user = usersData?.users?.find(u => u.id === variables.userId)
+      if (previousData?.task && user) {
+        queryClient.setQueryData<GetTaskQuery>(['GetTask', { id: taskId }], {
+          ...previousData,
+          task: {
+            ...previousData.task,
+            assignee: {
+              __typename: 'UserType' as const,
+              id: user.id,
+              name: user.name,
+              avatarUrl: user.avatarUrl,
+              lastOnline: user.lastOnline,
+              isOnline: user.isOnline ?? false,
+            },
+            assigneeTeam: null,
+          },
+        })
+      }
+      return { previousData }
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previousData && taskId) {
+        queryClient.setQueryData(['GetTask', { id: taskId }], context.previousData)
+      }
+    },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
       onSuccess()
@@ -136,6 +164,27 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
   })
 
   const { mutate: unassignTask } = useUnassignTaskMutation({
+    onMutate: async () => {
+      if (!taskId) return
+      await queryClient.cancelQueries({ queryKey: ['GetTask', { id: taskId }] })
+      const previousData = queryClient.getQueryData<GetTaskQuery>(['GetTask', { id: taskId }])
+      if (previousData?.task) {
+        queryClient.setQueryData<GetTaskQuery>(['GetTask', { id: taskId }], {
+          ...previousData,
+          task: {
+            ...previousData.task,
+            assignee: null,
+            assigneeTeam: null,
+          },
+        })
+      }
+      return { previousData }
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previousData && taskId) {
+        queryClient.setQueryData(['GetTask', { id: taskId }], context.previousData)
+      }
+    },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
       onSuccess()
@@ -143,6 +192,33 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
   })
 
   const { mutate: assignTaskToTeam } = useAssignTaskToTeamMutation({
+    onMutate: async (variables) => {
+      if (!taskId) return
+      await queryClient.cancelQueries({ queryKey: ['GetTask', { id: taskId }] })
+      const previousData = queryClient.getQueryData<GetTaskQuery>(['GetTask', { id: taskId }])
+      const team = locationsData?.locationNodes?.find(loc => loc.id === variables.teamId && loc.kind === 'TEAM')
+      if (previousData?.task && team) {
+        queryClient.setQueryData<GetTaskQuery>(['GetTask', { id: taskId }], {
+          ...previousData,
+          task: {
+            ...previousData.task,
+            assignee: null,
+            assigneeTeam: {
+              __typename: 'LocationNodeType' as const,
+              id: team.id,
+              title: team.title,
+              kind: team.kind,
+            },
+          },
+        })
+      }
+      return { previousData }
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previousData && taskId) {
+        queryClient.setQueryData(['GetTask', { id: taskId }], context.previousData)
+      }
+    },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
       onSuccess()
@@ -150,6 +226,27 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
   })
 
   const { mutate: unassignTaskFromTeam } = useUnassignTaskFromTeamMutation({
+    onMutate: async () => {
+      if (!taskId) return
+      await queryClient.cancelQueries({ queryKey: ['GetTask', { id: taskId }] })
+      const previousData = queryClient.getQueryData<GetTaskQuery>(['GetTask', { id: taskId }])
+      if (previousData?.task) {
+        queryClient.setQueryData<GetTaskQuery>(['GetTask', { id: taskId }], {
+          ...previousData,
+          task: {
+            ...previousData.task,
+            assignee: null,
+            assigneeTeam: null,
+          },
+        })
+      }
+      return { previousData }
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previousData && taskId) {
+        queryClient.setQueryData(['GetTask', { id: taskId }], context.previousData)
+      }
+    },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
       onSuccess()
@@ -576,7 +673,11 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
               {isEditMode && taskId && (
                 <div className="pt-6 mt-6 border-t border-divider flex justify-end gap-2">
                   <LoadingButton
-                    onClick={() => setIsDeleteDialogOpen(true)}
+                    onClick={() => {
+                      if (taskId) {
+                        deleteTask({ id: taskId })
+                      }
+                    }}
                     isLoading={isDeleting}
                     color="negative"
                     coloringStyle="outline"
@@ -681,19 +782,6 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
         </div>
       )}
 
-      <ConfirmDialog
-        isOpen={isDeleteDialogOpen}
-        onCancel={() => setIsDeleteDialogOpen(false)}
-        onConfirm={() => {
-          if (taskId) {
-            deleteTask({ id: taskId })
-          }
-          setIsDeleteDialogOpen(false)
-        }}
-        titleElement={translation('delete')}
-        description={translation('deleteTaskConfirmation')}
-        confirmType="negative"
-      />
       <ErrorDialog
         isOpen={errorDialog.isOpen}
         onClose={() => setErrorDialog({ isOpen: false })}

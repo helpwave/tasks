@@ -1,11 +1,10 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
-import { SearchBar } from '@helpwave/hightide'
+import { SearchBar, Dialog } from '@helpwave/hightide'
 import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { Users, ChevronDown } from 'lucide-react'
 import { useGetUsersQuery, useGetLocationsQuery } from '@/api/gql/generated'
 import clsx from 'clsx'
-import { createPortal } from 'react-dom'
 
 interface AssigneeSelectProps {
   value: string,
@@ -15,6 +14,9 @@ interface AssigneeSelectProps {
   excludeUserIds?: string[],
   id?: string,
   className?: string,
+  onClose?: () => void,
+  forceOpen?: boolean,
+  dialogTitle?: string,
   [key: string]: unknown,
 }
 
@@ -26,14 +28,20 @@ export const AssigneeSelect = ({
   excludeUserIds = [],
   id,
   className,
+  onClose,
+  forceOpen = false,
+  dialogTitle,
 }: AssigneeSelectProps) => {
   const translation = useTasksTranslation()
   const [searchQuery, setSearchQuery] = useState('')
   const [isOpen, setIsOpen] = useState(false)
-  const triggerRef = useRef<HTMLButtonElement>(null)
-  const dropdownRef = useRef<HTMLDivElement>(null)
   const searchInputRef = useRef<HTMLDivElement>(null)
-  const searchInputId = useMemo(() => id ? `${id}-search` : `assignee-select-search-${Math.random().toString(36).substr(2, 9)}`, [id])
+
+  useEffect(() => {
+    if (forceOpen) {
+      setIsOpen(true)
+    }
+  }, [forceOpen])
 
   const { data: usersData } = useGetUsersQuery(undefined, {
   })
@@ -71,56 +79,21 @@ export const AssigneeSelect = ({
     return teams.filter(team => team.title.toLowerCase().includes(lowerQuery))
   }, [teams, searchQuery])
 
-  const getDisplayValue = () => {
-    if (!value || value === '') {
-      return 'Choose user or team'
-    }
+  const getSelectedUser = () => {
+    if (!value || value === '') return null
     if (value.startsWith('team:')) {
       const teamId = value.replace('team:', '')
       const team = teams.find(t => t.id === teamId)
-      return team?.title || value
+      return team ? { type: 'team' as const, name: team.title, id: team.id } : null
     }
     const user = users.find(u => u.id === value)
-    return user?.name || value
+    return user ? { type: 'user' as const, name: user.name, id: user.id, user } : null
   }
 
-  const getDisplayAvatar = () => {
-    if (!value) return null
-    if (value.startsWith('team:')) {
-      return <Users className="size-5 text-description flex-shrink-0" />
-    }
-    const user = users.find(u => u.id === value)
-    if (!user) return null
-    return (
-      <AvatarStatusComponent
-        size="sm"
-        fullyRounded={true}
-        isOnline={user.isOnline ?? null}
-        image={user.avatarUrl ? {
-          avatarUrl: user.avatarUrl,
-          alt: user.name
-        } : undefined}
-      />
-    )
-  }
+  const selectedItem = getSelectedUser()
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Node
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(target) &&
-        triggerRef.current &&
-        !triggerRef.current.contains(target) &&
-        searchInputRef.current &&
-        !searchInputRef.current.contains(target)
-      ) {
-        setIsOpen(false)
-      }
-    }
-
     if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside)
       let attempts = 0
       const maxAttempts = 10
       const focusInput = () => {
@@ -136,9 +109,6 @@ export const AssigneeSelect = ({
       requestAnimationFrame(() => {
         requestAnimationFrame(focusInput)
       })
-      return () => {
-        document.removeEventListener('mousedown', handleClickOutside)
-      }
     }
   }, [isOpen])
 
@@ -146,67 +116,105 @@ export const AssigneeSelect = ({
     onValueChanged(selectedValue)
     setIsOpen(false)
     setSearchQuery('')
+    if (onClose) {
+      onClose()
+    }
   }
 
-  const triggerRect = triggerRef.current?.getBoundingClientRect()
+  const handleInputClick = () => {
+    setIsOpen(true)
+    if (selectedItem) {
+      setSearchQuery(selectedItem.name)
+    }
+  }
+
+  const handleClose = () => {
+    setIsOpen(false)
+    setSearchQuery('')
+    if (onClose) {
+      onClose()
+    }
+  }
+
+  const showSearchBar = !selectedItem
 
   return (
     <>
-      <button
-        ref={triggerRef}
+      <div
         id={id}
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
         className={clsx(
-          'flex items-center gap-2 justify-between w-full h-10 px-3 text-left border-2 border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-on-surface hover:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-primary transition-colors overflow-hidden ml-0.5',
+          'relative w-full',
           className
         )}
       >
-        <div className="flex items-center gap-2 min-w-0 flex-1">
-          {getDisplayAvatar()}
-          <span className="truncate">{getDisplayValue()}</span>
-        </div>
-        <ChevronDown className={clsx('size-6 ml-2 flex-shrink-0 transition-transform', isOpen && 'rotate-180')} />
-      </button>
-      {isOpen && triggerRect && createPortal(
-        <div
-          ref={dropdownRef}
-          onClick={(e) => e.stopPropagation()}
-          onMouseDown={(e) => e.stopPropagation()}
-          className="fixed z-[10000] mt-1 bg-white dark:bg-gray-800 border border-divider rounded-md shadow-lg min-w-[200px] max-w-[400px] max-h-[400px] flex flex-col"
-          style={{
-            top: triggerRect.bottom + 4,
-            left: triggerRect.left,
-            width: triggerRect.width,
-          }}
-        >
-          <div className="p-2 border-b border-divider sticky top-0 bg-white dark:bg-gray-800 z-[10000]">
-            <div ref={searchInputRef} className="relative z-[10000]">
-              <SearchBar
-                id={searchInputId}
-                name={searchInputId}
-                placeholder={translation('searchLocations')?.replace('locations', '')?.trim() || 'Search...'}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onSearch={() => null}
-                className="w-full"
-              />
+        <div className="relative flex items-center w-full transition-all duration-200">
+          {showSearchBar ? (
+            <SearchBar
+              placeholder={translation('selectAssignee') || 'Assign to...'}
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value)
+              }}
+              onSearch={() => null}
+              onClick={handleInputClick}
+              onFocus={handleInputClick}
+              className="w-full"
+            />
+          ) : (
+            <div
+              onClick={handleInputClick}
+              className="flex items-center gap-2 justify-between w-full h-10 px-3 border-2 border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-on-surface hover:bg-surface-hover focus-within:outline-none focus-within:ring-2 focus-within:ring-primary transition-all duration-200 cursor-text ml-0.5"
+            >
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                {selectedItem.type === 'team' ? (
+                  <Users className="size-5 text-description flex-shrink-0" />
+                ) : (
+                  <AvatarStatusComponent
+                    size="sm"
+                    fullyRounded={true}
+                    isOnline={selectedItem.user.isOnline ?? null}
+                    image={selectedItem.user.avatarUrl ? {
+                      avatarUrl: selectedItem.user.avatarUrl,
+                      alt: selectedItem.user.name
+                    } : undefined}
+                  />
+                )}
+                <span className="truncate">{selectedItem.name}</span>
+              </div>
+              <ChevronDown className={clsx('size-6 ml-2 flex-shrink-0 transition-transform duration-200 text-description', isOpen && 'rotate-180')} />
             </div>
+          )}
+        </div>
+      </div>
+      <Dialog
+        isOpen={isOpen}
+        onClose={handleClose}
+        titleElement={dialogTitle || translation('selectAssignee') || 'Assign to...'}
+        description=""
+        className="w-[500px] h-[600px] max-w-full flex flex-col"
+        isModal={true}
+      >
+        <div className="flex flex-col gap-4 flex-1 min-h-0 overflow-hidden">
+          <div ref={searchInputRef} className="flex-shrink-0">
+            <SearchBar
+              placeholder={translation('searchUsersOrTeams') || 'Search users or teams...'}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onSearch={() => null}
+              className="w-full"
+            />
           </div>
-          <div className="overflow-y-auto flex-1 bg-white dark:bg-gray-800">
+          <div className="overflow-y-auto flex-1 min-h-0 border border-divider rounded-lg bg-white" style={{ height: '300px' }}>
             {filteredUsers.length > 0 && (
               <>
-                <div className="px-2 py-1 text-xs font-semibold text-description bg-white dark:bg-gray-800">{translation('users') ?? 'Users'}</div>
+                <div className="px-3 py-2 text-xs font-semibold text-description bg-white sticky top-0">{translation('users') ?? 'Users'}</div>
                 {filteredUsers.map(u => (
                   <button
                     key={u.id}
                     type="button"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleSelect(u.id)
-                    }}
+                    onClick={() => handleSelect(u.id)}
                     className={clsx(
-                      'w-full px-3 py-2 text-left hover:bg-surface-hover transition-colors flex items-center gap-2 bg-white dark:bg-gray-800',
+                      'w-full px-3 py-2 text-left hover:bg-surface-hover transition-colors flex items-center gap-2 bg-white',
                       value === u.id && 'bg-surface-selected'
                     )}
                   >
@@ -226,17 +234,14 @@ export const AssigneeSelect = ({
             )}
             {allowTeams && filteredTeams.length > 0 && (
               <>
-                <div className="px-2 py-1 text-xs font-semibold text-description bg-white dark:bg-gray-800">{translation('teams')}</div>
+                <div className="px-3 py-2 text-xs font-semibold text-description bg-white sticky top-0">{translation('teams')}</div>
                 {filteredTeams.map(team => (
                   <button
                     key={team.id}
                     type="button"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleSelect(`team:${team.id}`)
-                    }}
+                    onClick={() => handleSelect(`team:${team.id}`)}
                     className={clsx(
-                      'w-full px-3 py-2 text-left hover:bg-surface-hover transition-colors flex items-center gap-2 bg-white dark:bg-gray-800',
+                      'w-full px-3 py-2 text-left hover:bg-surface-hover transition-colors flex items-center gap-2 bg-white',
                       value === `team:${team.id}` && 'bg-surface-selected'
                     )}
                   >
@@ -247,14 +252,14 @@ export const AssigneeSelect = ({
               </>
             )}
             {searchQuery.trim() && filteredUsers.length === 0 && (!allowTeams || filteredTeams.length === 0) && (
-              <div className="px-3 py-2 text-sm text-description text-center">
-                No results found
+              <div className="px-3 py-2 text-sm text-description text-center bg-white">
+                {translation('noResultsFound') || 'No results found'}
               </div>
             )}
           </div>
-        </div>,
-        document.body
-      )}
+        </div>
+      </Dialog>
     </>
   )
 }
+
