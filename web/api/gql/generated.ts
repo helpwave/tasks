@@ -125,6 +125,7 @@ export type Mutation = {
   unassignTaskFromTeam: TaskType;
   updateLocationNode: LocationNodeType;
   updatePatient: PatientType;
+  updateProfilePicture: UserType;
   updatePropertyDefinition: PropertyDefinitionType;
   updateTask: TaskType;
   waitPatient: PatientType;
@@ -227,6 +228,11 @@ export type MutationUpdateLocationNodeArgs = {
 export type MutationUpdatePatientArgs = {
   data: UpdatePatientInput;
   id: Scalars['ID']['input'];
+};
+
+
+export type MutationUpdateProfilePictureArgs = {
+  data: UpdateProfilePictureInput;
 };
 
 
@@ -516,6 +522,10 @@ export type UpdatePatientInput = {
   properties?: InputMaybe<Array<PropertyValueInput>>;
   sex?: InputMaybe<Sex>;
   teamIds?: InputMaybe<Array<Scalars['ID']['input']>>;
+};
+
+export type UpdateProfilePictureInput = {
+  avatarUrl: Scalars['String']['input'];
 };
 
 export type UpdatePropertyDefinitionInput = {
@@ -863,6 +873,13 @@ export type UnassignTaskFromTeamMutationVariables = Exact<{
 
 
 export type UnassignTaskFromTeamMutation = { __typename?: 'Mutation', unassignTaskFromTeam: { __typename?: 'TaskType', id: string, assigneeTeam?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType } | null } };
+
+export type UpdateProfilePictureMutationVariables = Exact<{
+  data: UpdateProfilePictureInput;
+}>;
+
+
+export type UpdateProfilePictureMutation = { __typename?: 'Mutation', updateProfilePicture: { __typename?: 'UserType', id: string, username: string, name: string, email?: string | null, firstname?: string | null, lastname?: string | null, title?: string | null, avatarUrl?: string | null, lastOnline?: any | null, isOnline: boolean } };
 
 
 
@@ -2337,6 +2354,36 @@ export const useUnassignTaskFromTeamMutation = <
       {
     mutationKey: ['UnassignTaskFromTeam'],
     mutationFn: (variables?: UnassignTaskFromTeamMutationVariables) => fetcher<UnassignTaskFromTeamMutation, UnassignTaskFromTeamMutationVariables>(UnassignTaskFromTeamDocument, variables)(),
+    ...options
+  }
+    )};
+
+export const UpdateProfilePictureDocument = `
+    mutation UpdateProfilePicture($data: UpdateProfilePictureInput!) {
+  updateProfilePicture(data: $data) {
+    id
+    username
+    name
+    email
+    firstname
+    lastname
+    title
+    avatarUrl
+    lastOnline
+    isOnline
+  }
+}
+    `;
+
+export const useUpdateProfilePictureMutation = <
+      TError = unknown,
+      TContext = unknown
+    >(options?: UseMutationOptions<UpdateProfilePictureMutation, TError, UpdateProfilePictureMutationVariables, TContext>) => {
+    
+    return useMutation<UpdateProfilePictureMutation, TError, UpdateProfilePictureMutationVariables, TContext>(
+      {
+    mutationKey: ['UpdateProfilePicture'],
+    mutationFn: (variables?: UpdateProfilePictureMutationVariables) => fetcher<UpdateProfilePictureMutation, UpdateProfilePictureMutationVariables>(UpdateProfilePictureDocument, variables)(),
     ...options
   }
     )};

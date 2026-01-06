@@ -15,3 +15,7 @@ htmlcov/
 # feedback
 **/feedback/
 feedback/
+
+# profile pictures
+**/profile/
+profile/

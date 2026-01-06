@@ -165,3 +165,8 @@ class UpdatePropertyDefinitionInput:
     options: list[str] | None = None
     is_active: bool | None = None
     allowed_entities: list[PropertyEntity] | None = None
+
+
+@strawberry.input
+class UpdateProfilePictureInput:
+    avatar_url: str

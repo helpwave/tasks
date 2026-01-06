@@ -1,0 +1,15 @@
+mutation UpdateProfilePicture($data: UpdateProfilePictureInput!) {
+  updateProfilePicture(data: $data) {
+    id
+    username
+    name
+    email
+    firstname
+    lastname
+    title
+    avatarUrl
+    lastOnline
+    isOnline
+  }
+}
+
