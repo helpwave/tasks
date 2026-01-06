@@ -1,5 +1,5 @@
 import type { NextPage } from 'next'
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Page } from '@/components/layout/Page'
 import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
@@ -16,7 +16,7 @@ import {
 import type { HightideTranslationLocales, ThemeType } from '@helpwave/hightide'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { useAuth } from '@/hooks/useAuth'
-import { LogOut, MonitorCog, MoonIcon, SunIcon, Trash2, ClipboardList, Shield, TableProperties, Building2, MessageSquareText } from 'lucide-react'
+import { LogOut, MonitorCog, MoonIcon, SunIcon, Trash2, ClipboardList, Shield, TableProperties, Building2, MessageSquareText, Upload, X } from 'lucide-react'
 import { useRouter } from 'next/router'
 import clsx from 'clsx'
 import { removeUser } from '@/api/auth/authService'
@@ -58,6 +58,10 @@ const SettingsPage: NextPage = () => {
   const config = getConfig()
   const router = useRouter()
   const [isFeedbackDialogOpen, setIsFeedbackDialogOpen] = useState(false)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [isUploading, setIsUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const {
     setValue: setOnboardingSurveyCompleted
@@ -95,6 +99,73 @@ const SettingsPage: NextPage = () => {
     }
   }
 
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file')
+        return
+      }
+      setSelectedFile(file)
+      const url = URL.createObjectURL(file)
+      setPreviewUrl(url)
+    }
+  }
+
+  const handleRemoveFile = () => {
+    setSelectedFile(null)
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl)
+      setPreviewUrl(null)
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
+
+  const handleUpload = async () => {
+    if (!selectedFile || !user?.id) return
+
+    setIsUploading(true)
+    try {
+      const { getUser } = await import('@/api/auth/authService')
+      const authUser = await getUser()
+      const token = authUser?.access_token
+
+      if (!token) {
+        throw new Error('Not authenticated')
+      }
+
+      const formData = new FormData()
+      formData.append('file', selectedFile)
+
+      const response = await fetch('/api/profile/upload', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Upload failed')
+      }
+
+      await response.json()
+
+      queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
+      queryClient.invalidateQueries({ queryKey: ['GetUser'] })
+      queryClient.invalidateQueries()
+
+      handleRemoveFile()
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Failed to upload profile picture')
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
   return (
     <Page pageTitle={titleWrapper(translation('settings'))}>
       <ContentPanel
@@ -103,15 +174,57 @@ const SettingsPage: NextPage = () => {
       >
         <div className="flex flex-col gap-y-12">
           <section className="flex-row-4 items-center p-4 bg-surface-1 rounded-lg border border-divider">
-            <AvatarStatusComponent
-              size="xl"
-              fullyRounded
-              image={user?.avatarUrl ? { avatarUrl: user.avatarUrl, alt: user?.name || '' } : undefined}
-              isOnline={user?.isOnline ?? null}
-            />
-            <div className="flex-col-1">
+            <div className="relative">
+              <AvatarStatusComponent
+                size="xl"
+                fullyRounded
+                image={previewUrl ? { avatarUrl: previewUrl, alt: user?.name || '' } : (user?.avatarUrl ? { avatarUrl: user.avatarUrl, alt: user?.name || '' } : undefined)}
+                isOnline={user?.isOnline ?? null}
+              />
+              {previewUrl && (
+                <button
+                  onClick={handleRemoveFile}
+                  className="absolute -top-1 -right-1 bg-negative text-white rounded-full p-1 hover:opacity-75 transition-opacity"
+                  aria-label="Remove selected image"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+            </div>
+            <div className="flex-col-1 flex-1">
               <span className="typography-title-md font-bold">{user?.name}</span>
               <span className="typography-body-sm text-description">{user?.id}</span>
+              <div className="flex-row-2 items-center gap-x-2 mt-2">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                  id="profile-picture-upload"
+                />
+                <label htmlFor="profile-picture-upload" className="cursor-pointer">
+                  <Button
+                    color="neutral"
+                    coloringStyle="outline"
+                    size="small"
+                    startIcon={<Upload className="w-4 h-4" />}
+                    className="pointer-events-none"
+                  >
+                    {selectedFile ? 'Change Picture' : 'Upload Picture'}
+                  </Button>
+                </label>
+                {selectedFile && (
+                  <Button
+                    color="primary"
+                    size="small"
+                    onClick={handleUpload}
+                    disabled={isUploading}
+                  >
+                    {isUploading ? 'Uploading...' : 'Save'}
+                  </Button>
+                )}
+              </div>
             </div>
           </section>
 

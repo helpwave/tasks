@@ -94,6 +94,7 @@ services:
       RUNTIME_CLIENT_ID: "tasks-web"
     volumes:
       - "./feedback:/feedback"
+      - "profile-data:/profile"
     depends_on:
       - backend
 
@@ -128,3 +129,4 @@ volumes:
   keycloak-data:
   postgres-data:
   influxdb-data:
+  profile-data:

@@ -1,8 +1,8 @@
 import { useMemo, useState, forwardRef, useImperativeHandle, useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { Button, Checkbox, ConfirmDialog, Dialog, FillerRowElement, SearchBar, Table, Tooltip } from '@helpwave/hightide'
+import { Button, Checkbox, ConfirmDialog, FillerRowElement, SearchBar, Table, Tooltip } from '@helpwave/hightide'
 import { PlusIcon, Table as TableIcon, LayoutGrid, UserCheck, Users, Printer } from 'lucide-react'
-import { useAssignTaskMutation, useAssignTaskToTeamMutation, useCompleteTaskMutation, useReopenTaskMutation, type GetGlobalDataQuery } from '@/api/gql/generated'
+import { useAssignTaskMutation, useAssignTaskToTeamMutation, useCompleteTaskMutation, useReopenTaskMutation, useGetUsersQuery, useGetLocationsQuery, type GetGlobalDataQuery } from '@/api/gql/generated'
 import { AssigneeSelect } from './AssigneeSelect'
 import clsx from 'clsx'
 import { SmartDate } from '@/utils/date'
@@ -341,10 +341,34 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
 
   const canHandover = openTasks.length > 0
 
+  const { data: usersData } = useGetUsersQuery(undefined, {})
+  const { data: locationsData } = useGetLocationsQuery(undefined, {})
+
+  const teams = useMemo(() => {
+    if (!locationsData?.locationNodes) return []
+    return locationsData.locationNodes.filter(loc => loc.kind === 'TEAM')
+  }, [locationsData])
+
+  const users = useMemo(() => {
+    return usersData?.users || []
+  }, [usersData])
+
+  const getSelectedUserOrTeam = useMemo(() => {
+    if (!selectedUserId) return null
+    if (selectedUserId.startsWith('team:')) {
+      const teamId = selectedUserId.replace('team:', '')
+      const team = teams.find(t => t.id === teamId)
+      return team ? { type: 'team' as const, name: team.title, id: team.id } : null
+    }
+    const user = users.find(u => u.id === selectedUserId)
+    return user ? { type: 'user' as const, name: user.name, id: user.id, user } : null
+  }, [selectedUserId, teams, users])
+
   const handleHandoverClick = () => {
     if (!canHandover) {
       return
     }
+    setSelectedUserId(null)
     setIsHandoverDialogOpen(true)
   }
 
@@ -355,7 +379,17 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
   }
 
   const handleConfirmHandover = () => {
-    if (!selectedUserId) return
+    if (!selectedUserId) {
+      console.warn('No selectedUserId for handover')
+      return
+    }
+
+    if (openTasks.length === 0) {
+      console.warn('No open tasks to handover')
+      setIsConfirmDialogOpen(false)
+      setSelectedUserId(null)
+      return
+    }
 
     const isTeam = selectedUserId.startsWith('team:')
     const assigneeId = isTeam ? selectedUserId.replace('team:', '') : selectedUserId
@@ -718,42 +752,40 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
           />
         )}
       </SidePanel>
-      <Dialog
-        isOpen={isHandoverDialogOpen}
+      <AssigneeSelect
+        value={selectedUserId || ''}
+        onValueChanged={handleUserSelect}
+        allowTeams={true}
+        allowUnassigned={false}
+        excludeUserIds={user?.id ? [user.id] : []}
         onClose={() => {
           setIsHandoverDialogOpen(false)
-          setSelectedUserId(null)
+          if (!isConfirmDialogOpen) {
+            setSelectedUserId(null)
+          }
         }}
-        titleElement={translation('shiftHandover') || 'Shift Handover'}
-        description={translation('shiftHandoverDescription') || `Select a user to transfer all ${openTasks.length} open task${openTasks.length !== 1 ? 's' : ''} assigned to you.`}
-      >
-        <div className="flex flex-col gap-4">
-          <AssigneeSelect
-            value={selectedUserId || ''}
-            onValueChanged={handleUserSelect}
-            allowTeams={true}
-            allowUnassigned={false}
-            excludeUserIds={user?.id ? [user.id] : []}
-          />
-        </div>
-      </Dialog>
-      <ConfirmDialog
-        isOpen={isConfirmDialogOpen}
-        onCancel={() => {
-          setIsConfirmDialogOpen(false)
-          setSelectedUserId(null)
-        }}
-        onConfirm={handleConfirmHandover}
-        titleElement={translation('confirmShiftHandover') || 'Confirm Shift Handover'}
-        description={(() => {
-          if (!selectedUserId) return ''
-          const isTeam = selectedUserId.startsWith('team:')
-          const taskCount = openTasks.length
-          const taskText = taskCount !== 1 ? 'tasks' : 'task'
-          const recipientText = isTeam ? 'selected team' : 'selected user'
-          return translation('confirmShiftHandoverDescription') || `Are you sure you want to transfer ${taskCount} open ${taskText} to the ${recipientText}?`
-        })()}
+        forceOpen={isHandoverDialogOpen}
+        dialogTitle={translation('shiftHandover') || 'Shift Handover'}
       />
+      {isConfirmDialogOpen && selectedUserId && (
+        <ConfirmDialog
+          isOpen={isConfirmDialogOpen}
+          onCancel={() => {
+            setIsConfirmDialogOpen(false)
+            setSelectedUserId(null)
+          }}
+          onConfirm={() => {
+            if (selectedUserId) {
+              handleConfirmHandover()
+            }
+          }}
+          titleElement={translation('confirmShiftHandover') || 'Confirm Shift Handover'}
+          description={getSelectedUserOrTeam && openTasks.length > 0 ? translation('confirmShiftHandoverDescriptionWithName', {
+            taskCount: openTasks.length,
+            name: getSelectedUserOrTeam.name
+          }) : (translation('confirmShiftHandoverDescription') || 'Are you sure you want to transfer all open tasks?')}
+        />
+      )}
       <UserInfoPopup
         userId={selectedUserPopupId}
         isOpen={!!selectedUserPopupId}

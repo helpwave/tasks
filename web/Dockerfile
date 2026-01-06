@@ -23,9 +23,12 @@ RUN apk add --no-cache libcap=2.77-r0 && \
     addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 tasks && \
     mkdir -p /feedback && \
-    chown tasks:nodejs /feedback
+    mkdir -p /profile && \
+    chown tasks:nodejs /feedback && \
+    chown tasks:nodejs /profile
 
 ENV FEEDBACK_DIR=/feedback
+ENV PROFILE_PICTURE_DIRECTORY=/profile
 
 COPY --from=builder --chown=tasks:nodejs /app/public ./public
 COPY --from=builder --chown=tasks:nodejs /app/build/standalone ./

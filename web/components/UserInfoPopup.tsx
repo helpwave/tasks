@@ -5,6 +5,7 @@ import { fetcher } from '@/api/gql/fetcher'
 import clsx from 'clsx'
 import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
+import { SmartDate } from '@/utils/date'
 
 const GET_USER_QUERY = `
   query GetUser($id: ID!) {
@@ -112,6 +113,11 @@ export const UserInfoPopup: React.FC<UserInfoPopupProps> = ({ userId, isOpen, on
                 {user.isOnline ? 'Online' : 'Offline'}
               </span>
             </div>
+            {user.lastOnline && (
+              <div className="text-xs text-description mt-1">
+                <SmartDate date={new Date(user.lastOnline)} />
+              </div>
+            )}
           </div>
         </div>
       ) : (
