@@ -25,8 +25,8 @@ const TasksPage: NextPage = () => {
     extractItems: (result) => result.tasks,
     mode: 'infinite',
     enabled: !!selectedRootLocationIds && !!user,
-      refetchOnWindowFocus: true,
-      refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
   })
   const taskId = router.query['taskId'] as string | undefined
 
@@ -50,7 +50,7 @@ const TasksPage: NextPage = () => {
         }
         : undefined,
       assignee: task.assignee
-        ? { id: task.assignee.id, name: task.assignee.name, avatarURL: task.assignee.avatarUrl }
+        ? { id: task.assignee.id, name: task.assignee.name, avatarURL: task.assignee.avatarUrl, isOnline: task.assignee.isOnline ?? null }
         : undefined,
     }))
   }, [tasksData])

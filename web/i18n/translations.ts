@@ -222,6 +222,7 @@ export type TasksTranslationEntries = {
   'updateLocation': string,
   'updateLocationConfirmation': string,
   'url': string,
+  'userInformation': string,
   'username': string,
   'users': string,
   'visibility': string,
@@ -270,23 +271,23 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'currentTime': `Aktuelle Zeit`,
     'dashboard': `Dashboard`,
     'dashboardWelcome': ({ name }): string => {
-      return `Guten Morgen, ${name}`
+      return `Guten Morgen, ${name}!`
     },
     'dashboardWelcomeAfternoon': ({ name }): string => {
-      return `Guten Nachmittag, ${name}`
+      return `Guten Nachmittag, ${name}!`
     },
     'dashboardWelcomeDescription': `Hier ist, was heute passiert.`,
     'dashboardWelcomeEvening': ({ name }): string => {
-      return `Guten Abend, ${name}`
+      return `Guten Abend, ${name}!`
     },
     'dashboardWelcomeMorning': ({ name }): string => {
-      return `Guten Morgen, ${name}`
+      return `Guten Morgen, ${name}!`
     },
     'dashboardWelcomeNight': ({ name }): string => {
-      return `Gute Nacht, ${name}`
+      return `Gute Nacht, ${name}!`
     },
     'dashboardWelcomeNoon': ({ name }): string => {
-      return `Guten Mittag, ${name}`
+      return `Guten Mittag, ${name}!`
     },
     'delete': `Löschen`,
     'deletePatient': `Patient löschen`,
@@ -573,6 +574,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'updateLocation': `Standort aktualisieren`,
     'updateLocationConfirmation': `Sind Sie sicher, dass Sie den Standort des Patienten aktualisieren möchten?`,
     'url': `URL`,
+    'userInformation': `Benutzerinformationen`,
     'username': `Benutzername`,
     'users': `Benutzer`,
     'visibility': `Sichtbarkeit`,
@@ -619,23 +621,23 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'currentTime': `Current Time`,
     'dashboard': `Dashboard`,
     'dashboardWelcome': ({ name }): string => {
-      return `Good Morning, ${name}`
+      return `Good Morning, ${name}!`
     },
     'dashboardWelcomeAfternoon': ({ name }): string => {
-      return `Good Afternoon, ${name}`
+      return `Good Afternoon, ${name}!`
     },
     'dashboardWelcomeDescription': `Here is what is happening today.`,
     'dashboardWelcomeEvening': ({ name }): string => {
-      return `Good Evening, ${name}`
+      return `Good Evening, ${name}!`
     },
     'dashboardWelcomeMorning': ({ name }): string => {
-      return `Good Morning, ${name}`
+      return `Good Morning, ${name}!`
     },
     'dashboardWelcomeNight': ({ name }): string => {
-      return `Good Night, ${name}`
+      return `Good Night, ${name}!`
     },
     'dashboardWelcomeNoon': ({ name }): string => {
-      return `Good Afternoon, ${name}`
+      return `Good Afternoon, ${name}!`
     },
     'delete': `Delete`,
     'deletePatient': `Delete Patient`,
@@ -823,15 +825,15 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'public': `public`,
     'publish': `publish`,
     'rAdd': ({ name }): string => {
-      return `Add ${name}`
+      return `Add ${name}!`
     },
     'rClickToAdd': ({ name }): string => {
-      return `Click to add ${name}`
+      return `Click to add ${name}!`
     },
     'recentPatients': `Your Recent Patients`,
     'recentTasks': `Your Recent Tasks`,
     'rEdit': ({ name }): string => {
-      return `Update ${name}`
+      return `Update ${name}!`
     },
     'removeProperty': `Remove Property`,
     'removePropertyConfirmation': `Are you sure you want to remove this property? This action cannot be undone.`,
@@ -921,6 +923,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'updateLocation': `Update Location`,
     'updateLocationConfirmation': `Are you sure you want to update the patient's location?`,
     'url': `URL`,
+    'userInformation': `User Information`,
     'username': `Username`,
     'users': `Users`,
     'visibility': `Visibility`,

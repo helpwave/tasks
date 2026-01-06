@@ -72,7 +72,7 @@
       }
     }
   },
-  "dashboardWelcome": "Guten Morgen, {name}",
+  "dashboardWelcome": "Guten Morgen, {name}!",
   "@dashboardWelcome": {
     "placeholders": {
       "name": {
@@ -80,7 +80,7 @@
       }
     }
   },
-  "dashboardWelcomeMorning": "Guten Morgen, {name}",
+  "dashboardWelcomeMorning": "Guten Morgen, {name}!",
   "@dashboardWelcomeMorning": {
     "placeholders": {
       "name": {
@@ -88,7 +88,7 @@
       }
     }
   },
-  "dashboardWelcomeNoon": "Guten Mittag, {name}",
+  "dashboardWelcomeNoon": "Guten Mittag, {name}!",
   "@dashboardWelcomeNoon": {
     "placeholders": {
       "name": {
@@ -96,7 +96,7 @@
       }
     }
   },
-  "dashboardWelcomeAfternoon": "Guten Nachmittag, {name}",
+  "dashboardWelcomeAfternoon": "Guten Nachmittag, {name}!",
   "@dashboardWelcomeAfternoon": {
     "placeholders": {
       "name": {
@@ -104,7 +104,7 @@
       }
     }
   },
-  "dashboardWelcomeEvening": "Guten Abend, {name}",
+  "dashboardWelcomeEvening": "Guten Abend, {name}!",
   "@dashboardWelcomeEvening": {
     "placeholders": {
       "name": {
@@ -112,7 +112,7 @@
       }
     }
   },
-  "dashboardWelcomeNight": "Gute Nacht, {name}",
+  "dashboardWelcomeNight": "Gute Nacht, {name}!",
   "@dashboardWelcomeNight": {
     "placeholders": {
       "name": {
@@ -397,5 +397,6 @@
   "ok": "OK",
   "submitAnonymously": "Anonym absenden",
   "conflictDetected": "Konflikt erkannt",
-  "overwrite": "Überschreiben"
+  "overwrite": "Überschreiben",
+  "userInformation": "Benutzerinformationen"
 }

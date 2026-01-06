@@ -61,8 +61,8 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
     extractItems: (result) => result.patients,
     mode: 'infinite',
     enabled: !isPrinting,
-      refetchOnWindowFocus: !isPrinting,
-      refetchOnMount: true,
+    refetchOnWindowFocus: !isPrinting,
+    refetchOnMount: true,
   })
 
   useEffect(() => {
@@ -134,16 +134,14 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
   }, [])
 
   useEffect(() => {
-    if (initialPatientId && patients.length > 0 && openedPatientId !== initialPatientId) {
+    if (initialPatientId && openedPatientId !== initialPatientId) {
       const patient = patients.find(p => p.id === initialPatientId)
       if (patient) {
         setSelectedPatient(patient)
+      }
         setIsPanelOpen(true)
         setOpenedPatientId(initialPatientId)
         onInitialPatientOpened?.()
-      }
-    } else if (!initialPatientId) {
-      setOpenedPatientId(null)
     }
   }, [initialPatientId, patients, openedPatientId, onInitialPatientOpened])
 
@@ -155,6 +153,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
   const handleClose = () => {
     setIsPanelOpen(false)
     setSelectedPatient(undefined)
+    setOpenedPatientId(null)
   }
 
   const handlePrint = () => {
@@ -356,10 +355,10 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       <SidePanel
         isOpen={isPanelOpen}
         onClose={handleClose}
-        title={!selectedPatient ? translation('addPatient') : translation('editPatient')}
+        title={!selectedPatient && !openedPatientId ? translation('addPatient') : translation('editPatient')}
       >
         <PatientDetailView
-          patientId={selectedPatient?.id}
+          patientId={selectedPatient?.id ?? openedPatientId ?? undefined}
           onClose={handleClose}
           onSuccess={refetch}
         />

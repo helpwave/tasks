@@ -7,15 +7,13 @@ import {
   PropertyEntity,
   Sex,
   type FieldType,
-  useCreatePatientMutation,
-  useDeletePatientMutation,
   useGetPatientQuery,
   useGetPropertyDefinitionsQuery
 } from '@/api/gql/generated'
 import { useAtomicMutation } from '@/hooks/useAtomicMutation'
 import { useSafeMutation } from '@/hooks/useSafeMutation'
 import { fetcher } from '@/api/gql/fetcher'
-import { UpdatePatientDocument, type UpdatePatientMutation, type UpdatePatientMutationVariables, AdmitPatientDocument, DischargePatientDocument, WaitPatientDocument, MarkPatientDeadDocument, type AdmitPatientMutation, type DischargePatientMutation, type WaitPatientMutation, type MarkPatientDeadMutation, type GetPatientQuery, type GetPatientsQuery, CompleteTaskDocument, ReopenTaskDocument, type CompleteTaskMutation, type ReopenTaskMutation, type CompleteTaskMutationVariables, type ReopenTaskMutationVariables } from '@/api/gql/generated'
+import { UpdatePatientDocument, type UpdatePatientMutation, type UpdatePatientMutationVariables, AdmitPatientDocument, DischargePatientDocument, WaitPatientDocument, MarkPatientDeadDocument, CreatePatientDocument, DeletePatientDocument, type AdmitPatientMutation, type DischargePatientMutation, type WaitPatientMutation, type MarkPatientDeadMutation, type CreatePatientMutation, type DeletePatientMutation, type CreatePatientMutationVariables, type DeletePatientMutationVariables, type GetPatientQuery, type GetPatientsQuery, CompleteTaskDocument, ReopenTaskDocument, type CompleteTaskMutation, type ReopenTaskMutation, type CompleteTaskMutationVariables, type ReopenTaskMutationVariables, type GetGlobalDataQuery } from '@/api/gql/generated'
 import {
   Button,
   Checkbox,
@@ -100,6 +98,7 @@ export const PatientDetailView = ({
   const translation = useTasksTranslation()
   const queryClient = useQueryClient()
   const { selectedLocationId, selectedRootLocationIds, rootLocations } = useTasksContext()
+  const selectedRootLocationIdsForQuery = selectedRootLocationIds && selectedRootLocationIds.length > 0 ? selectedRootLocationIds : undefined
   const firstSelectedRootLocationId = selectedRootLocationIds && selectedRootLocationIds.length > 0 ? selectedRootLocationIds[0] : undefined
   const [taskId, setTaskId] = useState<string | null>(null)
   const [isCreatingTask, setIsCreatingTask] = useState(false)
@@ -138,6 +137,8 @@ export const PatientDetailView = ({
     return map
   }, [locationsData])
 
+  const [optimisticTaskUpdates, setOptimisticTaskUpdates] = useState<Map<string, boolean>>(new Map())
+
   const { mutate: completeTask } = useSafeMutation<CompleteTaskMutation, CompleteTaskMutationVariables>({
     mutationFn: async (variables) => {
       return fetcher<CompleteTaskMutation, CompleteTaskMutationVariables>(CompleteTaskDocument, variables)()
@@ -159,11 +160,52 @@ export const PatientDetailView = ({
             }
           }
         }
+      },
+      {
+        queryKey: ['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }],
+        updateFn: (oldData: unknown) => {
+          const data = oldData as GetGlobalDataQuery | undefined
+          if (!data?.me?.tasks) return oldData
+          return {
+            ...data,
+            me: data.me ? {
+              ...data.me,
+              tasks: data.me.tasks.map(task => task.id === variables.id ? { ...task, done: true } : task)
+            } : null
+          }
+        }
+      },
+      {
+        queryKey: ['GetPatients'],
+        updateFn: (oldData: unknown) => {
+          const data = oldData as GetPatientsQuery | undefined
+          if (!data?.patients) return oldData
+          return {
+            ...data,
+            patients: data.patients.map(patient => {
+              if (patient.id === patientId && patient.tasks) {
+                return {
+                  ...patient,
+                  tasks: patient.tasks.map(task => task.id === variables.id ? { ...task, done: true } : task)
+                }
+              }
+              return patient
+            })
+          }
+        }
       }
     ],
     invalidateQueries: [['GetPatient', { id: patientId }], ['GetTasks'], ['GetPatients'], ['GetOverviewData'], ['GetGlobalData']],
-    onSuccess: () => {
+    onSuccess: async () => {
+      await queryClient.refetchQueries({ queryKey: ['GetPatient', { id: patientId }] })
       onSuccess()
+    },
+    onError: (error, variables) => {
+      setOptimisticTaskUpdates(prev => {
+        const next = new Map(prev)
+        next.delete(variables.id)
+        return next
+      })
     },
   })
 
@@ -188,11 +230,52 @@ export const PatientDetailView = ({
             }
           }
         }
+      },
+      {
+        queryKey: ['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }],
+        updateFn: (oldData: unknown) => {
+          const data = oldData as GetGlobalDataQuery | undefined
+          if (!data?.me?.tasks) return oldData
+          return {
+            ...data,
+            me: data.me ? {
+              ...data.me,
+              tasks: data.me.tasks.map(task => task.id === variables.id ? { ...task, done: false } : task)
+            } : null
+          }
+        }
+      },
+      {
+        queryKey: ['GetPatients'],
+        updateFn: (oldData: unknown) => {
+          const data = oldData as GetPatientsQuery | undefined
+          if (!data?.patients) return oldData
+          return {
+            ...data,
+            patients: data.patients.map(patient => {
+              if (patient.id === patientId && patient.tasks) {
+                return {
+                  ...patient,
+                  tasks: patient.tasks.map(task => task.id === variables.id ? { ...task, done: false } : task)
+                }
+              }
+              return patient
+            })
+          }
+        }
       }
     ],
     invalidateQueries: [['GetPatient', { id: patientId }], ['GetTasks'], ['GetPatients'], ['GetOverviewData'], ['GetGlobalData']],
-    onSuccess: () => {
+    onSuccess: async () => {
+      await queryClient.refetchQueries({ queryKey: ['GetPatient', { id: patientId }] })
       onSuccess()
+    },
+    onError: (error, variables) => {
+      setOptimisticTaskUpdates(prev => {
+        const next = new Map(prev)
+        next.delete(variables.id)
+        return next
+      })
     },
   })
 
@@ -274,8 +357,47 @@ export const PatientDetailView = ({
     }
   }, [isEditMode, firstSelectedRootLocationId, locationsData, formData.clinicId, rootLocations])
 
-  const { mutate: createPatient, isLoading: isCreating } = useCreatePatientMutation({
-    onSuccess: () => {
+  const { mutate: createPatient, isLoading: isCreating } = useSafeMutation<CreatePatientMutation, CreatePatientMutationVariables>({
+    mutationFn: async (variables) => {
+      return fetcher<CreatePatientMutation, CreatePatientMutationVariables>(CreatePatientDocument, variables)()
+    },
+    queryKey: ['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }],
+    optimisticUpdate: (variables) => [
+      {
+        queryKey: ['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }],
+        updateFn: (oldData: unknown) => {
+          const data = oldData as GetGlobalDataQuery | undefined
+          if (!data) return oldData
+          const newPatient = {
+            __typename: 'PatientType' as const,
+            id: `temp-${Date.now()}`,
+            name: `${variables.data.firstname} ${variables.data.lastname}`.trim(),
+            firstname: variables.data.firstname,
+            lastname: variables.data.lastname,
+            birthdate: variables.data.birthdate,
+            sex: variables.data.sex,
+            state: variables.data.state || PatientState.Admitted,
+            assignedLocation: null,
+            assignedLocations: [],
+            clinic: null,
+            position: null,
+            teams: [],
+            properties: [],
+            tasks: [],
+          }
+          return {
+            ...data,
+            patients: [...(data.patients || []), newPatient],
+            waitingPatients: variables.data.state === PatientState.Wait
+              ? [...(data.waitingPatients || []), newPatient]
+              : data.waitingPatients || [],
+          }
+        }
+      }
+    ],
+    invalidateQueries: [['GetGlobalData'], ['GetPatients'], ['GetOverviewData']],
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
       onSuccess()
       onClose()
     },
@@ -532,6 +654,24 @@ export const PatientDetailView = ({
               p.id === patientId ? { ...p, state: PatientState.Admitted } : p)
           }
         }
+      },
+      {
+        queryKey: ['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }],
+        updateFn: (oldData: unknown) => {
+          const data = oldData as GetGlobalDataQuery | undefined
+          if (!data) return oldData
+          const existingPatient = data.patients.find(p => p.id === patientId)
+          const updatedPatient = existingPatient
+            ? { ...existingPatient, state: PatientState.Admitted }
+            : { __typename: 'PatientType' as const, id: patientId, state: PatientState.Admitted, assignedLocation: null }
+          return {
+            ...data,
+            patients: existingPatient
+              ? data.patients.map(p => p.id === patientId ? updatedPatient : p)
+              : [...data.patients, updatedPatient],
+            waitingPatients: data.waitingPatients.filter(p => p.id !== patientId)
+          }
+        }
       }
     ],
     invalidateQueries: [['GetPatients'], ['GetGlobalData']],
@@ -569,6 +709,24 @@ export const PatientDetailView = ({
             ...data,
             patients: data.patients.map(p =>
               p.id === patientId ? { ...p, state: PatientState.Discharged } : p)
+          }
+        }
+      },
+      {
+        queryKey: ['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }],
+        updateFn: (oldData: unknown) => {
+          const data = oldData as GetGlobalDataQuery | undefined
+          if (!data) return oldData
+          const existingPatient = data.patients.find(p => p.id === patientId)
+          const updatedPatient = existingPatient
+            ? { ...existingPatient, state: PatientState.Discharged }
+            : { __typename: 'PatientType' as const, id: patientId, state: PatientState.Discharged, assignedLocation: null }
+          return {
+            ...data,
+            patients: existingPatient
+              ? data.patients.map(p => p.id === patientId ? updatedPatient : p)
+              : [...data.patients, updatedPatient],
+            waitingPatients: data.waitingPatients.filter(p => p.id !== patientId)
           }
         }
       }
@@ -610,6 +768,24 @@ export const PatientDetailView = ({
               p.id === patientId ? { ...p, state: PatientState.Dead } : p)
           }
         }
+      },
+      {
+        queryKey: ['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }],
+        updateFn: (oldData: unknown) => {
+          const data = oldData as GetGlobalDataQuery | undefined
+          if (!data) return oldData
+          const existingPatient = data.patients.find(p => p.id === patientId)
+          const updatedPatient = existingPatient
+            ? { ...existingPatient, state: PatientState.Dead }
+            : { __typename: 'PatientType' as const, id: patientId, state: PatientState.Dead, assignedLocation: null }
+          return {
+            ...data,
+            patients: existingPatient
+              ? data.patients.map(p => p.id === patientId ? updatedPatient : p)
+              : [...data.patients, updatedPatient],
+            waitingPatients: data.waitingPatients.filter(p => p.id !== patientId)
+          }
+        }
       }
     ],
     invalidateQueries: [['GetPatients'], ['GetGlobalData']],
@@ -649,6 +825,27 @@ export const PatientDetailView = ({
               p.id === patientId ? { ...p, state: PatientState.Wait } : p)
           }
         }
+      },
+      {
+        queryKey: ['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }],
+        updateFn: (oldData: unknown) => {
+          const data = oldData as GetGlobalDataQuery | undefined
+          if (!data) return oldData
+          const existingPatient = data.patients.find(p => p.id === patientId)
+          const isAlreadyWaiting = data.waitingPatients.some(p => p.id === patientId)
+          const updatedPatient = existingPatient
+            ? { ...existingPatient, state: PatientState.Wait }
+            : { __typename: 'PatientType' as const, id: patientId, state: PatientState.Wait, assignedLocation: null }
+          return {
+            ...data,
+            patients: existingPatient
+              ? data.patients.map(p => p.id === patientId ? updatedPatient : p)
+              : [...data.patients, updatedPatient],
+            waitingPatients: isAlreadyWaiting
+              ? data.waitingPatients
+              : [...data.waitingPatients, updatedPatient]
+          }
+        }
       }
     ],
     invalidateQueries: [['GetPatients'], ['GetGlobalData']],
@@ -657,8 +854,43 @@ export const PatientDetailView = ({
     },
   })
 
-  const { mutate: deletePatient } = useDeletePatientMutation({
-    onSuccess: () => {
+  const { mutate: deletePatient } = useSafeMutation<DeletePatientMutation, DeletePatientMutationVariables>({
+    mutationFn: async (variables) => {
+      return fetcher<DeletePatientMutation, DeletePatientMutationVariables>(DeletePatientDocument, variables)()
+    },
+    queryKey: ['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }],
+    optimisticUpdate: (variables) => [
+      {
+        queryKey: ['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }],
+        updateFn: (oldData: unknown) => {
+          const data = oldData as GetGlobalDataQuery | undefined
+          if (!data) return oldData
+          return {
+            ...data,
+            patients: (data.patients || []).filter(p => p.id !== variables.id),
+            waitingPatients: (data.waitingPatients || []).filter(p => p.id !== variables.id),
+          }
+        }
+      },
+      {
+        queryKey: ['GetPatients'],
+        updateFn: (oldData: unknown) => {
+          const data = oldData as GetPatientsQuery | undefined
+          if (!data?.patients) return oldData
+          return {
+            ...data,
+            patients: data.patients.filter(p => p.id !== variables.id),
+          }
+        }
+      },
+      {
+        queryKey: ['GetPatient', { id: variables.id }],
+        updateFn: () => undefined,
+      }
+    ],
+    invalidateQueries: [['GetGlobalData'], ['GetPatients'], ['GetOverviewData']],
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
       onSuccess()
       onClose()
     },
@@ -837,7 +1069,17 @@ export const PatientDetailView = ({
     })
   }
 
-  const tasks = useMemo(() => patientData?.patient?.tasks || [], [patientData?.patient?.tasks])
+  const tasks = useMemo(() => {
+    const baseTasks = patientData?.patient?.tasks || []
+    return baseTasks.map(task => {
+      const optimisticDone = optimisticTaskUpdates.get(task.id)
+      if (optimisticDone !== undefined) {
+        return { ...task, done: optimisticDone }
+      }
+      return task
+    })
+  }, [patientData?.patient?.tasks, optimisticTaskUpdates])
+
   const openTasks = useMemo(() => sortByDueDate(tasks.filter(t => !t.done)), [tasks])
   const closedTasks = useMemo(() => sortByDueDate(tasks.filter(t => t.done)), [tasks])
   const totalTasks = openTasks.length + closedTasks.length
@@ -867,11 +1109,16 @@ export const PatientDetailView = ({
     return new Date()
   }, [])
 
-  if (isEditMode && isLoadingPatient) {
-    return <LoadingContainer />
-  }
+  useEffect(() => {
+    setOptimisticTaskUpdates(new Map())
+  }, [patientData?.patient?.tasks])
 
   const handleToggleDone = (taskId: string, done: boolean) => {
+    setOptimisticTaskUpdates(prev => {
+      const next = new Map(prev)
+      next.set(taskId, done)
+      return next
+    })
     if (done) {
       setClosedExpanded(true)
       completeTask({ id: taskId })
@@ -879,6 +1126,10 @@ export const PatientDetailView = ({
       setOpenExpanded(true)
       reopenTask({ id: taskId })
     }
+  }
+
+  if (isEditMode && isLoadingPatient) {
+    return <LoadingContainer />
   }
 
   return (
@@ -946,6 +1197,7 @@ export const PatientDetailView = ({
                           onToggleDone={(taskId, done) => handleToggleDone(taskId, done)}
                           showPatient={false}
                           showAssignee={!!(task.assignee || task.assigneeTeam)}
+                          fullWidth={true}
                         />
                       ))}
                     </div>
@@ -973,6 +1225,7 @@ export const PatientDetailView = ({
                           onToggleDone={(taskId, done) => handleToggleDone(taskId, done)}
                           showPatient={false}
                           showAssignee={!!(task.assignee || task.assigneeTeam)}
+                          fullWidth={true}
                         />
                       ))}
                     </div>
@@ -1396,7 +1649,7 @@ export const PatientDetailView = ({
 
           {isEditMode && patientId && (
             <Tab label="Audit Log" className="flex-col-6 px-1 pt-4 h-full overflow-x-visible overflow-y-auto">
-              <AuditLogTimeline caseId={patientId} />
+              <AuditLogTimeline caseId={patientId} enabled={true} />
             </Tab>
           )}
         </TabView>

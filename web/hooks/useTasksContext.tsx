@@ -54,6 +54,7 @@ type User = {
   name: string,
   avatarUrl?: string | null,
   organizations?: string | null,
+  isOnline?: boolean | null,
 }
 
 type LocationNode = {
@@ -191,7 +192,8 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
           id: data.me.id,
           name: data.me.name,
           avatarUrl: data.me.avatarUrl,
-          organizations: data.me.organizations ?? null
+          organizations: data.me.organizations ?? null,
+          isOnline: data.me.isOnline ?? null
         } : undefined,
         myTasksCount: data?.me?.tasks?.filter(t => !t.done).length ?? 0,
         totalPatientsCount,

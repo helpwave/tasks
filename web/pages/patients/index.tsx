@@ -11,7 +11,7 @@ const PatientsPage: NextPage = () => {
   const translation = useTasksTranslation()
   const router = useRouter()
   const { totalPatientsCount } = useTasksContext()
-  const patientId = router.query['patientId'] as string | undefined
+  const patientId = router.isReady ? (router.query['patientId'] as string | undefined) : undefined
 
   return (
     <Page pageTitle={titleWrapper(translation('patients'))}>

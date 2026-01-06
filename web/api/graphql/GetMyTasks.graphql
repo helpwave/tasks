@@ -40,6 +40,8 @@ query GetMyTasks {
         id
         name
         avatarUrl
+        lastOnline
+        isOnline
       }
     }
   }

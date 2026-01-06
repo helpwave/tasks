@@ -44,7 +44,7 @@ export const AvatarStatusComponent: React.FC<AvatarStatusComponentProps> = ({
           dotSizeClasses[size],
           dotPositionClasses[size],
           dotBorderClasses[size],
-          showOnline ? 'bg-green-500' : 'bg-gray-400'
+          showOnline ? 'bg-green-600' : 'bg-red-600'
         )}
         aria-label={showOnline ? 'Online' : 'Offline'}
       />

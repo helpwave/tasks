@@ -28,6 +28,8 @@ query GetOverviewData {
       id
       name
       avatarUrl
+      lastOnline
+      isOnline
     }
     patient {
       id

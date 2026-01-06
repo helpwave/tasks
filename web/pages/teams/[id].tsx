@@ -65,7 +65,7 @@ const TeamPage: NextPage = () => {
         }
         : undefined,
       assignee: task.assignee
-        ? { id: task.assignee.id, name: task.assignee.name, avatarURL: task.assignee.avatarUrl }
+        ? { id: task.assignee.id, name: task.assignee.name, avatarURL: task.assignee.avatarUrl, isOnline: task.assignee.isOnline ?? null }
         : undefined,
       assigneeTeam: task.assigneeTeam
         ? { id: task.assigneeTeam.id, title: task.assigneeTeam.title }

@@ -5,7 +5,6 @@ import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
 import {
-  Avatar,
   Button,
   LocalizationUtil,
   Select,
@@ -26,6 +25,7 @@ import { hashString } from '@/utils/hash'
 import { getConfig } from '@/utils/config'
 import { useLocalStorage } from '@helpwave/hightide'
 import { FeedbackDialog } from '@/components/FeedbackDialog'
+import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
 
 type ThemeIconProps = {
   theme: ThemeType,
@@ -103,10 +103,11 @@ const SettingsPage: NextPage = () => {
       >
         <div className="flex flex-col gap-y-12">
           <section className="flex-row-4 items-center p-4 bg-surface-1 rounded-lg border border-divider">
-            <Avatar
+            <AvatarStatusComponent
               size="xl"
               fullyRounded
               image={user?.avatarUrl ? { avatarUrl: user.avatarUrl, alt: user?.name || '' } : undefined}
+              isOnline={user?.isOnline ?? null}
             />
             <div className="flex-col-1">
               <span className="typography-title-md font-bold">{user?.name}</span>

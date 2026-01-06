@@ -6,6 +6,8 @@ query GetGlobalData($rootLocationIds: [ID!]) {
     firstname
     lastname
     avatarUrl
+    lastOnline
+    isOnline
     organizations
     rootLocations {
       id

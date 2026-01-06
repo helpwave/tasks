@@ -3,6 +3,7 @@ query GetUsers {
     id
     name
     avatarUrl
+    lastOnline
     isOnline
   }
 }

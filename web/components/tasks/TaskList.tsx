@@ -1,11 +1,14 @@
 import { useMemo, useState, forwardRef, useImperativeHandle, useEffect } from 'react'
-import { Avatar, Button, Checkbox, CheckboxUncontrolled, ConfirmDialog, Dialog, FillerRowElement, SearchBar, Select, SelectOption, Table, Tooltip } from '@helpwave/hightide'
+import { useQueryClient } from '@tanstack/react-query'
+import { Button, Checkbox, ConfirmDialog, Dialog, FillerRowElement, SearchBar, Table, Tooltip } from '@helpwave/hightide'
 import { PlusIcon, Table as TableIcon, LayoutGrid, UserCheck, Users, Printer } from 'lucide-react'
-import { useAssignTaskMutation, useCompleteTaskMutation, useGetUsersQuery, useReopenTaskMutation } from '@/api/gql/generated'
+import { useAssignTaskMutation, useAssignTaskToTeamMutation, useCompleteTaskMutation, useReopenTaskMutation, type GetGlobalDataQuery } from '@/api/gql/generated'
+import { AssigneeSelect } from './AssigneeSelect'
 import clsx from 'clsx'
 import { SmartDate } from '@/utils/date'
 import { SidePanel } from '@/components/layout/SidePanel'
 import { TaskDetailView } from '@/components/tasks/TaskDetailView'
+import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
 import { PatientDetailView } from '@/components/patients/PatientDetailView'
 import { LocationChips } from '@/components/patients/LocationChips'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
@@ -32,7 +35,7 @@ export type TaskViewModel = {
       parent?: { id: string, title: string, parent?: { id: string, title: string } | null } | null,
     }>,
   },
-  assignee?: { id: string, name: string, avatarURL?: string | null },
+  assignee?: { id: string, name: string, avatarURL?: string | null, isOnline?: boolean | null },
   assigneeTeam?: { id: string, title: string },
   done: boolean,
 }
@@ -105,15 +108,109 @@ const STORAGE_KEY_SHOW_DONE = 'task-show-done'
 
 export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initialTasks, onRefetch, showAssignee = false, initialTaskId, onInitialTaskOpened, headerActions }, ref) => {
   const translation = useTasksTranslation()
-  const { totalPatientsCount, user } = useTasksContext()
+  const queryClient = useQueryClient()
+  const { totalPatientsCount, user, selectedRootLocationIds } = useTasksContext()
   const { viewType, toggleView } = useTaskViewToggle()
-  const { mutate: completeTask } = useCompleteTaskMutation({ onSuccess: onRefetch })
-  const { mutate: reopenTask } = useReopenTaskMutation({ onSuccess: onRefetch })
-  const { mutate: assignTask } = useAssignTaskMutation({ onSuccess: onRefetch })
-  const [isPrinting, setIsPrinting] = useState(false)
-  const { data: usersData } = useGetUsersQuery(undefined, {
-    refetchOnWindowFocus: !isPrinting,
+  const [optimisticUpdates, setOptimisticUpdates] = useState<Map<string, boolean>>(new Map())
+  const { mutate: completeTask } = useCompleteTaskMutation({
+    onMutate: async (variables) => {
+      const selectedRootLocationIdsForQuery = selectedRootLocationIds && selectedRootLocationIds.length > 0 ? selectedRootLocationIds : undefined
+      await queryClient.cancelQueries({ queryKey: ['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }] })
+      const previousData = queryClient.getQueryData<GetGlobalDataQuery>(['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }])
+      if (previousData?.me?.tasks) {
+        queryClient.setQueryData<GetGlobalDataQuery>(['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }], {
+          ...previousData,
+          me: previousData.me ? {
+            ...previousData.me,
+            tasks: previousData.me.tasks.map(task => task.id === variables.id ? { ...task, done: true } : task)
+          } : null
+        })
+      }
+      setOptimisticUpdates(prev => {
+        const next = new Map(prev)
+        next.set(variables.id, true)
+        return next
+      })
+      return { previousData }
+    },
+    onSuccess: async () => {
+      setOptimisticUpdates(prev => {
+        const next = new Map(prev)
+        return next
+      })
+      await queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
+      await queryClient.invalidateQueries({ queryKey: ['GetTasks'] })
+      await queryClient.invalidateQueries({ queryKey: ['GetPatients'] })
+      onRefetch?.()
+    },
+    onError: (error, variables, context) => {
+      if (context?.previousData) {
+        const selectedRootLocationIdsForQuery = selectedRootLocationIds && selectedRootLocationIds.length > 0 ? selectedRootLocationIds : undefined
+        queryClient.setQueryData(['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }], context.previousData)
+      }
+      setOptimisticUpdates(prev => {
+        const next = new Map(prev)
+        next.delete(variables.id)
+        return next
+      })
+    }
   })
+  const { mutate: reopenTask } = useReopenTaskMutation({
+    onMutate: async (variables) => {
+      const selectedRootLocationIdsForQuery = selectedRootLocationIds && selectedRootLocationIds.length > 0 ? selectedRootLocationIds : undefined
+      await queryClient.cancelQueries({ queryKey: ['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }] })
+      const previousData = queryClient.getQueryData<GetGlobalDataQuery>(['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }])
+      if (previousData?.me?.tasks) {
+        queryClient.setQueryData<GetGlobalDataQuery>(['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }], {
+          ...previousData,
+          me: previousData.me ? {
+            ...previousData.me,
+            tasks: previousData.me.tasks.map(task => task.id === variables.id ? { ...task, done: false } : task)
+          } : null
+        })
+      }
+      setOptimisticUpdates(prev => {
+        const next = new Map(prev)
+        next.set(variables.id, false)
+        return next
+      })
+      return { previousData }
+    },
+    onSuccess: async () => {
+      setOptimisticUpdates(prev => {
+        const next = new Map(prev)
+        return next
+      })
+      await queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
+      await queryClient.invalidateQueries({ queryKey: ['GetTasks'] })
+      await queryClient.invalidateQueries({ queryKey: ['GetPatients'] })
+      onRefetch?.()
+    },
+    onError: (error, variables, context) => {
+      if (context?.previousData) {
+        const selectedRootLocationIdsForQuery = selectedRootLocationIds && selectedRootLocationIds.length > 0 ? selectedRootLocationIds : undefined
+        queryClient.setQueryData(['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }], context.previousData)
+      }
+      setOptimisticUpdates(prev => {
+        const next = new Map(prev)
+        next.delete(variables.id)
+        return next
+      })
+    }
+  })
+  const { mutate: assignTask } = useAssignTaskMutation({
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
+      onRefetch?.()
+    }
+  })
+  const { mutate: assignTaskToTeam } = useAssignTaskToTeamMutation({
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
+      onRefetch?.()
+    }
+  })
+  const [, setIsPrinting] = useState(false)
 
   useEffect(() => {
     const handleBeforePrint = () => setIsPrinting(true)
@@ -181,8 +278,31 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
     }
   }, [initialTaskId, initialTasks, openedTaskId, onInitialTaskOpened])
 
+  useEffect(() => {
+    setOptimisticUpdates(prev => {
+      const next = new Map(prev)
+      let hasChanges = false
+
+      for (const [taskId, optimisticDone] of next.entries()) {
+        const task = initialTasks.find(t => t.id === taskId)
+        if (task && task.done === optimisticDone) {
+          next.delete(taskId)
+          hasChanges = true
+        }
+      }
+
+      return hasChanges ? next : prev
+    })
+  }, [initialTasks])
+
   const tasks = useMemo(() => {
-    let data = initialTasks
+    let data = initialTasks.map(task => {
+      const optimisticDone = optimisticUpdates.get(task.id)
+      if (optimisticDone !== undefined) {
+        return { ...task, done: optimisticDone }
+      }
+      return task
+    })
 
     if (!showDone) {
       data = data.filter(t => !t.done)
@@ -206,17 +326,20 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
 
       return a.dueDate.getTime() - b.dueDate.getTime()
     })
-  }, [initialTasks, searchQuery, showDone])
+  }, [initialTasks, optimisticUpdates, searchQuery, showDone])
 
   const openTasks = useMemo(() => {
-    return initialTasks.filter(t => !t.done && t.assignee?.id === user?.id)
-  }, [initialTasks, user?.id])
+    const tasksWithOptimistic = initialTasks.map(task => {
+      const optimisticDone = optimisticUpdates.get(task.id)
+      if (optimisticDone !== undefined) {
+        return { ...task, done: optimisticDone }
+      }
+      return task
+    })
+    return tasksWithOptimistic.filter(t => !t.done && t.assignee?.id === user?.id)
+  }, [initialTasks, optimisticUpdates, user?.id])
 
-  const users = useMemo(() => {
-    return usersData?.users?.filter(u => u.id !== user?.id) || []
-  }, [usersData, user?.id])
-
-  const canHandover = openTasks.length > 0 && users.length > 0
+  const canHandover = openTasks.length > 0
 
   const handleHandoverClick = () => {
     if (!canHandover) {
@@ -234,9 +357,22 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
   const handleConfirmHandover = () => {
     if (!selectedUserId) return
 
+    const isTeam = selectedUserId.startsWith('team:')
+    const assigneeId = isTeam ? selectedUserId.replace('team:', '') : selectedUserId
+
     openTasks.forEach(task => {
-      assignTask({ id: task.id, userId: selectedUserId })
+      if (isTeam) {
+        assignTaskToTeam({ id: task.id, teamId: assigneeId })
+      } else {
+        assignTask({ id: task.id, userId: assigneeId })
+      }
     })
+
+    queryClient.invalidateQueries({ queryKey: ['GetTask'] })
+    queryClient.invalidateQueries({ queryKey: ['GetTasks'] })
+    queryClient.invalidateQueries({ queryKey: ['GetPatients'] })
+    queryClient.invalidateQueries({ queryKey: ['GetOverviewData'] })
+    queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
 
     setIsConfirmDialogOpen(false)
     setSelectedUserId(null)
@@ -249,21 +385,31 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
           id: 'done',
           header: translation('status'),
           accessorKey: 'done',
-          cell: ({ row }) => (
-            <div onClick={(e) => e.stopPropagation()}>
-              <CheckboxUncontrolled
-                checked={row.original.done}
-                onCheckedChange={(checked) => {
-                  if (!checked) {
-                    completeTask({ id: row.original.id })
-                  } else {
-                    reopenTask({ id: row.original.id })
-                  }
-                }}
-                className={clsx('rounded-full')}
-              />
-            </div>
-          ),
+          cell: ({ row }) => {
+            const task = row.original
+            const optimisticDone = optimisticUpdates.get(task.id)
+            const displayDone = optimisticDone !== undefined ? optimisticDone : task.done
+            return (
+              <div onClick={(e) => e.stopPropagation()}>
+                <Checkbox
+                  checked={displayDone}
+                  onCheckedChange={(checked) => {
+                    setOptimisticUpdates(prev => {
+                      const next = new Map(prev)
+                      next.set(task.id, checked)
+                      return next
+                    })
+                    if (checked) {
+                      completeTask({ id: task.id })
+                    } else {
+                      reopenTask({ id: task.id })
+                    }
+                  }}
+                  className={clsx('rounded-full')}
+                />
+              </div>
+            )
+          },
           minSize: 110,
           size: 110,
           maxSize: 110,
@@ -380,8 +526,9 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
                   onClick={() => setSelectedUserPopupId(assignee.id)}
                   className="flex-row-2 items-center hover:opacity-75 transition-opacity"
                 >
-                  <Avatar
+                  <AvatarStatusComponent
                     fullyRounded={true}
+                    isOnline={assignee?.isOnline ?? null}
                     image={{
                       avatarUrl: assignee.avatarURL || 'https://cdn.helpwave.de/boringavatar.svg',
                       alt: assignee.name
@@ -406,11 +553,19 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
 
       return cols
     },
-    [translation, completeTask, reopenTask, showAssignee]
+    [translation, completeTask, reopenTask, showAssignee, optimisticUpdates]
   )
 
-  const handleToggleDone = (taskId: string, done: boolean) => {
-    if (!done) {
+  const handleToggleDone = (taskId: string, checked: boolean) => {
+    const task = initialTasks.find(t => t.id === taskId)
+    if (!task) return
+
+    setOptimisticUpdates(prev => {
+      const next = new Map(prev)
+      next.set(taskId, checked)
+      return next
+    })
+    if (checked) {
       completeTask({ id: taskId })
     } else {
       reopenTask({ id: taskId })
@@ -517,9 +672,9 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
           />
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 -mx-4 px-4 lg:mx-0 lg:pl-0 lg:pr-4 print-content">
+        <div className="grid gap-4 -mx-4 px-4 lg:mx-0 lg:pl-0 lg:pr-4 print-content" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))' }}>
           {tasks.length === 0 ? (
-            <div className="col-span-full text-center text-description py-8">
+            <div className="w-full text-center text-description py-8 col-span-full">
               {translation('noOpenTasks')}
             </div>
           ) : (
@@ -531,7 +686,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
                 onClick={(t) => setTaskDialogState({ isOpen: true, taskId: t.id })}
                 showAssignee={showAssignee}
                 onRefetch={onRefetch}
-                className={getPriorityColor(task.priority)}
+                className={clsx('w-full', getPriorityColor(task.priority))}
               />
             ))
           )}
@@ -573,16 +728,13 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
         description={translation('shiftHandoverDescription') || `Select a user to transfer all ${openTasks.length} open task${openTasks.length !== 1 ? 's' : ''} assigned to you.`}
       >
         <div className="flex flex-col gap-4">
-          <Select
+          <AssigneeSelect
             value={selectedUserId || ''}
             onValueChanged={handleUserSelect}
-          >
-            {users.map(u => (
-              <SelectOption key={u.id} value={u.id}>
-                {u.name}
-              </SelectOption>
-            ))}
-          </Select>
+            allowTeams={true}
+            allowUnassigned={false}
+            excludeUserIds={user?.id ? [user.id] : []}
+          />
         </div>
       </Dialog>
       <ConfirmDialog
@@ -593,7 +745,14 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
         }}
         onConfirm={handleConfirmHandover}
         titleElement={translation('confirmShiftHandover') || 'Confirm Shift Handover'}
-        description={translation('confirmShiftHandoverDescription') || `Are you sure you want to transfer ${openTasks.length} open task${openTasks.length !== 1 ? 's' : ''} to ${users.find(u => u.id === selectedUserId)?.name || 'the selected user'}?`}
+        description={(() => {
+          if (!selectedUserId) return ''
+          const isTeam = selectedUserId.startsWith('team:')
+          const taskCount = openTasks.length
+          const taskText = taskCount !== 1 ? 'tasks' : 'task'
+          const recipientText = isTeam ? 'selected team' : 'selected user'
+          return translation('confirmShiftHandoverDescription') || `Are you sure you want to transfer ${taskCount} open ${taskText} to the ${recipientText}?`
+        })()}
       />
       <UserInfoPopup
         userId={selectedUserPopupId}

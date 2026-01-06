@@ -16,6 +16,8 @@ query GetTask($id: ID!) {
       id
       name
       avatarUrl
+      lastOnline
+      isOnline
     }
     assigneeTeam {
       id

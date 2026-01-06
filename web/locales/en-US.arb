@@ -72,7 +72,7 @@
       }
     }
   },
-  "dashboardWelcome": "Good Morning, {name}",
+  "dashboardWelcome": "Good Morning, {name}!",
   "@dashboardWelcome": {
     "placeholders": {
       "name": {
@@ -80,7 +80,7 @@
       }
     }
   },
-  "dashboardWelcomeMorning": "Good Morning, {name}",
+  "dashboardWelcomeMorning": "Good Morning, {name}!",
   "@dashboardWelcomeMorning": {
     "placeholders": {
       "name": {
@@ -88,7 +88,7 @@
       }
     }
   },
-  "dashboardWelcomeNoon": "Good Afternoon, {name}",
+  "dashboardWelcomeNoon": "Good Afternoon, {name}!",
   "@dashboardWelcomeNoon": {
     "placeholders": {
       "name": {
@@ -96,7 +96,7 @@
       }
     }
   },
-  "dashboardWelcomeAfternoon": "Good Afternoon, {name}",
+  "dashboardWelcomeAfternoon": "Good Afternoon, {name}!",
   "@dashboardWelcomeAfternoon": {
     "placeholders": {
       "name": {
@@ -104,7 +104,7 @@
       }
     }
   },
-  "dashboardWelcomeEvening": "Good Evening, {name}",
+  "dashboardWelcomeEvening": "Good Evening, {name}!",
   "@dashboardWelcomeEvening": {
     "placeholders": {
       "name": {
@@ -112,7 +112,7 @@
       }
     }
   },
-  "dashboardWelcomeNight": "Good Night, {name}",
+  "dashboardWelcomeNight": "Good Night, {name}!",
   "@dashboardWelcomeNight": {
     "placeholders": {
       "name": {
@@ -235,7 +235,7 @@
   "subjectType": "Subject Type",
   "active": "Active",
   "inactive": "Inactive",
-  "rEdit": "Update {name}",
+  "rEdit": "Update {name}!",
   "@rEdit": {
     "placeholders": {
       "name": {
@@ -243,7 +243,7 @@
       }
     }
   },
-  "rAdd": "Add {name}",
+  "rAdd": "Add {name}!",
   "@rAdd": {
     "placeholders": {
       "name": {
@@ -313,7 +313,7 @@
   "showDone": "Show done",
   "patientData": "Data",
   "clickToAdd": "Click to add",
-  "rClickToAdd": "Click to add {name}",
+  "rClickToAdd": "Click to add {name}!",
   "@rClickToAdd": {
     "placeholders": {
       "name": {
@@ -396,5 +396,6 @@
   "errorOccurred": "An error occurred",
   "estimatedTime": "Estimated Time (minutes)",
   "ok": "OK",
-  "submitAnonymously": "Submit anonymously"
+  "submitAnonymously": "Submit anonymously",
+  "userInformation": "User Information"
 }

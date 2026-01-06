@@ -1,13 +1,16 @@
-import { Avatar, Button, CheckboxUncontrolled } from '@helpwave/hightide'
-import { Clock, User, Users } from 'lucide-react'
+import { Button, Checkbox } from '@helpwave/hightide'
+import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
+import { Clock, User, Users, Flag } from 'lucide-react'
 import clsx from 'clsx'
 import { SmartDate } from '@/utils/date'
 import { LocationChips } from '@/components/patients/LocationChips'
 import type { TaskViewModel } from './TaskList'
 import { useRouter } from 'next/router'
-import { useCompleteTaskMutation, useReopenTaskMutation } from '@/api/gql/generated'
-import { useState } from 'react'
+import { useCompleteTaskMutation, useReopenTaskMutation, type GetGlobalDataQuery } from '@/api/gql/generated'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { UserInfoPopup } from '@/components/UserInfoPopup'
+import { useQueryClient } from '@tanstack/react-query'
+import { useTasksContext } from '@/hooks/useTasksContext'
 
 type FlexibleTask = {
   id: string,
@@ -33,6 +36,7 @@ type FlexibleTask = {
     name: string,
     avatarURL?: string | null,
     avatarUrl?: string | null,
+    isOnline?: boolean | null,
   } | null,
   assigneeTeam?: {
     id: string,
@@ -48,6 +52,7 @@ type TaskCardViewProps = {
   showPatient?: boolean,
   onRefetch?: () => void,
   className?: string,
+  fullWidth?: boolean,
 }
 
 const isOverdue = (dueDate: Date | undefined, done: boolean): boolean => {
@@ -63,21 +68,106 @@ const isCloseToDueDate = (dueDate: Date | undefined, done: boolean): boolean => 
   return dueTime > now && dueTime - now <= oneHour
 }
 
+const getPriorityColor = (priority: string | null | undefined): string => {
+  if (!priority) return ''
+  switch (priority) {
+    case 'P1':
+      return 'border-l-4 border-l-green-500'
+    case 'P2':
+      return 'border-l-4 border-l-blue-500'
+    case 'P3':
+      return 'border-l-4 border-l-orange-500'
+    case 'P4':
+      return 'border-l-4 border-l-red-500'
+    default:
+      return ''
+  }
+}
+
 const toDate = (date: Date | string | null | undefined): Date | undefined => {
   if (!date) return undefined
   if (date instanceof Date) return date
   return new Date(date)
 }
 
-export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showAssignee: _showAssignee = false, showPatient = true, onRefetch, className }: TaskCardViewProps) => {
+export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showAssignee: _showAssignee = false, showPatient = true, onRefetch, className, fullWidth: _fullWidth = false }: TaskCardViewProps) => {
   const router = useRouter()
+  const queryClient = useQueryClient()
+  const { selectedRootLocationIds } = useTasksContext()
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
+  const [optimisticDone, setOptimisticDone] = useState<boolean | null>(null)
+  const pendingCheckedRef = useRef<boolean | null>(null)
   const flexibleTask = task as FlexibleTask
   const taskName = task.name || flexibleTask.title || ''
   const descriptionPreview = task.description
+  const displayDone = optimisticDone !== null ? optimisticDone : task.done
 
-  const { mutate: completeTask } = useCompleteTaskMutation({ onSuccess: onRefetch })
-  const { mutate: reopenTask } = useReopenTaskMutation({ onSuccess: onRefetch })
+  const { mutate: completeTask } = useCompleteTaskMutation({
+    onMutate: async (variables) => {
+      const selectedRootLocationIdsForQuery = selectedRootLocationIds && selectedRootLocationIds.length > 0 ? selectedRootLocationIds : undefined
+      await queryClient.cancelQueries({ queryKey: ['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }] })
+      const previousData = queryClient.getQueryData<GetGlobalDataQuery>(['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }])
+      const newDone = pendingCheckedRef.current ?? true
+      if (previousData?.me?.tasks) {
+        queryClient.setQueryData<GetGlobalDataQuery>(['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }], {
+          ...previousData,
+          me: previousData.me ? {
+            ...previousData.me,
+            tasks: previousData.me.tasks.map(task => task.id === variables.id ? { ...task, done: newDone } : task)
+          } : null
+        })
+      }
+      return { previousData }
+    },
+    onSuccess: async () => {
+      pendingCheckedRef.current = null
+      setOptimisticDone(null)
+      await queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
+      await queryClient.invalidateQueries({ queryKey: ['GetOverviewData'] })
+      onRefetch?.()
+    },
+    onError: (error, variables, context) => {
+      pendingCheckedRef.current = null
+      setOptimisticDone(null)
+      if (context?.previousData) {
+        const selectedRootLocationIdsForQuery = selectedRootLocationIds && selectedRootLocationIds.length > 0 ? selectedRootLocationIds : undefined
+        queryClient.setQueryData(['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }], context.previousData)
+      }
+    }
+  })
+  const { mutate: reopenTask } = useReopenTaskMutation({
+    onMutate: async (variables) => {
+      const selectedRootLocationIdsForQuery = selectedRootLocationIds && selectedRootLocationIds.length > 0 ? selectedRootLocationIds : undefined
+      await queryClient.cancelQueries({ queryKey: ['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }] })
+      const previousData = queryClient.getQueryData<GetGlobalDataQuery>(['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }])
+      const newDone = pendingCheckedRef.current ?? false
+      if (previousData?.me?.tasks) {
+        queryClient.setQueryData<GetGlobalDataQuery>(['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }], {
+          ...previousData,
+          me: previousData.me ? {
+            ...previousData.me,
+            tasks: previousData.me.tasks.map(task => task.id === variables.id ? { ...task, done: newDone } : task)
+          } : null
+        })
+      }
+      return { previousData }
+    },
+    onSuccess: async () => {
+      pendingCheckedRef.current = null
+      setOptimisticDone(null)
+      await queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
+      await queryClient.invalidateQueries({ queryKey: ['GetOverviewData'] })
+      onRefetch?.()
+    },
+    onError: (error, variables, context) => {
+      pendingCheckedRef.current = null
+      setOptimisticDone(null)
+      if (context?.previousData) {
+        const selectedRootLocationIdsForQuery = selectedRootLocationIds && selectedRootLocationIds.length > 0 ? selectedRootLocationIds : undefined
+        queryClient.setQueryData(['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }], context.previousData)
+      }
+    }
+  })
 
   const dueDate = toDate(task.dueDate)
   const overdue = dueDate ? isOverdue(dueDate, task.done) : false
@@ -85,11 +175,18 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
   const dueDateColorClass = overdue ? '!text-red-500' : closeToDue ? '!text-orange-500' : ''
   const assigneeAvatarUrl = task.assignee?.avatarURL || (flexibleTask.assignee?.avatarUrl)
 
+  const expectedFinishDate = useMemo(() => {
+    if (!dueDate || !flexibleTask.estimatedTime) return null
+    const finishDate = new Date(dueDate)
+    finishDate.setMinutes(finishDate.getMinutes() + flexibleTask.estimatedTime)
+    return finishDate
+  }, [dueDate, flexibleTask.estimatedTime])
+
   const borderColorClass = overdue
     ? 'border-red-500'
     : closeToDue
-    ? 'border-orange-500'
-    : 'border-neutral-300 dark:border-neutral-600'
+      ? 'border-orange-500'
+      : 'border-neutral-300 dark:border-neutral-600'
 
   const handlePatientClick = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -98,18 +195,30 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
     }
   }
 
+  useEffect(() => {
+    setOptimisticDone(null)
+  }, [task.done, task.id])
+
   const handleToggleDone = (checked: boolean) => {
-    if (!checked) {
+    if (_onToggleDone) {
+      _onToggleDone(task.id, checked)
+      return
+    }
+    pendingCheckedRef.current = checked
+    setOptimisticDone(checked)
+    if (checked) {
       completeTask({ id: task.id })
     } else {
       reopenTask({ id: task.id })
     }
   }
 
+  const priorityBorderClass = getPriorityColor(task.priority || (task as FlexibleTask).priority)
+
   return (
     <div
       onClick={() => onClick(task)}
-      className={clsx('border-2 p-5 rounded-lg text-left w-full transition-colors hover:border-primary relative bg-[rgba(255,255,255,1)] dark:bg-[rgba(55,65,81,1)] overflow-hidden cursor-pointer', borderColorClass, className)}
+      className={clsx('border-2 p-5 rounded-lg text-left transition-colors hover:border-primary relative bg-[rgba(255,255,255,1)] dark:bg-[rgba(55,65,81,1)] overflow-hidden cursor-pointer w-full', borderColorClass, priorityBorderClass, className)}
       role="button"
       tabIndex={0}
       onKeyDown={(e) => {
@@ -121,8 +230,8 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
     >
       <div className="flex items-start gap-4 w-full min-w-0">
         <div onClick={(e) => e.stopPropagation()}>
-          <CheckboxUncontrolled
-            checked={task.done}
+          <Checkbox
+            checked={displayDone}
             onCheckedChange={handleToggleDone}
             className="rounded-full mt-0.5 shrink-0"
           />
@@ -134,9 +243,9 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
                 <div className={clsx(
                   'w-2 h-2 rounded-full shrink-0',
                   (task as FlexibleTask).priority === 'P1' ? 'bg-green-500' :
-                  (task as FlexibleTask).priority === 'P2' ? 'bg-blue-500' :
-                  (task as FlexibleTask).priority === 'P3' ? 'bg-orange-500' :
-                  (task as FlexibleTask).priority === 'P4' ? 'bg-red-500' : ''
+                    (task as FlexibleTask).priority === 'P2' ? 'bg-blue-500' :
+                      (task as FlexibleTask).priority === 'P3' ? 'bg-orange-500' :
+                        (task as FlexibleTask).priority === 'P4' ? 'bg-red-500' : ''
                 )} />
               )}
               <div
@@ -162,9 +271,10 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
                 }}
                 className="flex items-center gap-1.5 text-base text-description shrink-0 min-w-0 hover:opacity-75 transition-opacity"
               >
-                <Avatar
+                <AvatarStatusComponent
                   fullyRounded={true}
                   size="sm"
+                  isOnline={task.assignee?.isOnline ?? null}
                   image={{
                     avatarUrl: assigneeAvatarUrl || 'https://cdn.helpwave.de/boringavatar.svg',
                     alt: task.assignee.name
@@ -197,21 +307,29 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
           )}
         </div>
       )}
-      <div className={clsx('absolute right-5 flex items-center gap-3 text-sm text-description', { 'bottom-5': showPatient, 'bottom-6': !showPatient })}>
-        {(task as FlexibleTask).estimatedTime && (
-          <div className="flex items-center gap-1">
-            <Clock className="size-4" />
-            <span>
-              {(task as FlexibleTask).estimatedTime! < 60
-                ? `${(task as FlexibleTask).estimatedTime}m`
-                : `${Math.floor((task as FlexibleTask).estimatedTime! / 60)}h ${(task as FlexibleTask).estimatedTime! % 60}m`}
-            </span>
-          </div>
-        )}
-        {dueDate && (
-          <div className={clsx('flex items-center gap-2', dueDateColorClass)}>
-            <Clock className="size-4" />
-            <SmartDate date={dueDate} mode="relative" showTime={true} />
+      <div className={clsx('absolute right-5 flex flex-col items-end gap-2 text-sm text-description', { 'bottom-5': showPatient, 'bottom-6': !showPatient })}>
+        <div className="flex items-center gap-3">
+          {(task as FlexibleTask).estimatedTime && (
+            <div className="flex items-center gap-1">
+              <Clock className="size-4" />
+              <span>
+                {(task as FlexibleTask).estimatedTime! < 60
+                  ? `${(task as FlexibleTask).estimatedTime}m`
+                  : `${Math.floor((task as FlexibleTask).estimatedTime! / 60)}h ${(task as FlexibleTask).estimatedTime! % 60}m`}
+              </span>
+            </div>
+          )}
+          {dueDate && (
+            <div className={clsx('flex items-center gap-2', dueDateColorClass)}>
+              <Clock className="size-4" />
+              <SmartDate date={dueDate} mode="relative" showTime={true} />
+            </div>
+          )}
+        </div>
+        {expectedFinishDate && (
+          <div className="flex items-center gap-2 text-xs">
+            <Flag className="size-4" />
+            <SmartDate date={expectedFinishDate} mode="relative" showTime={true} />
           </div>
         )}
       </div>
@@ -223,4 +341,3 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
     </div>
   )
 }
-
