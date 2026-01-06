@@ -6,6 +6,7 @@ import {
   PropertyEntity,
   useAssignTaskMutation,
   useAssignTaskToTeamMutation,
+  useCompleteTaskMutation,
   useCreateTaskMutation,
   useDeleteTaskMutation,
   useGetLocationsQuery,
@@ -13,6 +14,7 @@ import {
   useGetPropertyDefinitionsQuery,
   useGetTaskQuery,
   useGetUsersQuery,
+  useReopenTaskMutation,
   useUnassignTaskMutation,
   useUnassignTaskFromTeamMutation,
   UpdateTaskDocument,
@@ -20,6 +22,7 @@ import {
   type UpdateTaskMutation,
   type UpdateTaskMutationVariables
 } from '@/api/gql/generated'
+import { useQueryClient } from '@tanstack/react-query'
 import {
   Button,
   Checkbox,
@@ -37,6 +40,7 @@ import {
 } from '@helpwave/hightide'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { User } from 'lucide-react'
+import { AssigneeSelect } from './AssigneeSelect'
 import { SidePanel } from '@/components/layout/SidePanel'
 import { localToUTCWithSameTime, PatientDetailView } from '@/components/patients/PatientDetailView'
 import { PropertyList } from '@/components/PropertyList'
@@ -53,6 +57,7 @@ interface TaskDetailViewProps {
 
 export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }: TaskDetailViewProps) => {
   const translation = useTasksTranslation()
+  const queryClient = useQueryClient()
   const { selectedRootLocationIds } = useTasksContext()
   const [isShowingPatientDialog, setIsShowingPatientDialog] = useState<boolean>(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState<boolean>(false)
@@ -80,13 +85,9 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
     }
   )
 
-  const { data: usersData } = useGetUsersQuery(undefined, {})
-  const { data: locationsData } = useGetLocationsQuery(undefined, {})
+  useGetUsersQuery(undefined, {})
+  useGetLocationsQuery(undefined, {})
 
-  const teams = useMemo(() => {
-    if (!locationsData?.locationNodes) return []
-    return locationsData.locationNodes.filter(loc => loc.kind === 'TEAM')
-  }, [locationsData])
 
   const { data: propertyDefinitionsData } = useGetPropertyDefinitionsQuery()
 
@@ -98,7 +99,8 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
   }, [propertyDefinitionsData])
 
   const { mutate: createTask, isLoading: isCreating } = useCreateTaskMutation({
-    onSuccess: () => {
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
       onSuccess()
       onClose()
     },
@@ -117,7 +119,7 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
     queryKey: ['GetTask', { id: taskId }],
     timeoutMs: 3000,
     immediateFields: ['assigneeId', 'assigneeTeamId'] as unknown as (keyof { id: string, data: UpdateTaskInput })[],
-    onChangeFields: ['priority'] as unknown as (keyof { id: string, data: UpdateTaskInput })[],
+    onChangeFields: ['priority', 'done'] as unknown as (keyof { id: string, data: UpdateTaskInput })[],
     onBlurFields: ['title', 'description'] as unknown as (keyof { id: string, data: UpdateTaskInput })[],
     onCloseFields: ['dueDate'] as unknown as (keyof { id: string, data: UpdateTaskInput })[],
     getChecksum: (data) => data?.updateTask?.checksum || null,
@@ -125,31 +127,60 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
   })
 
   const { mutate: assignTask } = useAssignTaskMutation({
-    onSuccess: () => {
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
       onSuccess()
     },
   })
 
   const { mutate: unassignTask } = useUnassignTaskMutation({
-    onSuccess: () => {
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
       onSuccess()
     },
   })
 
   const { mutate: assignTaskToTeam } = useAssignTaskToTeamMutation({
-    onSuccess: () => {
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
       onSuccess()
     },
   })
 
   const { mutate: unassignTaskFromTeam } = useUnassignTaskFromTeamMutation({
-    onSuccess: () => {
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
+      onSuccess()
+    },
+  })
+
+  const { mutate: completeTask } = useCompleteTaskMutation({
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['GetTask', { id: taskId }] })
+      await queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
+      const patientId = taskData?.task?.patient?.id
+      if (patientId) {
+        await queryClient.invalidateQueries({ queryKey: ['GetPatient', { id: patientId }] })
+      }
+      onSuccess()
+    },
+  })
+
+  const { mutate: reopenTask } = useReopenTaskMutation({
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['GetTask', { id: taskId }] })
+      await queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
+      const patientId = taskData?.task?.patient?.id
+      if (patientId) {
+        await queryClient.invalidateQueries({ queryKey: ['GetPatient', { id: patientId }] })
+      }
       onSuccess()
     },
   })
 
   const { mutate: deleteTask, isLoading: isDeleting } = useDeleteTaskMutation({
-    onSuccess: () => {
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
       onSuccess()
       onClose()
     },
@@ -281,7 +312,6 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
   }
 
   const patients = patientsData?.patients || []
-  const users = usersData?.users || []
 
   if (isEditMode && isLoadingTask) {
     return <LoadingContainer/>
@@ -300,9 +330,12 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
                     checked={formData.done || false}
                     onCheckedChange={(checked) => {
                       if (!taskId) return
-                      const update: Partial<UpdateTaskInput> = { done: checked }
-                      handleFieldUpdate(update)
                       updateLocalState({ done: checked })
+                      if (checked) {
+                        completeTask({ id: taskId })
+                      } else {
+                        reopenTask({ id: taskId })
+                      }
                     }}
                     className="rounded-full scale-125"
                   />
@@ -386,33 +419,13 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
                     ? `team:${taskData.task.assigneeTeam.id}`
                     : (formData.assigneeId || taskData?.task?.assignee?.id || 'unassigned')
                   return (
-                    <Select
+                    <AssigneeSelect
                       {...bag}
                       value={currentAssigneeValue}
                       onValueChanged={handleAssigneeChange}
-                    >
-                      <SelectOption value="unassigned">{translation('unassigned')}</SelectOption>
-                      {users.length > 0 && (
-                        <>
-                          <div className="px-2 py-1 text-xs font-semibold text-description">{translation('users') ?? 'Users'}</div>
-                          {users.map(u => (
-                            <SelectOption key={u.id} value={u.id}>
-                              {u.name}
-                            </SelectOption>
-                          ))}
-                        </>
-                      )}
-                      {teams.length > 0 && (
-                        <>
-                          <div className="px-2 py-1 text-xs font-semibold text-description">{translation('teams')}</div>
-                          {teams.map(team => (
-                            <SelectOption key={team.id} value={`team:${team.id}`}>
-                              {team.title}
-                            </SelectOption>
-                          ))}
-                        </>
-                      )}
-                    </Select>
+                      allowTeams={true}
+                      allowUnassigned={true}
+                    />
                   )
                 }}
               </FormElementWrapper>

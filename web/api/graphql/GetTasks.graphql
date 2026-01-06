@@ -38,6 +38,8 @@ query GetTasks($rootLocationIds: [ID!], $assigneeId: ID, $assigneeTeamId: ID, $l
       id
       name
       avatarUrl
+      lastOnline
+      isOnline
     }
     assigneeTeam {
       id

@@ -10,6 +10,8 @@ mutation CreateTask($data: CreateTaskInput!) {
       id
       name
       avatarUrl
+      lastOnline
+      isOnline
     }
     patient {
       id
@@ -37,6 +39,8 @@ mutation UpdateTask($id: ID!, $data: UpdateTaskInput!) {
       id
       name
       avatarUrl
+      lastOnline
+      isOnline
     }
     properties {
       definition {
@@ -66,6 +70,8 @@ mutation AssignTask($id: ID!, $userId: ID!) {
       id
       name
       avatarUrl
+      lastOnline
+      isOnline
     }
   }
 }
@@ -77,6 +83,8 @@ mutation UnassignTask($id: ID!) {
       id
       name
       avatarUrl
+      lastOnline
+      isOnline
     }
   }
 }

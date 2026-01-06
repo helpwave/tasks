@@ -4,7 +4,8 @@ import {
   Expandable,
   Checkbox,
   Button,
-  SearchBar
+  SearchBar,
+  useLocalStorage
 } from '@helpwave/hightide'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import type { LocationNodeType } from '@/api/gql/generated'
@@ -35,6 +36,11 @@ interface LocationSelectionDialogProps {
   initialSelectedIds?: string[],
   multiSelect?: boolean,
   useCase?: LocationPickerUseCase,
+}
+
+const generateTreeSignature = (nodes: LocationNodeType[]): string => {
+  const sortedNodes = [...nodes].sort((a, b) => a.id.localeCompare(b.id))
+  return sortedNodes.map(n => `${n.id}:${n.parentId || ''}`).join('|')
 }
 
 interface LocationTreeItemProps {
@@ -188,6 +194,19 @@ export const LocationSelectionDialog = ({
     }
   )
 
+  const storageKey = `location-selector-state-${useCase}`
+  const signatureKey = `location-selector-signature-${useCase}`
+
+  const {
+    value: storedExpandedIds,
+    setValue: setStoredExpandedIds
+  } = useLocalStorage<string[]>(storageKey, [])
+
+  const {
+    value: storedTreeSignature,
+    setValue: setStoredTreeSignature
+  } = useLocalStorage<string>(signatureKey, '')
+
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set(initialSelectedIds))
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
   const [searchQuery, setSearchQuery] = useState('')
@@ -195,14 +214,39 @@ export const LocationSelectionDialog = ({
   const hasInitialized = useRef(false)
 
   useEffect(() => {
+    if (isOpen && data?.locationNodes) {
+      const currentSignature = generateTreeSignature(data.locationNodes as LocationNodeType[])
+      const treeChanged = currentSignature !== storedTreeSignature
+
+      if (treeChanged) {
+        setExpandedIds(new Set())
+        setStoredTreeSignature(currentSignature)
+        setStoredExpandedIds([])
+      } else if (!hasInitialized.current) {
+        try {
+          const parsedExpandedIds = storedExpandedIds && Array.isArray(storedExpandedIds)
+            ? new Set(storedExpandedIds.filter((id): id is string => typeof id === 'string'))
+            : new Set<string>()
+          setExpandedIds(parsedExpandedIds)
+        } catch {
+          setExpandedIds(new Set())
+        }
+        hasInitialized.current = true
+      }
+    }
+  }, [isOpen, data?.locationNodes, storedTreeSignature, storedExpandedIds, setStoredTreeSignature, setStoredExpandedIds])
+
+  useEffect(() => {
     if (isOpen) {
       setSelectedIds(new Set(initialSelectedIds))
-      setExpandedIds(new Set())
-      hasInitialized.current = true
+      if (!data?.locationNodes) {
+        setExpandedIds(new Set())
+        hasInitialized.current = false
+      }
     } else {
       hasInitialized.current = false
     }
-  }, [isOpen, initialSelectedIds])
+  }, [isOpen, initialSelectedIds, data?.locationNodes])
 
   const matchesFilter = useMemo(() => {
     if (useCase === 'default') {
@@ -367,16 +411,21 @@ export const LocationSelectionDialog = ({
       newSet.delete(nodeId)
     }
     setExpandedIds(newSet)
+    setStoredExpandedIds(Array.from(newSet))
   }
 
   const handleExpandAll = () => {
     if (!data?.locationNodes) return
     const allIds = data.locationNodes.map(n => n.id)
-    setExpandedIds(new Set(allIds))
+    const newSet = new Set(allIds)
+    setExpandedIds(newSet)
+    setStoredExpandedIds(Array.from(newSet))
   }
 
   const handleCollapseAll = () => {
-    setExpandedIds(new Set())
+    const newSet = new Set<string>()
+    setExpandedIds(newSet)
+    setStoredExpandedIds([])
   }
 
   const handleConfirm = () => {

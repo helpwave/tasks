@@ -8,6 +8,8 @@ query GetUser($id: ID!) {
     lastname
     title
     avatarUrl
+    lastOnline
+    isOnline
   }
 }
 

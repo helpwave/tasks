@@ -3,7 +3,8 @@ import { useQuery } from '@tanstack/react-query'
 import { Dialog, Button, LoadingContainer } from '@helpwave/hightide'
 import { fetcher } from '@/api/gql/fetcher'
 import clsx from 'clsx'
-import Image from 'next/image'
+import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
+import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 
 const GET_USER_QUERY = `
   query GetUser($id: ID!) {
@@ -16,6 +17,8 @@ const GET_USER_QUERY = `
       lastname
       title
       avatarUrl
+      lastOnline
+      isOnline
     }
   }
 `
@@ -29,6 +32,8 @@ interface UserInfo {
   lastname: string | null,
   title: string | null,
   avatarUrl: string | null,
+  lastOnline: string | null,
+  isOnline: boolean | null,
 }
 
 interface UserInfoPopupProps {
@@ -38,6 +43,7 @@ interface UserInfoPopupProps {
 }
 
 export const UserInfoPopup: React.FC<UserInfoPopupProps> = ({ userId, isOpen, onClose }) => {
+  const translation = useTasksTranslation()
   const { data, isLoading } = useQuery({
     queryKey: ['GetUser', userId],
     queryFn: () => fetcher<{ user: UserInfo | null }, { id: string }>(
@@ -53,36 +59,42 @@ export const UserInfoPopup: React.FC<UserInfoPopupProps> = ({ userId, isOpen, on
     <Dialog
       isOpen={isOpen}
       onClose={onClose}
-      titleElement="User Information"
+      titleElement={translation('userInformation')}
       description=""
-      className={clsx('w-96')}
+      className={clsx('w-96 z-50')}
+      backgroundClassName="z-40"
+      isModal={true}
     >
       {isLoading ? (
         <LoadingContainer />
       ) : user ? (
         <div className="flex-col-4">
-          {user.avatarUrl && (
-            <div className="flex justify-center">
-              <Image
-                src={user.avatarUrl}
-                alt={user.name}
-                className="w-20 h-20 rounded-full object-cover"
-              />
+          <div className="flex items-center gap-3">
+            <AvatarStatusComponent
+              size="xl"
+              fullyRounded={true}
+              isOnline={user.isOnline}
+              image={user.avatarUrl ? {
+                avatarUrl: user.avatarUrl,
+                alt: user.name
+              } : undefined}
+            />
+            <div className="flex-col-0">
+              <div className="font-semibold text-lg">{user.name}</div>
+              {user.username && (
+                <div className="text-xs text-description">@{user.username}</div>
+              )}
             </div>
-          )}
-          <div className="flex-col-2">
-            <div className="font-semibold text-lg">{user.name}</div>
-            {user.title && (
-              <div className="text-sm text-secondary">{user.title}</div>
-            )}
-            {user.username && (
-              <div className="text-xs text-description">@{user.username}</div>
-            )}
           </div>
           {user.email && (
             <div className="flex-col-1 pt-2 border-t border-divider">
               <div className="text-xs text-description">Email</div>
-              <div className="text-sm">{user.email}</div>
+              <a
+                href={`mailto:${user.email}`}
+                className="text-sm text-primary hover:underline"
+              >
+                {user.email}
+              </a>
             </div>
           )}
           {(user.firstname || user.lastname) && (
@@ -93,6 +105,14 @@ export const UserInfoPopup: React.FC<UserInfoPopupProps> = ({ userId, isOpen, on
               </div>
             </div>
           )}
+          <div className="flex-col-1 pt-2 border-t border-divider">
+            <div className="text-xs text-description">Status</div>
+            <div className="text-sm flex items-center gap-2">
+              <span className={user.isOnline ? 'text-green-500' : 'text-gray-400'}>
+                {user.isOnline ? 'Online' : 'Offline'}
+              </span>
+            </div>
+          </div>
         </div>
       ) : (
         <div className="text-sm text-secondary">User not found</div>

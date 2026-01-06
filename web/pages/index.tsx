@@ -15,8 +15,11 @@ import { SidePanel } from '@/components/layout/SidePanel'
 import { PatientDetailView } from '@/components/patients/PatientDetailView'
 import { TaskDetailView } from '@/components/tasks/TaskDetailView'
 import { LocationChips } from '@/components/patients/LocationChips'
-import { useCompleteTaskMutation, useReopenTaskMutation } from '@/api/gql/generated'
+import { CompleteTaskDocument, ReopenTaskDocument, type CompleteTaskMutation, type ReopenTaskMutation, type CompleteTaskMutationVariables, type ReopenTaskMutationVariables, type GetOverviewDataQuery, type GetGlobalDataQuery } from '@/api/gql/generated'
+import { useSafeMutation } from '@/hooks/useSafeMutation'
+import { fetcher } from '@/api/gql/fetcher'
 import clsx from 'clsx'
+import { useQueryClient } from '@tanstack/react-query'
 
 const isOverdue = (dueDate: Date | undefined | null, done: boolean): boolean => {
   if (!dueDate || done) return false
@@ -42,14 +45,95 @@ const getGreetingKey = (): string => {
 
 const Dashboard: NextPage = () => {
   const translation = useTasksTranslation()
-  const { user, myTasksCount, totalPatientsCount } = useTasksContext()
+  const { user, myTasksCount, totalPatientsCount, selectedRootLocationIds } = useTasksContext()
   const { data } = useGetOverviewDataQuery(undefined, {})
+  const queryClient = useQueryClient()
+  const selectedRootLocationIdsForQuery = selectedRootLocationIds && selectedRootLocationIds.length > 0 ? selectedRootLocationIds : undefined
 
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null)
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
 
-  const { mutate: completeTask } = useCompleteTaskMutation({})
-  const { mutate: reopenTask } = useReopenTaskMutation({})
+  const { mutate: completeTask } = useSafeMutation<CompleteTaskMutation, CompleteTaskMutationVariables>({
+    mutationFn: async (variables) => {
+      return fetcher<CompleteTaskMutation, CompleteTaskMutationVariables>(CompleteTaskDocument, variables)()
+    },
+    optimisticUpdate: (variables) => {
+      const updates: Array<{ queryKey: unknown[], updateFn: (oldData: unknown) => unknown }> = [
+        {
+          queryKey: ['GetOverviewData'],
+          updateFn: (oldData: unknown) => {
+            const data = oldData as GetOverviewDataQuery | undefined
+            if (!data?.recentTasks) return oldData
+            return {
+              ...data,
+              recentTasks: data.recentTasks.map(t =>
+                t.id === variables.id ? { ...t, done: true } : t)
+            }
+          }
+        }
+      ]
+      const globalData = queryClient.getQueryData<GetGlobalDataQuery>(['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }])
+      if (globalData?.me?.tasks) {
+        updates.push({
+          queryKey: ['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }],
+          updateFn: (oldData: unknown) => {
+            const data = oldData as GetGlobalDataQuery | undefined
+            if (!data?.me?.tasks) return oldData
+            return {
+              ...data,
+              me: data.me ? {
+                ...data.me,
+                tasks: data.me.tasks.map(task => task.id === variables.id ? { ...task, done: true } : task)
+              } : null
+            }
+          }
+        })
+      }
+      return updates
+    },
+    invalidateQueries: [['GetOverviewData'], ['GetTasks'], ['GetPatients'], ['GetGlobalData']],
+  })
+
+  const { mutate: reopenTask } = useSafeMutation<ReopenTaskMutation, ReopenTaskMutationVariables>({
+    mutationFn: async (variables) => {
+      return fetcher<ReopenTaskMutation, ReopenTaskMutationVariables>(ReopenTaskDocument, variables)()
+    },
+    optimisticUpdate: (variables) => {
+      const updates: Array<{ queryKey: unknown[], updateFn: (oldData: unknown) => unknown }> = [
+        {
+          queryKey: ['GetOverviewData'],
+          updateFn: (oldData: unknown) => {
+            const data = oldData as GetOverviewDataQuery | undefined
+            if (!data?.recentTasks) return oldData
+            return {
+              ...data,
+              recentTasks: data.recentTasks.map(t =>
+                t.id === variables.id ? { ...t, done: false } : t)
+            }
+          }
+        }
+      ]
+      const globalData = queryClient.getQueryData<GetGlobalDataQuery>(['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }])
+      if (globalData?.me?.tasks) {
+        updates.push({
+          queryKey: ['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }],
+          updateFn: (oldData: unknown) => {
+            const data = oldData as GetGlobalDataQuery | undefined
+            if (!data?.me?.tasks) return oldData
+            return {
+              ...data,
+              me: data.me ? {
+                ...data.me,
+                tasks: data.me.tasks.map(task => task.id === variables.id ? { ...task, done: false } : task)
+              } : null
+            }
+          }
+        })
+      }
+      return updates
+    },
+    invalidateQueries: [['GetOverviewData'], ['GetTasks'], ['GetPatients'], ['GetGlobalData']],
+  })
 
   const recentPatients = useMemo(() => data?.recentPatients ?? [], [data])
   const recentTasks = useMemo(() => data?.recentTasks ?? [], [data])

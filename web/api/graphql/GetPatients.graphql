@@ -109,6 +109,8 @@ query GetPatients($locationId: ID, $rootLocationIds: [ID!], $states: [PatientSta
         id
         name
         avatarUrl
+        lastOnline
+        isOnline
       }
       assigneeTeam {
         id

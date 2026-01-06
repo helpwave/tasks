@@ -6,13 +6,14 @@ import Head from 'next/head'
 import titleWrapper from '@/utils/titleWrapper'
 import Link from 'next/link'
 import {
-  Avatar,
   Button,
   Dialog,
   Expandable,
   MarkdownInterpreter,
+  Tooltip,
   useLocalStorage
 } from '@helpwave/hightide'
+import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
 import { getConfig } from '@/utils/config'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { UserInfoPopup } from '@/components/UserInfoPopup'
@@ -355,20 +356,23 @@ export const Header = ({ onMenuClick, isMenuOpen, ...props }: HeaderProps) => {
               <SettingsIcon />
             </Button>
           </div>
-          <button
-            onClick={() => user?.id && setSelectedUserId(user.id)}
-            className="flex-row-1.5 items-center gap-x-1.75 hover:opacity-75 transition-opacity"
-          >
-            <span className="hidden sm:inline typography-title-sm">{user?.name}</span>
-            <Avatar
-              size="lg"
-              fullyRounded={true}
-              image={user?.avatarUrl ? {
-                avatarUrl: user.avatarUrl,
-                alt: user.name
-              } : undefined}
-            />
-          </button>
+          <Tooltip tooltip={user?.isOnline ? 'Online' : 'Offline'}>
+            <button
+              onClick={() => user?.id && setSelectedUserId(user.id)}
+              className="flex-row-1.5 items-center gap-x-1.75 hover:opacity-75 transition-opacity"
+            >
+              <span className="hidden sm:inline typography-title-sm">{user?.name}</span>
+              <AvatarStatusComponent
+                size="lg"
+                fullyRounded={true}
+                isOnline={user?.isOnline ?? null}
+                image={user?.avatarUrl ? {
+                  avatarUrl: user.avatarUrl,
+                  alt: user.name
+                } : undefined}
+              />
+            </button>
+          </Tooltip>
         </div>
       </header>
       <FeedbackDialog isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} />

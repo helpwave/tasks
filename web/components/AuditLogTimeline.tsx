@@ -1,9 +1,12 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { SmartDate } from '@/utils/date'
 import clsx from 'clsx'
 import { fetcher } from '@/api/gql/fetcher'
 import { UserInfoPopup } from '@/components/UserInfoPopup'
+import { HelpwaveLogo } from '@helpwave/hightide'
+import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
+import { ChevronRight } from 'lucide-react'
 
 const GET_AUDIT_LOGS_QUERY = `
   query GetAuditLogs($caseId: ID!, $limit: Int, $offset: Int) {
@@ -28,6 +31,7 @@ export interface AuditLogEntry {
 interface AuditLogTimelineProps {
   caseId: string,
   className?: string,
+  enabled?: boolean,
 }
 
 const GET_USER_QUERY = `
@@ -36,6 +40,8 @@ const GET_USER_QUERY = `
       id
       username
       name
+      avatarUrl
+      isOnline
     }
   }
 `
@@ -44,11 +50,20 @@ interface UserInfo {
   id: string,
   username: string,
   name: string,
+  avatarUrl: string | null,
+  isOnline: boolean | null,
 }
 
-export const AuditLogTimeline: React.FC<AuditLogTimelineProps> = ({ caseId, className }) => {
+export const AuditLogTimeline: React.FC<AuditLogTimelineProps> = ({ caseId, className, enabled = false }) => {
   const [expandedEntries, setExpandedEntries] = useState<Set<number>>(new Set())
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
+  const [shouldFetch, setShouldFetch] = useState(false)
+
+  useEffect(() => {
+    if (enabled && !shouldFetch) {
+      setShouldFetch(true)
+    }
+  }, [enabled, shouldFetch])
 
   const { data, isLoading } = useQuery({
     queryKey: ['GetAuditLogs', caseId],
@@ -56,7 +71,7 @@ export const AuditLogTimeline: React.FC<AuditLogTimelineProps> = ({ caseId, clas
       GET_AUDIT_LOGS_QUERY,
       { caseId }
     )(),
-    enabled: !!caseId,
+    enabled: !!caseId && shouldFetch,
   })
 
   const auditLogs = useMemo(() => data?.auditLogs || [], [data?.auditLogs])
@@ -92,6 +107,11 @@ export const AuditLogTimeline: React.FC<AuditLogTimelineProps> = ({ caseId, clas
     return user?.name || user?.username || userId
   }
 
+  const getUserInfo = (userId: string | null): UserInfo | null => {
+    if (!userId) return null
+    return usersQuery.data?.get(userId) || null
+  }
+
   const toggleExpand = (index: number) => {
     setExpandedEntries(prev => {
       const next = new Set(prev)
@@ -104,13 +124,6 @@ export const AuditLogTimeline: React.FC<AuditLogTimelineProps> = ({ caseId, clas
     })
   }
 
-  const getActivityColor = (activity: string): string => {
-    if (activity.includes('create')) return 'bg-positive/20 text-positive border-positive/40'
-    if (activity.includes('update')) return 'bg-primary/20 text-primary border-primary/40'
-    if (activity.includes('delete')) return 'bg-negative/20 text-negative border-negative/40'
-    return 'bg-secondary/20 text-secondary border-secondary/40'
-  }
-
   const formatActivity = (activity: string): string => {
     return activity
       .replace(/_/g, ' ')
@@ -119,82 +132,132 @@ export const AuditLogTimeline: React.FC<AuditLogTimelineProps> = ({ caseId, clas
       .join(' ')
   }
 
+  const hasContext = (entry: AuditLogEntry): boolean => {
+    if (!entry.context) return false
+    try {
+      const parsed = JSON.parse(entry.context)
+      return typeof parsed === 'object' && parsed !== null && Object.keys(parsed).length > 0
+    } catch {
+      return entry.context.length > 0
+    }
+  }
+
+  const handleCardClick = (index: number, e: React.MouseEvent) => {
+    e.stopPropagation()
+    const entry = auditLogs[index]
+    if (entry && hasContext(entry)) {
+      toggleExpand(index)
+    }
+  }
+
   return (
     <div className={clsx('flex-col-2', className)}>
-      <div className="text-sm font-semibold mb-2">
+      <div className="text-sm font-semibold mb-4">
         Audit Log
       </div>
       {isLoading && (
-        <div className="text-sm text-secondary/60 italic py-4">
-          Loading...
+        <div className="flex items-center justify-center py-12">
+          <HelpwaveLogo className="w-16 h-16 animate-spin" />
         </div>
       )}
-      <div className="flex-col-2 border-l-2 border-secondary/30 pl-4 ml-2">
-        {auditLogs.map((entry: AuditLogEntry, index: number) => (
-          <div key={index} className="relative flex-col-2 mb-4 last:mb-0">
-            <div className="absolute -left-[18px] top-1 w-3 h-3 rounded-full border-2 border-background bg-secondary" />
-            <div className={clsx('flex-col-2 p-2 rounded border', getActivityColor(entry.activity))}>
-              <div className="flex-row-2 justify-between items-start">
-                <div className="flex-col-2 flex-grow">
-                  <div className="font-medium text-sm">
-                    {formatActivity(entry.activity)}
+      {!isLoading && (
+        <div className="flex-col-3">
+          {auditLogs.map((entry: AuditLogEntry, index: number) => {
+            const userInfo = getUserInfo(entry.userId)
+            const isExpanded = expandedEntries.has(index)
+            const hasDetails = hasContext(entry)
+
+            return (
+              <div
+                key={index}
+                onClick={(e) => handleCardClick(index, e)}
+                className={clsx(
+                  'p-4 rounded-lg border-2 transition-all',
+                  'bg-[rgba(255,255,255,1)] dark:bg-[rgba(55,65,81,1)]',
+                  'border-gray-300 dark:border-gray-600',
+                  'hover:border-primary hover:shadow-md',
+                  hasDetails && 'cursor-pointer'
+                )}
+              >
+                <div className="flex-row-2 justify-between items-start gap-4">
+                  <div className="flex-col-2 flex-grow min-w-0">
+                    <div className="font-medium text-sm mb-2">
+                      {formatActivity(entry.activity)}
+                    </div>
+                    <div className="flex-row-2 items-center gap-2">
+                      {entry.userId && userInfo && (
+                        <>
+                          <AvatarStatusComponent
+                            size="sm"
+                            fullyRounded={true}
+                            isOnline={userInfo.isOnline}
+                            image={userInfo.avatarUrl ? {
+                              avatarUrl: userInfo.avatarUrl,
+                              alt: userInfo.name
+                            } : undefined}
+                          />
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setSelectedUserId(entry.userId)
+                            }}
+                            className="text-xs text-gray-600 dark:text-gray-400 text-left hover:opacity-75 transition-opacity"
+                          >
+                            {getUserName(entry.userId)}
+                          </button>
+                        </>
+                      )}
+                      {entry.userId && !userInfo && (
+                        <div className="text-xs text-gray-600 dark:text-gray-400">
+                          {getUserName(entry.userId)}
+                        </div>
+                      )}
+                    </div>
+                    <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                      <SmartDate date={new Date(entry.timestamp)} />
+                    </div>
                   </div>
-                  {entry.userId && (
-                    <button
-                      onClick={() => setSelectedUserId(entry.userId)}
-                      className="text-xs opacity-75 hover:opacity-100 hover:underline text-left"
-                    >
-                      By: {getUserName(entry.userId)}
-                    </button>
+                  {hasDetails && (
+                    <div className="flex items-center shrink-0">
+                      <ChevronRight
+                        className={clsx(
+                          'w-5 h-5 text-gray-600 dark:text-gray-400 transition-transform',
+                          isExpanded && 'rotate-90'
+                        )}
+                      />
+                    </div>
                   )}
-                  <div className="text-xs opacity-75">
-                    <SmartDate date={new Date(entry.timestamp)} />
-                  </div>
                 </div>
-                {entry.context && (() => {
+                {isExpanded && entry.context && (() => {
                   try {
                     const parsed = JSON.parse(entry.context)
-                    return typeof parsed === 'object' && parsed !== null && Object.keys(parsed).length > 0
+                    return (
+                      <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <div className="p-3 bg-gray-100 dark:bg-gray-800 rounded text-xs font-mono overflow-x-auto">
+                          <pre>{JSON.stringify(parsed, null, 2)}</pre>
+                        </div>
+                      </div>
+                    )
                   } catch {
-                    return entry.context.length > 0
+                    return (
+                      <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <div className="p-3 bg-gray-100 dark:bg-gray-800 rounded text-xs font-mono overflow-x-auto">
+                          <pre>{entry.context}</pre>
+                        </div>
+                      </div>
+                    )
                   }
-                })() && (
-                  <button
-                    onClick={() => toggleExpand(index)}
-                    className="text-xs underline opacity-75 hover:opacity-100"
-                  >
-                    {expandedEntries.has(index)
-                      ? 'Hide Details'
-                      : 'Show Details'
-                    }
-                  </button>
-                )}
+                })()}
               </div>
-              {expandedEntries.has(index) && entry.context && (() => {
-                try {
-                  const parsed = JSON.parse(entry.context)
-                  return (
-                    <div className="mt-2 p-2 bg-background/50 rounded text-xs font-mono overflow-x-auto">
-                      <pre>{JSON.stringify(parsed, null, 2)}</pre>
-                    </div>
-                  )
-                } catch {
-                  return (
-                    <div className="mt-2 p-2 bg-background/50 rounded text-xs font-mono overflow-x-auto">
-                      <pre>{entry.context}</pre>
-                    </div>
-                  )
-                }
-              })()}
+            )
+          })}
+          {auditLogs.length === 0 && (
+            <div className="text-sm text-gray-600 dark:text-gray-400 italic py-8 text-center">
+              No audit logs available
             </div>
-          </div>
-        ))}
-        {!isLoading && auditLogs.length === 0 && (
-          <div className="text-sm text-secondary/60 italic py-4">
-            No audit logs available
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
       <UserInfoPopup
         userId={selectedUserId}
         isOpen={!!selectedUserId}
