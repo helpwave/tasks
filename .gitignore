@@ -13,9 +13,9 @@ coverage.xml
 htmlcov/
 
 # feedback
-web/feedback/
-feedback/
+/web/feedback/
+/feedback/
 
 # profile pictures
-web/profile/
-profile/
+/web/profile/
+/profile/
