@@ -48,6 +48,7 @@ import { PropertyList } from '@/components/PropertyList'
 import { ErrorDialog } from '@/components/ErrorDialog'
 import { useAtomicMutation } from '@/hooks/useAtomicMutation'
 import { fetcher } from '@/api/gql/fetcher'
+import { UserInfoPopup } from '@/components/UserInfoPopup'
 
 interface TaskDetailViewProps {
   taskId: string | null,
@@ -62,7 +63,16 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
   const { selectedRootLocationIds } = useTasksContext()
   const [isShowingPatientDialog, setIsShowingPatientDialog] = useState<boolean>(false)
   const [errorDialog, setErrorDialog] = useState<{ isOpen: boolean, message?: string }>({ isOpen: false })
+  const [selectedUserPopupId, setSelectedUserPopupId] = useState<string | null>(null)
   const isEditMode = !!taskId
+
+  const handleUserInfoClick = (userId: string) => {
+    setSelectedUserPopupId(userId)
+  }
+
+  const handleCloseUserInfoPopup = () => {
+    setSelectedUserPopupId(null)
+  }
 
   const [titleError, setTitleError] = useState<string | null>(null)
   const [patientIdError, setPatientIdError] = useState<string | null>(null)
@@ -533,6 +543,7 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
                       onValueChanged={handleAssigneeChange}
                       allowTeams={true}
                       allowUnassigned={true}
+                      onUserInfoClick={handleUserInfoClick}
                     />
                   )
                 }}
@@ -786,6 +797,11 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
         isOpen={errorDialog.isOpen}
         onClose={() => setErrorDialog({ isOpen: false })}
         message={errorDialog.message}
+      />
+      <UserInfoPopup
+        userId={selectedUserPopupId}
+        isOpen={!!selectedUserPopupId}
+        onClose={handleCloseUserInfoPopup}
       />
     </div>
   )

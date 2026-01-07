@@ -1,9 +1,9 @@
-import { useMemo, useState, forwardRef, useImperativeHandle, useEffect } from 'react'
+import { useMemo, useState, forwardRef, useImperativeHandle, useEffect, useRef } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Button, Checkbox, ConfirmDialog, FillerRowElement, SearchBar, Table, Tooltip } from '@helpwave/hightide'
 import { PlusIcon, Table as TableIcon, LayoutGrid, UserCheck, Users, Printer } from 'lucide-react'
 import { useAssignTaskMutation, useAssignTaskToTeamMutation, useCompleteTaskMutation, useReopenTaskMutation, useGetUsersQuery, useGetLocationsQuery, type GetGlobalDataQuery } from '@/api/gql/generated'
-import { AssigneeSelect } from './AssigneeSelect'
+import { AssigneeSelectDialog } from './AssigneeSelectDialog'
 import clsx from 'clsx'
 import { SmartDate } from '@/utils/date'
 import { SidePanel } from '@/components/layout/SidePanel'
@@ -233,6 +233,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
   const [isHandoverDialogOpen, setIsHandoverDialogOpen] = useState(false)
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false)
+  const isOpeningConfirmDialogRef = useRef(false)
   const [showDone, setShowDone] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem(STORAGE_KEY_SHOW_DONE)
@@ -373,9 +374,13 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
   }
 
   const handleUserSelect = (userId: string) => {
+    isOpeningConfirmDialogRef.current = true
     setSelectedUserId(userId)
     setIsHandoverDialogOpen(false)
     setIsConfirmDialogOpen(true)
+    setTimeout(() => {
+      isOpeningConfirmDialogRef.current = false
+    }, 0)
   }
 
   const handleConfirmHandover = () => {
@@ -388,6 +393,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
       console.warn('No open tasks to handover')
       setIsConfirmDialogOpen(false)
       setSelectedUserId(null)
+      setIsHandoverDialogOpen(false)
       return
     }
 
@@ -410,6 +416,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
 
     setIsConfirmDialogOpen(false)
     setSelectedUserId(null)
+    setIsHandoverDialogOpen(false)
   }
 
   const columns = useMemo<ColumnDef<TaskViewModel>[]>(
@@ -752,20 +759,21 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
           />
         )}
       </SidePanel>
-      <AssigneeSelect
+      <AssigneeSelectDialog
         value={selectedUserId || ''}
         onValueChanged={handleUserSelect}
         allowTeams={true}
         allowUnassigned={false}
         excludeUserIds={user?.id ? [user.id] : []}
+        isOpen={isHandoverDialogOpen}
         onClose={() => {
           setIsHandoverDialogOpen(false)
-          if (!isConfirmDialogOpen) {
+          if (!isConfirmDialogOpen && !isOpeningConfirmDialogRef.current) {
             setSelectedUserId(null)
           }
         }}
-        forceOpen={isHandoverDialogOpen}
         dialogTitle={translation('shiftHandover') || 'Shift Handover'}
+        onUserInfoClick={(userId) => setSelectedUserPopupId(userId)}
       />
       {isConfirmDialogOpen && selectedUserId && (
         <ConfirmDialog
@@ -773,6 +781,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
           onCancel={() => {
             setIsConfirmDialogOpen(false)
             setSelectedUserId(null)
+            setIsHandoverDialogOpen(false)
           }}
           onConfirm={() => {
             if (selectedUserId) {
