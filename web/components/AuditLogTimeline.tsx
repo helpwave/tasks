@@ -157,7 +157,7 @@ export const AuditLogTimeline: React.FC<AuditLogTimelineProps> = ({ caseId, clas
       </div>
       {isLoading && (
         <div className="flex items-center justify-center py-12">
-          <HelpwaveLogo className="w-16 h-16 animate-spin" />
+          <HelpwaveLogo className="w-16 h-16" animate="loading" />
         </div>
       )}
       {!isLoading && (
