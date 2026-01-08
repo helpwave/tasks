@@ -313,6 +313,7 @@
   "chooseTheme": "Choose Theme",
   "done": "Done",
   "showDone": "Show done",
+  "showAllPatients": "Show all patients",
   "patientData": "Data",
   "clickToAdd": "Click to add",
   "rClickToAdd": "Click to add {name}!",
