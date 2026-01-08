@@ -49,12 +49,29 @@ import { ErrorDialog } from '@/components/ErrorDialog'
 import { useAtomicMutation } from '@/hooks/useAtomicMutation'
 import { fetcher } from '@/api/gql/fetcher'
 import { UserInfoPopup } from '@/components/UserInfoPopup'
+import clsx from 'clsx'
 
 interface TaskDetailViewProps {
   taskId: string | null,
   onClose: () => void,
   onSuccess: () => void,
   initialPatientId?: string,
+}
+
+const getPriorityCheckboxColor = (priority: TaskPriority | null | undefined): string => {
+  if (!priority) return ''
+  switch (priority) {
+    case 'P1':
+      return 'border-green-500 text-green-500 checked:bg-green-500'
+    case 'P2':
+      return 'border-blue-500 text-blue-500 checked:bg-blue-500'
+    case 'P3':
+      return 'border-orange-500 text-orange-500 checked:bg-orange-500'
+    case 'P4':
+      return 'border-red-500 text-red-500 checked:bg-red-500'
+    default:
+      return ''
+  }
 }
 
 export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }: TaskDetailViewProps) => {
@@ -455,7 +472,7 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
                         reopenTask({ id: taskId })
                       }
                     }}
-                    className="rounded-full scale-125"
+                    className={clsx('rounded-full scale-125', getPriorityCheckboxColor(formData.priority as TaskPriority | null | undefined))}
                   />
                 )}
                 <div className="flex-1">

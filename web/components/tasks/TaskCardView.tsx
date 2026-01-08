@@ -84,6 +84,22 @@ const getPriorityColor = (priority: string | null | undefined): string => {
   }
 }
 
+const getPriorityCheckboxColor = (priority: string | null | undefined): string => {
+  if (!priority) return ''
+  switch (priority) {
+    case 'P1':
+      return 'border-green-500 text-green-500 checked:bg-green-500'
+    case 'P2':
+      return 'border-blue-500 text-blue-500 checked:bg-blue-500'
+    case 'P3':
+      return 'border-orange-500 text-orange-500 checked:bg-orange-500'
+    case 'P4':
+      return 'border-red-500 text-red-500 checked:bg-red-500'
+    default:
+      return ''
+  }
+}
+
 const toDate = (date: Date | string | null | undefined): Date | undefined => {
   if (!date) return undefined
   if (date instanceof Date) return date
@@ -233,7 +249,7 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
           <Checkbox
             checked={displayDone}
             onCheckedChange={handleToggleDone}
-            className="rounded-full mt-0.5 shrink-0"
+            className={clsx('rounded-full mt-0.5 shrink-0', getPriorityCheckboxColor(task.priority || (task as FlexibleTask).priority))}
           />
         </div>
         <div className={clsx('flex-1 min-w-0 overflow-hidden', { 'pb-16': showPatient, 'pb-12': !showPatient })}>
