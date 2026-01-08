@@ -39,11 +39,13 @@ type PatientListProps = {
   initialPatientId?: string,
   onInitialPatientOpened?: () => void,
   acceptedStates?: PatientState[],
+  rootLocationIds?: string[],
 }
 
-export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initialPatientId, onInitialPatientOpened, acceptedStates }, ref) => {
+export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initialPatientId, onInitialPatientOpened, acceptedStates, rootLocationIds }, ref) => {
   const translation = useTasksTranslation()
   const { selectedRootLocationIds } = useTasksContext()
+  const effectiveRootLocationIds = rootLocationIds ?? selectedRootLocationIds
   const { viewType, toggleView } = usePatientViewToggle()
   const [isPanelOpen, setIsPanelOpen] = useState(false)
   const [selectedPatient, setSelectedPatient] = useState<PatientViewModel | undefined>(undefined)
@@ -83,10 +85,10 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
   const patientStates = showAllPatients ? allPatientStates : (acceptedStates ?? [PatientState.Admitted])
 
   const { data: patientsData, refetch } = usePaginatedGraphQLQuery<GetPatientsQuery, GetPatientsQuery['patients'][0], { rootLocationIds?: string[], states?: PatientState[] }>({
-    queryKey: ['GetPatients', { rootLocationIds: selectedRootLocationIds, states: patientStates }],
+    queryKey: ['GetPatients', { rootLocationIds: effectiveRootLocationIds, states: patientStates }],
     document: GetPatientsDocument,
     baseVariables: {
-      rootLocationIds: selectedRootLocationIds && selectedRootLocationIds.length > 0 ? selectedRootLocationIds : undefined,
+      rootLocationIds: effectiveRootLocationIds && effectiveRootLocationIds.length > 0 ? effectiveRootLocationIds : undefined,
       states: patientStates
     },
     pageSize: 50,
