@@ -135,6 +135,21 @@ def get_token_source(connection: HTTPConnection) -> str | None:
         if len(parts) == 2 and parts[0].lower() == "bearer":
             return parts[1]
 
+    try:
+        if hasattr(connection, "query_params"):
+            token_param = connection.query_params.get("token")
+            if token_param:
+                return token_param
+    except (AttributeError, KeyError):
+        try:
+            from urllib.parse import urlparse, parse_qs
+            parsed_url = urlparse(str(connection.url))
+            query_params = parse_qs(parsed_url.query)
+            if "token" in query_params and query_params["token"]:
+                return query_params["token"][0]
+        except Exception:
+            pass
+
     return connection.cookies.get(AUTH_COOKIE_NAME)
 
 
