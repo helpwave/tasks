@@ -3,11 +3,11 @@ import { Page } from '@/components/layout/Page'
 import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
-import { Button, Chip, FillerRowElement, LoadingContainer, Table } from '@helpwave/hightide'
+import { Button, Chip, FillerCell, LoadingContainer, Table } from '@helpwave/hightide'
 import { useMemo, useState } from 'react'
 import type { ColumnDef } from '@tanstack/table-core'
 import { EditIcon, PlusIcon } from 'lucide-react'
-import { SidePanel } from '@/components/layout/SidePanel'
+import { Drawer } from '@helpwave/hightide'
 import type { Property } from '@/components/PropertyList'
 import { PropertyDetailView } from '@/components/properties/PropertyDetailView'
 import { useGetPropertyDefinitionsQuery, FieldType, PropertyEntity } from '@/api/gql/generated'
@@ -93,7 +93,7 @@ const PropertiesPage: NextPage = () => {
         const value = row.original.fieldType
 
         return (
-          <Chip size="small" className="coloring-tonal" color="primary">
+          <Chip size="sm" className="coloring-tonal" color="primary">
             <span>{translation('sPropertyType', { type: value })}</span>
           </Chip>
         )
@@ -159,7 +159,8 @@ const PropertiesPage: NextPage = () => {
         titleElement={translation('properties')}
         description={data ?  translation('nPatient', { count: data.length }) : (<LoadingContainer/>) }
         actionElement={(
-          <Button startIcon={<PlusIcon/>} onClick={handleAdd}>
+          <Button onClick={handleAdd}>
+            <PlusIcon/>
             {translation('rAdd', { name: translation('property') })}
           </Button>
         )}
@@ -169,14 +170,16 @@ const PropertiesPage: NextPage = () => {
             className="w-full h-full min-w-[600px]"
             data={data ?? []}
             columns={columns}
-            fillerRow={() => (<FillerRowElement className="min-h-12"/>)}
+            fillerRow={() => (<FillerCell className="min-h-12"/>)}
           />
         </div>
       </ContentPanel>
-      <SidePanel
+      <Drawer
+        alignment="right"
+        titleElement={translation(!selected ? 'rAdd': 'rEdit', { name: translation('property') })}
+        description={undefined}
         isOpen={isPanelOpen}
         onClose={handleClose}
-        title={translation(!selected ? 'rAdd': 'rEdit', { name: translation('property') })}
       >
         <PropertyDetailView
           id={selected?.id}
@@ -184,7 +187,7 @@ const PropertiesPage: NextPage = () => {
           onClose={handleClose}
           onSuccess={refetch}
         />
-      </SidePanel>
+      </Drawer>
     </Page>
   )
 }

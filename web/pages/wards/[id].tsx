@@ -3,7 +3,7 @@ import { Page } from '@/components/layout/Page'
 import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
-import { LoadingContainer, Tab, TabView } from '@helpwave/hightide'
+import { LoadingContainer, TabSwitcher, TabPanel } from '@helpwave/hightide'
 import { PatientList } from '@/components/patients/PatientList'
 import { TaskList, type TaskViewModel } from '@/components/tasks/TaskList'
 import { useGetLocationNodeQuery, GetPatientsDocument, type GetPatientsQuery } from '@/api/gql/generated'
@@ -31,9 +31,9 @@ const WardPage: NextPage = () => {
     pageSize: 50,
     extractItems: (result) => result.patients,
     mode: 'infinite',
-      enabled: !!id,
-      refetchOnWindowFocus: true,
-      refetchOnMount: true,
+    enabled: !!id,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
   })
 
   const tasks: TaskViewModel[] = useMemo(() => {
@@ -80,18 +80,18 @@ const WardPage: NextPage = () => {
           </div>
         )}
         {!isLoading && !isError && (
-          <TabView>
-            <Tab label={translation('patients')}>
+          <TabSwitcher>
+            <TabPanel label={translation('patients')}>
               <PatientList />
-            </Tab>
-            <Tab label={translation('tasks')}>
+            </TabPanel>
+            <TabPanel label={translation('tasks')}>
               <TaskList
                 tasks={tasks}
                 onRefetch={refetchPatients}
                 showAssignee={true}
               />
-            </Tab>
-          </TabView>
+            </TabPanel>
+          </TabSwitcher>
         )}
       </ContentPanel>
     </Page>

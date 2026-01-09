@@ -65,7 +65,8 @@ function useInfinitePaginatedQuery<TData, TVariables extends Record<string, unkn
     refetch,
   } = useInfiniteQuery({
     queryKey: [...queryKey, variables],
-    queryFn: ({ pageParam = 0 }) => queryFn(pageParam, variables),
+    queryFn: ({ pageParam }) => queryFn(pageParam as number, variables),
+    initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) => {
       const lastPageData = Array.isArray(lastPage) ? lastPage : []
       if (lastPageData.length < pageSize) {

@@ -71,16 +71,16 @@ const isCloseToDueDate = (dueDate: Date | undefined, done: boolean): boolean => 
 const getPriorityColor = (priority: string | null | undefined): string => {
   if (!priority) return ''
   switch (priority) {
-    case 'P1':
-      return 'border-l-4 border-l-green-500'
-    case 'P2':
-      return 'border-l-4 border-l-blue-500'
-    case 'P3':
-      return 'border-l-4 border-l-orange-500'
-    case 'P4':
-      return 'border-l-4 border-l-red-500'
-    default:
-      return ''
+  case 'P1':
+    return 'border-l-4 border-l-green-500'
+  case 'P2':
+    return 'border-l-4 border-l-blue-500'
+  case 'P3':
+    return 'border-l-4 border-l-orange-500'
+  case 'P4':
+    return 'border-l-4 border-l-red-500'
+  default:
+    return ''
   }
 }
 
@@ -218,7 +218,7 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
   return (
     <div
       onClick={() => onClick(task)}
-      className={clsx('border-2 p-5 rounded-lg text-left transition-colors hover:border-primary relative bg-[rgba(255,255,255,1)] dark:bg-[rgba(55,65,81,1)] overflow-hidden cursor-pointer w-full', borderColorClass, priorityBorderClass, className)}
+      className={clsx('border-2 p-5 rounded-lg text-left transition-colors hover:border-primary relative bg-[rgba(255,255,255,1)] dark:bg-[rgba(55,65,81,1)] overflow-hidden cursor-pointer w-full min-h-35', borderColorClass, priorityBorderClass, className)}
       role="button"
       tabIndex={0}
       onKeyDown={(e) => {
@@ -231,8 +231,8 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
       <div className="flex items-start gap-4 w-full min-w-0">
         <div onClick={(e) => e.stopPropagation()}>
           <Checkbox
-            checked={displayDone}
-            onCheckedChange={handleToggleDone}
+            value={displayDone}
+            onValueChange={handleToggleDone}
             className="rounded-full mt-0.5 shrink-0"
           />
         </div>
@@ -272,7 +272,6 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
                 className="flex items-center gap-1.5 text-base text-description shrink-0 min-w-0 hover:opacity-75 transition-opacity"
               >
                 <AvatarStatusComponent
-                  fullyRounded={true}
                   size="sm"
                   isOnline={task.assignee?.isOnline ?? null}
                   image={{
@@ -293,7 +292,7 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
         <div className="absolute bottom-5" style={{ left: 'calc(1.25rem + 1.5rem + 1rem)' }}>
           <Button
             color="neutral"
-            size="small"
+            size="sm"
             onClick={handlePatientClick}
             className="flex-row-0 justify-start w-fit"
           >

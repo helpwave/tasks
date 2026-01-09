@@ -6,6 +6,7 @@ import { Users, ChevronDown, Info } from 'lucide-react'
 import { useGetUsersQuery, useGetLocationsQuery } from '@/api/gql/generated'
 import clsx from 'clsx'
 import { AssigneeSelectDialog } from './AssigneeSelectDialog'
+import { UserInfoPopup } from '../UserInfoPopup'
 
 interface AssigneeSelectProps {
   value: string,
@@ -15,7 +16,6 @@ interface AssigneeSelectProps {
   excludeUserIds?: string[],
   id?: string,
   className?: string,
-  onUserInfoClick?: (userId: string) => void,
   [key: string]: unknown,
 }
 
@@ -27,11 +27,12 @@ export const AssigneeSelect = ({
   excludeUserIds = [],
   id,
   className,
-  onUserInfoClick,
 }: AssigneeSelectProps) => {
   const translation = useTasksTranslation()
   const [searchQuery, setSearchQuery] = useState('')
   const [isOpen, setIsOpen] = useState(false)
+  const [selectedUserPopupId, setSelectedUserPopupId] = useState<string | null>(null)
+
 
   const { data: usersData } = useGetUsersQuery(undefined, {
   })
@@ -108,7 +109,6 @@ export const AssigneeSelect = ({
                 ) : (
                   <AvatarStatusComponent
                     size="sm"
-                    fullyRounded={true}
                     isOnline={selectedItem.user.isOnline ?? null}
                     image={selectedItem.user.avatarUrl ? {
                       avatarUrl: selectedItem.user.avatarUrl,
@@ -119,13 +119,13 @@ export const AssigneeSelect = ({
                 <span className="truncate">{selectedItem?.name}</span>
               </div>
               <div className="flex items-center gap-1">
-                {selectedItem && selectedItem.type === 'user' && onUserInfoClick && (
+                {selectedItem && selectedItem.type === 'user' && (
                   <button
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation()
                       if (selectedItem) {
-                        onUserInfoClick(selectedItem.id)
+                        setSelectedUserPopupId(selectedItem.id)
                       }
                     }}
                     className="p-1 hover:bg-surface-hover rounded transition-colors text-description hover:text-on-surface"
@@ -148,7 +148,12 @@ export const AssigneeSelect = ({
         excludeUserIds={excludeUserIds}
         isOpen={isOpen}
         onClose={handleClose}
-        onUserInfoClick={onUserInfoClick}
+        onUserInfoClick={setSelectedUserPopupId}
+      />
+      <UserInfoPopup
+        userId={selectedUserPopupId}
+        isOpen={!!selectedUserPopupId}
+        onClose={() => setSelectedUserPopupId(null)}
       />
     </>
   )

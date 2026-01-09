@@ -56,7 +56,7 @@ export const LocationChips = ({ locations, disableLink = false, small = false }:
 
   const chipContent = (
     <Chip
-      size="small"
+      size="sm"
       color="neutral"
       className={`cursor-pointer hover:opacity-80 transition-opacity ${small ? 'text-xs' : ''}`}
     >
@@ -94,7 +94,7 @@ export const LocationChips = ({ locations, disableLink = false, small = false }:
           position="top"
         >
           <Chip
-            size="small"
+            size="sm"
             color="neutral"
             className={`cursor-help whitespace-pre-line ${small ? 'text-xs' : ''}`}
             onClick={(e) => e.stopPropagation()}

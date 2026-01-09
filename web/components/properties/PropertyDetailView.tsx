@@ -1,13 +1,15 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
+import type { FormFieldDataHandling } from '@helpwave/hightide'
 import {
   Button,
   Checkbox,
-  FormElementWrapper,
   Input,
-  LoadingButton,
   Select,
   SelectOption,
-  Textarea
+  Textarea,
+  FormField,
+  FormProvider,
+  useCreateForm
 } from '@helpwave/hightide'
 import type { Property, PropertyFieldType, PropertySelectOption, PropertySubjectType } from '@/components/PropertyList'
 import { propertyFieldTypeList, propertySubjectTypeList } from '@/components/PropertyList'
@@ -27,6 +29,35 @@ interface PropertyDetailViewProps {
   onSuccess: () => void,
 }
 
+type PropertyFormValues = {
+  name: string,
+  description: string,
+  subjectType: PropertySubjectType,
+  fieldType: PropertyFieldType,
+  isArchived: boolean,
+  selectData?: {
+    isAllowingFreetext: boolean,
+    options: PropertySelectOption[],
+  },
+}
+
+const mapFieldTypeToBackend = (fieldType: PropertyFieldType): FieldType => {
+  const mapping: Record<PropertyFieldType, FieldType> = {
+    text: FieldType.FieldTypeText,
+    number: FieldType.FieldTypeNumber,
+    checkbox: FieldType.FieldTypeCheckbox,
+    date: FieldType.FieldTypeDate,
+    dateTime: FieldType.FieldTypeDateTime,
+    singleSelect: FieldType.FieldTypeSelect,
+    multiSelect: FieldType.FieldTypeMultiSelect,
+  }
+  return mapping[fieldType]
+}
+
+const mapSubjectTypeToBackend = (subjectType: PropertySubjectType): PropertyEntity => {
+  return subjectType === 'patient' ? PropertyEntity.Patient : PropertyEntity.Task
+}
+
 export const PropertyDetailView = ({
   id,
   initialData,
@@ -36,24 +67,63 @@ export const PropertyDetailView = ({
   const translation = useTasksTranslation()
   const isEditMode = !!id
 
-  const [formData, setFormData] = useState<Property>({
-    id: '',
-    name: '',
-    subjectType: 'patient',
-    fieldType: 'singleSelect',
-    description: '',
-    isArchived: false,
-    selectData: undefined,
-    alwaysIncludeForViewSource: false,
-    setId: '',
-    ...initialData
-  })
   const [newOption, setNewOption] = useState<PropertySelectOption>({
     id: '',
     name: '',
     description: '',
     isCustom: false,
   })
+
+  const [isCreating, setIsCreating] = useState<boolean>(false)
+  const { mutate: createProperty } = useCreatePropertyDefinitionMutation({
+    onMutate: () => {
+      setIsCreating(true)
+    },
+    onSettled: () => {
+      setIsCreating(false)
+    },
+    onSuccess: () => {
+      onSuccess()
+      onClose()
+    }
+  })
+
+  const form = useCreateForm<PropertyFormValues>({
+    initialValues: {
+      name: initialData?.name || '',
+      description: initialData?.description || '',
+      subjectType: initialData?.subjectType || 'patient',
+      fieldType: initialData?.fieldType || 'singleSelect',
+      isArchived: initialData?.isArchived || false,
+      selectData: initialData?.selectData,
+    },
+    onFormSubmit: (values) => {
+      if (!values.name.trim()) return
+
+      const createData = {
+        name: values.name,
+        description: values.description || null,
+        fieldType: mapFieldTypeToBackend(values.fieldType),
+        allowedEntities: [mapSubjectTypeToBackend(values.subjectType)],
+        options: values.selectData?.options.map(opt => opt.name) || null,
+        isActive: !values.isArchived,
+      }
+
+      createProperty({ data: createData })
+    },
+    validators: {
+      name: (value) => {
+        if (!value || !value.trim()) {
+          return translation('name') + ' is required'
+        }
+        return null
+      },
+    }
+  })
+
+  const { update: updateForm, getValue: getFormValue } = form
+  const updateFormRef = useRef(updateForm)
+  updateFormRef.current = updateForm
 
   useEffect(() => {
     if (initialData && !isEditMode) {
@@ -63,9 +133,13 @@ export const PropertyDetailView = ({
         options: [],
       } : initialData.selectData
 
-      setFormData(prev => ({
+      updateFormRef.current(prev => ({
         ...prev,
-        ...initialData,
+        name: initialData.name || '',
+        description: initialData.description || '',
+        subjectType: initialData.subjectType || 'patient',
+        fieldType: initialData.fieldType || 'singleSelect',
+        isArchived: initialData.isArchived || false,
         selectData,
       }))
     } else if (initialData && isEditMode && id && initialData.id === id) {
@@ -75,8 +149,8 @@ export const PropertyDetailView = ({
         options: [],
       } : initialData.selectData
 
-      setFormData(prev => {
-        if (prev.id === id && prev.selectData?.options && selectData?.options) {
+      updateFormRef.current(prev => {
+        if (prev.selectData?.options && selectData?.options) {
           const existingOptionNames = new Set(prev.selectData.options.map(o => o.name))
           const newOptionNames = new Set(selectData.options.map(o => o.name))
           const optionsChanged = prev.selectData.options.length !== selectData.options.length ||
@@ -89,38 +163,25 @@ export const PropertyDetailView = ({
         }
         return {
           ...prev,
-          ...initialData,
+          name: initialData.name || '',
+          description: initialData.description || '',
+          subjectType: initialData.subjectType || 'patient',
+          fieldType: initialData.fieldType || 'singleSelect',
+          isArchived: initialData.isArchived || false,
           selectData,
         }
       })
     }
   }, [initialData, isEditMode, id])
 
-  const mapFieldTypeToBackend = (fieldType: PropertyFieldType): FieldType => {
-    const mapping: Record<PropertyFieldType, FieldType> = {
-      text: FieldType.FieldTypeText,
-      number: FieldType.FieldTypeNumber,
-      checkbox: FieldType.FieldTypeCheckbox,
-      date: FieldType.FieldTypeDate,
-      dateTime: FieldType.FieldTypeDateTime,
-      singleSelect: FieldType.FieldTypeSelect,
-      multiSelect: FieldType.FieldTypeMultiSelect,
-    }
-    return mapping[fieldType]
-  }
-
-  const mapSubjectTypeToBackend = (subjectType: PropertySubjectType): PropertyEntity => {
-    return subjectType === 'patient' ? PropertyEntity.Patient : PropertyEntity.Task
-  }
-
-  const { mutate: createProperty, isLoading: isCreating } = useCreatePropertyDefinitionMutation({
-    onSuccess: () => {
-      onSuccess()
-      onClose()
-    }
-  })
-
-  const { mutate: updateProperty, isLoading: isUpdating } = useUpdatePropertyDefinitionMutation({
+  const [isUpdating, setIsUpdating] = useState<boolean>(false)
+  const { mutate: updateProperty } = useUpdatePropertyDefinitionMutation({
+    onMutate: () => {
+      setIsUpdating(true)
+    },
+    onSettled: () => {
+      setIsUpdating(false)
+    },
     onSuccess: () => {
       onSuccess()
     }
@@ -128,10 +189,7 @@ export const PropertyDetailView = ({
 
   const isLoading = isCreating || isUpdating
 
-  const updateLocal = (updates: Partial<Property>) =>
-    setFormData(prev => ({ ...prev, ...updates }))
-
-  const persist = (updates: Partial<Property>) => {
+  const persist = (updates: Partial<PropertyFormValues>) => {
     if (!isEditMode || !id) return
 
     const backendUpdates: Record<string, unknown> = {}
@@ -152,269 +210,288 @@ export const PropertyDetailView = ({
     })
   }
 
-  const handleCreate = () => {
-    if (!formData.name.trim()) return
-
-    const createData = {
-      name: formData.name,
-      description: formData.description || null,
-      fieldType: mapFieldTypeToBackend(formData.fieldType),
-      allowedEntities: [mapSubjectTypeToBackend(formData.subjectType)],
-      options: formData.selectData?.options.map(opt => opt.name) || null,
-      isActive: !formData.isArchived,
-    }
-
-    createProperty({ data: createData })
-  }
-
-  const isSelectType = formData.fieldType === 'multiSelect' || formData.fieldType === 'singleSelect'
+  const isSelectType = getFormValue('fieldType') === 'multiSelect' || getFormValue('fieldType') === 'singleSelect'
 
   return (
-    <div className="flex flex-col h-full bg-surface">
-      <div className="flex-grow overflow-hidden flex flex-col">
-        <div className="flex flex-col gap-6 pt-4">
-          <FormElementWrapper label={translation('name')}>
-            {({ ...bag }) => (
-              <Input
-                {...bag}
-                value={formData.name}
-                onChange={e => updateLocal({ name: e.target.value })}
-                onBlur={() => persist({ name: formData.name })}
-              />
-            )}
-          </FormElementWrapper>
-
-          <FormElementWrapper label={translation('description')}>
-            {({ ...bag }) => (
-              <Textarea
-                {...bag}
-                value={formData.description ?? ''}
-                onChange={e => updateLocal({ description: e.target.value })}
-                onBlur={() => persist({ description: formData.description })}
-              />
-            )}
-          </FormElementWrapper>
-
-          <FormElementWrapper label={translation('subjectType')} disabled={isEditMode}>
-            {({ ...bag }) => (
-              <Select
-                {...bag}
-                value={formData.subjectType}
-                onValueChanged={value => {
-                  updateLocal({ subjectType: value as PropertySubjectType })
-                  persist({ subjectType: value as PropertySubjectType })
-                }}
+    <FormProvider state={form}>
+      <div className="flex flex-col h-full bg-surface">
+        <div className="flex-grow overflow-hidden flex flex-col">
+          <form onSubmit={event => { event.preventDefault(); form.submit() }}>
+            <div className="flex flex-col gap-6 pt-4">
+              <FormField<PropertyFormValues, 'name'>
+                name="name"
+                label={translation('name')}
+                required
               >
-                {propertySubjectTypeList.map(v => (
-                  <SelectOption key={v} value={v}>
-                    {translation('sPropertySubjectType', { subject: v })}
-                  </SelectOption>
-                ))}
-              </Select>
-            )}
-          </FormElementWrapper>
-
-          <FormElementWrapper label={translation('type')} disabled={isEditMode}>
-            {({ ...bag }) => (
-              <Select
-                {...bag}
-                value={formData.fieldType}
-                onValueChanged={value => {
-                  updateLocal({ fieldType: value as PropertyFieldType })
-                  persist({ fieldType: value as PropertyFieldType })
-                }}
-              >
-                {propertyFieldTypeList.map(v => (
-                  <SelectOption key={v} value={v}>
-                    {translation('sPropertyType', { type: v })}
-                  </SelectOption>
-                ))}
-              </Select>
-            )}
-          </FormElementWrapper>
-
-          {isSelectType && (
-            <div className="flex-col-2">
-              <span className="typography-title-md">
-                {translation('selectOptions')}
-              </span>
-              <div className="flex-col-2 min-h-64 max-h-64 overflow-y-auto">
-                {formData.selectData?.options.map((option) => (
-                  <div key={option.id} className="relative">
-                    <Input
-                      value={option.name}
-                      onChangeText={value => {
-                        setFormData(prev => {
-                          if (!prev.selectData) return prev
-                          return {
-                            ...prev,
-                            selectData: {
-                              ...prev.selectData,
-                              options: prev.selectData.options
-                                .map(entry => entry.id === option.id ? { ...entry, name: value } : entry)
-                            }
-                          }
-                        })
-                      }}
-                      onEditCompleted={value => {
-                        const update = {
-                          selectData: formData.selectData ? {
-                            ...formData.selectData,
-                            options: formData.selectData.options
-                              .map(entry => entry.id === option.id ? { ...entry, name: value } : entry)
-                          } : undefined
-                        }
-                        updateLocal(update)
-                        persist(update)
-                      }}
-                      className="pr-11 w-full"
-                    />
-                    <Button
-                      coloringStyle="text"
-                      color="negative"
-                      size="none"
-                      className="absolute right-3 top-2 rounded"
-                      onClick={() => {
-                        const update = {
-                          selectData: formData.selectData ? {
-                            ...formData.selectData,
-                            options: formData.selectData.options.filter(entry => entry.id !== option.id)
-                          } : undefined
-                        }
-                        updateLocal(update)
-                        persist(update)
-                      }}
-                    >
-                      <XIcon />
-                    </Button>
-                  </div>
-                ))}
-                <div className="relative">
+                {({ dataProps, focusableElementProps, interactionStates }) => (
                   <Input
-                    value={newOption.name}
-                    onChangeText={name => {
-                      setNewOption({
-                        ...newOption,
-                        name
-                      })
-                    }}
-                    onEditCompleted={name => {
-                      if (!name.trim()) return
-                      const option = {
-                        ...newOption,
-                        id: `temp-${Date.now()}-${Math.random()}`,
-                        name: name.trim()
+                    {...dataProps} {...focusableElementProps} {...interactionStates}
+                    value={dataProps.value || ''}
+                    onBlur={() => {
+                      if (isEditMode && id) {
+                        persist({ name: getFormValue('name') })
                       }
-                      setFormData(prev => {
-                        const update = {
-                          selectData: prev.selectData ? {
-                            ...prev.selectData,
-                            options: [...prev.selectData.options, option]
-                          } : {
-                            options: [option],
-                            isAllowingFreetext: false,
-                          }
-                        }
-                        const updatedFormData = {
-                          ...prev,
-                          ...update
-                        }
-                        setTimeout(() => {
-                          persist(update)
-                        }, 0)
-                        return updatedFormData
-                      })
-                      setNewOption({
-                        id: '',
-                        name: '',
-                        description: '',
-                        isCustom: false,
-                      })
                     }}
-                    className="pr-16 w-full"
-                    placeholder={translation('rAdd', { name: translation('option') })}
                   />
-                  <Button
-                    coloringStyle="text"
-                    color="primary"
-                    size="none"
-                    className="absolute right-3 top-2 rounded"
-                    disabled={!newOption.name}
-                    onClick={() => {
-                      if (!newOption.name.trim()) return
-                      const option = {
-                        ...newOption,
-                        id: `temp-${Date.now()}-${Math.random()}`,
-                        name: newOption.name.trim()
+                )}
+              </FormField>
+
+              <FormField<PropertyFormValues, 'description'>
+                name="description"
+                label={translation('description')}
+              >
+                {({ dataProps, focusableElementProps, interactionStates }) => (
+                  <Textarea
+                    {...dataProps} {...focusableElementProps} {...interactionStates}
+                    value={dataProps.value || ''}
+                    onBlur={() => {
+                      if (isEditMode && id) {
+                        persist({ description: getFormValue('description') })
                       }
-                      setFormData(prev => {
-                        const update = {
-                          selectData: prev.selectData ? {
-                            ...prev.selectData,
-                            options: [...prev.selectData.options, option]
-                          } : {
-                            options: [option],
-                            isAllowingFreetext: false,
-                          }
-                        }
-                        const updatedFormData = {
-                          ...prev,
-                          ...update
-                        }
-                        setTimeout(() => {
-                          persist(update)
-                        }, 0)
-                        return updatedFormData
-                      })
-                      setNewOption({
-                        id: '',
-                        name: '',
-                        description: '',
-                        isCustom: false,
-                      })
+                    }}
+                  />
+                )}
+              </FormField>
+
+              <FormField<PropertyFormValues, 'subjectType'>
+                name="subjectType"
+                label={translation('subjectType')}
+              >
+                {({ dataProps, focusableElementProps, interactionStates }) => (
+                  <Select
+                    {...dataProps as FormFieldDataHandling<string>} {...focusableElementProps} {...interactionStates}
+                    value={dataProps.value || 'patient'}
+                    disabled={isEditMode}
+                    onValueChange={(value) => {
+                      const subjectType = value as PropertySubjectType
+                      dataProps.onValueChange?.(subjectType)
+                      dataProps.onEditComplete?.(subjectType)
+                      if (isEditMode && id) {
+                        persist({ subjectType })
+                      }
                     }}
                   >
-                    <PlusIcon />
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
-          {isEditMode && (
-            <>
+                    {propertySubjectTypeList.map(v => (
+                      <SelectOption key={v} value={v}>
+                        {translation('sPropertySubjectType', { subject: v })}
+                      </SelectOption>
+                    ))}
+                  </Select>
+                )}
+              </FormField>
 
-              <div className="flex-row-4 justify-between items-center">
-                <div className="flex-col-1">
+              <FormField<PropertyFormValues, 'fieldType'>
+                name="fieldType"
+                label={translation('type')}
+              >
+                {({ dataProps, focusableElementProps, interactionStates }) => (
+                  <Select
+                    {...dataProps as FormFieldDataHandling<string>} {...focusableElementProps} {...interactionStates}
+                    value={dataProps.value || 'singleSelect'}
+                    disabled={isEditMode}
+                    onValueChange={(value) => {
+                      const fieldType = value as PropertyFieldType
+                      dataProps.onValueChange?.(fieldType)
+                      dataProps.onEditComplete?.(fieldType)
+                      if (isEditMode && id) {
+                        persist({ fieldType })
+                      }
+                    }}
+                  >
+                    {propertyFieldTypeList.map(v => (
+                      <SelectOption key={v} value={v}>
+                        {translation('sPropertyType', { type: v })}
+                      </SelectOption>
+                    ))}
+                  </Select>
+                )}
+              </FormField>
+
+              {isSelectType && (
+                <div className="flex-col-2">
                   <span className="typography-title-md">
-                    {translation('archiveProperty')}
+                    {translation('selectOptions')}
                   </span>
-                  <span className="text-description">
-                    {translation('archivedPropertyDescription')}
-                  </span>
+                  <div className="flex-col-2 min-h-64 max-h-64 overflow-y-auto">
+                    {getFormValue('selectData')?.options.map((option) => (
+                      <div key={option.id} className="relative">
+                        <Input
+                          value={option.name}
+                          onChange={(e) => {
+                            const value = e.target.value
+                            updateForm(prev => {
+                              if (!prev.selectData) return prev
+                              return {
+                                ...prev,
+                                selectData: {
+                                  ...prev.selectData,
+                                  options: prev.selectData.options
+                                    .map(entry => entry.id === option.id ? { ...entry, name: value } : entry)
+                                }
+                              }
+                            })
+                          }}
+                          onBlur={(e) => {
+                            const value = e.target.value
+                            const update = {
+                              selectData: getFormValue('selectData') ? {
+                                ...getFormValue('selectData')!,
+                                options: getFormValue('selectData')!.options
+                                  .map(entry => entry.id === option.id ? { ...entry, name: value } : entry)
+                              } : undefined
+                            }
+                            updateForm(prev => ({ ...prev, ...update }))
+                            persist(update)
+                          }}
+                          className="pr-11 w-full"
+                        />
+                        <Button
+                          coloringStyle="text"
+                          color="negative"
+                          className="absolute right-3 top-2 rounded"
+                          onClick={() => {
+                            const update = {
+                              selectData: getFormValue('selectData') ? {
+                                ...getFormValue('selectData')!,
+                                options: getFormValue('selectData')!.options.filter(entry => entry.id !== option.id)
+                              } : undefined
+                            }
+                            updateForm(prev => ({ ...prev, ...update }))
+                            persist(update)
+                          }}
+                        >
+                          <XIcon />
+                        </Button>
+                      </div>
+                    ))}
+                    <div className="relative">
+                      <Input
+                        value={newOption.name}
+                        onChange={(e) => {
+                          const name = e.target.value
+                          setNewOption({
+                            ...newOption,
+                            name
+                          })
+                        }}
+                        onBlur={(e) => {
+                          const name = e.target.value.trim()
+                          if (!name) return
+                          const option = {
+                            ...newOption,
+                            id: `temp-${Date.now()}-${Math.random()}`,
+                            name
+                          }
+                          const currentSelectData = getFormValue('selectData')
+                          const update = {
+                            selectData: currentSelectData ? {
+                              ...currentSelectData,
+                              options: [...currentSelectData.options, option]
+                            } : {
+                              options: [option],
+                              isAllowingFreetext: false,
+                            }
+                          }
+                          updateForm(prev => ({ ...prev, ...update }))
+                          setTimeout(() => {
+                            persist(update)
+                          }, 0)
+                          setNewOption({
+                            id: '',
+                            name: '',
+                            description: '',
+                            isCustom: false,
+                          })
+                        }}
+                        className="pr-16 w-full"
+                        placeholder={translation('rAdd', { name: translation('option') })}
+                      />
+                      <Button
+                        coloringStyle="text"
+                        color="primary"
+                        className="absolute right-3 top-2 rounded"
+                        disabled={!newOption.name}
+                        onClick={() => {
+                          if (!newOption.name.trim()) return
+                          const option = {
+                            ...newOption,
+                            id: `temp-${Date.now()}-${Math.random()}`,
+                            name: newOption.name.trim()
+                          }
+                          const currentSelectData = getFormValue('selectData')
+                          const update = {
+                            selectData: currentSelectData ? {
+                              ...currentSelectData,
+                              options: [...currentSelectData.options, option]
+                            } : {
+                              options: [option],
+                              isAllowingFreetext: false,
+                            }
+                          }
+                          updateForm(prev => ({ ...prev, ...update }))
+                          setTimeout(() => {
+                            persist(update)
+                          }, 0)
+                          setNewOption({
+                            id: '',
+                            name: '',
+                            description: '',
+                            isCustom: false,
+                          })
+                        }}
+                      >
+                        <PlusIcon />
+                      </Button>
+                    </div>
+                  </div>
                 </div>
-                <Checkbox
-                  checked={formData.isArchived}
-                  onCheckedChange={value => {
-                    const update = { isArchived: value }
-                    updateLocal(update)
-                    persist(update)
-                  }}
-                />
-              </div>
-
-            </>
-          )}
+              )}
+              {isEditMode && (
+                <FormField<PropertyFormValues, 'isArchived'>
+                  name="isArchived"
+                  label={translation('archiveProperty')}
+                >
+                  {({ dataProps: { value, onValueChange }, focusableElementProps, interactionStates }) => (
+                    <div className="flex-row-4 justify-between items-center">
+                      <div className="flex-col-1">
+                        <span className="typography-title-md">
+                          {translation('archiveProperty')}
+                        </span>
+                        <span className="text-description">
+                          {translation('archivedPropertyDescription')}
+                        </span>
+                      </div>
+                      <Checkbox
+                        {...focusableElementProps} {...interactionStates}
+                        value={value || false}
+                        onValueChange={(checked) => {
+                          onValueChange?.(checked)
+                          if (isEditMode && id) {
+                            persist({ isArchived: checked })
+                          }
+                        }}
+                      />
+                    </div>
+                  )}
+                </FormField>
+              )}
+            </div>
+            <div className="min-h-16" />
+          </form>
         </div>
-        <div className="min-h-16" />
+
+        {!isEditMode && (
+          <div className="flex-none pt-4 mt-auto border-t border-divider flex justify-end">
+            <Button
+              type="submit"
+              onClick={() => form.submit()}
+              disabled={isLoading}
+            >
+              {translation('create')}
+            </Button>
+          </div>
+        )}
       </div>
-
-      {!isEditMode && (
-        <div className="flex-none pt-4 mt-auto border-t border-divider flex justify-end">
-          <LoadingButton onClick={handleCreate} isLoading={isLoading}>
-            Create
-          </LoadingButton>
-        </div>
-      )}
-    </div>
+    </FormProvider>
   )
 }

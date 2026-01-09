@@ -222,7 +222,7 @@ export const PropertyList = ({
           ...ap,
           value: localValue || ap.value,
         }
-    })
+      })
 
     const pending = Array.from(pendingAdditions.values())
       .filter(pa => !removedPropertyIds.has(pa.property.id) && !attachedPropertyIds.has(pa.property.id))
@@ -274,25 +274,25 @@ export const PropertyList = ({
   const handleAddProperty = (property: Property) => {
     const getDefaultValue = (): PropertyValue => {
       switch (property.fieldType) {
-        case 'text':
-          return { textValue: '' }
-        case 'number':
-          return { numberValue: undefined }
-        case 'checkbox':
-          return { boolValue: false }
-        case 'date':
-        case 'dateTime':
-          return {}
-        case 'singleSelect':
-          return property.selectData?.options && property.selectData.options.length > 0
-            ? { singleSelectValue: property.selectData.options[0]?.id || undefined }
-            : {}
-        case 'multiSelect':
-          return { multiSelectValue: [] }
-        default:
-          return {}
-          }
-        }
+      case 'text':
+        return { textValue: '' }
+      case 'number':
+        return { numberValue: undefined }
+      case 'checkbox':
+        return { boolValue: false }
+      case 'date':
+      case 'dateTime':
+        return {}
+      case 'singleSelect':
+        return property.selectData?.options && property.selectData.options.length > 0
+          ? { singleSelectValue: property.selectData.options[0]?.id || undefined }
+          : {}
+      case 'multiSelect':
+        return { multiSelectValue: [] }
+      default:
+        return {}
+      }
+    }
 
     const defaultValue = getDefaultValue()
     setRemovedPropertyIds(prev => {
@@ -322,120 +322,120 @@ export const PropertyList = ({
       hasError={isError}
       className="min-h-48"
     >
-      <div className="flex-col-2">
+      <div className="flex-col-2 px-1 pt-2 pb-16">
         {displayedProperties.map((attachedProperty) => (
-            <PropertyEntry
+          <PropertyEntry
             key={attachedProperty.property.id}
             value={attachedProperty.value}
-              name={attachedProperty.property.name}
-              fieldType={attachedProperty.property.fieldType}
-              selectData={attachedProperty.property.selectData ?
-                {
-                  onAddOption: () => {
-                  },
-                  options: attachedProperty.property.selectData.options,
-                } : undefined
-              }
-              onChange={value => {
-                setLocalPropertyValues(prev => {
-                  const newMap = new Map(prev)
-                  newMap.set(attachedProperty.property.id, value)
-                  return newMap
-                })
-              }}
+            name={attachedProperty.property.name}
+            fieldType={attachedProperty.property.fieldType}
+            selectData={attachedProperty.property.selectData ?
+              {
+                onAddOption: () => {
+                },
+                options: attachedProperty.property.selectData.options,
+              } : undefined
+            }
+            onChange={value => {
+              setLocalPropertyValues(prev => {
+                const newMap = new Map(prev)
+                newMap.set(attachedProperty.property.id, value)
+                return newMap
+              })
+            }}
             onEditComplete={value => {
               handlePropertyChange(attachedProperty.property.id, value)
-              }}
-              onRemove={() => {
-                setPropertyToRemove(attachedProperty.property.id)
-              }}
-            />
+            }}
+            onRemove={() => {
+              setPropertyToRemove(attachedProperty.property.id)
+            }}
+          />
         ))}
         {fullWidthAddButton && (
           <div className="w-full">
             {hasUnattachedProperties ? (
-              <Menu<HTMLButtonElement>
+              <Menu
                 trigger={({ toggleOpen }, ref) => (
                   <Button
                     ref={ref}
-                    startIcon={<Plus size={20} />}
                     onClick={toggleOpen}
                     className="w-full"
                   >
+                    <Plus size={20} />
                     {translation('addProperty')}
                   </Button>
                 )}
                 menuClassName="min-w-[200px] p-2 "
                 alignmentVertical="topOutside"
               >
-              {({ close }) => (
-                <LoadingAndErrorComponent
-                  isLoading={isLoading}
-                  hasError={isError}
-                  loadingComponent={<LoadingAnimation classname="min-h-20" />}
-                >
+                {({ close }) => (
+                  <LoadingAndErrorComponent
+                    isLoading={isLoading}
+                    hasError={isError}
+                    loadingComponent={<LoadingAnimation classname="min-h-20" />}
+                  >
                     {unattachedProperties.map(property => (
-                        <MenuItem
-                          key={property.id}
-                          onClick={() => {
+                      <MenuItem
+                        key={property.id}
+                        onClick={() => {
                           handleAddProperty(property)
-                            close()
-                          }}
-                          className="rounded-md cursor-pointer"
-                        >
-                          {property.name}
-                        </MenuItem>
+                          close()
+                        }}
+                        className="rounded-md cursor-pointer"
+                      >
+                        {property.name}
+                      </MenuItem>
                     ))}
-                </LoadingAndErrorComponent>
-              )}
+                  </LoadingAndErrorComponent>
+                )}
               </Menu>
             ) : (
               <Button
-                startIcon={<Plus size={20} />}
                 disabled={true}
                 className="w-full"
               >
+                <Plus size={20} />
                 {translation('addProperty')}
               </Button>
             )}
           </div>
         )}
         {!fullWidthAddButton && hasUnattachedProperties && (
-            <Menu<HTMLDivElement>
-              trigger={({ toggleOpen }, ref) => (
-                <div
-                  ref={ref as React.RefObject<HTMLDivElement>}
-                  className="flex-row-4 px-4 py-2 items-center border-2 border-dashed bg-property-title-background text-property-title-text hover:border-primary rounded-xl cursor-pointer"
-                  onClick={toggleOpen}
-                >
-                  <Plus size={20} />
-                  <span>{translation('addProperty')}</span>
-                </div>
-              )}
-              menuClassName="min-w-[200px] p-2 "
-              alignmentVertical="topOutside"
-            >
-              {({ close }) => (
-                <LoadingAndErrorComponent
-                  isLoading={isLoading}
-                  hasError={isError}
-                  loadingComponent={<LoadingAnimation classname="min-h-20" />}
-                >
+          <Menu
+            trigger={({ toggleOpen }, ref) => (
+              <div
+                ref={ref}
+                className="flex-row-4 px-4 py-2 items-center border-2 border-dashed bg-property-title-background text-property-title-text hover:border-primary rounded-xl cursor-pointer"
+                onClick={toggleOpen}
+              >
+                <Plus size={20} />
+                <span>{translation('addProperty')}</span>
+              </div>
+            )}
+            menuClassName="min-w-[200px] p-2 "
+            alignmentVertical="topOutside"
+          >
+            {({ close }) => (
+              <LoadingAndErrorComponent
+                isLoading={isLoading}
+                hasError={isError}
+                loadingComponent={<LoadingAnimation classname="min-h-20" />}
+              >
                 {unattachedProperties.map(property => (
-                        <MenuItem
-                          key={property.id}
-                          onClick={() => {
+                  <MenuItem
+                    key={property.id}
+                    onClick={() => {
                       handleAddProperty(property)
-                            close()
-                          }}
-                          className="rounded-md cursor-pointer"
-                        >
-                          {property.name}
-                        </MenuItem>
+                      close()
+                    }}
+                    className="rounded-md cursor-pointer"
+                  >
+                    {property.name}
+                  </MenuItem>
                 ))}
-                </LoadingAndErrorComponent>
-              )}
-            </Menu>
+              </LoadingAndErrorComponent>
+            )}
+          </Menu>
         )}
       </div>
       <ConfirmDialog

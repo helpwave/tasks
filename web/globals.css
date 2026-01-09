@@ -1,22 +1,15 @@
 @import 'tailwindcss';
 
-@import "./style/colors.css";
 @import "@helpwave/hightide/style/uncompiled/globals.css";
+@import "./style/colors.css";
 @source "./node_modules/@helpwave/hightide";
 
 @layer components {
   body {
     @apply w-screen max-w-screen h-screen max-h-screen overflow-hidden;
   }
-
-  *:focus-visible:focus-visible {
-    @apply focus-style-none;
-  }
 }
 
-@utility input-element {
-  @apply border-border;
-}
 
 @media print {
   @page {
@@ -29,7 +22,8 @@
     print-color-adjust: exact !important;
   }
 
-  html, body {
+  html,
+  body {
     width: 100% !important;
     height: auto !important;
     margin: 0 !important;
@@ -71,7 +65,7 @@
     max-height: none !important;
   }
 
-  .print-content > div[class*="overflow"] {
+  .print-content>div[class*="overflow"] {
     overflow: hidden !important;
     overflow-x: hidden !important;
     overflow-y: hidden !important;
@@ -115,7 +109,7 @@
     max-height: none !important;
   }
 
-  .print-table table > * {
+  .print-table table>* {
     min-width: 0 !important;
   }
 
@@ -209,7 +203,7 @@
     display: block !important;
   }
 
-  .print-container > * {
+  .print-container>* {
     overflow: hidden !important;
     overflow-x: hidden !important;
     overflow-y: hidden !important;

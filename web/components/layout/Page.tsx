@@ -8,7 +8,9 @@ import Link from 'next/link'
 import {
   Button,
   Dialog,
-  Expandable,
+  ExpandableContent,
+  ExpandableHeader,
+  ExpandableRoot,
   MarkdownInterpreter,
   Tooltip,
   useLocalStorage
@@ -363,8 +365,7 @@ export const Header = ({ onMenuClick, isMenuOpen, ...props }: HeaderProps) => {
             >
               <span className="hidden sm:inline typography-title-sm">{user?.name}</span>
               <AvatarStatusComponent
-                size="lg"
-                fullyRounded={true}
+                size="sm"
                 isOnline={user?.isOnline ?? null}
                 image={user?.avatarUrl ? {
                   avatarUrl: user.avatarUrl,
@@ -396,7 +397,7 @@ const SidebarLink = ({ children, ...props }: SidebarLinkProps) => {
     <Link
       {...props}
       className={clsx(
-        'flex-row-1.5 w-full px-2.5 py-1.5 items-center rounded-md hover:bg-black/30',
+        'flex-row-1.5 w-full px-2.5 py-1.5 items-center rounded-md hover:bg-surface-hover',
         { 'text-primary font-bold': route === props.href },
         props.className
       )}
@@ -427,7 +428,7 @@ export const Sidebar = ({ isOpen, onClose, ...props }: SidebarProps) => {
       <aside
         {...props}
         className={clsx(
-          'flex-col-4 w-50 min-w-56 rounded-lg bg-surface text-on-surface overflow-hidden p-2.5 shadow-md',
+          'flex-col-4 w-50 min-w-56 rounded-lg bg-surface text-on-surface overflow-hidden shadow-md',
           'fixed lg:relative inset-y-0 z-50 lg:z-auto',
           'w-screen max-w-sm lg:w-50 lg:min-w-56',
           'transform transition-transform duration-300 ease-out',
@@ -439,7 +440,7 @@ export const Sidebar = ({ isOpen, onClose, ...props }: SidebarProps) => {
           props.className
         )}
       >
-        <nav className="flex-col-2 overflow-auto flex-1">
+        <nav className="flex-col-2 overflow-auto flex-1 p-2.5">
           <div className="flex items-center justify-between mb-8">
             <Link href="/" className="flex-row-1 text-primary items-center rounded-lg p-2" onClick={onClose}>
               <TasksLogo />
@@ -478,18 +479,10 @@ export const Sidebar = ({ isOpen, onClose, ...props }: SidebarProps) => {
           </SidebarLink>
 
           {context?.teams && context.teams.length > 0 && (
-            <Expandable
-              label={(
-                <div className="flex-row-2">
-                  <Users className="size-5" />
-                  {translation('teams')}
-                </div>
-              )}
-              headerClassName="!px-2.5 !py-1.5 hover:bg-black/30"
-              contentClassName="!px-0 !pb-0 gap-y-0"
-              className="!shadow-none"
+            <ExpandableRoot
+              className="shadow-none"
               isExpanded={context.sidebar.isShowingTeams}
-              onChange={isExpanded => context.update(prevState => ({
+              onExpandedChange={isExpanded => context.update(prevState => ({
                 ...prevState,
                 sidebar: {
                   ...prevState.sidebar,
@@ -497,27 +490,27 @@ export const Sidebar = ({ isOpen, onClose, ...props }: SidebarProps) => {
                 }
               }))}
             >
-              {context.teams.map(team => (
-                <SidebarLink key={team.id} href={`${locationRoute}/${team.id}`} className="pl-9.5" onClick={onClose}>
-                  {team.title}
-                </SidebarLink>
-              ))}
-            </Expandable>
+              <ExpandableHeader className="px-2.5 py-1.5">
+                <div className="flex-row-2">
+                  <Users className="size-5" />
+                  {translation('teams')}
+                </div>
+              </ExpandableHeader>
+              <ExpandableContent className="gap-y-0 pl-4 p-0">
+                {context.teams.map(team => (
+                  <SidebarLink key={team.id} href={`${locationRoute}/${team.id}`} onClick={onClose}>
+                    {team.title}
+                  </SidebarLink>
+                ))}
+              </ExpandableContent>
+            </ExpandableRoot>
           )}
 
           {context?.wards && context.wards.length > 0 && (
-            <Expandable
-              label={(
-                <div className="flex-row-2">
-                  <Building2 className="size-5" />
-                  {translation('wards')}
-                </div>
-              )}
-              headerClassName="!px-2.5 !py-1.5 hover:bg-black/30"
-              contentClassName="!px-0 !pb-0 gap-y-0"
-              className="!shadow-none"
+            <ExpandableRoot
+              className="shadow-none"
               isExpanded={context.sidebar.isShowingWards}
-              onChange={isExpanded => context.update(prevState => ({
+              onExpandedChange={isExpanded => context.update(prevState => ({
                 ...prevState,
                 sidebar: {
                   ...prevState.sidebar,
@@ -525,27 +518,27 @@ export const Sidebar = ({ isOpen, onClose, ...props }: SidebarProps) => {
                 }
               }))}
             >
-              {context.wards.map(ward => (
-                <SidebarLink key={ward.id} href={`${locationRoute}/${ward.id}`} className="pl-9.5" onClick={onClose}>
-                  {ward.title}
-                </SidebarLink>
-              ))}
-            </Expandable>
+              <ExpandableHeader className="px-2.5 py-1.5">
+                <div className="flex-row-2">
+                  <Building2 className="size-5" />
+                  {translation('wards')}
+                </div>
+              </ExpandableHeader>
+              <ExpandableContent className="gap-y-0 pl-4 p-0">
+                {context.wards.map(ward => (
+                  <SidebarLink key={ward.id} href={`${locationRoute}/${ward.id}`} onClick={onClose}>
+                    {ward.title}
+                  </SidebarLink>
+                ))}
+              </ExpandableContent>
+            </ExpandableRoot>
           )}
 
           {context?.clinics && context.clinics.length > 0 && (
-            <Expandable
-              label={(
-                <div className="flex-row-2">
-                  <Hospital className="size-5" />
-                  {translation('clinics')}
-                </div>
-              )}
-              headerClassName="!px-2.5 !py-1.5 hover:bg-black/30"
-              contentClassName="!px-0 !pb-0 gap-y-0"
-              className="!shadow-none"
+            <ExpandableRoot
+              className="shadow-none"
               isExpanded={context.sidebar.isShowingClinics}
-              onChange={isExpanded => context.update(prevState => ({
+              onExpandedChange={isExpanded => context.update(prevState => ({
                 ...prevState,
                 sidebar: {
                   ...prevState.sidebar,
@@ -553,12 +546,20 @@ export const Sidebar = ({ isOpen, onClose, ...props }: SidebarProps) => {
                 }
               }))}
             >
-              {context.clinics.map(clinic => (
-                <SidebarLink key={clinic.id} href={`${locationRoute}/${clinic.id}`} className="pl-9.5" onClick={onClose}>
-                  {clinic.title}
-                </SidebarLink>
-              ))}
-            </Expandable>
+              <ExpandableHeader className="px-2.5 py-1.5">
+                <div className="flex-row-2">
+                  <Hospital className="size-5" />
+                  {translation('clinics')}
+                </div>
+              </ExpandableHeader>
+              <ExpandableContent className="gap-y-0 pl-4 p-0">
+                {context.clinics.map(clinic => (
+                  <SidebarLink key={clinic.id} href={`${locationRoute}/${clinic.id}`} onClick={onClose}>
+                    {clinic.title}
+                  </SidebarLink>
+                ))}
+              </ExpandableContent>
+            </ExpandableRoot>
           )}
         </nav>
         <div className="mt-auto pt-4 border-t border-on-surface/20 sm:hidden">
@@ -585,7 +586,7 @@ export const Page = ({
   })
 
   return (
-    <div className="flex-row-8 h-screen w-screen overflow-hidden overflow-x-hidden">
+    <div className="flex-row-0 h-screen w-screen overflow-hidden overflow-x-hidden">
       <Head>
         <title>{titleWrapper(pageTitle)}</title>
       </Head>
@@ -598,7 +599,7 @@ export const Page = ({
       />
       <div
         ref={mainContentRef as React.RefObject<HTMLDivElement>}
-        className="flex-col-4 grow overflow-y-scroll"
+        className="flex-col-4 pl-8 grow overflow-y-scroll"
       >
         <Header
           className="sticky top-0 right-0 py-4 pr-4 bg-background text-on-background"

@@ -409,6 +409,16 @@
   "estimatedTime": "Geschätzte Zeit (Minuten)",
   "ok": "OK",
   "submitAnonymously": "Anonym absenden",
+  "submissionDetails": "Übermittlungsdetails",
+  "submittingAs": "Übermitteln als {name}",
+  "@submittingAs": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "anonymousSubmission": "Anonyme Übermittlung",
   "conflictDetected": "Konflikt erkannt",
   "overwrite": "Überschreiben",
   "userInformation": "Benutzerinformationen"

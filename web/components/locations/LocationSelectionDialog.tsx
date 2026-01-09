@@ -104,9 +104,9 @@ const LocationTreeItem = ({
           className="flex-shrink-0"
         >
           <Checkbox
-            checked={isSelected}
+            value={isSelected}
             indeterminate={isIndeterminate}
-            onCheckedChange={handleCheck}
+            onValueChange={handleCheck}
             onClick={(e) => e.stopPropagation()}
             onMouseDown={(e) => e.stopPropagation()}
           />
@@ -457,18 +457,18 @@ export const LocationSelectionDialog = ({
         <div className="flex items-center gap-2">
           <MapPin className="size-6 text-primary" />
           {useCase === 'clinic' ? translation('pickClinic') :
-           useCase === 'position' ? translation('pickPosition') :
-           useCase === 'teams' ? translation('pickTeams') :
-           useCase === 'root' ? translation('selectRootLocation') :
-           translation('selectLocation')}
+            useCase === 'position' ? translation('pickPosition') :
+              useCase === 'teams' ? translation('pickTeams') :
+                useCase === 'root' ? translation('selectRootLocation') :
+                  translation('selectLocation')}
         </div>
       )}
       description={
         useCase === 'clinic' ? translation('pickClinicDescription') :
-        useCase === 'position' ? translation('pickPositionDescription') :
-        useCase === 'teams' ? translation('pickTeamsDescription') :
-        useCase === 'root' ? translation('selectRootLocationDescription') :
-        translation('selectLocationDescription')
+          useCase === 'position' ? translation('pickPositionDescription') :
+            useCase === 'teams' ? translation('pickTeamsDescription') :
+              useCase === 'root' ? translation('selectRootLocationDescription') :
+                translation('selectLocationDescription')
       }
       className="w-[600px] h-[80vh] flex flex-col max-w-full"
     >
@@ -485,20 +485,20 @@ export const LocationSelectionDialog = ({
           </div>
 
           <div className="flex gap-1 border-l border-divider pl-2 ml-1">
-            <Button layout="icon" size="small" onClick={handleExpandAll} title={translation('expandAll')}>
+            <Button layout="icon" size="sm" onClick={handleExpandAll} title={translation('expandAll')}>
               <ChevronsDown className="size-4" />
             </Button>
-            <Button layout="icon" size="small" onClick={handleCollapseAll} title={translation('collapseAll')}>
+            <Button layout="icon" size="sm" onClick={handleCollapseAll} title={translation('collapseAll')}>
               <ChevronsUp className="size-4" />
             </Button>
           </div>
 
           {multiSelect && useCase !== 'root' && (
             <div className="flex gap-1 border-l border-divider pl-2">
-              <Button layout="icon" size="small" onClick={handleSelectAll} title={translation('selectAll')}>
+              <Button layout="icon" size="sm" onClick={handleSelectAll} title={translation('selectAll')}>
                 <CheckSquare className="size-4" />
               </Button>
-              <Button layout="icon" size="small" onClick={handleDeselectAll} title={translation('deselectAll')}>
+              <Button layout="icon" size="sm" onClick={handleDeselectAll} title={translation('deselectAll')}>
                 <Square className="size-4" />
               </Button>
             </div>

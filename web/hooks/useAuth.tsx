@@ -31,10 +31,10 @@ type AuthProviderProps = PropsWithChildren & {
 }
 
 export const AuthProvider = ({
-                               children,
-                               unprotectedURLs = [],
-                               ignoredURLs = []
-                             }: AuthProviderProps) => {
+  children,
+  unprotectedURLs = [],
+  ignoredURLs = []
+}: AuthProviderProps) => {
   const [authState, setAuthState] = useState<AuthState>({ isLoading: true })
   const { isLoading, identity } = authState
 

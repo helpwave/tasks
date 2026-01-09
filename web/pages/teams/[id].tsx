@@ -3,7 +3,7 @@ import { Page } from '@/components/layout/Page'
 import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
-import { Button, LoadingContainer, Tab, TabView } from '@helpwave/hightide'
+import { Button, LoadingContainer, TabPanel, TabSwitcher } from '@helpwave/hightide'
 import { PatientList } from '@/components/patients/PatientList'
 import { TaskList, type TaskViewModel } from '@/components/tasks/TaskList'
 import { useGetLocationNodeQuery, useGetPatientsQuery, useGetTasksQuery } from '@/api/gql/generated'
@@ -97,11 +97,11 @@ const TeamPage: NextPage = () => {
           </div>
         )}
         {!isLoading && !isError && (
-          <TabView>
-            <Tab label={translation('patients')}>
+          <TabSwitcher>
+            <TabPanel label={translation('patients')}>
               <PatientList />
-            </Tab>
-            <Tab label={translation('tasks')}>
+            </TabPanel>
+            <TabPanel label={translation('tasks')}>
               <TaskList
                 tasks={tasks}
                 onRefetch={handleRefetch}
@@ -117,8 +117,8 @@ const TeamPage: NextPage = () => {
                   </Button>
                 )}
               />
-            </Tab>
-          </TabView>
+            </TabPanel>
+          </TabSwitcher>
         )}
       </ContentPanel>
     </Page>

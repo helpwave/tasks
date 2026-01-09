@@ -1,9 +1,8 @@
 import { useMemo, useState, forwardRef, useImperativeHandle, useEffect } from 'react'
-import { Table, Chip, FillerRowElement, Button, SearchBar, ProgressIndicator, Tooltip } from '@helpwave/hightide'
+import { Table, Chip, FillerCell, Drawer, Button, SearchBar, ProgressIndicator, Tooltip } from '@helpwave/hightide'
 import { PlusIcon, Table as TableIcon, LayoutGrid, Printer } from 'lucide-react'
 import { GetPatientsDocument, Sex, type GetPatientsQuery, type TaskType, type PatientState } from '@/api/gql/generated'
 import { usePaginatedGraphQLQuery } from '@/hooks/usePaginatedQuery'
-import { SidePanel } from '@/components/layout/SidePanel'
 import { PatientDetailView } from '@/components/patients/PatientDetailView'
 import { SmartDate } from '@/utils/date'
 import { LocationChips } from '@/components/patients/LocationChips'
@@ -139,9 +138,9 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       if (patient) {
         setSelectedPatient(patient)
       }
-        setIsPanelOpen(true)
-        setOpenedPatientId(initialPatientId)
-        onInitialPatientOpened?.()
+      setIsPanelOpen(true)
+      setOpenedPatientId(initialPatientId)
+      onInitialPatientOpened?.()
     }
   }, [initialPatientId, patients, openedPatientId, onInitialPatientOpened])
 
@@ -200,8 +199,9 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
 
         return (
           <Chip
-            color={sex === Sex.Unknown ? 'neutral' : 'none'}
-            size="small"
+            color={sex === Sex.Unknown ? 'neutral' : undefined}
+            coloringStyle="tonal"
+            size="sm"
             className={`${colorClass} font-[var(--font-space-grotesk)] uppercase text-xs`}
           >
             <span>{label}</span>
@@ -314,13 +314,13 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
             </Tooltip>
           </div>
           <Button
-            startIcon={<PlusIcon />}
             onClick={() => {
               setSelectedPatient(undefined)
               setIsPanelOpen(true)
             }}
             className="w-full sm:w-auto min-w-[13rem] flex-shrink-0"
           >
+            <PlusIcon />
             {translation('addPatient')}
           </Button>
         </div>
@@ -331,7 +331,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
             className="w-full h-full cursor-pointer min-w-[800px] print-table"
             data={patients}
             columns={columns}
-            fillerRow={() => (<FillerRowElement className="min-h-12" />)}
+            fillerRow={() => (<FillerCell className="min-h-12" />)}
             onRowClick={(row) => handleEdit(row.original)}
           />
         </div>
@@ -352,17 +352,19 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
           )}
         </div>
       )}
-      <SidePanel
+      <Drawer
         isOpen={isPanelOpen}
         onClose={handleClose}
-        title={!selectedPatient && !openedPatientId ? translation('addPatient') : translation('editPatient')}
+        alignment="right"
+        titleElement={!selectedPatient && !openedPatientId ? translation('addPatient') : translation('editPatient')}
+        description={undefined}
       >
         <PatientDetailView
           patientId={selectedPatient?.id ?? openedPatientId ?? undefined}
           onClose={handleClose}
           onSuccess={refetch}
         />
-      </SidePanel>
+      </Drawer>
     </div>
   )
 })

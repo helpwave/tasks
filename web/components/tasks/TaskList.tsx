@@ -1,12 +1,12 @@
 import { useMemo, useState, forwardRef, useImperativeHandle, useEffect, useRef } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { Button, Checkbox, ConfirmDialog, FillerRowElement, SearchBar, Table, Tooltip } from '@helpwave/hightide'
+import { Button, Checkbox, ConfirmDialog, FillerCell, SearchBar, Table, Tooltip } from '@helpwave/hightide'
 import { PlusIcon, Table as TableIcon, LayoutGrid, UserCheck, Users, Printer } from 'lucide-react'
 import { useAssignTaskMutation, useAssignTaskToTeamMutation, useCompleteTaskMutation, useReopenTaskMutation, useGetUsersQuery, useGetLocationsQuery, type GetGlobalDataQuery } from '@/api/gql/generated'
 import { AssigneeSelectDialog } from './AssigneeSelectDialog'
 import clsx from 'clsx'
 import { SmartDate } from '@/utils/date'
-import { SidePanel } from '@/components/layout/SidePanel'
+import { Drawer } from '@helpwave/hightide'
 import { TaskDetailView } from '@/components/tasks/TaskDetailView'
 import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
 import { PatientDetailView } from '@/components/patients/PatientDetailView'
@@ -75,32 +75,32 @@ const isCloseToDueDate = (dueDate: Date | undefined, done: boolean): boolean => 
 const getPriorityColor = (priority: string | null | undefined): string => {
   if (!priority) return ''
   switch (priority) {
-    case 'P1':
-      return 'border-l-4 border-l-green-500'
-    case 'P2':
-      return 'border-l-4 border-l-blue-500'
-    case 'P3':
-      return 'border-l-4 border-l-orange-500'
-    case 'P4':
-      return 'border-l-4 border-l-red-500'
-    default:
-      return ''
+  case 'P1':
+    return 'border-l-4 border-l-green-500'
+  case 'P2':
+    return 'border-l-4 border-l-blue-500'
+  case 'P3':
+    return 'border-l-4 border-l-orange-500'
+  case 'P4':
+    return 'border-l-4 border-l-red-500'
+  default:
+    return ''
   }
 }
 
 const getPriorityDotColor = (priority: string | null | undefined): string => {
   if (!priority) return ''
   switch (priority) {
-    case 'P1':
-      return 'bg-green-500'
-    case 'P2':
-      return 'bg-blue-500'
-    case 'P3':
-      return 'bg-orange-500'
-    case 'P4':
-      return 'bg-red-500'
-    default:
-      return ''
+  case 'P1':
+    return 'bg-green-500'
+  case 'P2':
+    return 'bg-blue-500'
+  case 'P3':
+    return 'bg-orange-500'
+  case 'P4':
+    return 'bg-red-500'
+  default:
+    return ''
   }
 }
 
@@ -433,8 +433,8 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
             return (
               <div onClick={(e) => e.stopPropagation()}>
                 <Checkbox
-                  checked={displayDone}
-                  onCheckedChange={(checked) => {
+                  value={displayDone}
+                  onValueChange={(checked) => {
                     setOptimisticUpdates(prev => {
                       const next = new Map(prev)
                       next.set(task.id, checked)
@@ -516,7 +516,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
               <div className="flex flex-col gap-1">
                 <Button
                   color="neutral"
-                  size="small"
+                  size="sm"
                   onClick={event => {
                     event.stopPropagation()
                     setSelectedPatientId(data.patient?.id ?? null)
@@ -568,7 +568,6 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
                   className="flex-row-2 items-center hover:opacity-75 transition-opacity"
                 >
                   <AvatarStatusComponent
-                    fullyRounded={true}
                     isOnline={assignee?.isOnline ?? null}
                     image={{
                       avatarUrl: assignee.avatarURL || 'https://cdn.helpwave.de/boringavatar.svg',
@@ -632,25 +631,24 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
           <div className="flex items-center justify-between gap-4 w-full sm:w-auto">
             <div className="flex items-center gap-2">
               <Checkbox
-                checked={showDone}
-                onCheckedChange={handleShowDoneChange}
+                value={showDone}
+                onValueChange={handleShowDoneChange}
               />
               <span className="text-sm text-description whitespace-nowrap">{translation('showDone') || 'Show done'}</span>
             </div>
             <div className="flex items-center gap-2">
-              {viewType === 'table' && (
-                <Tooltip tooltip="Print" position="top">
-                  <Button
-                    layout="icon"
-                    color="neutral"
-                    coloringStyle="text"
-                    onClick={handlePrint}
-                    className="print-button"
-                  >
-                    <Printer className="size-5" />
-                  </Button>
-                </Tooltip>
-              )}
+              <Tooltip tooltip="Print" position="top">
+                <Button
+                  disabled={viewType !== 'table'}
+                  layout="icon"
+                  color="neutral"
+                  coloringStyle="text"
+                  onClick={handlePrint}
+                  className="print-button"
+                >
+                  <Printer className="size-5" />
+                </Button>
+              </Tooltip>
               <Tooltip tooltip="Table View" position="top">
                 <Button
                   layout="icon"
@@ -676,19 +674,19 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
           {headerActions}
           {canHandover && (
             <Button
-              startIcon={<UserCheck className="size-5"/>}
               onClick={handleHandoverClick}
               className="w-full sm:w-auto flex-shrink-0"
             >
+              <UserCheck className="size-5"/>
               {translation('shiftHandover') || 'Shift Handover'}
             </Button>
           )}
           <Button
-            startIcon={<PlusIcon/>}
             onClick={() => setTaskDialogState({ isOpen: true })}
             className="w-full sm:w-auto min-w-[13rem] flex-shrink-0"
             disabled={!hasPatients}
           >
+            <PlusIcon/>
             {translation('addTask')}
           </Button>
         </div>
@@ -700,7 +698,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
             data={tasks}
             columns={columns}
             fillerRow={() => (
-              <FillerRowElement className="min-h-12"/>
+              <FillerCell className="min-h-12"/>
             )}
             initialState={{
               sorting: [
@@ -733,8 +731,10 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
           )}
         </div>
       )}
-      <SidePanel
-        title={taskDialogState.taskId ? translation('editTask') : translation('createTask')}
+      <Drawer
+        alignment="right"
+        titleElement={taskDialogState.taskId ? translation('editTask') : translation('createTask')}
+        description={undefined}
         isOpen={taskDialogState.isOpen}
         onClose={() => setTaskDialogState({ isOpen: false })}
       >
@@ -744,9 +744,11 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
           onSuccess={onRefetch || (() => {
           })}
         />
-      </SidePanel>
-      <SidePanel
-        title={translation('editPatient')}
+      </Drawer>
+      <Drawer
+        alignment="right"
+        titleElement={translation('editPatient')}
+        description={undefined}
         isOpen={!!selectedPatientId}
         onClose={() => setSelectedPatientId(null)}
       >
@@ -758,7 +760,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
             })}
           />
         )}
-      </SidePanel>
+      </Drawer>
       <AssigneeSelectDialog
         value={selectedUserId || ''}
         onValueChanged={handleUserSelect}

@@ -140,7 +140,6 @@ export const AssigneeSelectDialog = ({
                   >
                     <AvatarStatusComponent
                       size="sm"
-                      fullyRounded={true}
                       isOnline={u.isOnline ?? null}
                       image={u.avatarUrl ? {
                         avatarUrl: u.avatarUrl,

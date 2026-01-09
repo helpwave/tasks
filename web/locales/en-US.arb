@@ -410,5 +410,15 @@
   "estimatedTime": "Estimated Time (minutes)",
   "ok": "OK",
   "submitAnonymously": "Submit anonymously",
+  "submissionDetails": "Submission Details",
+  "submittingAs": "Submitting as {name}",
+  "@submittingAs": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "anonymousSubmission": "Anonymous Submission",
   "userInformation": "User Information"
 }

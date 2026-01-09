@@ -27,15 +27,15 @@ type PropertyEntryProps = {
 
 // TODO move to hightide
 export const PropertyEntry = ({
-                                value,
-                                name,
-                                fieldType,
-                                onChange,
-                                onEditComplete,
-                                selectData,
-                                onRemove,
-                                readOnly,
-                              }: PropertyEntryProps) => {
+  value,
+  name,
+  fieldType,
+  onChange,
+  onEditComplete,
+  selectData,
+  onRemove,
+  readOnly,
+}: PropertyEntryProps) => {
   const commonProps = {
     name,
     onRemove,
@@ -47,93 +47,93 @@ export const PropertyEntry = ({
   }
 
   switch (fieldType) {
-    case 'text':
-      return (
-        <TextProperty
-          name={commonProps.name}
-          readOnly={commonProps.readOnly}
-          value={value.textValue ?? ''}
-          onChange={textValue => onChange({ ...value, textValue: textValue ?? '' })}
-          onEditComplete={textValue => onEditComplete({ ...value, textValue: textValue ?? '' })}
-          onRemove={onRemove}
-        />
-      )
-    case 'number':
-      return (
-        <NumberProperty
-          {...commonProps}
-          value={value.numberValue}
-          onChange={numberValue => onChange({ ...value, numberValue })}
-          onEditComplete={numberValue => onEditComplete({ ...value, numberValue })}
-        />
-      )
-    case 'date':
-      return (
-        <DateProperty
-          {...commonProps}
-          value={value.dateValue}
-          onChange={dateValue => onChange({ ...value, dateValue })}
-          onEditComplete={dateValue => onEditComplete({ ...value, dateValue })}
-        />
-      )
-    case 'dateTime':
-      return (
-        <DateProperty
-          {...commonProps}
-          value={value.dateTimeValue}
-          onChange={dateTimeValue => onChange({ ...value, dateTimeValue })}
-          onEditComplete={dateTimeValue => onEditComplete({ ...value, dateTimeValue })}
-        />
-      )
-    case 'checkbox':
-      return (
-        <CheckboxProperty
-          {...commonProps}
-          value={value.boolValue}
-          onChange={boolValue => onChange({ ...value, boolValue })}
-        />
-      )
-    case 'singleSelect':
-      return (
-        <SingleSelectProperty
-          {...commonProps}
-          value={value.singleSelectValue}
-          onValueChanged={singleSelectValue => {
-            const newProperty = { ...value, singleSelectValue }
-            onChange(newProperty)
-            onEditComplete(newProperty)
-          }}
-          onAddNew={selectData?.onAddOption}
-        >
-          {selectData?.options.map(option => (
-              <SelectOption key={option.id} value={option.id}>
-                {option.name}
-              </SelectOption>
-            ))
-          }
-        </SingleSelectProperty>
-      )
-    case 'multiSelect':
-      return (
-        <MultiSelectProperty
-          {...commonProps}
-          values={value.multiSelectValue ?? []}
-          onValuesChanged={multiSelectValue => {
-            const newProperty = { ...value, multiSelectValue }
-            onChange(newProperty)
-            onEditComplete(newProperty)
-          }}
-        >
-          {selectData?.options.map(option => (
-            <SelectOption key={option.id} value={option.id}>
-              {option.name}
-            </SelectOption>
-          ))
-          }
-        </MultiSelectProperty>
-      )
-    default:
+  case 'text':
+    return (
+      <TextProperty
+        name={commonProps.name}
+        readOnly={commonProps.readOnly}
+        value={value.textValue ?? ''}
+        onValueChange={textValue => onChange({ ...value, textValue: textValue ?? '' })}
+        onEditComplete={textValue => onEditComplete({ ...value, textValue: textValue ?? '' })}
+        onRemove={onRemove}
+      />
+    )
+  case 'number':
+    return (
+      <NumberProperty
+        {...commonProps}
+        value={value.numberValue}
+        onValueChange={numberValue => onChange({ ...value, numberValue })}
+        onEditComplete={numberValue => onEditComplete({ ...value, numberValue })}
+      />
+    )
+  case 'date':
+    return (
+      <DateProperty
+        {...commonProps}
+        value={value.dateValue}
+        onValueChange={dateValue => onChange({ ...value, dateValue })}
+        onEditComplete={dateValue => onEditComplete({ ...value, dateValue })}
+      />
+    )
+  case 'dateTime':
+    return (
+      <DateProperty
+        {...commonProps}
+        value={value.dateTimeValue}
+        onValueChange={dateTimeValue => onChange({ ...value, dateTimeValue })}
+        onEditComplete={dateTimeValue => onEditComplete({ ...value, dateTimeValue })}
+      />
+    )
+  case 'checkbox':
+    return (
+      <CheckboxProperty
+        {...commonProps}
+        value={value.boolValue}
+        onValueChange={boolValue => onChange({ ...value, boolValue })}
+        onEditComplete={boolValue => onChange({ ...value, boolValue })}
+      />
+    )
+  case 'singleSelect':
+    return (
+      <SingleSelectProperty
+        {...commonProps}
+        value={value.singleSelectValue}
+        onValueChange={singleSelectValue => {
+          const newProperty = { ...value, singleSelectValue }
+          onChange(newProperty)
+          onEditComplete(newProperty)
+        }}
+      >
+        {selectData?.options.map(option => (
+          <SelectOption key={option.id} value={option.id}>
+            {option.name}
+          </SelectOption>
+        ))
+        }
+      </SingleSelectProperty>
+    )
+  case 'multiSelect':
+    return (
+      <MultiSelectProperty
+        {...commonProps}
+        value={value.multiSelectValue ?? []}
+        onValueChange={multiSelectValue => {
+          const newProperty = { ...value, multiSelectValue }
+          onChange(newProperty)
+          onEditComplete(newProperty)
+        }}
+      >
+        {selectData?.options.map(option => (
+          <SelectOption key={option.id} value={option.id}>
+            {option.name}
+          </SelectOption>
+        ))
+        }
+      </MultiSelectProperty>
+    )
+  default:
 
-      return <></>
+    return <></>
   }
 }

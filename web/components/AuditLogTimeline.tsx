@@ -189,7 +189,6 @@ export const AuditLogTimeline: React.FC<AuditLogTimelineProps> = ({ caseId, clas
                         <>
                           <AvatarStatusComponent
                             size="sm"
-                            fullyRounded={true}
                             isOnline={userInfo.isOnline}
                             image={userInfo.avatarUrl ? {
                               avatarUrl: userInfo.avatarUrl,

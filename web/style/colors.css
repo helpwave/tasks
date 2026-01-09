@@ -26,21 +26,21 @@
 }
 
 @utility gender-male {
-  @apply reset-coloring-variables;
+  @apply coloring-reset-variables;
   --coloring-color: var(--color-gender-male);
   --coloring-on-color: var(--color-gender-on-male);
   --coloring-hover: var(--color-gender-male-hover);
 }
 
 @utility gender-female {
-  @apply reset-coloring-variables;
+  @apply coloring-reset-variables;
   --coloring-color: var(--color-gender-female);
   --coloring-on-color: var(--color-gender-on-female);
   --coloring-hover: var(--color-gender-female-hover);
 }
 
 @utility gender-neutral {
-  @apply reset-coloring-variables;
+  @apply coloring-reset-variables;
   --coloring-color: var(--color-gender-neutral);
   --coloring-on-color: var(--color-gender-on-neutral);
   --coloring-hover: var(--color-gender-neutral-hover);

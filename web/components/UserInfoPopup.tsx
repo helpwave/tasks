@@ -74,8 +74,7 @@ export const UserInfoPopup: React.FC<UserInfoPopupProps> = ({ userId, isOpen, on
             <div className="flex-col-4">
               <div className="flex items-center gap-3">
                 <AvatarStatusComponent
-                  size="xl"
-                  fullyRounded={true}
+                  size="lg"
                   isOnline={user.isOnline}
                   image={user.avatarUrl ? {
                     avatarUrl: user.avatarUrl,

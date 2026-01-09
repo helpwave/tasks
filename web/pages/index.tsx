@@ -4,14 +4,14 @@ import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
 import { useGetOverviewDataQuery } from '@/api/gql/generated'
-import { Avatar, Button, CheckboxUncontrolled, FillerRowElement, Table } from '@helpwave/hightide'
+import { Avatar, Button, CheckboxUncontrolled, FillerCell, Table } from '@helpwave/hightide'
 import { CurrentTime, SmartDate } from '@/utils/date'
 import { ClockIcon, ListCheckIcon, UsersIcon } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import type { ColumnDef } from '@tanstack/table-core'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import Link from 'next/link'
-import { SidePanel } from '@/components/layout/SidePanel'
+import { Drawer } from '@helpwave/hightide'
 import { PatientDetailView } from '@/components/patients/PatientDetailView'
 import { TaskDetailView } from '@/components/tasks/TaskDetailView'
 import { LocationChips } from '@/components/patients/LocationChips'
@@ -91,7 +91,7 @@ const Dashboard: NextPage = () => {
       }
       return updates
     },
-    invalidateQueries: [['GetOverviewData'], ['GetTasks'], ['GetPatients'], ['GetGlobalData']],
+    affectedQueryKeys: [['GetOverviewData'], ['GetTasks'], ['GetPatients'], ['GetGlobalData']],
   })
 
   const { mutate: reopenTask } = useSafeMutation<ReopenTaskMutation, ReopenTaskMutationVariables>({
@@ -132,7 +132,7 @@ const Dashboard: NextPage = () => {
       }
       return updates
     },
-    invalidateQueries: [['GetOverviewData'], ['GetTasks'], ['GetPatients'], ['GetGlobalData']],
+    affectedQueryKeys: [['GetOverviewData'], ['GetTasks'], ['GetPatients'], ['GetGlobalData']],
   })
 
   const recentPatients = useMemo(() => data?.recentPatients ?? [], [data])
@@ -146,8 +146,8 @@ const Dashboard: NextPage = () => {
       cell: ({ row }) => (
         <div onClick={(e) => e.stopPropagation()}>
           <CheckboxUncontrolled
-            checked={row.original.done}
-            onCheckedChange={(checked) => {
+            value={row.original.done}
+            onValueChange={(checked) => {
               if (!checked) {
                 completeTask({ id: row.original.id })
               } else {
@@ -183,7 +183,7 @@ const Dashboard: NextPage = () => {
         return (
           <Button
             color="neutral"
-            size="small"
+            size="sm"
             onClick={(e) => {
               e.stopPropagation()
               setSelectedPatientId(patient.id)
@@ -274,7 +274,6 @@ const Dashboard: NextPage = () => {
         <div className="flex-row-4 items-center">
           <Avatar
             size="lg"
-            fullyRounded
             image={user?.avatarUrl ? { avatarUrl: user.avatarUrl, alt: user.name } : undefined}
           />
           <div className="flex-col-1">
@@ -322,34 +321,36 @@ const Dashboard: NextPage = () => {
           </div>
         </div>
 
-        <div className="flex flex-col xl:flex-row gap-4 xl:gap-6 mt-4">
-          <ContentPanel titleElement={translation('recentTasks')} description={translation('tasksUpdatedRecently')} className="xl:w-[calc(60%-14.4px)] flex-shrink-0">
+        <div className="flex flex-col 2xl:flex-row gap-4 2xl:gap-6 mt-4">
+          <ContentPanel titleElement={translation('recentTasks')} description={translation('tasksUpdatedRecently')} className="2xl:w-[calc(60%-14.4px)] flex-shrink-0">
             <div className="overflow-x-auto -mx-4 px-4 lg:mx-0 lg:px-0">
               <Table
                 className="cursor-pointer w-full"
                 data={recentTasks}
                 columns={taskColumns}
-                fillerRow={() => (<FillerRowElement className="min-h-6"/>)}
+                fillerRow={() => (<FillerCell className="min-h-6"/>)}
                 onRowClick={(row) => setSelectedTaskId(row.original.id)}
               />
             </div>
           </ContentPanel>
 
-          <ContentPanel titleElement={translation('recentPatients')} description={translation('patientsUpdatedRecently')} className="xl:w-[calc(40%-9.6px)] flex-shrink-0">
+          <ContentPanel titleElement={translation('recentPatients')} description={translation('patientsUpdatedRecently')} className="2xl:w-[calc(40%-9.6px)] flex-shrink-0">
             <div className="overflow-x-auto -mx-4 px-4 lg:mx-0 lg:px-0">
               <Table
                 className="cursor-pointer w-full"
                 data={recentPatients}
                 columns={patientColumns}
-                fillerRow={() => (<FillerRowElement className="min-h-6"/>)}
+                fillerRow={() => (<FillerCell className="min-h-6"/>)}
                 onRowClick={(row) => setSelectedPatientId(row.original.id)}
               />
             </div>
           </ContentPanel>
         </div>
 
-        <SidePanel
-          title={translation('editPatient')}
+        <Drawer
+          alignment="right"
+          titleElement={translation('editPatient')}
+          description={undefined}
           isOpen={!!selectedPatientId}
           onClose={() => setSelectedPatientId(null)}
         >
@@ -360,10 +361,12 @@ const Dashboard: NextPage = () => {
               onSuccess={() => {}}
             />
           )}
-        </SidePanel>
+        </Drawer>
 
-        <SidePanel
-          title={translation('editTask')}
+        <Drawer
+          alignment="right"
+          titleElement={translation('editTask')}
+          description={undefined}
           isOpen={!!selectedTaskId}
           onClose={() => setSelectedTaskId(null)}
         >
@@ -374,7 +377,7 @@ const Dashboard: NextPage = () => {
               onSuccess={() => {}}
             />
           )}
-        </SidePanel>
+        </Drawer>
 
       </div>
     </Page>
