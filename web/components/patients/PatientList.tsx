@@ -1,7 +1,7 @@
 import { useMemo, useState, forwardRef, useImperativeHandle, useEffect } from 'react'
-import { Table, Chip, FillerCell, Drawer, Button, SearchBar, ProgressIndicator, Tooltip } from '@helpwave/hightide'
+import { Table, Chip, FillerCell, Button, SearchBar, ProgressIndicator, Tooltip, Checkbox, Drawer } from '@helpwave/hightide'
 import { PlusIcon, Table as TableIcon, LayoutGrid, Printer } from 'lucide-react'
-import { GetPatientsDocument, Sex, type GetPatientsQuery, type TaskType, type PatientState } from '@/api/gql/generated'
+import { GetPatientsDocument, Sex, PatientState, type GetPatientsQuery, type TaskType } from '@/api/gql/generated'
 import { usePaginatedGraphQLQuery } from '@/hooks/usePaginatedQuery'
 import { PatientDetailView } from '@/components/patients/PatientDetailView'
 import { SmartDate } from '@/utils/date'
@@ -27,6 +27,8 @@ export type PatientViewModel = {
   tasks: TaskType[],
 }
 
+const STORAGE_KEY_SHOW_ALL_PATIENTS = 'patient-show-all-states'
+
 export type PatientListRef = {
   openCreate: () => void,
   openPatient: (patientId: string) => void,
@@ -36,25 +38,57 @@ type PatientListProps = {
   initialPatientId?: string,
   onInitialPatientOpened?: () => void,
   acceptedStates?: PatientState[],
+  rootLocationIds?: string[],
 }
 
-export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initialPatientId, onInitialPatientOpened, acceptedStates }, ref) => {
+export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initialPatientId, onInitialPatientOpened, acceptedStates, rootLocationIds }, ref) => {
   const translation = useTasksTranslation()
   const { selectedRootLocationIds } = useTasksContext()
+  const effectiveRootLocationIds = rootLocationIds ?? selectedRootLocationIds
   const { viewType, toggleView } = usePatientViewToggle()
   const [isPanelOpen, setIsPanelOpen] = useState(false)
   const [selectedPatient, setSelectedPatient] = useState<PatientViewModel | undefined>(undefined)
   const [searchQuery, setSearchQuery] = useState('')
   const [openedPatientId, setOpenedPatientId] = useState<string | null>(null)
+  const [showAllPatients, setShowAllPatients] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem(STORAGE_KEY_SHOW_ALL_PATIENTS)
+      if (stored === 'true') {
+        return true
+      }
+      if (stored === 'false') {
+        return false
+      }
+    }
+    return false
+  })
 
   const [isPrinting, setIsPrinting] = useState(false)
 
+  const handleShowAllPatientsChange = (checked: boolean) => {
+    setShowAllPatients(() => {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(STORAGE_KEY_SHOW_ALL_PATIENTS, String(checked))
+      }
+      return checked
+    })
+  }
+
+  const allPatientStates: PatientState[] = [
+    PatientState.Admitted,
+    PatientState.Discharged,
+    PatientState.Dead,
+    PatientState.Wait,
+  ]
+
+  const patientStates = showAllPatients ? allPatientStates : (acceptedStates ?? [PatientState.Admitted])
+
   const { data: patientsData, refetch } = usePaginatedGraphQLQuery<GetPatientsQuery, GetPatientsQuery['patients'][0], { rootLocationIds?: string[], states?: PatientState[] }>({
-    queryKey: ['GetPatients'],
+    queryKey: ['GetPatients', { rootLocationIds: effectiveRootLocationIds, states: patientStates }],
     document: GetPatientsDocument,
     baseVariables: {
-      rootLocationIds: selectedRootLocationIds && selectedRootLocationIds.length > 0 ? selectedRootLocationIds : undefined,
-      states: acceptedStates
+      rootLocationIds: effectiveRootLocationIds && effectiveRootLocationIds.length > 0 ? effectiveRootLocationIds : undefined,
+      states: patientStates
     },
     pageSize: 50,
     extractItems: (result) => result.patients,
@@ -278,6 +312,13 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
           />
         </div>
         <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto sm:ml-auto lg:pr-4">
+          <div className="flex items-center gap-2">
+            <Checkbox
+              value={showAllPatients}
+              onValueChange={handleShowAllPatientsChange}
+            />
+            <span className="text-sm text-description whitespace-nowrap">{translation('showAllPatients') || 'Show all patients'}</span>
+          </div>
           {viewType === 'table' && (
             <Tooltip tooltip="Print" position="top">
               <Button

@@ -9,7 +9,6 @@ import { TaskList, type TaskViewModel } from '@/components/tasks/TaskList'
 import { useGetLocationNodeQuery, useGetPatientsQuery, useGetTasksQuery, type LocationType } from '@/api/gql/generated'
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/router'
-import { useTasksContext } from '@/hooks/useTasksContext'
 import { LocationChips } from '@/components/patients/LocationChips'
 import { LOCATION_PATH_SEPARATOR } from '@/utils/location'
 
@@ -28,7 +27,6 @@ const getKindStyles = (kind: string) => {
 const LocationPage: NextPage = () => {
   const translation = useTasksTranslation()
   const router = useRouter()
-  const { selectedRootLocationIds } = useTasksContext()
   const id = Array.isArray(router.query['id']) ? router.query['id'][0] : router.query['id']
   const [showAllTasks, setShowAllTasks] = useState(false)
 
@@ -43,7 +41,7 @@ const LocationPage: NextPage = () => {
   const isTeamLocation = locationData?.locationNode?.kind === 'TEAM'
 
   const { data: patientsData, refetch: refetchPatients, isLoading: isLoadingPatients } = useGetPatientsQuery(
-    { locationId: id, rootLocationIds: selectedRootLocationIds && selectedRootLocationIds.length > 0 ? selectedRootLocationIds : undefined },
+    { rootLocationIds: id ? [id] : undefined },
     {
       enabled: !!id && !isTeamLocation,
       refetchOnWindowFocus: true,

@@ -196,6 +196,7 @@ export type TasksTranslationEntries = {
   'shiftHandover': string,
   'shiftHandoverDescription': string,
   'showAllTasks': string,
+  'showAllPatients': string,
   'showDone': string,
   'showTeamTasks': string,
   'sPropertySubjectType': (values: { subject: string }) => string,
@@ -532,6 +533,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'shiftHandover': `Schichtübergabe`,
     'shiftHandoverDescription': `Wählen Sie einen Benutzer aus, um alle Ihnen zugewiesenen offenen Aufgaben zu übertragen.`,
     'showAllTasks': `Alle Aufgaben anzeigen`,
+    'showAllPatients': `Alle Patienten anzeigen`,
     'showDone': `Erledigte anzeigen`,
     'showTeamTasks': `Team-Aufgaben anzeigen`,
     'sPropertySubjectType': ({ subject }): string => {
@@ -898,6 +900,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'shiftHandover': `Shift Handover`,
     'shiftHandoverDescription': `Select a user to transfer all open tasks assigned to you.`,
     'showAllTasks': `Show All Tasks`,
+    'showAllPatients': `Show all patients`,
     'showDone': `Show done`,
     'showTeamTasks': `Show Team Tasks`,
     'sPropertySubjectType': ({ subject }): string => {
