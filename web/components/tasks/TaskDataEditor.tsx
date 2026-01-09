@@ -32,6 +32,39 @@ import { AssigneeSelect } from './AssigneeSelect'
 import { localToUTCWithSameTime, PatientDetailView } from '@/components/patients/PatientDetailView'
 import { useOptimisticUpdateTaskMutation } from '@/api/optimistic-updates/GetTask'
 import { ErrorDialog } from '@/components/ErrorDialog'
+import clsx from 'clsx'
+
+const getPriorityDotColor = (priority: string | null | undefined): string => {
+  if (!priority) return ''
+  switch (priority) {
+  case 'P1':
+    return 'bg-green-500'
+  case 'P2':
+    return 'bg-blue-500'
+  case 'P3':
+    return 'bg-orange-500'
+  case 'P4':
+    return 'bg-red-500'
+  default:
+    return ''
+  }
+}
+
+const getPriorityCheckboxColor = (priority: TaskPriority | null | undefined): string => {
+  if (!priority) return ''
+  switch (priority) {
+  case 'P1':
+    return 'border-green-500 text-green-500 data-[checked]:bg-green-500/30'
+  case 'P2':
+    return 'border-blue-500 text-blue-500 data-[checked]:bg-blue-500/30'
+  case 'P3':
+    return 'border-orange-500 text-orange-500 data-[checked]:bg-orange-500/30'
+  case 'P4':
+    return 'border-red-500 text-red-500 data-[checked]:bg-red-500/30'
+  default:
+    return ''
+  }
+}
 
 type TaskFormValues = CreateTaskInput & {
   done: boolean,
@@ -222,22 +255,6 @@ export const TaskDataEditor = ({
     return <LoadingContainer/>
   }
 
-  const getPriorityDotColor = (priority: string | null | undefined): string => {
-    if (!priority) return ''
-    switch (priority) {
-    case 'P1':
-      return 'bg-green-500'
-    case 'P2':
-      return 'bg-blue-500'
-    case 'P3':
-      return 'bg-orange-500'
-    case 'P4':
-      return 'bg-red-500'
-    default:
-      return ''
-    }
-  }
-
   return (
     <>
       <FormProvider state={form}>
@@ -257,7 +274,8 @@ export const TaskDataEditor = ({
                       reopenTask({ id: taskId })
                     }
                   }}
-                  className="rounded-full scale-125"
+                  className={clsx('rounded-full scale-125',
+                    getPriorityCheckboxColor(form.getValue('priority')))}
                 />
               )}
               <div className="flex-1">

@@ -107,16 +107,16 @@ const getPriorityDotColor = (priority: string | null | undefined): string => {
 const getPriorityCheckboxColor = (priority: string | null | undefined): string => {
   if (!priority) return ''
   switch (priority) {
-    case 'P1':
-      return 'border-green-500 text-green-500 checked:bg-green-500'
-    case 'P2':
-      return 'border-blue-500 text-blue-500 checked:bg-blue-500'
-    case 'P3':
-      return 'border-orange-500 text-orange-500 checked:bg-orange-500'
-    case 'P4':
-      return 'border-red-500 text-red-500 checked:bg-red-500'
-    default:
-      return ''
+  case 'P1':
+    return 'border-green-500 text-green-500 data-[checked]:bg-green-500/30'
+  case 'P2':
+    return 'border-blue-500 text-blue-500 data-[checked]:bg-blue-500/30'
+  case 'P3':
+    return 'border-orange-500 text-orange-500 data-[checked]:bg-orange-500/30'
+  case 'P4':
+    return 'border-red-500 text-red-500 data-[checked]:bg-red-500/30'
+  default:
+    return ''
   }
 }
 
