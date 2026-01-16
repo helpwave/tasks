@@ -84,6 +84,19 @@ pkgs.mkShell {
       fi
     fi
 
+    if [ -f "$PROJECT_ROOT/mcp_server/requirements.txt" ]; then
+      mcp_req_file="$PROJECT_ROOT/mcp_server/requirements.txt"
+      mcp_req_hash_file="$PROJECT_ROOT/$venvDir/.mcp_requirements_hash"
+      current_hash=$(sha256sum "$mcp_req_file" | cut -d " " -f1)
+
+      if [ ! -f "$mcp_req_hash_file" ] || [ "$(cat "$mcp_req_hash_file")" != "$current_hash" ]; then
+        echo ">>> MCP requirements changed. Updating pip..."
+        pip install --upgrade pip > /dev/null
+        pip install -r "$mcp_req_file"
+        echo "$current_hash" > "$mcp_req_hash_file"
+      fi
+    fi
+
     if [ -d "$PROJECT_ROOT/web" ]; then
       if [ ! -d "$PROJECT_ROOT/web/node_modules" ]; then
         (cd "$PROJECT_ROOT/web" && ${nodejs}/bin/npm install)

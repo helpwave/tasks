@@ -19,3 +19,7 @@ htmlcov/
 # profile pictures
 /web/profile/
 /profile/
+
+# mcp
+mcp_server/__pycache__/
+mcp_token

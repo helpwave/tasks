@@ -9,12 +9,13 @@
 
 If you simply want to test the application without modifying code, use the production compose file. This pulls official images and runs them behind a reverse proxy.
 
-1.  **Run the Stack**
+1. **Run the Stack**
+
     ```bash
     docker-compose up -d
     ```
 
-2.  **Access the App**
+2. **Access the App**
     * **App URL:** [`http://localhost:80`](http://localhost:80)
     * **User:** `test` / `test`
 
@@ -37,15 +38,18 @@ INFLUXDB_BUCKET="audit"
 ```
 
 ### Option A: Manual Setup (Docker Compose)
+
 Use this if you prefer managing your own Python and Node versions.
 
-1.  **Start Infrastructure**
+1. **Start Infrastructure**
     Start Postgres, Redis, Keycloak, and InfluxDB:
+
     ```bash
     docker-compose -f docker-compose.dev.yml up -d postgres redis keycloak influxdb
     ```
 
-2.  **Run Backend**
+2. **Run Backend**
+
     ```bash
     cd backend
     python -m venv venv
@@ -56,16 +60,18 @@ Use this if you prefer managing your own Python and Node versions.
     uvicorn main:app --reload
     ```
 
-3.  **Run Frontend**
+3. **Run Frontend**
     In a new terminal:
+
     ```bash
     cd web
     npm install
     npm run dev
     ```
 
-4.  **Run Simulator** (Optional)
+4. **Run Simulator** (Optional)
     In a new terminal:
+
     ```bash
     cd simulator
     python -m venv venv
@@ -75,19 +81,23 @@ Use this if you prefer managing your own Python and Node versions.
     ```
 
 ### Option B: Automated Setup (Nix)
+
 Use this to let Nix handle dependencies, environment variables, and helper commands automatically.
 
-1.  **Enter Shell**
+1. **Enter Shell**
+
     ```bash
     nix-shell
     ```
 
-2.  **Start Everything**
+2. **Start Everything**
+
     ```bash
     run-dev-all
     ```
 
-3.  **Run Simulator** (Optional)
+3. **Run Simulator** (Optional)
+
     ```bash
     run-simulator
     ```
@@ -104,27 +114,29 @@ Once the development environment is running:
 | **InfluxDB** | [`http://localhost:8086`](http://localhost:8086) | Time-series database for audit logs. |
 
 **Keycloak Realms & Users:**
+
 * **tasks Realm:** `http://localhost:8080/realms/tasks` (Redirects automatically from app login)
-    * User: `test`
-    * Password: `test`
+  * User: `test`
+  * Password: `test`
 * **master Realm (Admin Console):** [`http://localhost:8080/admin`](http://localhost:8080/admin)
-    * User: `admin`
-    * Password: `admin`
+  * User: `admin`
+  * Password: `admin`
 
 ## Project Structure
 
-- **backend/** - FastAPI backend with GraphQL API (Strawberry)
-- **web/** - Next.js frontend application
-- **simulator/** - Development tool for simulating clinic traffic
-- **proxy/** - Nginx reverse proxy for production deployments
-- **keycloak/** - Keycloak realm configuration
-- **scaffold/** - Initial data for hospital structure
+* **backend/** - FastAPI backend with GraphQL API (Strawberry)
+* **web/** - Next.js frontend application
+* **simulator/** - Development tool for simulating clinic traffic
+* **proxy/** - Nginx reverse proxy for production deployments
+* **keycloak/** - Keycloak realm configuration
+* **scaffold/** - Initial data for hospital structure
 
 ## Testing
 
 ### Running Tests Locally
 
 **Backend Tests:**
+
 ```bash
 cd backend
 python -m pytest tests/unit -v
@@ -132,12 +144,14 @@ python -m pytest tests/integration -v
 ```
 
 **Frontend Linting:**
+
 ```bash
 cd web
 npm run lint
 ```
 
 **E2E Tests:**
+
 ```bash
 cd tests
 npm install
@@ -149,6 +163,7 @@ npx playwright test
 You can run GitHub Actions workflows locally using [act](https://github.com/nektos/act). See [.github/workflows/README.md](.github/workflows/README.md) for detailed instructions.
 
 Quick start:
+
 ```bash
 # Install act (requires Docker)
 brew install act  # macOS
@@ -164,7 +179,7 @@ act -j backend-tests
 ## Docker Images
 
 All components are containerized and available on GitHub Container Registry:
-- `ghcr.io/helpwave/tasks-backend:latest`
-- `ghcr.io/helpwave/tasks-web:latest`
-- `ghcr.io/helpwave/tasks-simulator:latest`
-- `ghcr.io/helpwave/tasks-proxy:latest`
+* `ghcr.io/helpwave/tasks-backend:latest`
+* `ghcr.io/helpwave/tasks-web:latest`
+* `ghcr.io/helpwave/tasks-simulator:latest`
+* `ghcr.io/helpwave/tasks-proxy:latest`
