@@ -67,6 +67,7 @@ export const StagingDisclaimerDialog = () => {
     <Dialog
       isModal={false}
       isOpen={isStagingDisclaimerOpen}
+      onClose={dismissStagingDisclaimer}
       titleElement={translation('developmentAndPreviewInstance')}
       description={(<MarkdownInterpreter text={translation('stagingModalDisclaimerMarkdown')} />)}
       className={clsx('z-20 w-200')}
@@ -184,6 +185,7 @@ export const SurveyModal = () => {
     <Dialog
       isModal={false}
       isOpen={isSurveyOpen}
+      onClose={handleDismiss}
       titleElement={translation('surveyTitle')}
       description={translation('surveyDescription')}
       className={clsx('z-20 w-200')}
