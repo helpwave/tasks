@@ -139,7 +139,7 @@ export const SurveyModal = () => {
 
       if (config.onboardingSurveyUrl && onboardingSurveyCompleted === 0) {
         const url = new URL(config.onboardingSurveyUrl)
-        url.searchParams.set('userId', hashedUserId)
+        url.searchParams.set('a', hashedUserId)
         setSurveyType('onboarding')
         setSurveyUrl(url.toString())
         setSurveyOpen(true)
@@ -148,7 +148,7 @@ export const SurveyModal = () => {
 
       if (config.weeklySurveyUrl && onboardingSurveyCompleted > 0 && (weeklySurveyLastCompleted === 0 || now - weeklySurveyLastCompleted >= ONE_WEEK)) {
         const url = new URL(config.weeklySurveyUrl)
-        url.searchParams.set('userId', hashedUserId)
+        url.searchParams.set('a', hashedUserId)
         setSurveyType('weekly')
         setSurveyUrl(url.toString())
         setSurveyOpen(true)
