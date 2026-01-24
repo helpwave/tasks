@@ -69,6 +69,7 @@ export const StagingDisclaimerDialog = () => {
     <Dialog
       isModal={false}
       isOpen={isStagingDisclaimerOpen}
+      onClose={dismissStagingDisclaimer}
       titleElement={translation('developmentAndPreviewInstance')}
       description={(<MarkdownInterpreter text={translation('stagingModalDisclaimerMarkdown')} />)}
       className={clsx('z-20 w-200')}
@@ -141,7 +142,7 @@ export const SurveyModal = () => {
 
       if (config.onboardingSurveyUrl && onboardingSurveyCompleted === 0) {
         const url = new URL(config.onboardingSurveyUrl)
-        url.searchParams.set('userId', hashedUserId)
+        url.searchParams.set('a', hashedUserId)
         setSurveyType('onboarding')
         setSurveyUrl(url.toString())
         setSurveyOpen(true)
@@ -150,7 +151,7 @@ export const SurveyModal = () => {
 
       if (config.weeklySurveyUrl && onboardingSurveyCompleted > 0 && (weeklySurveyLastCompleted === 0 || now - weeklySurveyLastCompleted >= ONE_WEEK)) {
         const url = new URL(config.weeklySurveyUrl)
-        url.searchParams.set('userId', hashedUserId)
+        url.searchParams.set('a', hashedUserId)
         setSurveyType('weekly')
         setSurveyUrl(url.toString())
         setSurveyOpen(true)
@@ -186,6 +187,7 @@ export const SurveyModal = () => {
     <Dialog
       isModal={false}
       isOpen={isSurveyOpen}
+      onClose={handleDismiss}
       titleElement={translation('surveyTitle')}
       description={translation('surveyDescription')}
       className={clsx('z-20 w-200')}

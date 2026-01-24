@@ -101,6 +101,7 @@ export const InstallPrompt = () => {
     <Dialog
       isModal={false}
       isOpen={isOpen}
+      onClose={handleDismiss}
       titleElement={translation('installApp')}
       description={translation('installAppDescription')}
       className={clsx('z-20 w-96')}

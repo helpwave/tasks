@@ -94,7 +94,7 @@ const SettingsPage: NextPage = () => {
     if (surveyUrl) {
       const hashedUserId = await hashString(user.id)
       const url = new URL(surveyUrl)
-      url.searchParams.set('userId', hashedUserId)
+      url.searchParams.set('a', hashedUserId)
       window.open(url.toString(), '_blank', 'noopener,noreferrer')
     }
   }
