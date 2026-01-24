@@ -1,6 +1,6 @@
-import { useMemo, useState, forwardRef, useImperativeHandle, useEffect, useRef } from 'react'
+import { useMemo, useState, forwardRef, useImperativeHandle, useEffect, useRef, useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { Button, Checkbox, ConfirmDialog, FillerCell, SearchBar, Table, Tooltip } from '@helpwave/hightide'
+import { Button, Checkbox, ConfirmDialog, FillerCell, SearchBar, Table, Tooltip, Visibility } from '@helpwave/hightide'
 import { PlusIcon, Table as TableIcon, LayoutGrid, UserCheck, Users, Printer } from 'lucide-react'
 import { useAssignTaskMutation, useAssignTaskToTeamMutation, useCompleteTaskMutation, useReopenTaskMutation, useGetUsersQuery, useGetLocationsQuery, type GetGlobalDataQuery } from '@/api/gql/generated'
 import { AssigneeSelectDialog } from './AssigneeSelectDialog'
@@ -435,182 +435,183 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
     setIsHandoverDialogOpen(false)
   }
 
-  const columns = useMemo<ColumnDef<TaskViewModel>[]>(
-    () => {
-      const cols: ColumnDef<TaskViewModel>[] = [
-        {
-          id: 'done',
-          header: translation('status'),
-          accessorKey: 'done',
-          cell: ({ row }) => {
-            const task = row.original
-            const optimisticDone = optimisticUpdates.get(task.id)
-            const displayDone = optimisticDone !== undefined ? optimisticDone : task.done
-            return (
-              <div onClick={(e) => e.stopPropagation()}>
-                <Checkbox
-                  value={displayDone}
-                  onValueChange={(checked) => {
-                    setOptimisticUpdates(prev => {
-                      const next = new Map(prev)
-                      next.set(task.id, checked)
-                      return next
-                    })
-                    if (checked) {
-                      completeTask({ id: task.id })
-                    } else {
-                      reopenTask({ id: task.id })
-                    }
-                  }}
-                  className={clsx('rounded-full', getPriorityCheckboxColor(task.priority))}
-                />
-              </div>
-            )
-          },
-          minSize: 110,
-          size: 110,
-          maxSize: 110,
-          enableResizing: false,
-        },
-        {
-          id: 'title',
-          header: translation('title'),
-          accessorKey: 'name',
-          cell: ({ row }) => {
-            return (
-              <div className="flex items-center gap-2">
-                {row.original.priority && (
-                  <div className={clsx('w-2 h-2 rounded-full shrink-0', getPriorityDotColor(row.original.priority))} />
-                )}
-                <span>{row.original.name}</span>
-              </div>
-            )
-          },
-          minSize: 200,
-          size: Number.MAX_SAFE_INTEGER,
-        },
-        {
-          id: 'dueDate',
-          header: translation('dueDate'),
-          accessorKey: 'dueDate',
-          cell: ({ row }) => {
-            if (!row.original.dueDate) return <span className="text-description">-</span>
-            const overdue = isOverdue(row.original.dueDate, row.original.done)
-            const closeToDue = isCloseToDueDate(row.original.dueDate, row.original.done)
-            let colorClass = ''
-            if (overdue) {
-              colorClass = '!text-red-500'
-            } else if (closeToDue) {
-              colorClass = '!text-orange-500'
-            }
-            return (
-              <SmartDate
-                date={row.original.dueDate}
-                mode="relative"
-                className={clsx(colorClass)}
+  const columns = useMemo<ColumnDef<TaskViewModel>[]>(() => {
+    const cols: ColumnDef<TaskViewModel>[] = [
+      {
+        id: 'done',
+        header: translation('status'),
+        accessorKey: 'done',
+        cell: ({ row }) => {
+          const task = row.original
+          const optimisticDone = optimisticUpdates.get(task.id)
+          const displayDone = optimisticDone !== undefined ? optimisticDone : task.done
+          return (
+            <div onClick={(e) => e.stopPropagation()}>
+              <Checkbox
+                value={displayDone}
+                onValueChange={(checked) => {
+                  setOptimisticUpdates(prev => {
+                    const next = new Map(prev)
+                    next.set(task.id, checked)
+                    return next
+                  })
+                  if (checked) {
+                    completeTask({ id: task.id })
+                  } else {
+                    reopenTask({ id: task.id })
+                  }
+                }}
+                className={clsx('rounded-full', getPriorityCheckboxColor(task.priority))}
               />
-            )
-          },
-          minSize: 150,
-          size: 150,
-          maxSize: 200,
+            </div>
+          )
         },
-        {
-          id: 'patient',
-          header: translation('patient'),
-          accessorFn: ({ patient }) => patient?.name,
-          cell: ({ row }) => {
-            const data = row.original
-            if (!data.patient) {
-              return (
-                <span className="text-description">
-                  {translation('noPatient')}
-                </span>
-              )
-            }
+        minSize: 110,
+        size: 110,
+        maxSize: 110,
+        enableResizing: false,
+      },
+      {
+        id: 'title',
+        header: translation('title'),
+        accessorKey: 'name',
+        cell: ({ row }) => {
+          return (
+            <div className="flex items-center gap-2">
+              {row.original.priority && (
+                <div className={clsx('w-2 h-2 rounded-full shrink-0', getPriorityDotColor(row.original.priority))} />
+              )}
+              <span>{row.original.name}</span>
+            </div>
+          )
+        },
+        minSize: 200,
+        size: 300,
+        filterFn: 'text',
+      },
+      {
+        id: 'dueDate',
+        header: translation('dueDate'),
+        accessorKey: 'dueDate',
+        cell: ({ row }) => {
+          if (!row.original.dueDate) return <span className="text-description">-</span>
+          const overdue = isOverdue(row.original.dueDate, row.original.done)
+          const closeToDue = isCloseToDueDate(row.original.dueDate, row.original.done)
+          let colorClass = ''
+          if (overdue) {
+            colorClass = '!text-red-500'
+          } else if (closeToDue) {
+            colorClass = '!text-orange-500'
+          }
+          return (
+            <SmartDate
+              date={row.original.dueDate}
+              mode="relative"
+              className={clsx(colorClass)}
+            />
+          )
+        },
+        minSize: 200,
+        size: 200,
+        maxSize: 200,
+        filterFn: 'date',
+      },
+      {
+        id: 'patient',
+        header: translation('patient'),
+        accessorFn: ({ patient }) => patient?.name,
+        cell: ({ row }) => {
+          const data = row.original
+          if (!data.patient) {
             return (
-              <div className="flex flex-col gap-1">
-                <Button
-                  color="neutral"
-                  size="sm"
-                  onClick={event => {
-                    event.stopPropagation()
-                    setSelectedPatientId(data.patient?.id ?? null)
-                  }}
-                  className="flex-row-0 justify-start w-fit"
-                >
-                  {data.patient?.name}
-                </Button>
-                <LocationChips locations={data.patient.locations || []} small />
-              </div>
+              <span className="text-description">
+                {translation('noPatient')}
+              </span>
             )
-          },
-          sortingFn: 'text',
-          minSize: 200,
-          size: 250,
-          maxSize: 350,
+          }
+          return (
+            <div className="flex flex-col gap-1">
+              <Button
+                color="neutral"
+                size="sm"
+                onClick={event => {
+                  event.stopPropagation()
+                  setSelectedPatientId(data.patient?.id ?? null)
+                }}
+                className="flex-row-0 justify-start w-fit"
+              >
+                {data.patient?.name}
+              </Button>
+              <LocationChips locations={data.patient.locations || []} small />
+            </div>
+          )
         },
-      ]
+        sortingFn: 'text',
+        filterFn: 'text',
+        minSize: 200,
+        size: 250,
+        maxSize: 350,
+      },
+    ]
 
-      if (showAssignee) {
-        cols.push({
-          id: 'assignee',
-          header: translation('assignedTo'),
-          accessorFn: ({ assignee, assigneeTeam }) => assignee?.name || assigneeTeam?.title,
-          cell: ({ row }) => {
-            const assignee = row.original.assignee
-            const assigneeTeam = row.original.assigneeTeam
-            if (!assignee && !assigneeTeam) {
-              return (
-                <span className="text-description">
-                  {translation('notAssigned')}
-                </span>
-              )
-            }
-
-            if (assigneeTeam) {
-              return (
-                <div className="flex-row-2 items-center">
-                  <Users className="size-5 text-description" />
-                  <span>{assigneeTeam.title}</span>
-                </div>
-              )
-            }
-
-            if (assignee) {
-              return (
-                <button
-                  onClick={() => setSelectedUserPopupId(assignee.id)}
-                  className="flex-row-2 items-center hover:opacity-75 transition-opacity"
-                >
-                  <AvatarStatusComponent
-                    isOnline={assignee?.isOnline ?? null}
-                    image={{
-                      avatarUrl: assignee.avatarURL || 'https://cdn.helpwave.de/boringavatar.svg',
-                      alt: assignee.name
-                    }}
-                  />
-                  <span>{assignee.name}</span>
-                </button>
-              )
-            }
-
+    if (showAssignee) {
+      cols.push({
+        id: 'assignee',
+        header: translation('assignedTo'),
+        accessorFn: ({ assignee, assigneeTeam }) => assignee?.name || assigneeTeam?.title,
+        cell: ({ row }) => {
+          const assignee = row.original.assignee
+          const assigneeTeam = row.original.assigneeTeam
+          if (!assignee && !assigneeTeam) {
             return (
               <span className="text-description">
                 {translation('notAssigned')}
               </span>
             )
-          },
-          minSize: 200,
-          size: 250,
-          maxSize: 350,
-        })
-      }
+          }
 
-      return cols
-    },
-    [translation, completeTask, reopenTask, showAssignee, optimisticUpdates]
-  )
+          if (assigneeTeam) {
+            return (
+              <div className="flex-row-2 items-center">
+                <Users className="size-5 text-description" />
+                <span>{assigneeTeam.title}</span>
+              </div>
+            )
+          }
+
+          if (assignee) {
+            return (
+              <button
+                onClick={() => setSelectedUserPopupId(assignee.id)}
+                className="flex-row-2 items-center hover:opacity-75 transition-opacity"
+              >
+                <AvatarStatusComponent
+                  isOnline={assignee?.isOnline ?? null}
+                  image={{
+                    avatarUrl: assignee.avatarURL || 'https://cdn.helpwave.de/boringavatar.svg',
+                    alt: assignee.name
+                  }}
+                />
+                <span>{assignee.name}</span>
+              </button>
+            )
+          }
+
+          return (
+            <span className="text-description">
+              {translation('notAssigned')}
+            </span>
+          )
+        },
+        minSize: 200,
+        size: 250,
+        maxSize: 350,
+      })
+    }
+
+    return cols
+  },
+  [translation, completeTask, reopenTask, showAssignee, optimisticUpdates])
 
   const handleToggleDone = (taskId: string, checked: boolean) => {
     const task = initialTasks.find(t => t.id === taskId)
@@ -631,6 +632,10 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
   const handlePrint = () => {
     window.print()
   }
+
+  const fillerRow = useCallback(() => (
+    <FillerCell className="min-h-12"/>
+  ), [])
 
   return (
     <div className="flex flex-col h-full gap-4 print-container">
@@ -653,7 +658,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
               <span className="text-sm text-description whitespace-nowrap">{translation('showDone') || 'Show done'}</span>
             </div>
             <div className="flex items-center gap-2">
-              <Tooltip tooltip="Print" position="top">
+              <Tooltip tooltip={translation(viewType !== 'table' ? 'printOnlyAvailableInTableMode' : 'print')} position="top">
                 <Button
                   disabled={viewType !== 'table'}
                   layout="icon"
@@ -665,7 +670,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
                   <Printer className="size-5" />
                 </Button>
               </Tooltip>
-              <Tooltip tooltip="Table View" position="top">
+              <Tooltip tooltip={translation('tableView')} position="top">
                 <Button
                   layout="icon"
                   color={viewType === 'table' ? 'primary' : 'neutral'}
@@ -675,7 +680,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
                   <TableIcon className="size-5" />
                 </Button>
               </Tooltip>
-              <Tooltip tooltip="Card View" position="top">
+              <Tooltip tooltip={translation('cardView')} position="top">
                 <Button
                   layout="icon"
                   color={viewType === 'card' ? 'primary' : 'neutral'}
@@ -697,36 +702,36 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
               {translation('shiftHandover') || 'Shift Handover'}
             </Button>
           )}
-          <Button
-            onClick={() => setTaskDialogState({ isOpen: true })}
-            className="w-full sm:w-auto min-w-[13rem] flex-shrink-0"
-            disabled={!hasPatients}
-          >
-            <PlusIcon/>
-            {translation('addTask')}
-          </Button>
+          <Tooltip tooltip={translation('addTask')} position="top">
+            <Button
+              onClick={() => setTaskDialogState({ isOpen: true })}
+              disabled={!hasPatients}
+              layout="icon"
+            >
+              <PlusIcon/>
+            </Button>
+          </Tooltip>
         </div>
       </div>
-      {viewType === 'table' ? (
-        <div className="overflow-x-auto -mx-4 px-4 lg:mx-0 lg:pl-0 lg:pr-4 print-content">
-          <Table
-            className="w-full h-full cursor-pointer min-w-[800px] print-table"
-            data={tasks}
-            columns={columns}
-            fillerRow={() => (
-              <FillerCell className="min-h-12"/>
-            )}
-            initialState={{
+      <Visibility isVisible={viewType === 'table'}>
+        <Table
+          table={{
+            data: tasks,
+            columns: columns,
+            fillerRow: fillerRow,
+            initialState: {
               sorting: [
                 { id: 'done', desc: false },
                 { id: 'dueDate', desc: false },
-              ]
-            }}
-            enableMultiSort={true}
-            onRowClick={row => setTaskDialogState({ isOpen: true, taskId: row.original.id })}
-          />
-        </div>
-      ) : (
+              ],
+            },
+            enableMultiSort: true,
+            onRowClick: row => setTaskDialogState({ isOpen: true, taskId: row.original.id }),
+          }}
+          className="print-content"
+        />
+      </Visibility>
+      <Visibility isVisible={viewType === 'card'}>
         <div className="grid gap-4 -mx-4 px-4 lg:mx-0 lg:pl-0 lg:pr-4 print-content" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))' }}>
           {tasks.length === 0 ? (
             <div className="w-full text-center text-description py-8 col-span-full">
@@ -746,7 +751,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
             ))
           )}
         </div>
-      )}
+      </Visibility>
       <Drawer
         alignment="right"
         titleElement={taskDialogState.taskId ? translation('editTask') : translation('createTask')}

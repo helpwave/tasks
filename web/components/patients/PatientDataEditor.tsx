@@ -330,15 +330,13 @@ export const PatientDataEditor = ({
           {({ dataProps, focusableElementProps, interactionStates  }) => (
             <DateTimeInput
               {...dataProps} {...focusableElementProps} {...interactionStates}
+              ref={ref => focusableElementProps.ref(ref?.input ?? null)}
               value={convertBirthdateStringToDate(dataProps.value) ?? undefined}
               pickerProps={{
                 start: startDate,
                 end: endDate
               }}
               mode="date"
-              onRemove={() => {
-                dataProps.onEditComplete?.(undefined)
-              }}
             />
           )}
         </FormField>
@@ -378,7 +376,7 @@ export const PatientDataEditor = ({
         {!isEditMode && (
           <FormField<PatientFormValues, 'state'>
             name="state"
-            label={translation('patientState')}
+            label={translation('status')}
           >
             {({ dataProps: { value, onValueChange, onEditComplete }, focusableElementProps, interactionStates  }) => (
               <div className="flex items-center gap-2">
@@ -430,16 +428,6 @@ export const PatientDataEditor = ({
                     <CheckIcon className="size-4" aria-hidden="true" />
                   </Visibility>
                   {translation('waitPatient')}
-                </Button>
-                <Button
-                  disabled={value === PatientState.Dead}
-                  onClick={() => setIsMarkDeadDialogOpen(true)}
-                  color="neutral"
-                >
-                  <Visibility isVisible={value === PatientState.Admitted}>
-                    <CheckIcon className="size-4" aria-hidden="true" />
-                  </Visibility>
-                  {translation('markPatientDead')}
                 </Button>
               </div>
             )}

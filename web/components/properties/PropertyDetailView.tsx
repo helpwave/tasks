@@ -9,7 +9,8 @@ import {
   Textarea,
   FormField,
   FormProvider,
-  useCreateForm
+  useCreateForm,
+  FormContext
 } from '@helpwave/hightide'
 import type { Property, PropertyFieldType, PropertySelectOption, PropertySubjectType } from '@/components/PropertyList'
 import { propertyFieldTypeList, propertySubjectTypeList } from '@/components/PropertyList'
@@ -210,7 +211,6 @@ export const PropertyDetailView = ({
     })
   }
 
-  const isSelectType = getFormValue('fieldType') === 'multiSelect' || getFormValue('fieldType') === 'singleSelect'
 
   return (
     <FormProvider state={form}>
@@ -307,145 +307,156 @@ export const PropertyDetailView = ({
                 )}
               </FormField>
 
-              {isSelectType && (
-                <div className="flex-col-2">
-                  <span className="typography-title-md">
-                    {translation('selectOptions')}
-                  </span>
-                  <div className="flex-col-2 min-h-64 max-h-64 overflow-y-auto">
-                    {getFormValue('selectData')?.options.map((option) => (
-                      <div key={option.id} className="relative">
-                        <Input
-                          value={option.name}
-                          onChange={(e) => {
-                            const value = e.target.value
-                            updateForm(prev => {
-                              if (!prev.selectData) return prev
-                              return {
-                                ...prev,
-                                selectData: {
-                                  ...prev.selectData,
-                                  options: prev.selectData.options
-                                    .map(entry => entry.id === option.id ? { ...entry, name: value } : entry)
+              <FormContext.Consumer>
+                {({ getValues }) => {
+                  const fieldType = getValues().fieldType
+                  const isSelectType = fieldType === 'multiSelect' || fieldType === 'singleSelect'
+                  if (!isSelectType) return null
+                  return (
+                    <div className="flex-col-2">
+                      <span className="typography-title-md">
+                        {translation('selectOptions')}
+                      </span>
+                      <div className="flex-col-2 min-h-64 max-h-64 overflow-y-auto">
+                        {getFormValue('selectData')?.options.map((option) => (
+                          <div key={option.id} className="relative">
+                            <Input
+                              value={option.name}
+                              onChange={(e) => {
+                                const value = e.target.value
+                                updateForm(prev => {
+                                  if (!prev.selectData) return prev
+                                  return {
+                                    ...prev,
+                                    selectData: {
+                                      ...prev.selectData,
+                                      options: prev.selectData.options
+                                        .map(entry => entry.id === option.id ? { ...entry, name: value } : entry)
+                                    }
+                                  }
+                                })
+                              }}
+                              onBlur={(e) => {
+                                const value = e.target.value
+                                const update = {
+                                  selectData: getFormValue('selectData') ? {
+                                    ...getFormValue('selectData')!,
+                                    options: getFormValue('selectData')!.options
+                                      .map(entry => entry.id === option.id ? { ...entry, name: value } : entry)
+                                  } : undefined
+                                }
+                                updateForm(prev => ({ ...prev, ...update }))
+                                persist(update)
+                              }}
+                              className="pr-11 w-full"
+                            />
+                            <Button
+                              coloringStyle="text"
+                              color="negative"
+                              size="sm"
+                              layout="icon"
+                              className="absolute right-1 top-1 rounded"
+                              onClick={() => {
+                                const update = {
+                                  selectData: getFormValue('selectData') ? {
+                                    ...getFormValue('selectData')!,
+                                    options: getFormValue('selectData')!.options.filter(entry => entry.id !== option.id)
+                                  } : undefined
+                                }
+                                updateForm(prev => ({ ...prev, ...update }))
+                                persist(update)
+                              }}
+                            >
+                              <XIcon />
+                            </Button>
+                          </div>
+                        ))}
+                        <div className="relative">
+                          <Input
+                            value={newOption.name}
+                            onChange={(e) => {
+                              const name = e.target.value
+                              setNewOption({
+                                ...newOption,
+                                name
+                              })
+                            }}
+                            onBlur={(e) => {
+                              const name = e.target.value.trim()
+                              if (!name) return
+                              const option = {
+                                ...newOption,
+                                id: `temp-${Date.now()}-${Math.random()}`,
+                                name
+                              }
+                              const currentSelectData = getFormValue('selectData')
+                              const update = {
+                                selectData: currentSelectData ? {
+                                  ...currentSelectData,
+                                  options: [...currentSelectData.options, option]
+                                } : {
+                                  options: [option],
+                                  isAllowingFreetext: false,
                                 }
                               }
-                            })
-                          }}
-                          onBlur={(e) => {
-                            const value = e.target.value
-                            const update = {
-                              selectData: getFormValue('selectData') ? {
-                                ...getFormValue('selectData')!,
-                                options: getFormValue('selectData')!.options
-                                  .map(entry => entry.id === option.id ? { ...entry, name: value } : entry)
-                              } : undefined
-                            }
-                            updateForm(prev => ({ ...prev, ...update }))
-                            persist(update)
-                          }}
-                          className="pr-11 w-full"
-                        />
-                        <Button
-                          coloringStyle="text"
-                          color="negative"
-                          className="absolute right-3 top-2 rounded"
-                          onClick={() => {
-                            const update = {
-                              selectData: getFormValue('selectData') ? {
-                                ...getFormValue('selectData')!,
-                                options: getFormValue('selectData')!.options.filter(entry => entry.id !== option.id)
-                              } : undefined
-                            }
-                            updateForm(prev => ({ ...prev, ...update }))
-                            persist(update)
-                          }}
-                        >
-                          <XIcon />
-                        </Button>
+                              updateForm(prev => ({ ...prev, ...update }))
+                              setTimeout(() => {
+                                persist(update)
+                              }, 0)
+                              setNewOption({
+                                id: '',
+                                name: '',
+                                description: '',
+                                isCustom: false,
+                              })
+                            }}
+                            className="pr-16 w-full"
+                            placeholder={translation('rAdd', { name: translation('option') })}
+                          />
+                          <Button
+                            coloringStyle="text"
+                            color="primary"
+                            size="sm"
+                            layout="icon"
+                            className="absolute right-1 top-1 rounded"
+                            disabled={!newOption.name}
+                            onClick={() => {
+                              if (!newOption.name.trim()) return
+                              const option = {
+                                ...newOption,
+                                id: `temp-${Date.now()}-${Math.random()}`,
+                                name: newOption.name.trim()
+                              }
+                              const currentSelectData = getFormValue('selectData')
+                              const update = {
+                                selectData: currentSelectData ? {
+                                  ...currentSelectData,
+                                  options: [...currentSelectData.options, option]
+                                } : {
+                                  options: [option],
+                                  isAllowingFreetext: false,
+                                }
+                              }
+                              updateForm(prev => ({ ...prev, ...update }))
+                              setTimeout(() => {
+                                persist(update)
+                              }, 0)
+                              setNewOption({
+                                id: '',
+                                name: '',
+                                description: '',
+                                isCustom: false,
+                              })
+                            }}
+                          >
+                            <PlusIcon />
+                          </Button>
+                        </div>
                       </div>
-                    ))}
-                    <div className="relative">
-                      <Input
-                        value={newOption.name}
-                        onChange={(e) => {
-                          const name = e.target.value
-                          setNewOption({
-                            ...newOption,
-                            name
-                          })
-                        }}
-                        onBlur={(e) => {
-                          const name = e.target.value.trim()
-                          if (!name) return
-                          const option = {
-                            ...newOption,
-                            id: `temp-${Date.now()}-${Math.random()}`,
-                            name
-                          }
-                          const currentSelectData = getFormValue('selectData')
-                          const update = {
-                            selectData: currentSelectData ? {
-                              ...currentSelectData,
-                              options: [...currentSelectData.options, option]
-                            } : {
-                              options: [option],
-                              isAllowingFreetext: false,
-                            }
-                          }
-                          updateForm(prev => ({ ...prev, ...update }))
-                          setTimeout(() => {
-                            persist(update)
-                          }, 0)
-                          setNewOption({
-                            id: '',
-                            name: '',
-                            description: '',
-                            isCustom: false,
-                          })
-                        }}
-                        className="pr-16 w-full"
-                        placeholder={translation('rAdd', { name: translation('option') })}
-                      />
-                      <Button
-                        coloringStyle="text"
-                        color="primary"
-                        className="absolute right-3 top-2 rounded"
-                        disabled={!newOption.name}
-                        onClick={() => {
-                          if (!newOption.name.trim()) return
-                          const option = {
-                            ...newOption,
-                            id: `temp-${Date.now()}-${Math.random()}`,
-                            name: newOption.name.trim()
-                          }
-                          const currentSelectData = getFormValue('selectData')
-                          const update = {
-                            selectData: currentSelectData ? {
-                              ...currentSelectData,
-                              options: [...currentSelectData.options, option]
-                            } : {
-                              options: [option],
-                              isAllowingFreetext: false,
-                            }
-                          }
-                          updateForm(prev => ({ ...prev, ...update }))
-                          setTimeout(() => {
-                            persist(update)
-                          }, 0)
-                          setNewOption({
-                            id: '',
-                            name: '',
-                            description: '',
-                            isCustom: false,
-                          })
-                        }}
-                      >
-                        <PlusIcon />
-                      </Button>
                     </div>
-                  </div>
-                </div>
-              )}
+                  )
+                }}
+              </FormContext.Consumer>
               {isEditMode && (
                 <FormField<PropertyFormValues, 'isArchived'>
                   name="isArchived"

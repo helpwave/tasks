@@ -61,7 +61,7 @@ export const LocationChips = ({ locations, disableLink = false, small = false }:
       className={`cursor-pointer hover:opacity-80 transition-opacity ${small ? 'text-xs' : ''}`}
     >
       <div className="flex items-center gap-1">
-        <MapPin className="size-3" />
+        <MapPin className="size-force-3" />
         <span>{firstLocation?.title}</span>
         {firstLocation?.kind && (
           <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider ${getKindStyles(firstLocation.kind)}`}>

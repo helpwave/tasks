@@ -357,11 +357,9 @@ export const TaskDataEditor = ({
               {({ dataProps, focusableElementProps, interactionStates }) => (
                 <DateTimeInput
                   {...dataProps} {...focusableElementProps} {...interactionStates}
+                  ref={ref => focusableElementProps.ref(ref?.input ?? null)}
                   value={dataProps.value ?? undefined}
                   mode="dateTime"
-                  onRemove={() => {
-                    dataProps.onEditComplete?.(undefined)
-                  }}
                   onEditComplete={(date: Date | null | undefined) => {
                     dataProps.onEditComplete?.(date ? localToUTCWithSameTime(date) : null)
                   }}

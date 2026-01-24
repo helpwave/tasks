@@ -365,8 +365,10 @@ export const PropertyList = ({
                     {translation('addProperty')}
                   </Button>
                 )}
-                menuClassName="min-w-[200px] p-2 "
-                alignmentVertical="topOutside"
+                className="min-w-50 p-2 "
+                options={{
+                  verticalAlignment: 'beforeStart',
+                }}
               >
                 {({ close }) => (
                   <LoadingAndErrorComponent
@@ -412,8 +414,10 @@ export const PropertyList = ({
                 <span>{translation('addProperty')}</span>
               </div>
             )}
-            menuClassName="min-w-[200px] p-2 "
-            alignmentVertical="topOutside"
+            className="min-w-50 p-2 "
+            options={{
+              verticalAlignment: 'beforeStart',
+            }}
           >
             {({ close }) => (
               <LoadingAndErrorComponent

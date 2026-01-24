@@ -4,7 +4,7 @@ import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
 import { Button, Chip, FillerCell, LoadingContainer, Table } from '@helpwave/hightide'
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import type { ColumnDef } from '@tanstack/table-core'
 import { EditIcon, PlusIcon } from 'lucide-react'
 import { Drawer } from '@helpwave/hightide'
@@ -84,28 +84,30 @@ const PropertiesPage: NextPage = () => {
       minSize: 200,
       size: 250,
       maxSize: 300,
+      filterFn: 'text',
     },
     {
       id: 'fieldType',
       header: translation('type'),
-      accessorKey: 'fieldType',
+      accessorFn: ({ fieldType }) => fieldType.toString(),
       cell: ({ row }) => {
         const value = row.original.fieldType
 
         return (
-          <Chip size="sm" className="coloring-tonal" color="primary">
+          <Chip className="coloring-tonal" color="primary">
             <span>{translation('sPropertyType', { type: value })}</span>
           </Chip>
         )
       },
-      minSize: 100,
-      size: 100,
-      maxSize: 150,
+      minSize: 160,
+      size: 160,
+      maxSize: 250,
+      filterFn: 'text',
     },
     {
       id: 'subjectType',
       header: translation('subjectType'),
-      accessorKey: 'subjectType',
+      accessorFn: ({ subjectType }) => subjectType.toString(),
       cell: ({ row }) => {
         const data = row.original
         return (
@@ -114,14 +116,15 @@ const PropertiesPage: NextPage = () => {
           </span>
         )
       },
-      minSize: 150,
-      size: 150,
+      minSize: 200,
+      size: 200,
       maxSize: 250,
+      filterFn: 'text',
     },
     {
       id: 'active',
       header: translation('status'),
-      accessorKey: 'isArchived',
+      accessorFn: ({ isArchived }) => !isArchived,
       cell: ({ row }) => {
         return (
           <Chip className="coloring-tonal" color={row.original.isArchived ? 'negative' : 'positive'}>
@@ -131,6 +134,7 @@ const PropertiesPage: NextPage = () => {
       },
       minSize: 100,
       size: 120,
+      filterFn: 'boolean',
     },
     {
       id: 'actions',
@@ -167,10 +171,12 @@ const PropertiesPage: NextPage = () => {
       >
         <div className="overflow-x-auto -mx-4 px-4 lg:mx-0 lg:px-0">
           <Table
-            className="w-full h-full min-w-[600px]"
-            data={data ?? []}
-            columns={columns}
-            fillerRow={() => (<FillerCell className="min-h-12"/>)}
+            className="w-full h-full min-w-150"
+            table={{
+              data: data ?? [],
+              columns,
+              fillerRow: useCallback(() => (<FillerCell className="min-h-12"/>), []),
+            }}
           />
         </div>
       </ContentPanel>

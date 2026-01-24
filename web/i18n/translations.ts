@@ -27,6 +27,7 @@ export type TasksTranslationEntries = {
   'authenticationFailed': string,
   'birthdate': string,
   'cancel': string,
+  'cardView': string,
   'chooseLanguage': string,
   'chooseTheme': string,
   'clearCache': string,
@@ -153,6 +154,8 @@ export type TasksTranslationEntries = {
   'place': string,
   'position': string,
   'preferences': string,
+  'print': string,
+  'printOnlyAvailableInTableMode': string,
   'priority': (values: { priority: string }) => string,
   'priorityLabel': string,
   'priorityNone': string,
@@ -173,6 +176,7 @@ export type TasksTranslationEntries = {
   'retakeSurvey': string,
   'returnHome': string,
   'rooms': string,
+  'rShow': (values: { name: string }) => string,
   'save': string,
   'searchLocations': string,
   'searchUsersOrTeams': string,
@@ -195,8 +199,8 @@ export type TasksTranslationEntries = {
   'sex': string,
   'shiftHandover': string,
   'shiftHandoverDescription': string,
-  'showAllTasks': string,
   'showAllPatients': string,
+  'showAllTasks': string,
   'showDone': string,
   'showTeamTasks': string,
   'sPropertySubjectType': (values: { subject: string }) => string,
@@ -213,6 +217,7 @@ export type TasksTranslationEntries = {
   'surveyDescription': string,
   'surveyTitle': string,
   'system': string,
+  'tableView': string,
   'task': string,
   'tasks': string,
   'taskStatus': (values: { status: string }) => string,
@@ -259,6 +264,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'authenticationFailed': `Authentifizierung fehlgeschlagen`,
     'birthdate': `Geburtsdatum`,
     'cancel': `Abbrechen`,
+    'cardView': `Kachelansicht`,
     'chooseLanguage': `Sprache wählen`,
     'chooseTheme': `Design wählen`,
     'clearCache': `Cache leeren`,
@@ -476,6 +482,8 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'place': `Ort`,
     'position': `Position`,
     'preferences': `Präferenzen`,
+    'print': `Drucken`,
+    'printOnlyAvailableInTableMode': `Drucken ist nur im Tabellenmodus verfügbar`,
     'priority': ({ priority }): string => {
       return TranslationGen.resolveSelect(priority, {
         'P1': `Normal`,
@@ -510,6 +518,9 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'retakeSurvey': `Umfrage erneut durchführen`,
     'returnHome': `Zur Homepage`,
     'rooms': `Zimmer`,
+    'rShow': ({ name }): string => {
+      return `${name} anzeigen`
+    },
     'save': `Speichern`,
     'searchLocations': `Standorte suchen...`,
     'searchUsersOrTeams': `Benutzer oder Teams suchen...`,
@@ -532,8 +543,8 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'sex': `Geschlecht`,
     'shiftHandover': `Schichtübergabe`,
     'shiftHandoverDescription': `Wählen Sie einen Benutzer aus, um alle Ihnen zugewiesenen offenen Aufgaben zu übertragen.`,
-    'showAllTasks': `Alle Aufgaben anzeigen`,
     'showAllPatients': `Alle Patienten anzeigen`,
+    'showAllTasks': `Alle Aufgaben anzeigen`,
     'showDone': `Erledigte anzeigen`,
     'showTeamTasks': `Team-Aufgaben anzeigen`,
     'sPropertySubjectType': ({ subject }): string => {
@@ -569,6 +580,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'surveyDescription': `Ihr Feedback ist wertvoll für uns. Bitte nehmen Sie sich einen Moment Zeit, um unsere Umfrage auszufüllen.`,
     'surveyTitle': `Helfen Sie uns, helpwave tasks zu verbessern`,
     'system': `System`,
+    'tableView': `Tabellenansicht`,
     'task': `Aufgabe`,
     'tasks': `Aufgaben`,
     'taskStatus': ({ status }): string => {
@@ -627,6 +639,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'authenticationFailed': `Authentication Failed`,
     'birthdate': `Birthdate`,
     'cancel': `Cancel`,
+    'cardView': `Card View`,
     'chooseLanguage': `Choose Language`,
     'chooseTheme': `Choose Theme`,
     'clearCache': `Clear Cache`,
@@ -844,6 +857,8 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'place': `Place`,
     'position': `Position`,
     'preferences': `Preferences`,
+    'print': `Print`,
+    'printOnlyAvailableInTableMode': `Print is only available in table mode`,
     'priority': ({ priority }): string => {
       return TranslationGen.resolveSelect(priority, {
         'P1': `Normal`,
@@ -877,6 +892,9 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'retakeSurvey': `Retake Survey`,
     'returnHome': `Return Home`,
     'rooms': `Rooms`,
+    'rShow': ({ name }): string => {
+      return `Show ${name}`
+    },
     'save': `Save`,
     'searchLocations': `Search locations...`,
     'searchUsersOrTeams': `Search users or teams...`,
@@ -899,8 +917,8 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'sex': `Sex`,
     'shiftHandover': `Shift Handover`,
     'shiftHandoverDescription': `Select a user to transfer all open tasks assigned to you.`,
-    'showAllTasks': `Show All Tasks`,
     'showAllPatients': `Show all patients`,
+    'showAllTasks': `Show All Tasks`,
     'showDone': `Show done`,
     'showTeamTasks': `Show Team Tasks`,
     'sPropertySubjectType': ({ subject }): string => {
@@ -936,6 +954,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'surveyDescription': `Your feedback is valuable to us. Please take a moment to complete our survey.`,
     'surveyTitle': `Help us to improve helpwave tasks`,
     'system': `System`,
+    'tableView': `Table View`,
     'task': `Task`,
     'tasks': `Tasks`,
     'taskStatus': ({ status }): string => {
