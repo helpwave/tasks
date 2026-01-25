@@ -1,14 +1,15 @@
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import type { ColumnDef, Row } from '@tanstack/react-table'
 import type { GetOverviewDataQuery } from '@/api/gql/generated'
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
+import type { TableProps } from '@helpwave/hightide'
 import { FillerCell, Table, TableColumnSwitcher, Tooltip } from '@helpwave/hightide'
 import { SmartDate } from '@/utils/date'
 import { LocationChips } from '@/components/patients/LocationChips'
 
 type PatientViewModel = GetOverviewDataQuery['recentPatients'][0]
 
-export interface RecentPatientsTableProps {
+export interface RecentPatientsTableProps extends Omit<TableProps<PatientViewModel>, 'table'> {
   patients: PatientViewModel[],
   onSelectPatient: (id: string) => void,
 }
@@ -16,6 +17,7 @@ export interface RecentPatientsTableProps {
 export const RecentPatientsTable = ({
   patients,
   onSelectPatient,
+  ...props
 }: RecentPatientsTableProps) => {
   const translation = useTasksTranslation()
   const patientColumns = useMemo<ColumnDef<PatientViewModel>[]>(() => [
@@ -25,12 +27,12 @@ export const RecentPatientsTable = ({
       accessorKey: 'name',
       cell: ({ row }) => {
         return (
-          <Tooltip tooltip={row.original.name} containerClassName="overflow-hidden w-full">
-            <span className="truncate overflow-ellipsis">{row.original.name}</span>
+          <Tooltip tooltip={row.original.name} containerClassName="overflow-hidden w-fit max-w-full !block">
+            <span className="truncate block">{row.original.name}</span>
           </Tooltip>
         )
       },
-      minSize: 200,
+      minSize: 160,
       filterFn: 'text',
     },
     {
@@ -70,11 +72,12 @@ export const RecentPatientsTable = ({
 
   return (
     <Table
+      {...props}
       table={{
         data: patients,
         columns: patientColumns,
-        fillerRow: () => (<FillerCell className="min-h-6"/>),
-        onRowClick: (row: Row<PatientViewModel>) => onSelectPatient(row.original.id)
+        fillerRowCell: useCallback(() => (<FillerCell className="min-h-15"/>), []),
+        onRowClick: useCallback((row: Row<PatientViewModel>) => onSelectPatient(row.original.id), [onSelectPatient])
       }}
       header={(
         <div className="flex-row-4 justify-between items-center">

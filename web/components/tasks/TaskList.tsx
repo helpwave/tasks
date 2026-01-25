@@ -439,36 +439,35 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
     const cols: ColumnDef<TaskViewModel>[] = [
       {
         id: 'done',
-        header: translation('status'),
+        header: () => null,
         accessorKey: 'done',
         cell: ({ row }) => {
           const task = row.original
           const optimisticDone = optimisticUpdates.get(task.id)
           const displayDone = optimisticDone !== undefined ? optimisticDone : task.done
           return (
-            <div onClick={(e) => e.stopPropagation()}>
-              <Checkbox
-                value={displayDone}
-                onValueChange={(checked) => {
-                  setOptimisticUpdates(prev => {
-                    const next = new Map(prev)
-                    next.set(task.id, checked)
-                    return next
-                  })
-                  if (checked) {
-                    completeTask({ id: task.id })
-                  } else {
-                    reopenTask({ id: task.id })
-                  }
-                }}
-                className={clsx('rounded-full', getPriorityCheckboxColor(task.priority))}
-              />
-            </div>
+            <Checkbox
+              value={displayDone}
+              onValueChange={(checked) => {
+                setOptimisticUpdates(prev => {
+                  const next = new Map(prev)
+                  next.set(task.id, checked)
+                  return next
+                })
+                if (checked) {
+                  completeTask({ id: task.id })
+                } else {
+                  reopenTask({ id: task.id })
+                }
+              }}
+              onClick={(e) => e.stopPropagation()}
+              className={clsx('rounded-full', getPriorityCheckboxColor(task.priority))}
+            />
           )
         },
-        minSize: 110,
-        size: 110,
-        maxSize: 110,
+        minSize: 60,
+        size: 60,
+        maxSize: 60,
         enableResizing: false,
       },
       {
@@ -640,15 +639,14 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
   return (
     <div className="flex flex-col h-full gap-4 print-container">
       <div className="flex flex-col sm:flex-row justify-between w-full gap-4 print-header">
-        <div className="w-full sm:max-w-md">
-          <SearchBar
-            placeholder={translation('search')}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onSearch={() => null}
-          />
-        </div>
-        <div className="flex flex-wrap items-center gap-4 w-full sm:w-auto sm:ml-auto lg:pr-4">
+        <SearchBar
+          placeholder={translation('search')}
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          onSearch={() => null}
+          containerProps={{ className: 'max-w-80 h-10' }}
+        />
+        <div className="flex flex-wrap items-center justify-end gap-4 w-full sm:w-auto sm:ml-auto lg:pr-4">
           <div className="flex items-center justify-between gap-4 w-full sm:w-auto">
             <div className="flex items-center gap-2">
               <Checkbox
@@ -696,7 +694,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
           {canHandover && (
             <Button
               onClick={handleHandoverClick}
-              className="w-full sm:w-auto flex-shrink-0"
+              className="w-fit"
             >
               <UserCheck className="size-5"/>
               {translation('shiftHandover') || 'Shift Handover'}
@@ -718,7 +716,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
           table={{
             data: tasks,
             columns: columns,
-            fillerRow: fillerRow,
+            fillerRowCell: fillerRow,
             initialState: {
               sorting: [
                 { id: 'done', desc: false },

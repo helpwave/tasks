@@ -3,12 +3,10 @@ import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import type { CreateTaskInput, UpdateTaskInput, TaskPriority } from '@/api/gql/generated'
 import {
   PatientState,
-  useCompleteTaskMutation,
   useCreateTaskMutation,
   useDeleteTaskMutation,
   useGetPatientsQuery,
-  useGetTaskQuery,
-  useReopenTaskMutation
+  useGetTaskQuery
 } from '@/api/gql/generated'
 import type { FormFieldDataHandling } from '@helpwave/hightide'
 import {
@@ -23,7 +21,10 @@ import {
   SelectOption,
   Textarea,
   useCreateForm,
-  Drawer
+  Drawer,
+  useFormObserverKey,
+  Visibility,
+  FormObserver
 } from '@helpwave/hightide'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { User, Flag } from 'lucide-react'
@@ -134,18 +135,6 @@ export const TaskDataEditor = ({
     },
   })
 
-  const { mutate: completeTask } = useCompleteTaskMutation({
-    onSuccess: () => {
-      onSuccess?.()
-    },
-  })
-
-  const { mutate: reopenTask } = useReopenTaskMutation({
-    onSuccess: () => {
-      onSuccess?.()
-    },
-  })
-
   const [isDeleting, setIsDeleting] = useState<boolean>(false)
   const { mutate: deleteTask } = useDeleteTaskMutation({
     onMutate: () => {
@@ -218,7 +207,7 @@ export const TaskDataEditor = ({
     }
   })
 
-  const { update: updateForm, getValue: getFormValue } = form
+  const { update: updateForm } = form
 
   useEffect(() => {
     if (taskData?.task && isEditMode) {
@@ -242,14 +231,14 @@ export const TaskDataEditor = ({
 
   const patients = patientsData?.patients || []
 
+  const dueDate = useFormObserverKey({ formStore: form.store, key: 'dueDate' })?.value ?? null
+  const estimatedTime = useFormObserverKey({ formStore: form.store, key: 'estimatedTime' })?.value ?? null
   const expectedFinishDate = useMemo(() => {
-    const dueDate = getFormValue('dueDate')
-    const estimatedTime = getFormValue('estimatedTime')
     if (!dueDate || !estimatedTime) return null
     const finishDate = new Date(dueDate)
     finishDate.setMinutes(finishDate.getMinutes() + estimatedTime)
     return finishDate
-  }, [getFormValue])
+  }, [dueDate, estimatedTime])
 
   if (isEditMode && isLoadingTask) {
     return <LoadingContainer/>
@@ -261,23 +250,22 @@ export const TaskDataEditor = ({
         <form onSubmit={event => { event.preventDefault(); form.submit() }}>
           <div className="flex flex-col gap-6 pt-4 pb-24">
             <div className="flex items-center gap-3">
-              {isEditMode && (
-                <Checkbox
-                  id="task-done"
-                  value={getFormValue('done') || false}
-                  onValueChange={(checked) => {
-                    if (!taskId) return
-                    updateForm(prev => ({ ...prev, done: checked }))
-                    if (checked) {
-                      completeTask({ id: taskId })
-                    } else {
-                      reopenTask({ id: taskId })
-                    }
-                  }}
-                  className={clsx('rounded-full scale-125',
-                    getPriorityCheckboxColor(form.getValue('priority')))}
-                />
-              )}
+              <Visibility isVisible={isEditMode}>
+                <FormObserver>
+                  {({ values: { done, priority } }) => (
+                    <Checkbox
+                      id="task-done"
+                      value={done || false}
+                      onValueChange={(checked) => {
+                        // TODO replace with form.update when it allows setting the update trigger
+                        form.store.setValue('done', checked, true)
+                      }}
+                      className={clsx('rounded-full scale-125',
+                        getPriorityCheckboxColor(priority))}
+                    />
+                  )}
+                </FormObserver>
+              </Visibility>
               <div className="flex-1">
                 <FormField<TaskFormValues, 'title'>
                   name="title"
@@ -357,12 +345,9 @@ export const TaskDataEditor = ({
               {({ dataProps, focusableElementProps, interactionStates }) => (
                 <DateTimeInput
                   {...dataProps} {...focusableElementProps} {...interactionStates}
-                  ref={ref => focusableElementProps.ref(ref?.input ?? null)}
                   value={dataProps.value ?? undefined}
+                  isControlled={true}
                   mode="dateTime"
-                  onEditComplete={(date: Date | null | undefined) => {
-                    dataProps.onEditComplete?.(date ? localToUTCWithSameTime(date) : null)
-                  }}
                 />
               )}
             </FormField>

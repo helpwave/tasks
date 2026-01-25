@@ -877,7 +877,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'public': `public`,
     'publish': `publish`,
     'rAdd': ({ name }): string => {
-      return `Add ${name}!`
+      return `Add ${name}`
     },
     'rClickToAdd': ({ name }): string => {
       return `Click to add ${name}!`

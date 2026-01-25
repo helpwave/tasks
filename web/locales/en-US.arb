@@ -253,7 +253,7 @@
       }
     }
   },
-  "rAdd": "Add {name}!",
+  "rAdd": "Add {name}",
   "@rAdd": {
     "placeholders": {
       "name": {

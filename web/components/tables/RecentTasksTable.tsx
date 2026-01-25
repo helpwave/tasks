@@ -3,6 +3,7 @@ import type { ColumnDef, Row } from '@tanstack/react-table'
 import type { GetOverviewDataQuery } from '@/api/gql/generated'
 import { useCallback, useMemo } from 'react'
 import clsx from 'clsx'
+import type { TableProps } from '@helpwave/hightide'
 import { Button, Checkbox, FillerCell, Table, TableColumnSwitcher, Tooltip } from '@helpwave/hightide'
 import { ArrowRightIcon } from 'lucide-react'
 import { SmartDate } from '@/utils/date'
@@ -10,7 +11,7 @@ import { DueDateUtils } from '@/utils/dueDate'
 
 type TaskViewModel = GetOverviewDataQuery['recentTasks'][0]
 
-export interface RecentTasksTableProps {
+export interface RecentTasksTableProps extends Omit<TableProps<TaskViewModel>, 'table'> {
   tasks: TaskViewModel[],
   completeTask: (id: string) => void,
   reopenTask: (id: string) => void,
@@ -25,33 +26,33 @@ export const RecentTasksTable = ({
   reopenTask,
   onSelectPatient,
   onSelectTask,
+  ...props
 }: RecentTasksTableProps) => {
   const translation = useTasksTranslation()
   const taskColumns = useMemo<ColumnDef<TaskViewModel>[]>(() => [
     {
       id: 'done',
-      header: translation('status'),
+      header: () => null,
       accessorKey: 'done',
       cell: ({ row }) => (
-        <div onClick={(e) => e.stopPropagation()}>
-          <Checkbox
-            value={row.original.done}
-            onValueChange={(checked) => {
-              if (!checked) {
-                completeTask(row.original.id)
-              } else {
-                reopenTask(row.original.id)
-              }
-            }}
-            className={clsx('rounded-full')}
-          />
-        </div>
+        <Checkbox
+          value={row.original.done}
+          onValueChange={(checked) => {
+            if (checked) {
+              completeTask(row.original.id)
+            } else {
+              reopenTask(row.original.id)
+            }
+          }}
+          onClick={(e) => e.stopPropagation()}
+          className={clsx('rounded-full')}
+        />
       ),
-      minSize: 130,
-      size: 130,
-      maxSize: 130,
+      minSize: 60,
+      size: 60,
+      maxSize: 60,
       enableResizing: false,
-      filterFn: 'boolean',
+      enableHiding: false,
     },
     {
       id: 'title',
@@ -59,7 +60,9 @@ export const RecentTasksTable = ({
       accessorKey: 'title',
       cell: ({ row }) => {
         return (
-          <span className="typography-title-sm">{row.original.title}</span>
+          <Tooltip tooltip={row.original.title} containerClassName="overflow-hidden w-full !block">
+            <span className="typography-title-sm truncate block">{row.original.title}</span>
+          </Tooltip>
         )
       },
       minSize: 200,
@@ -74,7 +77,7 @@ export const RecentTasksTable = ({
         if (!patient) return <FillerCell/>
 
         return (
-          <Tooltip tooltip={translation('rShow', { name: patient.name })} containerClassName="overflow-hidden w-full">
+          <Tooltip tooltip={translation('rShow', { name: patient.name })} containerClassName="overflow-hidden w-full !block">
             <Button
               color="neutral"
               coloringStyle="text"
@@ -85,7 +88,7 @@ export const RecentTasksTable = ({
               }}
               className="flex-row-1 w-full justify-between"
             >
-              <span className="truncate overflow-ellipsis">{patient.name}</span>
+              <span className="truncate block">{patient.name}</span>
               <ArrowRightIcon className="size-force-5"/>
             </Button>
           </Tooltip>
@@ -142,10 +145,12 @@ export const RecentTasksTable = ({
 
   return (
     <Table
+      {...props}
       table={{
         data: tasks,
         columns: taskColumns,
-        fillerRow: useCallback(() => (<FillerCell className="min-h-6"/>), []),
+        isUsingFillerRows: true,
+        fillerRowCell: useCallback(() => (<FillerCell className="min-h-8"/>), []),
         onRowClick: useCallback((row: Row<TaskViewModel>) => onSelectTask(row.original.id), [onSelectTask])
       }}
       header={(

@@ -5,6 +5,8 @@ import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { PropertyEntry } from '@/components/PropertyEntry'
 import { useGetPropertyDefinitionsQuery, FieldType, PropertyEntity } from '@/api/gql/generated'
 
+
+
 export const propertyFieldTypeList = ['multiSelect', 'singleSelect', 'number', 'text', 'date', 'dateTime', 'checkbox'] as const
 export type PropertyFieldType = typeof propertyFieldTypeList[number]
 
@@ -74,6 +76,28 @@ export type PropertyListProps = {
   }>,
   onPropertyValueChange?: (definitionId: string, value: PropertyValue | null) => void,
   fullWidthAddButton?: boolean,
+}
+
+const getDefaultValue = (fieldType: PropertyFieldType, selectData?: PropertySelectData): PropertyValue => {
+  switch (fieldType) {
+  case 'text':
+    return { textValue: '' }
+  case 'number':
+    return { numberValue: undefined }
+  case 'checkbox':
+    return { boolValue: false }
+  case 'date':
+  case 'dateTime':
+    return {}
+  case 'singleSelect':
+    return selectData?.options && selectData.options.length > 0
+      ? { singleSelectValue: selectData.options[0]?.id || undefined }
+      : {}
+  case 'multiSelect':
+    return { multiSelectValue: [] }
+  default:
+    return {}
+  }
 }
 
 const mapFieldTypeFromBackend = (fieldType: FieldType): PropertyFieldType => {
@@ -331,11 +355,16 @@ export const PropertyList = ({
             fieldType={attachedProperty.property.fieldType}
             selectData={attachedProperty.property.selectData ?
               {
-                onAddOption: () => {
-                },
+                onAddOption: () => {},
                 options: attachedProperty.property.selectData.options,
               } : undefined
             }
+            onValueClear={() => {
+              handlePropertyChange(
+                attachedProperty.property.id,
+                getDefaultValue(attachedProperty.property.fieldType, attachedProperty.property.selectData)
+              )
+            }}
             onChange={value => {
               setLocalPropertyValues(prev => {
                 const newMap = new Map(prev)

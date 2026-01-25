@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
-import { Dialog, Button, Textarea, FormField, FormProvider, Checkbox, useCreateForm, useTranslatedValidators } from '@helpwave/hightide'
+import { Dialog, Button, Textarea, FormField, FormProvider, Checkbox, useCreateForm, useTranslatedValidators, useFormObserverKey } from '@helpwave/hightide'
 import { useTasksTranslation, useLocale } from '@/i18n/useTasksTranslation'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { Mic, Pause } from 'lucide-react'
@@ -102,14 +102,16 @@ export const FeedbackDialog = ({ isOpen, onClose, hideUrl = false }: FeedbackDia
     },
   })
 
-  const { update: updateForm, getValue: getFormValue } = form
+  const { update: updateForm } = form
+
+  const isAnonymous = useFormObserverKey({ formStore: form.store, key: 'isAnonymous' })?.value ?? false
 
   const submissionName = useMemo(() => {
-    if(getFormValue('isAnonymous')) {
+    if(isAnonymous) {
       return translation('anonymous')
     }
     return user?.name || 'Unknown User'
-  }, [getFormValue, translation, user?.name])
+  }, [isAnonymous, translation, user?.name])
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -226,14 +228,13 @@ export const FeedbackDialog = ({ isOpen, onClose, hideUrl = false }: FeedbackDia
 
   useEffect(() => {
     if (isOpen && user) {
-      const isAnonymous = getFormValue('isAnonymous')
       updateForm(prev => ({
         ...prev,
         username: isAnonymous ? 'Anonymous' : (user.name || 'Unknown User'),
         userId: isAnonymous ? undefined : user.id,
       }))
     }
-  }, [isOpen, user, updateForm, getFormValue])
+  }, [isOpen, user, updateForm, isAnonymous])
 
   return (
     <FormProvider state={form}>

@@ -175,11 +175,13 @@ const PropertiesPage: NextPage = () => {
             table={{
               data: data ?? [],
               columns,
-              fillerRow: useCallback(() => (<FillerCell className="min-h-12"/>), []),
+              isUsingFillerRows: true,
+              fillerRowCell: useCallback(() => (<FillerCell className="min-h-12"/>), []),
             }}
           />
         </div>
       </ContentPanel>
+
       <Drawer
         alignment="right"
         titleElement={translation(!selected ? 'rAdd': 'rEdit', { name: translation('property') })}

@@ -173,11 +173,11 @@ const Dashboard: NextPage = () => {
 
   return (
     <Page pageTitle={titleWrapper(translation('homePage'))}>
-      <div className="flex-col-8 p-4">
+      <div className="flex-col-8">
         <GreetingSection userName={user?.name} userAvatarUrl={user?.avatarUrl} />
 
-        <div className="flex flex-col sm:flex-row flex-wrap gap-4">
-          <Link href="/tasks" className="min-w-50 min-h-20 flex-1 w-full sm:w-auto rounded-lg">
+        <div className="flex flex-wrap gap-4">
+          <Link href="/tasks" className="min-w-60 min-h-20 flex-1 w-full sm:w-auto rounded-lg">
             <StatCard
               label={translation('myOpenTasks')}
               value={myTasksCount}
@@ -186,7 +186,7 @@ const Dashboard: NextPage = () => {
             />
           </Link>
 
-          <Link href="/patients" className="min-w-50 min-h-20 flex-1 w-full sm:w-auto rounded-lg">
+          <Link href="/patients" className="min-w-60 min-h-20 flex-1 w-full sm:w-auto rounded-lg">
             <StatCard
               label={translation('totalPatients')}
               value={totalPatientsCount}
@@ -195,7 +195,7 @@ const Dashboard: NextPage = () => {
             />
           </Link>
 
-          <div className="min-w-50 min-h-20 flex-1 w-full sm:w-auto">
+          <div className="min-w-60 min-h-20 flex-1 w-full sm:w-auto">
             <StatCard
               label={translation('currentTime')}
               value={<CurrentTime/>}
@@ -205,18 +205,26 @@ const Dashboard: NextPage = () => {
           </div>
         </div>
 
-        <div className="flex flex-col 2xl:flex-row gap-4 2xl:gap-6 mt-4">
+        <div className="flex flex-wrap gap-4 2xl:flex-row 2xl:flex-nowrap">
           <RecentTasksTable
             tasks={recentTasks}
             completeTask={useCallback((id) => completeTask({ id }), [completeTask])}
             reopenTask={useCallback((id) => reopenTask({ id }), [reopenTask])}
             onSelectPatient={setSelectedPatientId}
             onSelectTask={setSelectedTaskId}
+            className="w-full 2xl:min-w-150 flex-1"
+            paginationOptions={{
+              allowChangingPageSize: false,
+            }}
           />
 
           <RecentPatientsTable
             patients={recentPatients}
             onSelectPatient={setSelectedPatientId}
+            className="w-full 2xl: min-w-100 2xl:w-2/5"
+            paginationOptions={{
+              allowChangingPageSize: false,
+            }}
           />
         </div>
 

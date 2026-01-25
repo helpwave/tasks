@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import type { FormFieldDataHandling } from '@helpwave/hightide'
-import { FormProvider, Input, DateTimeInput, Select, SelectOption, Textarea, Checkbox, Button, ConfirmDialog, LoadingContainer, useCreateForm, FormField, Visibility } from '@helpwave/hightide'
+import { FormProvider, Input, DateTimeInput, Select, SelectOption, Textarea, Checkbox, Button, ConfirmDialog, LoadingContainer, useCreateForm, FormField, Visibility, useFormObserverKey } from '@helpwave/hightide'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import type { CreatePatientInput, LocationNodeType, UpdatePatientInput, GetPatientQuery } from '@/api/gql/generated'
 import { Sex, PatientState, useGetLocationsQuery, useGetPatientQuery } from '@/api/gql/generated'
@@ -220,7 +220,7 @@ export const PatientDataEditor = ({
     }
   })
 
-  const { store, update: updateForm, getValue: getFormValue } = form
+  const { store, update: updateForm } = form
 
   useEffect(() => {
     if (patientData?.patient) {
@@ -254,8 +254,12 @@ export const PatientDataEditor = ({
     return new Date()
   }, [])
 
+  const clinic = useFormObserverKey({ formStore: form.store, key: 'clinic' })?.value ?? null
+  const position = useFormObserverKey({ formStore: form.store, key: 'position' })?.value ?? null
+  const teams = useFormObserverKey({ formStore: form.store, key: 'teams' })?.value ?? []
+
   useEffect(() => {
-    if (!isEditMode && locationsData?.locationNodes && !getFormValue('clinic')) {
+    if (!isEditMode && locationsData?.locationNodes && !clinic) {
       let clinicLocation: LocationNodeType | undefined
       if (firstSelectedRootLocationId) {
         const selectedRootLocation = locationsData.locationNodes.find(
@@ -275,7 +279,7 @@ export const PatientDataEditor = ({
         updateForm({ clinic: clinicLocation })
       }
     }
-  }, [isEditMode, firstSelectedRootLocationId, locationsData, rootLocations, getFormValue, updateForm])
+  }, [isEditMode, firstSelectedRootLocationId, locationsData, rootLocations, clinic, updateForm])
 
   if (isEditMode && isLoadingPatient) {
     return <LoadingContainer />
@@ -286,10 +290,6 @@ export const PatientDataEditor = ({
     { label: translation('female'), value: Sex.Female },
     { label: translation('diverse'), value: Sex.Unknown }
   ]
-
-  const clinic = form.getValue('clinic')
-  const position = form.getValue('position')
-  const teams = form.getValue('teams')
 
 
   return (
@@ -330,7 +330,6 @@ export const PatientDataEditor = ({
           {({ dataProps, focusableElementProps, interactionStates  }) => (
             <DateTimeInput
               {...dataProps} {...focusableElementProps} {...interactionStates}
-              ref={ref => focusableElementProps.ref(ref?.input ?? null)}
               value={convertBirthdateStringToDate(dataProps.value) ?? undefined}
               pickerProps={{
                 start: startDate,

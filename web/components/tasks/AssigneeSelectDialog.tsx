@@ -111,16 +111,16 @@ export const AssigneeSelectDialog = ({
       className="w-[500px] h-[600px] max-w-full flex flex-col"
       isModal={true}
     >
+      <div ref={searchInputRef} className="flex-shrink-0">
+        <SearchBar
+          placeholder={translation('searchUsersOrTeams') || 'Search users or teams...'}
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          onSearch={() => null}
+          className="w-full"
+        />
+      </div>
       <div className="flex flex-col gap-4 flex-1 min-h-0 overflow-hidden" onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
-        <div ref={searchInputRef} className="flex-shrink-0">
-          <SearchBar
-            placeholder={translation('searchUsersOrTeams') || 'Search users or teams...'}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onSearch={() => null}
-            className="w-full"
-          />
-        </div>
         <div className="overflow-y-auto flex-1 min-h-0 border border-divider rounded-lg bg-surface" style={{ height: '300px' }}>
           {filteredUsers.length > 0 && (
             <>

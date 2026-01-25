@@ -22,6 +22,7 @@ type PropertyEntryProps = {
   onEditComplete: (value: PropertyValue) => void,
   selectData?: PropertyEntrySelectProps,
   onRemove?: () => void,
+  onValueClear?: () => void,
   readOnly?: boolean,
 }
 
@@ -34,11 +35,13 @@ export const PropertyEntry = ({
   onEditComplete,
   selectData,
   onRemove,
+  onValueClear,
   readOnly,
 }: PropertyEntryProps) => {
   const commonProps = {
     name,
     onRemove,
+    onValueClear,
     readOnly,
   }
 
@@ -50,12 +53,10 @@ export const PropertyEntry = ({
   case 'text':
     return (
       <TextProperty
-        name={commonProps.name}
-        readOnly={commonProps.readOnly}
+        {...commonProps}
         value={value.textValue ?? ''}
         onValueChange={textValue => onChange({ ...value, textValue: textValue ?? '' })}
         onEditComplete={textValue => onEditComplete({ ...value, textValue: textValue ?? '' })}
-        onRemove={onRemove}
       />
     )
   case 'number':
@@ -99,11 +100,8 @@ export const PropertyEntry = ({
       <SingleSelectProperty
         {...commonProps}
         value={value.singleSelectValue}
-        onValueChange={singleSelectValue => {
-          const newProperty = { ...value, singleSelectValue }
-          onChange(newProperty)
-          onEditComplete(newProperty)
-        }}
+        onValueChange={singleSelectValue => onChange({ ...value, singleSelectValue })}
+        onEditComplete={singleSelectValue => onEditComplete({ ...value, singleSelectValue })}
       >
         {selectData?.options.map(option => (
           <SelectOption key={option.id} value={option.id}>
@@ -118,11 +116,8 @@ export const PropertyEntry = ({
       <MultiSelectProperty
         {...commonProps}
         value={value.multiSelectValue ?? []}
-        onValueChange={multiSelectValue => {
-          const newProperty = { ...value, multiSelectValue }
-          onChange(newProperty)
-          onEditComplete(newProperty)
-        }}
+        onValueChange={multiSelectValue => onChange({ ...value, multiSelectValue })}
+        onEditComplete={multiSelectValue => onEditComplete({ ...value, multiSelectValue })}
       >
         {selectData?.options.map(option => (
           <SelectOption key={option.id} value={option.id}>
@@ -133,7 +128,6 @@ export const PropertyEntry = ({
       </MultiSelectProperty>
     )
   default:
-
     return <></>
   }
 }

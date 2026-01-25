@@ -10,7 +10,7 @@ import {
   FormField,
   FormProvider,
   useCreateForm,
-  FormContext
+  FormObserverKey
 } from '@helpwave/hightide'
 import type { Property, PropertyFieldType, PropertySelectOption, PropertySubjectType } from '@/components/PropertyList'
 import { propertyFieldTypeList, propertySubjectTypeList } from '@/components/PropertyList'
@@ -89,6 +89,42 @@ export const PropertyDetailView = ({
     }
   })
 
+  const [isUpdating, setIsUpdating] = useState<boolean>(false)
+  const { mutate: updateProperty } = useUpdatePropertyDefinitionMutation({
+    onMutate: () => {
+      setIsUpdating(true)
+    },
+    onSettled: () => {
+      setIsUpdating(false)
+    },
+    onSuccess: () => {
+      onSuccess()
+    }
+  })
+
+  const persist = (updates: Partial<PropertyFormValues>) => {
+    if (!isEditMode || !id) return
+
+    const backendUpdates: Record<string, unknown> = {}
+    if (updates.name !== undefined) backendUpdates['name'] = updates.name
+    if (updates.description !== undefined) backendUpdates['description'] = updates.description
+    if (updates.isArchived !== undefined) backendUpdates['isActive'] = !updates.isArchived
+    if (updates.fieldType !== undefined) backendUpdates['fieldType'] = mapFieldTypeToBackend(updates.fieldType)
+    if (updates.subjectType !== undefined) {
+      backendUpdates['allowedEntities'] = [mapSubjectTypeToBackend(updates.subjectType)]
+    }
+    if (updates.selectData?.options !== undefined) {
+      backendUpdates['options'] = updates.selectData.options.map(opt => opt.name)
+    }
+
+    updateProperty({
+      id,
+      data: backendUpdates
+    })
+  }
+
+  const isLoading = isCreating || isUpdating
+
   const form = useCreateForm<PropertyFormValues>({
     initialValues: {
       name: initialData?.name || '',
@@ -119,10 +155,14 @@ export const PropertyDetailView = ({
         }
         return null
       },
+    },
+    onValidUpdate: (_, updates) => {
+      if (!isEditMode) return
+      persist(updates)
     }
   })
 
-  const { update: updateForm, getValue: getFormValue } = form
+  const { update: updateForm } = form
   const updateFormRef = useRef(updateForm)
   updateFormRef.current = updateForm
 
@@ -175,41 +215,9 @@ export const PropertyDetailView = ({
     }
   }, [initialData, isEditMode, id])
 
-  const [isUpdating, setIsUpdating] = useState<boolean>(false)
-  const { mutate: updateProperty } = useUpdatePropertyDefinitionMutation({
-    onMutate: () => {
-      setIsUpdating(true)
-    },
-    onSettled: () => {
-      setIsUpdating(false)
-    },
-    onSuccess: () => {
-      onSuccess()
-    }
-  })
 
-  const isLoading = isCreating || isUpdating
 
-  const persist = (updates: Partial<PropertyFormValues>) => {
-    if (!isEditMode || !id) return
 
-    const backendUpdates: Record<string, unknown> = {}
-    if (updates.name !== undefined) backendUpdates['name'] = updates.name
-    if (updates.description !== undefined) backendUpdates['description'] = updates.description
-    if (updates.isArchived !== undefined) backendUpdates['isActive'] = !updates.isArchived
-    if (updates.fieldType !== undefined) backendUpdates['fieldType'] = mapFieldTypeToBackend(updates.fieldType)
-    if (updates.subjectType !== undefined) {
-      backendUpdates['allowedEntities'] = [mapSubjectTypeToBackend(updates.subjectType)]
-    }
-    if (updates.selectData?.options !== undefined) {
-      backendUpdates['options'] = updates.selectData.options.map(opt => opt.name)
-    }
-
-    updateProperty({
-      id,
-      data: backendUpdates
-    })
-  }
 
 
   return (
@@ -227,11 +235,6 @@ export const PropertyDetailView = ({
                   <Input
                     {...dataProps} {...focusableElementProps} {...interactionStates}
                     value={dataProps.value || ''}
-                    onBlur={() => {
-                      if (isEditMode && id) {
-                        persist({ name: getFormValue('name') })
-                      }
-                    }}
                   />
                 )}
               </FormField>
@@ -244,11 +247,6 @@ export const PropertyDetailView = ({
                   <Textarea
                     {...dataProps} {...focusableElementProps} {...interactionStates}
                     value={dataProps.value || ''}
-                    onBlur={() => {
-                      if (isEditMode && id) {
-                        persist({ description: getFormValue('description') })
-                      }
-                    }}
                   />
                 )}
               </FormField>
@@ -307,9 +305,8 @@ export const PropertyDetailView = ({
                 )}
               </FormField>
 
-              <FormContext.Consumer>
-                {({ getValues }) => {
-                  const fieldType = getValues().fieldType
+              <FormObserverKey<PropertyFormValues, 'fieldType'> key="fieldType">
+                {({ value: fieldType }) => {
                   const isSelectType = fieldType === 'multiSelect' || fieldType === 'singleSelect'
                   if (!isSelectType) return null
                   return (
@@ -318,145 +315,155 @@ export const PropertyDetailView = ({
                         {translation('selectOptions')}
                       </span>
                       <div className="flex-col-2 min-h-64 max-h-64 overflow-y-auto">
-                        {getFormValue('selectData')?.options.map((option) => (
-                          <div key={option.id} className="relative">
-                            <Input
-                              value={option.name}
-                              onChange={(e) => {
-                                const value = e.target.value
-                                updateForm(prev => {
-                                  if (!prev.selectData) return prev
-                                  return {
-                                    ...prev,
-                                    selectData: {
-                                      ...prev.selectData,
-                                      options: prev.selectData.options
-                                        .map(entry => entry.id === option.id ? { ...entry, name: value } : entry)
+                        <FormObserverKey<PropertyFormValues, 'selectData'> key="selectData">
+                          {({ value: selectData }) => {
+                            return selectData?.options.map((option) => (
+                              <div key={option.id} className="relative">
+                                <Input
+                                  value={option.name}
+                                  onChange={(e) => {
+                                    const value = e.target.value
+                                    updateForm(prev => {
+                                      if (!prev.selectData) return prev
+                                      return {
+                                        ...prev,
+                                        selectData: {
+                                          ...prev.selectData,
+                                          options: prev.selectData.options
+                                            .map(entry => entry.id === option.id ? { ...entry, name: value } : entry)
+                                        }
+                                      }
+                                    })
+                                  }}
+                                  onBlur={(e) => {
+                                    const value = e.target.value
+                                    const update = {
+                                      selectData: selectData ? {
+                                        ...selectData,
+                                        options: selectData.options
+                                          .map(entry => entry.id === option.id ? { ...entry, name: value } : entry)
+                                      } : undefined
                                     }
-                                  }
-                                })
-                              }}
-                              onBlur={(e) => {
-                                const value = e.target.value
-                                const update = {
-                                  selectData: getFormValue('selectData') ? {
-                                    ...getFormValue('selectData')!,
-                                    options: getFormValue('selectData')!.options
-                                      .map(entry => entry.id === option.id ? { ...entry, name: value } : entry)
-                                  } : undefined
-                                }
-                                updateForm(prev => ({ ...prev, ...update }))
-                                persist(update)
-                              }}
-                              className="pr-11 w-full"
-                            />
-                            <Button
-                              coloringStyle="text"
-                              color="negative"
-                              size="sm"
-                              layout="icon"
-                              className="absolute right-1 top-1 rounded"
-                              onClick={() => {
-                                const update = {
-                                  selectData: getFormValue('selectData') ? {
-                                    ...getFormValue('selectData')!,
-                                    options: getFormValue('selectData')!.options.filter(entry => entry.id !== option.id)
-                                  } : undefined
-                                }
-                                updateForm(prev => ({ ...prev, ...update }))
-                                persist(update)
-                              }}
-                            >
-                              <XIcon />
-                            </Button>
-                          </div>
-                        ))}
-                        <div className="relative">
-                          <Input
-                            value={newOption.name}
-                            onChange={(e) => {
-                              const name = e.target.value
-                              setNewOption({
-                                ...newOption,
-                                name
-                              })
-                            }}
-                            onBlur={(e) => {
-                              const name = e.target.value.trim()
-                              if (!name) return
-                              const option = {
-                                ...newOption,
-                                id: `temp-${Date.now()}-${Math.random()}`,
-                                name
-                              }
-                              const currentSelectData = getFormValue('selectData')
-                              const update = {
-                                selectData: currentSelectData ? {
-                                  ...currentSelectData,
-                                  options: [...currentSelectData.options, option]
-                                } : {
-                                  options: [option],
-                                  isAllowingFreetext: false,
-                                }
-                              }
-                              updateForm(prev => ({ ...prev, ...update }))
-                              setTimeout(() => {
-                                persist(update)
-                              }, 0)
-                              setNewOption({
-                                id: '',
-                                name: '',
-                                description: '',
-                                isCustom: false,
-                              })
-                            }}
-                            className="pr-16 w-full"
-                            placeholder={translation('rAdd', { name: translation('option') })}
-                          />
-                          <Button
-                            coloringStyle="text"
-                            color="primary"
-                            size="sm"
-                            layout="icon"
-                            className="absolute right-1 top-1 rounded"
-                            disabled={!newOption.name}
-                            onClick={() => {
-                              if (!newOption.name.trim()) return
-                              const option = {
-                                ...newOption,
-                                id: `temp-${Date.now()}-${Math.random()}`,
-                                name: newOption.name.trim()
-                              }
-                              const currentSelectData = getFormValue('selectData')
-                              const update = {
-                                selectData: currentSelectData ? {
-                                  ...currentSelectData,
-                                  options: [...currentSelectData.options, option]
-                                } : {
-                                  options: [option],
-                                  isAllowingFreetext: false,
-                                }
-                              }
-                              updateForm(prev => ({ ...prev, ...update }))
-                              setTimeout(() => {
-                                persist(update)
-                              }, 0)
-                              setNewOption({
-                                id: '',
-                                name: '',
-                                description: '',
-                                isCustom: false,
-                              })
-                            }}
-                          >
-                            <PlusIcon />
-                          </Button>
-                        </div>
+                                    updateForm(prev => ({ ...prev, ...update }))
+                                    persist(update)
+                                  }}
+                                  className="pr-11 w-full"
+                                />
+                                <Button
+                                  coloringStyle="text"
+                                  color="negative"
+                                  size="sm"
+                                  layout="icon"
+                                  className="absolute right-1 top-1 rounded"
+                                  onClick={() => {
+                                    const update = {
+                                      selectData: selectData ? {
+                                        ...selectData,
+                                        options: selectData.options.filter(entry => entry.id !== option.id)
+                                      } : undefined
+                                    }
+                                    updateForm(prev => ({ ...prev, ...update }))
+                                    persist(update)
+                                  }}
+                                >
+                                  <XIcon />
+                                </Button>
+                              </div>
+                            ))
+                          }}
+                        </FormObserverKey>
+                        <FormObserverKey<PropertyFormValues, 'selectData'> key="selectData">
+                          {({ value: selectData }) => {
+                            return (
+                              <div className="relative">
+                                <Input
+                                  value={newOption.name}
+                                  onChange={(e) => {
+                                    const name = e.target.value
+                                    setNewOption({
+                                      ...newOption,
+                                      name
+                                    })
+                                  }}
+                                  onBlur={(e) => {
+                                    const name = e.target.value.trim()
+                                    if (!name) return
+                                    const option = {
+                                      ...newOption,
+                                      id: `temp-${Date.now()}-${Math.random()}`,
+                                      name
+                                    }
+                                    const currentSelectData = selectData
+                                    const update = {
+                                      selectData: currentSelectData ? {
+                                        ...currentSelectData,
+                                        options: [...currentSelectData.options, option]
+                                      } : {
+                                        options: [option],
+                                        isAllowingFreetext: false,
+                                      }
+                                    }
+                                    updateForm(prev => ({ ...prev, ...update }))
+                                    setTimeout(() => {
+                                      persist(update)
+                                    }, 0)
+                                    setNewOption({
+                                      id: '',
+                                      name: '',
+                                      description: '',
+                                      isCustom: false,
+                                    })
+                                  }}
+                                  className="pr-16 w-full"
+                                  placeholder={translation('rAdd', { name: translation('option') })}
+                                />
+                                <Button
+                                  coloringStyle="text"
+                                  color="primary"
+                                  size="sm"
+                                  layout="icon"
+                                  className="absolute right-1 top-1 rounded"
+                                  disabled={!newOption.name}
+                                  onClick={() => {
+                                    if (!newOption.name.trim()) return
+                                    const option = {
+                                      ...newOption,
+                                      id: `temp-${Date.now()}-${Math.random()}`,
+                                      name: newOption.name.trim()
+                                    }
+                                    const currentSelectData = selectData
+                                    const update = {
+                                      selectData: currentSelectData ? {
+                                        ...currentSelectData,
+                                        options: [...currentSelectData.options, option]
+                                      } : {
+                                        options: [option],
+                                        isAllowingFreetext: false,
+                                      }
+                                    }
+                                    updateForm(prev => ({ ...prev, ...update }))
+                                    setTimeout(() => {
+                                      persist(update)
+                                    }, 0)
+                                    setNewOption({
+                                      id: '',
+                                      name: '',
+                                      description: '',
+                                      isCustom: false,
+                                    })
+                                  }}
+                                >
+                                  <PlusIcon />
+                                </Button>
+                              </div>
+                            )
+                          }}
+                        </FormObserverKey>
                       </div>
                     </div>
                   )
                 }}
-              </FormContext.Consumer>
+              </FormObserverKey>
               {isEditMode && (
                 <FormField<PropertyFormValues, 'isArchived'>
                   name="isArchived"

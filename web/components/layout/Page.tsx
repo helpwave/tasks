@@ -604,11 +604,11 @@ export const Page = ({
         className="flex-col-4 pl-8 grow overflow-y-scroll"
       >
         <Header
-          className="sticky top-0 right-0 py-4 pr-4 bg-background text-on-background"
+          className="sticky top-0 right-0 p-4 bg-background text-on-background"
           onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)}
           isMenuOpen={isSidebarOpen}
         />
-        <main className="flex-col-2 grow pr-4 px-4 lg:px-0">
+        <main className="flex-col-2 grow pr-4 px-4">
           {children}
           <div className="min-h-16" />
         </main>
