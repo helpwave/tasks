@@ -31,7 +31,7 @@ export const AssigneeSelect = ({
   const translation = useTasksTranslation()
   const [searchQuery, setSearchQuery] = useState('')
   const [isOpen, setIsOpen] = useState(false)
-  const [selectedUserPopupId, setSelectedUserPopupId] = useState<string | null>(null)
+  const [selectedUserPopupState, setSelectedUserPopupState] = useState<{ isOpen: boolean, userId: string | null }>({ isOpen: false, userId: null })
 
 
   const { data: usersData } = useGetUsersQuery(undefined, {
@@ -125,7 +125,7 @@ export const AssigneeSelect = ({
                     onClick={(e) => {
                       e.stopPropagation()
                       if (selectedItem) {
-                        setSelectedUserPopupId(selectedItem.id)
+                        setSelectedUserPopupState({ isOpen: true, userId: selectedItem.id })
                       }
                     }}
                     className="p-1 hover:bg-surface-hover rounded transition-colors text-description hover:text-on-surface"
@@ -148,12 +148,12 @@ export const AssigneeSelect = ({
         excludeUserIds={excludeUserIds}
         isOpen={isOpen}
         onClose={handleClose}
-        onUserInfoClick={setSelectedUserPopupId}
+        onUserInfoClick={(userId) => setSelectedUserPopupState({ isOpen: true, userId })}
       />
       <UserInfoPopup
-        userId={selectedUserPopupId}
-        isOpen={!!selectedUserPopupId}
-        onClose={() => setSelectedUserPopupId(null)}
+        userId={selectedUserPopupState.userId}
+        isOpen={selectedUserPopupState.isOpen && selectedUserPopupState.userId !== null}
+        onClose={() => setSelectedUserPopupState(prev => ({ ...prev, isOpen: false }))}
       />
     </>
   )
