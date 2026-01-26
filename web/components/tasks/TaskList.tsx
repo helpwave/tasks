@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { Button, Checkbox, Chip, ConfirmDialog, FillerCell, SearchBar, TableColumnSwitcher, TableDisplay, TablePagination, TableProvider, Tooltip, Visibility } from '@helpwave/hightide'
 import { PlusIcon, Table as TableIcon, LayoutGrid, UserCheck, Users, Printer } from 'lucide-react'
 import type { TaskPriority, GetTasksQuery } from '@/api/gql/generated'
-import { useAssignTaskMutation, useAssignTaskToTeamMutation, useCompleteTaskMutation, useReopenTaskMutation, useGetUsersQuery, useGetLocationsQuery, useGetPropertyDefinitionsQuery, PropertyEntity, ColumnType, FieldType, type GetGlobalDataQuery } from '@/api/gql/generated'
+import { useAssignTaskMutation, useAssignTaskToTeamMutation, useCompleteTaskMutation, useReopenTaskMutation, useGetUsersQuery, useGetLocationsQuery, useGetPropertyDefinitionsQuery, PropertyEntity, type GetGlobalDataQuery } from '@/api/gql/generated'
 import { AssigneeSelectDialog } from './AssigneeSelectDialog'
 import clsx from 'clsx'
 import { SmartDate } from '@/utils/date'
@@ -19,6 +19,7 @@ import { TaskCardView } from '@/components/tasks/TaskCardView'
 import { UserInfoPopup } from '@/components/UserInfoPopup'
 import type { ColumnDef } from '@tanstack/table-core'
 import { PriorityUtils } from '@/utils/priority'
+import { createPropertyColumn } from '@/utils/propertyColumn'
 
 export type TaskViewModel = {
   id: string,
@@ -399,174 +400,9 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
       def => def.isActive && def.allowedEntities.includes(PropertyEntity.Task)
     )
 
-    return taskProperties.map(prop => {
-      const columnId = `property_${prop.id}`
-
-      const getFilterFn = () => {
-        switch (prop.fieldType) {
-        case FieldType.FieldTypeCheckbox:
-          return 'boolean'
-        case FieldType.FieldTypeDate:
-        case FieldType.FieldTypeDateTime:
-          return 'date'
-        case FieldType.FieldTypeNumber:
-          return 'number'
-        case FieldType.FieldTypeSelect:
-        case FieldType.FieldTypeMultiSelect:
-          return 'tags'
-        default:
-          return 'text'
-        }
-      }
-
-      const extractOptionIndex = (value: string): number | null => {
-        const match = value.match(/-opt-(\d+)$/)
-        return match && match[1] ? parseInt(match[1], 10) : null
-      }
-
-      return {
-        id: columnId,
-        header: prop.name,
-        accessorFn: (row) => {
-          const property = row.properties?.find(
-            p => p.definition.id === prop.id
-          )
-          if (!property) return null
-          if (prop.fieldType === FieldType.FieldTypeMultiSelect) {
-            return property.multiSelectValues ?? null
-          }
-          return (
-            property.textValue ??
-            property.numberValue ??
-            property.booleanValue ??
-            property.dateValue ??
-            property.dateTimeValue ??
-            property.selectValue ??
-            null
-          )
-        },
-        cell: ({ row }) => {
-          const property = row.original.properties?.find(
-            p => p.definition.id === prop.id
-          )
-          if (!property) return <FillerCell className="min-h-12" />
-
-          if (typeof property.booleanValue === 'boolean') {
-            return (
-              <Chip
-                className="coloring-tonal"
-                color={property.booleanValue ? 'positive' : 'negative'}
-              >
-                {property.booleanValue
-                  ? translation('yes')
-                  : translation('no')}
-              </Chip>
-            )
-          }
-
-          if (
-            prop.fieldType === FieldType.FieldTypeDate &&
-            property.dateValue
-          ) {
-            return (
-              <SmartDate
-                date={new Date(property.dateValue)}
-                showTime={false}
-              />
-            )
-          }
-
-          if (
-            prop.fieldType === FieldType.FieldTypeDateTime &&
-            property.dateTimeValue
-          ) {
-            return (
-              <SmartDate date={new Date(property.dateTimeValue)} />
-            )
-          }
-
-          if (
-            prop.fieldType === FieldType.FieldTypeSelect &&
-            property.selectValue
-          ) {
-            const selectValue = property.selectValue
-            const optionIndex = extractOptionIndex(selectValue)
-            if (
-              optionIndex !== null &&
-              optionIndex >= 0 &&
-              optionIndex < prop.options.length
-            ) {
-              return (
-                <Chip className="coloring-tonal">
-                  {prop.options[optionIndex]}
-                </Chip>
-              )
-            }
-            return <span>{selectValue}</span>
-          }
-
-          if (
-            prop.fieldType === FieldType.FieldTypeMultiSelect &&
-            property.multiSelectValues &&
-            property.multiSelectValues.length > 0
-          ) {
-            return (
-              <div className="flex flex-wrap gap-1">
-                {property.multiSelectValues
-                  .filter((val): val is string => val !== null && val !== undefined)
-                  .map((val, idx) => {
-                    const optionIndex = extractOptionIndex(val)
-                    const optionText =
-                      optionIndex !== null &&
-                      optionIndex >= 0 &&
-                      optionIndex < prop.options.length
-                        ? prop.options[optionIndex]
-                        : val
-                    return (
-                      <Chip key={idx} className="coloring-tonal">
-                        {optionText}
-                      </Chip>
-                    )
-                  })}
-              </div>
-            )
-          }
-
-          if (
-            property.textValue !== null &&
-            property.textValue !== undefined
-          ) {
-            return <span>{property.textValue.toString()}</span>
-          }
-
-          if (
-            property.numberValue !== null &&
-            property.numberValue !== undefined
-          ) {
-            return <span>{property.numberValue.toString()}</span>
-          }
-
-          return <FillerCell className="min-h-12" />
-        },
-        meta: {
-          columnType: ColumnType.Property,
-          propertyDefinitionId: prop.id,
-          fieldType: prop.fieldType,
-          ...(getFilterFn() === 'tags' && {
-            filterData: {
-              tags: prop.options.map((opt, idx) => ({
-                label: opt,
-                tag: `${prop.id}-opt-${idx}`,
-              })),
-            },
-          }),
-        },
-        minSize: 150,
-        size: 200,
-        maxSize: 300,
-        filterFn: getFilterFn(),
-      } as ColumnDef<TaskViewModel>
-    })
+    return taskProperties.map(prop =>
+      createPropertyColumn<TaskViewModel>(prop, translation, 'min-h-12')
+    )
   }, [propertyDefinitionsData, translation])
 
   const columns = useMemo<ColumnDef<TaskViewModel>[]>(() => {
