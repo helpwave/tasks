@@ -4,13 +4,13 @@ import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { CheckCircle2, ChevronDown, Circle, PlusIcon } from 'lucide-react'
 import { TaskCardView } from '@/components/tasks/TaskCardView'
 import clsx from 'clsx'
-import type { GetPatientQuery } from '@/api/gql/generated'
+import { type GetPatientData } from '@/api/queries/patients'
 import { TaskDetailView } from '@/components/tasks/TaskDetailView'
-import { useOptimisticCompleteTaskMutation, useOptimisticReopenTaskMutation } from '@/api/optimistic-updates/GetPatient'
+import { useCompleteTaskMutation, useReopenTaskMutation } from '@/api/mutations/tasks'
 
 interface PatientTasksViewProps {
   patientId: string,
-  patientData: GetPatientQuery | undefined,
+  patientData: GetPatientData | undefined,
   onSuccess?: () => void,
 }
 
@@ -31,35 +31,9 @@ export const PatientTasksView = ({
   const translation = useTasksTranslation()
   const [taskId, setTaskId] = useState<string | null>(null)
   const [isCreatingTask, setIsCreatingTask] = useState(false)
-  const [optimisticTaskUpdates, setOptimisticTaskUpdates] = useState<Map<string, boolean>>(new Map())
 
-  const { mutate: completeTask } = useOptimisticCompleteTaskMutation({
-    id: patientId,
-    onSuccess: async () => {
-      onSuccess?.()
-    },
-    onError: (error, variables) => {
-      setOptimisticTaskUpdates(prev => {
-        const next = new Map(prev)
-        next.delete(variables.id)
-        return next
-      })
-    },
-  })
-
-  const { mutate: reopenTask } = useOptimisticReopenTaskMutation({
-    id: patientId,
-    onSuccess: async () => {
-      onSuccess?.()
-    },
-    onError: (error, variables) => {
-      setOptimisticTaskUpdates(prev => {
-        const next = new Map(prev)
-        next.delete(variables.id)
-        return next
-      })
-    },
-  })
+  const [completeTaskMutation] = useCompleteTaskMutation()
+  const [reopenTaskMutation] = useReopenTaskMutation()
 
   const tasks = useMemo(() => {
     const baseTasks = patientData?.patient?.tasks || []
@@ -75,9 +49,6 @@ export const PatientTasksView = ({
   const openTasks = useMemo(() => sortByDueDate(tasks.filter(t => !t.done)), [tasks])
   const closedTasks = useMemo(() => sortByDueDate(tasks.filter(t => t.done)), [tasks])
 
-  useEffect(() => {
-    setOptimisticTaskUpdates(new Map())
-  }, [patientData?.patient?.tasks])
 
   const handleToggleDone = (taskId: string, done: boolean) => {
     setOptimisticTaskUpdates(prev => {
@@ -86,9 +57,9 @@ export const PatientTasksView = ({
       return next
     })
     if (done) {
-      completeTask({ id: taskId })
+      completeTaskMutation({ variables: { id: taskId } })
     } else {
-      reopenTask({ id: taskId })
+      reopenTaskMutation({ variables: { id: taskId } })
     }
   }
 

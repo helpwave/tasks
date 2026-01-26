@@ -1,9 +1,9 @@
 import React, { useEffect, useRef } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
 import { subscriptionClient, type SubscriptionObserver } from '@/api/gql/subscriptionClient'
 import { showNotification, createNotificationForPatientCreated, createNotificationForPatientUpdated, createNotificationForTaskCreated } from '@/utils/pushNotifications'
-import { fetcher } from '@/api/gql/fetcher'
-import { GetTaskDocument, GetPatientDocument, type GetTaskQuery, type GetPatientQuery } from '@/api/gql/generated'
+import { apolloClient } from '@/utils/apolloClient'
+import { GET_TASK } from '@/api/queries/tasks'
+import { GET_PATIENT } from '@/api/queries/patients'
 
 const TASK_UPDATED_SUBSCRIPTION = `
   subscription TaskUpdated($taskId: ID, $rootLocationIds: [ID!]) {
@@ -60,7 +60,6 @@ const LOCATION_NODE_DELETED_SUBSCRIPTION = `
 `
 
 export function useGlobalSubscriptions(selectedRootLocationIds?: string[]) {
-  const queryClient = useQueryClient()
   const unsubscribeRefs = useRef<Array<() => void>>([])
   const prevLocationIdsRef = useRef<string>('')
 
@@ -102,29 +101,20 @@ export function useGlobalSubscriptions(selectedRootLocationIds?: string[]) {
       : undefined
 
     const handleTaskUpdated = (taskId: string) => {
-      queryClient.invalidateQueries({ queryKey: ['GetTask', { id: taskId }], type: 'active' })
-      queryClient.invalidateQueries({
-        queryKey: ['GetTasks'],
-        predicate: (query) => shouldInvalidateForLocation(query.queryKey as unknown[]),
-        type: 'active'
-      })
-      queryClient.invalidateQueries({ queryKey: ['GetOverviewData'], type: 'active' })
-      queryClient.invalidateQueries({ queryKey: ['GetGlobalData'], type: 'active' })
-      queryClient.invalidateQueries({ queryKey: ['GetPatients'], type: 'active' })
+      apolloClient.cache.evict({ id: apolloClient.cache.identify({ __typename: 'TaskType', id: taskId }) })
+      apolloClient.cache.gc()
     }
 
     const handleTaskCreated = async (taskId: string) => {
-      queryClient.invalidateQueries({
-        queryKey: ['GetTasks'],
-        predicate: (query) => shouldInvalidateForLocation(query.queryKey as unknown[]),
-        type: 'active'
-      })
-      queryClient.invalidateQueries({ queryKey: ['GetOverviewData'], type: 'active' })
-      queryClient.invalidateQueries({ queryKey: ['GetGlobalData'], type: 'active' })
-      queryClient.invalidateQueries({ queryKey: ['GetPatients'], type: 'active' })
+      apolloClient.cache.evict({ fieldName: 'tasks' })
+      apolloClient.cache.gc()
 
       try {
-        const taskData = await fetcher<GetTaskQuery, { id: string }>(GetTaskDocument, { id: taskId })()
+        const { data: taskData } = await apolloClient.query({
+          query: GET_TASK,
+          variables: { id: taskId },
+          fetchPolicy: 'network-only',
+        })
         if (taskData?.task) {
           const notification = createNotificationForTaskCreated(taskData.task.title, taskId)
           const registration = await navigator.serviceWorker.ready.catch(() => null)
@@ -136,30 +126,21 @@ export function useGlobalSubscriptions(selectedRootLocationIds?: string[]) {
     }
 
     const handleTaskDeleted = (taskId: string) => {
-      queryClient.removeQueries({ queryKey: ['GetTask', { id: taskId }] })
-      queryClient.invalidateQueries({
-        queryKey: ['GetTasks'],
-        predicate: (query) => shouldInvalidateForLocation(query.queryKey as unknown[]),
-        type: 'active'
-      })
-      queryClient.invalidateQueries({ queryKey: ['GetOverviewData'], type: 'active' })
-      queryClient.invalidateQueries({ queryKey: ['GetGlobalData'], type: 'active' })
-      queryClient.invalidateQueries({ queryKey: ['GetPatients'], type: 'active' })
+      apolloClient.cache.evict({ id: apolloClient.cache.identify({ __typename: 'TaskType', id: taskId }) })
+      apolloClient.cache.gc()
     }
 
     const handlePatientUpdated = async (patientId: string) => {
-      queryClient.invalidateQueries({ queryKey: ['GetPatient', { id: patientId }], type: 'active' })
-      queryClient.invalidateQueries({
-        queryKey: ['GetPatients'],
-        predicate: (query) => shouldInvalidateForLocation(query.queryKey as unknown[]),
-        type: 'active'
-      })
-      queryClient.invalidateQueries({ queryKey: ['GetOverviewData'], type: 'active' })
-      queryClient.invalidateQueries({ queryKey: ['GetGlobalData'], type: 'active' })
+      apolloClient.cache.evict({ id: apolloClient.cache.identify({ __typename: 'PatientType', id: patientId }) })
+      apolloClient.cache.gc()
 
       if (document.hidden) {
         try {
-          const patientData = await fetcher<GetPatientQuery, { id: string }>(GetPatientDocument, { id: patientId })()
+          const { data: patientData } = await apolloClient.query({
+            query: GET_PATIENT,
+            variables: { id: patientId },
+            fetchPolicy: 'network-only',
+          })
           if (patientData?.patient) {
             const patientName = patientData.patient.firstname && patientData.patient.lastname
               ? `${patientData.patient.firstname} ${patientData.patient.lastname}`.trim()
@@ -175,16 +156,15 @@ export function useGlobalSubscriptions(selectedRootLocationIds?: string[]) {
     }
 
     const handlePatientCreated = async (patientId: string) => {
-      queryClient.invalidateQueries({
-        queryKey: ['GetPatients'],
-        predicate: (query) => shouldInvalidateForLocation(query.queryKey as unknown[]),
-        type: 'active'
-      })
-      queryClient.invalidateQueries({ queryKey: ['GetOverviewData'], type: 'active' })
-      queryClient.invalidateQueries({ queryKey: ['GetGlobalData'], type: 'active' })
+      apolloClient.cache.evict({ fieldName: 'patients' })
+      apolloClient.cache.gc()
 
       try {
-        const patientData = await fetcher<GetPatientQuery, { id: string }>(GetPatientDocument, { id: patientId })()
+        const { data: patientData } = await apolloClient.query({
+          query: GET_PATIENT,
+          variables: { id: patientId },
+          fetchPolicy: 'network-only',
+        })
         if (patientData?.patient) {
           const patientName = patientData.patient.firstname && patientData.patient.lastname
             ? `${patientData.patient.firstname} ${patientData.patient.lastname}`.trim()
@@ -199,51 +179,25 @@ export function useGlobalSubscriptions(selectedRootLocationIds?: string[]) {
     }
 
     const handlePatientStateChanged = (patientId: string) => {
-      queryClient.invalidateQueries({ queryKey: ['GetPatient', { id: patientId }], type: 'active' })
-      queryClient.invalidateQueries({
-        queryKey: ['GetPatients'],
-        predicate: (query) => shouldInvalidateForLocation(query.queryKey as unknown[]),
-        type: 'active'
-      })
-      queryClient.invalidateQueries({ queryKey: ['GetOverviewData'], type: 'active' })
-      queryClient.invalidateQueries({ queryKey: ['GetGlobalData'], type: 'active' })
+      apolloClient.cache.evict({ id: apolloClient.cache.identify({ __typename: 'PatientType', id: patientId }) })
+      apolloClient.cache.gc()
     }
 
     const handleLocationNodeUpdated = (locationId: string) => {
-      queryClient.invalidateQueries({ queryKey: ['GetLocationNode', { id: locationId }], type: 'active' })
-      queryClient.invalidateQueries({ queryKey: ['GetLocations'], type: 'active' })
-      queryClient.invalidateQueries({
-        queryKey: ['GetPatients'],
-        predicate: (query) => shouldInvalidateForLocation(query.queryKey as unknown[]),
-        type: 'active'
-      })
-      queryClient.invalidateQueries({
-        queryKey: ['GetTasks'],
-        predicate: (query) => shouldInvalidateForLocation(query.queryKey as unknown[]),
-        type: 'active'
-      })
-      queryClient.invalidateQueries({ queryKey: ['GetGlobalData'], type: 'active' })
+      apolloClient.cache.evict({ id: apolloClient.cache.identify({ __typename: 'LocationNodeType', id: locationId }) })
+      apolloClient.cache.evict({ fieldName: 'locationNodes' })
+      apolloClient.cache.gc()
     }
 
     const handleLocationNodeCreated = (_locationId: string) => {
-      queryClient.invalidateQueries({ queryKey: ['GetLocations'], type: 'active' })
-      queryClient.invalidateQueries({ queryKey: ['GetGlobalData'], type: 'active' })
+      apolloClient.cache.evict({ fieldName: 'locationNodes' })
+      apolloClient.cache.gc()
     }
 
     const handleLocationNodeDeleted = (locationId: string) => {
-      queryClient.removeQueries({ queryKey: ['GetLocationNode', { id: locationId }] })
-      queryClient.invalidateQueries({ queryKey: ['GetLocations'], type: 'active' })
-      queryClient.invalidateQueries({
-        queryKey: ['GetPatients'],
-        predicate: (query) => shouldInvalidateForLocation(query.queryKey as unknown[]),
-        type: 'active'
-      })
-      queryClient.invalidateQueries({
-        queryKey: ['GetTasks'],
-        predicate: (query) => shouldInvalidateForLocation(query.queryKey as unknown[]),
-        type: 'active'
-      })
-      queryClient.invalidateQueries({ queryKey: ['GetGlobalData'], type: 'active' })
+      apolloClient.cache.evict({ id: apolloClient.cache.identify({ __typename: 'LocationNodeType', id: locationId }) })
+      apolloClient.cache.evict({ fieldName: 'locationNodes' })
+      apolloClient.cache.gc()
     }
 
     const createObserver = (handler: (id: string) => void): SubscriptionObserver => ({

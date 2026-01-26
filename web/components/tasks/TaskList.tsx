@@ -1,9 +1,14 @@
 import { useMemo, useState, forwardRef, useImperativeHandle, useEffect, useRef, useCallback } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
 import { Button, Checkbox, ConfirmDialog, FillerCell, SearchBar, TableColumnSwitcher, TableDisplay, TablePagination, TableProvider, Tooltip, Visibility } from '@helpwave/hightide'
 import { PlusIcon, Table as TableIcon, LayoutGrid, UserCheck, Users, Printer } from 'lucide-react'
-import type { TaskPriority } from '@/api/gql/generated'
-import { useAssignTaskMutation, useAssignTaskToTeamMutation, useCompleteTaskMutation, useReopenTaskMutation, useGetUsersQuery, useGetLocationsQuery, type GetGlobalDataQuery } from '@/api/gql/generated'
+import { useAssignTaskMutation, useAssignTaskToTeamMutation, useCompleteTaskMutation, useReopenTaskMutation } from '@/api/mutations/tasks'
+import { useGetUsersQuery } from '@/api/queries/users'
+import { useGetLocationsQuery } from '@/api/queries/locations'
+import { useGetPropertyDefinitionsQuery } from '@/api/queries/properties'
+import { GET_TASKS, useGetTasksQuery, type GetTasksData } from '@/api/queries/tasks'
+import { useAsyncTableData } from '@/hooks/useAsyncTableData'
+import { FieldType, PropertyEntity } from '@/api/types'
+import type { PaginationState, SortingState, ColumnFiltersState } from '@tanstack/react-table'
 import { AssigneeSelectDialog } from './AssigneeSelectDialog'
 import clsx from 'clsx'
 import { SmartDate } from '@/utils/date'
@@ -53,8 +58,11 @@ type TaskDialogState = {
 }
 
 type TaskListProps = {
-  tasks: TaskViewModel[],
-  onRefetch?: () => void,
+  baseVariables?: {
+    rootLocationIds?: string[]
+    assigneeId?: string
+    assigneeTeamId?: string
+  }
   showAssignee?: boolean,
   initialTaskId?: string,
   onInitialTaskOpened?: () => void,
@@ -76,110 +84,24 @@ const isCloseToDueDate = (dueDate: Date | undefined, done: boolean): boolean => 
 
 const STORAGE_KEY_SHOW_DONE = 'task-show-done'
 
-export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initialTasks, onRefetch, showAssignee = false, initialTaskId, onInitialTaskOpened, headerActions }, ref) => {
+export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ baseVariables, showAssignee = false, initialTaskId, onInitialTaskOpened, headerActions }, ref) => {
   const translation = useTasksTranslation()
-  const queryClient = useQueryClient()
   const { totalPatientsCount, user, selectedRootLocationIds } = useTasksContext()
   const { viewType, toggleView } = useTaskViewToggle()
-  const [optimisticUpdates, setOptimisticUpdates] = useState<Map<string, boolean>>(new Map())
-  const { mutate: completeTask } = useCompleteTaskMutation({
-    onMutate: async (variables) => {
-      const selectedRootLocationIdsForQuery = selectedRootLocationIds && selectedRootLocationIds.length > 0 ? selectedRootLocationIds : undefined
-      await queryClient.cancelQueries({ queryKey: ['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }] })
-      const previousData = queryClient.getQueryData<GetGlobalDataQuery>(['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }])
-      if (previousData?.me?.tasks) {
-        queryClient.setQueryData<GetGlobalDataQuery>(['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }], {
-          ...previousData,
-          me: previousData.me ? {
-            ...previousData.me,
-            tasks: previousData.me.tasks.map(task => task.id === variables.id ? { ...task, done: true } : task)
-          } : null
-        })
-      }
-      setOptimisticUpdates(prev => {
-        const next = new Map(prev)
-        next.set(variables.id, true)
-        return next
-      })
-      return { previousData }
-    },
-    onSuccess: async () => {
-      setOptimisticUpdates(prev => {
-        const next = new Map(prev)
-        return next
-      })
-      await queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
-      await queryClient.invalidateQueries({ queryKey: ['GetTasks'] })
-      await queryClient.invalidateQueries({ queryKey: ['GetPatients'] })
-      onRefetch?.()
-    },
-    onError: (error, variables, context) => {
-      if (context?.previousData) {
-        const selectedRootLocationIdsForQuery = selectedRootLocationIds && selectedRootLocationIds.length > 0 ? selectedRootLocationIds : undefined
-        queryClient.setQueryData(['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }], context.previousData)
-      }
-      setOptimisticUpdates(prev => {
-        const next = new Map(prev)
-        next.delete(variables.id)
-        return next
-      })
-    }
+  const [pagination, setPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 25,
   })
-  const { mutate: reopenTask } = useReopenTaskMutation({
-    onMutate: async (variables) => {
-      const selectedRootLocationIdsForQuery = selectedRootLocationIds && selectedRootLocationIds.length > 0 ? selectedRootLocationIds : undefined
-      await queryClient.cancelQueries({ queryKey: ['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }] })
-      const previousData = queryClient.getQueryData<GetGlobalDataQuery>(['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }])
-      if (previousData?.me?.tasks) {
-        queryClient.setQueryData<GetGlobalDataQuery>(['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }], {
-          ...previousData,
-          me: previousData.me ? {
-            ...previousData.me,
-            tasks: previousData.me.tasks.map(task => task.id === variables.id ? { ...task, done: false } : task)
-          } : null
-        })
-      }
-      setOptimisticUpdates(prev => {
-        const next = new Map(prev)
-        next.set(variables.id, false)
-        return next
-      })
-      return { previousData }
-    },
-    onSuccess: async () => {
-      setOptimisticUpdates(prev => {
-        const next = new Map(prev)
-        return next
-      })
-      await queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
-      await queryClient.invalidateQueries({ queryKey: ['GetTasks'] })
-      await queryClient.invalidateQueries({ queryKey: ['GetPatients'] })
-      onRefetch?.()
-    },
-    onError: (error, variables, context) => {
-      if (context?.previousData) {
-        const selectedRootLocationIdsForQuery = selectedRootLocationIds && selectedRootLocationIds.length > 0 ? selectedRootLocationIds : undefined
-        queryClient.setQueryData(['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }], context.previousData)
-      }
-      setOptimisticUpdates(prev => {
-        const next = new Map(prev)
-        next.delete(variables.id)
-        return next
-      })
-    }
-  })
-  const { mutate: assignTask } = useAssignTaskMutation({
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
-      onRefetch?.()
-    }
-  })
-  const { mutate: assignTaskToTeam } = useAssignTaskToTeamMutation({
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
-      onRefetch?.()
-    }
-  })
+  const [sorting, setSorting] = useState<SortingState>([
+    { id: 'done', desc: false },
+    { id: 'dueDate', desc: false },
+  ])
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
+  const [searchText, setSearchText] = useState('')
+  const [completeTaskMutation] = useCompleteTaskMutation()
+  const [reopenTaskMutation] = useReopenTaskMutation()
+  const [assignTaskMutation] = useAssignTaskMutation()
+  const [assignTaskToTeamMutation] = useAssignTaskToTeamMutation()
   const [, setIsPrinting] = useState(false)
 
   useEffect(() => {
@@ -200,6 +122,18 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
   const [taskDialogState, setTaskDialogState] = useState<TaskDialogState>({ isOpen: false })
   const [searchQuery, setSearchQuery] = useState('')
   const [openedTaskId, setOpenedTaskId] = useState<string | null>(null)
+
+  useEffect(() => {
+    setSearchText(searchQuery)
+  }, [searchQuery])
+
+  const effectiveBaseVariables = useMemo(() => ({
+    rootLocationIds: baseVariables?.rootLocationIds || selectedRootLocationIds,
+    assigneeId: baseVariables?.assigneeId || user?.id,
+    assigneeTeamId: baseVariables?.assigneeTeamId,
+  }), [baseVariables, selectedRootLocationIds, user?.id])
+
+
   const [isHandoverDialogOpen, setIsHandoverDialogOpen] = useState(false)
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false)
@@ -239,78 +173,6 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
     }
   }))
 
-  useEffect(() => {
-    if (initialTaskId && initialTasks.length > 0 && openedTaskId !== initialTaskId) {
-      setTaskDialogState({ isOpen: true, taskId: initialTaskId })
-      setOpenedTaskId(initialTaskId)
-      onInitialTaskOpened?.()
-    } else if (!initialTaskId) {
-      setOpenedTaskId(null)
-    }
-  }, [initialTaskId, initialTasks, openedTaskId, onInitialTaskOpened])
-
-  useEffect(() => {
-    setOptimisticUpdates(prev => {
-      const next = new Map(prev)
-      let hasChanges = false
-
-      for (const [taskId, optimisticDone] of next.entries()) {
-        const task = initialTasks.find(t => t.id === taskId)
-        if (task && task.done === optimisticDone) {
-          next.delete(taskId)
-          hasChanges = true
-        }
-      }
-
-      return hasChanges ? next : prev
-    })
-  }, [initialTasks])
-
-  const tasks = useMemo(() => {
-    let data = initialTasks.map(task => {
-      const optimisticDone = optimisticUpdates.get(task.id)
-      if (optimisticDone !== undefined) {
-        return { ...task, done: optimisticDone }
-      }
-      return task
-    })
-
-    if (!showDone) {
-      data = data.filter(t => !t.done)
-    }
-
-    if (searchQuery) {
-      const lowerQuery = searchQuery.toLowerCase()
-      data = data.filter(t =>
-        t.name.toLowerCase().includes(lowerQuery) ||
-        t.patient?.name.toLowerCase().includes(lowerQuery))
-    }
-
-    return [...data].sort((a, b) => {
-      if (a.done !== b.done) {
-        return a.done ? 1 : -1
-      }
-
-      if (!a.dueDate && !b.dueDate) return 0
-      if (!a.dueDate) return 1
-      if (!b.dueDate) return -1
-
-      return a.dueDate.getTime() - b.dueDate.getTime()
-    })
-  }, [initialTasks, optimisticUpdates, searchQuery, showDone])
-
-  const openTasks = useMemo(() => {
-    const tasksWithOptimistic = initialTasks.map(task => {
-      const optimisticDone = optimisticUpdates.get(task.id)
-      if (optimisticDone !== undefined) {
-        return { ...task, done: optimisticDone }
-      }
-      return task
-    })
-    return tasksWithOptimistic.filter(t => !t.done && t.assignee?.id === user?.id)
-  }, [initialTasks, optimisticUpdates, user?.id])
-
-  const canHandover = openTasks.length > 0
 
   const { data: usersData } = useGetUsersQuery(undefined, {})
   const { data: locationsData } = useGetLocationsQuery(undefined, {})
@@ -336,7 +198,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
   }, [selectedUserId, teams, users])
 
   const handleHandoverClick = () => {
-    if (!canHandover) {
+    if (openTasks.length === 0) {
       return
     }
     setSelectedUserId(null)
@@ -372,24 +234,18 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
 
     openTasks.forEach(task => {
       if (isTeam) {
-        assignTaskToTeam({ id: task.id, teamId: assigneeId })
+        assignTaskToTeamMutation({ variables: { id: task.id, teamId: assigneeId } })
       } else {
-        assignTask({ id: task.id, userId: assigneeId })
+        assignTaskMutation({ variables: { id: task.id, userId: assigneeId } })
       }
     })
-
-    queryClient.invalidateQueries({ queryKey: ['GetTask'] })
-    queryClient.invalidateQueries({ queryKey: ['GetTasks'] })
-    queryClient.invalidateQueries({ queryKey: ['GetPatients'] })
-    queryClient.invalidateQueries({ queryKey: ['GetOverviewData'] })
-    queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
 
     setIsConfirmDialogOpen(false)
     setSelectedUserId(null)
     setIsHandoverDialogOpen(false)
   }
 
-  const columns = useMemo<ColumnDef<TaskViewModel>[]>(() => {
+  const baseColumns = useMemo<ColumnDef<TaskViewModel>[]>(() => {
     const cols: ColumnDef<TaskViewModel>[] = [
       {
         id: 'done',
@@ -397,21 +253,14 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
         accessorKey: 'done',
         cell: ({ row }) => {
           const task = row.original
-          const optimisticDone = optimisticUpdates.get(task.id)
-          const displayDone = optimisticDone !== undefined ? optimisticDone : task.done
           return (
             <Checkbox
-              value={displayDone}
+              value={task.done}
               onValueChange={(checked) => {
-                setOptimisticUpdates(prev => {
-                  const next = new Map(prev)
-                  next.set(task.id, checked)
-                  return next
-                })
                 if (checked) {
-                  completeTask({ id: task.id })
+                  completeTaskMutation({ variables: { id: task.id } })
                 } else {
-                  reopenTask({ id: task.id })
+                  reopenTaskMutation({ variables: { id: task.id } })
                 }
               }}
               onClick={(e) => e.stopPropagation()}
@@ -567,13 +416,11 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
     }
 
     return cols
-  },
-  [translation, completeTask, reopenTask, showAssignee, optimisticUpdates])
+  }, [translation, completeTask, reopenTask, showAssignee, optimisticUpdates])
+
+  const { data: propertyDefinitionsData } = useGetPropertyDefinitionsQuery()
 
   const handleToggleDone = (taskId: string, checked: boolean) => {
-    const task = initialTasks.find(t => t.id === taskId)
-    if (!task) return
-
     setOptimisticUpdates(prev => {
       const next = new Map(prev)
       next.set(taskId, checked)
@@ -585,6 +432,162 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
       reopenTask({ id: taskId })
     }
   }
+
+  const { data: fetchedTasksData, isLoading, totalCount, pageCount, refetch } = useAsyncTableData<
+    GetTasksData,
+    GetTasksData['tasks']['data'][0],
+    typeof effectiveBaseVariables
+  >({
+    queryKey: ['GetTasks'],
+    document: GET_TASKS,
+    baseVariables: effectiveBaseVariables,
+    pageIndex: pagination.pageIndex,
+    pageSize: pagination.pageSize,
+    sorting,
+    columnFilters,
+    searchText,
+    columns: baseColumns,
+    entityType: 'task',
+    extractItems: (result) => {
+      const tasks = result.tasks as any
+      return (tasks?.data || tasks || []) as GetTasksQuery['tasks']['data']
+    },
+    extractTotalCount: (result) => {
+      const tasks = result.tasks as any
+      return tasks?.totalCount ?? (Array.isArray(tasks) ? tasks.length : 0)
+    },
+    enabled: !!effectiveBaseVariables.rootLocationIds && !!effectiveBaseVariables.assigneeId,
+  })
+
+  const propertyColumns = useMemo<ColumnDef<TaskViewModel>[]>(() => {
+    if (!propertyDefinitionsData?.propertyDefinitions) return []
+
+    return propertyDefinitionsData.propertyDefinitions
+      .filter(def => def.isActive && def.allowedEntities.includes(PropertyEntity.Task))
+      .map(def => {
+        const getFilterFn = () => {
+          switch (def.fieldType) {
+            case FieldType.FieldTypeText:
+              return 'text'
+            case FieldType.FieldTypeNumber:
+              return 'number'
+            case FieldType.FieldTypeCheckbox:
+              return 'boolean'
+            case FieldType.FieldTypeDate:
+              return 'date'
+            case FieldType.FieldTypeDateTime:
+              return 'date'
+            case FieldType.FieldTypeSelect:
+              return 'tags'
+            case FieldType.FieldTypeMultiSelect:
+              return 'tags'
+            default:
+              return 'text'
+          }
+        }
+
+        return {
+          id: `property-${def.id}`,
+          header: def.name,
+          accessorFn: () => null,
+          cell: ({ row }) => {
+            const task = fetchedTasksData?.find(t => t.id === row.original.id)
+            const propertyValue = task?.properties?.find(p => p.definition.id === def.id)
+            if (!propertyValue) return null
+
+            const value = propertyValue.textValue ?? propertyValue.numberValue ?? propertyValue.booleanValue ?? propertyValue.dateValue ?? propertyValue.dateTimeValue ?? propertyValue.selectValue ?? propertyValue.multiSelectValues
+            if (!value) return null
+
+            switch (def.fieldType) {
+              case FieldType.FieldTypeText:
+                return String(value)
+              case FieldType.FieldTypeNumber:
+                return String(value)
+              case FieldType.FieldTypeCheckbox:
+                return value ? translation('yes') : translation('no')
+              case FieldType.FieldTypeDate:
+              case FieldType.FieldTypeDateTime:
+                return <SmartDate date={new Date(value)} showTime={def.fieldType === FieldType.FieldTypeDateTime} />
+              case FieldType.FieldTypeSelect:
+                return String(value)
+              case FieldType.FieldTypeMultiSelect:
+                return Array.isArray(value) ? value.join(', ') : String(value)
+              default:
+                return String(value)
+            }
+          },
+          minSize: 150,
+          size: 200,
+          maxSize: 300,
+          filterFn: getFilterFn(),
+          meta: {
+            filterData: {
+              propertyDefinitionId: def.id,
+              ...(def.fieldType === FieldType.FieldTypeSelect || def.fieldType === FieldType.FieldTypeMultiSelect) && def.options.length > 0 ? {
+                tags: def.options.map(opt => ({ label: opt, tag: opt })),
+              } : {},
+            }
+          }
+        } as ColumnDef<TaskViewModel>
+      })
+  }, [propertyDefinitionsData, translation, fetchedTasksData])
+
+  const columns = useMemo<ColumnDef<TaskViewModel>[]>(() => [
+    ...baseColumns,
+    ...propertyColumns,
+  ], [baseColumns, propertyColumns])
+
+  const fetchedTasks: TaskViewModel[] = useMemo(() => {
+    if (!fetchedTasksData || fetchedTasksData.length === 0) return []
+    return fetchedTasksData.map((task) => ({
+      id: task.id,
+      name: task.title,
+      description: task.description || undefined,
+      updateDate: task.updateDate ? new Date(task.updateDate) : new Date(task.creationDate),
+      dueDate: task.dueDate ? new Date(task.dueDate) : undefined,
+      priority: task.priority || null,
+      estimatedTime: task.estimatedTime ?? null,
+      done: task.done,
+      patient: task.patient
+        ? {
+          id: task.patient.id,
+          name: task.patient.name,
+          locations: task.patient.assignedLocations || []
+        }
+        : undefined,
+      assignee: task.assignee
+        ? { id: task.assignee.id, name: task.assignee.name, avatarURL: task.assignee.avatarUrl, isOnline: task.assignee.isOnline ?? null }
+        : undefined,
+      assigneeTeam: task.assigneeTeam
+        ? { id: task.assigneeTeam.id, title: task.assigneeTeam.title }
+        : undefined,
+    }))
+  }, [fetchedTasksData])
+
+  useEffect(() => {
+    if (initialTaskId && fetchedTasks.length > 0 && openedTaskId !== initialTaskId) {
+      setTaskDialogState({ isOpen: true, taskId: initialTaskId })
+      setOpenedTaskId(initialTaskId)
+      onInitialTaskOpened?.()
+    } else if (!initialTaskId) {
+      setOpenedTaskId(null)
+    }
+  }, [initialTaskId, fetchedTasks, openedTaskId, onInitialTaskOpened])
+
+
+  const tasks = useMemo(() => {
+    let data = fetchedTasks
+
+    if (!showDone) {
+      data = data.filter(t => !t.done)
+    }
+
+    return data
+  }, [fetchedTasks, showDone])
+
+  const openTasks = useMemo(() => {
+    return fetchedTasks.filter(t => !t.done && t.assignee?.id === user?.id)
+  }, [fetchedTasks, user?.id])
 
   const handlePrint = () => {
     window.print()
@@ -599,15 +602,26 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
       data={tasks}
       columns={columns}
       fillerRowCell={fillerRow}
-      initialState={{
-        sorting: [
-          { id: 'done', desc: false },
-          { id: 'dueDate', desc: false },
-        ],
-        pagination: {
-          pageSize: 25,
-        }
+      state={{
+        pagination,
+        sorting,
+        columnFilters,
+      } as any}
+      onPaginationChange={(updater: any) => {
+        setPagination(typeof updater === 'function' ? updater(pagination) : updater)
       }}
+      onSortingChange={(updater: any) => {
+        setSorting(typeof updater === 'function' ? updater(sorting) : updater)
+        setPagination({ ...pagination, pageIndex: 0 })
+      }}
+      onColumnFiltersChange={(updater: any) => {
+        setColumnFilters(typeof updater === 'function' ? updater(columnFilters) : updater)
+        setPagination({ ...pagination, pageIndex: 0 })
+      }}
+      pageCount={pageCount}
+      manualPagination={true}
+      manualSorting={true}
+      manualFiltering={true}
       enableMultiSort={true}
       onRowClick={row => setTaskDialogState({ isOpen: true, taskId: row.original.id })}
     >
@@ -669,7 +683,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
               </div>
             </div>
             {headerActions}
-            {canHandover && (
+            {openTasks.length > 0 && (
               <Button
                 onClick={handleHandoverClick}
                 className="w-fit"
@@ -709,7 +723,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
                   onToggleDone={handleToggleDone}
                   onClick={(t) => setTaskDialogState({ isOpen: true, taskId: t.id })}
                   showAssignee={showAssignee}
-                  onRefetch={onRefetch}
+                  onRefetch={refetch}
                   className={clsx('w-full')}
                 />
               ))
@@ -726,8 +740,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
           <TaskDetailView
             taskId={taskDialogState.taskId ?? null}
             onClose={() => setTaskDialogState({ isOpen: false })}
-            onSuccess={onRefetch || (() => {
-            })}
+            onSuccess={refetch}
           />
         </Drawer>
         <Drawer
@@ -741,8 +754,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
             <PatientDetailView
               patientId={selectedPatientId}
               onClose={() => setSelectedPatientId(null)}
-              onSuccess={onRefetch || (() => {
-              })}
+              onSuccess={refetch}
             />
           )}
         </Drawer>

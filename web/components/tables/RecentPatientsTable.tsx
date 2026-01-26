@@ -1,13 +1,14 @@
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import type { ColumnDef, Row } from '@tanstack/react-table'
 import type { GetOverviewDataQuery } from '@/api/gql/generated'
-import { useCallback, useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import type { TableProps } from '@helpwave/hightide'
 import { FillerCell, Table, TableColumnSwitcher, Tooltip } from '@helpwave/hightide'
 import { SmartDate } from '@/utils/date'
 import { LocationChips } from '@/components/patients/LocationChips'
+import type { PaginationState, SortingState, ColumnFiltersState } from '@tanstack/react-table'
 
-type PatientViewModel = GetOverviewDataQuery['recentPatients'][0]
+type PatientViewModel = GetOverviewDataData['recentPatients'][0]
 
 export interface RecentPatientsTableProps extends Omit<TableProps<PatientViewModel>, 'table'> {
   patients: PatientViewModel[],
@@ -20,6 +21,13 @@ export const RecentPatientsTable = ({
   ...props
 }: RecentPatientsTableProps) => {
   const translation = useTasksTranslation()
+  const [pagination, setPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 25,
+  })
+  const [sorting, setSorting] = useState<SortingState>([])
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
+
   const patientColumns = useMemo<ColumnDef<PatientViewModel>[]>(() => [
     {
       id: 'name',
@@ -75,6 +83,8 @@ export const RecentPatientsTable = ({
     }
   ], [translation])
 
+  const pageCount = Math.ceil(patients.length / pagination.pageSize)
+
   return (
     <Table
       {...props}
@@ -83,12 +93,27 @@ export const RecentPatientsTable = ({
         columns: patientColumns,
         fillerRowCell: useCallback(() => (<FillerCell className="min-h-8"/>), []),
         onRowClick: useCallback((row: Row<PatientViewModel>) => onSelectPatient(row.original.id), [onSelectPatient]),
-        initialState: {
-          pagination: {
-            pageSize: 25,
-          }
-        }
-      }}
+        state: {
+          pagination,
+          sorting,
+          columnFilters,
+        } as any,
+        onPaginationChange: ((updater: any) => {
+          setPagination(typeof updater === 'function' ? updater(pagination) : updater)
+        }) as any,
+        onSortingChange: ((updater: any) => {
+          setSorting(typeof updater === 'function' ? updater(sorting) : updater)
+          setPagination({ ...pagination, pageIndex: 0 })
+        }) as any,
+        onColumnFiltersChange: ((updater: any) => {
+          setColumnFilters(typeof updater === 'function' ? updater(columnFilters) : updater)
+          setPagination({ ...pagination, pageIndex: 0 })
+        }) as any,
+        pageCount,
+        manualPagination: true,
+        manualSorting: true,
+        manualFiltering: true,
+      } as any}
       header={(
         <div className="flex-row-4 justify-between items-center">
           <div className="flex-col-0">

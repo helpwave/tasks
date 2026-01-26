@@ -165,14 +165,14 @@ export function useOptimisticUpdateTaskMutation({
           queryKey: [...query.queryKey] as unknown[],
           updateFn: (oldData: unknown) => {
             const data = oldData as GetTasksQuery | undefined
-            if (!data?.tasks) return oldData
-            const taskIndex = data.tasks.findIndex(t => t.id === id)
+            if (!data?.tasks?.data) return oldData
+            const taskIndex = data.tasks.data.findIndex(t => t.id === id)
             if (taskIndex === -1) return oldData
-            const task = data.tasks[taskIndex]
+            const task = data.tasks.data[taskIndex]
             if (!task) return oldData
             const updatedTask = updateTaskInQuery(task as unknown as TaskType, updateData)
             if (!updatedTask) return oldData
-            const updatedTaskForList: typeof data.tasks[0] = {
+            const updatedTaskForList: typeof data.tasks.data[0] = {
               ...task,
               title: updateData.title !== undefined ? (updateData.title || '') : task.title,
               description: updateData.description !== undefined ? updateData.description : task.description,
@@ -205,11 +205,14 @@ export function useOptimisticUpdateTaskMutation({
             }
             return {
               ...data,
-              tasks: [
-                ...data.tasks.slice(0, taskIndex),
-                updatedTaskForList,
-                ...data.tasks.slice(taskIndex + 1)
-              ]
+              tasks: {
+                ...data.tasks,
+                data: [
+                  ...data.tasks.data.slice(0, taskIndex),
+                  updatedTaskForList,
+                  ...data.tasks.data.slice(taskIndex + 1)
+                ]
+              }
             }
           }
         })

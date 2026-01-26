@@ -99,7 +99,13 @@ def full_text_search_query(search_param: str = "search"):
             if not search_input or search_input is strawberry.UNSET:
                 return result
 
-            model_class = result.column_descriptions[0]["entity"]
+            model_class = None
+            try:
+                if result.column_descriptions and len(result.column_descriptions) > 0:
+                    model_class = result.column_descriptions[0].get("entity")
+            except (AttributeError, IndexError, KeyError, TypeError):
+                pass
+            
             if not model_class:
                 return result
 

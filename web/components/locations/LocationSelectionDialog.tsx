@@ -8,9 +8,9 @@ import {
   useLocalStorage
 } from '@helpwave/hightide'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
-import type { LocationNodeType } from '@/api/gql/generated'
-import { LocationType } from '@/api/gql/generated'
-import { useGetLocationsQuery } from '@/api/gql/generated'
+import { type GetLocationsData } from '@/api/queries/locations'
+import { LocationType } from '@/api/types'
+import { useGetLocationsQuery } from '@/api/queries/locations'
 import type { TreeNode } from '@/utils/tree'
 import { buildTree } from '@/utils/tree'
 import {
@@ -32,21 +32,21 @@ export type LocationPickerUseCase =
 interface LocationSelectionDialogProps {
   isOpen: boolean,
   onClose: () => void,
-  onSelect: (locations: LocationNodeType[]) => void,
+  onSelect: (locations: GetLocationsData['locationNodes']) => void,
   initialSelectedIds?: string[],
   multiSelect?: boolean,
   useCase?: LocationPickerUseCase,
 }
 
-const generateTreeSignature = (nodes: LocationNodeType[]): string => {
+const generateTreeSignature = (nodes: GetLocationsData['locationNodes']): string => {
   const sortedNodes = [...nodes].sort((a, b) => a.id.localeCompare(b.id))
   return sortedNodes.map(n => `${n.id}:${n.parentId || ''}`).join('|')
 }
 
 interface LocationTreeItemProps {
-  node: TreeNode<LocationNodeType>,
+  node: TreeNode<GetLocationsData['locationNodes'][0]>,
   selectedIds: Set<string>,
-  onToggle: (node: LocationNodeType, checked: boolean) => void,
+  onToggle: (node: GetLocationsData['locationNodes'][0], checked: boolean) => void,
   expandedIds: Set<string>,
   onExpandToggle: (nodeId: string, isOpen: boolean) => void,
   level?: number,
@@ -80,7 +80,7 @@ const LocationTreeItem = ({
 
   const isIndeterminate = useMemo(() => {
     if (!hasChildren || !isSelectable) return false
-    const checkChildren = (n: TreeNode<LocationNodeType>): boolean => {
+    const checkChildren = (n: TreeNode<GetLocationsData['locationNodes'][0]>): boolean => {
       return n.children.some(child => selectedIds.has(child.id) || checkChildren(child))
     }
     return !isSelected && checkChildren(node)
@@ -168,7 +168,7 @@ const LocationTreeItem = ({
               expandedIds={expandedIds}
               onExpandToggle={onExpandToggle}
               level={level + 1}
-              isSelectable={(child as TreeNode<LocationNodeType> & { isSelectable?: boolean }).isSelectable ?? true}
+              isSelectable={(child as TreeNode<GetLocationsData['locationNodes'][0]> & { isSelectable?: boolean }).isSelectable ?? true}
             />
           ))}
         </div>
@@ -186,11 +186,11 @@ export const LocationSelectionDialog = ({
   useCase = 'default',
 }: LocationSelectionDialogProps) => {
   const translation = useTasksTranslation()
-  const { data, isLoading } = useGetLocationsQuery(
+  const { data, loading: isLoading } = useGetLocationsQuery(
     {},
     {
-      enabled: isOpen,
-      refetchOnWindowFocus: true,
+      skip: !isOpen,
+      fetchPolicy: 'cache-and-network',
     }
   )
 
@@ -215,7 +215,7 @@ export const LocationSelectionDialog = ({
 
   useEffect(() => {
     if (isOpen && data?.locationNodes) {
-      const currentSignature = generateTreeSignature(data.locationNodes as LocationNodeType[])
+      const currentSignature = generateTreeSignature(data.locationNodes as GetLocationsData['locationNodes'][0][])
       const treeChanged = currentSignature !== storedTreeSignature
 
       if (treeChanged) {
@@ -264,13 +264,13 @@ export const LocationSelectionDialog = ({
         'CLINIC',
         'TEAM',
       ])
-      return (node: LocationNodeType) => {
+      return (node: GetLocationsData['locationNodes'][0]) => {
         const kindStr = node.kind.toString().toUpperCase()
         return allowedKinds.has(node.kind as LocationType) ||
                allowedKinds.has(kindStr)
       }
     } else if (useCase === 'clinic') {
-      return (node: LocationNodeType) => {
+      return (node: GetLocationsData['locationNodes'][0]) => {
         const kindStr = node.kind.toString().toUpperCase()
         return kindStr === 'CLINIC' || node.kind === LocationType.Clinic
       }
@@ -287,7 +287,7 @@ export const LocationSelectionDialog = ({
         'BED',
         'ROOM',
       ])
-      return (node: LocationNodeType) => {
+      return (node: GetLocationsData['locationNodes'][0]) => {
         const kindStr = node.kind.toString().toUpperCase()
         return allowedKinds.has(node.kind as LocationType) ||
                allowedKinds.has(kindStr)
@@ -301,7 +301,7 @@ export const LocationSelectionDialog = ({
         'CLINIC',
         'TEAM',
       ])
-      return (node: LocationNodeType) => {
+      return (node: GetLocationsData['locationNodes'][0]) => {
         const kindStr = node.kind.toString().toUpperCase()
         return allowedKinds.has(node.kind as LocationType) ||
                allowedKinds.has(kindStr)
@@ -312,14 +312,14 @@ export const LocationSelectionDialog = ({
   }, [useCase])
 
   const filterTree = useMemo(() => {
-    const filterNode = (node: TreeNode<LocationNodeType>): (TreeNode<LocationNodeType> & { isSelectable?: boolean }) | null => {
+    const filterNode = (node: TreeNode<GetLocationsData['locationNodes'][0]>): (TreeNode<GetLocationsData['locationNodes'][0]> & { isSelectable?: boolean }) | null => {
       const hasChildren = node.children && node.children.length > 0
       const nodeMatchesFilter = matchesFilter(node)
 
       if (hasChildren) {
         const filteredChildren = node.children
           .map(child => filterNode(child))
-          .filter((child): child is TreeNode<LocationNodeType> & { isSelectable?: boolean } => child !== null)
+          .filter((child): child is TreeNode<GetLocationsData['locationNodes'][0]> & { isSelectable?: boolean } => child !== null)
 
         if (nodeMatchesFilter) {
           return {
@@ -355,7 +355,7 @@ export const LocationSelectionDialog = ({
 
   const treeData = useMemo(() => {
     if (!data?.locationNodes) return []
-    const nodes = data.locationNodes as LocationNodeType[]
+    const nodes = data.locationNodes as GetLocationsData['locationNodes'][0][]
 
     let allNodes = nodes
 
@@ -367,7 +367,7 @@ export const LocationSelectionDialog = ({
       const searchIds = new Set(searchFiltered.map(n => n.id))
       const parentIds = new Set<string>()
       searchFiltered.forEach(n => {
-        let current: LocationNodeType | undefined = n
+        let current: GetLocationsData['locationNodes'][0] | undefined = n
         while (current?.parentId) {
           parentIds.add(current.parentId)
           current = nodes.find(node => node.id === current?.parentId)
@@ -379,17 +379,17 @@ export const LocationSelectionDialog = ({
     const fullTree = buildTree(allNodes)
 
     if (useCase === 'default') {
-      return fullTree.map(node => ({ ...node, isSelectable: true })) as Array<TreeNode<LocationNodeType> & { isSelectable: boolean }>
+      return fullTree.map(node => ({ ...node, isSelectable: true })) as Array<TreeNode<GetLocationsData['locationNodes'][0]> & { isSelectable: boolean }>
     }
 
     const filtered = fullTree
       .map(filterTree)
-      .filter((node): node is TreeNode<LocationNodeType> & { isSelectable?: boolean } => node !== null)
+      .filter((node): node is TreeNode<GetLocationsData['locationNodes'][0]> & { isSelectable?: boolean } => node !== null)
 
     return filtered
   }, [data, searchQuery, useCase, filterTree])
 
-  const handleToggleSelect = (node: LocationNodeType, checked: boolean) => {
+  const handleToggleSelect = (node: GetLocationsData['locationNodes'][0], checked: boolean) => {
     const newSet = new Set(selectedIds)
     if (checked) {
       if (useCase === 'clinic' || !multiSelect) {
@@ -431,7 +431,7 @@ export const LocationSelectionDialog = ({
   const handleConfirm = () => {
     if (!data?.locationNodes) return
     if (selectedIds.size === 0) return
-    const nodes = data.locationNodes as LocationNodeType[]
+    const nodes = data.locationNodes as GetLocationsData['locationNodes'][0][]
 
     const finalSelectedIds = Array.from(selectedIds)
     const selectedNodes = nodes.filter(n => finalSelectedIds.includes(n.id))

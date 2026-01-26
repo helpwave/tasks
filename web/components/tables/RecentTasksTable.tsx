@@ -1,7 +1,8 @@
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import type { ColumnDef, Row } from '@tanstack/react-table'
-import type { GetOverviewDataQuery, TaskPriority } from '@/api/gql/generated'
-import { useCallback, useMemo } from 'react'
+import { useGetOverviewDataQuery, type GetOverviewDataData } from '@/api/queries/global'
+import { TaskPriority } from '@/api/types'
+import { useCallback, useMemo, useState } from 'react'
 import clsx from 'clsx'
 import type { TableProps } from '@helpwave/hightide'
 import { Button, Checkbox, FillerCell, Table, TableColumnSwitcher, Tooltip } from '@helpwave/hightide'
@@ -9,8 +10,9 @@ import { ArrowRightIcon } from 'lucide-react'
 import { SmartDate } from '@/utils/date'
 import { DueDateUtils } from '@/utils/dueDate'
 import { PriorityUtils } from '@/utils/priority'
+import type { PaginationState, SortingState, ColumnFiltersState } from '@tanstack/react-table'
 
-type TaskViewModel = GetOverviewDataQuery['recentTasks'][0]
+type TaskViewModel = GetOverviewDataData['recentTasks'][0]
 
 export interface RecentTasksTableProps extends Omit<TableProps<TaskViewModel>, 'table'> {
   tasks: TaskViewModel[],
@@ -30,6 +32,13 @@ export const RecentTasksTable = ({
   ...props
 }: RecentTasksTableProps) => {
   const translation = useTasksTranslation()
+  const [pagination, setPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 25,
+  })
+  const [sorting, setSorting] = useState<SortingState>([])
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
+
   const taskColumns = useMemo<ColumnDef<TaskViewModel>[]>(() => [
     {
       id: 'done',
@@ -151,6 +160,8 @@ export const RecentTasksTable = ({
     }
   ], [translation, completeTask, reopenTask, onSelectPatient])
 
+  const pageCount = Math.ceil(tasks.length / pagination.pageSize)
+
   return (
     <Table
       {...props}
@@ -160,12 +171,27 @@ export const RecentTasksTable = ({
         isUsingFillerRows: true,
         fillerRowCell: useCallback(() => (<FillerCell className="min-h-8"/>), []),
         onRowClick: useCallback((row: Row<TaskViewModel>) => onSelectTask(row.original.id), [onSelectTask]),
-        initialState: {
-          pagination: {
-            pageSize: 25,
-          }
-        }
-      }}
+        state: {
+          pagination,
+          sorting,
+          columnFilters,
+        } as any,
+        onPaginationChange: ((updater: any) => {
+          setPagination(typeof updater === 'function' ? updater(pagination) : updater)
+        }) as any,
+        onSortingChange: ((updater: any) => {
+          setSorting(typeof updater === 'function' ? updater(sorting) : updater)
+          setPagination({ ...pagination, pageIndex: 0 })
+        }) as any,
+        onColumnFiltersChange: ((updater: any) => {
+          setColumnFilters(typeof updater === 'function' ? updater(columnFilters) : updater)
+          setPagination({ ...pagination, pageIndex: 0 })
+        }) as any,
+        pageCount,
+        manualPagination: true,
+        manualSorting: true,
+        manualFiltering: true,
+      } as any}
       header={(
         <div className="flex-row-4 justify-between items-center">
           <div className="flex-col-0">

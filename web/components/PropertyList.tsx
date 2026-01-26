@@ -3,7 +3,8 @@ import { Plus } from 'lucide-react'
 import React, { useMemo, useState, useEffect } from 'react'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { PropertyEntry } from '@/components/PropertyEntry'
-import { useGetPropertyDefinitionsQuery, FieldType, PropertyEntity } from '@/api/gql/generated'
+import { useGetPropertyDefinitionsQuery } from '@/api/queries/properties'
+import { FieldType, PropertyEntity } from '@/api/types'
 
 
 
@@ -147,14 +148,14 @@ export const PropertyList = ({
         subjectType: mapSubjectTypeFromBackend(def.allowedEntities[0] || PropertyEntity.Patient),
         fieldType: mapFieldTypeFromBackend(def.fieldType),
         isArchived: !def.isActive,
-        selectData: (def.fieldType === FieldType.FieldTypeSelect || def.fieldType === FieldType.FieldTypeMultiSelect) && def.options.length > 0 ? {
+        selectData: (def.fieldType === FieldType.FieldTypeSelect || def.fieldType === FieldType.FieldTypeMultiSelect) ? {
           isAllowingFreetext: false,
-          options: def.options.map((opt, idx) => ({
+          options: def.options && def.options.length > 0 ? def.options.map((opt, idx) => ({
             id: `${def.id}-opt-${idx}`,
             name: opt,
             description: undefined,
             isCustom: false,
-          })),
+          })) : [],
         } : undefined,
       } as Property))
   }, [propertyDefinitionsData, subjectType])
@@ -172,6 +173,11 @@ export const PropertyList = ({
 
     return Array.from(seenDefinitionIds.values()).map(pv => {
       const def = pv.definition
+      const availableProperty = availableProperties.find(ap => ap.id === def.id)
+      const options = def.options && def.options.length > 0 
+        ? def.options 
+        : (availableProperty?.selectData?.options.map(opt => opt.name) || [])
+
       const property: Property = {
         id: def.id,
         name: def.name,
@@ -179,16 +185,26 @@ export const PropertyList = ({
         subjectType: mapSubjectTypeFromBackend((def.allowedEntities && def.allowedEntities[0] ? def.allowedEntities[0] as PropertyEntity : PropertyEntity.Patient)),
         fieldType: mapFieldTypeFromBackend(def.fieldType as FieldType),
         isArchived: !def.isActive,
-        selectData: (def.fieldType === FieldType.FieldTypeSelect || def.fieldType === FieldType.FieldTypeMultiSelect) && def.options.length > 0 ? {
+        selectData: (def.fieldType === FieldType.FieldTypeSelect || def.fieldType === FieldType.FieldTypeMultiSelect) ? {
           isAllowingFreetext: false,
-          options: def.options.map((opt, idx) => ({
+          options: options.length > 0 ? options.map((opt, idx) => ({
             id: `${def.id}-opt-${idx}`,
-            name: opt,
+            name: typeof opt === 'string' ? opt : opt,
             description: undefined,
             isCustom: false,
-          })),
+          })) : [],
         } : undefined,
       }
+
+      const selectDataForValue = property.selectData
+      const singleSelectValue = pv.selectValue && selectDataForValue?.options
+        ? selectDataForValue.options.find(opt => opt.name === pv.selectValue)?.id || undefined
+        : undefined
+      const multiSelectValue = pv.multiSelectValues && selectDataForValue?.options
+        ? pv.multiSelectValues
+          .map(optionName => selectDataForValue.options.find(opt => opt.name === optionName)?.id)
+          .filter((id): id is string => id !== undefined)
+        : undefined
 
       const value: PropertyValue = {
         textValue: pv.textValue ?? undefined,
@@ -202,8 +218,8 @@ export const PropertyList = ({
           const date = new Date(pv.dateTimeValue)
           return !isNaN(date.getTime()) ? date : undefined
         })() : undefined,
-        singleSelectValue: pv.selectValue || undefined,
-        multiSelectValue: pv.multiSelectValues || undefined,
+        singleSelectValue,
+        multiSelectValue,
       }
 
       return {
@@ -212,7 +228,7 @@ export const PropertyList = ({
         value,
       } as AttachedProperty
     }).sort((a, b) => a.property.name.localeCompare(b.property.name))
-  }, [propertyValues, subjectId])
+  }, [propertyValues, subjectId, availableProperties])
 
   useEffect(() => {
     const currentPropertyIds = new Set(attachedProperties.map(ap => ap.property.id))
@@ -353,10 +369,10 @@ export const PropertyList = ({
             value={attachedProperty.value}
             name={attachedProperty.property.name}
             fieldType={attachedProperty.property.fieldType}
-            selectData={attachedProperty.property.selectData ?
+            selectData={attachedProperty.property.fieldType === 'singleSelect' || attachedProperty.property.fieldType === 'multiSelect' ?
               {
                 onAddOption: () => {},
-                options: attachedProperty.property.selectData.options,
+                options: attachedProperty.property.selectData?.options || [],
               } : undefined
             }
             onValueClear={() => {

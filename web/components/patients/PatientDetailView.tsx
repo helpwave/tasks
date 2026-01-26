@@ -1,11 +1,9 @@
 import { useMemo } from 'react'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
-import type { CreatePatientInput } from '@/api/gql/generated'
-import {
-  PropertyEntity,
-  useGetPatientQuery,
-  useGetPropertyDefinitionsQuery
-} from '@/api/gql/generated'
+import { PropertyEntity } from '@/api/types'
+import { useGetPatientQuery } from '@/api/queries/patients'
+import { useGetPropertyDefinitionsQuery } from '@/api/queries/properties'
+import { useUpdatePatientMutation } from '@/api/mutations/patients'
 import {
   ProgressIndicator,
   TabList,
@@ -18,7 +16,7 @@ import { LocationChips } from '@/components/patients/LocationChips'
 import { PatientTasksView } from './PatientTasksView'
 import { PatientDataEditor } from './PatientDataEditor'
 import { AuditLogTimeline } from '@/components/AuditLogTimeline'
-import { PropertyList } from '../PropertyList'
+import { PropertyList, type PropertyValue } from '../PropertyList'
 
 export const toISODate = (d: Date | string | null | undefined): string | null => {
   if (!d) return null
@@ -62,17 +60,40 @@ export const PatientDetailView = ({
 
   const { data: patientData } = useGetPatientQuery(
     { id: patientId! },
-    { enabled: isEditMode }
+    { skip: !isEditMode }
   )
 
-  const { data: propertyDefinitionsData } = useGetPropertyDefinitionsQuery()
+  const { data: propertyDefinitionsData } = useGetPropertyDefinitionsQuery({})
+
+  const [updatePatientMutation] = useUpdatePatientMutation(patientId!)
+
+  const availableProperties = useMemo(() => {
+    if (!propertyDefinitionsData?.propertyDefinitions) return []
+    const entity = PropertyEntity.Patient
+    return propertyDefinitionsData.propertyDefinitions
+      .filter(def => def.isActive && def.allowedEntities.includes(entity))
+      .map(def => ({
+        id: def.id,
+        name: def.name,
+        description: def.description || undefined,
+        subjectType: (def.allowedEntities[0] || PropertyEntity.Patient) === PropertyEntity.Patient ? 'patient' as const : 'task' as const,
+        fieldType: (def.fieldType === 'TEXT' ? 'text' : def.fieldType === 'NUMBER' ? 'number' : def.fieldType === 'CHECKBOX' ? 'checkbox' : def.fieldType === 'DATE' ? 'date' : def.fieldType === 'DATETIME' ? 'dateTime' : def.fieldType === 'SELECT' ? 'singleSelect' : def.fieldType === 'MULTI_SELECT' ? 'multiSelect' : 'text') as 'text' | 'number' | 'checkbox' | 'date' | 'dateTime' | 'singleSelect' | 'multiSelect',
+        isArchived: !def.isActive,
+        selectData: (def.fieldType === 'SELECT' || def.fieldType === 'MULTI_SELECT') ? {
+          isAllowingFreetext: false,
+          options: def.options && def.options.length > 0 ? def.options.map((opt, idx) => ({
+            id: `${def.id}-opt-${idx}`,
+            name: opt,
+            description: undefined,
+            isCustom: false,
+          })) : [],
+        } : undefined,
+      }))
+  }, [propertyDefinitionsData])
 
   const hasAvailableProperties = useMemo(() => {
-    if (!propertyDefinitionsData?.propertyDefinitions) return false
-    return propertyDefinitionsData.propertyDefinitions.some(
-      def => def.isActive && def.allowedEntities.includes(PropertyEntity.Patient)
-    )
-  }, [propertyDefinitionsData])
+    return availableProperties.length > 0
+  }, [availableProperties])
 
   const taskStats: { totalTasks: number, openTasks: number, closedTasks: number, taskProgress: number } = useMemo(() => ({
     totalTasks: patientData?.patient?.tasks?.length ?? 0,
@@ -142,6 +163,69 @@ export const PatientDetailView = ({
               subjectType="patient"
               fullWidthAddButton={true}
               propertyValues={patientData?.patient?.properties}
+              onPropertyValueChange={(definitionId, value) => {
+                const existingProperties = patientData?.patient?.properties?.map(p => ({
+                  definitionId: p.definition.id,
+                  textValue: p.textValue,
+                  numberValue: p.numberValue,
+                  booleanValue: p.booleanValue,
+                  dateValue: p.dateValue,
+                  dateTimeValue: p.dateTimeValue,
+                  selectValue: p.selectValue,
+                  multiSelectValues: p.multiSelectValues,
+                })) || []
+
+                if (value === null) {
+                  const updatedProperties = existingProperties.filter(p => p.definitionId !== definitionId)
+                  updatePatientMutation({ variables: { id: patientId, data: { properties: updatedProperties } } })
+                  return
+                }
+
+                const propertyDefinition = propertyDefinitionsData?.propertyDefinitions?.find(def => def.id === definitionId)
+                const property = availableProperties.find(ap => ap.id === definitionId)
+                const selectData = property?.selectData || (propertyDefinition?.options && propertyDefinition.options.length > 0 ? {
+                  options: propertyDefinition.options.map((opt, idx) => ({
+                    id: `${definitionId}-opt-${idx}`,
+                    name: opt,
+                    description: undefined,
+                    isCustom: false,
+                  })),
+                } : undefined)
+
+                let multiSelectValues: string[] | null = null
+                if (value.multiSelectValue && value.multiSelectValue.length > 0 && selectData?.options) {
+                  multiSelectValues = value.multiSelectValue
+                    .map(optionId => {
+                      const option = selectData.options.find(opt => opt.id === optionId)
+                      return option?.name
+                    })
+                    .filter((name): name is string => name !== undefined)
+                }
+
+                let selectValue: string | null = null
+                if (value.singleSelectValue && selectData?.options) {
+                  const option = selectData.options.find(opt => opt.id === value.singleSelectValue)
+                  selectValue = option?.name || null
+                }
+
+                const propertyInput: PropertyValueInput = {
+                  definitionId,
+                  textValue: value.textValue !== undefined ? (value.textValue !== null && value.textValue.trim() !== '' ? value.textValue : '') : null,
+                  numberValue: value.numberValue ?? null,
+                  booleanValue: value.boolValue ?? null,
+                  dateValue: value.dateValue && !isNaN(value.dateValue.getTime()) ? value.dateValue.toISOString().split('T')[0] : null,
+                  dateTimeValue: value.dateTimeValue && !isNaN(value.dateTimeValue.getTime()) ? value.dateTimeValue.toISOString() : null,
+                  selectValue,
+                  multiSelectValues: multiSelectValues && multiSelectValues.length > 0 ? multiSelectValues : null,
+                }
+
+                const updatedProperties = [
+                  ...existingProperties.filter(p => p.definitionId !== definitionId),
+                  propertyInput,
+                ]
+
+                updatePatient({ id: patientId, data: { properties: updatedProperties } })
+              }}
             />
           </TabPanel>
         )}

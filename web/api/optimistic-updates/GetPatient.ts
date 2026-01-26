@@ -43,18 +43,21 @@ export function useOptimisticCompleteTaskMutation({
         queryKey: ['GetPatients'],
         updateFn: (oldData: unknown) => {
           const data = oldData as GetPatientsQuery | undefined
-          if (!data?.patients) return oldData
+          if (!data?.patients?.data) return oldData
           return {
             ...data,
-            patients: data.patients.map(patient => {
-              if (patient.id === id && patient.tasks) {
-                return {
-                  ...patient,
-                  tasks: patient.tasks.map(task => task.id === variables.id ? { ...task, done: true } : task)
+            patients: {
+              ...data.patients,
+              data: data.patients.data.map(patient => {
+                if (patient.id === id && patient.tasks) {
+                  return {
+                    ...patient,
+                    tasks: patient.tasks.map(task => task.id === variables.id ? { ...task, done: true } : task)
+                  }
                 }
-              }
-              return patient
-            })
+                return patient
+              })
+            }
           }
         }
       },
@@ -117,18 +120,21 @@ export function useOptimisticReopenTaskMutation({
         queryKey: ['GetPatients'],
         updateFn: (oldData: unknown) => {
           const data = oldData as GetPatientsQuery | undefined
-          if (!data?.patients) return oldData
+          if (!data?.patients?.data) return oldData
           return {
             ...data,
-            patients: data.patients.map(patient => {
-              if (patient.id === id && patient.tasks) {
-                return {
-                  ...patient,
-                  tasks: patient.tasks.map(task => task.id === variables.id ? { ...task, done: false } : task)
+            patients: {
+              ...data.patients,
+              data: data.patients.data.map(patient => {
+                if (patient.id === id && patient.tasks) {
+                  return {
+                    ...patient,
+                    tasks: patient.tasks.map(task => task.id === variables.id ? { ...task, done: false } : task)
+                  }
                 }
-              }
-              return patient
-            })
+                return patient
+              })
+            }
           }
         }
       },
@@ -197,10 +203,16 @@ export function useOptimisticCreatePatientMutation({
           }
           return {
             ...data,
-            patients: [...(data.patients || []), newPatient],
+            patients: {
+              ...data.patients,
+              data: [...(data.patients?.data || []), newPatient],
+            },
             waitingPatients: variables.data.state === PatientState.Wait
-              ? [...(data.waitingPatients || []), newPatient]
-              : data.waitingPatients || [],
+              ? {
+                  ...data.waitingPatients,
+                  data: [...(data.waitingPatients?.data || []), newPatient],
+                }
+              : data.waitingPatients,
           }
         }
       }
@@ -249,11 +261,14 @@ export function useOptimisticAdmitPatientMutation({
         queryKey: ['GetPatients'],
         updateFn: (oldData: unknown) => {
           const data = oldData as GetPatientsQuery | undefined
-          if (!data?.patients) return oldData
+          if (!data?.patients?.data) return oldData
           return {
             ...data,
-            patients: data.patients.map(p =>
-              p.id === id ? { ...p, state: PatientState.Admitted } : p)
+            patients: {
+              ...data.patients,
+              data: data.patients.data.map(p =>
+                p.id === id ? { ...p, state: PatientState.Admitted } : p)
+            }
           }
         }
       },
@@ -261,17 +276,23 @@ export function useOptimisticAdmitPatientMutation({
         queryKey: ['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }],
         updateFn: (oldData: unknown) => {
           const data = oldData as GetGlobalDataQuery | undefined
-          if (!data) return oldData
-          const existingPatient = data.patients.find(p => p.id === id)
+          if (!data?.patients?.data) return oldData
+          const existingPatient = data.patients.data.find(p => p.id === id)
           const updatedPatient = existingPatient
             ? { ...existingPatient, state: PatientState.Admitted }
             : { __typename: 'PatientType' as const, id, state: PatientState.Admitted, assignedLocation: null }
           return {
             ...data,
-            patients: existingPatient
-              ? data.patients.map(p => p.id === id ? updatedPatient : p)
-              : [...data.patients, updatedPatient],
-            waitingPatients: data.waitingPatients.filter(p => p.id !== id)
+            patients: {
+              ...data.patients,
+              data: existingPatient
+                ? data.patients.data.map(p => p.id === id ? updatedPatient : p)
+                : [...data.patients.data, updatedPatient],
+            },
+            waitingPatients: {
+              ...data.waitingPatients,
+              data: data.waitingPatients.data.filter(p => p.id !== id),
+            }
           }
         }
       }
@@ -318,11 +339,14 @@ export function useOptimisticDischargePatientMutation({
         queryKey: ['GetPatients'],
         updateFn: (oldData: unknown) => {
           const data = oldData as GetPatientsQuery | undefined
-          if (!data?.patients) return oldData
+          if (!data?.patients?.data) return oldData
           return {
             ...data,
-            patients: data.patients.map(p =>
-              p.id === id ? { ...p, state: PatientState.Discharged } : p)
+            patients: {
+              ...data.patients,
+              data: data.patients.data.map(p =>
+                p.id === id ? { ...p, state: PatientState.Discharged } : p)
+            }
           }
         }
       },
@@ -330,17 +354,23 @@ export function useOptimisticDischargePatientMutation({
         queryKey: ['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }],
         updateFn: (oldData: unknown) => {
           const data = oldData as GetGlobalDataQuery | undefined
-          if (!data) return oldData
-          const existingPatient = data.patients.find(p => p.id === id)
+          if (!data?.patients?.data) return oldData
+          const existingPatient = data.patients.data.find(p => p.id === id)
           const updatedPatient = existingPatient
             ? { ...existingPatient, state: PatientState.Discharged }
             : { __typename: 'PatientType' as const, id, state: PatientState.Discharged, assignedLocation: null }
           return {
             ...data,
-            patients: existingPatient
-              ? data.patients.map(p => p.id === id ? updatedPatient : p)
-              : [...data.patients, updatedPatient],
-            waitingPatients: data.waitingPatients.filter(p => p.id !== id)
+            patients: {
+              ...data.patients,
+              data: existingPatient
+                ? data.patients.data.map(p => p.id === id ? updatedPatient : p)
+                : [...data.patients.data, updatedPatient],
+            },
+            waitingPatients: {
+              ...data.waitingPatients,
+              data: data.waitingPatients.data.filter(p => p.id !== id),
+            }
           }
         }
       }
@@ -371,11 +401,17 @@ export function useOptimisticDeletePatientMutation({
         queryKey: ['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }],
         updateFn: (oldData: unknown) => {
           const data = oldData as GetGlobalDataQuery | undefined
-          if (!data) return oldData
+          if (!data?.patients?.data) return oldData
           return {
             ...data,
-            patients: (data.patients || []).filter(p => p.id !== variables.id),
-            waitingPatients: (data.waitingPatients || []).filter(p => p.id !== variables.id),
+            patients: {
+              ...data.patients,
+              data: (data.patients.data || []).filter(p => p.id !== variables.id),
+            },
+            waitingPatients: {
+              ...data.waitingPatients,
+              data: (data.waitingPatients.data || []).filter(p => p.id !== variables.id),
+            },
           }
         }
       },
@@ -383,10 +419,13 @@ export function useOptimisticDeletePatientMutation({
         queryKey: ['GetPatients'],
         updateFn: (oldData: unknown) => {
           const data = oldData as GetPatientsQuery | undefined
-          if (!data?.patients) return oldData
+          if (!data?.patients?.data) return oldData
           return {
             ...data,
-            patients: data.patients.filter(p => p.id !== variables.id),
+            patients: {
+              ...data.patients,
+              data: data.patients.data.filter(p => p.id !== variables.id),
+            }
           }
         }
       },
@@ -437,11 +476,14 @@ export function useOptimisticWaitPatientMutation({
         queryKey: ['GetPatients'],
         updateFn: (oldData: unknown) => {
           const data = oldData as GetPatientsQuery | undefined
-          if (!data?.patients) return oldData
+          if (!data?.patients?.data) return oldData
           return {
             ...data,
-            patients: data.patients.map(p =>
-              p.id === id ? { ...p, state: PatientState.Wait } : p)
+            patients: {
+              ...data.patients,
+              data: data.patients.data.map(p =>
+                p.id === id ? { ...p, state: PatientState.Wait } : p)
+            }
           }
         }
       },
@@ -449,20 +491,26 @@ export function useOptimisticWaitPatientMutation({
         queryKey: ['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }],
         updateFn: (oldData: unknown) => {
           const data = oldData as GetGlobalDataQuery | undefined
-          if (!data) return oldData
-          const existingPatient = data.patients.find(p => p.id === id)
-          const isAlreadyWaiting = data.waitingPatients.some(p => p.id === id)
+          if (!data?.patients?.data) return oldData
+          const existingPatient = data.patients.data.find(p => p.id === id)
+          const isAlreadyWaiting = data.waitingPatients.data.some(p => p.id === id)
           const updatedPatient = existingPatient
             ? { ...existingPatient, state: PatientState.Wait }
             : { __typename: 'PatientType' as const, id, state: PatientState.Wait, assignedLocation: null }
           return {
             ...data,
-            patients: existingPatient
-              ? data.patients.map(p => p.id === id ? updatedPatient : p)
-              : [...data.patients, updatedPatient],
-            waitingPatients: isAlreadyWaiting
-              ? data.waitingPatients
-              : [...data.waitingPatients, updatedPatient]
+            patients: {
+              ...data.patients,
+              data: existingPatient
+                ? data.patients.data.map(p => p.id === id ? updatedPatient : p)
+                : [...data.patients.data, updatedPatient],
+            },
+            waitingPatients: {
+              ...data.waitingPatients,
+              data: isAlreadyWaiting
+                ? data.waitingPatients.data
+                : [...data.waitingPatients.data, updatedPatient]
+            }
           }
         }
       }
@@ -509,11 +557,14 @@ export function useOptimisticMarkPatientDeadMutation({
         queryKey: ['GetPatients'],
         updateFn: (oldData: unknown) => {
           const data = oldData as GetPatientsQuery | undefined
-          if (!data?.patients) return oldData
+          if (!data?.patients?.data) return oldData
           return {
             ...data,
-            patients: data.patients.map(p =>
-              p.id === id ? { ...p, state: PatientState.Dead } : p)
+            patients: {
+              ...data.patients,
+              data: data.patients.data.map(p =>
+                p.id === id ? { ...p, state: PatientState.Dead } : p)
+            }
           }
         }
       },
@@ -521,17 +572,23 @@ export function useOptimisticMarkPatientDeadMutation({
         queryKey: ['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }],
         updateFn: (oldData: unknown) => {
           const data = oldData as GetGlobalDataQuery | undefined
-          if (!data) return oldData
-          const existingPatient = data.patients.find(p => p.id === id)
+          if (!data?.patients?.data) return oldData
+          const existingPatient = data.patients.data.find(p => p.id === id)
           const updatedPatient = existingPatient
             ? { ...existingPatient, state: PatientState.Dead }
             : { __typename: 'PatientType' as const, id, state: PatientState.Dead, assignedLocation: null }
           return {
             ...data,
-            patients: existingPatient
-              ? data.patients.map(p => p.id === id ? updatedPatient : p)
-              : [...data.patients, updatedPatient],
-            waitingPatients: data.waitingPatients.filter(p => p.id !== id)
+            patients: {
+              ...data.patients,
+              data: existingPatient
+                ? data.patients.data.map(p => p.id === id ? updatedPatient : p)
+                : [...data.patients.data, updatedPatient],
+            },
+            waitingPatients: {
+              ...data.waitingPatients,
+              data: data.waitingPatients.data.filter(p => p.id !== id),
+            }
           }
         }
       }
@@ -701,17 +758,17 @@ export function useOptimisticUpdatePatientMutation({
           queryKey: [...query.queryKey] as unknown[],
           updateFn: (oldData: unknown) => {
             const data = oldData as GetPatientsQuery | undefined
-            if (!data?.patients) return oldData
-            const patientIndex = data.patients.findIndex(p => p.id === id)
+            if (!data?.patients?.data) return oldData
+            const patientIndex = data.patients.data.findIndex(p => p.id === id)
             if (patientIndex === -1) return oldData
-            const patient = data.patients[patientIndex]
+            const patient = data.patients.data[patientIndex]
             if (!patient) return oldData
             const updatedPatient = updatePatientInQuery(patient as unknown as PatientType, updateData)
             if (!updatedPatient) return oldData
             const updatedName = updatedPatient.firstname && updatedPatient.lastname
               ? `${updatedPatient.firstname} ${updatedPatient.lastname}`.trim()
               : updatedPatient.firstname || updatedPatient.lastname || patient.name || ''
-            const updatedPatientForList: typeof data.patients[0] = {
+            const updatedPatientForList: typeof data.patients.data[0] = {
               ...patient,
               firstname: updateData.firstname !== undefined ? (updateData.firstname || '') : patient.firstname,
               lastname: updateData.lastname !== undefined ? (updateData.lastname || '') : patient.lastname,
@@ -738,11 +795,14 @@ export function useOptimisticUpdatePatientMutation({
             }
             return {
               ...data,
-              patients: [
-                ...data.patients.slice(0, patientIndex),
-                updatedPatientForList,
-                ...data.patients.slice(patientIndex + 1)
-              ]
+              patients: {
+                ...data.patients,
+                data: [
+                  ...data.patients.data.slice(0, patientIndex),
+                  updatedPatientForList,
+                  ...data.patients.data.slice(patientIndex + 1)
+                ]
+              }
             }
           }
         })
@@ -752,13 +812,16 @@ export function useOptimisticUpdatePatientMutation({
         queryKey: ['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }],
         updateFn: (oldData: unknown) => {
           const data = oldData as GetGlobalDataQuery | undefined
-          if (!data) return oldData
-          const existingPatient = data.patients.find(p => p.id === id)
+          if (!data?.patients?.data) return oldData
+          const existingPatient = data.patients.data.find(p => p.id === id)
           if (!existingPatient) return oldData
           const updatedPatient = updatePatientInQuery(existingPatient as unknown as PatientType, updateData)
           return {
             ...data,
-            patients: data.patients.map(p => p.id === id ? updatedPatient as typeof existingPatient : p)
+            patients: {
+              ...data.patients,
+              data: data.patients.data.map(p => p.id === id ? updatedPatient as typeof existingPatient : p)
+            }
           }
         }
       })

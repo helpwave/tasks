@@ -1,8 +1,11 @@
 import { useMemo, useState, forwardRef, useImperativeHandle, useEffect, useCallback } from 'react'
 import { Chip, FillerCell, Button, SearchBar, ProgressIndicator, Tooltip, Checkbox, Drawer, Visibility, TableProvider, TableDisplay, TablePagination, TableColumnSwitcher } from '@helpwave/hightide'
 import { PlusIcon, Table as TableIcon, LayoutGrid, Printer } from 'lucide-react'
-import { GetPatientsDocument, Sex, PatientState, type GetPatientsQuery, type TaskType } from '@/api/gql/generated'
-import { usePaginatedGraphQLQuery } from '@/hooks/usePaginatedQuery'
+import { GET_PATIENTS, useGetPatientsQuery, type GetPatientsData } from '@/api/queries/patients'
+import { useGetPropertyDefinitionsQuery } from '@/api/queries/properties'
+import { Sex, PatientState, FieldType, PropertyEntity } from '@/api/types'
+import { useAsyncTableData } from '@/hooks/useAsyncTableData'
+import type { PaginationState, SortingState, ColumnFiltersState } from '@tanstack/react-table'
 import { PatientDetailView } from '@/components/patients/PatientDetailView'
 import { SmartDate } from '@/utils/date'
 import { LocationChips } from '@/components/patients/LocationChips'
@@ -18,13 +21,16 @@ export type PatientViewModel = {
   name: string,
   firstname: string,
   lastname: string,
-  position: GetPatientsQuery['patients'][0]['position'],
+  position: GetPatientsData['patients']['data'][0]['position'],
   openTasksCount: number,
   closedTasksCount: number,
   birthdate: Date,
   sex: Sex,
   state: PatientState,
-  tasks: TaskType[],
+  tasks: Array<{
+    id: string
+    done: boolean
+  }>,
 }
 
 const STORAGE_KEY_SHOW_ALL_PATIENTS = 'patient-show-all-states'
@@ -50,6 +56,17 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
   const [selectedPatient, setSelectedPatient] = useState<PatientViewModel | undefined>(undefined)
   const [searchQuery, setSearchQuery] = useState('')
   const [openedPatientId, setOpenedPatientId] = useState<string | null>(null)
+  const [pagination, setPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 25,
+  })
+  const [sorting, setSorting] = useState<SortingState>([])
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
+  const [searchText, setSearchText] = useState('')
+
+  useEffect(() => {
+    setSearchText(searchQuery)
+  }, [searchQuery])
   const [showAllPatients, setShowAllPatients] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem(STORAGE_KEY_SHOW_ALL_PATIENTS)
@@ -83,20 +100,10 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
 
   const patientStates = showAllPatients ? allPatientStates : (acceptedStates ?? [PatientState.Admitted])
 
-  const { data: patientsData, refetch } = usePaginatedGraphQLQuery<GetPatientsQuery, GetPatientsQuery['patients'][0], { rootLocationIds?: string[], states?: PatientState[] }>({
-    queryKey: ['GetPatients', { rootLocationIds: effectiveRootLocationIds, states: patientStates }],
-    document: GetPatientsDocument,
-    baseVariables: {
-      rootLocationIds: effectiveRootLocationIds && effectiveRootLocationIds.length > 0 ? effectiveRootLocationIds : undefined,
-      states: patientStates
-    },
-    pageSize: 50,
-    extractItems: (result) => result.patients,
-    mode: 'infinite',
-    enabled: !isPrinting,
-    refetchOnWindowFocus: !isPrinting,
-    refetchOnMount: true,
-  })
+  const effectiveBaseVariables = useMemo(() => ({
+    rootLocationIds: effectiveRootLocationIds && effectiveRootLocationIds.length > 0 ? effectiveRootLocationIds : undefined,
+    states: patientStates,
+  }), [effectiveRootLocationIds, patientStates])
 
   useEffect(() => {
     const handleBeforePrint = () => setIsPrinting(true)
@@ -110,73 +117,6 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       window.removeEventListener('afterprint', handleAfterPrint)
     }
   }, [])
-
-  const patients: PatientViewModel[] = useMemo(() => {
-    if (!patientsData || patientsData.length === 0) return []
-
-    let data = patientsData.map(p => ({
-      id: p.id,
-      name: p.name,
-      firstname: p.firstname,
-      lastname: p.lastname,
-      birthdate: new Date(p.birthdate),
-      sex: p.sex,
-      state: p.state,
-      position: p.position,
-      openTasksCount: p.tasks?.filter(t => !t.done).length ?? 0,
-      closedTasksCount: p.tasks?.filter(t => t.done).length ?? 0,
-      tasks: []
-    }))
-
-    if (searchQuery) {
-      const lowerQuery = searchQuery.toLowerCase()
-      data = data.filter(p =>
-        p.name.toLowerCase().includes(lowerQuery) ||
-        p.firstname.toLowerCase().includes(lowerQuery) ||
-        p.lastname.toLowerCase().includes(lowerQuery))
-    }
-
-    return data
-  }, [patientsData, searchQuery])
-
-  useImperativeHandle(ref, () => ({
-    openCreate: () => {
-      setSelectedPatient(undefined)
-      setIsPanelOpen(true)
-    },
-    openPatient: (patientId: string) => {
-      const patient = patients.find(p => p.id === patientId)
-      if (patient) {
-        setSelectedPatient(patient)
-        setIsPanelOpen(true)
-      }
-    }
-  }), [patients])
-
-  useEffect(() => {
-    const handleBeforePrint = () => setIsPrinting(true)
-    const handleAfterPrint = () => setIsPrinting(false)
-
-    window.addEventListener('beforeprint', handleBeforePrint)
-    window.addEventListener('afterprint', handleAfterPrint)
-
-    return () => {
-      window.removeEventListener('beforeprint', handleBeforePrint)
-      window.removeEventListener('afterprint', handleAfterPrint)
-    }
-  }, [])
-
-  useEffect(() => {
-    if (initialPatientId && openedPatientId !== initialPatientId) {
-      const patient = patients.find(p => p.id === initialPatientId)
-      if (patient) {
-        setSelectedPatient(patient)
-      }
-      setIsPanelOpen(true)
-      setOpenedPatientId(initialPatientId)
-      onInitialPatientOpened?.()
-    }
-  }, [initialPatientId, patients, openedPatientId, onInitialPatientOpened])
 
   const handleEdit = useCallback((patient: PatientViewModel) => {
     setSelectedPatient(patient)
@@ -193,7 +133,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
     window.print()
   }
 
-  const columns = useMemo<ColumnDef<PatientViewModel>[]>(() => [
+  const baseColumns = useMemo<ColumnDef<PatientViewModel>[]>(() => [
     {
       id: 'name',
       header: translation('name'),
@@ -320,6 +260,156 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
     },
   ], [allPatientStates, translation])
 
+  const { data: propertyDefinitionsData } = useGetPropertyDefinitionsQuery()
+
+  const { data: fetchedPatientsData, isLoading, totalCount, pageCount, refetch } = useAsyncTableData<
+    GetPatientsData,
+    GetPatientsData['patients']['data'][0],
+    typeof effectiveBaseVariables
+  >({
+    queryKey: ['GetPatients', { rootLocationIds: effectiveRootLocationIds, states: patientStates }],
+    document: GET_PATIENTS,
+    baseVariables: effectiveBaseVariables,
+    pageIndex: pagination.pageIndex,
+    pageSize: pagination.pageSize,
+    sorting,
+    columnFilters,
+    searchText,
+    columns: baseColumns,
+    entityType: 'patient',
+    extractItems: (result) => {
+      return result.patients?.data || []
+    },
+    extractTotalCount: (result) => {
+      return result.patients?.totalCount ?? 0
+    },
+    enabled: !isPrinting && !!effectiveBaseVariables.rootLocationIds,
+    refetchOnWindowFocus: !isPrinting,
+    refetchOnMount: true,
+  })
+
+  const propertyColumns = useMemo<ColumnDef<PatientViewModel>[]>(() => {
+    if (!propertyDefinitionsData?.propertyDefinitions) return []
+
+    return propertyDefinitionsData.propertyDefinitions
+      .filter(def => def.isActive && def.allowedEntities.includes(PropertyEntity.Patient))
+      .map(def => {
+        const getFilterFn = () => {
+          switch (def.fieldType) {
+            case FieldType.FieldTypeText:
+              return 'text'
+            case FieldType.FieldTypeNumber:
+              return 'number'
+            case FieldType.FieldTypeCheckbox:
+              return 'boolean'
+            case FieldType.FieldTypeDate:
+              return 'date'
+            case FieldType.FieldTypeDateTime:
+              return 'date'
+            case FieldType.FieldTypeSelect:
+              return 'tags'
+            case FieldType.FieldTypeMultiSelect:
+              return 'tags'
+            default:
+              return 'text'
+          }
+        }
+
+        return {
+          id: `property-${def.id}`,
+          header: def.name,
+          accessorFn: () => null,
+          cell: ({ row }) => {
+            const patient = fetchedPatientsData?.find(p => p.id === row.original.id)
+            const propertyValue = patient?.properties?.find(p => p.definition.id === def.id)
+            if (!propertyValue) return null
+
+            const value = propertyValue.textValue ?? propertyValue.numberValue ?? propertyValue.booleanValue ?? propertyValue.dateValue ?? propertyValue.dateTimeValue ?? propertyValue.selectValue ?? propertyValue.multiSelectValues
+            if (!value) return null
+
+            switch (def.fieldType) {
+              case FieldType.FieldTypeText:
+                return String(value)
+              case FieldType.FieldTypeNumber:
+                return String(value)
+              case FieldType.FieldTypeCheckbox:
+                return value ? translation('yes') : translation('no')
+              case FieldType.FieldTypeDate:
+              case FieldType.FieldTypeDateTime:
+                return <SmartDate date={new Date(value)} showTime={def.fieldType === FieldType.FieldTypeDateTime} />
+              case FieldType.FieldTypeSelect:
+                return String(value)
+              case FieldType.FieldTypeMultiSelect:
+                return Array.isArray(value) ? value.join(', ') : String(value)
+              default:
+                return String(value)
+            }
+          },
+          minSize: 150,
+          size: 200,
+          maxSize: 300,
+          filterFn: getFilterFn(),
+          meta: {
+            filterData: {
+              propertyDefinitionId: def.id,
+              ...(def.fieldType === FieldType.FieldTypeSelect || def.fieldType === FieldType.FieldTypeMultiSelect) && def.options.length > 0 ? {
+                tags: def.options.map(opt => ({ label: opt, tag: opt })),
+              } : {},
+            }
+          }
+        } as ColumnDef<PatientViewModel>
+      })
+  }, [propertyDefinitionsData, translation, fetchedPatientsData])
+
+  const columns = useMemo<ColumnDef<PatientViewModel>[]>(() => [
+    ...baseColumns,
+    ...propertyColumns,
+  ], [baseColumns, propertyColumns])
+
+  const patients: PatientViewModel[] = useMemo(() => {
+    if (!fetchedPatientsData || fetchedPatientsData.length === 0) return []
+
+    return fetchedPatientsData.map(p => ({
+      id: p.id,
+      name: p.name,
+      firstname: p.firstname,
+      lastname: p.lastname,
+      birthdate: new Date(p.birthdate),
+      sex: p.sex,
+      state: p.state,
+      position: p.position,
+      openTasksCount: p.tasks?.filter((t: { done: boolean }) => !t.done).length ?? 0,
+      closedTasksCount: p.tasks?.filter((t: { done: boolean }) => t.done).length ?? 0,
+      tasks: []
+    }))
+  }, [fetchedPatientsData])
+
+  useImperativeHandle(ref, () => ({
+    openCreate: () => {
+      setSelectedPatient(undefined)
+      setIsPanelOpen(true)
+    },
+    openPatient: (patientId: string) => {
+      const patient = patients.find(p => p.id === patientId)
+      if (patient) {
+        setSelectedPatient(patient)
+        setIsPanelOpen(true)
+      }
+    }
+  }), [patients])
+
+  useEffect(() => {
+    if (initialPatientId && openedPatientId !== initialPatientId) {
+      const patient = patients.find(p => p.id === initialPatientId)
+      if (patient) {
+        setSelectedPatient(patient)
+      }
+      setIsPanelOpen(true)
+      setOpenedPatientId(initialPatientId)
+      onInitialPatientOpened?.()
+    }
+  }, [initialPatientId, patients, openedPatientId, onInitialPatientOpened])
+
   const onRowClick = useCallback((row: Row<PatientViewModel>) => handleEdit(row.original), [handleEdit])
   const fillerRowCell = useCallback(() => (<FillerCell className="min-h-8" />), [])
 
@@ -329,11 +419,26 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       columns={columns}
       fillerRowCell={fillerRowCell}
       onRowClick={onRowClick}
-      initialState={{
-        pagination: {
-          pageSize: 25,
-        }
+      state={{
+        pagination,
+        sorting,
+        columnFilters,
+      } as any}
+      onPaginationChange={(updater: any) => {
+        setPagination(typeof updater === 'function' ? updater(pagination) : updater)
       }}
+      onSortingChange={(updater: any) => {
+        setSorting(typeof updater === 'function' ? updater(sorting) : updater)
+        setPagination({ ...pagination, pageIndex: 0 })
+      }}
+      onColumnFiltersChange={(updater: any) => {
+        setColumnFilters(typeof updater === 'function' ? updater(columnFilters) : updater)
+        setPagination({ ...pagination, pageIndex: 0 })
+      }}
+      pageCount={pageCount}
+      manualPagination={true}
+      manualSorting={true}
+      manualFiltering={true}
     >
       <div className="flex flex-col h-full gap-4">
         <div className="flex flex-col sm:flex-row justify-between w-full gap-4">

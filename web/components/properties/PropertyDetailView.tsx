@@ -16,12 +16,8 @@ import type { Property, PropertyFieldType, PropertySelectOption, PropertySubject
 import { propertyFieldTypeList, propertySubjectTypeList } from '@/components/PropertyList'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { PlusIcon, XIcon } from 'lucide-react'
-import {
-  useCreatePropertyDefinitionMutation,
-  useUpdatePropertyDefinitionMutation,
-  FieldType,
-  PropertyEntity
-} from '@/api/gql/generated'
+import { useCreatePropertyMutation, useUpdatePropertyMutation } from '@/api/mutations/properties'
+import { FieldType, PropertyEntity } from '@/api/types'
 
 interface PropertyDetailViewProps {
   id?: string,
@@ -76,28 +72,10 @@ export const PropertyDetailView = ({
   })
 
   const [isCreating, setIsCreating] = useState<boolean>(false)
-  const { mutate: createProperty } = useCreatePropertyDefinitionMutation({
-    onMutate: () => {
-      setIsCreating(true)
-    },
-    onSettled: () => {
-      setIsCreating(false)
-    },
-    onSuccess: () => {
-      onSuccess()
-      onClose()
-    }
-  })
+  const [createPropertyMutation] = useCreatePropertyMutation()
 
   const [isUpdating, setIsUpdating] = useState<boolean>(false)
-  const { mutate: updateProperty } = useUpdatePropertyDefinitionMutation({
-    onMutate: () => {
-      setIsUpdating(true)
-    },
-    onSettled: () => {
-      setIsUpdating(false)
-    },
-    onSuccess: () => {
+  const [updatePropertyMutation] = useUpdatePropertyMutation()
       onSuccess()
     }
   })
@@ -117,10 +95,15 @@ export const PropertyDetailView = ({
       backendUpdates['options'] = updates.selectData.options.map(opt => opt.name)
     }
 
-    updateProperty({
-      id,
-      data: backendUpdates
-    })
+    setIsUpdating(true)
+    try {
+      await updatePropertyMutation({ variables: { id, data: backendUpdates } })
+      onSuccess()
+    } catch (error) {
+      console.error('Failed to update property', error)
+    } finally {
+      setIsUpdating(false)
+    }
   }
 
   const isLoading = isCreating || isUpdating
@@ -132,7 +115,10 @@ export const PropertyDetailView = ({
       subjectType: initialData?.subjectType || 'patient',
       fieldType: initialData?.fieldType || 'singleSelect',
       isArchived: initialData?.isArchived || false,
-      selectData: initialData?.selectData,
+      selectData: initialData?.selectData || (initialData?.fieldType === 'multiSelect' || initialData?.fieldType === 'singleSelect' ? {
+        isAllowingFreetext: false,
+        options: [],
+      } : undefined),
     },
     onFormSubmit: (values) => {
       if (!values.name.trim()) return
@@ -146,7 +132,16 @@ export const PropertyDetailView = ({
         isActive: !values.isArchived,
       }
 
-      createProperty({ data: createData })
+      setIsCreating(true)
+      try {
+        await createPropertyMutation({ variables: { data: createData } })
+        onSuccess()
+        onClose()
+      } catch (error) {
+        console.error('Failed to create property', error)
+      } finally {
+        setIsCreating(false)
+      }
     },
     validators: {
       name: (value) => {
@@ -289,10 +284,21 @@ export const PropertyDetailView = ({
                     disabled={isEditMode}
                     onValueChange={(value) => {
                       const fieldType = value as PropertyFieldType
+                      const isSelectType = fieldType === 'multiSelect' || fieldType === 'singleSelect'
+                      const currentSelectData = form.store.get('selectData')
+                      const selectData = isSelectType && !currentSelectData ? {
+                        isAllowingFreetext: false,
+                        options: [],
+                      } : currentSelectData
                       dataProps.onValueChange?.(fieldType)
+                      updateForm(prev => ({
+                        ...prev,
+                        fieldType,
+                        selectData,
+                      }))
                       dataProps.onEditComplete?.(fieldType)
                       if (isEditMode && id) {
-                        persist({ fieldType })
+                        persist({ fieldType, selectData })
                       }
                     }}
                   >
@@ -317,7 +323,8 @@ export const PropertyDetailView = ({
                       <div className="flex-col-2 min-h-64 max-h-64 overflow-y-auto">
                         <FormObserverKey<PropertyFormValues, 'selectData'> key="selectData">
                           {({ value: selectData }) => {
-                            return selectData?.options.map((option) => (
+                            if (!selectData?.options) return null
+                            return selectData.options.map((option) => (
                               <div key={option.id} className="relative">
                                 <Input
                                   value={option.name}

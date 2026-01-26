@@ -35,14 +35,18 @@ query GetGlobalData($rootLocationIds: [ID!]) {
     parentId
   }
   patients(rootLocationIds: $rootLocationIds) {
-    id
-    state
-    assignedLocation {
+    data {
       id
+      state
+      assignedLocation {
+        id
+      }
     }
   }
   waitingPatients: patients(states: [WAIT], rootLocationIds: $rootLocationIds) {
-    id
-    state
+    data {
+      id
+      state
+    }
   }
 }

@@ -267,8 +267,8 @@ class FilterInput:
 
 @strawberry.input
 class PaginationInput:
-    page_index: int = 0
-    page_size: int | None = None
+    pageIndex: int = 0
+    pageSize: int | None = None
 
 
 @strawberry.input
@@ -284,3 +284,9 @@ class FullTextSearchInput:
     search_columns: list[str] | None = None
     include_properties: bool = False
     property_definition_ids: list[str] | None = None
+
+
+@strawberry.type
+class PaginatedResponse:
+    data: list[strawberry.scalars.JSON]
+    total_count: int

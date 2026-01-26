@@ -1,8 +1,9 @@
 import type { Dispatch, SetStateAction } from 'react'
 import { createContext, type PropsWithChildren, useContext, useEffect, useRef, useState } from 'react'
 import { usePathname } from 'next/navigation'
-import { useGetGlobalDataQuery, useGetLocationsQuery } from '@/api/gql/generated'
-import { useQueryClient } from '@tanstack/react-query'
+import { useGetGlobalDataQuery } from '@/api/queries/global'
+import { useGetLocationsQuery } from '@/api/queries/locations'
+import { apolloClient } from '@/utils/apolloClient'
 import { useAuth } from './useAuth'
 import { useLocalStorage } from '@helpwave/hightide'
 
@@ -103,7 +104,6 @@ export const useTasksContext = (): TasksContextType => {
 export const TasksContextProvider = ({ children }: PropsWithChildren) => {
   const pathName = usePathname()
   const { identity, isLoading: isAuthLoading } = useAuth()
-  const queryClient = useQueryClient()
   const {
     value: storedSelectedRootLocationIds,
     setValue: setStoredSelectedRootLocationIds
@@ -120,8 +120,8 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
   const { data: allLocationsData } = useGetLocationsQuery(
     {},
     {
-      enabled: !isAuthLoading && !!identity,
-      refetchOnWindowFocus: true,
+      skip: isAuthLoading || !identity,
+      fetchPolicy: 'cache-and-network',
     }
   )
 
@@ -134,9 +134,8 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
       rootLocationIds: selectedRootLocationIdsForQuery
     },
     {
-      enabled: !isAuthLoading && !!identity,
-      refetchOnWindowFocus: true,
-      refetchOnMount: true,
+      skip: isAuthLoading || !identity,
+      fetchPolicy: 'cache-and-network',
     }
   )
 
@@ -168,15 +167,16 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
       const currentRootLocationIds = data.me.rootLocations.map(loc => loc.id).sort().join(',')
 
       if (prevRootLocationIdsRef.current && prevRootLocationIdsRef.current !== currentRootLocationIds) {
-        queryClient.invalidateQueries()
+        apolloClient.cache.evict({ fieldName: 'me' })
+        apolloClient.cache.gc()
       }
       prevRootLocationIdsRef.current = currentRootLocationIds
     }
   }, [data?.me?.rootLocations, queryClient])
 
   useEffect(() => {
-    const totalPatientsCount = data?.patients?.length ?? 0
-    const waitingPatientsCount = data?.waitingPatients?.length ?? 0
+    const totalPatientsCount = data?.patients?.data?.length ?? 0
+    const waitingPatientsCount = data?.waitingPatients?.data?.length ?? 0
     const rootLocations = data?.me?.rootLocations?.map(loc => ({ id: loc.id, title: loc.title, kind: loc.kind })) ?? []
 
     setState(prevState => {
@@ -199,7 +199,7 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
         totalPatientsCount,
         waitingPatientsCount,
         locationPatientsCount: prevState.selectedLocationId
-          ? data?.patients?.filter(p => p.assignedLocation?.id === prevState.selectedLocationId).length ?? 0
+          ? data?.patients?.data?.filter(p => p.assignedLocation?.id === prevState.selectedLocationId).length ?? 0
           : totalPatientsCount,
         teams: filterLocationsByRootSubtree(
           data?.teams || [],

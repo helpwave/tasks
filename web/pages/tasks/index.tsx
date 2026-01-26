@@ -3,57 +3,15 @@ import { Page } from '@/components/layout/Page'
 import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
-import { TaskList, type TaskViewModel } from '@/components/tasks/TaskList'
-import { useMemo } from 'react'
-import { GetTasksDocument, type GetTasksQuery } from '@/api/gql/generated'
+import { TaskList } from '@/components/tasks/TaskList'
 import { useRouter } from 'next/router'
 import { useTasksContext } from '@/hooks/useTasksContext'
-import { usePaginatedGraphQLQuery } from '@/hooks/usePaginatedQuery'
 
 const TasksPage: NextPage = () => {
   const translation = useTasksTranslation()
   const router = useRouter()
   const { selectedRootLocationIds, user, myTasksCount } = useTasksContext()
-  const { data: tasksData, refetch } = usePaginatedGraphQLQuery<GetTasksQuery, GetTasksQuery['tasks'][0], { rootLocationIds?: string[], assigneeId?: string }>({
-    queryKey: ['GetTasks'],
-    document: GetTasksDocument,
-    baseVariables: {
-      rootLocationIds: selectedRootLocationIds,
-      assigneeId: user?.id,
-    },
-    pageSize: 50,
-    extractItems: (result) => result.tasks,
-    mode: 'infinite',
-    enabled: !!selectedRootLocationIds && !!user,
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
-  })
   const taskId = router.query['taskId'] as string | undefined
-
-  const tasks: TaskViewModel[] = useMemo(() => {
-    if (!tasksData || tasksData.length === 0) return []
-
-    return tasksData.map((task) => ({
-      id: task.id,
-      name: task.title,
-      description: task.description || undefined,
-      updateDate: task.updateDate ? new Date(task.updateDate) : new Date(task.creationDate),
-      dueDate: task.dueDate ? new Date(task.dueDate) : undefined,
-      priority: task.priority || null,
-      estimatedTime: task.estimatedTime ?? null,
-      done: task.done,
-      patient: task.patient
-        ? {
-          id: task.patient.id,
-          name: task.patient.name,
-          locations: task.patient.assignedLocations || []
-        }
-        : undefined,
-      assignee: task.assignee
-        ? { id: task.assignee.id, name: task.assignee.name, avatarURL: task.assignee.avatarUrl, isOnline: task.assignee.isOnline ?? null }
-        : undefined,
-    }))
-  }, [tasksData])
 
   return (
     <Page pageTitle={titleWrapper(translation('myTasks'))}>
@@ -62,8 +20,10 @@ const TasksPage: NextPage = () => {
         description={myTasksCount !== undefined ? translation('nTask', { count: myTasksCount }) : undefined}
       >
         <TaskList
-          tasks={tasks}
-          onRefetch={refetch}
+          baseVariables={{
+            rootLocationIds: selectedRootLocationIds,
+            assigneeId: user?.id,
+          }}
           showAssignee={false}
           initialTaskId={taskId}
           onInitialTaskOpened={() => router.replace('/tasks', undefined, { shallow: true })}

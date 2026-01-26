@@ -1,10 +1,8 @@
 import { useMemo } from 'react'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
-import {
-  PropertyEntity,
-  useGetPropertyDefinitionsQuery,
-  useGetTaskQuery
-} from '@/api/gql/generated'
+import { PropertyEntity } from '@/api/types'
+import { useGetPropertyDefinitionsQuery } from '@/api/queries/properties'
+import { useGetTaskQuery } from '@/api/queries/tasks'
 import {
   TabList,
   TabPanel,
@@ -28,12 +26,12 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
   const { data: taskData } = useGetTaskQuery(
     { id: taskId! },
     {
-      enabled: isEditMode,
-      refetchOnMount: true,
+      skip: !isEditMode,
+      fetchPolicy: 'cache-and-network',
     }
   )
 
-  const { data: propertyDefinitionsData } = useGetPropertyDefinitionsQuery()
+  const { data: propertyDefinitionsData } = useGetPropertyDefinitionsQuery({})
 
   const hasAvailableProperties = useMemo(() => {
     if (!propertyDefinitionsData?.propertyDefinitions) return false

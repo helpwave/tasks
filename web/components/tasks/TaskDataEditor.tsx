@@ -1,13 +1,9 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
-import type { CreateTaskInput, UpdateTaskInput, TaskPriority } from '@/api/gql/generated'
-import {
-  PatientState,
-  useCreateTaskMutation,
-  useDeleteTaskMutation,
-  useGetPatientsQuery,
-  useGetTaskQuery
-} from '@/api/gql/generated'
+import { PatientState, TaskPriority } from '@/api/types'
+import { useCreateTaskMutation, useDeleteTaskMutation, useUpdateTaskMutation } from '@/api/mutations/tasks'
+import { useGetPatientsQuery } from '@/api/queries/patients'
+import { useGetTaskQuery } from '@/api/queries/tasks'
 import type { FormFieldDataHandling } from '@helpwave/hightide'
 import {
   Button,
@@ -31,14 +27,30 @@ import { User, Flag } from 'lucide-react'
 import { SmartDate } from '@/utils/date'
 import { AssigneeSelect } from './AssigneeSelect'
 import { localToUTCWithSameTime, PatientDetailView } from '@/components/patients/PatientDetailView'
-import { useOptimisticUpdateTaskMutation } from '@/api/optimistic-updates/GetTask'
 import { ErrorDialog } from '@/components/ErrorDialog'
 import clsx from 'clsx'
 import { PriorityUtils } from '@/utils/priority'
 
-type TaskFormValues = CreateTaskInput & {
-  done: boolean,
-  assigneeTeamId?: string | null,
+type TaskFormValues = {
+  title: string
+  description?: string | null
+  patientId: string
+  assigneeId?: string | null
+  assigneeTeamId?: string | null
+  dueDate?: Date | null
+  priority?: TaskPriority | null
+  estimatedTime?: number | null
+  done: boolean
+  properties?: Array<{
+    definitionId: string
+    textValue?: string | null
+    numberValue?: number | null
+    booleanValue?: boolean | null
+    dateValue?: string | null
+    dateTimeValue?: string | null
+    selectValue?: string | null
+    multiSelectValues?: Array<string> | null
+  }> | null
 }
 
 interface TaskDataEditorProps {
@@ -62,11 +74,11 @@ export const TaskDataEditor = ({
   const isEditMode = id !== null
   const taskId = id
 
-  const { data: taskData, isLoading: isLoadingTask } = useGetTaskQuery(
+  const { data: taskData, loading: isLoadingTask } = useGetTaskQuery(
     { id: taskId! },
     {
-      enabled: isEditMode,
-      refetchOnMount: true,
+      skip: !isEditMode,
+      fetchPolicy: 'cache-and-network',
     }
   )
 
@@ -76,47 +88,17 @@ export const TaskDataEditor = ({
       states: [PatientState.Admitted, PatientState.Wait],
     },
     {
-      enabled: !isEditMode,
+      skip: isEditMode,
     }
   )
 
   const [isCreating, setIsCreating] = useState<boolean>(false)
-  const { mutate: createTask } = useCreateTaskMutation({
-    onMutate: () => {
-      setIsCreating(true)
-    },
-    onSettled: () => {
-      setIsCreating(false)
-    },
-    onSuccess: async () => {
-      onSuccess?.()
-      onClose?.()
-    },
-    onError: (error) => {
-      setErrorDialog({ isOpen: true, message: error instanceof Error ? error.message : 'Failed to create task' })
-    },
-  })
+  const [createTaskMutation] = useCreateTaskMutation()
 
-  const { mutate: updateTask } = useOptimisticUpdateTaskMutation({
-    id: taskId!,
-    onSuccess: () => {
-      onSuccess?.()
-    },
-  })
+  const [updateTaskMutation] = useUpdateTaskMutation(taskId!)
 
   const [isDeleting, setIsDeleting] = useState<boolean>(false)
-  const { mutate: deleteTask } = useDeleteTaskMutation({
-    onMutate: () => {
-      setIsDeleting(true)
-    },
-    onSettled: () => {
-      setIsDeleting(false)
-    },
-    onSuccess: () => {
-      onSuccess?.()
-      onClose?.()
-    },
-  })
+  const [deleteTaskMutation] = useDeleteTaskMutation()
 
   const form = useCreateForm<TaskFormValues>({
     initialValues: {
@@ -130,20 +112,31 @@ export const TaskDataEditor = ({
       estimatedTime: null,
       done: false,
     },
-    onFormSubmit: (values) => {
-      createTask({
-        data: {
-          title: values.title,
-          patientId: values.patientId,
-          description: values.description,
-          assigneeId: values.assigneeId,
-          assigneeTeamId: values.assigneeTeamId,
-          dueDate: values.dueDate ? localToUTCWithSameTime(values.dueDate)?.toISOString() : null,
-          priority: (values.priority as TaskPriority | null) || undefined,
-          estimatedTime: values.estimatedTime,
-          properties: values.properties
-        } as CreateTaskInput & { priority?: TaskPriority | null, estimatedTime?: number | null }
-      })
+    onFormSubmit: async (values) => {
+      setIsCreating(true)
+      try {
+        await createTaskMutation({
+          variables: {
+            data: {
+              title: values.title,
+              patientId: values.patientId,
+              description: values.description,
+              assigneeId: values.assigneeId,
+              assigneeTeamId: values.assigneeTeamId,
+              dueDate: values.dueDate ? localToUTCWithSameTime(values.dueDate)?.toISOString() : null,
+              priority: values.priority || undefined,
+              estimatedTime: values.estimatedTime,
+              properties: values.properties,
+            },
+          },
+        })
+        onSuccess?.()
+        onClose?.()
+      } catch (error) {
+        setErrorDialog({ isOpen: true, message: error instanceof Error ? error.message : 'Failed to create task' })
+      } finally {
+        setIsCreating(false)
+      }
     },
     validators: {
       title: (value) => {
@@ -159,19 +152,28 @@ export const TaskDataEditor = ({
         return null
       },
     },
-    onValidUpdate: (_, updates) => {
+    onValidUpdate: async (_, updates) => {
       if (isEditMode && taskId) {
-        const data: UpdateTaskInput = {
-          title: updates?.title,
-          description: updates?.description,
-          dueDate: updates?.dueDate ? localToUTCWithSameTime(updates.dueDate)?.toISOString() : undefined,
-          priority: updates?.priority as TaskPriority | null | undefined,
-          estimatedTime: updates?.estimatedTime,
-          done: updates?.done,
-          assigneeId: updates?.assigneeId,
-          assigneeTeamId: updates?.assigneeTeamId,
+        try {
+          await updateTaskMutation({
+            variables: {
+              id: taskId,
+              data: {
+                title: updates?.title,
+                description: updates?.description,
+                dueDate: updates?.dueDate ? localToUTCWithSameTime(updates.dueDate)?.toISOString() : undefined,
+                priority: updates?.priority || undefined,
+                estimatedTime: updates?.estimatedTime,
+                done: updates?.done,
+                assigneeId: updates?.assigneeId,
+                assigneeTeamId: updates?.assigneeTeamId,
+              },
+            },
+          })
+          onSuccess?.()
+        } catch (error) {
+          setErrorDialog({ isOpen: true, message: error instanceof Error ? error.message : 'Failed to update task' })
         }
-        updateTask({ id: taskId, data })
       }
     }
   })
@@ -198,7 +200,7 @@ export const TaskDataEditor = ({
     }
   }, [taskData?.task, isEditMode, initialPatientId, taskId, updateForm])
 
-  const patients = patientsData?.patients || []
+  const patients = patientsData?.patients?.data || []
 
   const dueDate = useFormObserverKey({ formStore: form.store, key: 'dueDate' })?.value ?? null
   const estimatedTime = useFormObserverKey({ formStore: form.store, key: 'estimatedTime' })?.value ?? null
@@ -411,7 +413,16 @@ export const TaskDataEditor = ({
                 <Button
                   onClick={() => {
                     if (taskId) {
-                      deleteTask({ id: taskId })
+                      setIsDeleting(true)
+                      try {
+                        await deleteTaskMutation({ variables: { id: taskId } })
+                        onSuccess?.()
+                        onClose?.()
+                      } catch (error) {
+                        setErrorDialog({ isOpen: true, message: error instanceof Error ? error.message : 'Failed to delete task' })
+                      } finally {
+                        setIsDeleting(false)
+                      }
                     }
                   }}
                   disabled={isDeleting}

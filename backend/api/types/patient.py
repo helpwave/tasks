@@ -162,3 +162,9 @@ class PatientType:
     @strawberry.field
     def checksum(self) -> str:
         return calculate_checksum_for_instance(self)
+
+
+@strawberry.type
+class PatientsResponse:
+    data: list[PatientType]
+    total_count: int

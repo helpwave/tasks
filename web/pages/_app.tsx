@@ -1,11 +1,10 @@
 import Head from 'next/head'
 import type { AppProps } from 'next/app'
 import { Inter, Space_Grotesk as SpaceGrotesk } from 'next/font/google'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { ApolloProvider } from '@apollo/client/react'
 import {
   HightideProvider
 } from '@helpwave/hightide'
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools/production'
 import titleWrapper from '@/utils/titleWrapper'
 import { getConfig } from '@/utils/config'
 import '../globals.css'
@@ -15,6 +14,7 @@ import { SubscriptionProvider } from '@/providers/SubscriptionProvider'
 import { InstallPrompt } from '@/components/pwa/InstallPrompt'
 import { registerServiceWorker, requestNotificationPermission } from '@/utils/pushNotifications'
 import { useEffect } from 'react'
+import { apolloClient } from '@/utils/apolloClient'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -24,14 +24,6 @@ const inter = Inter({
 const spaceGrotesk = SpaceGrotesk({
   subsets: ['latin'],
   variable: '--font-space-grotesk'
-})
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: true,
-    },
-  },
 })
 
 const config = getConfig()
@@ -52,7 +44,7 @@ function MyApp({
 
   return (
     <HightideProvider>
-      <QueryClientProvider client={queryClient}>
+      <ApolloProvider client={apolloClient}>
         <Head>
           <title>{titleWrapper()}</title>
           <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes, viewport-fit=cover" />
@@ -79,8 +71,7 @@ function MyApp({
             </SubscriptionProvider>
           </TasksContextProvider>
         </AuthProvider>
-        {config.env === 'development' && <ReactQueryDevtools buttonPosition="bottom-left" />}
-      </QueryClientProvider>
+      </ApolloProvider>
     </HightideProvider>
   )
 }

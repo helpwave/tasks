@@ -45,8 +45,8 @@ export const PropertyEntry = ({
     readOnly,
   }
 
-  if (['singleSelect', 'multiSelect'].includes(fieldType) && !selectData) {
-    throw new Error('PropertyEntry: When using a SingleSelect or MultiSelect field type selectData must be provided')
+  if (['singleSelect', 'multiSelect'].includes(fieldType) && (!selectData || !Array.isArray(selectData.options))) {
+    throw new Error('PropertyEntry: When using a SingleSelect or MultiSelect field type selectData with options array must be provided')
   }
 
   switch (fieldType) {

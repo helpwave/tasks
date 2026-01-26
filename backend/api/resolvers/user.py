@@ -1,6 +1,6 @@
 import strawberry
 from api.context import Info
-from api.decorators.filter_sort import filtered_and_sorted_query
+from api.decorators.filter_sort import QueryResult, filtered_and_sorted_query
 from api.decorators.full_text_search import full_text_search_query
 from api.inputs import (
     FilterInput,
@@ -13,7 +13,7 @@ from api.resolvers.base import BaseMutationResolver
 from api.types.user import UserType
 from database import models
 from graphql import GraphQLError
-from sqlalchemy import select
+from sqlalchemy import Select, func, select
 
 
 @strawberry.type
@@ -37,7 +37,17 @@ class UserQuery:
         search: FullTextSearchInput | None = None,
     ) -> list[UserType]:
         query = select(models.User)
-        return query
+        result = query
+        
+        if isinstance(result, Select):
+            query_result = await info.context.db.execute(result)
+            data = query_result.scalars().all()
+        elif isinstance(result, QueryResult):
+            data = result.data
+        else:
+            data = result if isinstance(result, list) else []
+        
+        return data
 
     @strawberry.field
     def me(self, info: Info) -> UserType | None:

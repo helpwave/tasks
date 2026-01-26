@@ -83,3 +83,9 @@ class TaskType:
     @property
     def _checksum_exclude(self) -> set[str]:
         return {"creation_date", "update_date"}
+
+
+@strawberry.type
+class TasksResponse:
+    data: list[TaskType]
+    total_count: int

@@ -17,10 +17,11 @@ from api.services.authorization import AuthorizationService
 from api.services.checksum import validate_checksum
 from api.services.datetime import normalize_datetime_to_utc
 from api.services.property import PropertyService
-from api.types.task import TaskType
+from api.decorators.filter_sort import QueryResult
+from api.types.task import TaskType, TasksResponse
 from database import models
 from graphql import GraphQLError
-from sqlalchemy import desc, select
+from sqlalchemy import Select, desc, func, select
 from sqlalchemy.orm import aliased, selectinload
 
 
@@ -57,7 +58,7 @@ class TaskQuery:
         sorting: list[SortInput] | None = None,
         pagination: PaginationInput | None = None,
         search: FullTextSearchInput | None = None,
-    ) -> list[TaskType]:
+    ) -> TasksResponse:
         auth_service = AuthorizationService(info.context.db)
 
         if patient_id:
@@ -76,14 +77,29 @@ class TaskQuery:
             if assignee_team_id:
                 query = query.where(models.Task.assignee_team_id == assignee_team_id)
 
-            return query
+            result = query
+            if isinstance(result, Select):
+                count_result = await info.context.db.execute(
+                    select(func.count()).select_from(result.subquery())
+                )
+                total_count = count_result.scalar() or 0
+                query_result = await info.context.db.execute(result)
+                data = query_result.scalars().all()
+            elif isinstance(result, QueryResult):
+                data = result.data
+                total_count = result.total_count if result.total_count is not None else len(data)
+            else:
+                data = result if isinstance(result, list) else []
+                total_count = len(data)
+
+            return TasksResponse(data=data, total_count=total_count)
 
         accessible_location_ids = await auth_service.get_user_accessible_location_ids(
             info.context.user, info.context
         )
 
         if not accessible_location_ids:
-            return []
+            return TasksResponse(data=[], total_count=0)
 
         patient_locations = aliased(models.patient_locations)
         patient_teams = aliased(models.patient_teams)
@@ -172,7 +188,22 @@ class TaskQuery:
                 models.Task.assignee_team_id.in_(select(team_location_cte.c.id))
             )
 
-        return query
+        result = query
+        if isinstance(result, Select):
+            count_result = await info.context.db.execute(
+                select(func.count()).select_from(result.subquery())
+            )
+            total_count = count_result.scalar() or 0
+            query_result = await info.context.db.execute(result)
+            data = query_result.scalars().all()
+        elif isinstance(result, QueryResult):
+            data = result.data
+            total_count = result.total_count if result.total_count is not None else len(data)
+        else:
+            data = result if isinstance(result, list) else []
+            total_count = len(data)
+
+        return TasksResponse(data=data, total_count=total_count)
 
     @strawberry.field
     async def recent_tasks(

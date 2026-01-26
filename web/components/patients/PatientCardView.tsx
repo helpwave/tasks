@@ -3,7 +3,7 @@ import { SmartDate } from '@/utils/date'
 import { LocationChips } from '@/components/patients/LocationChips'
 import { PatientStateChip } from '@/components/patients/PatientStateChip'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
-import { Sex } from '@/api/gql/generated'
+import { Sex } from '@/api/types'
 import type { PatientViewModel } from './PatientList'
 
 type PatientCardViewProps = {

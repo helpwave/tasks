@@ -1,5 +1,5 @@
 import { Chip } from '@helpwave/hightide'
-import { PatientState } from '@/api/gql/generated'
+import { PatientState } from '@/api/types'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 
 type PatientStateChipProps = {

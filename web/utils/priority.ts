@@ -1,4 +1,4 @@
-import type { TaskPriority } from '@/api/gql/generated'
+import { TaskPriority } from '@/api/types'
 
 function toBackgroundColor(priority: TaskPriority | null | undefined): string {
   switch (priority) {

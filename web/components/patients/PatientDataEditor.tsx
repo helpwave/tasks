@@ -2,25 +2,41 @@ import { useState, useMemo, useEffect } from 'react'
 import type { FormFieldDataHandling } from '@helpwave/hightide'
 import { FormProvider, Input, DateTimeInput, Select, SelectOption, Textarea, Checkbox, Button, ConfirmDialog, LoadingContainer, useCreateForm, FormField, Visibility, useFormObserverKey } from '@helpwave/hightide'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
-import type { CreatePatientInput, LocationNodeType, UpdatePatientInput, GetPatientQuery } from '@/api/gql/generated'
-import { Sex, PatientState, useGetLocationsQuery, useGetPatientQuery } from '@/api/gql/generated'
+import { Sex, PatientState } from '@/api/types'
+import { useGetLocationsQuery } from '@/api/queries/locations'
+import { useGetPatientQuery, type GetPatientData } from '@/api/queries/patients'
+import { useCreatePatientMutation, useUpdatePatientMutation, useDeletePatientMutation, useAdmitPatientMutation, useDischargePatientMutation, useWaitPatientMutation, useMarkPatientDeadMutation } from '@/api/mutations/patients'
 import { Building2, CheckIcon, Locate, Users, XIcon } from 'lucide-react'
 import { formatLocationPath, formatLocationPathFromId } from '@/utils/location'
 import { toISODate } from './PatientDetailView'
 import { LocationSelectionDialog } from '@/components/locations/LocationSelectionDialog'
-import { useOptimisticCreatePatientMutation, useOptimisticAdmitPatientMutation, useOptimisticDischargePatientMutation, useOptimisticDeletePatientMutation, useOptimisticWaitPatientMutation, useOptimisticMarkPatientDeadMutation, useOptimisticUpdatePatientMutation } from '@/api/optimistic-updates/GetPatient'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { ErrorDialog } from '@/components/ErrorDialog'
 
-type PatientFormValues = Omit<CreatePatientInput, 'clinicId' | 'teamIds' | 'positionId'> & {
-  clinic: NonNullable<GetPatientQuery['patient']>['clinic'] | null,
-  teams?: NonNullable<GetPatientQuery['patient']>['teams'] | null,
-  position?: NonNullable<GetPatientQuery['patient']>['position'] | null,
+type PatientFormValues = {
+  firstname: string
+  lastname: string
+  birthdate: string
+  sex: Sex
+  clinic: NonNullable<GetPatientData['patient']>['clinic'] | null
+  teams?: NonNullable<GetPatientData['patient']>['teams'] | null
+  position?: NonNullable<GetPatientData['patient']>['position'] | null
+  description?: string | null
+  properties?: Array<{
+    definitionId: string
+    textValue?: string | null
+    numberValue?: number | null
+    booleanValue?: boolean | null
+    dateValue?: string | null
+    dateTimeValue?: string | null
+    selectValue?: string | null
+    multiSelectValues?: Array<string> | null
+  }> | null
 }
 
 interface PatientDataEditorProps {
   id: null | string,
-  initialCreateData?: Partial<CreatePatientInput>,
+  initialCreateData?: Partial<PatientFormValues>,
   onSuccess?: () => void,
   onClose?: () => void,
 }
@@ -57,12 +73,12 @@ export const PatientDataEditor = ({
   const isEditMode = id !== null
   const patientId = id
 
-  const { data: patientData, isLoading: isLoadingPatient } = useGetPatientQuery(
+  const { data: patientData, loading: isLoadingPatient } = useGetPatientQuery(
     { id: patientId! },
-    { enabled: isEditMode }
+    { skip: !isEditMode }
   )
 
-  const { data: locationsData } = useGetLocationsQuery(undefined)
+  const { data: locationsData } = useGetLocationsQuery({})
 
   const locationsMap = useMemo(() => {
     if (!locationsData?.locationNodes) return new Map()
@@ -74,30 +90,11 @@ export const PatientDataEditor = ({
   }, [locationsData])
 
   const [isCreating, setIsCreating] = useState<boolean>(false)
-  const { mutate: createPatient } = useOptimisticCreatePatientMutation({
-    onMutate: () => {
-      setIsCreating(true)
-    },
-    onSettled: () => {
-      setIsCreating(false)
-    },
-    onSuccess: async () => {
-      onSuccess?.()
-      onClose?.()
-    },
-    onError: (error) => {
-      setErrorDialog({ isOpen: true, message: error instanceof Error ? error.message : 'Failed to create patient' })
-    },
-  })
+  const [createPatientMutation] = useCreatePatientMutation()
 
-  const { mutate: admitPatient } = useOptimisticAdmitPatientMutation({
-    id: patientId!,
-    onSuccess: () => {
-      onSuccess?.()
-    },
-  })
+  const [admitPatientMutation] = useAdmitPatientMutation()
 
-  const { mutate: dischargePatient } = useOptimisticDischargePatientMutation({
+  const [dischargePatientMutation] = useDischargePatientMutation()
     id: patientId!,
     onSuccess: () => {
       onSuccess?.()
@@ -139,29 +136,40 @@ export const PatientDataEditor = ({
       firstname: '',
       lastname: '',
       sex: Sex.Female,
-      assignedLocationIds: selectedLocationId ? [selectedLocationId] : [],
       birthdate: getDefaultBirthdate(),
-      state: PatientState.Wait,
       description: null,
       clinic: null,
       teams: null,
       position: null,
       ...initialCreateData,
     },
-    onFormSubmit: (values) => {
-      const data: CreatePatientInput = {
-        firstname: values.firstname,
-        lastname: values.lastname,
-        birthdate: values.birthdate,
-        sex: values.sex,
-        assignedLocationIds: values.assignedLocationIds,
-        clinicId: values.clinic!.id,
-        teamIds: values.teams?.filter(Boolean).map(t => t.id) || undefined,
-        positionId: values.position?.id,
-        state: values.state,
-        description: values.description,
+    onFormSubmit: async (values) => {
+      setIsCreating(true)
+      try {
+        await createPatientMutation({
+          variables: {
+            data: {
+              firstname: values.firstname,
+              lastname: values.lastname,
+              birthdate: values.birthdate,
+              sex: values.sex,
+              assignedLocationIds: [],
+              clinicId: values.clinic!.id,
+              teamIds: values.teams?.filter(Boolean).map(t => t.id) || undefined,
+              positionId: values.position?.id,
+              state: PatientState.Wait,
+              description: values.description,
+              properties: values.properties,
+            },
+          },
+        })
+        onSuccess?.()
+        onClose?.()
+      } catch (error) {
+        setErrorDialog({ isOpen: true, message: error instanceof Error ? error.message : 'Failed to create patient' })
+      } finally {
+        setIsCreating(false)
       }
-      createPatient({ data })
     },
     validators: {
       firstname: (value) => {
@@ -196,20 +204,28 @@ export const PatientDataEditor = ({
         return null
       },
     },
-    onValidUpdate: (_, updates) => {
+    onValidUpdate: async (_, updates) => {
       if (isEditMode && patientId) {
-        const data: UpdatePatientInput = {
-          firstname: updates?.firstname,
-          lastname: updates.lastname,
-          birthdate: updates.birthdate,
-          sex: updates.sex,
-          assignedLocationIds: updates.assignedLocationIds,
-          clinicId: updates.clinic?.id,
-          teamIds: updates.teams?.map(t => t.id),
-          positionId: updates.position?.id,
-          description: updates.description,
+        try {
+          await updatePatientMutation({
+            variables: {
+              id: patientId,
+              data: {
+                firstname: updates?.firstname,
+                lastname: updates?.lastname,
+                birthdate: updates?.birthdate,
+                sex: updates?.sex,
+                clinicId: updates?.clinic?.id,
+                teamIds: updates?.teams?.map(t => t.id),
+                positionId: updates?.position?.id,
+                description: updates?.description,
+              },
+            },
+          })
+          onSuccess?.()
+        } catch (error) {
+          setErrorDialog({ isOpen: true, message: error instanceof Error ? error.message : 'Failed to update patient' })
         }
-        updatePatient({ id: patientId, data })
       }
     }
   })
@@ -225,11 +241,11 @@ export const PatientDataEditor = ({
         lastname,
         sex,
         birthdate: toISODate(birthdate),
-        assignedLocationIds: assignedLocations.map(loc => loc.id),
         clinic: clinic || null,
         position: position || null,
         teams: teams || null,
         description: description,
+        properties: patient.properties || null,
       }
       updateForm(prev => ({
         ...prev,
@@ -403,7 +419,14 @@ export const PatientDataEditor = ({
               <div className="flex gap-4 flex-wrap">
                 <Button
                   disabled={value === PatientState.Admitted}
-                  onClick={() => admitPatient({ id: patientId! })}
+                  onClick={async () => {
+                    try {
+                      await admitPatientMutation({ variables: { id: patientId! } })
+                      onSuccess?.()
+                    } catch (error) {
+                      setErrorDialog({ isOpen: true, message: error instanceof Error ? error.message : 'Failed to admit patient' })
+                    }
+                  }}
                   color={value === PatientState.Admitted ? 'positive' : 'neutral'}
                 >
                   <Visibility isVisible={value === PatientState.Admitted}>
@@ -598,7 +621,12 @@ export const PatientDataEditor = ({
         onCancel={() => setIsMarkDeadDialogOpen(false)}
         onConfirm={() => {
           if (patientId && markPatientDead) {
-            markPatientDead({ id: patientId })
+            try {
+              await markPatientDeadMutation({ variables: { id: patientId } })
+              onSuccess?.()
+            } catch (error) {
+              setErrorDialog({ isOpen: true, message: error instanceof Error ? error.message : 'Failed to mark patient as dead' })
+            }
           }
           setIsMarkDeadDialogOpen(false)
         }}
@@ -626,7 +654,13 @@ export const PatientDataEditor = ({
         onCancel={() => setIsDeleteDialogOpen(false)}
         onConfirm={() => {
           if (patientId && deletePatient) {
-            deletePatient({ id: patientId })
+            try {
+              await deletePatientMutation({ variables: { id: patientId } })
+              onSuccess?.()
+              onClose?.()
+            } catch (error) {
+              setErrorDialog({ isOpen: true, message: error instanceof Error ? error.message : 'Failed to delete patient' })
+            }
           }
           setIsDeleteDialogOpen(false)
         }}

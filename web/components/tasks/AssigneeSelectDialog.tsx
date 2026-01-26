@@ -3,7 +3,8 @@ import { SearchBar, Dialog } from '@helpwave/hightide'
 import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { Users, Info } from 'lucide-react'
-import { useGetUsersQuery, useGetLocationsQuery } from '@/api/gql/generated'
+import { useGetUsersQuery } from '@/api/queries/users'
+import { useGetLocationsQuery } from '@/api/queries/locations'
 import clsx from 'clsx'
 
 interface AssigneeSelectDialogProps {

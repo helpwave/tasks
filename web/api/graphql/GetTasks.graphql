@@ -1,6 +1,23 @@
-query GetTasks($rootLocationIds: [ID!], $assigneeId: ID, $assigneeTeamId: ID, $limit: Int, $offset: Int) {
-  tasks(rootLocationIds: $rootLocationIds, assigneeId: $assigneeId, assigneeTeamId: $assigneeTeamId, limit: $limit, offset: $offset) {
-    id
+query GetTasks(
+  $rootLocationIds: [ID!]
+  $assigneeId: ID
+  $assigneeTeamId: ID
+  $filtering: [FilterInput!]
+  $sorting: [SortInput!]
+  $pagination: PaginationInput
+  $search: FullTextSearchInput
+) {
+  tasks(
+    rootLocationIds: $rootLocationIds
+    assigneeId: $assigneeId
+    assigneeTeamId: $assigneeTeamId
+    filtering: $filtering
+    sorting: $sorting
+    pagination: $pagination
+    search: $search
+  ) {
+    data {
+      id
     title
     description
     done
@@ -46,6 +63,26 @@ query GetTasks($rootLocationIds: [ID!], $assigneeId: ID, $assigneeTeamId: ID, $l
       title
       kind
     }
+    properties {
+      definition {
+        id
+        name
+        description
+        fieldType
+        isActive
+        allowedEntities
+        options
+      }
+      textValue
+      numberValue
+      booleanValue
+      dateValue
+      dateTimeValue
+      selectValue
+      multiSelectValues
+    }
+    }
+    totalCount
   }
 }
 

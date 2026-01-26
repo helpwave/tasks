@@ -20,6 +20,12 @@ from sqlalchemy.orm import aliased
 T = TypeVar("T")
 
 
+class QueryResult:
+    def __init__(self, data: list[Any], total_count: int | None = None):
+        self.data = data
+        self.total_count = total_count
+
+
 def detect_entity_type(model_class: type[Base]) -> str | None:
     if model_class == models.Patient:
         return "patient"
@@ -542,7 +548,13 @@ def filtered_and_sorted_query(
             if not isinstance(result, Select):
                 return result
 
-            model_class = result.column_descriptions[0]["entity"]
+            model_class = None
+            try:
+                if result.column_descriptions and len(result.column_descriptions) > 0:
+                    model_class = result.column_descriptions[0].get("entity")
+            except (AttributeError, IndexError, KeyError, TypeError):
+                pass
+            
             if not model_class:
                 if isinstance(result, Select):
                     for arg in args:
@@ -615,25 +627,43 @@ def filtered_and_sorted_query(
                     result, sorting, model_class, property_field_types
                 )
 
+            info = kwargs.get("info")
+            if not info:
+                for arg in args:
+                    if hasattr(arg, "context"):
+                        info = arg
+                        break
+
+            db = None
+            if info and hasattr(info, "context") and hasattr(info.context, "db"):
+                db = info.context.db
+            if not db:
+                for arg in args:
+                    if hasattr(arg, "context") and hasattr(arg.context, "db"):
+                        db = arg.context.db
+                        break
+
+            total_count = None
+            if db and isinstance(result, Select):
+                count_query = result
+                count_result = await db.execute(
+                    select(func.count()).select_from(count_query.subquery())
+                )
+                total_count = count_result.scalar() or 0
+
             if pagination and pagination is not strawberry.UNSET:
-                page_index = pagination.page_index
-                page_size = pagination.page_size
+                page_index = pagination.pageIndex
+                page_size = pagination.pageSize
                 if page_size:
                     offset = page_index * page_size
                     result = apply_pagination(result, limit=page_size, offset=offset)
 
-            if isinstance(result, Select):
-                for arg in args:
-                    if hasattr(arg, "context") and hasattr(arg.context, "db"):
-                        db = arg.context.db
-                        query_result = await db.execute(result)
-                        return query_result.scalars().all()
-                else:
-                    info = kwargs.get("info")
-                    if info and hasattr(info, "context") and hasattr(info.context, "db"):
-                        db = info.context.db
-                        query_result = await db.execute(result)
-                        return query_result.scalars().all()
+            if isinstance(result, Select) and db:
+                query_result = await db.execute(result)
+                data = query_result.scalars().all()
+                if total_count is not None:
+                    return QueryResult(data=data, total_count=total_count)
+                return data
 
             return result
 

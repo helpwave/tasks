@@ -2,7 +2,8 @@ import type { NextPage } from 'next'
 import { Page } from '@/components/layout/Page'
 import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
-import { useGetOverviewDataQuery } from '@/api/gql/generated'
+import { useGetOverviewDataQuery } from '@/api/queries/global'
+import { useCompleteTaskMutation, useReopenTaskMutation } from '@/api/mutations/tasks'
 import { Avatar } from '@helpwave/hightide'
 import { CurrentTime } from '@/utils/date'
 import { ClockIcon, ListCheckIcon, UsersIcon } from 'lucide-react'
@@ -12,10 +13,6 @@ import Link from 'next/link'
 import { Drawer } from '@helpwave/hightide'
 import { PatientDetailView } from '@/components/patients/PatientDetailView'
 import { TaskDetailView } from '@/components/tasks/TaskDetailView'
-import { CompleteTaskDocument, ReopenTaskDocument, type CompleteTaskMutation, type ReopenTaskMutation, type CompleteTaskMutationVariables, type ReopenTaskMutationVariables, type GetOverviewDataQuery, type GetGlobalDataQuery } from '@/api/gql/generated'
-import { useSafeMutation } from '@/hooks/useSafeMutation'
-import { fetcher } from '@/api/gql/fetcher'
-import { useQueryClient } from '@tanstack/react-query'
 import { RecentTasksTable } from '@/components/tables/RecentTasksTable'
 import { RecentPatientsTable } from '@/components/tables/RecentPatientsTable'
 import clsx from 'clsx'
@@ -78,94 +75,12 @@ const StatCard = ({ label, value, icon, iconWrapperClassName, className }: StatC
 const Dashboard: NextPage = () => {
   const translation = useTasksTranslation()
   const { user, myTasksCount, totalPatientsCount, selectedRootLocationIds } = useTasksContext()
-  const { data } = useGetOverviewDataQuery(undefined, {})
-  const queryClient = useQueryClient()
-  const selectedRootLocationIdsForQuery = selectedRootLocationIds && selectedRootLocationIds.length > 0 ? selectedRootLocationIds : undefined
+  const { data } = useGetOverviewDataQuery({})
+  const [completeTaskMutation] = useCompleteTaskMutation()
+  const [reopenTaskMutation] = useReopenTaskMutation()
 
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null)
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
-
-  const { mutate: completeTask } = useSafeMutation<CompleteTaskMutation, CompleteTaskMutationVariables>({
-    mutationFn: async (variables) => {
-      return fetcher<CompleteTaskMutation, CompleteTaskMutationVariables>(CompleteTaskDocument, variables)()
-    },
-    optimisticUpdate: (variables) => {
-      const updates: Array<{ queryKey: unknown[], updateFn: (oldData: unknown) => unknown }> = [
-        {
-          queryKey: ['GetOverviewData'],
-          updateFn: (oldData: unknown) => {
-            const data = oldData as GetOverviewDataQuery | undefined
-            if (!data?.recentTasks) return oldData
-            return {
-              ...data,
-              recentTasks: data.recentTasks.map(t =>
-                t.id === variables.id ? { ...t, done: true } : t)
-            }
-          }
-        }
-      ]
-      const globalData = queryClient.getQueryData<GetGlobalDataQuery>(['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }])
-      if (globalData?.me?.tasks) {
-        updates.push({
-          queryKey: ['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }],
-          updateFn: (oldData: unknown) => {
-            const data = oldData as GetGlobalDataQuery | undefined
-            if (!data?.me?.tasks) return oldData
-            return {
-              ...data,
-              me: data.me ? {
-                ...data.me,
-                tasks: data.me.tasks.map(task => task.id === variables.id ? { ...task, done: true } : task)
-              } : null
-            }
-          }
-        })
-      }
-      return updates
-    },
-    affectedQueryKeys: [['GetOverviewData'], ['GetTasks'], ['GetPatients'], ['GetGlobalData']],
-  })
-
-  const { mutate: reopenTask } = useSafeMutation<ReopenTaskMutation, ReopenTaskMutationVariables>({
-    mutationFn: async (variables) => {
-      return fetcher<ReopenTaskMutation, ReopenTaskMutationVariables>(ReopenTaskDocument, variables)()
-    },
-    optimisticUpdate: (variables) => {
-      const updates: Array<{ queryKey: unknown[], updateFn: (oldData: unknown) => unknown }> = [
-        {
-          queryKey: ['GetOverviewData'],
-          updateFn: (oldData: unknown) => {
-            const data = oldData as GetOverviewDataQuery | undefined
-            if (!data?.recentTasks) return oldData
-            return {
-              ...data,
-              recentTasks: data.recentTasks.map(t =>
-                t.id === variables.id ? { ...t, done: false } : t)
-            }
-          }
-        }
-      ]
-      const globalData = queryClient.getQueryData<GetGlobalDataQuery>(['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }])
-      if (globalData?.me?.tasks) {
-        updates.push({
-          queryKey: ['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }],
-          updateFn: (oldData: unknown) => {
-            const data = oldData as GetGlobalDataQuery | undefined
-            if (!data?.me?.tasks) return oldData
-            return {
-              ...data,
-              me: data.me ? {
-                ...data.me,
-                tasks: data.me.tasks.map(task => task.id === variables.id ? { ...task, done: false } : task)
-              } : null
-            }
-          }
-        })
-      }
-      return updates
-    },
-    affectedQueryKeys: [['GetOverviewData'], ['GetTasks'], ['GetPatients'], ['GetGlobalData']],
-  })
 
   const recentPatients = useMemo(() => data?.recentPatients ?? [], [data])
   const recentTasks = useMemo(() => data?.recentTasks ?? [], [data])
@@ -208,8 +123,8 @@ const Dashboard: NextPage = () => {
         <div className="flex flex-wrap gap-4 2xl:flex-row 2xl:flex-nowrap print-content">
           <RecentTasksTable
             tasks={recentTasks}
-            completeTask={useCallback((id) => completeTask({ id }), [completeTask])}
-            reopenTask={useCallback((id) => reopenTask({ id }), [reopenTask])}
+            completeTask={useCallback((id) => completeTaskMutation({ variables: { id } }), [completeTaskMutation])}
+            reopenTask={useCallback((id) => reopenTaskMutation({ variables: { id } }), [reopenTaskMutation])}
             onSelectPatient={setSelectedPatientId}
             onSelectTask={setSelectedTaskId}
             className="w-full 2xl:min-w-150 flex-1"

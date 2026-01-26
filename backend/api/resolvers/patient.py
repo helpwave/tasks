@@ -3,7 +3,7 @@ from collections.abc import AsyncGenerator
 import strawberry
 from api.audit import audit_log
 from api.context import Info
-from api.decorators.filter_sort import filtered_and_sorted_query
+from api.decorators.filter_sort import QueryResult, filtered_and_sorted_query
 from api.decorators.full_text_search import full_text_search_query
 from api.inputs import (
     FilterInput,
@@ -18,10 +18,10 @@ from api.services.checksum import validate_checksum
 from api.services.location import LocationService
 from api.services.notifications import notify_entity_deleted
 from api.services.property import PropertyService
-from api.types.patient import PatientType
+from api.types.patient import PatientType, PatientsResponse
 from database import models
 from graphql import GraphQLError
-from sqlalchemy import desc, func, select
+from sqlalchemy import Select, desc, func, select
 from sqlalchemy.orm import aliased, selectinload
 
 
@@ -66,7 +66,7 @@ class PatientQuery:
         sorting: list[SortInput] | None = None,
         pagination: PaginationInput | None = None,
         search: FullTextSearchInput | None = None,
-    ) -> list[PatientType]:
+    ) -> PatientsResponse:
         query = select(models.Patient).options(
             selectinload(models.Patient.assigned_locations),
             selectinload(models.Patient.tasks),
@@ -86,7 +86,7 @@ class PatientQuery:
         )
 
         if not accessible_location_ids:
-            return []
+            return PatientsResponse(data=[], total_count=0)
 
         query = auth_service.filter_patients_by_access(
             info.context.user, query, accessible_location_ids
@@ -112,7 +112,7 @@ class PatientQuery:
         elif root_location_ids:
             valid_root_location_ids = [lid for lid in root_location_ids if lid in accessible_location_ids]
             if not valid_root_location_ids:
-                return []
+                return PatientsResponse(data=[], total_count=0)
             root_location_ids = valid_root_location_ids
             filter_cte = (
                 select(models.LocationNode.id)
@@ -153,7 +153,22 @@ class PatientQuery:
                 .distinct()
             )
 
-        return query
+        result = query
+        if isinstance(result, Select):
+            count_result = await info.context.db.execute(
+                select(func.count()).select_from(result.subquery())
+            )
+            total_count = count_result.scalar() or 0
+            query_result = await info.context.db.execute(result)
+            data = query_result.scalars().all()
+        elif isinstance(result, QueryResult):
+            data = result.data
+            total_count = result.total_count if result.total_count is not None else len(data)
+        else:
+            data = result if isinstance(result, list) else []
+            total_count = len(data)
+
+        return PatientsResponse(data=data, total_count=total_count)
 
     @strawberry.field
     async def recent_patients(
