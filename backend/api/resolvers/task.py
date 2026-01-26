@@ -3,7 +3,14 @@ from collections.abc import AsyncGenerator
 import strawberry
 from api.audit import audit_log
 from api.context import Info
-from api.decorators.pagination import apply_pagination
+from api.decorators.filter_sort import filtered_and_sorted_query
+from api.decorators.full_text_search import full_text_search_query
+from api.inputs import (
+    FilterInput,
+    FullTextSearchInput,
+    PaginationInput,
+    SortInput,
+)
 from api.inputs import CreateTaskInput, UpdateTaskInput
 from api.resolvers.base import BaseMutationResolver, BaseSubscriptionResolver
 from api.services.authorization import AuthorizationService
@@ -37,6 +44,8 @@ class TaskQuery:
         return task
 
     @strawberry.field
+    @filtered_and_sorted_query()
+    @full_text_search_query()
     async def tasks(
         self,
         info: Info,
@@ -44,8 +53,10 @@ class TaskQuery:
         assignee_id: strawberry.ID | None = None,
         assignee_team_id: strawberry.ID | None = None,
         root_location_ids: list[strawberry.ID] | None = None,
-        limit: int | None = None,
-        offset: int | None = None,
+        filtering: list[FilterInput] | None = None,
+        sorting: list[SortInput] | None = None,
+        pagination: PaginationInput | None = None,
+        search: FullTextSearchInput | None = None,
     ) -> list[TaskType]:
         auth_service = AuthorizationService(info.context.db)
 
@@ -65,10 +76,7 @@ class TaskQuery:
             if assignee_team_id:
                 query = query.where(models.Task.assignee_team_id == assignee_team_id)
 
-            query = apply_pagination(query, limit=limit, offset=offset)
-
-            result = await info.context.db.execute(query)
-            return result.scalars().all()
+            return query
 
         accessible_location_ids = await auth_service.get_user_accessible_location_ids(
             info.context.user, info.context
@@ -164,10 +172,7 @@ class TaskQuery:
                 models.Task.assignee_team_id.in_(select(team_location_cte.c.id))
             )
 
-        query = apply_pagination(query, limit=limit, offset=offset)
-
-        result = await info.context.db.execute(query)
-        return result.scalars().all()
+        return query
 
     @strawberry.field
     async def recent_tasks(
@@ -339,7 +344,11 @@ class TaskMutation(BaseMutationResolver[models.Task]):
         if data.estimated_time is not strawberry.UNSET:
             task.estimated_time = data.estimated_time
 
-        if data.assignee_id is not None and data.assignee_team_id is not strawberry.UNSET and data.assignee_team_id is not None:
+        if (
+            data.assignee_id is not None
+            and data.assignee_team_id is not strawberry.UNSET
+            and data.assignee_team_id is not None
+        ):
             raise GraphQLError(
                 "Cannot assign both a user and a team. Please assign either a user or a team.",
                 extensions={"code": "BAD_REQUEST"},

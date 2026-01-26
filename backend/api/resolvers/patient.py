@@ -3,7 +3,14 @@ from collections.abc import AsyncGenerator
 import strawberry
 from api.audit import audit_log
 from api.context import Info
-from api.decorators.pagination import apply_pagination
+from api.decorators.filter_sort import filtered_and_sorted_query
+from api.decorators.full_text_search import full_text_search_query
+from api.inputs import (
+    FilterInput,
+    FullTextSearchInput,
+    PaginationInput,
+    SortInput,
+)
 from api.inputs import CreatePatientInput, PatientState, UpdatePatientInput
 from api.resolvers.base import BaseMutationResolver, BaseSubscriptionResolver
 from api.services.authorization import AuthorizationService
@@ -47,14 +54,18 @@ class PatientQuery:
         return patient
 
     @strawberry.field
+    @filtered_and_sorted_query()
+    @full_text_search_query()
     async def patients(
         self,
         info: Info,
         location_node_id: strawberry.ID | None = None,
         root_location_ids: list[strawberry.ID] | None = None,
         states: list[PatientState] | None = None,
-        limit: int | None = None,
-        offset: int | None = None,
+        filtering: list[FilterInput] | None = None,
+        sorting: list[SortInput] | None = None,
+        pagination: PaginationInput | None = None,
+        search: FullTextSearchInput | None = None,
     ) -> list[PatientType]:
         query = select(models.Patient).options(
             selectinload(models.Patient.assigned_locations),
@@ -142,10 +153,7 @@ class PatientQuery:
                 .distinct()
             )
 
-        query = apply_pagination(query, limit=limit, offset=offset)
-
-        result = await info.context.db.execute(query)
-        return result.scalars().all()
+        return query
 
     @strawberry.field
     async def recent_patients(
