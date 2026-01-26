@@ -1,7 +1,8 @@
 import { useMemo, useState, forwardRef, useImperativeHandle, useEffect, useRef, useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { Button, Checkbox, ConfirmDialog, FillerCell, SearchBar, Table, Tooltip, Visibility } from '@helpwave/hightide'
+import { Button, Checkbox, ConfirmDialog, FillerCell, SearchBar, TableColumnSwitcher, TableDisplay, TablePagination, TableProvider, Tooltip, Visibility } from '@helpwave/hightide'
 import { PlusIcon, Table as TableIcon, LayoutGrid, UserCheck, Users, Printer } from 'lucide-react'
+import type { TaskPriority } from '@/api/gql/generated'
 import { useAssignTaskMutation, useAssignTaskToTeamMutation, useCompleteTaskMutation, useReopenTaskMutation, useGetUsersQuery, useGetLocationsQuery, type GetGlobalDataQuery } from '@/api/gql/generated'
 import { AssigneeSelectDialog } from './AssigneeSelectDialog'
 import clsx from 'clsx'
@@ -17,6 +18,7 @@ import { useTaskViewToggle } from '@/hooks/useViewToggle'
 import { TaskCardView } from '@/components/tasks/TaskCardView'
 import { UserInfoPopup } from '@/components/UserInfoPopup'
 import type { ColumnDef } from '@tanstack/table-core'
+import { PriorityUtils } from '@/utils/priority'
 
 export type TaskViewModel = {
   id: string,
@@ -70,54 +72,6 @@ const isCloseToDueDate = (dueDate: Date | undefined, done: boolean): boolean => 
   const dueTime = dueDate.getTime()
   const oneHour = 60 * 60 * 1000
   return dueTime > now && dueTime - now <= oneHour
-}
-
-const getPriorityColor = (priority: string | null | undefined): string => {
-  if (!priority) return ''
-  switch (priority) {
-  case 'P1':
-    return 'border-l-4 border-l-green-500'
-  case 'P2':
-    return 'border-l-4 border-l-blue-500'
-  case 'P3':
-    return 'border-l-4 border-l-orange-500'
-  case 'P4':
-    return 'border-l-4 border-l-red-500'
-  default:
-    return ''
-  }
-}
-
-const getPriorityDotColor = (priority: string | null | undefined): string => {
-  if (!priority) return ''
-  switch (priority) {
-  case 'P1':
-    return 'bg-green-500'
-  case 'P2':
-    return 'bg-blue-500'
-  case 'P3':
-    return 'bg-orange-500'
-  case 'P4':
-    return 'bg-red-500'
-  default:
-    return ''
-  }
-}
-
-const getPriorityCheckboxColor = (priority: string | null | undefined): string => {
-  if (!priority) return ''
-  switch (priority) {
-  case 'P1':
-    return 'border-green-500 text-green-500 data-[checked]:bg-green-500/30'
-  case 'P2':
-    return 'border-blue-500 text-blue-500 data-[checked]:bg-blue-500/30'
-  case 'P3':
-    return 'border-orange-500 text-orange-500 data-[checked]:bg-orange-500/30'
-  case 'P4':
-    return 'border-red-500 text-red-500 data-[checked]:bg-red-500/30'
-  default:
-    return ''
-  }
 }
 
 const STORAGE_KEY_SHOW_DONE = 'task-show-done'
@@ -461,7 +415,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
                 }
               }}
               onClick={(e) => e.stopPropagation()}
-              className={clsx('rounded-full', getPriorityCheckboxColor(task.priority))}
+              className={clsx('rounded-full', PriorityUtils.toCheckboxColor(task.priority as TaskPriority | null | undefined))}
             />
           )
         },
@@ -478,7 +432,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
           return (
             <div className="flex-row-2 items-center">
               {row.original.priority && (
-                <div className={clsx('w-2 h-2 rounded-full shrink-0', getPriorityDotColor(row.original.priority))} />
+                <div className={clsx('w-2 h-2 rounded-full shrink-0', PriorityUtils.toBackgroundColor(row.original.priority as TaskPriority | null | undefined))} />
               )}
               <span>{row.original.name}</span>
             </div>
@@ -641,190 +595,200 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
   ), [])
 
   return (
-    <div className="flex flex-col h-full gap-4">
-      <div className="flex flex-col sm:flex-row justify-between w-full gap-4">
-        <SearchBar
-          placeholder={translation('search')}
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          onSearch={() => null}
-          containerProps={{ className: 'max-w-80 h-10' }}
-        />
-        <div className="flex flex-wrap items-center justify-end gap-4 w-full sm:w-auto sm:ml-auto lg:pr-4">
-          <div className="flex items-center justify-between gap-4 w-full sm:w-auto">
-            <div className="flex items-center gap-2">
-              <Checkbox
-                value={showDone}
-                onValueChange={handleShowDoneChange}
-              />
-              <span className="text-sm text-description whitespace-nowrap">{translation('showDone') || 'Show done'}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Tooltip tooltip={translation(viewType !== 'table' ? 'printOnlyAvailableInTableMode' : 'print')} position="top">
-                <Button
-                  disabled={viewType !== 'table'}
-                  layout="icon"
-                  color="neutral"
-                  coloringStyle="text"
-                  onClick={handlePrint}
-                >
-                  <Printer className="size-5" />
-                </Button>
-              </Tooltip>
-              <Tooltip tooltip={translation('tableView')} position="top">
-                <Button
-                  layout="icon"
-                  color={viewType === 'table' ? 'primary' : 'neutral'}
-                  coloringStyle={viewType === 'table' ? undefined : 'text'}
-                  onClick={() => toggleView('table')}
-                >
-                  <TableIcon className="size-5" />
-                </Button>
-              </Tooltip>
-              <Tooltip tooltip={translation('cardView')} position="top">
-                <Button
-                  layout="icon"
-                  color={viewType === 'card' ? 'primary' : 'neutral'}
-                  coloringStyle={viewType === 'card' ? undefined : 'text'}
-                  onClick={() => toggleView('card')}
-                >
-                  <LayoutGrid className="size-5" />
-                </Button>
-              </Tooltip>
-            </div>
+    <TableProvider
+      data={tasks}
+      columns={columns}
+      fillerRowCell={fillerRow}
+      initialState={{
+        sorting: [
+          { id: 'done', desc: false },
+          { id: 'dueDate', desc: false },
+        ],
+        pagination: {
+          pageSize: 25,
+        }
+      }}
+      enableMultiSort={true}
+      onRowClick={row => setTaskDialogState({ isOpen: true, taskId: row.original.id })}
+    >
+      <div className="flex flex-col h-full gap-4">
+        <div className="flex flex-col sm:flex-row justify-between w-full gap-4">
+          <div className="flex-row-2 items-center">
+            <SearchBar
+              placeholder={translation('search')}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onSearch={() => null}
+              containerProps={{ className: 'max-w-80 h-10' }}
+            />
+            <Visibility isVisible={viewType === 'table'}>
+              <TableColumnSwitcher />
+            </Visibility>
           </div>
-          {headerActions}
-          {canHandover && (
-            <Button
-              onClick={handleHandoverClick}
-              className="w-fit"
-            >
-              <UserCheck className="size-5"/>
-              {translation('shiftHandover') || 'Shift Handover'}
-            </Button>
-          )}
-          <Tooltip tooltip={translation('addTask')} position="top">
-            <Button
-              onClick={() => setTaskDialogState({ isOpen: true })}
-              disabled={!hasPatients}
-              layout="icon"
-            >
-              <PlusIcon/>
-            </Button>
-          </Tooltip>
-        </div>
-      </div>
-      <Visibility isVisible={viewType === 'table'}>
-        <Table
-          table={{
-            data: tasks,
-            columns: columns,
-            fillerRowCell: fillerRow,
-            initialState: {
-              sorting: [
-                { id: 'done', desc: false },
-                { id: 'dueDate', desc: false },
-              ],
-            },
-            enableMultiSort: true,
-            onRowClick: row => setTaskDialogState({ isOpen: true, taskId: row.original.id }),
-          }}
-          displayProps={{ className: 'print-content' }}
-        />
-      </Visibility>
-      <Visibility isVisible={viewType === 'card'}>
-        <div className="grid gap-4 -mx-4 px-4 lg:mx-0 lg:pl-0 lg:pr-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))' }}>
-          {tasks.length === 0 ? (
-            <div className="w-full text-center text-description py-8 col-span-full">
-              {translation('noOpenTasks')}
+          <div className="flex flex-wrap items-center justify-end gap-4 w-full sm:w-auto sm:ml-auto lg:pr-4">
+            <div className="flex items-center justify-between gap-4 w-full sm:w-auto">
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  value={showDone}
+                  onValueChange={handleShowDoneChange}
+                />
+                <span className="text-sm text-description whitespace-nowrap">{translation('showDone') || 'Show done'}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Tooltip tooltip={translation(viewType !== 'table' ? 'printOnlyAvailableInTableMode' : 'print')} position="top">
+                  <Button
+                    disabled={viewType !== 'table'}
+                    layout="icon"
+                    color="neutral"
+                    coloringStyle="text"
+                    onClick={handlePrint}
+                  >
+                    <Printer className="size-5" />
+                  </Button>
+                </Tooltip>
+                <Tooltip tooltip={translation('tableView')} position="top">
+                  <Button
+                    layout="icon"
+                    color={viewType === 'table' ? 'primary' : 'neutral'}
+                    coloringStyle={viewType === 'table' ? undefined : 'text'}
+                    onClick={() => toggleView('table')}
+                  >
+                    <TableIcon className="size-5" />
+                  </Button>
+                </Tooltip>
+                <Tooltip tooltip={translation('cardView')} position="top">
+                  <Button
+                    layout="icon"
+                    color={viewType === 'card' ? 'primary' : 'neutral'}
+                    coloringStyle={viewType === 'card' ? undefined : 'text'}
+                    onClick={() => toggleView('card')}
+                  >
+                    <LayoutGrid className="size-5" />
+                  </Button>
+                </Tooltip>
+              </div>
             </div>
-          ) : (
-            tasks.map((task) => (
-              <TaskCardView
-                key={task.id}
-                task={task}
-                onToggleDone={handleToggleDone}
-                onClick={(t) => setTaskDialogState({ isOpen: true, taskId: t.id })}
-                showAssignee={showAssignee}
-                onRefetch={onRefetch}
-                className={clsx('w-full', getPriorityColor(task.priority))}
-              />
-            ))
-          )}
+            {headerActions}
+            {canHandover && (
+              <Button
+                onClick={handleHandoverClick}
+                className="w-fit"
+              >
+                <UserCheck className="size-5"/>
+                {translation('shiftHandover') || 'Shift Handover'}
+              </Button>
+            )}
+            <Tooltip tooltip={translation('addTask')} position="top">
+              <Button
+                onClick={() => setTaskDialogState({ isOpen: true })}
+                disabled={!hasPatients}
+                layout="icon"
+              >
+                <PlusIcon/>
+              </Button>
+            </Tooltip>
+          </div>
         </div>
-      </Visibility>
-      <Drawer
-        alignment="right"
-        titleElement={taskDialogState.taskId ? translation('editTask') : translation('createTask')}
-        description={undefined}
-        isOpen={taskDialogState.isOpen}
-        onClose={() => setTaskDialogState({ isOpen: false })}
-      >
-        <TaskDetailView
-          taskId={taskDialogState.taskId ?? null}
+        <Visibility isVisible={viewType === 'table'}>
+          <div className="flex-col-3 items-center">
+            <TableDisplay className="print-content" />
+            <TablePagination />
+          </div>
+        </Visibility>
+        <Visibility isVisible={viewType === 'card'}>
+          <div className="grid gap-4 -mx-4 px-4 lg:mx-0 lg:pl-0 lg:pr-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))' }}>
+            {tasks.length === 0 ? (
+              <div className="w-full text-center text-description py-8 col-span-full">
+                {translation('noOpenTasks')}
+              </div>
+            ) : (
+              tasks.map((task) => (
+                <TaskCardView
+                  key={task.id}
+                  task={task}
+                  onToggleDone={handleToggleDone}
+                  onClick={(t) => setTaskDialogState({ isOpen: true, taskId: t.id })}
+                  showAssignee={showAssignee}
+                  onRefetch={onRefetch}
+                  className={clsx('w-full')}
+                />
+              ))
+            )}
+          </div>
+        </Visibility>
+        <Drawer
+          alignment="right"
+          titleElement={taskDialogState.taskId ? translation('editTask') : translation('createTask')}
+          description={undefined}
+          isOpen={taskDialogState.isOpen}
           onClose={() => setTaskDialogState({ isOpen: false })}
-          onSuccess={onRefetch || (() => {
-          })}
-        />
-      </Drawer>
-      <Drawer
-        alignment="right"
-        titleElement={translation('editPatient')}
-        description={undefined}
-        isOpen={!!selectedPatientId}
-        onClose={() => setSelectedPatientId(null)}
-      >
-        {!!selectedPatientId && (
-          <PatientDetailView
-            patientId={selectedPatientId}
-            onClose={() => setSelectedPatientId(null)}
+        >
+          <TaskDetailView
+            taskId={taskDialogState.taskId ?? null}
+            onClose={() => setTaskDialogState({ isOpen: false })}
             onSuccess={onRefetch || (() => {
             })}
           />
-        )}
-      </Drawer>
-      <AssigneeSelectDialog
-        value={selectedUserId || ''}
-        onValueChanged={handleUserSelect}
-        allowTeams={true}
-        allowUnassigned={false}
-        excludeUserIds={user?.id ? [user.id] : []}
-        isOpen={isHandoverDialogOpen}
-        onClose={() => {
-          setIsHandoverDialogOpen(false)
-          if (!isConfirmDialogOpen && !isOpeningConfirmDialogRef.current) {
-            setSelectedUserId(null)
-          }
-        }}
-        dialogTitle={translation('shiftHandover') || 'Shift Handover'}
-        onUserInfoClick={(userId) => setSelectedUserPopupId(userId)}
-      />
-      {isConfirmDialogOpen && selectedUserId && (
-        <ConfirmDialog
-          isOpen={isConfirmDialogOpen}
-          onCancel={() => {
-            setIsConfirmDialogOpen(false)
-            setSelectedUserId(null)
+        </Drawer>
+        <Drawer
+          alignment="right"
+          titleElement={translation('editPatient')}
+          description={undefined}
+          isOpen={!!selectedPatientId}
+          onClose={() => setSelectedPatientId(null)}
+        >
+          {!!selectedPatientId && (
+            <PatientDetailView
+              patientId={selectedPatientId}
+              onClose={() => setSelectedPatientId(null)}
+              onSuccess={onRefetch || (() => {
+              })}
+            />
+          )}
+        </Drawer>
+        <AssigneeSelectDialog
+          value={selectedUserId || ''}
+          onValueChanged={handleUserSelect}
+          allowTeams={true}
+          allowUnassigned={false}
+          excludeUserIds={user?.id ? [user.id] : []}
+          isOpen={isHandoverDialogOpen}
+          onClose={() => {
             setIsHandoverDialogOpen(false)
-          }}
-          onConfirm={() => {
-            if (selectedUserId) {
-              handleConfirmHandover()
+            if (!isConfirmDialogOpen && !isOpeningConfirmDialogRef.current) {
+              setSelectedUserId(null)
             }
           }}
-          titleElement={translation('confirmShiftHandover') || 'Confirm Shift Handover'}
-          description={getSelectedUserOrTeam && openTasks.length > 0 ? translation('confirmShiftHandoverDescriptionWithName', {
-            taskCount: openTasks.length,
-            name: getSelectedUserOrTeam.name
-          }) : (translation('confirmShiftHandoverDescription') || 'Are you sure you want to transfer all open tasks?')}
+          dialogTitle={translation('shiftHandover') || 'Shift Handover'}
+          onUserInfoClick={(userId) => setSelectedUserPopupId(userId)}
         />
-      )}
-      <UserInfoPopup
-        userId={selectedUserPopupId}
-        isOpen={!!selectedUserPopupId}
-        onClose={() => setSelectedUserPopupId(null)}
-      />
-    </div>
+        {isConfirmDialogOpen && selectedUserId && (
+          <ConfirmDialog
+            isOpen={isConfirmDialogOpen}
+            onCancel={() => {
+              setIsConfirmDialogOpen(false)
+              setSelectedUserId(null)
+              setIsHandoverDialogOpen(false)
+            }}
+            onConfirm={() => {
+              if (selectedUserId) {
+                handleConfirmHandover()
+              }
+            }}
+            titleElement={translation('confirmShiftHandover') || 'Confirm Shift Handover'}
+            description={getSelectedUserOrTeam && openTasks.length > 0 ? translation('confirmShiftHandoverDescriptionWithName', {
+              taskCount: openTasks.length,
+              name: getSelectedUserOrTeam.name
+            }) : (translation('confirmShiftHandoverDescription') || 'Are you sure you want to transfer all open tasks?')}
+          />
+        )}
+        <UserInfoPopup
+          userId={selectedUserPopupId}
+          isOpen={!!selectedUserPopupId}
+          onClose={() => setSelectedUserPopupId(null)}
+        />
+      </div>
+    </TableProvider>
   )
 })
 

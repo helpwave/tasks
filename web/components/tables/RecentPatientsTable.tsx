@@ -82,7 +82,12 @@ export const RecentPatientsTable = ({
         data: patients,
         columns: patientColumns,
         fillerRowCell: useCallback(() => (<FillerCell className="min-h-8"/>), []),
-        onRowClick: useCallback((row: Row<PatientViewModel>) => onSelectPatient(row.original.id), [onSelectPatient])
+        onRowClick: useCallback((row: Row<PatientViewModel>) => onSelectPatient(row.original.id), [onSelectPatient]),
+        initialState: {
+          pagination: {
+            pageSize: 25,
+          }
+        }
       }}
       header={(
         <div className="flex-row-4 justify-between items-center">

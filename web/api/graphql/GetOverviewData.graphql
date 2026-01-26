@@ -24,6 +24,7 @@ query GetOverviewData {
     done
     dueDate
     updateDate
+    priority
     assignee {
       id
       name

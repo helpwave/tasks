@@ -1,5 +1,5 @@
 import { useMemo, useState, forwardRef, useImperativeHandle, useEffect, useCallback } from 'react'
-import { Table, Chip, FillerCell, Button, SearchBar, ProgressIndicator, Tooltip, Checkbox, Drawer, Visibility } from '@helpwave/hightide'
+import { Chip, FillerCell, Button, SearchBar, ProgressIndicator, Tooltip, Checkbox, Drawer, Visibility, TableProvider, TableDisplay, TablePagination, TableColumnSwitcher } from '@helpwave/hightide'
 import { PlusIcon, Table as TableIcon, LayoutGrid, Printer } from 'lucide-react'
 import { GetPatientsDocument, Sex, PatientState, type GetPatientsQuery, type TaskType } from '@/api/gql/generated'
 import { usePaginatedGraphQLQuery } from '@/hooks/usePaginatedQuery'
@@ -324,113 +324,123 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
   const fillerRowCell = useCallback(() => (<FillerCell className="min-h-8" />), [])
 
   return (
-    <div className="flex flex-col h-full gap-4 print-container">
-      <div className="flex flex-col sm:flex-row justify-between w-full gap-4 print-header">
-        <div className="w-full sm:max-w-md">
-          <SearchBar
-            placeholder={translation('search')}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onSearch={() => null}
-          />
-        </div>
-        <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto sm:ml-auto">
-          <div className="flex items-center gap-2">
-            <Checkbox
-              value={showAllPatients}
-              onValueChange={handleShowAllPatientsChange}
+    <TableProvider
+      data={patients}
+      columns={columns}
+      fillerRowCell={fillerRowCell}
+      onRowClick={onRowClick}
+      initialState={{
+        pagination: {
+          pageSize: 25,
+        }
+      }}
+    >
+      <div className="flex flex-col h-full gap-4">
+        <div className="flex flex-col sm:flex-row justify-between w-full gap-4">
+          <div className="flex-row-2 items-center">
+            <SearchBar
+              placeholder={translation('search')}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onSearch={() => null}
             />
-            <span className="text-sm text-description whitespace-nowrap">{translation('showAllPatients') || 'Show all patients'}</span>
+            <Visibility isVisible={viewType === 'table'}>
+              <TableColumnSwitcher />
+            </Visibility>
           </div>
-          <Tooltip tooltip={translation(viewType !== 'table' ? 'printOnlyAvailableInTableMode' : 'print')} position="top">
-            <Button
-              layout="icon"
-              color="neutral"
-              coloringStyle="text"
-              onClick={handlePrint}
-              className="print-button"
-              disabled={viewType !== 'table'}
-            >
-              <Printer className="size-5" />
-            </Button>
-          </Tooltip>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <Tooltip tooltip={translation('tableView')} position="top">
-              <Button
-                layout="icon"
-                color={viewType === 'table' ? 'primary' : 'neutral'}
-                coloringStyle={viewType === 'table' ? undefined : 'text'}
-                onClick={() => toggleView('table')}
-              >
-                <TableIcon className="size-5" />
-              </Button>
-            </Tooltip>
-            <Tooltip tooltip={translation('cardView')} position="top">
-              <Button
-                layout="icon"
-                color={viewType === 'card' ? 'primary' : 'neutral'}
-                coloringStyle={viewType === 'card' ? undefined : 'text'}
-                onClick={() => toggleView('card')}
-              >
-                <LayoutGrid className="size-5" />
-              </Button>
-            </Tooltip>
-          </div>
-          <Tooltip tooltip={translation('addPatient')} position="top">
-            <Button
-              onClick={() => {
-                setSelectedPatient(undefined)
-                setIsPanelOpen(true)
-              }}
-              layout="icon"
-            >
-              <PlusIcon />
-            </Button>
-          </Tooltip>
-        </div>
-      </div>
-      <Visibility isVisible={viewType === 'table'}>
-        <Table
-          table={{
-            data: patients,
-            columns,
-            fillerRowCell,
-            onRowClick
-          }}
-          displayProps={{ className: 'print-content' }}
-        />
-      </Visibility>
-      <Visibility isVisible={viewType === 'card'}>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 -mx-4 px-4 lg:mx-0 lg:pl-0 lg:pr-4 print-content">
-          {patients.length === 0 ? (
-            <div className="col-span-full text-center text-description py-8">
-              {translation('noPatient')}
-            </div>
-          ) : (
-            patients.map((patient) => (
-              <PatientCardView
-                key={patient.id}
-                patient={patient}
-                onClick={handleEdit}
+          <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto sm:ml-auto">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                value={showAllPatients}
+                onValueChange={handleShowAllPatientsChange}
               />
-            ))
-          )}
+              <span className="text-sm text-description whitespace-nowrap">{translation('showAllPatients') || 'Show all patients'}</span>
+            </div>
+            <Tooltip tooltip={translation(viewType !== 'table' ? 'printOnlyAvailableInTableMode' : 'print')} position="top">
+              <Button
+                layout="icon"
+                color="neutral"
+                coloringStyle="text"
+                onClick={handlePrint}
+                className="print-button"
+                disabled={viewType !== 'table'}
+              >
+                <Printer className="size-5" />
+              </Button>
+            </Tooltip>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <Tooltip tooltip={translation('tableView')} position="top">
+                <Button
+                  layout="icon"
+                  color={viewType === 'table' ? 'primary' : 'neutral'}
+                  coloringStyle={viewType === 'table' ? undefined : 'text'}
+                  onClick={() => toggleView('table')}
+                >
+                  <TableIcon className="size-5" />
+                </Button>
+              </Tooltip>
+              <Tooltip tooltip={translation('cardView')} position="top">
+                <Button
+                  layout="icon"
+                  color={viewType === 'card' ? 'primary' : 'neutral'}
+                  coloringStyle={viewType === 'card' ? undefined : 'text'}
+                  onClick={() => toggleView('card')}
+                >
+                  <LayoutGrid className="size-5" />
+                </Button>
+              </Tooltip>
+            </div>
+            <Tooltip tooltip={translation('addPatient')} position="top">
+              <Button
+                onClick={() => {
+                  setSelectedPatient(undefined)
+                  setIsPanelOpen(true)
+                }}
+                layout="icon"
+              >
+                <PlusIcon />
+              </Button>
+            </Tooltip>
+          </div>
         </div>
-      </Visibility>
-      <Drawer
-        isOpen={isPanelOpen}
-        onClose={handleClose}
-        alignment="right"
-        titleElement={!selectedPatient && !openedPatientId ? translation('addPatient') : translation('editPatient')}
-        description={undefined}
-      >
-        <PatientDetailView
-          patientId={selectedPatient?.id ?? openedPatientId ?? undefined}
+        <Visibility isVisible={viewType === 'table'}>
+          <TableDisplay
+            className="print-content"
+          />
+          <TablePagination />
+        </Visibility>
+        <Visibility isVisible={viewType === 'card'}>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 -mx-4 px-4 lg:mx-0 lg:pl-0 lg:pr-4 print-content">
+            {patients.length === 0 ? (
+              <div className="col-span-full text-center text-description py-8">
+                {translation('noPatient')}
+              </div>
+            ) : (
+              patients.map((patient) => (
+                <PatientCardView
+                  key={patient.id}
+                  patient={patient}
+                  onClick={handleEdit}
+                />
+              ))
+            )}
+          </div>
+        </Visibility>
+        <Drawer
+          isOpen={isPanelOpen}
           onClose={handleClose}
-          onSuccess={refetch}
-        />
-      </Drawer>
-    </div>
+          alignment="right"
+          titleElement={!selectedPatient && !openedPatientId ? translation('addPatient') : translation('editPatient')}
+          description={undefined}
+        >
+          <PatientDetailView
+            patientId={selectedPatient?.id ?? openedPatientId ?? undefined}
+            onClose={handleClose}
+            onSuccess={refetch}
+          />
+        </Drawer>
+      </div>
+    </TableProvider>
   )
 })
 

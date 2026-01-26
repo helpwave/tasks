@@ -35,6 +35,18 @@
 
   --color-location-bed: var(--color-emerald-100);
   --color-location-on-bed: var(--color-emerald-700);
+
+  --color-priority-p1: var(--color-green-500);
+  --color-priority-on-p1: var(--color-green-700);
+
+  --color-priority-p2: var(--color-blue-500);
+  --color-priority-on-p2: var(--color-blue-700);
+
+  --color-priority-p3: var(--color-orange-500);
+  --color-priority-on-p3: var(--color-orange-700);
+
+  --color-priority-p4: var(--color-red-500);
+  --color-priority-on-p4: var(--color-red-700);
 }
 
 @layer base {

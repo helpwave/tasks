@@ -1,6 +1,6 @@
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import type { ColumnDef, Row } from '@tanstack/react-table'
-import type { GetOverviewDataQuery } from '@/api/gql/generated'
+import type { GetOverviewDataQuery, TaskPriority } from '@/api/gql/generated'
 import { useCallback, useMemo } from 'react'
 import clsx from 'clsx'
 import type { TableProps } from '@helpwave/hightide'
@@ -8,6 +8,7 @@ import { Button, Checkbox, FillerCell, Table, TableColumnSwitcher, Tooltip } fro
 import { ArrowRightIcon } from 'lucide-react'
 import { SmartDate } from '@/utils/date'
 import { DueDateUtils } from '@/utils/dueDate'
+import { PriorityUtils } from '@/utils/priority'
 
 type TaskViewModel = GetOverviewDataQuery['recentTasks'][0]
 
@@ -45,7 +46,7 @@ export const RecentTasksTable = ({
             }
           }}
           onClick={(e) => e.stopPropagation()}
-          className={clsx('rounded-full')}
+          className={clsx('rounded-full', PriorityUtils.toCheckboxColor(row.original.priority as TaskPriority | null | undefined))}
         />
       ),
       minSize: 60,
@@ -61,7 +62,12 @@ export const RecentTasksTable = ({
       cell: ({ row }) => {
         return (
           <Tooltip tooltip={row.original.title} containerClassName="overflow-hidden w-full !block">
-            <span className="typography-title-sm truncate block">{row.original.title}</span>
+            <div className="flex-row-2 items-center">
+              {row.original.priority && (
+                <div className={clsx('w-2 h-2 rounded-full shrink-0', PriorityUtils.toBackgroundColor(row.original.priority as TaskPriority | null | undefined))} />
+              )}
+              <span className="typography-title-sm truncate block">{row.original.title}</span>
+            </div>
           </Tooltip>
         )
       },
@@ -153,7 +159,12 @@ export const RecentTasksTable = ({
         columns: taskColumns,
         isUsingFillerRows: true,
         fillerRowCell: useCallback(() => (<FillerCell className="min-h-8"/>), []),
-        onRowClick: useCallback((row: Row<TaskViewModel>) => onSelectTask(row.original.id), [onSelectTask])
+        onRowClick: useCallback((row: Row<TaskViewModel>) => onSelectTask(row.original.id), [onSelectTask]),
+        initialState: {
+          pagination: {
+            pageSize: 25,
+          }
+        }
       }}
       header={(
         <div className="flex-row-4 justify-between items-center">

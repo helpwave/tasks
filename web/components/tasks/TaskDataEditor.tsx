@@ -34,38 +34,7 @@ import { localToUTCWithSameTime, PatientDetailView } from '@/components/patients
 import { useOptimisticUpdateTaskMutation } from '@/api/optimistic-updates/GetTask'
 import { ErrorDialog } from '@/components/ErrorDialog'
 import clsx from 'clsx'
-
-const getPriorityDotColor = (priority: string | null | undefined): string => {
-  if (!priority) return ''
-  switch (priority) {
-  case 'P1':
-    return 'bg-green-500'
-  case 'P2':
-    return 'bg-blue-500'
-  case 'P3':
-    return 'bg-orange-500'
-  case 'P4':
-    return 'bg-red-500'
-  default:
-    return ''
-  }
-}
-
-const getPriorityCheckboxColor = (priority: TaskPriority | null | undefined): string => {
-  if (!priority) return ''
-  switch (priority) {
-  case 'P1':
-    return 'border-green-500 text-green-500 data-[checked]:bg-green-500/30'
-  case 'P2':
-    return 'border-blue-500 text-blue-500 data-[checked]:bg-blue-500/30'
-  case 'P3':
-    return 'border-orange-500 text-orange-500 data-[checked]:bg-orange-500/30'
-  case 'P4':
-    return 'border-red-500 text-red-500 data-[checked]:bg-red-500/30'
-  default:
-    return ''
-  }
-}
+import { PriorityUtils } from '@/utils/priority'
 
 type TaskFormValues = CreateTaskInput & {
   done: boolean,
@@ -244,6 +213,13 @@ export const TaskDataEditor = ({
     return <LoadingContainer/>
   }
 
+  const priorities = [
+    { value: 'P1', label: translation('priority', { priority: 'P1' }) },
+    { value: 'P2', label: translation('priority', { priority: 'P2' }) },
+    { value: 'P3', label: translation('priority', { priority: 'P3' }) },
+    { value: 'P4', label: translation('priority', { priority: 'P4' }) },
+  ]
+
   return (
     <>
       <FormProvider state={form}>
@@ -261,7 +237,7 @@ export const TaskDataEditor = ({
                         form.store.setValue('done', checked, true)
                       }}
                       className={clsx('rounded-full scale-125',
-                        getPriorityCheckboxColor(priority))}
+                        PriorityUtils.toCheckboxColor(priority as TaskPriority | null | undefined))}
                     />
                   )}
                 </FormObserver>
@@ -269,7 +245,9 @@ export const TaskDataEditor = ({
               <div className="flex-1">
                 <FormField<TaskFormValues, 'title'>
                   name="title"
-                  label=""
+                  label={translation('task')}
+                  required
+                  showRequiredIndicator={!isEditMode}
                 >
                   {({ dataProps, focusableElementProps, interactionStates }) => (
                     <Input
@@ -285,6 +263,8 @@ export const TaskDataEditor = ({
             <FormField<TaskFormValues, 'patientId'>
               name="patientId"
               label={translation('patient')}
+              required
+              showRequiredIndicator={!isEditMode}
             >
               {({ dataProps, focusableElementProps, interactionStates }) => {
                 return (!isEditMode) ? (
@@ -368,31 +348,15 @@ export const TaskDataEditor = ({
                       dataProps.onEditComplete?.(priority)
                     }}
                   >
-                    <SelectOption value="none">{translation('priorityNone')}</SelectOption>
-                    <SelectOption value="P1">
-                      <div className="flex items-center gap-2">
-                        <span className={`w-2 h-2 rounded-full ${getPriorityDotColor('P1')}`} />
-                        <span>{translation('priority', { priority: 'P1' })}</span>
-                      </div>
-                    </SelectOption>
-                    <SelectOption value="P2">
-                      <div className="flex items-center gap-2">
-                        <span className={`w-2 h-2 rounded-full ${getPriorityDotColor('P2')}`} />
-                        <span>{translation('priority', { priority: 'P2' })}</span>
-                      </div>
-                    </SelectOption>
-                    <SelectOption value="P3">
-                      <div className="flex items-center gap-2">
-                        <span className={`w-2 h-2 rounded-full ${getPriorityDotColor('P3')}`} />
-                        <span>{translation('priority', { priority: 'P3' })}</span>
-                      </div>
-                    </SelectOption>
-                    <SelectOption value="P4">
-                      <div className="flex items-center gap-2">
-                        <span className={`w-2 h-2 rounded-full ${getPriorityDotColor('P4')}`} />
-                        <span>{translation('priority', { priority: 'P4' })}</span>
-                      </div>
-                    </SelectOption>
+                    <SelectOption value="none" iconAppearance="right">{translation('priorityNone')}</SelectOption>
+                    {priorities.map(({ value, label }) => (
+                      <SelectOption key={value} value={value} iconAppearance="right">
+                        <div className="flex items-center gap-2">
+                          <span className={`w-2 h-2 rounded-full ${PriorityUtils.toBackgroundColor(value as TaskPriority | null | undefined)}`} />
+                          <span>{label}</span>
+                        </div>
+                      </SelectOption>
+                    ))}
                   </Select>
                 )
               }}

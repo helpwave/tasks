@@ -177,6 +177,11 @@ const PropertiesPage: NextPage = () => {
               columns,
               isUsingFillerRows: true,
               fillerRowCell: useCallback(() => (<FillerCell className="min-h-12"/>), []),
+              initialState: {
+                pagination: {
+                  pageSize: 25,
+                }
+              }
             }}
           />
         </div>

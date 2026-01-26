@@ -6,11 +6,13 @@ import { SmartDate } from '@/utils/date'
 import { LocationChips } from '@/components/patients/LocationChips'
 import type { TaskViewModel } from './TaskList'
 import { useRouter } from 'next/router'
+import type { TaskPriority } from '@/api/gql/generated'
 import { useCompleteTaskMutation, useReopenTaskMutation, type GetGlobalDataQuery } from '@/api/gql/generated'
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { UserInfoPopup } from '@/components/UserInfoPopup'
 import { useQueryClient } from '@tanstack/react-query'
 import { useTasksContext } from '@/hooks/useTasksContext'
+import { PriorityUtils } from '@/utils/priority'
 
 type FlexibleTask = {
   id: string,
@@ -66,38 +68,6 @@ const isCloseToDueDate = (dueDate: Date | undefined, done: boolean): boolean => 
   const dueTime = dueDate.getTime()
   const oneHour = 60 * 60 * 1000
   return dueTime > now && dueTime - now <= oneHour
-}
-
-const getPriorityColor = (priority: string | null | undefined): string => {
-  if (!priority) return ''
-  switch (priority) {
-  case 'P1':
-    return 'border-l-4 border-l-green-500'
-  case 'P2':
-    return 'border-l-4 border-l-blue-500'
-  case 'P3':
-    return 'border-l-4 border-l-orange-500'
-  case 'P4':
-    return 'border-l-4 border-l-red-500'
-  default:
-    return ''
-  }
-}
-
-const getPriorityCheckboxColor = (priority: string | null | undefined): string => {
-  if (!priority) return ''
-  switch (priority) {
-  case 'P1':
-    return 'border-green-500 text-green-500 checked:bg-green-500'
-  case 'P2':
-    return 'border-blue-500 text-blue-500 checked:bg-blue-500'
-  case 'P3':
-    return 'border-orange-500 text-orange-500 checked:bg-orange-500'
-  case 'P4':
-    return 'border-red-500 text-red-500 checked:bg-red-500'
-  default:
-    return ''
-  }
 }
 
 const toDate = (date: Date | string | null | undefined): Date | undefined => {
@@ -198,12 +168,6 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
     return finishDate
   }, [dueDate, flexibleTask.estimatedTime])
 
-  const borderColorClass = overdue
-    ? 'border-red-500'
-    : closeToDue
-      ? 'border-orange-500'
-      : 'border-neutral-300 dark:border-neutral-600'
-
   const handlePatientClick = (e: React.MouseEvent) => {
     e.stopPropagation()
     if (task.patient?.id) {
@@ -229,12 +193,29 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
     }
   }
 
-  const priorityBorderClass = getPriorityColor(task.priority || (task as FlexibleTask).priority)
+  const borderColorClass = overdue
+    ? 'border-negative'
+    : closeToDue
+      ? 'border-warning'
+      : 'border-border'
+
+  const priorityBorderClass = {
+    P1: 'border-l-4 border-l-priority-p1',
+    P2: 'border-l-4 border-l-priority-p2',
+    P3: 'border-l-4 border-l-priority-p3',
+    P4: 'border-l-4 border-l-priority-p4',
+  }[(task as FlexibleTask).priority as TaskPriority] ?? ''
 
   return (
     <div
       onClick={() => onClick(task)}
-      className={clsx('border-2 p-5 rounded-lg text-left transition-colors hover:border-primary relative bg-surface bg-on-surface-variant overflow-hidden cursor-pointer w-full min-h-35', borderColorClass, priorityBorderClass, className)}
+      className={clsx(
+        'border-2 p-4 rounded-lg text-left transition-colors hover:border-primary ',
+        'relative bg-surface bg-on-surface-variant overflow-hidden cursor-pointer w-full min-h-35',
+        borderColorClass,
+        priorityBorderClass,
+        className
+      )}
       role="button"
       tabIndex={0}
       onKeyDown={(e) => {
@@ -249,20 +230,19 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
           <Checkbox
             value={displayDone}
             onValueChange={handleToggleDone}
-            className={clsx('rounded-full mt-0.5 shrink-0', getPriorityCheckboxColor(task.priority || (task as FlexibleTask).priority))}
+            className={clsx('rounded-full mt-0.5 shrink-0', PriorityUtils.toCheckboxColor(task?.priority as TaskPriority | null | undefined))}
           />
         </div>
         <div className={clsx('flex-1 min-w-0 overflow-hidden', { 'pb-16': showPatient, 'pb-12': !showPatient })}>
           <div className={clsx('flex items-center justify-between gap-2 flex-wrap min-w-0', { 'mb-2': showPatient, 'mb-4': !showPatient })}>
             <div className="flex items-center gap-2 min-w-0 flex-1">
               {(task as FlexibleTask).priority && (
-                <div className={clsx(
-                  'w-2 h-2 rounded-full shrink-0',
-                  (task as FlexibleTask).priority === 'P1' ? 'bg-green-500' :
-                    (task as FlexibleTask).priority === 'P2' ? 'bg-blue-500' :
-                      (task as FlexibleTask).priority === 'P3' ? 'bg-orange-500' :
-                        (task as FlexibleTask).priority === 'P4' ? 'bg-red-500' : ''
-                )} />
+                <div
+                  className={clsx(
+                    'w-2 h-2 rounded-full shrink-0',
+                    PriorityUtils.toBackgroundColor(task?.priority as TaskPriority | null | undefined)
+                  )}
+                />
               )}
               <div
                 className={clsx(
