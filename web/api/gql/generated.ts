@@ -27,6 +27,11 @@ export type AuditLogType = {
   userId?: Maybe<Scalars['String']['output']>;
 };
 
+export enum ColumnType {
+  DirectAttribute = 'DIRECT_ATTRIBUTE',
+  Property = 'PROPERTY'
+}
+
 export type CreateLocationNodeInput = {
   kind: LocationType;
   parentId?: InputMaybe<Scalars['ID']['input']>;
@@ -80,6 +85,83 @@ export enum FieldType {
   FieldTypeText = 'FIELD_TYPE_TEXT',
   FieldTypeUnspecified = 'FIELD_TYPE_UNSPECIFIED'
 }
+
+export type FilterInput = {
+  column: Scalars['String']['input'];
+  columnType?: ColumnType;
+  operator: FilterOperator;
+  parameter: FilterParameter;
+  propertyDefinitionId?: InputMaybe<Scalars['String']['input']>;
+};
+
+export enum FilterOperator {
+  BooleanIsFalse = 'BOOLEAN_IS_FALSE',
+  BooleanIsTrue = 'BOOLEAN_IS_TRUE',
+  DatetimeBetween = 'DATETIME_BETWEEN',
+  DatetimeEquals = 'DATETIME_EQUALS',
+  DatetimeGreaterThan = 'DATETIME_GREATER_THAN',
+  DatetimeGreaterThanOrEqual = 'DATETIME_GREATER_THAN_OR_EQUAL',
+  DatetimeLessThan = 'DATETIME_LESS_THAN',
+  DatetimeLessThanOrEqual = 'DATETIME_LESS_THAN_OR_EQUAL',
+  DatetimeNotBetween = 'DATETIME_NOT_BETWEEN',
+  DatetimeNotEquals = 'DATETIME_NOT_EQUALS',
+  DateBetween = 'DATE_BETWEEN',
+  DateEquals = 'DATE_EQUALS',
+  DateGreaterThan = 'DATE_GREATER_THAN',
+  DateGreaterThanOrEqual = 'DATE_GREATER_THAN_OR_EQUAL',
+  DateLessThan = 'DATE_LESS_THAN',
+  DateLessThanOrEqual = 'DATE_LESS_THAN_OR_EQUAL',
+  DateNotBetween = 'DATE_NOT_BETWEEN',
+  DateNotEquals = 'DATE_NOT_EQUALS',
+  IsNotNull = 'IS_NOT_NULL',
+  IsNull = 'IS_NULL',
+  NumberBetween = 'NUMBER_BETWEEN',
+  NumberEquals = 'NUMBER_EQUALS',
+  NumberGreaterThan = 'NUMBER_GREATER_THAN',
+  NumberGreaterThanOrEqual = 'NUMBER_GREATER_THAN_OR_EQUAL',
+  NumberLessThan = 'NUMBER_LESS_THAN',
+  NumberLessThanOrEqual = 'NUMBER_LESS_THAN_OR_EQUAL',
+  NumberNotBetween = 'NUMBER_NOT_BETWEEN',
+  NumberNotEquals = 'NUMBER_NOT_EQUALS',
+  TagsContains = 'TAGS_CONTAINS',
+  TagsEquals = 'TAGS_EQUALS',
+  TagsNotContains = 'TAGS_NOT_CONTAINS',
+  TagsNotEquals = 'TAGS_NOT_EQUALS',
+  TagsSingleContains = 'TAGS_SINGLE_CONTAINS',
+  TagsSingleEquals = 'TAGS_SINGLE_EQUALS',
+  TagsSingleNotContains = 'TAGS_SINGLE_NOT_CONTAINS',
+  TagsSingleNotEquals = 'TAGS_SINGLE_NOT_EQUALS',
+  TextContains = 'TEXT_CONTAINS',
+  TextEndsWith = 'TEXT_ENDS_WITH',
+  TextEquals = 'TEXT_EQUALS',
+  TextNotContains = 'TEXT_NOT_CONTAINS',
+  TextNotEquals = 'TEXT_NOT_EQUALS',
+  TextNotWhitespace = 'TEXT_NOT_WHITESPACE',
+  TextStartsWith = 'TEXT_STARTS_WITH'
+}
+
+export type FilterParameter = {
+  compareDate?: InputMaybe<Scalars['Date']['input']>;
+  compareDateTime?: InputMaybe<Scalars['DateTime']['input']>;
+  compareValue?: InputMaybe<Scalars['Float']['input']>;
+  isCaseSensitive?: Scalars['Boolean']['input'];
+  max?: InputMaybe<Scalars['Float']['input']>;
+  maxDate?: InputMaybe<Scalars['Date']['input']>;
+  maxDateTime?: InputMaybe<Scalars['DateTime']['input']>;
+  min?: InputMaybe<Scalars['Float']['input']>;
+  minDate?: InputMaybe<Scalars['Date']['input']>;
+  minDateTime?: InputMaybe<Scalars['DateTime']['input']>;
+  propertyDefinitionId?: InputMaybe<Scalars['String']['input']>;
+  searchTags?: InputMaybe<Array<Scalars['String']['input']>>;
+  searchText?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type FullTextSearchInput = {
+  includeProperties?: Scalars['Boolean']['input'];
+  propertyDefinitionIds?: InputMaybe<Array<Scalars['String']['input']>>;
+  searchColumns?: InputMaybe<Array<Scalars['String']['input']>>;
+  searchText: Scalars['String']['input'];
+};
 
 export type LocationNodeType = {
   __typename?: 'LocationNodeType';
@@ -252,6 +334,11 @@ export type MutationWaitPatientArgs = {
   id: Scalars['ID']['input'];
 };
 
+export type PaginationInput = {
+  pageIndex?: Scalars['Int']['input'];
+  pageSize?: InputMaybe<Scalars['Int']['input']>;
+};
+
 export enum PatientState {
   Admitted = 'ADMITTED',
   Dead = 'DEAD',
@@ -336,11 +423,15 @@ export type Query = {
   me?: Maybe<UserType>;
   patient?: Maybe<PatientType>;
   patients: Array<PatientType>;
+  patientsTotal: Scalars['Int']['output'];
   propertyDefinitions: Array<PropertyDefinitionType>;
   recentPatients: Array<PatientType>;
+  recentPatientsTotal: Scalars['Int']['output'];
   recentTasks: Array<TaskType>;
+  recentTasksTotal: Scalars['Int']['output'];
   task?: Maybe<TaskType>;
   tasks: Array<TaskType>;
+  tasksTotal: Scalars['Int']['output'];
   user?: Maybe<UserType>;
   users: Array<UserType>;
 };
@@ -375,21 +466,53 @@ export type QueryPatientArgs = {
 
 
 export type QueryPatientsArgs = {
-  limit?: InputMaybe<Scalars['Int']['input']>;
+  filtering?: InputMaybe<Array<FilterInput>>;
   locationNodeId?: InputMaybe<Scalars['ID']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
+  pagination?: InputMaybe<PaginationInput>;
   rootLocationIds?: InputMaybe<Array<Scalars['ID']['input']>>;
+  search?: InputMaybe<FullTextSearchInput>;
+  sorting?: InputMaybe<Array<SortInput>>;
+  states?: InputMaybe<Array<PatientState>>;
+};
+
+
+export type QueryPatientsTotalArgs = {
+  filtering?: InputMaybe<Array<FilterInput>>;
+  locationNodeId?: InputMaybe<Scalars['ID']['input']>;
+  rootLocationIds?: InputMaybe<Array<Scalars['ID']['input']>>;
+  search?: InputMaybe<FullTextSearchInput>;
+  sorting?: InputMaybe<Array<SortInput>>;
   states?: InputMaybe<Array<PatientState>>;
 };
 
 
 export type QueryRecentPatientsArgs = {
-  limit?: Scalars['Int']['input'];
+  filtering?: InputMaybe<Array<FilterInput>>;
+  pagination?: InputMaybe<PaginationInput>;
+  search?: InputMaybe<FullTextSearchInput>;
+  sorting?: InputMaybe<Array<SortInput>>;
+};
+
+
+export type QueryRecentPatientsTotalArgs = {
+  filtering?: InputMaybe<Array<FilterInput>>;
+  search?: InputMaybe<FullTextSearchInput>;
+  sorting?: InputMaybe<Array<SortInput>>;
 };
 
 
 export type QueryRecentTasksArgs = {
-  limit?: Scalars['Int']['input'];
+  filtering?: InputMaybe<Array<FilterInput>>;
+  pagination?: InputMaybe<PaginationInput>;
+  search?: InputMaybe<FullTextSearchInput>;
+  sorting?: InputMaybe<Array<SortInput>>;
+};
+
+
+export type QueryRecentTasksTotalArgs = {
+  filtering?: InputMaybe<Array<FilterInput>>;
+  search?: InputMaybe<FullTextSearchInput>;
+  sorting?: InputMaybe<Array<SortInput>>;
 };
 
 
@@ -401,10 +524,23 @@ export type QueryTaskArgs = {
 export type QueryTasksArgs = {
   assigneeId?: InputMaybe<Scalars['ID']['input']>;
   assigneeTeamId?: InputMaybe<Scalars['ID']['input']>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
+  filtering?: InputMaybe<Array<FilterInput>>;
+  pagination?: InputMaybe<PaginationInput>;
   patientId?: InputMaybe<Scalars['ID']['input']>;
   rootLocationIds?: InputMaybe<Array<Scalars['ID']['input']>>;
+  search?: InputMaybe<FullTextSearchInput>;
+  sorting?: InputMaybe<Array<SortInput>>;
+};
+
+
+export type QueryTasksTotalArgs = {
+  assigneeId?: InputMaybe<Scalars['ID']['input']>;
+  assigneeTeamId?: InputMaybe<Scalars['ID']['input']>;
+  filtering?: InputMaybe<Array<FilterInput>>;
+  patientId?: InputMaybe<Scalars['ID']['input']>;
+  rootLocationIds?: InputMaybe<Array<Scalars['ID']['input']>>;
+  search?: InputMaybe<FullTextSearchInput>;
+  sorting?: InputMaybe<Array<SortInput>>;
 };
 
 
@@ -412,11 +548,31 @@ export type QueryUserArgs = {
   id: Scalars['ID']['input'];
 };
 
+
+export type QueryUsersArgs = {
+  filtering?: InputMaybe<Array<FilterInput>>;
+  pagination?: InputMaybe<PaginationInput>;
+  search?: InputMaybe<FullTextSearchInput>;
+  sorting?: InputMaybe<Array<SortInput>>;
+};
+
 export enum Sex {
   Female = 'FEMALE',
   Male = 'MALE',
   Unknown = 'UNKNOWN'
 }
+
+export enum SortDirection {
+  Asc = 'ASC',
+  Desc = 'DESC'
+}
+
+export type SortInput = {
+  column: Scalars['String']['input'];
+  columnType?: ColumnType;
+  direction: SortDirection;
+  propertyDefinitionId?: InputMaybe<Scalars['String']['input']>;
+};
 
 export type Subscription = {
   __typename?: 'Subscription';
@@ -601,10 +757,19 @@ export type GetMyTasksQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type GetMyTasksQuery = { __typename?: 'Query', me?: { __typename?: 'UserType', id: string, tasks: Array<{ __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, dueDate?: any | null, priority?: string | null, estimatedTime?: number | null, creationDate: any, updateDate?: any | null, patient: { __typename?: 'PatientType', id: string, name: string, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null, assignedLocations: Array<{ __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null }> }, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null, lastOnline?: any | null, isOnline: boolean } | null }> } | null };
 
-export type GetOverviewDataQueryVariables = Exact<{ [key: string]: never; }>;
+export type GetOverviewDataQueryVariables = Exact<{
+  recentPatientsFiltering?: InputMaybe<Array<FilterInput> | FilterInput>;
+  recentPatientsSorting?: InputMaybe<Array<SortInput> | SortInput>;
+  recentPatientsPagination?: InputMaybe<PaginationInput>;
+  recentPatientsSearch?: InputMaybe<FullTextSearchInput>;
+  recentTasksFiltering?: InputMaybe<Array<FilterInput> | FilterInput>;
+  recentTasksSorting?: InputMaybe<Array<SortInput> | SortInput>;
+  recentTasksPagination?: InputMaybe<PaginationInput>;
+  recentTasksSearch?: InputMaybe<FullTextSearchInput>;
+}>;
 
 
-export type GetOverviewDataQuery = { __typename?: 'Query', recentPatients: Array<{ __typename?: 'PatientType', id: string, name: string, sex: Sex, birthdate: any, position?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null, tasks: Array<{ __typename?: 'TaskType', updateDate?: any | null }> }>, recentTasks: Array<{ __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, dueDate?: any | null, updateDate?: any | null, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null, lastOnline?: any | null, isOnline: boolean } | null, patient: { __typename?: 'PatientType', id: string, name: string, position?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null } }> };
+export type GetOverviewDataQuery = { __typename?: 'Query', recentPatientsTotal: number, recentTasksTotal: number, recentPatients: Array<{ __typename?: 'PatientType', id: string, name: string, sex: Sex, birthdate: any, position?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null, tasks: Array<{ __typename?: 'TaskType', updateDate?: any | null }>, properties: Array<{ __typename?: 'PropertyValueType', textValue?: string | null, numberValue?: number | null, booleanValue?: boolean | null, dateValue?: any | null, dateTimeValue?: any | null, selectValue?: string | null, multiSelectValues?: Array<string> | null, definition: { __typename?: 'PropertyDefinitionType', id: string, name: string, description?: string | null, fieldType: FieldType, isActive: boolean, allowedEntities: Array<PropertyEntity>, options: Array<string> } }> }>, recentTasks: Array<{ __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, dueDate?: any | null, updateDate?: any | null, priority?: string | null, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null, lastOnline?: any | null, isOnline: boolean } | null, patient: { __typename?: 'PatientType', id: string, name: string, position?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null }, properties: Array<{ __typename?: 'PropertyValueType', textValue?: string | null, numberValue?: number | null, booleanValue?: boolean | null, dateValue?: any | null, dateTimeValue?: any | null, selectValue?: string | null, multiSelectValues?: Array<string> | null, definition: { __typename?: 'PropertyDefinitionType', id: string, name: string, description?: string | null, fieldType: FieldType, isActive: boolean, allowedEntities: Array<PropertyEntity>, options: Array<string> } }> }> };
 
 export type GetPatientQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -617,12 +782,14 @@ export type GetPatientsQueryVariables = Exact<{
   locationId?: InputMaybe<Scalars['ID']['input']>;
   rootLocationIds?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
   states?: InputMaybe<Array<PatientState> | PatientState>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
+  filtering?: InputMaybe<Array<FilterInput> | FilterInput>;
+  sorting?: InputMaybe<Array<SortInput> | SortInput>;
+  pagination?: InputMaybe<PaginationInput>;
+  search?: InputMaybe<FullTextSearchInput>;
 }>;
 
 
-export type GetPatientsQuery = { __typename?: 'Query', patients: Array<{ __typename?: 'PatientType', id: string, name: string, firstname: string, lastname: string, birthdate: any, sex: Sex, state: PatientState, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null, assignedLocations: Array<{ __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null } | null }>, clinic: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null } | null } | null }, position?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null } | null } | null } | null, teams: Array<{ __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null } | null } | null }>, tasks: Array<{ __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, dueDate?: any | null, priority?: string | null, estimatedTime?: number | null, creationDate: any, updateDate?: any | null, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null, lastOnline?: any | null, isOnline: boolean } | null, assigneeTeam?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType } | null }>, properties: Array<{ __typename?: 'PropertyValueType', textValue?: string | null, definition: { __typename?: 'PropertyDefinitionType', name: string } }> }> };
+export type GetPatientsQuery = { __typename?: 'Query', patientsTotal: number, patients: Array<{ __typename?: 'PatientType', id: string, name: string, firstname: string, lastname: string, birthdate: any, sex: Sex, state: PatientState, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null, assignedLocations: Array<{ __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null } | null }>, clinic: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null } | null } | null }, position?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null } | null } | null } | null, teams: Array<{ __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null } | null } | null }>, tasks: Array<{ __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, dueDate?: any | null, priority?: string | null, estimatedTime?: number | null, creationDate: any, updateDate?: any | null, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null, lastOnline?: any | null, isOnline: boolean } | null, assigneeTeam?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType } | null }>, properties: Array<{ __typename?: 'PropertyValueType', textValue?: string | null, numberValue?: number | null, booleanValue?: boolean | null, dateValue?: any | null, dateTimeValue?: any | null, selectValue?: string | null, multiSelectValues?: Array<string> | null, definition: { __typename?: 'PropertyDefinitionType', id: string, name: string, description?: string | null, fieldType: FieldType, isActive: boolean, allowedEntities: Array<PropertyEntity>, options: Array<string> } }> }> };
 
 export type GetTaskQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -635,12 +802,14 @@ export type GetTasksQueryVariables = Exact<{
   rootLocationIds?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
   assigneeId?: InputMaybe<Scalars['ID']['input']>;
   assigneeTeamId?: InputMaybe<Scalars['ID']['input']>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
+  filtering?: InputMaybe<Array<FilterInput> | FilterInput>;
+  sorting?: InputMaybe<Array<SortInput> | SortInput>;
+  pagination?: InputMaybe<PaginationInput>;
+  search?: InputMaybe<FullTextSearchInput>;
 }>;
 
 
-export type GetTasksQuery = { __typename?: 'Query', tasks: Array<{ __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, dueDate?: any | null, priority?: string | null, estimatedTime?: number | null, creationDate: any, updateDate?: any | null, patient: { __typename?: 'PatientType', id: string, name: string, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null, assignedLocations: Array<{ __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null }> }, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null, lastOnline?: any | null, isOnline: boolean } | null, assigneeTeam?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType } | null }> };
+export type GetTasksQuery = { __typename?: 'Query', tasksTotal: number, tasks: Array<{ __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, dueDate?: any | null, priority?: string | null, estimatedTime?: number | null, creationDate: any, updateDate?: any | null, patient: { __typename?: 'PatientType', id: string, name: string, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null, assignedLocations: Array<{ __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null }> }, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null, lastOnline?: any | null, isOnline: boolean } | null, assigneeTeam?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType } | null, properties: Array<{ __typename?: 'PropertyValueType', textValue?: string | null, numberValue?: number | null, booleanValue?: boolean | null, dateValue?: any | null, dateTimeValue?: any | null, selectValue?: string | null, multiSelectValues?: Array<string> | null, definition: { __typename?: 'PropertyDefinitionType', id: string, name: string, description?: string | null, fieldType: FieldType, isActive: boolean, allowedEntities: Array<PropertyEntity>, options: Array<string> } }> }> };
 
 export type GetUserQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -1057,8 +1226,13 @@ export const useGetMyTasksQuery = <
     )};
 
 export const GetOverviewDataDocument = `
-    query GetOverviewData {
-  recentPatients(limit: 5) {
+    query GetOverviewData($recentPatientsFiltering: [FilterInput!], $recentPatientsSorting: [SortInput!], $recentPatientsPagination: PaginationInput, $recentPatientsSearch: FullTextSearchInput, $recentTasksFiltering: [FilterInput!], $recentTasksSorting: [SortInput!], $recentTasksPagination: PaginationInput, $recentTasksSearch: FullTextSearchInput) {
+  recentPatients(
+    filtering: $recentPatientsFiltering
+    sorting: $recentPatientsSorting
+    pagination: $recentPatientsPagination
+    search: $recentPatientsSearch
+  ) {
     id
     name
     sex
@@ -1075,14 +1249,43 @@ export const GetOverviewDataDocument = `
     tasks {
       updateDate
     }
+    properties {
+      definition {
+        id
+        name
+        description
+        fieldType
+        isActive
+        allowedEntities
+        options
+      }
+      textValue
+      numberValue
+      booleanValue
+      dateValue
+      dateTimeValue
+      selectValue
+      multiSelectValues
+    }
   }
-  recentTasks(limit: 10) {
+  recentPatientsTotal(
+    filtering: $recentPatientsFiltering
+    sorting: $recentPatientsSorting
+    search: $recentPatientsSearch
+  )
+  recentTasks(
+    filtering: $recentTasksFiltering
+    sorting: $recentTasksSorting
+    pagination: $recentTasksPagination
+    search: $recentTasksSearch
+  ) {
     id
     title
     description
     done
     dueDate
     updateDate
+    priority
     assignee {
       id
       name
@@ -1103,7 +1306,30 @@ export const GetOverviewDataDocument = `
         }
       }
     }
+    properties {
+      definition {
+        id
+        name
+        description
+        fieldType
+        isActive
+        allowedEntities
+        options
+      }
+      textValue
+      numberValue
+      booleanValue
+      dateValue
+      dateTimeValue
+      selectValue
+      multiSelectValues
+    }
   }
+  recentTasksTotal(
+    filtering: $recentTasksFiltering
+    sorting: $recentTasksSorting
+    search: $recentTasksSearch
+  )
 }
     `;
 
@@ -1266,13 +1492,15 @@ export const useGetPatientQuery = <
     )};
 
 export const GetPatientsDocument = `
-    query GetPatients($locationId: ID, $rootLocationIds: [ID!], $states: [PatientState!], $limit: Int, $offset: Int) {
+    query GetPatients($locationId: ID, $rootLocationIds: [ID!], $states: [PatientState!], $filtering: [FilterInput!], $sorting: [SortInput!], $pagination: PaginationInput, $search: FullTextSearchInput) {
   patients(
     locationNodeId: $locationId
     rootLocationIds: $rootLocationIds
     states: $states
-    limit: $limit
-    offset: $offset
+    filtering: $filtering
+    sorting: $sorting
+    pagination: $pagination
+    search: $search
   ) {
     id
     name
@@ -1394,11 +1622,31 @@ export const GetPatientsDocument = `
     }
     properties {
       definition {
+        id
         name
+        description
+        fieldType
+        isActive
+        allowedEntities
+        options
       }
       textValue
+      numberValue
+      booleanValue
+      dateValue
+      dateTimeValue
+      selectValue
+      multiSelectValues
     }
   }
+  patientsTotal(
+    locationNodeId: $locationId
+    rootLocationIds: $rootLocationIds
+    states: $states
+    filtering: $filtering
+    sorting: $sorting
+    search: $search
+  )
 }
     `;
 
@@ -1484,13 +1732,15 @@ export const useGetTaskQuery = <
     )};
 
 export const GetTasksDocument = `
-    query GetTasks($rootLocationIds: [ID!], $assigneeId: ID, $assigneeTeamId: ID, $limit: Int, $offset: Int) {
+    query GetTasks($rootLocationIds: [ID!], $assigneeId: ID, $assigneeTeamId: ID, $filtering: [FilterInput!], $sorting: [SortInput!], $pagination: PaginationInput, $search: FullTextSearchInput) {
   tasks(
     rootLocationIds: $rootLocationIds
     assigneeId: $assigneeId
     assigneeTeamId: $assigneeTeamId
-    limit: $limit
-    offset: $offset
+    filtering: $filtering
+    sorting: $sorting
+    pagination: $pagination
+    search: $search
   ) {
     id
     title
@@ -1538,7 +1788,33 @@ export const GetTasksDocument = `
       title
       kind
     }
+    properties {
+      definition {
+        id
+        name
+        description
+        fieldType
+        isActive
+        allowedEntities
+        options
+      }
+      textValue
+      numberValue
+      booleanValue
+      dateValue
+      dateTimeValue
+      selectValue
+      multiSelectValues
+    }
   }
+  tasksTotal(
+    rootLocationIds: $rootLocationIds
+    assigneeId: $assigneeId
+    assigneeTeamId: $assigneeTeamId
+    filtering: $filtering
+    sorting: $sorting
+    search: $search
+  )
 }
     `;
 

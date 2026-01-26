@@ -176,8 +176,7 @@ const SettingsPage: NextPage = () => {
           <section className="flex-row-4 items-center p-4 bg-surface-1 rounded-lg border border-divider">
             <div className="relative">
               <AvatarStatusComponent
-                size="xl"
-                fullyRounded
+                size="lg"
                 image={previewUrl ? { avatarUrl: previewUrl, alt: user?.name || '' } : (user?.avatarUrl ? { avatarUrl: user.avatarUrl, alt: user?.name || '' } : undefined)}
                 isOnline={user?.isOnline ?? null}
               />
@@ -207,17 +206,17 @@ const SettingsPage: NextPage = () => {
                   <Button
                     color="neutral"
                     coloringStyle="outline"
-                    size="small"
-                    startIcon={<Upload className="w-4 h-4" />}
+                    size="sm"
                     className="pointer-events-none"
                   >
+                    <Upload className="w-4 h-4" />
                     {selectedFile ? 'Change Picture' : 'Upload Picture'}
                   </Button>
                 </label>
                 {selectedFile && (
                   <Button
                     color="primary"
-                    size="small"
+                    size="sm"
                     onClick={handleUpload}
                     disabled={isUploading}
                   >
@@ -257,8 +256,8 @@ const SettingsPage: NextPage = () => {
                 coloringStyle="outline"
                 className="justify-start h-auto py-4"
                 onClick={() => router.push('/properties')}
-                startIcon={<TableProperties className="mr-2" />}
               >
+                <TableProperties className="mr-2" />
                 <div className="flex-col-1 items-start">
                   <span className="typography-label-lg">{translation('properties')}</span>
                   <span className="typography-body-sm text-description font-normal">
@@ -277,7 +276,7 @@ const SettingsPage: NextPage = () => {
                 <span className="typography-label-lg">{translation('language')}</span>
                 <Select
                   value={locale}
-                  onValueChanged={(language: string) => setLocale(language as HightideTranslationLocales)}
+                  onValueChange={(language: string) => setLocale(language as HightideTranslationLocales)}
                   buttonProps={{
                     selectedDisplay: (l) => LocalizationUtil.languagesLocalNames[l as HightideTranslationLocales],
                     className: 'w-full'
@@ -292,10 +291,10 @@ const SettingsPage: NextPage = () => {
               </div>
 
               <div className="flex-col-2">
-                <span className="typography-label-lg">{translation('themes', { count: 1 })}</span>
+                <span className="typography-label-lg">{translation('pThemes', { count: 1 })}</span>
                 <Select
                   value={theme}
-                  onValueChanged={(theme) => setTheme(theme as ThemeType)}
+                  onValueChange={(theme) => setTheme(theme as ThemeType)}
                   iconAppearance="right"
                   buttonProps={{
                     selectedDisplay: (value) => (
@@ -328,8 +327,8 @@ const SettingsPage: NextPage = () => {
                   color="neutral"
                   coloringStyle="outline"
                   onClick={handleRetakeSurvey}
-                  startIcon={<ClipboardList className="w-4 h-4" />}
                 >
+                  <ClipboardList className="w-4 h-4" />
                   {translation('retakeSurvey')}
                 </Button>
               )}
@@ -337,8 +336,8 @@ const SettingsPage: NextPage = () => {
                 color="neutral"
                 coloringStyle="outline"
                 onClick={() => setIsFeedbackDialogOpen(true)}
-                startIcon={<MessageSquareText className="w-4 h-4" />}
               >
+                <MessageSquareText className="w-4 h-4" />
                 {translation('feedback')}
               </Button>
             </div>
@@ -354,8 +353,8 @@ const SettingsPage: NextPage = () => {
                   const accountUrl = `${config.auth.issuer}/account`
                   window.open(accountUrl, '_blank', 'noopener,noreferrer')
                 }}
-                startIcon={<Shield className="w-4 h-4" />}
               >
+                <Shield className="w-4 h-4" />
                 {translation('security') ?? 'Security'}
               </Button>
 
@@ -363,8 +362,8 @@ const SettingsPage: NextPage = () => {
                 color="neutral"
                 coloringStyle="outline"
                 onClick={() => logout()}
-                startIcon={<LogOut className="w-4 h-4" />}
               >
+                <LogOut className="w-4 h-4" />
                 {translation('logout')}
               </Button>
 
@@ -372,8 +371,8 @@ const SettingsPage: NextPage = () => {
                 color="negative"
                 coloringStyle="outline"
                 onClick={handleClearCache}
-                startIcon={<Trash2 className="w-4 h-4" />}
               >
+                <Trash2 className="w-4 h-4" />
                 {translation('clearCache')}
               </Button>
             </div>

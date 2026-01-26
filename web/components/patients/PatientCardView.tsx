@@ -4,7 +4,7 @@ import { LocationChips } from '@/components/patients/LocationChips'
 import { PatientStateChip } from '@/components/patients/PatientStateChip'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { Sex } from '@/api/gql/generated'
-import type { PatientViewModel } from './PatientList'
+import type { PatientViewModel } from '../tables/PatientList'
 
 type PatientCardViewProps = {
   patient: PatientViewModel,
@@ -60,8 +60,8 @@ export const PatientCardView = ({ patient, onClick }: PatientCardViewProps) => {
 
         <div className="flex flex-wrap items-center gap-2">
           <Chip
-            color={sex === Sex.Unknown ? 'neutral' : 'none'}
-            size="small"
+            color={sex === Sex.Unknown ? 'neutral' : undefined}
+            size="sm"
             className={`${colorClass} font-[var(--font-space-grotesk)] uppercase text-xs`}
           >
             <span>{label}</span>

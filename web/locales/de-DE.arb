@@ -228,15 +228,25 @@
   "time.today": "Heute",
   "myFavorites": "Meine Favoriten",
   "freeBeds": "Freie Betten",
+  "cardView": "Kachelansicht",
   "occupancy": "Belegung",
   "properties": "Eigenschaften",
   "addProperty": "Eigenschaften hinzufügen",
   "type": "Typ",
+  "tableView": "Tabellenansicht",
   "subjectType": "Subjekt Type",
   "active": "Aktiv",
   "inactive": "Inaktiv",
   "rEdit": "{name} ändern",
   "@rEdit": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "rShow": "{name} anzeigen",
+  "@rShow": {
     "placeholders": {
       "name": {
         "type": "string"
@@ -390,6 +400,8 @@
   },
   "priorityLabel": "Priorität",
   "priorityNone": "Keine",
+  "print": "Drucken",
+  "printOnlyAvailableInTableMode": "Drucken ist nur im Tabellenmodus verfügbar",
   "deletePatient": "Patient löschen",
   "deletePatientConfirmation": "Sind Sie sicher, dass Sie diesen Patienten löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
   "feedbackDescription": "Teilen Sie Ihr Feedback, melden Sie Fehler oder schlagen Sie Verbesserungen vor.",
@@ -410,6 +422,16 @@
   "estimatedTime": "Geschätzte Zeit (Minuten)",
   "ok": "OK",
   "submitAnonymously": "Anonym absenden",
+  "submissionDetails": "Übermittlungsdetails",
+  "submittingAs": "Übermitteln als {name}",
+  "@submittingAs": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "anonymousSubmission": "Anonyme Übermittlung",
   "conflictDetected": "Konflikt erkannt",
   "overwrite": "Überschreiben",
   "userInformation": "Benutzerinformationen"

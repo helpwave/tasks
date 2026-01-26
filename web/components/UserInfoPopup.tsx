@@ -51,7 +51,7 @@ export const UserInfoPopup: React.FC<UserInfoPopupProps> = ({ userId, isOpen, on
       GET_USER_QUERY,
       { id: userId! }
     )(),
-    enabled: isOpen && !!userId,
+    enabled: !!userId,
   })
 
   const user = data?.user
@@ -62,8 +62,7 @@ export const UserInfoPopup: React.FC<UserInfoPopupProps> = ({ userId, isOpen, on
       onClose={onClose}
       titleElement={translation('userInformation')}
       description=""
-      className={clsx('w-96 z-50')}
-      backgroundClassName="z-40"
+      className={clsx('w-96')}
       isModal={true}
     >
       <div onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
@@ -74,8 +73,7 @@ export const UserInfoPopup: React.FC<UserInfoPopupProps> = ({ userId, isOpen, on
             <div className="flex-col-4">
               <div className="flex items-center gap-3">
                 <AvatarStatusComponent
-                  size="xl"
-                  fullyRounded={true}
+                  size="lg"
                   isOnline={user.isOnline}
                   image={user.avatarUrl ? {
                     avatarUrl: user.avatarUrl,

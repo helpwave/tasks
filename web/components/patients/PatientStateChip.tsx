@@ -11,21 +11,21 @@ export const PatientStateChip = ({ state }: PatientStateChipProps) => {
 
   const getColor = (state: PatientState): 'positive' | 'warning' | 'neutral' | 'negative' => {
     switch (state) {
-      case PatientState.Admitted:
-        return 'positive'
-      case PatientState.Wait:
-        return 'warning'
-      case PatientState.Discharged:
-        return 'neutral'
-      case PatientState.Dead:
-        return 'negative'
-      default:
-        return 'neutral'
+    case PatientState.Admitted:
+      return 'positive'
+    case PatientState.Wait:
+      return 'warning'
+    case PatientState.Discharged:
+      return 'neutral'
+    case PatientState.Dead:
+      return 'negative'
+    default:
+      return 'neutral'
     }
   }
 
   return (
-    <Chip color={getColor(state)} size="small" className="font-[var(--font-space-grotesk)] uppercase text-xs">
+    <Chip color={getColor(state)} size="sm" className="font-[var(--font-space-grotesk)] uppercase text-xs">
       {translation('patientState', { state: state as string })}
     </Chip>
   )

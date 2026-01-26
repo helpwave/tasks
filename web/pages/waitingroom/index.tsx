@@ -3,7 +3,7 @@ import { Page } from '@/components/layout/Page'
 import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
-import { PatientList } from '@/components/patients/PatientList'
+import { PatientList } from '@/components/tables/PatientList'
 import { useRouter } from 'next/router'
 import { PatientState } from '@/api/gql/generated'
 

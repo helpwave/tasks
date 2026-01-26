@@ -8,6 +8,10 @@ export default [
       'next-env.d.ts',
     ],
   },
-
+  {
+    rules: {
+      indent: ['warn', 2],
+    },
+  },
   ...config.nextExtension,
 ]

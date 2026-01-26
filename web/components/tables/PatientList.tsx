@@ -1,9 +1,8 @@
-import { useMemo, useState, forwardRef, useImperativeHandle, useEffect } from 'react'
-import { Table, Chip, FillerRowElement, Button, SearchBar, ProgressIndicator, Tooltip, Checkbox } from '@helpwave/hightide'
+import { useMemo, useState, forwardRef, useImperativeHandle, useEffect, useCallback } from 'react'
+import { Chip, FillerCell, Button, SearchBar, ProgressIndicator, Tooltip, Checkbox, Drawer, Visibility, TableProvider, TableDisplay, TablePagination, TableColumnSwitcher } from '@helpwave/hightide'
 import { PlusIcon, Table as TableIcon, LayoutGrid, Printer } from 'lucide-react'
-import { GetPatientsDocument, Sex, PatientState, type GetPatientsQuery, type TaskType } from '@/api/gql/generated'
+import { GetPatientsDocument, Sex, PatientState, type GetPatientsQuery, type TaskType, useGetPropertyDefinitionsQuery, PropertyEntity, type FullTextSearchInput } from '@/api/gql/generated'
 import { usePaginatedGraphQLQuery } from '@/hooks/usePaginatedQuery'
-import { SidePanel } from '@/components/layout/SidePanel'
 import { PatientDetailView } from '@/components/patients/PatientDetailView'
 import { SmartDate } from '@/utils/date'
 import { LocationChips } from '@/components/patients/LocationChips'
@@ -12,7 +11,8 @@ import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { usePatientViewToggle } from '@/hooks/useViewToggle'
 import { PatientCardView } from '@/components/patients/PatientCardView'
-import type { ColumnDef } from '@tanstack/table-core'
+import type { ColumnDef, Row } from '@tanstack/table-core'
+import { createPropertyColumn } from '@/utils/propertyColumn'
 
 export type PatientViewModel = {
   id: string,
@@ -26,6 +26,7 @@ export type PatientViewModel = {
   sex: Sex,
   state: PatientState,
   tasks: TaskType[],
+  properties?: GetPatientsQuery['patients'][0]['properties'],
 }
 
 const STORAGE_KEY_SHOW_ALL_PATIENTS = 'patient-show-all-states'
@@ -75,29 +76,40 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
     })
   }
 
-  const allPatientStates: PatientState[] = [
+  const allPatientStates: PatientState[] = useMemo(() => [
     PatientState.Admitted,
     PatientState.Discharged,
     PatientState.Dead,
     PatientState.Wait,
-  ]
+  ], [])
 
   const patientStates = showAllPatients ? allPatientStates : (acceptedStates ?? [PatientState.Admitted])
 
-  const { data: patientsData, refetch } = usePaginatedGraphQLQuery<GetPatientsQuery, GetPatientsQuery['patients'][0], { rootLocationIds?: string[], states?: PatientState[] }>({
-    queryKey: ['GetPatients', { rootLocationIds: effectiveRootLocationIds, states: patientStates }],
+  const searchInput: FullTextSearchInput | undefined = searchQuery
+    ? {
+      searchText: searchQuery,
+      includeProperties: true,
+    }
+    : undefined
+
+  const { data: patientsData, refetch, totalCount } = usePaginatedGraphQLQuery<GetPatientsQuery, GetPatientsQuery['patients'][0], { rootLocationIds?: string[], states?: PatientState[], search?: FullTextSearchInput }>({
+    queryKey: ['GetPatients', { rootLocationIds: effectiveRootLocationIds, states: patientStates, search: searchQuery }],
     document: GetPatientsDocument,
     baseVariables: {
       rootLocationIds: effectiveRootLocationIds && effectiveRootLocationIds.length > 0 ? effectiveRootLocationIds : undefined,
-      states: patientStates
+      states: patientStates,
+      search: searchInput,
     },
     pageSize: 50,
     extractItems: (result) => result.patients,
+    extractTotalCount: (result) => result.patientsTotal ?? undefined,
     mode: 'infinite',
     enabled: !isPrinting,
     refetchOnWindowFocus: !isPrinting,
     refetchOnMount: true,
   })
+
+  const { data: propertyDefinitionsData } = useGetPropertyDefinitionsQuery()
 
   useEffect(() => {
     const handleBeforePrint = () => setIsPrinting(true)
@@ -115,7 +127,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
   const patients: PatientViewModel[] = useMemo(() => {
     if (!patientsData || patientsData.length === 0) return []
 
-    let data = patientsData.map(p => ({
+    return patientsData.map(p => ({
       id: p.id,
       name: p.name,
       firstname: p.firstname,
@@ -126,19 +138,10 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       position: p.position,
       openTasksCount: p.tasks?.filter(t => !t.done).length ?? 0,
       closedTasksCount: p.tasks?.filter(t => t.done).length ?? 0,
-      tasks: []
+      tasks: [],
+      properties: p.properties ?? [],
     }))
-
-    if (searchQuery) {
-      const lowerQuery = searchQuery.toLowerCase()
-      data = data.filter(p =>
-        p.name.toLowerCase().includes(lowerQuery) ||
-        p.firstname.toLowerCase().includes(lowerQuery) ||
-        p.lastname.toLowerCase().includes(lowerQuery))
-    }
-
-    return data
-  }, [patientsData, searchQuery])
+  }, [patientsData])
 
   useImperativeHandle(ref, () => ({
     openCreate: () => {
@@ -173,16 +176,16 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       if (patient) {
         setSelectedPatient(patient)
       }
-        setIsPanelOpen(true)
-        setOpenedPatientId(initialPatientId)
-        onInitialPatientOpened?.()
+      setIsPanelOpen(true)
+      setOpenedPatientId(initialPatientId)
+      onInitialPatientOpened?.()
     }
   }, [initialPatientId, patients, openedPatientId, onInitialPatientOpened])
 
-  const handleEdit = (patient: PatientViewModel) => {
+  const handleEdit = useCallback((patient: PatientViewModel) => {
     setSelectedPatient(patient)
     setIsPanelOpen(true)
-  }
+  }, [])
 
   const handleClose = () => {
     setIsPanelOpen(false)
@@ -194,6 +197,17 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
     window.print()
   }
 
+  const patientPropertyColumns = useMemo<ColumnDef<PatientViewModel>[]>(() => {
+    if (!propertyDefinitionsData?.propertyDefinitions) return []
+
+    const patientProperties = propertyDefinitionsData.propertyDefinitions.filter(
+      def => def.isActive && def.allowedEntities.includes(PropertyEntity.Patient)
+    )
+
+    return patientProperties.map(prop =>
+      createPropertyColumn<PatientViewModel>(prop))
+  }, [propertyDefinitionsData])
+
   const columns = useMemo<ColumnDef<PatientViewModel>[]>(() => [
     {
       id: 'name',
@@ -202,22 +216,29 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       minSize: 200,
       size: 250,
       maxSize: 300,
+      filterFn: 'text',
     },
     {
       id: 'state',
       header: translation('status'),
-      accessorKey: 'state',
+      accessorFn: ({ state }) => [state],
       cell: ({ row }) => (
         <PatientStateChip state={row.original.state} />
       ),
       minSize: 120,
       size: 144,
       maxSize: 180,
+      filterFn: 'tags',
+      meta: {
+        filterData: {
+          tags: allPatientStates.map(state => ({ label: translation('patientState', { state: state as string }), tag: state })),
+        }
+      }
     },
     {
       id: 'sex',
       header: translation('sex'),
-      accessorKey: 'sex',
+      accessorFn: ({ sex }) => [sex],
       cell: ({ row }) => {
         const sex = row.original.sex
         const colorClass = sex === Sex.Male
@@ -234,28 +255,40 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
 
         return (
           <Chip
-            color={sex === Sex.Unknown ? 'neutral' : 'none'}
-            size="small"
+            color={sex === Sex.Unknown ? 'neutral' : undefined}
+            coloringStyle="tonal"
+            size="sm"
             className={`${colorClass} font-[var(--font-space-grotesk)] uppercase text-xs`}
           >
             <span>{label}</span>
           </Chip>
         )
       },
-      minSize: 100,
-      size: 100,
-      maxSize: 150,
+      minSize: 160,
+      size: 160,
+      maxSize: 200,
+      filterFn: 'tags',
+      meta: {
+        filterData: {
+          tags: [
+            { label: translation('male'), tag: Sex.Male },
+            { label: translation('female'), tag: Sex.Female },
+            { label: translation('diverse'), tag: Sex.Unknown },
+          ],
+        }
+      }
     },
     {
       id: 'position',
       header: translation('location'),
-      accessorKey: 'position',
+      accessorFn: ({ position }) => position?.title,
       cell: ({ row }) => (
         <LocationChips locations={row.original.position ? [row.original.position] : []} small />
       ),
       minSize: 200,
       size: 250,
       maxSize: 400,
+      filterFn: 'text',
     },
     {
       id: 'birthdate',
@@ -266,8 +299,10 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
           <SmartDate date={row.original.birthdate} showTime={false} />
         )
       },
-      minSize: 90,
-      size: 100,
+      minSize: 200,
+      size: 200,
+      maxSize: 200,
+      filterFn: 'date',
     },
     {
       id: 'tasks',
@@ -294,117 +329,135 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
           </Tooltip>
         )
       },
-      minSize: 80,
-      size: 110,
-      maxSize: 130,
+      minSize: 150,
+      size: 150,
+      maxSize: 200,
     },
-  ], [translation])
+    ...patientPropertyColumns,
+  ], [allPatientStates, translation, patientPropertyColumns])
+
+  const onRowClick = useCallback((row: Row<PatientViewModel>) => handleEdit(row.original), [handleEdit])
+  const fillerRowCell = useCallback(() => (<FillerCell className="min-h-8" />), [])
 
   return (
-    <div className="flex flex-col h-full gap-4 print-container">
-      <div className="flex flex-col sm:flex-row justify-between w-full gap-4 print-header">
-        <div className="w-full sm:max-w-md">
-          <SearchBar
-            placeholder={translation('search')}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onSearch={() => null}
-          />
-        </div>
-        <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto sm:ml-auto lg:pr-4">
-          <div className="flex items-center gap-2">
-            <Checkbox
-              checked={showAllPatients}
-              onCheckedChange={handleShowAllPatientsChange}
+    <TableProvider
+      data={patients}
+      columns={columns}
+      fillerRowCell={fillerRowCell}
+      onRowClick={onRowClick}
+      initialState={{
+        pagination: {
+          pageSize: 25,
+        }
+      }}
+      pageCount={totalCount ? Math.ceil(totalCount / 25) : undefined}
+    >
+      <div className="flex flex-col h-full gap-4">
+        <div className="flex flex-col sm:flex-row justify-between w-full gap-4">
+          <div className="flex-row-2 items-center">
+            <SearchBar
+              placeholder={translation('search')}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onSearch={() => null}
             />
-            <span className="text-sm text-description whitespace-nowrap">{translation('showAllPatients') || 'Show all patients'}</span>
+            <Visibility isVisible={viewType === 'table'}>
+              <TableColumnSwitcher />
+            </Visibility>
           </div>
-          {viewType === 'table' && (
-            <Tooltip tooltip="Print" position="top">
+          <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto sm:ml-auto">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                value={showAllPatients}
+                onValueChange={handleShowAllPatientsChange}
+              />
+              <span className="text-sm text-description whitespace-nowrap">{translation('showAllPatients') || 'Show all patients'}</span>
+            </div>
+            <Tooltip tooltip={translation(viewType !== 'table' ? 'printOnlyAvailableInTableMode' : 'print')} position="top">
               <Button
                 layout="icon"
                 color="neutral"
                 coloringStyle="text"
                 onClick={handlePrint}
                 className="print-button"
+                disabled={viewType !== 'table'}
               >
                 <Printer className="size-5" />
               </Button>
             </Tooltip>
-          )}
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <Tooltip tooltip="Table View" position="top">
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <Tooltip tooltip={translation('tableView')} position="top">
+                <Button
+                  layout="icon"
+                  color={viewType === 'table' ? 'primary' : 'neutral'}
+                  coloringStyle={viewType === 'table' ? undefined : 'text'}
+                  onClick={() => toggleView('table')}
+                >
+                  <TableIcon className="size-5" />
+                </Button>
+              </Tooltip>
+              <Tooltip tooltip={translation('cardView')} position="top">
+                <Button
+                  layout="icon"
+                  color={viewType === 'card' ? 'primary' : 'neutral'}
+                  coloringStyle={viewType === 'card' ? undefined : 'text'}
+                  onClick={() => toggleView('card')}
+                >
+                  <LayoutGrid className="size-5" />
+                </Button>
+              </Tooltip>
+            </div>
+            <Tooltip tooltip={translation('addPatient')} position="top">
               <Button
+                onClick={() => {
+                  setSelectedPatient(undefined)
+                  setIsPanelOpen(true)
+                }}
                 layout="icon"
-                color={viewType === 'table' ? 'primary' : 'neutral'}
-                coloringStyle={viewType === 'table' ? undefined : 'text'}
-                onClick={() => toggleView('table')}
               >
-                <TableIcon className="size-5" />
-              </Button>
-            </Tooltip>
-            <Tooltip tooltip="Card View" position="top">
-              <Button
-                layout="icon"
-                color={viewType === 'card' ? 'primary' : 'neutral'}
-                coloringStyle={viewType === 'card' ? undefined : 'text'}
-                onClick={() => toggleView('card')}
-              >
-                <LayoutGrid className="size-5" />
+                <PlusIcon />
               </Button>
             </Tooltip>
           </div>
-          <Button
-            startIcon={<PlusIcon />}
-            onClick={() => {
-              setSelectedPatient(undefined)
-              setIsPanelOpen(true)
-            }}
-            className="w-full sm:w-auto min-w-[13rem] flex-shrink-0"
-          >
-            {translation('addPatient')}
-          </Button>
         </div>
-      </div>
-      {viewType === 'table' ? (
-        <div className="overflow-x-auto -mx-4 px-4 lg:mx-0 lg:pl-0 lg:pr-4 print-content">
-          <Table
-            className="w-full h-full cursor-pointer min-w-[800px] print-table"
-            data={patients}
-            columns={columns}
-            fillerRow={() => (<FillerRowElement className="min-h-12" />)}
-            onRowClick={(row) => handleEdit(row.original)}
+        <Visibility isVisible={viewType === 'table'}>
+          <TableDisplay
+            className="print-content"
           />
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 -mx-4 px-4 lg:mx-0 lg:pl-0 lg:pr-4 print-content">
-          {patients.length === 0 ? (
-            <div className="col-span-full text-center text-description py-8">
-              {translation('noPatient')}
-            </div>
-          ) : (
-            patients.map((patient) => (
-              <PatientCardView
-                key={patient.id}
-                patient={patient}
-                onClick={handleEdit}
-              />
-            ))
-          )}
-        </div>
-      )}
-      <SidePanel
-        isOpen={isPanelOpen}
-        onClose={handleClose}
-        title={!selectedPatient && !openedPatientId ? translation('addPatient') : translation('editPatient')}
-      >
-        <PatientDetailView
-          patientId={selectedPatient?.id ?? openedPatientId ?? undefined}
+          <TablePagination />
+        </Visibility>
+        <Visibility isVisible={viewType === 'card'}>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 -mx-4 px-4 lg:mx-0 lg:pl-0 lg:pr-4 print-content">
+            {patients.length === 0 ? (
+              <div className="col-span-full text-center text-description py-8">
+                {translation('noPatient')}
+              </div>
+            ) : (
+              patients.map((patient) => (
+                <PatientCardView
+                  key={patient.id}
+                  patient={patient}
+                  onClick={handleEdit}
+                />
+              ))
+            )}
+          </div>
+        </Visibility>
+        <Drawer
+          isOpen={isPanelOpen}
           onClose={handleClose}
-          onSuccess={refetch}
-        />
-      </SidePanel>
-    </div>
+          alignment="right"
+          titleElement={!selectedPatient && !openedPatientId ? translation('addPatient') : translation('editPatient')}
+          description={undefined}
+        >
+          <PatientDetailView
+            patientId={selectedPatient?.id ?? openedPatientId ?? undefined}
+            onClose={handleClose}
+            onSuccess={refetch}
+          />
+        </Drawer>
+      </div>
+    </TableProvider>
   )
 })
 

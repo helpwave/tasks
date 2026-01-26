@@ -4,6 +4,8 @@ import { formatLocationPath } from '@/utils/location'
 import Link from 'next/link'
 import type { LocationType } from '@/api/gql/generated'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
+import type { HTMLAttributes } from 'react'
+import clsx from 'clsx'
 
 type PartialLocationNode = {
   id: string,
@@ -12,41 +14,32 @@ type PartialLocationNode = {
   parent?: PartialLocationNode | null,
 }
 
-interface LocationChipsProps {
+interface LocationChipsProps extends HTMLAttributes<HTMLDivElement> {
   locations: PartialLocationNode[],
   disableLink?: boolean,
   small?: boolean,
+  placeholderProps?: HTMLAttributes<HTMLSpanElement>,
 }
 
-const getKindStyles = (kind: string | undefined) => {
-  if (!kind) return 'bg-surface-subdued text-text-tertiary'
-  const k = kind.toUpperCase()
-  if (k === 'HOSPITAL') return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
-  if (k === 'PRACTICE') return 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300'
-  if (k === 'CLINIC') return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
-  if (k === 'TEAM') return 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
-  if (k === 'WARD') return 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300'
-  if (k === 'ROOM') return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
-  if (k === 'BED') return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
-  return 'bg-surface-subdued text-text-tertiary'
+const getKindStyles = (kind: LocationType | undefined) => {
+  if (kind === 'HOSPITAL') return 'not-print:location-hospital not-print:coloring-solid'
+  if (kind === 'PRACTICE') return 'not-print:location-practice not-print:coloring-solid'
+  if (kind === 'CLINIC') return 'not-print:location-clinic not-print:coloring-solid'
+  if (kind === 'TEAM') return 'not-print:location-team not-print:coloring-solid'
+  if (kind === 'WARD') return 'not-print:location-ward not-print:coloring-solid'
+  if (kind === 'ROOM') return 'not-print:location-room not-print:coloring-solid'
+  if (kind === 'BED') return 'not-print:location-bed not-print:coloring-solid'
+  return ''
 }
 
-export const LocationChips = ({ locations, disableLink = false, small = false }: LocationChipsProps) => {
+export const LocationChips = ({ locations, disableLink = false, small = false, placeholderProps, ...props }: LocationChipsProps) => {
   const translation = useTasksTranslation()
 
-  if (locations.length === 0) {
-    return (
-      <span className="text-description text-sm">
-        Not assigned
-      </span>
-    )
-  }
-
   const firstLocation = locations[0]
-  if (!firstLocation) {
+  if (locations.length === 0 || !firstLocation) {
     return (
-      <span className="text-description text-sm">
-        Not assigned
+      <span  {...placeholderProps} className={clsx('text-description text-sm', placeholderProps?.className)}>
+        {translation('notAssigned')}
       </span>
     )
   }
@@ -56,12 +49,12 @@ export const LocationChips = ({ locations, disableLink = false, small = false }:
 
   const chipContent = (
     <Chip
-      size="small"
+      size="sm"
       color="neutral"
       className={`cursor-pointer hover:opacity-80 transition-opacity ${small ? 'text-xs' : ''}`}
     >
       <div className="flex items-center gap-1">
-        <MapPin className="size-3" />
+        <MapPin className="size-force-3 print:hidden" />
         <span>{firstLocation?.title}</span>
         {firstLocation?.kind && (
           <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider ${getKindStyles(firstLocation.kind)}`}>
@@ -73,7 +66,14 @@ export const LocationChips = ({ locations, disableLink = false, small = false }:
   )
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+    <div
+      {...props}
+      className={clsx('flex flex-wrap items-center gap-1.5', props.className)}
+      onClick={(e) => {
+        e.stopPropagation()
+        props.onClick?.(e)
+      }}
+    >
       <Tooltip
         tooltip={formatLocationPath(firstLocation)}
         position="top"
@@ -94,7 +94,7 @@ export const LocationChips = ({ locations, disableLink = false, small = false }:
           position="top"
         >
           <Chip
-            size="small"
+            size="sm"
             color="neutral"
             className={`cursor-help whitespace-pre-line ${small ? 'text-xs' : ''}`}
             onClick={(e) => e.stopPropagation()}

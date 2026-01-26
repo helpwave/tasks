@@ -1,5 +1,5 @@
-query GetOverviewData {
-  recentPatients(limit: 5) {
+query GetOverviewData($recentPatientsFiltering: [FilterInput!], $recentPatientsSorting: [SortInput!], $recentPatientsPagination: PaginationInput, $recentPatientsSearch: FullTextSearchInput, $recentTasksFiltering: [FilterInput!], $recentTasksSorting: [SortInput!], $recentTasksPagination: PaginationInput, $recentTasksSearch: FullTextSearchInput) {
+  recentPatients(filtering: $recentPatientsFiltering, sorting: $recentPatientsSorting, pagination: $recentPatientsPagination, search: $recentPatientsSearch) {
     id
     name
     sex
@@ -16,14 +16,34 @@ query GetOverviewData {
     tasks {
       updateDate
     }
+    properties {
+      definition {
+        id
+        name
+        description
+        fieldType
+        isActive
+        allowedEntities
+        options
+      }
+      textValue
+      numberValue
+      booleanValue
+      dateValue
+      dateTimeValue
+      selectValue
+      multiSelectValues
+    }
   }
-  recentTasks(limit: 10) {
+  recentPatientsTotal(filtering: $recentPatientsFiltering, sorting: $recentPatientsSorting, search: $recentPatientsSearch)
+  recentTasks(filtering: $recentTasksFiltering, sorting: $recentTasksSorting, pagination: $recentTasksPagination, search: $recentTasksSearch) {
     id
     title
     description
     done
     dueDate
     updateDate
+    priority
     assignee {
       id
       name
@@ -44,5 +64,24 @@ query GetOverviewData {
         }
       }
     }
+    properties {
+      definition {
+        id
+        name
+        description
+        fieldType
+        isActive
+        allowedEntities
+        options
+      }
+      textValue
+      numberValue
+      booleanValue
+      dateValue
+      dateTimeValue
+      selectValue
+      multiSelectValues
+    }
   }
+  recentTasksTotal(filtering: $recentTasksFiltering, sorting: $recentTasksSorting, search: $recentTasksSearch)
 }

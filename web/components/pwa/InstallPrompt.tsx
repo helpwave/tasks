@@ -111,7 +111,8 @@ export const InstallPrompt = () => {
         <Button color="neutral" coloringStyle="outline" onClick={handleDismiss}>
           {translation('dismiss')}
         </Button>
-        <Button color="positive" onClick={handleInstall} startIcon={<Download className="size-4" />}>
+        <Button color="positive" onClick={handleInstall}>
+          <Download className="size-4" />
           {translation('install')}
         </Button>
       </div>

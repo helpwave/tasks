@@ -3,9 +3,10 @@ import { Page } from '@/components/layout/Page'
 import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
-import { LoadingContainer, Tab, TabView, Chip, Button } from '@helpwave/hightide'
-import { PatientList } from '@/components/patients/PatientList'
-import { TaskList, type TaskViewModel } from '@/components/tasks/TaskList'
+import { LoadingContainer, TabSwitcher, Chip, Button, TabPanel } from '@helpwave/hightide'
+import { PatientList } from '@/components/tables/PatientList'
+import type { TaskViewModel } from '@/components/tables/TaskList'
+import { TaskList } from '@/components/tables/TaskList'
 import { useGetLocationNodeQuery, useGetPatientsQuery, useGetTasksQuery, type LocationType } from '@/api/gql/generated'
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/router'
@@ -166,15 +167,13 @@ const LocationPage: NextPage = () => {
                 <span className="typography-title-lg font-bold">{locationTitle}</span>
                 {locationKind && (
                   <Chip
-                    size="small"
-                    color="none"
-                    className={`text-[8px] font-bold px-0.5 py-0.5 rounded uppercase tracking-wider ${getKindStyles(locationKind)}`}
+                    size="sm"
+                    color={undefined}
+                    className={`text-[0.625rem] font-bold px-1 py-0.5 rounded-md uppercase tracking-wider ${getKindStyles(locationKind)}`}
                   >
                     {translation('locationType', { type: locationKind })}
                   </Chip>
                 )}
-              </div>
-              {parentChain.length > 0 && (
                 <div className="flex flex-wrap items-center -space-x-1 scale-75 origin-top-left">
                   {parentChain.map((parent, index) => (
                     <div key={parent.id} className="flex items-center">
@@ -183,7 +182,7 @@ const LocationPage: NextPage = () => {
                     </div>
                   ))}
                 </div>
-              )}
+              </div>
             </div>
           )
         }
@@ -197,11 +196,11 @@ const LocationPage: NextPage = () => {
           </div>
         )}
         {!isLoading && !isError && (
-          <TabView>
-            <Tab label={translation('patients')}>
-              <PatientList rootLocationIds={id ? [id] : undefined} />
-            </Tab>
-            <Tab label={translation('tasks')}>
+          <TabSwitcher>
+            <TabPanel label={translation('patients')}>
+              <PatientList />
+            </TabPanel>
+            <TabPanel label={translation('tasks')}>
               <TaskList
                 tasks={tasks}
                 onRefetch={handleRefetch}
@@ -219,8 +218,8 @@ const LocationPage: NextPage = () => {
                   ) : undefined
                 }
               />
-            </Tab>
-          </TabView>
+            </TabPanel>
+          </TabSwitcher>
         )}
       </ContentPanel>
     </Page>

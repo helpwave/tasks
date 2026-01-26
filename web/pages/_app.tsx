@@ -3,8 +3,7 @@ import type { AppProps } from 'next/app'
 import { Inter, Space_Grotesk as SpaceGrotesk } from 'next/font/google'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import {
-  LocaleProvider,
-  ThemeProvider
+  HightideProvider
 } from '@helpwave/hightide'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools/production'
 import titleWrapper from '@/utils/titleWrapper'
@@ -27,7 +26,13 @@ const spaceGrotesk = SpaceGrotesk({
   variable: '--font-space-grotesk'
 })
 
-const queryClient = new QueryClient()
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: true,
+    },
+  },
+})
 
 const config = getConfig()
 
@@ -46,40 +51,38 @@ function MyApp({
   }, [])
 
   return (
-    <LocaleProvider>
-      <ThemeProvider>
-        <QueryClientProvider client={queryClient}>
-          <Head>
-            <title>{titleWrapper()}</title>
-            <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes, viewport-fit=cover" />
-            <style
-              dangerouslySetInnerHTML={{
-                __html: `
+    <HightideProvider>
+      <QueryClientProvider client={queryClient}>
+        <Head>
+          <title>{titleWrapper()}</title>
+          <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes, viewport-fit=cover" />
+          <style
+            dangerouslySetInnerHTML={{
+              __html: `
                   :root {
                     --font-inter: ${inter.style.fontFamily};
                     --font-space: ${spaceGrotesk.style.fontFamily};
                   }
                 `,
-                            }}
-                        />
-                    </Head>
-                    <AuthProvider
-                      ignoredURLs={[
-                        '/auth/callback',
-                      ]}
-                    >
-                      <TasksContextProvider>
-                        <SubscriptionProvider>
-                          <Component {...pageProps} />
-                          <InstallPrompt />
-                        </SubscriptionProvider>
-                      </TasksContextProvider>
-                    </AuthProvider>
-                    {config.env === 'development' && <ReactQueryDevtools position="bottom-left" />}
-                </QueryClientProvider>
-            </ThemeProvider>
-        </LocaleProvider>
-    )
+            }}
+          />
+        </Head>
+        <AuthProvider
+          ignoredURLs={[
+            '/auth/callback',
+          ]}
+        >
+          <TasksContextProvider>
+            <SubscriptionProvider>
+              <Component {...pageProps} />
+              <InstallPrompt />
+            </SubscriptionProvider>
+          </TasksContextProvider>
+        </AuthProvider>
+        {config.env === 'development' && <ReactQueryDevtools buttonPosition="bottom-left" />}
+      </QueryClientProvider>
+    </HightideProvider>
+  )
 }
 
 export default MyApp
