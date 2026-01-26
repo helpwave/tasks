@@ -170,3 +170,116 @@ class UpdatePropertyDefinitionInput:
 @strawberry.input
 class UpdateProfilePictureInput:
     avatar_url: str
+
+
+@strawberry.enum
+class SortDirection(Enum):
+    ASC = "ASC"
+    DESC = "DESC"
+
+
+@strawberry.enum
+class FilterOperator(Enum):
+    TEXT_EQUALS = "TEXT_EQUALS"
+    TEXT_NOT_EQUALS = "TEXT_NOT_EQUALS"
+    TEXT_NOT_WHITESPACE = "TEXT_NOT_WHITESPACE"
+    TEXT_CONTAINS = "TEXT_CONTAINS"
+    TEXT_NOT_CONTAINS = "TEXT_NOT_CONTAINS"
+    TEXT_STARTS_WITH = "TEXT_STARTS_WITH"
+    TEXT_ENDS_WITH = "TEXT_ENDS_WITH"
+    NUMBER_EQUALS = "NUMBER_EQUALS"
+    NUMBER_NOT_EQUALS = "NUMBER_NOT_EQUALS"
+    NUMBER_GREATER_THAN = "NUMBER_GREATER_THAN"
+    NUMBER_GREATER_THAN_OR_EQUAL = "NUMBER_GREATER_THAN_OR_EQUAL"
+    NUMBER_LESS_THAN = "NUMBER_LESS_THAN"
+    NUMBER_LESS_THAN_OR_EQUAL = "NUMBER_LESS_THAN_OR_EQUAL"
+    NUMBER_BETWEEN = "NUMBER_BETWEEN"
+    NUMBER_NOT_BETWEEN = "NUMBER_NOT_BETWEEN"
+    DATE_EQUALS = "DATE_EQUALS"
+    DATE_NOT_EQUALS = "DATE_NOT_EQUALS"
+    DATE_GREATER_THAN = "DATE_GREATER_THAN"
+    DATE_GREATER_THAN_OR_EQUAL = "DATE_GREATER_THAN_OR_EQUAL"
+    DATE_LESS_THAN = "DATE_LESS_THAN"
+    DATE_LESS_THAN_OR_EQUAL = "DATE_LESS_THAN_OR_EQUAL"
+    DATE_BETWEEN = "DATE_BETWEEN"
+    DATE_NOT_BETWEEN = "DATE_NOT_BETWEEN"
+    DATETIME_EQUALS = "DATETIME_EQUALS"
+    DATETIME_NOT_EQUALS = "DATETIME_NOT_EQUALS"
+    DATETIME_GREATER_THAN = "DATETIME_GREATER_THAN"
+    DATETIME_GREATER_THAN_OR_EQUAL = "DATETIME_GREATER_THAN_OR_EQUAL"
+    DATETIME_LESS_THAN = "DATETIME_LESS_THAN"
+    DATETIME_LESS_THAN_OR_EQUAL = "DATETIME_LESS_THAN_OR_EQUAL"
+    DATETIME_BETWEEN = "DATETIME_BETWEEN"
+    DATETIME_NOT_BETWEEN = "DATETIME_NOT_BETWEEN"
+    BOOLEAN_IS_TRUE = "BOOLEAN_IS_TRUE"
+    BOOLEAN_IS_FALSE = "BOOLEAN_IS_FALSE"
+    TAGS_EQUALS = "TAGS_EQUALS"
+    TAGS_NOT_EQUALS = "TAGS_NOT_EQUALS"
+    TAGS_CONTAINS = "TAGS_CONTAINS"
+    TAGS_NOT_CONTAINS = "TAGS_NOT_CONTAINS"
+    TAGS_SINGLE_EQUALS = "TAGS_SINGLE_EQUALS"
+    TAGS_SINGLE_NOT_EQUALS = "TAGS_SINGLE_NOT_EQUALS"
+    TAGS_SINGLE_CONTAINS = "TAGS_SINGLE_CONTAINS"
+    TAGS_SINGLE_NOT_CONTAINS = "TAGS_SINGLE_NOT_CONTAINS"
+    IS_NULL = "IS_NULL"
+    IS_NOT_NULL = "IS_NOT_NULL"
+
+
+@strawberry.enum
+class ColumnType(Enum):
+    DIRECT_ATTRIBUTE = "DIRECT_ATTRIBUTE"
+    PROPERTY = "PROPERTY"
+
+
+@strawberry.input
+class FilterParameter:
+    search_text: str | None = None
+    compare_value: float | None = None
+    min: float | None = None
+    max: float | None = None
+    compare_date: date | None = None
+    min_date: date | None = None
+    max_date: date | None = None
+    compare_date_time: datetime | None = None
+    min_date_time: datetime | None = None
+    max_date_time: datetime | None = None
+    search_tags: list[str] | None = None
+    property_definition_id: str | None = None
+
+
+@strawberry.input
+class SortInput:
+    column: str
+    direction: SortDirection
+    column_type: ColumnType = ColumnType.DIRECT_ATTRIBUTE
+    property_definition_id: str | None = None
+
+
+@strawberry.input
+class FilterInput:
+    column: str
+    operator: FilterOperator
+    parameter: FilterParameter
+    column_type: ColumnType = ColumnType.DIRECT_ATTRIBUTE
+    property_definition_id: str | None = None
+
+
+@strawberry.input
+class PaginationInput:
+    page_index: int = 0
+    page_size: int | None = None
+
+
+@strawberry.input
+class QueryOptionsInput:
+    sorting: list[SortInput] | None = None
+    filtering: list[FilterInput] | None = None
+    pagination: PaginationInput | None = None
+
+
+@strawberry.input
+class FullTextSearchInput:
+    search_text: str
+    search_columns: list[str] | None = None
+    include_properties: bool = False
+    property_definition_ids: list[str] | None = None
