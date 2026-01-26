@@ -3,7 +3,7 @@ import type { ColumnDef, Row } from '@tanstack/react-table'
 import type { GetOverviewDataQuery } from '@/api/gql/generated'
 import { useCallback, useMemo } from 'react'
 import type { TableProps } from '@helpwave/hightide'
-import { Chip, FillerCell, Table, TableColumnSwitcher, Tooltip } from '@helpwave/hightide'
+import { FillerCell, Table, TableColumnSwitcher, Tooltip } from '@helpwave/hightide'
 import { SmartDate } from '@/utils/date'
 import { LocationChips } from '@/components/patients/LocationChips'
 import { useGetPropertyDefinitionsQuery, PropertyEntity } from '@/api/gql/generated'
@@ -32,8 +32,7 @@ export const RecentPatientsTable = ({
     )
 
     return patientProperties.map(prop =>
-      createPropertyColumn<PatientViewModel>(prop, translation)
-    )
+      createPropertyColumn<PatientViewModel>(prop, translation))
   }, [propertyDefinitionsData, translation])
 
   const patientColumns = useMemo<ColumnDef<PatientViewModel>[]>(() => [

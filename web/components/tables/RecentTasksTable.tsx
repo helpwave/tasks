@@ -4,7 +4,7 @@ import type { GetOverviewDataQuery, TaskPriority } from '@/api/gql/generated'
 import { useCallback, useMemo } from 'react'
 import clsx from 'clsx'
 import type { TableProps } from '@helpwave/hightide'
-import { Button, Checkbox, Chip, FillerCell, Table, TableColumnSwitcher, Tooltip } from '@helpwave/hightide'
+import { Button, Checkbox, FillerCell, Table, TableColumnSwitcher, Tooltip } from '@helpwave/hightide'
 import { ArrowRightIcon } from 'lucide-react'
 import { SmartDate } from '@/utils/date'
 import { DueDateUtils } from '@/utils/dueDate'
@@ -42,8 +42,7 @@ export const RecentTasksTable = ({
     )
 
     return taskProperties.map(prop =>
-      createPropertyColumn<TaskViewModel>(prop, translation)
-    )
+      createPropertyColumn<TaskViewModel>(prop, translation))
   }, [propertyDefinitionsData, translation])
 
   const taskColumns = useMemo<ColumnDef<TaskViewModel>[]>(() => [
@@ -96,7 +95,7 @@ export const RecentTasksTable = ({
       accessorFn: (value) => value.patient?.name,
       cell: ({ row }) => {
         const patient = row.original.patient
-        if (!patient) return <FillerCell/>
+        if (!patient) return <FillerCell />
 
         return (
           <Tooltip tooltip={translation('rShow', { name: patient.name })} containerClassName="overflow-hidden w-full !block">
@@ -111,7 +110,7 @@ export const RecentTasksTable = ({
               className="flex-row-1 w-full justify-between"
             >
               <span className="truncate block">{patient.name}</span>
-              <ArrowRightIcon className="size-force-5"/>
+              <ArrowRightIcon className="size-force-5" />
             </Button>
           </Tooltip>
         )
@@ -154,9 +153,9 @@ export const RecentTasksTable = ({
       accessorFn: (value) => value.updateDate ? new Date(value.updateDate) : undefined,
       cell: ({ getValue }) => {
         const date = getValue() as Date | undefined
-        if (!date) return <FillerCell/>
+        if (!date) return <FillerCell />
         return (
-          <SmartDate date={date}/>
+          <SmartDate date={date} />
         )
       },
       minSize: 220,
@@ -175,7 +174,7 @@ export const RecentTasksTable = ({
         data: tasks,
         columns: taskColumns,
         isUsingFillerRows: true,
-        fillerRowCell: useCallback(() => (<FillerCell className="min-h-8"/>), []),
+        fillerRowCell: useCallback(() => (<FillerCell className="min-h-8" />), []),
         onRowClick: useCallback((row: Row<TaskViewModel>) => onSelectTask(row.original.id), [onSelectTask]),
         initialState: {
           pagination: {
@@ -190,7 +189,7 @@ export const RecentTasksTable = ({
             <span className="text-description">{translation('tasksUpdatedRecently')}</span>
           </div>
           <div>
-            <TableColumnSwitcher/>
+            <TableColumnSwitcher />
           </div>
         </div>
       )}

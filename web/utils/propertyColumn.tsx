@@ -5,11 +5,11 @@ import { ColumnType, FieldType, type PropertyDefinitionType, type PropertyValueT
 import { getPropertyFilterFn } from './propertyFilterMapping'
 
 type PropertyValue = PropertyValueType & {
-  definition: PropertyDefinitionType
+  definition: PropertyDefinitionType,
 }
 
 type RowWithProperties = {
-  properties?: PropertyValue[] | null
+  properties?: PropertyValue[] | null,
 }
 
 const extractOptionIndex = (value: string): number | null => {
@@ -20,7 +20,7 @@ const extractOptionIndex = (value: string): number | null => {
 function renderPropertyCell(
   property: PropertyValue | undefined,
   prop: PropertyDefinitionType,
-  translation: (key: string, values?: Record<string, unknown>) => string,
+  translate: (key: string, values?: Record<string, unknown>) => string,
   fillerCellClassName: string
 ): React.ReactNode {
   if (!property) {
@@ -34,8 +34,8 @@ function renderPropertyCell(
         color={property.booleanValue ? 'positive' : 'negative'}
       >
         {property.booleanValue
-          ? translation('yes')
-          : translation('no')}
+          ? translate('yes')
+          : translate('no')}
       </Chip>
     )
   }
@@ -159,9 +159,14 @@ function getFilterData(prop: PropertyDefinitionType) {
 
 export function createPropertyColumn<T extends RowWithProperties>(
   prop: PropertyDefinitionType,
-  translation: ((key: string, values?: Record<string, unknown>) => string) | any,
+  translation: unknown,
   fillerCellClassName: string = 'min-h-8'
 ): ColumnDef<T> {
+  // Type-safe wrapper for translation function
+  const translate = (key: string, values?: Record<string, unknown>): string => {
+    const translationFn = translation as (key: string, values?: Record<string, unknown>) => string
+    return translationFn(key, values)
+  }
   const columnId = `property_${prop.id}`
   const filterFn = getPropertyFilterFn(prop.fieldType)
   const filterData = getFilterData(prop)
@@ -179,7 +184,7 @@ export function createPropertyColumn<T extends RowWithProperties>(
       const property = row.original.properties?.find(
         p => p.definition.id === prop.id
       )
-      return renderPropertyCell(property, prop, translation, fillerCellClassName)
+      return renderPropertyCell(property, prop, translate, fillerCellClassName)
     },
     meta: {
       columnType: ColumnType.Property,

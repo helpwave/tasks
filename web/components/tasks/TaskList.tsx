@@ -1,6 +1,6 @@
 import { useMemo, useState, forwardRef, useImperativeHandle, useEffect, useRef, useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { Button, Checkbox, Chip, ConfirmDialog, FillerCell, SearchBar, TableColumnSwitcher, TableDisplay, TablePagination, TableProvider, Tooltip, Visibility } from '@helpwave/hightide'
+import { Button, Checkbox, ConfirmDialog, FillerCell, SearchBar, TableColumnSwitcher, TableDisplay, TablePagination, TableProvider, Tooltip, Visibility } from '@helpwave/hightide'
 import { PlusIcon, Table as TableIcon, LayoutGrid, UserCheck, Users, Printer } from 'lucide-react'
 import type { TaskPriority, GetTasksQuery } from '@/api/gql/generated'
 import { useAssignTaskMutation, useAssignTaskToTeamMutation, useCompleteTaskMutation, useReopenTaskMutation, useGetUsersQuery, useGetLocationsQuery, useGetPropertyDefinitionsQuery, PropertyEntity, type GetGlobalDataQuery } from '@/api/gql/generated'
@@ -401,8 +401,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
     )
 
     return taskProperties.map(prop =>
-      createPropertyColumn<TaskViewModel>(prop, translation, 'min-h-12')
-    )
+      createPropertyColumn<TaskViewModel>(prop, translation, 'min-h-12'))
   }, [propertyDefinitionsData, translation])
 
   const columns = useMemo<ColumnDef<TaskViewModel>[]>(() => {
