@@ -248,9 +248,9 @@ export const PatientDataEditor = ({
     return new Date()
   }, [])
 
-  const clinic = useFormObserverKey({ formStore: form.store, key: 'clinic' })?.value ?? null
-  const position = useFormObserverKey({ formStore: form.store, key: 'position' })?.value ?? null
-  const teams = useFormObserverKey({ formStore: form.store, key: 'teams' })?.value ?? []
+  const clinic = useFormObserverKey({ formStore: form.store, formKey: 'clinic' })?.value ?? null
+  const position = useFormObserverKey({ formStore: form.store, formKey: 'position' })?.value ?? null
+  const teams = useFormObserverKey({ formStore: form.store, formKey: 'teams' })?.value ?? []
 
   useEffect(() => {
     if (!isEditMode && locationsData?.locationNodes && !clinic) {

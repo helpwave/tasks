@@ -104,7 +104,7 @@ export const FeedbackDialog = ({ isOpen, onClose, hideUrl = false }: FeedbackDia
 
   const { update: updateForm } = form
 
-  const isAnonymous = useFormObserverKey({ formStore: form.store, key: 'isAnonymous' })?.value ?? false
+  const isAnonymous = useFormObserverKey({ formStore: form.store, formKey: 'isAnonymous' })?.value ?? false
 
   const submissionName = useMemo(() => {
     if(isAnonymous) {

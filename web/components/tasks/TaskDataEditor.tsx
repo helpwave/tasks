@@ -200,8 +200,8 @@ export const TaskDataEditor = ({
 
   const patients = patientsData?.patients || []
 
-  const dueDate = useFormObserverKey({ formStore: form.store, key: 'dueDate' })?.value ?? null
-  const estimatedTime = useFormObserverKey({ formStore: form.store, key: 'estimatedTime' })?.value ?? null
+  const dueDate = useFormObserverKey({ formStore: form.store, formKey: 'dueDate' })?.value ?? null
+  const estimatedTime = useFormObserverKey({ formStore: form.store, formKey: 'estimatedTime' })?.value ?? null
   const expectedFinishDate = useMemo(() => {
     if (!dueDate || !estimatedTime) return null
     const finishDate = new Date(dueDate)
