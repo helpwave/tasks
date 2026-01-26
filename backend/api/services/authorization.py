@@ -1,3 +1,4 @@
+from config import ALLOW_UNAUTHENTICATED_ACCESS, IS_DEV
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased, selectinload
@@ -12,6 +13,10 @@ class AuthorizationService:
     async def get_user_accessible_location_ids(
         self, user: models.User | None, context=None
     ) -> set[str]:
+        if IS_DEV and ALLOW_UNAUTHENTICATED_ACCESS:
+            result = await self.db.execute(select(models.LocationNode.id))
+            rows = result.fetchall()
+            return {row[0] for row in rows}
         if context and hasattr(context, '_accessible_location_ids') and context._accessible_location_ids is not None:
             return context._accessible_location_ids
 
@@ -69,6 +74,8 @@ class AuthorizationService:
     async def can_access_patient(
         self, user: models.User | None, patient: models.Patient, context=None
     ) -> bool:
+        if IS_DEV and ALLOW_UNAUTHENTICATED_ACCESS:
+            return True
         if not user:
             return False
 
@@ -104,6 +111,8 @@ class AuthorizationService:
     async def can_access_patient_id(
         self, user: models.User | None, patient_id: str, context=None
     ) -> bool:
+        if IS_DEV and ALLOW_UNAUTHENTICATED_ACCESS:
+            return True
         if not user:
             return False
 
@@ -125,6 +134,8 @@ class AuthorizationService:
     def filter_patients_by_access(
         self, user: models.User | None, query, accessible_location_ids: set[str] | None = None
     ):
+        if IS_DEV and ALLOW_UNAUTHENTICATED_ACCESS:
+            return query
         if not user:
             return query.where(False)
 

@@ -28,6 +28,11 @@ REDIS_URL = os.getenv("REDIS_URL", REDIS_URL)
 
 ENV = os.getenv("ENV", "production")
 IS_DEV = ENV == "development"
+DEV_MODE_NO_AUTH = os.getenv("DEV_MODE_NO_AUTH") == "true"
+ALLOW_UNAUTHENTICATED_ACCESS = (
+    os.getenv("ALLOW_UNAUTHENTICATED_ACCESS") == "true"
+    or (IS_DEV and DEV_MODE_NO_AUTH)
+)
 
 LOGGER = os.getenv("LOGGER", "uvicorn")
 

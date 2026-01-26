@@ -1,3 +1,4 @@
+from config import ALLOW_UNAUTHENTICATED_ACCESS, IS_DEV
 from graphql import FieldNode, GraphQLError
 from strawberry.extensions import SchemaExtension
 
@@ -7,7 +8,7 @@ class GlobalAuthExtension(SchemaExtension):
         execution_context = self.execution_context
         user = execution_context.context.user
 
-        if user:
+        if user or (IS_DEV and ALLOW_UNAUTHENTICATED_ACCESS):
             yield
             return
 

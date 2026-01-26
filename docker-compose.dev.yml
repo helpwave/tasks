@@ -86,6 +86,7 @@ services:
       INFLUXDB_TOKEN: "tasks-token-secret"
       INFLUXDB_ORG: "tasks"
       INFLUXDB_BUCKET: "audit"
+      DEV_MODE_NO_AUTH: "true"
     volumes:
       - "./scaffold:/scaffold:ro"
     depends_on:

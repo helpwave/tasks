@@ -51,18 +51,18 @@ Create an MCP server for the helpwave tasks codebase with read/write access to p
 ## Run Locally
 
 1. `pip install -r mcp_server/requirements.txt`
-2. `MCP_GRAPHQL_URL=http://localhost:8000/graphql MCP_ACCESS_TOKEN=... python -m mcp_server.server`
+2. `ENV=development ALLOW_UNAUTHENTICATED_ACCESS=true MCP_GRAPHQL_URL=http://localhost:8000/graphql python -m mcp_server.server`
 
 ## Run With LLM
 
 1. `export OPENAI_API_KEY=...`
-2. `MCP_GRAPHQL_URL=http://localhost:8000/graphql MCP_ACCESS_TOKEN=... python mcp_server/llm_runner.py --prompt "Summarize tasks for patient X"`
+2. `ENV=development ALLOW_UNAUTHENTICATED_ACCESS=true MCP_GRAPHQL_URL=http://localhost:8000/graphql python mcp_server/llm_runner.py --prompt "Summarize tasks for patient X"`
 3. Optional: `OPENAI_MODEL=gpt-4o-mini`
 
 ### Ollama
 
 1. Start Ollama locally
-2. `LLM_PROVIDER=ollama OLLAMA_BASE_URL=http://localhost:11434/v1 OPENAI_MODEL=llama3.1 MCP_GRAPHQL_URL=http://localhost:8000/graphql MCP_ACCESS_TOKEN=... python mcp_server/llm_runner.py --prompt "Summarize tasks for patient X"`
+2. `LLM_PROVIDER=ollama OLLAMA_BASE_URL=http://localhost:11434/v1 OPENAI_MODEL=llama3.1 ENV=development ALLOW_UNAUTHENTICATED_ACCESS=true MCP_GRAPHQL_URL=http://localhost:8000/graphql python mcp_server/llm_runner.py --prompt "Summarize tasks for patient X"`
 
 ## Nix Integration
 
@@ -84,7 +84,7 @@ Create an MCP server for the helpwave tasks codebase with read/write access to p
 
 Inspector command:
 
-- `MCP_GRAPHQL_URL=http://localhost:8000/graphql MCP_ACCESS_TOKEN=... mcp dev mcp_server/server.py:app`
+- `ENV=development ALLOW_UNAUTHENTICATED_ACCESS=true MCP_GRAPHQL_URL=http://localhost:8000/graphql mcp dev mcp_server/server.py:app`
 - Direct GraphQL calls: `curl` with `Authorization: Bearer <token>` against `/graphql`
 
 Validation checklist:

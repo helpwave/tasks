@@ -5,11 +5,13 @@
 ### Prerequisites
 
 1. **Start Docker services** (PostgreSQL and Redis):
+
    ```bash
    docker-compose -f docker-compose.dev.yml up -d postgres redis
    ```
 
 2. **Start the backend server**:
+
    ```bash
    cd backend
    source test_env/bin/activate  # or your virtual environment
@@ -20,6 +22,7 @@
    ```
 
 3. **Start the frontend server**:
+
    ```bash
    cd web
    npm run build  # if not already built
@@ -40,12 +43,14 @@ E2E_BASE_URL="http://localhost:3000" CI=true npx playwright test
 ## NixOS Limitation
 
 **Note for NixOS users**: Playwright's Chromium browser cannot run directly on NixOS due to dynamic linking limitations. The error message will indicate:
+
 ```
 NixOS cannot run dynamically linked executables intended for generic
 linux environments out of the box.
 ```
 
 **Solutions for NixOS**:
+
 1. Use GitHub Actions to run E2E tests (recommended)
 2. Use a Docker container to run the tests
 3. Configure NixOS with proper FHS (Filesystem Hierarchy Standard) support
@@ -55,6 +60,7 @@ The tests are designed to work correctly on GitHub Actions (Ubuntu runners).
 ## GitHub Actions
 
 E2E tests run automatically on:
+
 - Push to `main` or `develop` branches
 - Pull requests to `main` or `develop` branches
 
