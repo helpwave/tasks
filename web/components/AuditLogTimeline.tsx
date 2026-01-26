@@ -173,7 +173,7 @@ export const AuditLogTimeline: React.FC<AuditLogTimelineProps> = ({ caseId, clas
                 onClick={(e) => handleCardClick(index, e)}
                 className={clsx(
                   'p-4 rounded-lg border-2 transition-all',
-                  'bg-[rgba(255,255,255,1)] dark:bg-[rgba(55,65,81,1)]',
+                  'bg-surface-variant text-on-surface',
                   'border-gray-300 dark:border-gray-600',
                   'hover:border-primary hover:shadow-md',
                   hasDetails && 'cursor-pointer'
