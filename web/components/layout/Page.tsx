@@ -324,7 +324,7 @@ export const Header = ({ onMenuClick, isMenuOpen, ...props }: HeaderProps) => {
   const { user } = useTasksContext()
   const translation = useTasksTranslation()
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false)
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
+  const [isUserInfoOpen, setIsUserInfoOpen] = useState(false)
 
   return (
     <>
@@ -361,7 +361,7 @@ export const Header = ({ onMenuClick, isMenuOpen, ...props }: HeaderProps) => {
           </Tooltip>
           <Tooltip tooltip={user?.isOnline ? 'Online' : 'Offline'}>
             <Button
-              onClick={() => user?.id && setSelectedUserId(user.id)}
+              onClick={() => setIsUserInfoOpen(!!user?.id)}
               coloringStyle="text"
               color="neutral"
             >
@@ -380,9 +380,9 @@ export const Header = ({ onMenuClick, isMenuOpen, ...props }: HeaderProps) => {
       </header>
       <FeedbackDialog isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} />
       <UserInfoPopup
-        userId={selectedUserId}
-        isOpen={!!selectedUserId}
-        onClose={() => setSelectedUserId(null)}
+        userId={user?.id ?? null}
+        isOpen={isUserInfoOpen}
+        onClose={() => setIsUserInfoOpen(false)}
       />
     </>
   )
