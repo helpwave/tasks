@@ -32,8 +32,8 @@ export const RecentPatientsTable = ({
     )
 
     return patientProperties.map(prop =>
-      createPropertyColumn<PatientViewModel>(prop, translation))
-  }, [propertyDefinitionsData, translation])
+      createPropertyColumn<PatientViewModel>(prop))
+  }, [propertyDefinitionsData])
 
   const patientColumns = useMemo<ColumnDef<PatientViewModel>[]>(() => [
     {

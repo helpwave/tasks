@@ -18,7 +18,7 @@ import { LocationChips } from '@/components/patients/LocationChips'
 import { PatientTasksView } from './PatientTasksView'
 import { PatientDataEditor } from './PatientDataEditor'
 import { AuditLogTimeline } from '@/components/AuditLogTimeline'
-import { PropertyList, type PropertyValue } from '../PropertyList'
+import { PropertyList, type PropertyValue } from '../tables/PropertyList'
 import { useOptimisticUpdatePatientMutation } from '@/api/optimistic-updates/GetPatient'
 
 export const toISODate = (d: Date | string | null | undefined): string | null => {

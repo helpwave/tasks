@@ -11,7 +11,7 @@ import {
   TabPanel,
   TabSwitcher
 } from '@helpwave/hightide'
-import { PropertyList, type PropertyValue } from '@/components/PropertyList'
+import { PropertyList, type PropertyValue } from '@/components/tables/PropertyList'
 import { TaskDataEditor } from './TaskDataEditor'
 import { useOptimisticUpdateTaskMutation } from '@/api/optimistic-updates/GetTask'
 

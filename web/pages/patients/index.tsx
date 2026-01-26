@@ -4,7 +4,7 @@ import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
 import { useTasksContext } from '@/hooks/useTasksContext'
-import { PatientList } from '@/components/patients/PatientList'
+import { PatientList } from '@/components/tables/PatientList'
 import { useRouter } from 'next/router'
 
 const PatientsPage: NextPage = () => {

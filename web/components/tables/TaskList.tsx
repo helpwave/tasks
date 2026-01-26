@@ -1,10 +1,10 @@
 import { useMemo, useState, forwardRef, useImperativeHandle, useEffect, useRef, useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { Button, Checkbox, ConfirmDialog, FillerCell, SearchBar, TableColumnSwitcher, TableDisplay, TablePagination, TableProvider, Tooltip, Visibility } from '@helpwave/hightide'
+import { Button, Checkbox, ConfirmDialog, FillerCell, SearchBar, TableColumnSwitcher, TableDisplay, TablePagination, TableProvider, Tooltip, useLocalStorage, Visibility } from '@helpwave/hightide'
 import { PlusIcon, Table as TableIcon, LayoutGrid, UserCheck, Users, Printer } from 'lucide-react'
 import type { TaskPriority, GetTasksQuery } from '@/api/gql/generated'
 import { useAssignTaskMutation, useAssignTaskToTeamMutation, useCompleteTaskMutation, useReopenTaskMutation, useGetUsersQuery, useGetLocationsQuery, useGetPropertyDefinitionsQuery, PropertyEntity, type GetGlobalDataQuery } from '@/api/gql/generated'
-import { AssigneeSelectDialog } from './AssigneeSelectDialog'
+import { AssigneeSelectDialog } from '@/components/tasks/AssigneeSelectDialog'
 import clsx from 'clsx'
 import { SmartDate } from '@/utils/date'
 import { Drawer } from '@helpwave/hightide'
@@ -17,9 +17,10 @@ import { useTasksContext } from '@/hooks/useTasksContext'
 import { useTaskViewToggle } from '@/hooks/useViewToggle'
 import { TaskCardView } from '@/components/tasks/TaskCardView'
 import { UserInfoPopup } from '@/components/UserInfoPopup'
-import type { ColumnDef } from '@tanstack/table-core'
+import type { ColumnDef, ColumnFiltersState, PaginationState, SortingState, TableState, VisibilityState } from '@tanstack/table-core'
 import { PriorityUtils } from '@/utils/priority'
 import { createPropertyColumn } from '@/utils/propertyColumn'
+import { useStateWithLocalStorage } from '@/hooks/useStateWithLocalStorage'
 
 export type TaskViewModel = {
   id: string,
@@ -77,10 +78,40 @@ const isCloseToDueDate = (dueDate: Date | undefined, done: boolean): boolean => 
   return dueTime > now && dueTime - now <= oneHour
 }
 
+
+
 const STORAGE_KEY_SHOW_DONE = 'task-show-done'
+const STORAGE_KEY_COLUMN_VISIBILITY = 'task-list-column-visibility'
+const STORAGE_KEY_COLUMN_FILTERS = 'task-list-column-filters'
+const STORAGE_KEY_COLUMN_SORTING = 'task-list-column-sorting'
+const STORAGE_KEY_COLUMN_PAGINATION = 'task-list-column-pagination'
 
 export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initialTasks, onRefetch, showAssignee = false, initialTaskId, onInitialTaskOpened, headerActions, totalCount }, ref) => {
   const translation = useTasksTranslation()
+
+  const [pagination, setPagination] = useStateWithLocalStorage<PaginationState>({
+    key: STORAGE_KEY_COLUMN_PAGINATION,
+    defaultValue: {
+      pageSize: 25,
+      pageIndex: 0
+    }
+  })
+  const [sorting, setSorting] = useStateWithLocalStorage<SortingState>({
+    key: STORAGE_KEY_COLUMN_SORTING,
+    defaultValue: [
+      { id: 'done', desc: false },
+      { id: 'dueDate', desc: false },
+    ]
+  })
+  const [filters, setFilters] = useStateWithLocalStorage<ColumnFiltersState>({
+    key: STORAGE_KEY_COLUMN_FILTERS,
+    defaultValue: []
+  })
+  const [columnVisibility, setColumnVisibility] = useStateWithLocalStorage<VisibilityState>({
+    key: STORAGE_KEY_COLUMN_VISIBILITY,
+    defaultValue: {}
+  })
+
   const queryClient = useQueryClient()
   const { totalPatientsCount, user, selectedRootLocationIds } = useTasksContext()
   const { viewType, toggleView } = useTaskViewToggle()
@@ -184,20 +215,6 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
       onRefetch?.()
     }
   })
-  const [, setIsPrinting] = useState(false)
-
-  useEffect(() => {
-    const handleBeforePrint = () => setIsPrinting(true)
-    const handleAfterPrint = () => setIsPrinting(false)
-
-    window.addEventListener('beforeprint', handleBeforePrint)
-    window.addEventListener('afterprint', handleAfterPrint)
-
-    return () => {
-      window.removeEventListener('beforeprint', handleBeforePrint)
-      window.removeEventListener('afterprint', handleAfterPrint)
-    }
-  }, [])
 
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null)
   const [selectedUserPopupId, setSelectedUserPopupId] = useState<string | null>(null)
@@ -208,27 +225,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false)
   const isOpeningConfirmDialogRef = useRef(false)
-  const [showDone, setShowDone] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem(STORAGE_KEY_SHOW_DONE)
-      if (stored === 'true') {
-        return true
-      }
-      if (stored === 'false') {
-        return false
-      }
-    }
-    return false
-  })
-
-  const handleShowDoneChange = (checked: boolean) => {
-    setShowDone(() => {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(STORAGE_KEY_SHOW_DONE, String(checked))
-      }
-      return checked
-    })
-  }
+  const { value: showDone, setValue: setShowDone } = useLocalStorage<boolean>(STORAGE_KEY_SHOW_DONE, false)
 
   const hasPatients = (totalPatientsCount ?? 0) > 0
 
@@ -302,6 +299,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
       return a.dueDate.getTime() - b.dueDate.getTime()
     })
   }, [initialTasks, optimisticUpdates, searchQuery, showDone])
+
 
   const openTasks = useMemo(() => {
     const tasksWithOptimistic = initialTasks.map(task => {
@@ -393,16 +391,15 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
     setIsHandoverDialogOpen(false)
   }
 
+  const taskProperties = useMemo(() => {
+    return propertyDefinitionsData?.propertyDefinitions
+      .filter(def => def.isActive && def.allowedEntities.includes(PropertyEntity.Task)) ?? []
+  }, [propertyDefinitionsData])
+
   const taskPropertyColumns = useMemo<ColumnDef<TaskViewModel>[]>(() => {
-    if (!propertyDefinitionsData?.propertyDefinitions) return []
+    return taskProperties.map(prop => createPropertyColumn<TaskViewModel>(prop))
+  }, [taskProperties])
 
-    const taskProperties = propertyDefinitionsData.propertyDefinitions.filter(
-      def => def.isActive && def.allowedEntities.includes(PropertyEntity.Task)
-    )
-
-    return taskProperties.map(prop =>
-      createPropertyColumn<TaskViewModel>(prop, translation, 'min-h-12'))
-  }, [propertyDefinitionsData, translation])
 
   const columns = useMemo<ColumnDef<TaskViewModel>[]>(() => {
     const cols: ColumnDef<TaskViewModel>[] = [
@@ -601,28 +598,21 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
     }
   }
 
-  const handlePrint = () => {
-    window.print()
-  }
-
-  const fillerRow = useCallback(() => (
-    <FillerCell className="min-h-12"/>
-  ), [])
-
   return (
     <TableProvider
       data={tasks}
       columns={columns}
-      fillerRowCell={fillerRow}
-      initialState={{
-        sorting: [
-          { id: 'done', desc: false },
-          { id: 'dueDate', desc: false },
-        ],
-        pagination: {
-          pageSize: 25,
-        }
-      }}
+      fillerRowCell={useCallback(() => (<FillerCell className="min-h-12"/>), [])}
+      state={{
+        columnVisibility,
+        pagination,
+        sorting,
+        columnFilters: filters,
+      } as Partial<TableState> as TableState}
+      onColumnVisibilityChange={setColumnVisibility}
+      onPaginationChange={setPagination}
+      onSortingChange={setSorting}
+      onColumnFiltersChange={setFilters}
       enableMultiSort={true}
       onRowClick={row => setTaskDialogState({ isOpen: true, taskId: row.original.id })}
       pageCount={totalCount ? Math.ceil(totalCount / 25) : undefined}
@@ -646,7 +636,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
               <div className="flex items-center gap-2">
                 <Checkbox
                   value={showDone}
-                  onValueChange={handleShowDoneChange}
+                  onValueChange={setShowDone}
                 />
                 <span className="text-sm text-description whitespace-nowrap">{translation('showDone') || 'Show done'}</span>
               </div>
@@ -657,7 +647,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
                     layout="icon"
                     color="neutral"
                     coloringStyle="text"
-                    onClick={handlePrint}
+                    onClick={() => window.print()}
                   >
                     <Printer className="size-5" />
                   </Button>

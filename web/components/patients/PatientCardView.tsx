@@ -4,7 +4,7 @@ import { LocationChips } from '@/components/patients/LocationChips'
 import { PatientStateChip } from '@/components/patients/PatientStateChip'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { Sex } from '@/api/gql/generated'
-import type { PatientViewModel } from './PatientList'
+import type { PatientViewModel } from '../tables/PatientList'
 
 type PatientCardViewProps = {
   patient: PatientViewModel,

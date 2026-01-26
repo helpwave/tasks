@@ -205,8 +205,8 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
     )
 
     return patientProperties.map(prop =>
-      createPropertyColumn<PatientViewModel>(prop, translation))
-  }, [propertyDefinitionsData, translation])
+      createPropertyColumn<PatientViewModel>(prop))
+  }, [propertyDefinitionsData])
 
   const columns = useMemo<ColumnDef<PatientViewModel>[]>(() => [
     {

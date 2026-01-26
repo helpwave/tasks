@@ -1,8 +1,7 @@
 import type { ColumnDef } from '@tanstack/table-core'
-import { Chip, FillerCell } from '@helpwave/hightide'
-import { SmartDate } from '@/utils/date'
 import { ColumnType, FieldType, type PropertyDefinitionType, type PropertyValueType } from '@/api/gql/generated'
 import { getPropertyFilterFn } from './propertyFilterMapping'
+import { PropertyCell } from '@/components/properties/PropertyCell'
 
 type PropertyValue = PropertyValueType & {
   definition: PropertyDefinitionType,
@@ -10,119 +9,6 @@ type PropertyValue = PropertyValueType & {
 
 type RowWithProperties = {
   properties?: PropertyValue[] | null,
-}
-
-const extractOptionIndex = (value: string): number | null => {
-  const match = value.match(/-opt-(\d+)$/)
-  return match && match[1] ? parseInt(match[1], 10) : null
-}
-
-function renderPropertyCell(
-  property: PropertyValue | undefined,
-  prop: PropertyDefinitionType,
-  translate: (key: string, values?: Record<string, unknown>) => string,
-  fillerCellClassName: string
-): React.ReactNode {
-  if (!property) {
-    return <FillerCell className={fillerCellClassName} />
-  }
-
-  if (typeof property.booleanValue === 'boolean') {
-    return (
-      <Chip
-        className="coloring-tonal"
-        color={property.booleanValue ? 'positive' : 'negative'}
-      >
-        {property.booleanValue
-          ? translate('yes')
-          : translate('no')}
-      </Chip>
-    )
-  }
-
-  if (
-    prop.fieldType === FieldType.FieldTypeDate &&
-    property.dateValue
-  ) {
-    return (
-      <SmartDate
-        date={new Date(property.dateValue)}
-        showTime={false}
-      />
-    )
-  }
-
-  if (
-    prop.fieldType === FieldType.FieldTypeDateTime &&
-    property.dateTimeValue
-  ) {
-    return (
-      <SmartDate date={new Date(property.dateTimeValue)} />
-    )
-  }
-
-  if (
-    prop.fieldType === FieldType.FieldTypeSelect &&
-    property.selectValue
-  ) {
-    const selectValue = property.selectValue
-    const optionIndex = extractOptionIndex(selectValue)
-    if (
-      optionIndex !== null &&
-      optionIndex >= 0 &&
-      optionIndex < prop.options.length
-    ) {
-      return (
-        <Chip className="coloring-tonal">
-          {prop.options[optionIndex]}
-        </Chip>
-      )
-    }
-    return <span>{selectValue}</span>
-  }
-
-  if (
-    prop.fieldType === FieldType.FieldTypeMultiSelect &&
-    property.multiSelectValues &&
-    property.multiSelectValues.length > 0
-  ) {
-    return (
-      <div className="flex flex-wrap gap-1">
-        {property.multiSelectValues
-          .filter((val): val is string => val !== null && val !== undefined)
-          .map((val, idx) => {
-            const optionIndex = extractOptionIndex(val)
-            const optionText =
-              optionIndex !== null &&
-              optionIndex >= 0 &&
-              optionIndex < prop.options.length
-                ? prop.options[optionIndex]
-                : val
-            return (
-              <Chip key={idx} className="coloring-tonal">
-                {optionText}
-              </Chip>
-            )
-          })}
-      </div>
-    )
-  }
-
-  if (
-    property.textValue !== null &&
-    property.textValue !== undefined
-  ) {
-    return <span>{property.textValue.toString()}</span>
-  }
-
-  if (
-    property.numberValue !== null &&
-    property.numberValue !== undefined
-  ) {
-    return <span>{property.numberValue.toString()}</span>
-  }
-
-  return <FillerCell className={fillerCellClassName} />
 }
 
 function getPropertyAccessorValue(
@@ -146,7 +32,7 @@ function getPropertyAccessorValue(
 
 function getFilterData(prop: PropertyDefinitionType) {
   const filterFn = getPropertyFilterFn(prop.fieldType)
-  if (filterFn === 'tags' || filterFn === 'tags_single') {
+  if (filterFn === 'tags' || filterFn === 'tagsSingle') {
     return {
       tags: prop.options.map((opt, idx) => ({
         label: opt,
@@ -158,15 +44,8 @@ function getFilterData(prop: PropertyDefinitionType) {
 }
 
 export function createPropertyColumn<T extends RowWithProperties>(
-  prop: PropertyDefinitionType,
-  translation: unknown,
-  fillerCellClassName: string = 'min-h-8'
+  prop: PropertyDefinitionType
 ): ColumnDef<T> {
-  // Type-safe wrapper for translation function
-  const translate = (key: string, values?: Record<string, unknown>): string => {
-    const translationFn = translation as (key: string, values?: Record<string, unknown>) => string
-    return translationFn(key, values)
-  }
   const columnId = `property_${prop.id}`
   const filterFn = getPropertyFilterFn(prop.fieldType)
   const filterData = getFilterData(prop)
@@ -184,7 +63,7 @@ export function createPropertyColumn<T extends RowWithProperties>(
       const property = row.original.properties?.find(
         p => p.definition.id === prop.id
       )
-      return renderPropertyCell(property, prop, translate, fillerCellClassName)
+      return (<PropertyCell property={property} fieldType={prop.fieldType} />)
     },
     meta: {
       columnType: ColumnType.Property,
@@ -192,8 +71,8 @@ export function createPropertyColumn<T extends RowWithProperties>(
       fieldType: prop.fieldType,
       ...(filterData && { filterData }),
     },
-    minSize: 150,
-    size: 200,
+    minSize: 220,
+    size: 220,
     maxSize: 300,
     filterFn,
   } as ColumnDef<T>

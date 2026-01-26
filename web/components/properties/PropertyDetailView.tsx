@@ -12,8 +12,8 @@ import {
   useCreateForm,
   FormObserverKey
 } from '@helpwave/hightide'
-import type { Property, PropertyFieldType, PropertySelectOption, PropertySubjectType } from '@/components/PropertyList'
-import { propertyFieldTypeList, propertySubjectTypeList } from '@/components/PropertyList'
+import type { Property, PropertyFieldType, PropertySelectOption, PropertySubjectType } from '@/components/tables/PropertyList'
+import { propertyFieldTypeList, propertySubjectTypeList } from '@/components/tables/PropertyList'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { PlusIcon, XIcon } from 'lucide-react'
 import {

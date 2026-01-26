@@ -1,8 +1,8 @@
 import { LoadingAndErrorComponent, LoadingAnimation, Menu, MenuItem, ConfirmDialog, Button } from '@helpwave/hightide'
 import { Plus } from 'lucide-react'
-import React, { useMemo, useState, useEffect } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
-import { PropertyEntry } from '@/components/PropertyEntry'
+import { PropertyEntry } from '@/components/properties/PropertyEntry'
 import { useGetPropertyDefinitionsQuery, FieldType, PropertyEntity } from '@/api/gql/generated'
 
 

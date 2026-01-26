@@ -7,7 +7,7 @@ import {
   SingleSelectProperty,
   TextProperty
 } from '@helpwave/hightide'
-import type { PropertyFieldType, PropertySelectOption, PropertyValue } from '@/components/PropertyList'
+import type { PropertyFieldType, PropertySelectOption, PropertyValue } from '@/components/tables/PropertyList'
 
 type PropertyEntrySelectProps = {
   onAddOption?: (name: string) => void,

@@ -42,8 +42,8 @@ export const RecentTasksTable = ({
     )
 
     return taskProperties.map(prop =>
-      createPropertyColumn<TaskViewModel>(prop, translation))
-  }, [propertyDefinitionsData, translation])
+      createPropertyColumn<TaskViewModel>(prop))
+  }, [propertyDefinitionsData])
 
   const taskColumns = useMemo<ColumnDef<TaskViewModel>[]>(() => [
     {
