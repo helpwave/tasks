@@ -300,6 +300,7 @@ export const PatientDataEditor = ({
             name="firstname"
             label={translation('firstName')}
             required
+            showRequiredIndicator={!isEditMode}
           >
             {({ dataProps, focusableElementProps, interactionStates  }) => (
               <Input
@@ -312,6 +313,7 @@ export const PatientDataEditor = ({
             name="lastname"
             label={translation('lastName')}
             required
+            showRequiredIndicator={!isEditMode}
           >
             {({ dataProps, focusableElementProps, interactionStates  }) => (
               <Input
@@ -326,11 +328,14 @@ export const PatientDataEditor = ({
           name="birthdate"
           label={translation('birthdate')}
           required
+          showRequiredIndicator={!isEditMode}
         >
           {({ dataProps, focusableElementProps, interactionStates  }) => (
             <DateTimeInput
-              {...dataProps} {...focusableElementProps} {...interactionStates}
+              {...focusableElementProps} {...interactionStates}
               value={convertBirthdateStringToDate(dataProps.value) ?? undefined}
+              onValueChange={(value) => dataProps.onValueChange(value ? toISODate(value) : undefined)}
+              onEditComplete={(value) => dataProps.onEditComplete(value ? toISODate(value) : undefined)}
               pickerProps={{
                 start: startDate,
                 end: endDate
@@ -344,6 +349,7 @@ export const PatientDataEditor = ({
           name="sex"
           label={translation('sex')}
           required
+          showRequiredIndicator={!isEditMode}
         >
           {({ dataProps, focusableElementProps, interactionStates  }) => (
             <Select
@@ -362,6 +368,7 @@ export const PatientDataEditor = ({
         <FormField<PatientFormValues, 'description'>
           name="description"
           label={translation('description')}
+          showRequiredIndicator={!isEditMode}
         >
           {({ dataProps, focusableElementProps, interactionStates  }) => (
             <Textarea
@@ -376,6 +383,7 @@ export const PatientDataEditor = ({
           <FormField<PatientFormValues, 'state'>
             name="state"
             label={translation('status')}
+            showRequiredIndicator={!isEditMode}
           >
             {({ dataProps: { value, onValueChange, onEditComplete }, focusableElementProps, interactionStates  }) => (
               <div className="flex items-center gap-2">
@@ -395,6 +403,7 @@ export const PatientDataEditor = ({
           <FormField<PatientFormValues, 'state'>
             name="state"
             label={translation('patientActions')}
+            showRequiredIndicator={!isEditMode}
           >
             {({ dataProps: { value }  }) => (
               <div className="flex gap-4 flex-wrap">
@@ -437,6 +446,7 @@ export const PatientDataEditor = ({
           name="clinic"
           label={translation('clinic')}
           required
+          showRequiredIndicator={!isEditMode}
         >
           {({ dataProps: { value, onValueChange, onEditComplete }, focusableElementProps, interactionStates  }) => (
             <div className="flex flex-col gap-2">
@@ -478,6 +488,7 @@ export const PatientDataEditor = ({
           name="position"
           label={translation('position')}
           required
+          showRequiredIndicator={!isEditMode}
         >
           {({ dataProps: { value, onValueChange, onEditComplete }, focusableElementProps, interactionStates  }) => (
             <div className="flex flex-col gap-2">

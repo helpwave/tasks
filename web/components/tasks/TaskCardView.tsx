@@ -234,7 +234,7 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
   return (
     <div
       onClick={() => onClick(task)}
-      className={clsx('border-2 p-5 rounded-lg text-left transition-colors hover:border-primary relative bg-[rgba(255,255,255,1)] dark:bg-[rgba(55,65,81,1)] overflow-hidden cursor-pointer w-full min-h-35', borderColorClass, priorityBorderClass, className)}
+      className={clsx('border-2 p-5 rounded-lg text-left transition-colors hover:border-primary relative bg-surface bg-on-surface-variant overflow-hidden cursor-pointer w-full min-h-35', borderColorClass, priorityBorderClass, className)}
       role="button"
       tabIndex={0}
       onKeyDown={(e) => {
@@ -276,7 +276,7 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
             {task.assigneeTeam && (
               <div className="flex items-center gap-1.5 text-base text-description shrink-0 min-w-0">
                 <Users className="size-5 text-description" />
-                <span className="truncate max-w-[150px]">{task.assigneeTeam.title}</span>
+                <span className="truncate max-w-40">{task.assigneeTeam.title}</span>
               </div>
             )}
             {!task.assigneeTeam && task.assignee && (
