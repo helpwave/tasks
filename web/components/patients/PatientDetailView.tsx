@@ -1,6 +1,6 @@
-import { useMemo } from 'react'
+import { useMemo, useCallback } from 'react'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
-import type { CreatePatientInput } from '@/api/gql/generated'
+import type { CreatePatientInput, PropertyValueInput } from '@/api/gql/generated'
 import {
   PropertyEntity,
   useGetPatientQuery,
@@ -18,7 +18,8 @@ import { LocationChips } from '@/components/patients/LocationChips'
 import { PatientTasksView } from './PatientTasksView'
 import { PatientDataEditor } from './PatientDataEditor'
 import { AuditLogTimeline } from '@/components/AuditLogTimeline'
-import { PropertyList } from '../PropertyList'
+import { PropertyList, type PropertyValue } from '../PropertyList'
+import { useOptimisticUpdatePatientMutation } from '@/api/optimistic-updates/GetPatient'
 
 export const toISODate = (d: Date | string | null | undefined): string | null => {
   if (!d) return null
@@ -67,12 +68,71 @@ export const PatientDetailView = ({
 
   const { data: propertyDefinitionsData } = useGetPropertyDefinitionsQuery()
 
+  const { mutate: updatePatient } = useOptimisticUpdatePatientMutation({
+    id: patientId!,
+    onSuccess: () => {
+      onSuccess()
+    },
+  })
+
   const hasAvailableProperties = useMemo(() => {
     if (!propertyDefinitionsData?.propertyDefinitions) return false
     return propertyDefinitionsData.propertyDefinitions.some(
       def => def.isActive && def.allowedEntities.includes(PropertyEntity.Patient)
     )
   }, [propertyDefinitionsData])
+
+  const convertPropertyValueToInput = useCallback((definitionId: string, value: PropertyValue | null): PropertyValueInput | null => {
+    if (!value) return null
+    return {
+      definitionId,
+      textValue: value.textValue ?? undefined,
+      numberValue: value.numberValue ?? undefined,
+      booleanValue: value.boolValue ?? undefined,
+      dateValue: value.dateValue?.toISOString().split('T')[0] ?? undefined,
+      dateTimeValue: value.dateTimeValue?.toISOString() ?? undefined,
+      selectValue: value.singleSelectValue ?? undefined,
+      multiSelectValues: value.multiSelectValue ?? undefined,
+    }
+  }, [])
+
+  const handlePropertyValueChange = useCallback((definitionId: string, value: PropertyValue | null) => {
+    if (!isEditMode || !patientId || !patientData?.patient) return
+
+    const currentProperties = patientData.patient.properties || []
+    const propertyInputs: PropertyValueInput[] = []
+
+    // Add all existing properties except the one being changed
+    for (const prop of currentProperties) {
+      if (prop.definition.id !== definitionId) {
+        propertyInputs.push({
+          definitionId: prop.definition.id,
+          textValue: prop.textValue ?? undefined,
+          numberValue: prop.numberValue ?? undefined,
+          booleanValue: prop.booleanValue ?? undefined,
+          dateValue: prop.dateValue ?? undefined,
+          dateTimeValue: prop.dateTimeValue ?? undefined,
+          selectValue: prop.selectValue ?? undefined,
+          multiSelectValues: prop.multiSelectValues ?? undefined,
+        })
+      }
+    }
+
+    // Add the changed property if it's not null
+    if (value !== null) {
+      const newPropertyInput = convertPropertyValueToInput(definitionId, value)
+      if (newPropertyInput) {
+        propertyInputs.push(newPropertyInput)
+      }
+    }
+
+    updatePatient({
+      id: patientId,
+      data: {
+        properties: propertyInputs,
+      },
+    })
+  }, [isEditMode, patientId, patientData?.patient, convertPropertyValueToInput, updatePatient])
 
   const taskStats: { totalTasks: number, openTasks: number, closedTasks: number, taskProgress: number } = useMemo(() => ({
     totalTasks: patientData?.patient?.tasks?.length ?? 0,
@@ -142,6 +202,7 @@ export const PatientDetailView = ({
               subjectType="patient"
               fullWidthAddButton={true}
               propertyValues={patientData?.patient?.properties}
+              onPropertyValueChange={handlePropertyValueChange}
             />
           </TabPanel>
         )}

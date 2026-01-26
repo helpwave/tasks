@@ -1,17 +1,19 @@
-import { useMemo } from 'react'
+import { useMemo, useCallback } from 'react'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import {
   PropertyEntity,
   useGetPropertyDefinitionsQuery,
-  useGetTaskQuery
+  useGetTaskQuery,
+  type PropertyValueInput
 } from '@/api/gql/generated'
 import {
   TabList,
   TabPanel,
   TabSwitcher
 } from '@helpwave/hightide'
-import { PropertyList } from '@/components/PropertyList'
+import { PropertyList, type PropertyValue } from '@/components/PropertyList'
 import { TaskDataEditor } from './TaskDataEditor'
+import { useOptimisticUpdateTaskMutation } from '@/api/optimistic-updates/GetTask'
 
 interface TaskDetailViewProps {
   taskId: string | null,
@@ -35,12 +37,71 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
 
   const { data: propertyDefinitionsData } = useGetPropertyDefinitionsQuery()
 
+  const { mutate: updateTask } = useOptimisticUpdateTaskMutation({
+    id: taskId!,
+    onSuccess: () => {
+      onSuccess()
+    },
+  })
+
   const hasAvailableProperties = useMemo(() => {
     if (!propertyDefinitionsData?.propertyDefinitions) return false
     return propertyDefinitionsData.propertyDefinitions.some(
       def => def.isActive && def.allowedEntities.includes(PropertyEntity.Task)
     )
   }, [propertyDefinitionsData])
+
+  const convertPropertyValueToInput = useCallback((definitionId: string, value: PropertyValue | null): PropertyValueInput | null => {
+    if (!value) return null
+    return {
+      definitionId,
+      textValue: value.textValue ?? undefined,
+      numberValue: value.numberValue ?? undefined,
+      booleanValue: value.boolValue ?? undefined,
+      dateValue: value.dateValue?.toISOString().split('T')[0] ?? undefined,
+      dateTimeValue: value.dateTimeValue?.toISOString() ?? undefined,
+      selectValue: value.singleSelectValue ?? undefined,
+      multiSelectValues: value.multiSelectValue ?? undefined,
+    }
+  }, [])
+
+  const handlePropertyValueChange = useCallback((definitionId: string, value: PropertyValue | null) => {
+    if (!isEditMode || !taskId || !taskData?.task) return
+
+    const currentProperties = taskData.task.properties || []
+    const propertyInputs: PropertyValueInput[] = []
+
+    // Add all existing properties except the one being changed
+    for (const prop of currentProperties) {
+      if (prop.definition.id !== definitionId) {
+        propertyInputs.push({
+          definitionId: prop.definition.id,
+          textValue: prop.textValue ?? undefined,
+          numberValue: prop.numberValue ?? undefined,
+          booleanValue: prop.booleanValue ?? undefined,
+          dateValue: prop.dateValue ?? undefined,
+          dateTimeValue: prop.dateTimeValue ?? undefined,
+          selectValue: prop.selectValue ?? undefined,
+          multiSelectValues: prop.multiSelectValues ?? undefined,
+        })
+      }
+    }
+
+    // Add the changed property if it's not null
+    if (value !== null) {
+      const newPropertyInput = convertPropertyValueToInput(definitionId, value)
+      if (newPropertyInput) {
+        propertyInputs.push(newPropertyInput)
+      }
+    }
+
+    updateTask({
+      id: taskId,
+      data: {
+        properties: propertyInputs,
+      },
+    })
+  }, [isEditMode, taskId, taskData?.task, convertPropertyValueToInput, updateTask])
 
 
   return (
@@ -68,6 +129,7 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
                     ...p.definition,
                   },
                 }))}
+                onPropertyValueChange={handlePropertyValueChange}
               />
             </div>
           </TabPanel>
