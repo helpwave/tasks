@@ -3,9 +3,17 @@ from collections.abc import AsyncGenerator
 import strawberry
 from api.audit import audit_log
 from api.context import Info
-from api.decorators.filter_sort import filtered_and_sorted_query
-from api.decorators.full_text_search import full_text_search_query
+from api.decorators.filter_sort import (
+    apply_filtering,
+    apply_sorting,
+    filtered_and_sorted_query,
+)
+from api.decorators.full_text_search import (
+    apply_full_text_search,
+    full_text_search_query,
+)
 from api.inputs import (
+    ColumnType,
     FilterInput,
     FullTextSearchInput,
     PaginationInput,
@@ -21,52 +29,20 @@ from api.services.property import PropertyService
 from api.types.patient import PatientType
 from database import models
 from graphql import GraphQLError
-from sqlalchemy import desc, func, select
+from sqlalchemy import func, select
 from sqlalchemy.orm import aliased, selectinload
+from sqlalchemy.sql import Select
 
 
 @strawberry.type
 class PatientQuery:
-    @strawberry.field
-    async def patient(
-        self,
-        info: Info,
-        id: strawberry.ID,
-    ) -> PatientType | None:
-        result = await info.context.db.execute(
-            select(models.Patient)
-            .where(models.Patient.id == id)
-            .where(models.Patient.deleted.is_(False))
-            .options(
-                selectinload(models.Patient.assigned_locations),
-                selectinload(models.Patient.tasks),
-                selectinload(models.Patient.teams),
-            ),
-        )
-        patient = result.scalars().first()
-        if patient:
-            auth_service = AuthorizationService(info.context.db)
-            if not await auth_service.can_access_patient(info.context.user, patient, info.context):
-                raise GraphQLError(
-                    "Insufficient permission. Please contact an administrator if you believe this is an error.",
-                    extensions={"code": "FORBIDDEN"},
-                )
-        return patient
-
-    @strawberry.field
-    @filtered_and_sorted_query()
-    @full_text_search_query()
-    async def patients(
-        self,
+    @staticmethod
+    async def _build_patients_base_query(
         info: Info,
         location_node_id: strawberry.ID | None = None,
         root_location_ids: list[strawberry.ID] | None = None,
         states: list[PatientState] | None = None,
-        filtering: list[FilterInput] | None = None,
-        sorting: list[SortInput] | None = None,
-        pagination: PaginationInput | None = None,
-        search: FullTextSearchInput | None = None,
-    ) -> list[PatientType]:
+    ) -> tuple[Select, list[strawberry.ID]]:
         query = select(models.Patient).options(
             selectinload(models.Patient.assigned_locations),
             selectinload(models.Patient.tasks),
@@ -81,12 +57,14 @@ class PatientQuery:
                 models.Patient.state == PatientState.ADMITTED.value
             )
         auth_service = AuthorizationService(info.context.db)
-        accessible_location_ids = await auth_service.get_user_accessible_location_ids(
-            info.context.user, info.context
+        accessible_location_ids = (
+            await auth_service.get_user_accessible_location_ids(
+                info.context.user, info.context
+            )
         )
 
         if not accessible_location_ids:
-            return []
+            return query.where(False), []
 
         query = auth_service.filter_patients_by_access(
             info.context.user, query, accessible_location_ids
@@ -96,7 +74,10 @@ class PatientQuery:
         if location_node_id:
             if location_node_id not in accessible_location_ids:
                 raise GraphQLError(
-                    "Insufficient permission. Please contact an administrator if you believe this is an error.",
+                    (
+                        "Insufficient permission. Please contact an administrator "
+                        "if you believe this is an error."
+                    ),
                     extensions={"code": "FORBIDDEN"},
                 )
             filter_cte = (
@@ -110,9 +91,11 @@ class PatientQuery:
             )
             filter_cte = filter_cte.union_all(children)
         elif root_location_ids:
-            valid_root_location_ids = [lid for lid in root_location_ids if lid in accessible_location_ids]
+            valid_root_location_ids = [
+                lid for lid in root_location_ids if lid in accessible_location_ids
+            ]
             if not valid_root_location_ids:
-                return []
+                return query.where(False), []
             root_location_ids = valid_root_location_ids
             filter_cte = (
                 select(models.LocationNode.id)
@@ -141,29 +124,170 @@ class PatientQuery:
                     (models.Patient.clinic_id.in_(select(filter_cte.c.id)))
                     | (
                         models.Patient.position_id.isnot(None)
-                        & models.Patient.position_id.in_(select(filter_cte.c.id))
+                        & models.Patient.position_id.in_(
+                            select(filter_cte.c.id)
+                        )
                     )
                     | (
                         models.Patient.assigned_location_id.isnot(None)
-                        & models.Patient.assigned_location_id.in_(select(filter_cte.c.id))
+                        & models.Patient.assigned_location_id.in_(
+                            select(filter_cte.c.id)
+                        )
                     )
-                    | (patient_locations_filter.c.location_id.in_(select(filter_cte.c.id)))
-                    | (patient_teams_filter.c.location_id.in_(select(filter_cte.c.id)))
+                    | (
+                        patient_locations_filter.c.location_id.in_(
+                            select(filter_cte.c.id)
+                        )
+                    )
+                    | (
+                        patient_teams_filter.c.location_id.in_(
+                            select(filter_cte.c.id)
+                        )
+                    )
                 )
                 .distinct()
             )
 
+        return query, accessible_location_ids
+
+    @strawberry.field
+    async def patient(
+        self,
+        info: Info,
+        id: strawberry.ID,
+    ) -> PatientType | None:
+        result = await info.context.db.execute(
+            select(models.Patient)
+            .where(models.Patient.id == id)
+            .where(models.Patient.deleted.is_(False))
+            .options(
+                selectinload(models.Patient.assigned_locations),
+                selectinload(models.Patient.tasks),
+                selectinload(models.Patient.teams),
+            ),
+        )
+        patient = result.scalars().first()
+        if patient:
+            auth_service = AuthorizationService(info.context.db)
+            if not await auth_service.can_access_patient(
+                info.context.user, patient, info.context
+            ):
+                raise GraphQLError(
+                    (
+                        "Insufficient permission. Please contact an administrator "
+                        "if you believe this is an error."
+                    ),
+                    extensions={"code": "FORBIDDEN"},
+                )
+        return patient
+
+    @strawberry.field
+    @filtered_and_sorted_query()
+    @full_text_search_query()
+    async def patients(
+        self,
+        info: Info,
+        location_node_id: strawberry.ID | None = None,
+        root_location_ids: list[strawberry.ID] | None = None,
+        states: list[PatientState] | None = None,
+        filtering: list[FilterInput] | None = None,
+        sorting: list[SortInput] | None = None,
+        pagination: PaginationInput | None = None,
+        search: FullTextSearchInput | None = None,
+    ) -> list[PatientType]:
+        query, _ = await PatientQuery._build_patients_base_query(
+            info, location_node_id, root_location_ids, states
+        )
         return query
 
     @strawberry.field
+    async def patientsTotal(
+        self,
+        info: Info,
+        location_node_id: strawberry.ID | None = None,
+        root_location_ids: list[strawberry.ID] | None = None,
+        states: list[PatientState] | None = None,
+        filtering: list[FilterInput] | None = None,
+        sorting: list[SortInput] | None = None,
+        search: FullTextSearchInput | None = None,
+    ) -> int:
+        query, _ = await PatientQuery._build_patients_base_query(
+            info, location_node_id, root_location_ids, states
+        )
+
+        if search and search is not strawberry.UNSET:
+            query = apply_full_text_search(query, search, models.Patient)
+
+        if filtering:
+            property_field_types: dict[str, str] = {}
+            property_def_ids = set()
+            for f in filtering:
+                if (
+                    f.column_type == ColumnType.PROPERTY
+                    and f.property_definition_id
+                ):
+                    property_def_ids.add(f.property_definition_id)
+
+            if property_def_ids:
+                prop_defs_result = await info.context.db.execute(
+                    select(models.PropertyDefinition).where(
+                        models.PropertyDefinition.id.in_(property_def_ids)
+                    )
+                )
+                prop_defs = prop_defs_result.scalars().all()
+                property_field_types = {
+                    str(prop_def.id): prop_def.field_type
+                    for prop_def in prop_defs
+                }
+
+            query = apply_filtering(
+                query, filtering, models.Patient, property_field_types
+            )
+
+        if sorting:
+            property_field_types: dict[str, str] = {}
+            property_def_ids = set()
+            for s in sorting:
+                if (
+                    s.column_type == ColumnType.PROPERTY
+                    and s.property_definition_id
+                ):
+                    property_def_ids.add(s.property_definition_id)
+
+            if property_def_ids:
+                prop_defs_result = await info.context.db.execute(
+                    select(models.PropertyDefinition).where(
+                        models.PropertyDefinition.id.in_(property_def_ids)
+                    )
+                )
+                prop_defs = prop_defs_result.scalars().all()
+                property_field_types = {
+                    str(prop_def.id): prop_def.field_type for prop_def in prop_defs
+                }
+
+            query = apply_sorting(query, sorting, models.Patient, property_field_types)
+
+        subquery = query.subquery()
+        count_query = select(func.count(func.distinct(subquery.c.id)))
+        result = await info.context.db.execute(count_query)
+        return result.scalar() or 0
+
+    @strawberry.field
+    @filtered_and_sorted_query()
+    @full_text_search_query()
     async def recent_patients(
         self,
         info: Info,
-        limit: int = 5,
+        filtering: list[FilterInput] | None = None,
+        sorting: list[SortInput] | None = None,
+        pagination: PaginationInput | None = None,
+        search: FullTextSearchInput | None = None,
     ) -> list[PatientType]:
         auth_service = AuthorizationService(info.context.db)
-        accessible_location_ids = await auth_service.get_user_accessible_location_ids(
-            info.context.user, info.context
+        accessible_location_ids = (
+            await auth_service.get_user_accessible_location_ids(
+                info.context.user, info.context
+            )
         )
 
         if not accessible_location_ids:
@@ -179,7 +303,7 @@ class PatientQuery:
         )
 
         query = (
-            select(models.Patient, max_task_update_date.c.max_update_date)
+            select(models.Patient)
             .options(
                 selectinload(models.Patient.assigned_locations),
                 selectinload(models.Patient.tasks),
@@ -190,14 +314,108 @@ class PatientQuery:
                 models.Patient.id == max_task_update_date.c.patient_id,
             )
             .where(models.Patient.deleted.is_(False))
-            .order_by(desc(max_task_update_date.c.max_update_date), desc(models.Patient.id))
-            .limit(limit)
         )
         query = auth_service.filter_patients_by_access(
             info.context.user, query, accessible_location_ids
         )
-        result = await info.context.db.execute(query)
-        return [row[0] for row in result.all()]
+
+        return query
+
+    @strawberry.field
+    async def recentPatientsTotal(
+        self,
+        info: Info,
+        filtering: list[FilterInput] | None = None,
+        sorting: list[SortInput] | None = None,
+        search: FullTextSearchInput | None = None,
+    ) -> int:
+        auth_service = AuthorizationService(info.context.db)
+        accessible_location_ids = (
+            await auth_service.get_user_accessible_location_ids(
+                info.context.user, info.context
+            )
+        )
+
+        if not accessible_location_ids:
+            return 0
+
+        max_task_update_date = (
+            select(
+                func.max(models.Task.update_date).label("max_update_date"),
+                models.Task.patient_id.label("patient_id"),
+            )
+            .group_by(models.Task.patient_id)
+            .subquery()
+        )
+
+        query = (
+            select(models.Patient)
+            .outerjoin(
+                max_task_update_date,
+                models.Patient.id == max_task_update_date.c.patient_id,
+            )
+            .where(models.Patient.deleted.is_(False))
+        )
+        query = auth_service.filter_patients_by_access(
+            info.context.user, query, accessible_location_ids
+        )
+
+        if search and search is not strawberry.UNSET:
+            query = apply_full_text_search(query, search, models.Patient)
+
+        if filtering:
+            property_field_types: dict[str, str] = {}
+            property_def_ids = set()
+            for f in filtering:
+                if (
+                    f.column_type == ColumnType.PROPERTY
+                    and f.property_definition_id
+                ):
+                    property_def_ids.add(f.property_definition_id)
+
+            if property_def_ids:
+                prop_defs_result = await info.context.db.execute(
+                    select(models.PropertyDefinition).where(
+                        models.PropertyDefinition.id.in_(property_def_ids)
+                    )
+                )
+                prop_defs = prop_defs_result.scalars().all()
+                property_field_types = {
+                    str(prop_def.id): prop_def.field_type
+                    for prop_def in prop_defs
+                }
+
+            query = apply_filtering(
+                query, filtering, models.Patient, property_field_types
+            )
+
+        if sorting:
+            property_field_types: dict[str, str] = {}
+            property_def_ids = set()
+            for s in sorting:
+                if (
+                    s.column_type == ColumnType.PROPERTY
+                    and s.property_definition_id
+                ):
+                    property_def_ids.add(s.property_definition_id)
+
+            if property_def_ids:
+                prop_defs_result = await info.context.db.execute(
+                    select(models.PropertyDefinition).where(
+                        models.PropertyDefinition.id.in_(property_def_ids)
+                    )
+                )
+                prop_defs = prop_defs_result.scalars().all()
+                property_field_types = {
+                    str(prop_def.id): prop_def.field_type for prop_def in prop_defs
+                }
+
+            query = apply_sorting(query, sorting, models.Patient, property_field_types)
+
+        subquery = query.subquery()
+        count_query = select(func.count(func.distinct(subquery.c.id)))
+        result = await info.context.db.execute(count_query)
+        return result.scalar() or 0
 
 
 @strawberry.type
@@ -224,19 +442,27 @@ class PatientMutation(BaseMutationResolver[models.Patient]):
         )
 
         auth_service = AuthorizationService(db)
-        accessible_location_ids = await auth_service.get_user_accessible_location_ids(
-            info.context.user, info.context
+        accessible_location_ids = (
+            await auth_service.get_user_accessible_location_ids(
+                info.context.user, info.context
+            )
         )
 
         if not accessible_location_ids:
             raise GraphQLError(
-                "Insufficient permission. Please contact an administrator if you believe this is an error.",
+                (
+                    "Insufficient permission. Please contact an "
+                    "administrator if you believe this is an error."
+                ),
                 extensions={"code": "FORBIDDEN"},
             )
 
         if data.clinic_id not in accessible_location_ids:
             raise GraphQLError(
-                "Insufficient permission. Please contact an administrator if you believe this is an error.",
+                (
+                    "Insufficient permission. Please contact an administrator "
+                    "if you believe this is an error."
+                ),
                 extensions={"code": "FORBIDDEN"},
             )
 
@@ -255,7 +481,10 @@ class PatientMutation(BaseMutationResolver[models.Patient]):
             for team_id in data.team_ids:
                 if team_id not in accessible_location_ids:
                     raise GraphQLError(
-                        "Insufficient permission. Please contact an administrator if you believe this is an error.",
+                        (
+                            "Insufficient permission. Please contact an "
+                            "administrator if you believe this is an error."
+                        ),
                         extensions={"code": "FORBIDDEN"},
                     )
             teams = await location_service.validate_and_get_teams(
@@ -289,9 +518,15 @@ class PatientMutation(BaseMutationResolver[models.Patient]):
             )
             new_patient.assigned_locations = locations
         elif data.assigned_location_id:
-            if data.assigned_location_id not in accessible_location_ids:
+            if (
+                data.assigned_location_id
+                not in accessible_location_ids
+            ):
                 raise GraphQLError(
-                    "Insufficient permission. Please contact an administrator if you believe this is an error.",
+                    (
+                        "Insufficient permission. Please contact an "
+                        "administrator if you believe this is an error."
+                    ),
                     extensions={"code": "FORBIDDEN"},
                 )
             location = await location_service.get_location_by_id(
@@ -335,7 +570,9 @@ class PatientMutation(BaseMutationResolver[models.Patient]):
             raise Exception("Patient not found")
 
         auth_service = AuthorizationService(db)
-        if not await auth_service.can_access_patient(info.context.user, patient, info.context):
+        if not await auth_service.can_access_patient(
+            info.context.user, patient, info.context
+        ):
             raise GraphQLError(
                 "Forbidden: You do not have access to this patient",
                 extensions={"code": "FORBIDDEN"},
@@ -356,8 +593,10 @@ class PatientMutation(BaseMutationResolver[models.Patient]):
             patient.description = data.description
 
         location_service = PatientMutation._get_location_service(db)
-        accessible_location_ids = await auth_service.get_user_accessible_location_ids(
-            info.context.user
+        accessible_location_ids = (
+            await auth_service.get_user_accessible_location_ids(
+                info.context.user
+            )
         )
 
         if data.clinic_id is not None:
@@ -375,7 +614,10 @@ class PatientMutation(BaseMutationResolver[models.Patient]):
             else:
                 if data.position_id not in accessible_location_ids:
                     raise GraphQLError(
-                        "Insufficient permission. Please contact an administrator if you believe this is an error.",
+                        (
+                            "Insufficient permission. Please contact an "
+                            "administrator if you believe this is an error."
+                        ),
                         extensions={"code": "FORBIDDEN"},
                     )
                 await location_service.validate_and_get_position(
@@ -409,9 +651,15 @@ class PatientMutation(BaseMutationResolver[models.Patient]):
             )
             patient.assigned_locations = locations
         elif data.assigned_location_id is not None:
-            if data.assigned_location_id not in accessible_location_ids:
+            if (
+                data.assigned_location_id
+                not in accessible_location_ids
+            ):
                 raise GraphQLError(
-                    "Insufficient permission. Please contact an administrator if you believe this is an error.",
+                    (
+                        "Insufficient permission. Please contact an "
+                        "administrator if you believe this is an error."
+                    ),
                     extensions={"code": "FORBIDDEN"},
                 )
             location = await location_service.get_location_by_id(
@@ -449,7 +697,9 @@ class PatientMutation(BaseMutationResolver[models.Patient]):
             return False
 
         auth_service = AuthorizationService(db)
-        if not await auth_service.can_access_patient(info.context.user, patient, info.context):
+        if not await auth_service.can_access_patient(
+            info.context.user, patient, info.context
+        ):
             raise GraphQLError(
                 "Forbidden: You do not have access to this patient",
                 extensions={"code": "FORBIDDEN"},
@@ -483,7 +733,9 @@ class PatientMutation(BaseMutationResolver[models.Patient]):
             raise Exception("Patient not found")
 
         auth_service = AuthorizationService(db)
-        if not await auth_service.can_access_patient(info.context.user, patient, info.context):
+        if not await auth_service.can_access_patient(
+            info.context.user, patient, info.context
+        ):
             raise GraphQLError(
                 "Forbidden: You do not have access to this patient",
                 extensions={"code": "FORBIDDEN"},

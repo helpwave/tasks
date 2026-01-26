@@ -5,7 +5,7 @@ import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
 import { TaskList, type TaskViewModel } from '@/components/tasks/TaskList'
 import { useMemo } from 'react'
-import { GetTasksDocument, type GetTasksQuery } from '@/api/gql/generated'
+import { GetTasksDocument, type GetTasksQuery, type FullTextSearchInput } from '@/api/gql/generated'
 import { useRouter } from 'next/router'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { usePaginatedGraphQLQuery } from '@/hooks/usePaginatedQuery'
@@ -14,7 +14,7 @@ const TasksPage: NextPage = () => {
   const translation = useTasksTranslation()
   const router = useRouter()
   const { selectedRootLocationIds, user, myTasksCount } = useTasksContext()
-  const { data: tasksData, refetch } = usePaginatedGraphQLQuery<GetTasksQuery, GetTasksQuery['tasks'][0], { rootLocationIds?: string[], assigneeId?: string }>({
+  const { data: tasksData, refetch, totalCount } = usePaginatedGraphQLQuery<GetTasksQuery, GetTasksQuery['tasks'][0], { rootLocationIds?: string[], assigneeId?: string, search?: FullTextSearchInput }>({
     queryKey: ['GetTasks'],
     document: GetTasksDocument,
     baseVariables: {
@@ -23,6 +23,7 @@ const TasksPage: NextPage = () => {
     },
     pageSize: 50,
     extractItems: (result) => result.tasks,
+    extractTotalCount: (result) => result.tasksTotal ?? undefined,
     mode: 'infinite',
     enabled: !!selectedRootLocationIds && !!user,
     refetchOnWindowFocus: true,
@@ -52,6 +53,7 @@ const TasksPage: NextPage = () => {
       assignee: task.assignee
         ? { id: task.assignee.id, name: task.assignee.name, avatarURL: task.assignee.avatarUrl, isOnline: task.assignee.isOnline ?? null }
         : undefined,
+      properties: task.properties ?? [],
     }))
   }, [tasksData])
 
@@ -67,6 +69,7 @@ const TasksPage: NextPage = () => {
           showAssignee={false}
           initialTaskId={taskId}
           onInitialTaskOpened={() => router.replace('/tasks', undefined, { shallow: true })}
+          totalCount={totalCount}
         />
       </ContentPanel>
     </Page>

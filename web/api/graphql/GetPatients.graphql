@@ -1,5 +1,5 @@
-query GetPatients($locationId: ID, $rootLocationIds: [ID!], $states: [PatientState!], $limit: Int, $offset: Int) {
-  patients(locationNodeId: $locationId, rootLocationIds: $rootLocationIds, states: $states, limit: $limit, offset: $offset) {
+query GetPatients($locationId: ID, $rootLocationIds: [ID!], $states: [PatientState!], $filtering: [FilterInput!], $sorting: [SortInput!], $pagination: PaginationInput, $search: FullTextSearchInput) {
+  patients(locationNodeId: $locationId, rootLocationIds: $rootLocationIds, states: $states, filtering: $filtering, sorting: $sorting, pagination: $pagination, search: $search) {
     id
     name
     firstname
@@ -120,9 +120,22 @@ query GetPatients($locationId: ID, $rootLocationIds: [ID!], $states: [PatientSta
     }
     properties {
       definition {
+        id
         name
+        description
+        fieldType
+        isActive
+        allowedEntities
+        options
       }
       textValue
+      numberValue
+      booleanValue
+      dateValue
+      dateTimeValue
+      selectValue
+      multiSelectValues
     }
   }
+  patientsTotal(locationNodeId: $locationId, rootLocationIds: $rootLocationIds, states: $states, filtering: $filtering, sorting: $sorting, search: $search)
 }

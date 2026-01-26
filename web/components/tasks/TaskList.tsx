@@ -1,9 +1,9 @@
 import { useMemo, useState, forwardRef, useImperativeHandle, useEffect, useRef, useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { Button, Checkbox, ConfirmDialog, FillerCell, SearchBar, TableColumnSwitcher, TableDisplay, TablePagination, TableProvider, Tooltip, Visibility } from '@helpwave/hightide'
+import { Button, Checkbox, Chip, ConfirmDialog, FillerCell, SearchBar, TableColumnSwitcher, TableDisplay, TablePagination, TableProvider, Tooltip, Visibility } from '@helpwave/hightide'
 import { PlusIcon, Table as TableIcon, LayoutGrid, UserCheck, Users, Printer } from 'lucide-react'
-import type { TaskPriority } from '@/api/gql/generated'
-import { useAssignTaskMutation, useAssignTaskToTeamMutation, useCompleteTaskMutation, useReopenTaskMutation, useGetUsersQuery, useGetLocationsQuery, type GetGlobalDataQuery } from '@/api/gql/generated'
+import type { TaskPriority, GetTasksQuery } from '@/api/gql/generated'
+import { useAssignTaskMutation, useAssignTaskToTeamMutation, useCompleteTaskMutation, useReopenTaskMutation, useGetUsersQuery, useGetLocationsQuery, useGetPropertyDefinitionsQuery, PropertyEntity, ColumnType, FieldType, type GetGlobalDataQuery } from '@/api/gql/generated'
 import { AssigneeSelectDialog } from './AssigneeSelectDialog'
 import clsx from 'clsx'
 import { SmartDate } from '@/utils/date'
@@ -40,6 +40,7 @@ export type TaskViewModel = {
   assignee?: { id: string, name: string, avatarURL?: string | null, isOnline?: boolean | null },
   assigneeTeam?: { id: string, title: string },
   done: boolean,
+  properties?: GetTasksQuery['tasks'][0]['properties'],
 }
 
 export type TaskListRef = {
@@ -59,6 +60,7 @@ type TaskListProps = {
   initialTaskId?: string,
   onInitialTaskOpened?: () => void,
   headerActions?: React.ReactNode,
+  totalCount?: number,
 }
 
 const isOverdue = (dueDate: Date | undefined, done: boolean): boolean => {
@@ -76,12 +78,13 @@ const isCloseToDueDate = (dueDate: Date | undefined, done: boolean): boolean => 
 
 const STORAGE_KEY_SHOW_DONE = 'task-show-done'
 
-export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initialTasks, onRefetch, showAssignee = false, initialTaskId, onInitialTaskOpened, headerActions }, ref) => {
+export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initialTasks, onRefetch, showAssignee = false, initialTaskId, onInitialTaskOpened, headerActions, totalCount }, ref) => {
   const translation = useTasksTranslation()
   const queryClient = useQueryClient()
   const { totalPatientsCount, user, selectedRootLocationIds } = useTasksContext()
   const { viewType, toggleView } = useTaskViewToggle()
   const [optimisticUpdates, setOptimisticUpdates] = useState<Map<string, boolean>>(new Map())
+  const { data: propertyDefinitionsData } = useGetPropertyDefinitionsQuery()
   const { mutate: completeTask } = useCompleteTaskMutation({
     onMutate: async (variables) => {
       const selectedRootLocationIdsForQuery = selectedRootLocationIds && selectedRootLocationIds.length > 0 ? selectedRootLocationIds : undefined
@@ -389,6 +392,183 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
     setIsHandoverDialogOpen(false)
   }
 
+  const taskPropertyColumns = useMemo<ColumnDef<TaskViewModel>[]>(() => {
+    if (!propertyDefinitionsData?.propertyDefinitions) return []
+
+    const taskProperties = propertyDefinitionsData.propertyDefinitions.filter(
+      def => def.isActive && def.allowedEntities.includes(PropertyEntity.Task)
+    )
+
+    return taskProperties.map(prop => {
+      const columnId = `property_${prop.id}`
+
+      const getFilterFn = () => {
+        switch (prop.fieldType) {
+        case FieldType.FieldTypeCheckbox:
+          return 'boolean'
+        case FieldType.FieldTypeDate:
+        case FieldType.FieldTypeDateTime:
+          return 'date'
+        case FieldType.FieldTypeNumber:
+          return 'number'
+        case FieldType.FieldTypeSelect:
+        case FieldType.FieldTypeMultiSelect:
+          return 'tags'
+        default:
+          return 'text'
+        }
+      }
+
+      const extractOptionIndex = (value: string): number | null => {
+        const match = value.match(/-opt-(\d+)$/)
+        return match && match[1] ? parseInt(match[1], 10) : null
+      }
+
+      return {
+        id: columnId,
+        header: prop.name,
+        accessorFn: (row) => {
+          const property = row.properties?.find(
+            p => p.definition.id === prop.id
+          )
+          if (!property) return null
+          if (prop.fieldType === FieldType.FieldTypeMultiSelect) {
+            return property.multiSelectValues ?? null
+          }
+          return (
+            property.textValue ??
+            property.numberValue ??
+            property.booleanValue ??
+            property.dateValue ??
+            property.dateTimeValue ??
+            property.selectValue ??
+            null
+          )
+        },
+        cell: ({ row }) => {
+          const property = row.original.properties?.find(
+            p => p.definition.id === prop.id
+          )
+          if (!property) return <FillerCell className="min-h-12" />
+
+          if (typeof property.booleanValue === 'boolean') {
+            return (
+              <Chip
+                className="coloring-tonal"
+                color={property.booleanValue ? 'positive' : 'negative'}
+              >
+                {property.booleanValue
+                  ? translation('yes')
+                  : translation('no')}
+              </Chip>
+            )
+          }
+
+          if (
+            prop.fieldType === FieldType.FieldTypeDate &&
+            property.dateValue
+          ) {
+            return (
+              <SmartDate
+                date={new Date(property.dateValue)}
+                showTime={false}
+              />
+            )
+          }
+
+          if (
+            prop.fieldType === FieldType.FieldTypeDateTime &&
+            property.dateTimeValue
+          ) {
+            return (
+              <SmartDate date={new Date(property.dateTimeValue)} />
+            )
+          }
+
+          if (
+            prop.fieldType === FieldType.FieldTypeSelect &&
+            property.selectValue
+          ) {
+            const selectValue = property.selectValue
+            const optionIndex = extractOptionIndex(selectValue)
+            if (
+              optionIndex !== null &&
+              optionIndex >= 0 &&
+              optionIndex < prop.options.length
+            ) {
+              return (
+                <Chip className="coloring-tonal">
+                  {prop.options[optionIndex]}
+                </Chip>
+              )
+            }
+            return <span>{selectValue}</span>
+          }
+
+          if (
+            prop.fieldType === FieldType.FieldTypeMultiSelect &&
+            property.multiSelectValues &&
+            property.multiSelectValues.length > 0
+          ) {
+            return (
+              <div className="flex flex-wrap gap-1">
+                {property.multiSelectValues
+                  .filter((val): val is string => val !== null && val !== undefined)
+                  .map((val, idx) => {
+                    const optionIndex = extractOptionIndex(val)
+                    const optionText =
+                      optionIndex !== null &&
+                      optionIndex >= 0 &&
+                      optionIndex < prop.options.length
+                        ? prop.options[optionIndex]
+                        : val
+                    return (
+                      <Chip key={idx} className="coloring-tonal">
+                        {optionText}
+                      </Chip>
+                    )
+                  })}
+              </div>
+            )
+          }
+
+          if (
+            property.textValue !== null &&
+            property.textValue !== undefined
+          ) {
+            return <span>{property.textValue.toString()}</span>
+          }
+
+          if (
+            property.numberValue !== null &&
+            property.numberValue !== undefined
+          ) {
+            return <span>{property.numberValue.toString()}</span>
+          }
+
+          return <FillerCell className="min-h-12" />
+        },
+        meta: {
+          columnType: ColumnType.Property,
+          propertyDefinitionId: prop.id,
+          fieldType: prop.fieldType,
+          ...(getFilterFn() === 'tags' && {
+            filterData: {
+              tags: prop.options.map((opt, idx) => ({
+                label: opt,
+                tag: `${prop.id}-opt-${idx}`,
+              })),
+            },
+          }),
+        },
+        minSize: 150,
+        size: 200,
+        maxSize: 300,
+        filterFn: getFilterFn(),
+      } as ColumnDef<TaskViewModel>
+    })
+  }, [propertyDefinitionsData, translation])
+
   const columns = useMemo<ColumnDef<TaskViewModel>[]>(() => {
     const cols: ColumnDef<TaskViewModel>[] = [
       {
@@ -566,9 +746,9 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
       })
     }
 
-    return cols
+    return [...cols, ...taskPropertyColumns]
   },
-  [translation, completeTask, reopenTask, showAssignee, optimisticUpdates])
+  [translation, completeTask, reopenTask, showAssignee, optimisticUpdates, taskPropertyColumns])
 
   const handleToggleDone = (taskId: string, checked: boolean) => {
     const task = initialTasks.find(t => t.id === taskId)
@@ -610,6 +790,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
       }}
       enableMultiSort={true}
       onRowClick={row => setTaskDialogState({ isOpen: true, taskId: row.original.id })}
+      pageCount={totalCount ? Math.ceil(totalCount / 25) : undefined}
     >
       <div className="flex flex-col h-full gap-4">
         <div className="flex flex-col sm:flex-row justify-between w-full gap-4">

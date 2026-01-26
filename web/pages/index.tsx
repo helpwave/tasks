@@ -78,7 +78,16 @@ const StatCard = ({ label, value, icon, iconWrapperClassName, className }: StatC
 const Dashboard: NextPage = () => {
   const translation = useTasksTranslation()
   const { user, myTasksCount, totalPatientsCount, selectedRootLocationIds } = useTasksContext()
-  const { data } = useGetOverviewDataQuery(undefined, {})
+  const { data } = useGetOverviewDataQuery({
+    recentPatientsFiltering: undefined,
+    recentPatientsSorting: undefined,
+    recentPatientsPagination: undefined,
+    recentPatientsSearch: undefined,
+    recentTasksFiltering: undefined,
+    recentTasksSorting: undefined,
+    recentTasksPagination: undefined,
+    recentTasksSearch: undefined,
+  }, {})
   const queryClient = useQueryClient()
   const selectedRootLocationIdsForQuery = selectedRootLocationIds && selectedRootLocationIds.length > 0 ? selectedRootLocationIds : undefined
 
