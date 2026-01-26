@@ -249,9 +249,9 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
           </Chip>
         )
       },
-      minSize: 120,
-      size: 120,
-      maxSize: 150,
+      minSize: 160,
+      size: 160,
+      maxSize: 200,
       filterFn: 'tags',
       meta: {
         filterData: {
@@ -284,8 +284,8 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
           <SmartDate date={row.original.birthdate} showTime={false} />
         )
       },
-      minSize: 160,
-      size: 160,
+      minSize: 200,
+      size: 200,
       maxSize: 200,
       filterFn: 'date',
     },
@@ -314,9 +314,9 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
           </Tooltip>
         )
       },
-      minSize: 120,
-      size: 120,
-      maxSize: 150,
+      minSize: 150,
+      size: 150,
+      maxSize: 200,
     },
   ], [allPatientStates, translation])
 

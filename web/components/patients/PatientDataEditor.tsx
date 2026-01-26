@@ -157,7 +157,7 @@ export const PatientDataEditor = ({
         assignedLocationIds: values.assignedLocationIds,
         clinicId: values.clinic!.id,
         teamIds: values.teams?.filter(Boolean).map(t => t.id) || undefined,
-        positionId: values.position!.id,
+        positionId: values.position?.id,
         state: values.state,
         description: values.description,
       }
@@ -192,12 +192,6 @@ export const PatientDataEditor = ({
       clinic: (value) => {
         if (!value) {
           return translation('clinic') + ' is required'
-        }
-        return null
-      },
-      position: (value) => {
-        if (!value) {
-          return translation('position') + ' is required'
         }
         return null
       },
@@ -487,8 +481,6 @@ export const PatientDataEditor = ({
         <FormField<PatientFormValues, 'position'>
           name="position"
           label={translation('position')}
-          required
-          showRequiredIndicator={!isEditMode}
         >
           {({ dataProps: { value, onValueChange, onEditComplete }, focusableElementProps, interactionStates  }) => (
             <div className="flex flex-col gap-2">
