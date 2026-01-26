@@ -119,20 +119,38 @@ def apply_text_filter(column: Any, operator: FilterOperator, parameter: Any) -> 
     if search_text is None:
         return None
 
-    if operator == FilterOperator.TEXT_EQUALS:
-        return column.ilike(search_text)
-    if operator == FilterOperator.TEXT_NOT_EQUALS:
-        return ~column.ilike(search_text)
-    if operator == FilterOperator.TEXT_NOT_WHITESPACE:
-        return func.trim(column) != ""
-    if operator == FilterOperator.TEXT_CONTAINS:
-        return column.ilike(f"%{search_text}%")
-    if operator == FilterOperator.TEXT_NOT_CONTAINS:
-        return ~column.ilike(f"%{search_text}%")
-    if operator == FilterOperator.TEXT_STARTS_WITH:
-        return column.ilike(f"{search_text}%")
-    if operator == FilterOperator.TEXT_ENDS_WITH:
-        return column.ilike(f"%{search_text}")
+    is_case_sensitive = parameter.is_case_sensitive
+
+    if is_case_sensitive:
+        if operator == FilterOperator.TEXT_EQUALS:
+            return column.like(search_text)
+        if operator == FilterOperator.TEXT_NOT_EQUALS:
+            return ~column.like(search_text)
+        if operator == FilterOperator.TEXT_NOT_WHITESPACE:
+            return func.trim(column) != ""
+        if operator == FilterOperator.TEXT_CONTAINS:
+            return column.like(f"%{search_text}%")
+        if operator == FilterOperator.TEXT_NOT_CONTAINS:
+            return ~column.like(f"%{search_text}%")
+        if operator == FilterOperator.TEXT_STARTS_WITH:
+            return column.like(f"{search_text}%")
+        if operator == FilterOperator.TEXT_ENDS_WITH:
+            return column.like(f"%{search_text}")
+    else:
+        if operator == FilterOperator.TEXT_EQUALS:
+            return column.ilike(search_text)
+        if operator == FilterOperator.TEXT_NOT_EQUALS:
+            return ~column.ilike(search_text)
+        if operator == FilterOperator.TEXT_NOT_WHITESPACE:
+            return func.trim(column) != ""
+        if operator == FilterOperator.TEXT_CONTAINS:
+            return column.ilike(f"%{search_text}%")
+        if operator == FilterOperator.TEXT_NOT_CONTAINS:
+            return ~column.ilike(f"%{search_text}%")
+        if operator == FilterOperator.TEXT_STARTS_WITH:
+            return column.ilike(f"{search_text}%")
+        if operator == FilterOperator.TEXT_ENDS_WITH:
+            return column.ilike(f"%{search_text}")
 
     return None
 

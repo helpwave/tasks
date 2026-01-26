@@ -234,6 +234,7 @@ class ColumnType(Enum):
 @strawberry.input
 class FilterParameter:
     search_text: str | None = None
+    is_case_sensitive: bool = False
     compare_value: float | None = None
     min: float | None = None
     max: float | None = None
