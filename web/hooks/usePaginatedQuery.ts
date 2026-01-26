@@ -23,6 +23,7 @@ export interface PaginatedGraphQLQueryOptions<TQueryResult, TItem, TVariables ex
   baseVariables: TVariables,
   pageSize: number,
   extractItems: (queryResult: TQueryResult) => TItem[],
+  extractTotalCount?: (queryResult: TQueryResult) => number | undefined,
   mode?: PaginationMode,
   enabled?: boolean,
   refetchInterval?: number | false,
@@ -42,6 +43,7 @@ export interface PaginatedQueryResult<TData> {
   totalPages?: number,
   currentPage?: number,
   goToPage?: (page: number) => void,
+  totalCount?: number,
 }
 
 function useInfinitePaginatedQuery<TData, TVariables extends Record<string, unknown>>({
@@ -224,23 +226,36 @@ export function usePaginatedGraphQLQuery<TQueryResult, TItem, TVariables extends
   baseVariables,
   pageSize,
   extractItems,
+  extractTotalCount,
   mode = 'infinite',
   enabled = true,
   refetchInterval,
   refetchOnWindowFocus = true,
   refetchOnMount = true,
 }: PaginatedGraphQLQueryOptions<TQueryResult, TItem, TVariables>): PaginatedQueryResult<TItem> {
+  const [totalCount, setTotalCount] = React.useState<number | undefined>(undefined)
+
   const queryFn = React.useCallback(
     async (page: number, variables: TVariables): Promise<TItem[]> => {
       const paginatedVariables = {
         ...variables,
-        limit: pageSize,
-        offset: page * pageSize,
+        pagination: {
+          pageIndex: page,
+          pageSize: pageSize,
+        },
       }
       const result = await fetcher<TQueryResult, typeof paginatedVariables>(document, paginatedVariables)()
+
+      if (extractTotalCount) {
+        const count = extractTotalCount(result)
+        if (count !== undefined) {
+          setTotalCount(count)
+        }
+      }
+
       return extractItems(result)
     },
-    [document, pageSize, extractItems]
+    [document, pageSize, extractItems, extractTotalCount]
   )
 
   const result = usePaginatedQuery<TItem[], TVariables>({
@@ -258,6 +273,7 @@ export function usePaginatedGraphQLQuery<TQueryResult, TItem, TVariables extends
   return {
     ...result,
     data: result.data as TItem[],
+    totalCount,
   }
 }
 

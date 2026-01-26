@@ -49,7 +49,9 @@ def get_property_join_alias(
 ) -> Any:
     entity_type = detect_entity_type(model_class)
     if not entity_type:
-        raise ValueError(f"Unsupported entity type for property filtering: {model_class}")
+        raise ValueError(
+            f"Unsupported entity type for property filtering: {model_class}"
+        )
 
     property_alias = aliased(models.PropertyValue)
     value_column = get_property_value_column(field_type)
@@ -97,10 +99,16 @@ def apply_sorting(
                 continue
 
             field_type = property_field_types.get(
-                sort_input.property_definition_id, "FIELD_TYPE_TEXT"
+                sort_input.property_definition_id,
+                "FIELD_TYPE_TEXT"
             )
-            query, property_alias, value_column = get_property_join_alias(
-                query, model_class, sort_input.property_definition_id, field_type
+            query, property_alias, value_column = (
+                get_property_join_alias(
+                    query,
+                    model_class,
+                    sort_input.property_definition_id,
+                    field_type,
+                )
             )
 
             if sort_input.direction == SortDirection.DESC:
@@ -114,7 +122,9 @@ def apply_sorting(
     return query
 
 
-def apply_text_filter(column: Any, operator: FilterOperator, parameter: Any) -> Any:
+def apply_text_filter(
+    column: Any, operator: FilterOperator, parameter: Any
+) -> Any:
     search_text = parameter.search_text
     if search_text is None:
         return None
@@ -155,7 +165,9 @@ def apply_text_filter(column: Any, operator: FilterOperator, parameter: Any) -> 
     return None
 
 
-def apply_number_filter(column: Any, operator: FilterOperator, parameter: Any) -> Any:
+def apply_number_filter(
+    column: Any, operator: FilterOperator, parameter: Any
+) -> Any:
     compare_value = parameter.compare_value
     min_value = parameter.min
     max_value = parameter.max
@@ -192,7 +204,9 @@ def normalize_date_for_comparison(date_value: Any) -> Any:
     return date_value
 
 
-def apply_date_filter(column: Any, operator: FilterOperator, parameter: Any) -> Any:
+def apply_date_filter(
+    column: Any, operator: FilterOperator, parameter: Any
+) -> Any:
     compare_date = parameter.compare_date
     min_date = parameter.min_date
     max_date = parameter.max_date
@@ -276,7 +290,9 @@ def apply_datetime_filter(
     return None
 
 
-def apply_boolean_filter(column: Any, operator: FilterOperator, parameter: Any) -> Any:
+def apply_boolean_filter(
+    column: Any, operator: FilterOperator, parameter: Any
+) -> Any:
     if operator == FilterOperator.BOOLEAN_IS_TRUE:
         return column.is_(True)
     if operator == FilterOperator.BOOLEAN_IS_FALSE:
@@ -336,7 +352,9 @@ def apply_tags_single_filter(
     return None
 
 
-def apply_null_filter(column: Any, operator: FilterOperator, parameter: Any) -> Any:
+def apply_null_filter(
+    column: Any, operator: FilterOperator, parameter: Any
+) -> Any:
     if operator == FilterOperator.IS_NULL:
         return column.is_(None)
     if operator == FilterOperator.IS_NOT_NULL:
@@ -432,7 +450,8 @@ def apply_filtering(
                 continue
 
             field_type = property_field_types.get(
-                filter_input.property_definition_id, "FIELD_TYPE_TEXT"
+                filter_input.property_definition_id,
+                "FIELD_TYPE_TEXT"
             )
             query, property_alias, value_column = get_property_join_alias(
                 query, model_class, filter_input.property_definition_id, field_type
@@ -450,7 +469,9 @@ def apply_filtering(
                 FilterOperator.TEXT_STARTS_WITH,
                 FilterOperator.TEXT_ENDS_WITH,
             ]:
-                condition = apply_text_filter(value_column, operator, parameter)
+                condition = apply_text_filter(
+                    value_column, operator, parameter
+                )
 
             elif operator in [
                 FilterOperator.NUMBER_EQUALS,
@@ -474,7 +495,9 @@ def apply_filtering(
                 FilterOperator.DATE_BETWEEN,
                 FilterOperator.DATE_NOT_BETWEEN,
             ]:
-                condition = apply_date_filter(value_column, operator, parameter)
+                condition = apply_date_filter(
+                    value_column, operator, parameter
+                )
 
             elif operator in [
                 FilterOperator.DATETIME_EQUALS,
@@ -492,7 +515,9 @@ def apply_filtering(
                 FilterOperator.BOOLEAN_IS_TRUE,
                 FilterOperator.BOOLEAN_IS_FALSE,
             ]:
-                condition = apply_boolean_filter(value_column, operator, parameter)
+                condition = apply_boolean_filter(
+                    value_column, operator, parameter
+                )
 
             elif operator in [
                 FilterOperator.TAGS_EQUALS,
@@ -500,7 +525,9 @@ def apply_filtering(
                 FilterOperator.TAGS_CONTAINS,
                 FilterOperator.TAGS_NOT_CONTAINS,
             ]:
-                condition = apply_tags_filter(value_column, operator, parameter)
+                condition = apply_tags_filter(
+                    value_column, operator, parameter
+                )
 
             elif operator in [
                 FilterOperator.TAGS_SINGLE_EQUALS,
@@ -514,7 +541,9 @@ def apply_filtering(
                 FilterOperator.IS_NULL,
                 FilterOperator.IS_NOT_NULL,
             ]:
-                condition = apply_null_filter(value_column, operator, parameter)
+                condition = apply_null_filter(
+                    value_column, operator, parameter
+                )
 
         if condition is not None:
             filter_conditions.append(condition)
@@ -546,13 +575,20 @@ def filtered_and_sorted_query(
             if not model_class:
                 if isinstance(result, Select):
                     for arg in args:
-                        if hasattr(arg, "context") and hasattr(arg.context, "db"):
+                        if (
+                            hasattr(arg, "context")
+                            and hasattr(arg.context, "db")
+                        ):
                             db = arg.context.db
                             query_result = await db.execute(result)
                             return query_result.scalars().all()
                     else:
                         info = kwargs.get("info")
-                        if info and hasattr(info, "context") and hasattr(info.context, "db"):
+                        if (
+                            info
+                            and hasattr(info, "context")
+                            and hasattr(info.context, "db")
+                        ):
                             db = info.context.db
                             query_result = await db.execute(result)
                             return query_result.scalars().all()
@@ -579,7 +615,10 @@ def filtered_and_sorted_query(
 
                 if property_def_ids:
                     for arg in args:
-                        if hasattr(arg, "context") and hasattr(arg.context, "db"):
+                        if (
+                            hasattr(arg, "context")
+                            and hasattr(arg.context, "db")
+                        ):
                             db = arg.context.db
                             prop_defs_result = await db.execute(
                                 select(models.PropertyDefinition).where(
@@ -588,12 +627,17 @@ def filtered_and_sorted_query(
                             )
                             prop_defs = prop_defs_result.scalars().all()
                             property_field_types = {
-                                str(prop_def.id): prop_def.field_type for prop_def in prop_defs
+                                str(prop_def.id): prop_def.field_type
+                                for prop_def in prop_defs
                             }
                             break
                     else:
                         info = kwargs.get("info")
-                        if info and hasattr(info, "context") and hasattr(info.context, "db"):
+                        if (
+                            info
+                            and hasattr(info, "context")
+                            and hasattr(info.context, "db")
+                        ):
                             db = info.context.db
                             prop_defs_result = await db.execute(
                                 select(models.PropertyDefinition).where(
@@ -602,7 +646,8 @@ def filtered_and_sorted_query(
                             )
                             prop_defs = prop_defs_result.scalars().all()
                             property_field_types = {
-                                str(prop_def.id): prop_def.field_type for prop_def in prop_defs
+                                str(prop_def.id): prop_def.field_type
+                                for prop_def in prop_defs
                             }
 
             if filtering:
@@ -624,13 +669,20 @@ def filtered_and_sorted_query(
 
             if isinstance(result, Select):
                 for arg in args:
-                    if hasattr(arg, "context") and hasattr(arg.context, "db"):
+                    if (
+                        hasattr(arg, "context")
+                        and hasattr(arg.context, "db")
+                    ):
                         db = arg.context.db
                         query_result = await db.execute(result)
                         return query_result.scalars().all()
                 else:
                     info = kwargs.get("info")
-                    if info and hasattr(info, "context") and hasattr(info.context, "db"):
+                    if (
+                        info
+                        and hasattr(info, "context")
+                        and hasattr(info.context, "db")
+                    ):
                         db = info.context.db
                         query_result = await db.execute(result)
                         return query_result.scalars().all()

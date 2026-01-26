@@ -65,10 +65,14 @@ def apply_full_text_search(
             if search_input.property_definition_ids:
                 property_filter = and_(
                     property_alias.text_value.ilike(search_pattern),
-                    property_alias.definition_id.in_(search_input.property_definition_ids),
+                    property_alias.definition_id.in_(
+                        search_input.property_definition_ids
+                    ),
                 )
             else:
-                property_filter = property_alias.text_value.ilike(search_pattern)
+                property_filter = (
+                    property_alias.text_value.ilike(search_pattern)
+                )
 
             query = query.outerjoin(property_alias, join_condition)
             search_conditions.append(property_filter)
