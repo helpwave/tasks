@@ -322,6 +322,7 @@ type HeaderProps = HTMLAttributes<HTMLHeadElement> & {
 export const Header = ({ onMenuClick, isMenuOpen, ...props }: HeaderProps) => {
   const router = useRouter()
   const { user } = useTasksContext()
+  const translation = useTasksTranslation()
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false)
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
 
@@ -347,23 +348,22 @@ export const Header = ({ onMenuClick, isMenuOpen, ...props }: HeaderProps) => {
         </div>
         <div className="flex-row-2 justify-end items-center gap-x-2">
           <RootLocationSelector className="hidden sm:flex" />
-          <div className="flex-row-0">
-            <Notifications />
-          </div>
-          <div className="flex-row-0">
+          <Notifications />
+          <Tooltip tooltip={translation('feedback')}>
             <Button coloringStyle="text" layout="icon" color="neutral" onClick={() => setIsFeedbackOpen(true)}>
               <MessageSquare />
             </Button>
-          </div>
-          <div className="flex-row-0">
+          </Tooltip>
+          <Tooltip tooltip={translation('settings')}>
             <Button coloringStyle="text" layout="icon" color="neutral" onClick={() => router.push('/settings')}>
               <SettingsIcon />
             </Button>
-          </div>
+          </Tooltip>
           <Tooltip tooltip={user?.isOnline ? 'Online' : 'Offline'}>
-            <button
+            <Button
               onClick={() => user?.id && setSelectedUserId(user.id)}
-              className="flex-row-1.5 items-center gap-x-1.75 hover:opacity-75 transition-opacity"
+              coloringStyle="text"
+              color="neutral"
             >
               <span className="hidden sm:inline typography-title-sm">{user?.name}</span>
               <AvatarStatusComponent
@@ -374,7 +374,7 @@ export const Header = ({ onMenuClick, isMenuOpen, ...props }: HeaderProps) => {
                   alt: user.name
                 } : undefined}
               />
-            </button>
+            </Button>
           </Tooltip>
         </div>
       </header>

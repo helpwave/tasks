@@ -14,14 +14,58 @@
   --color-gender-neutral: var(--color-blue-500);
   --color-gender-on-neutral: var(--color-white);
   --color-gender-neutral-hover: var(--color-blue-600);
+
+  --color-location-hospital: var(--color-red-100);
+  --color-location-on-hospital: var(--color-red-700);
+
+  --color-location-practice: var(--color-indigo-100);
+  --color-location-on-practice: var(--color-indigo-700);
+
+  --color-location-clinic: var(--color-blue-100);
+  --color-location-on-clinic: var(--color-blue-700);
+
+  --color-location-team: var(--color-purple-100);
+  --color-location-on-team: var(--color-purple-700);
+
+  --color-location-ward: var(--color-orange-100);
+  --color-location-on-ward: var(--color-orange-700);
+
+  --color-location-room: var(--color-gray-100);
+  --color-location-on-room: var(--color-gray-700);
+
+  --color-location-bed: var(--color-emerald-100);
+  --color-location-on-bed: var(--color-emerald-700);
 }
 
 @layer base {
+
   /* Here are overrides for the light theme */
   @variant dark {
     /* Header */
     --color-header-background: var(--color-black);
     --color-header-text: var(--color-white);
+
+    /* Location colors */
+    --color-location-hospital: var(--color-red-900);
+    --color-location-on-hospital: var(--color-red-300);
+
+    --color-location-practice: var(--color-indigo-900);
+    --color-location-on-practice: var(--color-indigo-300);
+
+    --color-location-clinic: var(--color-blue-900);
+    --color-location-on-clinic: var(--color-blue-300);
+
+    --color-location-team: var(--color-purple-900);
+    --color-location-on-team: var(--color-purple-300);
+
+    --color-location-ward: var(--color-orange-900);
+    --color-location-on-ward: var(--color-orange-300);
+
+    --color-location-room: var(--color-gray-800);
+    --color-location-on-room: var(--color-gray-300);
+
+    --color-location-bed: var(--color-emerald-900);
+    --color-location-on-bed: var(--color-emerald-300);
   }
 }
 
@@ -44,4 +88,46 @@
   --coloring-color: var(--color-gender-neutral);
   --coloring-on-color: var(--color-gender-on-neutral);
   --coloring-hover: var(--color-gender-neutral-hover);
+}
+
+@utility location-hospital {
+  @apply coloring-reset-variables;
+  --coloring-color: var(--color-location-hospital);
+  --coloring-on-color: var(--color-location-on-hospital);
+}
+
+@utility location-practice {
+  @apply coloring-reset-variables;
+  --coloring-color: var(--color-location-practice);
+  --coloring-on-color: var(--color-location-on-practice);
+}
+
+@utility location-clinic {
+  @apply coloring-reset-variables;
+  --coloring-color: var(--color-location-clinic);
+  --coloring-on-color: var(--color-location-on-clinic);
+}
+
+@utility location-team {
+  @apply coloring-reset-variables;
+  --coloring-color: var(--color-location-team);
+  --coloring-on-color: var(--color-location-on-team);
+}
+
+@utility location-ward {
+  @apply coloring-reset-variables;
+  --coloring-color: var(--color-location-ward);
+  --coloring-on-color: var(--color-location-on-ward);
+}
+
+@utility location-room {
+  @apply coloring-reset-variables;
+  --coloring-color: var(--color-location-room);
+  --coloring-on-color: var(--color-location-on-room);
+}
+
+@utility location-bed {
+  @apply coloring-reset-variables;
+  --coloring-color: var(--color-location-bed);
+  --coloring-on-color: var(--color-location-on-bed);
 }

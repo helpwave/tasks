@@ -321,7 +321,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
   ], [allPatientStates, translation])
 
   const onRowClick = useCallback((row: Row<PatientViewModel>) => handleEdit(row.original), [handleEdit])
-  const fillerRow = useCallback(() => (<FillerCell className="min-h-12" />), [])
+  const fillerRowCell = useCallback(() => (<FillerCell className="min-h-8" />), [])
 
   return (
     <div className="flex flex-col h-full gap-4 print-container">
@@ -334,7 +334,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
             onSearch={() => null}
           />
         </div>
-        <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto sm:ml-auto lg:pr-4">
+        <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto sm:ml-auto">
           <div className="flex items-center gap-2">
             <Checkbox
               value={showAllPatients}
@@ -390,17 +390,15 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
         </div>
       </div>
       <Visibility isVisible={viewType === 'table'}>
-        <div className="overflow-x-auto -mx-4 px-4 lg:mx-0 lg:pl-0 lg:pr-4 print-content">
-          <Table
-            table={{
-              data: patients,
-              columns,
-              fillerRow,
-              onRowClick
-            }}
-            className="w-full h-full cursor-pointer min-w-[800px] print-table"
-          />
-        </div>
+        <Table
+          table={{
+            data: patients,
+            columns,
+            fillerRowCell,
+            onRowClick
+          }}
+          displayProps={{ className: 'print-content' }}
+        />
       </Visibility>
       <Visibility isVisible={viewType === 'card'}>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 -mx-4 px-4 lg:mx-0 lg:pl-0 lg:pr-4 print-content">

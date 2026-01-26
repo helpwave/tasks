@@ -40,7 +40,12 @@ export const RecentPatientsTable = ({
       header: translation('location'),
       accessorKey: 'position',
       cell: ({ row }) => (
-        <LocationChips locations={row.original.position ? [row.original.position] : []} small />
+        <LocationChips
+          locations={row.original.position ? [row.original.position] : []}
+          small
+          className="min-h-8"
+          placeholderProps={{ className: 'min-h-8 block' }}
+        />
       ),
       minSize: 200,
       filterFn: 'text',
@@ -76,7 +81,7 @@ export const RecentPatientsTable = ({
       table={{
         data: patients,
         columns: patientColumns,
-        fillerRowCell: useCallback(() => (<FillerCell className="min-h-15"/>), []),
+        fillerRowCell: useCallback(() => (<FillerCell className="min-h-8"/>), []),
         onRowClick: useCallback((row: Row<PatientViewModel>) => onSelectPatient(row.original.id), [onSelectPatient])
       }}
       header={(

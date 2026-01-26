@@ -205,7 +205,7 @@ const Dashboard: NextPage = () => {
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-4 2xl:flex-row 2xl:flex-nowrap">
+        <div className="flex flex-wrap gap-4 2xl:flex-row 2xl:flex-nowrap print-content">
           <RecentTasksTable
             tasks={recentTasks}
             completeTask={useCallback((id) => completeTask({ id }), [completeTask])}
@@ -213,18 +213,12 @@ const Dashboard: NextPage = () => {
             onSelectPatient={setSelectedPatientId}
             onSelectTask={setSelectedTaskId}
             className="w-full 2xl:min-w-150 flex-1"
-            paginationOptions={{
-              allowChangingPageSize: false,
-            }}
           />
 
           <RecentPatientsTable
             patients={recentPatients}
             onSelectPatient={setSelectedPatientId}
             className="w-full 2xl: min-w-100 2xl:w-2/5"
-            paginationOptions={{
-              allowChangingPageSize: false,
-            }}
           />
         </div>
 

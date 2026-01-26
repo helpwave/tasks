@@ -476,7 +476,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
         accessorKey: 'name',
         cell: ({ row }) => {
           return (
-            <div className="flex items-center gap-2">
+            <div className="flex-row-2 items-center">
               {row.original.priority && (
                 <div className={clsx('w-2 h-2 rounded-full shrink-0', getPriorityDotColor(row.original.priority))} />
               )}
@@ -510,9 +510,10 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
             />
           )
         },
-        minSize: 200,
-        size: 200,
-        maxSize: 200,
+        minSize: 220,
+        size: 220,
+        maxSize: 220,
+        enableResizing: false,
         filterFn: 'date',
       },
       {
@@ -529,20 +530,23 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
             )
           }
           return (
-            <div className="flex flex-col gap-1">
-              <Button
-                color="neutral"
-                size="sm"
-                onClick={event => {
-                  event.stopPropagation()
-                  setSelectedPatientId(data.patient?.id ?? null)
-                }}
-                className="flex-row-0 justify-start w-fit"
-              >
-                {data.patient?.name}
-              </Button>
-              <LocationChips locations={data.patient.locations || []} small />
-            </div>
+            <>
+              <div className="flex flex-col gap-1 print:hidden">
+                <Button
+                  color="neutral"
+                  size="sm"
+                  onClick={event => {
+                    event.stopPropagation()
+                    setSelectedPatientId(data.patient?.id ?? null)
+                  }}
+                  className="flex-row-0 justify-start w-fit"
+                >
+                  {data.patient?.name}
+                </Button>
+                <LocationChips locations={data.patient.locations || []} small />
+              </div>
+              <span className="hidden print:block">{data.patient?.name}</span>
+            </>
           )
         },
         sortingFn: 'text',
@@ -637,8 +641,8 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
   ), [])
 
   return (
-    <div className="flex flex-col h-full gap-4 print-container">
-      <div className="flex flex-col sm:flex-row justify-between w-full gap-4 print-header">
+    <div className="flex flex-col h-full gap-4">
+      <div className="flex flex-col sm:flex-row justify-between w-full gap-4">
         <SearchBar
           placeholder={translation('search')}
           value={searchQuery}
@@ -663,7 +667,6 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
                   color="neutral"
                   coloringStyle="text"
                   onClick={handlePrint}
-                  className="print-button"
                 >
                   <Printer className="size-5" />
                 </Button>
@@ -726,11 +729,11 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
             enableMultiSort: true,
             onRowClick: row => setTaskDialogState({ isOpen: true, taskId: row.original.id }),
           }}
-          className="print-content"
+          displayProps={{ className: 'print-content' }}
         />
       </Visibility>
       <Visibility isVisible={viewType === 'card'}>
-        <div className="grid gap-4 -mx-4 px-4 lg:mx-0 lg:pl-0 lg:pr-4 print-content" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))' }}>
+        <div className="grid gap-4 -mx-4 px-4 lg:mx-0 lg:pl-0 lg:pr-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))' }}>
           {tasks.length === 0 ? (
             <div className="w-full text-center text-description py-8 col-span-full">
               {translation('noOpenTasks')}

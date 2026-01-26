@@ -120,9 +120,10 @@ export const RecentTasksTable = ({
           />
         )
       },
-      minSize: 200,
-      size: 200,
-      maxSize: 200,
+      minSize: 220,
+      size: 220,
+      maxSize: 220,
+      enableResizing: false,
       filterFn: 'date',
     },
     {
@@ -136,9 +137,10 @@ export const RecentTasksTable = ({
           <SmartDate date={date}/>
         )
       },
-      minSize: 200,
-      size: 200,
-      maxSize: 200,
+      minSize: 220,
+      size: 220,
+      maxSize: 220,
+      enableResizing: false,
       filterFn: 'date',
     }
   ], [translation, completeTask, reopenTask, onSelectPatient])
