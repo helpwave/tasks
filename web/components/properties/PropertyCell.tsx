@@ -31,14 +31,34 @@ export const PropertyCell = ({
         {property.booleanValue ? translation('yes') : translation('no')}
       </Chip>
     )
-  case FieldType.FieldTypeDate:
+  case FieldType.FieldTypeDate: {
+    if (!property.dateValue) {
+      return <FillerCell />
+    }
+    const date = property.dateValue instanceof Date
+      ? property.dateValue
+      : new Date(property.dateValue)
+    if (isNaN(date.getTime())) {
+      return <FillerCell />
+    }
     return (
-      <SmartDate date={property.dateValue ?? new Date()} showTime={false} />
+      <SmartDate date={date} showTime={false} />
     )
-  case FieldType.FieldTypeDateTime:
+  }
+  case FieldType.FieldTypeDateTime: {
+    if (!property.dateTimeValue) {
+      return <FillerCell />
+    }
+    const date = property.dateTimeValue instanceof Date
+      ? property.dateTimeValue
+      : new Date(property.dateTimeValue)
+    if (isNaN(date.getTime())) {
+      return <FillerCell />
+    }
     return (
-      <SmartDate date={property.dateTimeValue ?? new Date()} />
+      <SmartDate date={date} />
     )
+  }
   case FieldType.FieldTypeSelect: {
     if (!property.selectValue) {
       return <FillerCell />
