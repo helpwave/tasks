@@ -99,12 +99,17 @@ export const PropertyCell = ({
     return (
       <span className="truncate block">{property.numberValue}</span>
     )
-  case FieldType.FieldTypeText:
+  case FieldType.FieldTypeText: {
+    const textValue = property.textValue ?? property.numberValue ?? ''
+    const displayText = typeof textValue === 'string' && textValue.length > 15
+      ? `${textValue.substring(0, 15)}...`
+      : String(textValue)
     return (
-      <Tooltip tooltip={property.textValue} tooltipClassName="whitespace-wrap">
-        <span className="truncate block max-w-full overflow-hidden text-ellipsis">{property.textValue ?? property.numberValue}</span>
+      <Tooltip tooltip={textValue} tooltipClassName="whitespace-wrap">
+        <span className="truncate block max-w-full overflow-hidden text-ellipsis">{displayText}</span>
       </Tooltip>
     )
+  }
   default:
     return <FillerCell />
   }

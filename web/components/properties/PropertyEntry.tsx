@@ -72,6 +72,7 @@ export const PropertyEntry = ({
     return (
       <DateProperty
         {...commonProps}
+        type="date"
         value={value.dateValue}
         onValueChange={dateValue => onChange({ ...value, dateValue })}
         onEditComplete={dateValue => onEditComplete({ ...value, dateValue })}
@@ -81,6 +82,7 @@ export const PropertyEntry = ({
     return (
       <DateProperty
         {...commonProps}
+        type="dateTime"
         value={value.dateTimeValue}
         onValueChange={dateTimeValue => onChange({ ...value, dateTimeValue })}
         onEditComplete={dateTimeValue => onEditComplete({ ...value, dateTimeValue })}
