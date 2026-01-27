@@ -220,6 +220,11 @@ export const RecentTasksTable = ({
         isUsingFillerRows: true,
         fillerRowCell: useCallback(() => (<FillerCell className="min-h-8" />), []),
         onRowClick: useCallback((row: Row<TaskViewModel>) => onSelectTask(row.original.id), [onSelectTask]),
+        initialState: {
+          pagination: {
+            pageSize: 10,
+          }
+        },
         state: {
           columnVisibility,
           pagination,

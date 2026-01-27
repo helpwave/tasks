@@ -621,6 +621,11 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
       data={tasks}
       columns={columns}
       fillerRowCell={useCallback(() => (<FillerCell className="min-h-12"/>), [])}
+      initialState={{
+        pagination: {
+          pageSize: 10,
+        }
+      }}
       state={{
         columnVisibility,
         pagination,

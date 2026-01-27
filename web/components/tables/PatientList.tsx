@@ -388,6 +388,11 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       columns={columns}
       fillerRowCell={fillerRowCell}
       onRowClick={onRowClick}
+      initialState={{
+        pagination: {
+          pageSize: 10,
+        }
+      }}
       state={{
         columnVisibility,
         pagination,
