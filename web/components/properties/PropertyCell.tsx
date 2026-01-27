@@ -31,40 +31,78 @@ export const PropertyCell = ({
         {property.booleanValue ? translation('yes') : translation('no')}
       </Chip>
     )
-  case FieldType.FieldTypeDate:
+  case FieldType.FieldTypeDate: {
+    if (!property.dateValue) {
+      return <FillerCell />
+    }
+    const date = property.dateValue instanceof Date
+      ? property.dateValue
+      : new Date(property.dateValue)
+    if (isNaN(date.getTime())) {
+      return <FillerCell />
+    }
     return (
-      <SmartDate date={property.dateValue ?? new Date()} showTime={false} />
+      <SmartDate date={date} showTime={false} />
     )
-  case FieldType.FieldTypeDateTime:
+  }
+  case FieldType.FieldTypeDateTime: {
+    if (!property.dateTimeValue) {
+      return <FillerCell />
+    }
+    const date = property.dateTimeValue instanceof Date
+      ? property.dateTimeValue
+      : new Date(property.dateTimeValue)
+    if (isNaN(date.getTime())) {
+      return <FillerCell />
+    }
     return (
-      <SmartDate date={property.dateTimeValue ?? new Date()} />
+      <SmartDate date={date} />
     )
-  case FieldType.FieldTypeSelect:
-    return (
-      <Chip className="primary coloring-tonal">
-        {property.selectValue}
-      </Chip>
-    )
-  case FieldType.FieldTypeMultiSelect:
+  }
+  case FieldType.FieldTypeSelect: {
+    if (!property.selectValue) {
+      return <FillerCell />
+    }
+    const selectOptionIndex = property.selectValue.match(/-opt-(\d+)$/)?.[1]
+    const selectOptionName = selectOptionIndex !== undefined && property.definition?.options
+      ? property.definition.options[parseInt(selectOptionIndex, 10)]
+      : property.selectValue
     return (
       <div className="flex flex-wrap gap-1">
-        {property.multiSelectValues?.map((val) => {
+        <Chip className="primary coloring-tonal">
+          {selectOptionName}
+        </Chip>
+      </div>
+    )
+  }
+  case FieldType.FieldTypeMultiSelect: {
+    if (!property.multiSelectValues || property.multiSelectValues.length === 0) {
+      return <FillerCell />
+    }
+    return (
+      <div className="flex flex-wrap gap-1">
+        {property.multiSelectValues.map((val) => {
+          const multiSelectOptionIndex = val.match(/-opt-(\d+)$/)?.[1]
+          const multiSelectOptionName = multiSelectOptionIndex !== undefined && property.definition?.options
+            ? property.definition.options[parseInt(multiSelectOptionIndex, 10)]
+            : val
           return (
             <Chip key={val} className="primary coloring-tonal">
-              {val}
+              {multiSelectOptionName}
             </Chip>
           )
         })}
       </div>
     )
+  }
   case FieldType.FieldTypeNumber:
     return (
-      <span className="truncate">{property.numberValue}</span>
+      <span className="truncate block">{property.numberValue}</span>
     )
   case FieldType.FieldTypeText:
     return (
       <Tooltip tooltip={property.textValue} tooltipClassName="whitespace-wrap">
-        <span className="truncate">{property.textValue ?? property.numberValue}</span>
+        <span className="truncate block max-w-full overflow-hidden text-ellipsis">{property.textValue ?? property.numberValue}</span>
       </Tooltip>
     )
   default:

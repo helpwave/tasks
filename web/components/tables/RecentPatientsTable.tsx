@@ -1,15 +1,21 @@
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
-import type { ColumnDef, Row } from '@tanstack/react-table'
+import type { ColumnDef, Row, ColumnFiltersState, PaginationState, SortingState, TableState, VisibilityState } from '@tanstack/react-table'
 import type { GetOverviewDataQuery } from '@/api/gql/generated'
-import { useCallback, useMemo } from 'react'
+import { useCallback, useMemo, useEffect } from 'react'
 import type { TableProps } from '@helpwave/hightide'
 import { FillerCell, Table, TableColumnSwitcher, Tooltip } from '@helpwave/hightide'
 import { SmartDate } from '@/utils/date'
 import { LocationChips } from '@/components/patients/LocationChips'
 import { useGetPropertyDefinitionsQuery, PropertyEntity } from '@/api/gql/generated'
 import { createPropertyColumn } from '@/utils/propertyColumn'
+import { useStateWithLocalStorage } from '@/hooks/useStateWithLocalStorage'
 
 type PatientViewModel = GetOverviewDataQuery['recentPatients'][0]
+
+const STORAGE_KEY_COLUMN_VISIBILITY = 'recent-patients-column-visibility'
+const STORAGE_KEY_COLUMN_FILTERS = 'recent-patients-column-filters'
+const STORAGE_KEY_COLUMN_SORTING = 'recent-patients-column-sorting'
+const STORAGE_KEY_COLUMN_PAGINATION = 'recent-patients-column-pagination'
 
 export interface RecentPatientsTableProps extends Omit<TableProps<PatientViewModel>, 'table'> {
   patients: PatientViewModel[],
@@ -23,6 +29,44 @@ export const RecentPatientsTable = ({
 }: RecentPatientsTableProps) => {
   const translation = useTasksTranslation()
   const { data: propertyDefinitionsData } = useGetPropertyDefinitionsQuery()
+
+  const [pagination, setPagination] = useStateWithLocalStorage<PaginationState>({
+    key: STORAGE_KEY_COLUMN_PAGINATION,
+    defaultValue: {
+      pageSize: 10,
+      pageIndex: 0
+    }
+  })
+  const [sorting, setSorting] = useStateWithLocalStorage<SortingState>({
+    key: STORAGE_KEY_COLUMN_SORTING,
+    defaultValue: []
+  })
+  const [filters, setFilters] = useStateWithLocalStorage<ColumnFiltersState>({
+    key: STORAGE_KEY_COLUMN_FILTERS,
+    defaultValue: []
+  })
+  const [columnVisibility, setColumnVisibility] = useStateWithLocalStorage<VisibilityState>({
+    key: STORAGE_KEY_COLUMN_VISIBILITY,
+    defaultValue: {}
+  })
+
+  useEffect(() => {
+    if (propertyDefinitionsData?.propertyDefinitions) {
+      const patientProperties = propertyDefinitionsData.propertyDefinitions.filter(
+        def => def.isActive && def.allowedEntities.includes(PropertyEntity.Patient)
+      )
+      const propertyColumnIds = patientProperties.map(prop => `property_${prop.id}`)
+      const hasPropertyColumnsInVisibility = propertyColumnIds.some(id => id in columnVisibility)
+
+      if (!hasPropertyColumnsInVisibility && propertyColumnIds.length > 0) {
+        const initialVisibility: VisibilityState = { ...columnVisibility }
+        propertyColumnIds.forEach(id => {
+          initialVisibility[id] = false
+        })
+        setColumnVisibility(initialVisibility)
+      }
+    }
+  }, [propertyDefinitionsData, columnVisibility, setColumnVisibility])
 
   const patientPropertyColumns = useMemo<ColumnDef<PatientViewModel>[]>(() => {
     if (!propertyDefinitionsData?.propertyDefinitions) return []
@@ -99,11 +143,17 @@ export const RecentPatientsTable = ({
         columns: patientColumns,
         fillerRowCell: useCallback(() => (<FillerCell className="min-h-8"/>), []),
         onRowClick: useCallback((row: Row<PatientViewModel>) => onSelectPatient(row.original.id), [onSelectPatient]),
-        initialState: {
-          pagination: {
-            pageSize: 25,
-          }
-        }
+        state: {
+          columnVisibility,
+          pagination,
+          sorting,
+          columnFilters: filters,
+        } as Partial<TableState> as TableState,
+        onColumnVisibilityChange: setColumnVisibility,
+        onPaginationChange: setPagination,
+        onSortingChange: setSorting,
+        onColumnFiltersChange: setFilters,
+        enableMultiSort: true,
       }}
       header={(
         <div className="flex-row-4 justify-between items-center">

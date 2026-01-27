@@ -1,7 +1,7 @@
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
-import type { ColumnDef, Row } from '@tanstack/react-table'
+import type { ColumnDef, Row, ColumnFiltersState, PaginationState, SortingState, TableState, VisibilityState } from '@tanstack/react-table'
 import type { GetOverviewDataQuery, TaskPriority } from '@/api/gql/generated'
-import { useCallback, useMemo } from 'react'
+import { useCallback, useMemo, useEffect } from 'react'
 import clsx from 'clsx'
 import type { TableProps } from '@helpwave/hightide'
 import { Button, Checkbox, FillerCell, Table, TableColumnSwitcher, Tooltip } from '@helpwave/hightide'
@@ -11,8 +11,14 @@ import { DueDateUtils } from '@/utils/dueDate'
 import { PriorityUtils } from '@/utils/priority'
 import { useGetPropertyDefinitionsQuery, PropertyEntity } from '@/api/gql/generated'
 import { createPropertyColumn } from '@/utils/propertyColumn'
+import { useStateWithLocalStorage } from '@/hooks/useStateWithLocalStorage'
 
 type TaskViewModel = GetOverviewDataQuery['recentTasks'][0]
+
+const STORAGE_KEY_COLUMN_VISIBILITY = 'recent-tasks-column-visibility'
+const STORAGE_KEY_COLUMN_FILTERS = 'recent-tasks-column-filters'
+const STORAGE_KEY_COLUMN_SORTING = 'recent-tasks-column-sorting'
+const STORAGE_KEY_COLUMN_PAGINATION = 'recent-tasks-column-pagination'
 
 export interface RecentTasksTableProps extends Omit<TableProps<TaskViewModel>, 'table'> {
   tasks: TaskViewModel[],
@@ -34,6 +40,44 @@ export const RecentTasksTable = ({
   const translation = useTasksTranslation()
   const { data: propertyDefinitionsData } = useGetPropertyDefinitionsQuery()
 
+  const [pagination, setPagination] = useStateWithLocalStorage<PaginationState>({
+    key: STORAGE_KEY_COLUMN_PAGINATION,
+    defaultValue: {
+      pageSize: 10,
+      pageIndex: 0
+    }
+  })
+  const [sorting, setSorting] = useStateWithLocalStorage<SortingState>({
+    key: STORAGE_KEY_COLUMN_SORTING,
+    defaultValue: []
+  })
+  const [filters, setFilters] = useStateWithLocalStorage<ColumnFiltersState>({
+    key: STORAGE_KEY_COLUMN_FILTERS,
+    defaultValue: []
+  })
+  const [columnVisibility, setColumnVisibility] = useStateWithLocalStorage<VisibilityState>({
+    key: STORAGE_KEY_COLUMN_VISIBILITY,
+    defaultValue: {}
+  })
+
+  useEffect(() => {
+    if (propertyDefinitionsData?.propertyDefinitions) {
+      const taskProperties = propertyDefinitionsData.propertyDefinitions.filter(
+        def => def.isActive && def.allowedEntities.includes(PropertyEntity.Task)
+      )
+      const propertyColumnIds = taskProperties.map(prop => `property_${prop.id}`)
+      const hasPropertyColumnsInVisibility = propertyColumnIds.some(id => id in columnVisibility)
+
+      if (!hasPropertyColumnsInVisibility && propertyColumnIds.length > 0) {
+        const initialVisibility: VisibilityState = { ...columnVisibility }
+        propertyColumnIds.forEach(id => {
+          initialVisibility[id] = false
+        })
+        setColumnVisibility(initialVisibility)
+      }
+    }
+  }, [propertyDefinitionsData, columnVisibility, setColumnVisibility])
+
   const taskPropertyColumns = useMemo<ColumnDef<TaskViewModel>[]>(() => {
     if (!propertyDefinitionsData?.propertyDefinitions) return []
 
@@ -48,7 +92,7 @@ export const RecentTasksTable = ({
   const taskColumns = useMemo<ColumnDef<TaskViewModel>[]>(() => [
     {
       id: 'done',
-      header: () => null,
+      header: translation('done'),
       accessorKey: 'done',
       cell: ({ row }) => (
         <Checkbox
@@ -176,11 +220,17 @@ export const RecentTasksTable = ({
         isUsingFillerRows: true,
         fillerRowCell: useCallback(() => (<FillerCell className="min-h-8" />), []),
         onRowClick: useCallback((row: Row<TaskViewModel>) => onSelectTask(row.original.id), [onSelectTask]),
-        initialState: {
-          pagination: {
-            pageSize: 25,
-          }
-        }
+        state: {
+          columnVisibility,
+          pagination,
+          sorting,
+          columnFilters: filters,
+        } as Partial<TableState> as TableState,
+        onColumnVisibilityChange: setColumnVisibility,
+        onPaginationChange: setPagination,
+        onSortingChange: setSorting,
+        onColumnFiltersChange: setFilters,
+        enableMultiSort: true,
       }}
       header={(
         <div className="flex-row-4 justify-between items-center">

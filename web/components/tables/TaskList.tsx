@@ -92,7 +92,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
   const [pagination, setPagination] = useStateWithLocalStorage<PaginationState>({
     key: STORAGE_KEY_COLUMN_PAGINATION,
     defaultValue: {
-      pageSize: 25,
+      pageSize: 10,
       pageIndex: 0
     }
   })
@@ -117,6 +117,24 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
   const { viewType, toggleView } = useTaskViewToggle()
   const [optimisticUpdates, setOptimisticUpdates] = useState<Map<string, boolean>>(new Map())
   const { data: propertyDefinitionsData } = useGetPropertyDefinitionsQuery()
+
+  useEffect(() => {
+    if (propertyDefinitionsData?.propertyDefinitions) {
+      const taskProperties = propertyDefinitionsData.propertyDefinitions.filter(
+        def => def.isActive && def.allowedEntities.includes(PropertyEntity.Task)
+      )
+      const propertyColumnIds = taskProperties.map(prop => `property_${prop.id}`)
+      const hasPropertyColumnsInVisibility = propertyColumnIds.some(id => id in columnVisibility)
+
+      if (!hasPropertyColumnsInVisibility && propertyColumnIds.length > 0) {
+        const initialVisibility: VisibilityState = { ...columnVisibility }
+        propertyColumnIds.forEach(id => {
+          initialVisibility[id] = false
+        })
+        setColumnVisibility(initialVisibility)
+      }
+    }
+  }, [propertyDefinitionsData, columnVisibility, setColumnVisibility])
   const { mutate: completeTask } = useCompleteTaskMutation({
     onMutate: async (variables) => {
       const selectedRootLocationIdsForQuery = selectedRootLocationIds && selectedRootLocationIds.length > 0 ? selectedRootLocationIds : undefined
@@ -405,7 +423,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
     const cols: ColumnDef<TaskViewModel>[] = [
       {
         id: 'done',
-        header: () => null,
+        header: translation('done'),
         accessorKey: 'done',
         cell: ({ row }) => {
           const task = row.original
@@ -615,7 +633,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
       onColumnFiltersChange={setFilters}
       enableMultiSort={true}
       onRowClick={row => setTaskDialogState({ isOpen: true, taskId: row.original.id })}
-      pageCount={totalCount ? Math.ceil(totalCount / 25) : undefined}
+      pageCount={totalCount ? Math.ceil(totalCount / pagination.pageSize) : undefined}
     >
       <div className="flex flex-col h-full gap-4">
         <div className="flex flex-col sm:flex-row justify-between w-full gap-4">
@@ -697,6 +715,14 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
         </div>
         <Visibility isVisible={viewType === 'table'}>
           <div className="flex-col-3 items-center">
+            <style>{`
+              table th[data-column-id="done"],
+              table th[data-id="done"],
+              table thead th:has([data-column-id="done"]),
+              table thead th:has([data-id="done"]) {
+                display: none !important;
+              }
+            `}</style>
             <TableDisplay className="print-content" />
             <TablePagination />
           </div>

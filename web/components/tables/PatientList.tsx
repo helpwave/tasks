@@ -11,8 +11,9 @@ import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { usePatientViewToggle } from '@/hooks/useViewToggle'
 import { PatientCardView } from '@/components/patients/PatientCardView'
-import type { ColumnDef, Row } from '@tanstack/table-core'
+import type { ColumnDef, Row, ColumnFiltersState, PaginationState, SortingState, TableState, VisibilityState } from '@tanstack/table-core'
 import { createPropertyColumn } from '@/utils/propertyColumn'
+import { useStateWithLocalStorage } from '@/hooks/useStateWithLocalStorage'
 
 export type PatientViewModel = {
   id: string,
@@ -30,6 +31,10 @@ export type PatientViewModel = {
 }
 
 const STORAGE_KEY_SHOW_ALL_PATIENTS = 'patient-show-all-states'
+const STORAGE_KEY_COLUMN_VISIBILITY = 'patient-list-column-visibility'
+const STORAGE_KEY_COLUMN_FILTERS = 'patient-list-column-filters'
+const STORAGE_KEY_COLUMN_SORTING = 'patient-list-column-sorting'
+const STORAGE_KEY_COLUMN_PAGINATION = 'patient-list-column-pagination'
 
 export type PatientListRef = {
   openCreate: () => void,
@@ -63,6 +68,26 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       }
     }
     return false
+  })
+
+  const [pagination, setPagination] = useStateWithLocalStorage<PaginationState>({
+    key: STORAGE_KEY_COLUMN_PAGINATION,
+    defaultValue: {
+      pageSize: 10,
+      pageIndex: 0
+    }
+  })
+  const [sorting, setSorting] = useStateWithLocalStorage<SortingState>({
+    key: STORAGE_KEY_COLUMN_SORTING,
+    defaultValue: []
+  })
+  const [filters, setFilters] = useStateWithLocalStorage<ColumnFiltersState>({
+    key: STORAGE_KEY_COLUMN_FILTERS,
+    defaultValue: []
+  })
+  const [columnVisibility, setColumnVisibility] = useStateWithLocalStorage<VisibilityState>({
+    key: STORAGE_KEY_COLUMN_VISIBILITY,
+    defaultValue: {}
   })
 
   const [isPrinting, setIsPrinting] = useState(false)
@@ -110,6 +135,24 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
   })
 
   const { data: propertyDefinitionsData } = useGetPropertyDefinitionsQuery()
+
+  useEffect(() => {
+    if (propertyDefinitionsData?.propertyDefinitions) {
+      const patientProperties = propertyDefinitionsData.propertyDefinitions.filter(
+        def => def.isActive && def.allowedEntities.includes(PropertyEntity.Patient)
+      )
+      const propertyColumnIds = patientProperties.map(prop => `property_${prop.id}`)
+      const hasPropertyColumnsInVisibility = propertyColumnIds.some(id => id in columnVisibility)
+
+      if (!hasPropertyColumnsInVisibility && propertyColumnIds.length > 0) {
+        const initialVisibility: VisibilityState = { ...columnVisibility }
+        propertyColumnIds.forEach(id => {
+          initialVisibility[id] = false
+        })
+        setColumnVisibility(initialVisibility)
+      }
+    }
+  }, [propertyDefinitionsData, columnVisibility, setColumnVisibility])
 
   useEffect(() => {
     const handleBeforePrint = () => setIsPrinting(true)
@@ -345,12 +388,18 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       columns={columns}
       fillerRowCell={fillerRowCell}
       onRowClick={onRowClick}
-      initialState={{
-        pagination: {
-          pageSize: 25,
-        }
-      }}
-      pageCount={totalCount ? Math.ceil(totalCount / 25) : undefined}
+      state={{
+        columnVisibility,
+        pagination,
+        sorting,
+        columnFilters: filters,
+      } as Partial<TableState> as TableState}
+      onColumnVisibilityChange={setColumnVisibility}
+      onPaginationChange={setPagination}
+      onSortingChange={setSorting}
+      onColumnFiltersChange={setFilters}
+      enableMultiSort={true}
+      pageCount={totalCount ? Math.ceil(totalCount / pagination.pageSize) : undefined}
     >
       <div className="flex flex-col h-full gap-4">
         <div className="flex flex-col sm:flex-row justify-between w-full gap-4">
