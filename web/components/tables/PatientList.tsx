@@ -46,9 +46,10 @@ type PatientListProps = {
   onInitialPatientOpened?: () => void,
   acceptedStates?: PatientState[],
   rootLocationIds?: string[],
+  locationId?: string,
 }
 
-export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initialPatientId, onInitialPatientOpened, acceptedStates, rootLocationIds }, ref) => {
+export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initialPatientId, onInitialPatientOpened, acceptedStates, rootLocationIds, locationId }, ref) => {
   const translation = useTasksTranslation()
   const { selectedRootLocationIds } = useTasksContext()
   const effectiveRootLocationIds = rootLocationIds ?? selectedRootLocationIds
@@ -117,11 +118,12 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
     }
     : undefined
 
-  const { data: patientsData, refetch, totalCount } = usePaginatedGraphQLQuery<GetPatientsQuery, GetPatientsQuery['patients'][0], { rootLocationIds?: string[], states?: PatientState[], search?: FullTextSearchInput }>({
-    queryKey: ['GetPatients', { rootLocationIds: effectiveRootLocationIds, states: patientStates, search: searchQuery }],
+  const { data: patientsData, refetch, totalCount } = usePaginatedGraphQLQuery<GetPatientsQuery, GetPatientsQuery['patients'][0], { locationId?: string, rootLocationIds?: string[], states?: PatientState[], search?: FullTextSearchInput }>({
+    queryKey: ['GetPatients', { locationId, rootLocationIds: effectiveRootLocationIds, states: patientStates, search: searchQuery }],
     document: GetPatientsDocument,
     baseVariables: {
-      rootLocationIds: effectiveRootLocationIds && effectiveRootLocationIds.length > 0 ? effectiveRootLocationIds : undefined,
+      locationId: locationId || undefined,
+      rootLocationIds: !locationId && effectiveRootLocationIds && effectiveRootLocationIds.length > 0 ? effectiveRootLocationIds : undefined,
       states: patientStates,
       search: searchInput,
     },

@@ -198,7 +198,7 @@ const LocationPage: NextPage = () => {
         {!isLoading && !isError && (
           <TabSwitcher>
             <TabPanel label={translation('patients')}>
-              <PatientList />
+              <PatientList locationId={id || undefined} />
             </TabPanel>
             <TabPanel label={translation('tasks')}>
               <TaskList
