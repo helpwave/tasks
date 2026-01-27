@@ -143,6 +143,11 @@ export const RecentPatientsTable = ({
         columns: patientColumns,
         fillerRowCell: useCallback(() => (<FillerCell className="min-h-8"/>), []),
         onRowClick: useCallback((row: Row<PatientViewModel>) => onSelectPatient(row.original.id), [onSelectPatient]),
+        initialState: {
+          pagination: {
+            pageSize: 10,
+          }
+        },
         state: {
           columnVisibility,
           pagination,
