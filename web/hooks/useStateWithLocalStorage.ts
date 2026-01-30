@@ -26,12 +26,8 @@ export const useStateWithLocalStorage = <T>({
 }: useStateWithLocalStorageProps<T>): [T, Dispatch<SetStateAction<T>>] => {
   const [value, setValue] = useState<T>(() => loadFromLocalStorage(key, defaultValue))
 
-  if('task-list-column-filters' === key) {
-    console.log('loading from localStorage', key, value)
-  }
-
   useEffect(() => {
     saveToLocalStorage(key, value)
-  }, [key,value])
+  }, [key, value])
   return [value, setValue]
 }

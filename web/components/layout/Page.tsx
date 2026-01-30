@@ -498,7 +498,7 @@ export const Sidebar = ({ isOpen, onClose, ...props }: SidebarProps) => {
                   {translation('teams')}
                 </div>
               </ExpandableHeader>
-              <ExpandableContent className="gap-y-0 pl-4 p-0">
+              <ExpandableContent className="!max-h-none !h-auto !overflow-visible gap-y-0 pl-4 p-0">
                 {context.teams.map(team => (
                   <SidebarLink key={team.id} href={`${locationRoute}/${team.id}`} onClick={onClose}>
                     {team.title}
@@ -526,7 +526,7 @@ export const Sidebar = ({ isOpen, onClose, ...props }: SidebarProps) => {
                   {translation('wards')}
                 </div>
               </ExpandableHeader>
-              <ExpandableContent className="gap-y-0 pl-4 p-0">
+              <ExpandableContent className="!max-h-none !h-auto !overflow-visible gap-y-0 pl-4 p-0">
                 {context.wards.map(ward => (
                   <SidebarLink key={ward.id} href={`${locationRoute}/${ward.id}`} onClick={onClose}>
                     {ward.title}
@@ -554,7 +554,7 @@ export const Sidebar = ({ isOpen, onClose, ...props }: SidebarProps) => {
                   {translation('clinics')}
                 </div>
               </ExpandableHeader>
-              <ExpandableContent className="gap-y-0 pl-4 p-0">
+              <ExpandableContent className="!max-h-none !h-auto !overflow-visible gap-y-0 pl-4 p-0">
                 {context.clinics.map(clinic => (
                   <SidebarLink key={clinic.id} href={`${locationRoute}/${clinic.id}`} onClick={onClose}>
                     {clinic.title}

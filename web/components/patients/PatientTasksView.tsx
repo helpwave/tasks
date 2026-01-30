@@ -113,7 +113,7 @@ export const PatientTasksView = ({
             <Circle className="size-5 text-warning" />
             {translation('openTasks')} ({openTasks.length})
           </ExpandableHeader>
-          <ExpandableContent className="expandable-content-h-56 px-1 data-[expanded]:py-2">
+          <ExpandableContent className="!max-h-none !h-auto !overflow-visible px-1 data-[expanded]:py-2">
             {openTasks.length === 0 &&
                 <div className="text-description italic">{translation('noOpenTasks')}</div>}
             {openTasks.map(task => (
@@ -139,7 +139,7 @@ export const PatientTasksView = ({
             <CheckCircle2 className="size-5 text-positive" />
             {translation('closedTasks')} ({closedTasks.length})
           </ExpandableHeader>
-          <ExpandableContent className="expandable-content-h-56 px-1 data-[expanded]:py-2">
+          <ExpandableContent className="!max-h-none !h-auto !overflow-visible px-1 data-[expanded]:py-2">
             {closedTasks.length === 0 &&
                 <div className="text-description italic">{translation('noClosedTasks')}</div>}
             {closedTasks.map(task => (
