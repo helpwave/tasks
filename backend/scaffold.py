@@ -37,6 +37,7 @@ def _compute_scaffold_directory_hash(scaffold_path: Path) -> str:
 
 
 SCAFFOLD_STATE_KEY = "directory_hash"
+FALLBACK_CLINIC_TITLE = "FALLBACK_CLINIC"
 
 
 def _load_and_merge_json_payload(scaffold_path: Path) -> list[dict[str, Any]]:
@@ -95,6 +96,54 @@ async def load_scaffold_data() -> None:
         current_hash = _compute_scaffold_directory_hash(scaffold_path)
 
     async with async_session() as session:
+        fallback_result = await session.execute(
+            select(LocationNode.id).where(
+                LocationNode.title == FALLBACK_CLINIC_TITLE,
+                LocationNode.parent_id.is_(None),
+                LocationNode.kind == "CLINIC",
+            )
+        )
+        fallback_id = fallback_result.scalar_one_or_none()
+        if fallback_id is not None:
+            patient_ref = await session.execute(
+                select(Patient.id).where(
+                    Patient.clinic_id == fallback_id
+                ).limit(1)
+            )
+            user_root_ref = await session.execute(
+                select(user_root_locations.c.location_id).where(
+                    user_root_locations.c.location_id == fallback_id
+                ).limit(1)
+            )
+            task_ref = await session.execute(
+                select(Task.id).where(
+                    Task.assignee_team_id == fallback_id
+                ).limit(1)
+            )
+            team_ref = await session.execute(
+                select(patient_teams.c.location_id).where(
+                    patient_teams.c.location_id == fallback_id
+                ).limit(1)
+            )
+            if (
+                patient_ref.scalar_one_or_none() is None
+                and user_root_ref.scalar_one_or_none() is None
+                and task_ref.scalar_one_or_none() is None
+                and team_ref.scalar_one_or_none() is None
+            ):
+                await session.execute(
+                    delete(location_organizations).where(
+                        location_organizations.c.location_id == fallback_id
+                    )
+                )
+                await session.execute(
+                    delete(LocationNode).where(LocationNode.id == fallback_id)
+                )
+                await session.flush()
+                logger.info(
+                    "Removed unused FALLBACK_CLINIC (no references)"
+                )
+
         if SCAFFOLD_STRATEGY in (ScaffoldStrategy.MERGE, ScaffoldStrategy.FORCE):
             result = await session.execute(
                 select(ScaffoldImportState.value).where(
@@ -141,26 +190,26 @@ async def load_scaffold_data() -> None:
                 select(Patient.id).where(Patient.clinic_id.isnot(None)).limit(1)
             )
             has_patients_with_clinic = result.scalar_one_or_none() is not None
-            backup_clinic_id: str | None = None
+            fallback_clinic_id: str | None = None
             if has_patients_with_clinic:
-                backup_clinic = LocationNode(
-                    title="Scaffold backup clinic",
+                fallback_clinic = LocationNode(
+                    title=FALLBACK_CLINIC_TITLE,
                     kind="CLINIC",
                     parent_id=None,
                 )
-                session.add(backup_clinic)
+                session.add(fallback_clinic)
                 await session.flush()
-                backup_clinic_id = backup_clinic.id
+                fallback_clinic_id = fallback_clinic.id
                 await session.execute(
                     location_organizations.insert().values(
-                        location_id=backup_clinic_id,
+                        location_id=fallback_clinic_id,
                         organization_id="global",
                     )
                 )
                 await session.execute(
                     update(Patient)
                     .where(Patient.clinic_id.isnot(None))
-                    .values(clinic_id=backup_clinic_id)
+                    .values(clinic_id=fallback_clinic_id)
                 )
 
             await session.execute(delete(patient_locations))
@@ -173,8 +222,8 @@ async def load_scaffold_data() -> None:
             await session.execute(update(Task).values(assignee_team_id=None))
 
             ids_to_keep = set(personal_location_ids)
-            if backup_clinic_id is not None:
-                ids_to_keep.add(backup_clinic_id)
+            if fallback_clinic_id is not None:
+                ids_to_keep.add(fallback_clinic_id)
             all_ids_result = await session.execute(select(LocationNode.id))
             all_ids = {row[0] for row in all_ids_result.all()}
             ids_to_delete = all_ids - ids_to_keep

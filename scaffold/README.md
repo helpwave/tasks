@@ -37,14 +37,14 @@ All `*.json` files in the directory are loaded, merged into one list of root ite
 
 **Before deleting locations:**
 
-1. **Backup clinic for existing patients**  
-   If any patient has a `clinic_id`, a **“Scaffold backup clinic”** is created (root CLINIC) and linked to the organization **`global`**. All such patients are moved to this backup clinic so they are not left without a clinic.
+1. **Fallback clinic for existing patients**  
+   If any patient has a `clinic_id`, a **“FALLBACK_CLINIC”** is created (root CLINIC) and linked to the organization **`global`**. All such patients are moved to this fallback clinic so they are not left without a clinic. On every scaffold load (restart), if that fallback node still exists but no patient has it as clinic, and no user has it as root location, and no task has it as assignee team, and no patient has it in teams, the fallback node is **deleted**.
 
 2. **Personal location nodes are not deleted**  
    Location nodes created for **users without an attached organization** (title `"{username}'s Organization"`, root, no row in `location_organizations`) are **preserved**. Only other scaffold/organization locations are removed.
 
 3. User root-location links (`user_root_locations`) are removed only for locations that are being deleted; links to preserved personal locations stay.
-4. Patient assignments (locations, teams), task assignee team, and then `location_organizations` and the non-preserved location nodes are cleared. Preserved nodes and the backup clinic (if created) are kept.
+4. Patient assignments (locations, teams), task assignee team, and then `location_organizations` and the non-preserved location nodes are cleared. Preserved nodes and the fallback clinic (if created) are kept.
 5. The merged JSON payload is imported as in MERGE.
 
 ## Personal location nodes
