@@ -182,8 +182,24 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
     setState(prevState => {
       let selectedRootLocationIds = prevState.selectedRootLocationIds || []
 
-      if (rootLocations.length > 0 && selectedRootLocationIds.length === 0 && storedSelectedRootLocationIds.length === 0) {
-        selectedRootLocationIds = [rootLocations[0]!.id]
+      if (rootLocations.length > 0) {
+        const rootLocationIds = new Set(rootLocations.map(loc => loc.id))
+
+        const isInitialSet = storedSelectedRootLocationIds.length === 0
+
+        const validSelectedIds = selectedRootLocationIds.filter(id => rootLocationIds.has(id))
+        if (validSelectedIds.length !== selectedRootLocationIds.length) {
+          selectedRootLocationIds = validSelectedIds
+        }
+
+        const validStoredIds = storedSelectedRootLocationIds.filter(id => rootLocationIds.has(id))
+        if (validStoredIds.length !== storedSelectedRootLocationIds.length) {
+          setStoredSelectedRootLocationIds(validStoredIds)
+        }
+
+        if (isInitialSet && selectedRootLocationIds.length === 0) {
+          selectedRootLocationIds = rootLocations.map(loc => loc.id)
+        }
       }
 
       return {
@@ -223,7 +239,7 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
         selectedRootLocationIds,
       }
     })
-  }, [data, storedSelectedRootLocationIds, allLocationsData])
+  }, [data, storedSelectedRootLocationIds, allLocationsData, setStoredSelectedRootLocationIds])
 
   const lastWrittenLocationIdsRef = useRef<string[] | undefined>(undefined)
 

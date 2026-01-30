@@ -259,10 +259,12 @@ export const LocationSelectionDialog = ({
         LocationType.Practice,
         LocationType.Clinic,
         LocationType.Team,
+        LocationType.Ward,
         'HOSPITAL',
         'PRACTICE',
         'CLINIC',
         'TEAM',
+        'WARD',
       ])
       return (node: LocationNodeType) => {
         const kindStr = node.kind.toString().toUpperCase()
