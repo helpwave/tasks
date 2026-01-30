@@ -326,10 +326,10 @@ async def _create_location_tree(
 
     organization_ids = data.get("organization_ids", [])
     if organization_ids:
-        allowed_types_for_orgs = {"HOSPITAL", "CLINIC", "PRACTICE", "TEAM"}
+        allowed_types_for_orgs = {"HOSPITAL", "CLINIC", "PRACTICE", "TEAM", "WARD"}
         if location_type.value not in allowed_types_for_orgs:
             logger.warning(
-                f"Organization IDs can only be assigned to HOSPITAL, CLINIC, PRACTICE, or TEAM. "
+                f"Organization IDs can only be assigned to HOSPITAL, CLINIC, PRACTICE, TEAM, or WARD. "
                 f"Skipping organization assignment for location '{name}' (type: {location_type.value})"
             )
         else:
