@@ -138,15 +138,15 @@ const LocationTreeItem = ({
 
   if (!hasChildren) {
     return (
-      <div className="flex-row-2 items-center rounded-lg px-4 py-1 transition-colors hover:bg-surface-hover">
-        <MinusIcon className="size-6 text-description" />
+      <div className="flex-row-2 items-center rounded-lg px-2 py-1 transition-colors hover:bg-surface-hover">
+        <MinusIcon className="size-6 text-description flex-shrink-0" />
         {labelContent}
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col mb-3">
       <Expandable
         label={labelContent}
         clickOnlyOnHeader={true}
@@ -154,9 +154,9 @@ const LocationTreeItem = ({
         onChange={(isOpen) => {
           onExpandToggle(node.id, isOpen)
         }}
-        className="!shadow-none !bg-transparent !rounded-none"
+        className="!shadow-none !bg-transparent !rounded-none w-full"
         headerClassName="px-2 hover:bg-surface-hover rounded-lg transition-colors !text-text-primary hover:!text-text-primary flex-row-reverse justify-end cursor-pointer"
-        contentExpandedClassName="!max-h-none !overflow-visible border-l-2 border-divider ml-5 pl-2 pr-0 mt-1"
+        contentExpandedClassName="!max-h-none !h-auto !min-h-0 !overflow-visible !flex !flex-col px-1 data-[expanded]:py-2 border-l-2 border-divider ml-5 pl-2 pr-0 mt-1"
       >
         <div className="flex flex-col gap-1">
           {node.children.map(child => (
@@ -269,7 +269,7 @@ export const LocationSelectionDialog = ({
       return (node: LocationNodeType) => {
         const kindStr = node.kind.toString().toUpperCase()
         return allowedKinds.has(node.kind as LocationType) ||
-               allowedKinds.has(kindStr)
+          allowedKinds.has(kindStr)
       }
     } else if (useCase === 'clinic') {
       return (node: LocationNodeType) => {
@@ -292,7 +292,7 @@ export const LocationSelectionDialog = ({
       return (node: LocationNodeType) => {
         const kindStr = node.kind.toString().toUpperCase()
         return allowedKinds.has(node.kind as LocationType) ||
-               allowedKinds.has(kindStr)
+          allowedKinds.has(kindStr)
       }
     } else if (useCase === 'teams') {
       const allowedKinds = new Set<string>([
@@ -306,7 +306,7 @@ export const LocationSelectionDialog = ({
       return (node: LocationNodeType) => {
         const kindStr = node.kind.toString().toUpperCase()
         return allowedKinds.has(node.kind as LocationType) ||
-               allowedKinds.has(kindStr)
+          allowedKinds.has(kindStr)
       }
     }
 

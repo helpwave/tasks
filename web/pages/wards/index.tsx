@@ -242,7 +242,7 @@ const WardsOverviewPage: NextPage = () => {
               </div>
             )}
             headerClassName="typography-label-md font-bold !px-4 !py-4 rounded-xl"
-            contentExpandedClassName="pb-4"
+            contentExpandedClassName="!max-h-none !h-auto !overflow-visible pb-4"
             className="rounded-xl"
             isExpanded={true}
           >
@@ -259,7 +259,7 @@ const WardsOverviewPage: NextPage = () => {
               key={index}
               label={wardGroup.name}
               headerClassName="typography-label-md font-bold !px-4 !py-4 rounded-xl"
-              contentExpandedClassName="pb-4"
+              contentExpandedClassName="!max-h-none !h-auto !overflow-visible pb-4"
               className="rounded-xl"
               isExpanded={false}
             >

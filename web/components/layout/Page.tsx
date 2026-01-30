@@ -159,7 +159,7 @@ export const SurveyModal = () => {
       }
     }
 
-    setupSurvey().catch(() => {})
+    setupSurvey().catch(() => { })
   }, [config.onboardingSurveyUrl, config.weeklySurveyUrl, user?.id, onboardingSurveyCompleted, weeklySurveyLastCompleted, surveyLastDismissed, isSurveyOpen])
 
   const handleDismiss = () => {
