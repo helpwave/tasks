@@ -1,4 +1,4 @@
-import type { LocationNodeType } from '@/api/gql/generated'
+import type { LocationNodeType, LocationType } from '@/api/gql/generated'
 
 export const LOCATION_PATH_SEPARATOR = ' / '
 
@@ -6,6 +6,35 @@ type PartialLocationNode = {
   id: string,
   title: string,
   parent?: PartialLocationNode | null,
+}
+
+type LocationNodeWithKind = PartialLocationNode & { kind?: LocationType }
+
+export type LocationDisplayParts = {
+  mainText: string,
+  pillContent: string | null,
+  pillKind: LocationType | null,
+}
+
+export const getLocationDisplayParts = (location: LocationNodeWithKind | LocationNodeType | null | undefined): LocationDisplayParts => {
+  if (!location) return { mainText: '', pillContent: null, pillKind: null }
+  const fullPath = formatLocationPath(location)
+  const kind = 'kind' in location ? location.kind : undefined
+  if (kind === 'BED' && location.parent?.parent) {
+    return {
+      mainText: [location.parent.parent.title, location.parent.title].join(LOCATION_PATH_SEPARATOR),
+      pillContent: location.title,
+      pillKind: 'BED',
+    }
+  }
+  if (kind === 'BED' && location.parent) {
+    return {
+      mainText: location.parent.title,
+      pillContent: location.title,
+      pillKind: 'BED',
+    }
+  }
+  return { mainText: fullPath, pillContent: null, pillKind: kind ?? null }
 }
 
 export const buildLocationPath = (location: PartialLocationNode | LocationNodeType | null | undefined): string[] => {

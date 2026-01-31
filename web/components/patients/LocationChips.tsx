@@ -1,6 +1,6 @@
 import { Chip, Tooltip } from '@helpwave/hightide'
 import { MapPin } from 'lucide-react'
-import { formatLocationPath } from '@/utils/location'
+import { formatLocationPath, getLocationDisplayParts } from '@/utils/location'
 import Link from 'next/link'
 import type { LocationType } from '@/api/gql/generated'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
@@ -46,6 +46,7 @@ export const LocationChips = ({ locations, disableLink = false, small = false, p
 
   const remainingCount = locations.length - 1
   const remainingLocations = locations.slice(1)
+  const displayParts = getLocationDisplayParts(firstLocation)
 
   const chipContent = (
     <Chip
@@ -55,10 +56,10 @@ export const LocationChips = ({ locations, disableLink = false, small = false, p
     >
       <div className="flex items-center gap-1">
         <MapPin className="size-force-3 print:hidden" />
-        <span>{firstLocation?.title}</span>
-        {firstLocation?.kind && (
-          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider ${getKindStyles(firstLocation.kind)}`}>
-            {translation('locationType', { type: firstLocation.kind })}
+        <span>{displayParts.mainText || firstLocation?.title}</span>
+        {(displayParts.pillContent ?? displayParts.pillKind) && (
+          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider ${getKindStyles(displayParts.pillKind ?? undefined)}`}>
+            {displayParts.pillContent ?? (displayParts.pillKind ? translation('locationType', { type: displayParts.pillKind }) : null)}
           </span>
         )}
       </div>
