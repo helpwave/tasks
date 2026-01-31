@@ -53,3 +53,40 @@ export const formatLocationPathFromId = (
 ): string => {
   return buildLocationPathFromId(locationId, allLocations).join(separator)
 }
+
+type LocationWithKindAndParent = {
+  id: string,
+  title: string,
+  kind?: string,
+  parent?: LocationWithKindAndParent | null,
+}
+
+export type PatientWithPositionAndLocations = {
+  position?: LocationWithKindAndParent | null,
+  assignedLocations?: LocationWithKindAndParent[],
+}
+
+const findRoomUnderWardInChain = (node: LocationWithKindAndParent | null | undefined, wardId: string): { id: string, title: string } | null => {
+  let current: LocationWithKindAndParent | null | undefined = node
+  while (current) {
+    if (current.parent?.id === wardId) {
+      return { id: current.id, title: current.title }
+    }
+    current = current.parent ?? null
+  }
+  return null
+}
+
+export const getRoomUnderWard = (
+  patient: PatientWithPositionAndLocations,
+  wardId: string
+): { id: string, title: string } | null => {
+  const fromPosition = findRoomUnderWardInChain(patient.position ?? null, wardId)
+  if (fromPosition) return fromPosition
+  const locations = patient.assignedLocations ?? []
+  for (const loc of locations) {
+    const found = findRoomUnderWardInChain(loc, wardId)
+    if (found) return found
+  }
+  return null
+}

@@ -170,6 +170,7 @@
   "recentPatients": "Your Recent Patients",
   "recentTasks": "Your Recent Tasks",
   "rooms": "Rooms",
+  "roomUnassigned": "No room",
   "settings": "Settings",
   "settingsDescription": "Here you can change the app configuration.",
   "sex": "Sex",

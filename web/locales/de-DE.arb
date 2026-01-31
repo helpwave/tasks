@@ -170,6 +170,7 @@
   "recentPatients": "Deine kürzlichen Patienten",
   "recentTasks": "Deine kürzlichen Aufgaben",
   "rooms": "Zimmer",
+  "roomUnassigned": "Kein Zimmer",
   "settings": "Einstellungen",
   "settingsDescription": "Hier kannst du die App Konfiguration ändern.",
   "sex": "Geschlecht",

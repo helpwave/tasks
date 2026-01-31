@@ -176,6 +176,7 @@ export type TasksTranslationEntries = {
   'retakeSurvey': string,
   'returnHome': string,
   'rooms': string,
+  'roomUnassigned': string,
   'rShow': (values: { name: string }) => string,
   'save': string,
   'searchLocations': string,
@@ -518,6 +519,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'retakeSurvey': `Umfrage erneut durchführen`,
     'returnHome': `Zur Homepage`,
     'rooms': `Zimmer`,
+    'roomUnassigned': `Kein Zimmer`,
     'rShow': ({ name }): string => {
       return `${name} anzeigen`
     },
@@ -892,6 +894,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'retakeSurvey': `Retake Survey`,
     'returnHome': `Return Home`,
     'rooms': `Rooms`,
+    'roomUnassigned': `No room`,
     'rShow': ({ name }): string => {
       return `Show ${name}`
     },

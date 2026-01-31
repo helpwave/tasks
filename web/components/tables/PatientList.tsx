@@ -14,6 +14,7 @@ import { PatientCardView } from '@/components/patients/PatientCardView'
 import type { ColumnDef, Row, ColumnFiltersState, PaginationState, SortingState, TableState, VisibilityState } from '@tanstack/table-core'
 import { createPropertyColumn } from '@/utils/propertyColumn'
 import { useStateWithLocalStorage } from '@/hooks/useStateWithLocalStorage'
+import { getRoomUnderWard } from '@/utils/location'
 
 export type PatientViewModel = {
   id: string,
@@ -21,6 +22,7 @@ export type PatientViewModel = {
   firstname: string,
   lastname: string,
   position: GetPatientsQuery['patients'][0]['position'],
+  assignedLocations?: GetPatientsQuery['patients'][0]['assignedLocations'],
   openTasksCount: number,
   closedTasksCount: number,
   birthdate: Date,
@@ -181,12 +183,44 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       sex: p.sex,
       state: p.state,
       position: p.position,
+      assignedLocations: p.assignedLocations,
       openTasksCount: p.tasks?.filter(t => !t.done).length ?? 0,
       closedTasksCount: p.tasks?.filter(t => t.done).length ?? 0,
       tasks: [],
       properties: p.properties ?? [],
     }))
   }, [patientsData])
+
+  const ROOM_UNASSIGNED_KEY = '__unassigned__'
+
+  const patientsByRoom: { roomKey: string, roomTitle: string | null, patients: PatientViewModel[] }[] = useMemo(() => {
+    if (!locationId || patients.length === 0) return []
+    const map = new Map<string, { roomTitle: string | null, patients: PatientViewModel[] }>()
+    for (const patient of patients) {
+      const room = getRoomUnderWard(patient, locationId)
+      const key = room?.id ?? ROOM_UNASSIGNED_KEY
+      const title = room?.title ?? null
+      const existing = map.get(key)
+      if (existing) {
+        existing.patients.push(patient)
+      } else {
+        map.set(key, { roomTitle: title, patients: [patient] })
+      }
+    }
+    const entries = Array.from(map.entries())
+    const unassigned = entries.find(([k]) => k === ROOM_UNASSIGNED_KEY)
+    const assigned = entries.filter(([k]) => k !== ROOM_UNASSIGNED_KEY).sort((a, b) => {
+      const aTitle = a[1].roomTitle ?? ''
+      const bTitle = b[1].roomTitle ?? ''
+      return aTitle.localeCompare(bTitle, undefined, { sensitivity: 'base' })
+    })
+    const ordered = unassigned ? [...assigned, unassigned] : assigned
+    return ordered.map(([roomKey, { roomTitle, patients: roomPatients }]) => ({
+      roomKey,
+      roomTitle,
+      patients: roomPatients,
+    }))
+  }, [locationId, patients])
 
   useImperativeHandle(ref, () => ({
     openCreate: () => {
@@ -483,21 +517,48 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
           <TablePagination />
         </Visibility>
         <Visibility isVisible={viewType === 'card'}>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 -mx-4 px-4 lg:mx-0 lg:pl-0 lg:pr-4 print-content">
-            {patients.length === 0 ? (
-              <div className="col-span-full text-center text-description py-8">
-                {translation('noPatient')}
-              </div>
-            ) : (
-              patients.map((patient) => (
-                <PatientCardView
-                  key={patient.id}
-                  patient={patient}
-                  onClick={handleEdit}
-                />
-              ))
-            )}
-          </div>
+          {!locationId ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 -mx-4 px-4 lg:mx-0 lg:pl-0 lg:pr-4 print-content">
+              {patients.length === 0 ? (
+                <div className="col-span-full text-center text-description py-8">
+                  {translation('noPatient')}
+                </div>
+              ) : (
+                patients.map((patient) => (
+                  <PatientCardView
+                    key={patient.id}
+                    patient={patient}
+                    onClick={handleEdit}
+                  />
+                ))
+              )}
+            </div>
+          ) : (
+            <div className="flex flex-col gap-6 -mx-4 px-4 lg:mx-0 lg:pl-0 lg:pr-4 print-content">
+              {patients.length === 0 ? (
+                <div className="text-center text-description py-8">
+                  {translation('noPatient')}
+                </div>
+              ) : (
+                patientsByRoom.map(({ roomKey, roomTitle, patients: roomPatients }) => (
+                  <section key={roomKey} className="flex flex-col gap-3">
+                    <h3 className="text-sm font-semibold text-description uppercase tracking-wide">
+                      {roomKey === ROOM_UNASSIGNED_KEY ? translation('roomUnassigned') : roomTitle}
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                      {roomPatients.map((patient) => (
+                        <PatientCardView
+                          key={patient.id}
+                          patient={patient}
+                          onClick={handleEdit}
+                        />
+                      ))}
+                    </div>
+                  </section>
+                ))
+              )}
+            </div>
+          )}
         </Visibility>
         <Drawer
           isOpen={isPanelOpen}
