@@ -1,11 +1,8 @@
 import { useMemo, useCallback } from 'react'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import type { CreatePatientInput, PropertyValueInput } from '@/api/gql/generated'
-import {
-  PropertyEntity,
-  useGetPatientQuery,
-  useGetPropertyDefinitionsQuery
-} from '@/api/gql/generated'
+import { PropertyEntity } from '@/api/gql/generated'
+import { usePatient, usePropertyDefinitions } from '@/data'
 import {
   ProgressIndicator,
   TabList,
@@ -19,7 +16,7 @@ import { PatientTasksView } from './PatientTasksView'
 import { PatientDataEditor } from './PatientDataEditor'
 import { AuditLogTimeline } from '@/components/AuditLogTimeline'
 import { PropertyList, type PropertyValue } from '../tables/PropertyList'
-import { useOptimisticUpdatePatientMutation } from '@/api/optimistic-updates/GetPatient'
+import { useUpdatePatient } from '@/data'
 
 export const toISODate = (d: Date | string | null | undefined): string | null => {
   if (!d) return null
@@ -61,19 +58,14 @@ export const PatientDetailView = ({
 
   const isEditMode = !!patientId
 
-  const { data: patientData } = useGetPatientQuery(
-    { id: patientId! },
-    { enabled: isEditMode }
+  const { data: patientData } = usePatient(
+    patientId ?? '',
+    { skip: !isEditMode }
   )
 
-  const { data: propertyDefinitionsData } = useGetPropertyDefinitionsQuery()
+  const { data: propertyDefinitionsData } = usePropertyDefinitions()
 
-  const { mutate: updatePatient } = useOptimisticUpdatePatientMutation({
-    id: patientId!,
-    onSuccess: () => {
-      onSuccess()
-    },
-  })
+  const [updatePatient] = useUpdatePatient()
 
   const hasAvailableProperties = useMemo(() => {
     if (!propertyDefinitionsData?.propertyDefinitions) return false
@@ -97,9 +89,9 @@ export const PatientDetailView = ({
   }, [])
 
   const handlePropertyValueChange = useCallback((definitionId: string, value: PropertyValue | null) => {
-    if (!isEditMode || !patientId || !patientData?.patient) return
+    if (!isEditMode || !patientId || !patientData) return
 
-    const currentProperties = patientData.patient.properties || []
+    const currentProperties = patientData.properties || []
     const propertyInputs: PropertyValueInput[] = []
 
     // Add all existing properties except the one being changed
@@ -127,30 +119,33 @@ export const PatientDetailView = ({
     }
 
     updatePatient({
-      id: patientId,
-      data: {
-        properties: propertyInputs,
+      variables: {
+        id: patientId,
+        data: {
+          properties: propertyInputs,
+        },
       },
+      onCompleted: () => onSuccess(),
     })
-  }, [isEditMode, patientId, patientData?.patient, convertPropertyValueToInput, updatePatient])
+  }, [isEditMode, patientId, patientData, convertPropertyValueToInput, updatePatient])
 
   const taskStats: { totalTasks: number, openTasks: number, closedTasks: number, taskProgress: number } = useMemo(() => ({
-    totalTasks: patientData?.patient?.tasks?.length ?? 0,
-    openTasks: patientData?.patient?.tasks?.filter(task => !task.done).length ?? 0,
-    closedTasks: patientData?.patient?.tasks?.filter(task => task.done).length ?? 0,
-    taskProgress: patientData?.patient?.tasks?.length ?? 0 > 0 ? (patientData?.patient?.tasks?.filter(task => task.done).length ?? 0) / (patientData?.patient?.tasks?.length ?? 0) : 0,
-  }), [patientData?.patient?.tasks])
+    totalTasks: patientData?.tasks?.length ?? 0,
+    openTasks: patientData?.tasks?.filter(task => !task.done).length ?? 0,
+    closedTasks: patientData?.tasks?.filter(task => task.done).length ?? 0,
+    taskProgress: patientData?.tasks?.length ?? 0 > 0 ? (patientData?.tasks?.filter(task => task.done).length ?? 0) / (patientData?.tasks?.length ?? 0) : 0,
+  }), [patientData?.tasks])
 
-  const patientName = patientData?.patient ? `${patientData.patient.firstname} ${patientData.patient.lastname}` : ''
+  const patientName = patientData ? `${patientData.firstname} ${patientData.lastname}` : ''
   const displayLocation = useMemo(() => {
-    if (patientData?.patient?.position) {
-      return [patientData.patient.position]
+    if (patientData?.position) {
+      return [patientData.position]
     }
-    if (patientData?.patient?.assignedLocations && patientData.patient.assignedLocations.length > 0) {
-      return patientData.patient.assignedLocations
+    if (patientData?.assignedLocations && patientData.assignedLocations.length > 0) {
+      return patientData.assignedLocations
     }
     return []
-  }, [patientData?.patient?.position, patientData?.patient?.assignedLocations])
+  }, [patientData?.position, patientData?.assignedLocations])
 
 
   return (
@@ -171,8 +166,8 @@ export const PatientDetailView = ({
                   </div>
                 </Tooltip>
               )}
-              {patientData?.patient?.state && (
-                <PatientStateChip state={patientData.patient.state} />
+              {patientData?.state && (
+                <PatientStateChip state={patientData.state} />
               )}
             </div>
           </div>
@@ -189,7 +184,7 @@ export const PatientDetailView = ({
           <TabPanel label={translation('tasks')} className="flex-col-0 px-1 pt-4 pb-16 overflow-y-auto">
             <PatientTasksView
               patientId={patientId}
-              patientData={patientData}
+              patientData={patientData ? { patient: patientData } : undefined}
               onSuccess={onSuccess}
             />
           </TabPanel>
@@ -201,7 +196,7 @@ export const PatientDetailView = ({
               subjectId={patientId}
               subjectType="patient"
               fullWidthAddButton={true}
-              propertyValues={patientData?.patient?.properties}
+              propertyValues={patientData?.properties}
               onPropertyValueChange={handlePropertyValueChange}
             />
           </TabPanel>

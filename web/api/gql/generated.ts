@@ -1,5 +1,3 @@
-import { useQuery, useMutation, UseQueryOptions, UseMutationOptions } from '@tanstack/react-query';
-import { fetcher } from './fetcher';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
@@ -1064,21 +1062,6 @@ export const GetAuditLogsDocument = `
 }
     `;
 
-export const useGetAuditLogsQuery = <
-      TData = GetAuditLogsQuery,
-      TError = unknown
-    >(
-      variables: GetAuditLogsQueryVariables,
-      options?: Omit<UseQueryOptions<GetAuditLogsQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetAuditLogsQuery, TError, TData>['queryKey'] }
-    ) => {
-    
-    return useQuery<GetAuditLogsQuery, TError, TData>(
-      {
-    queryKey: ['GetAuditLogs', variables],
-    queryFn: fetcher<GetAuditLogsQuery, GetAuditLogsQueryVariables>(GetAuditLogsDocument, variables),
-    ...options
-  }
-    )};
 
 export const GetLocationNodeDocument = `
     query GetLocationNode($id: ID!) {
@@ -1115,21 +1098,6 @@ export const GetLocationNodeDocument = `
 }
     `;
 
-export const useGetLocationNodeQuery = <
-      TData = GetLocationNodeQuery,
-      TError = unknown
-    >(
-      variables: GetLocationNodeQueryVariables,
-      options?: Omit<UseQueryOptions<GetLocationNodeQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetLocationNodeQuery, TError, TData>['queryKey'] }
-    ) => {
-    
-    return useQuery<GetLocationNodeQuery, TError, TData>(
-      {
-    queryKey: ['GetLocationNode', variables],
-    queryFn: fetcher<GetLocationNodeQuery, GetLocationNodeQueryVariables>(GetLocationNodeDocument, variables),
-    ...options
-  }
-    )};
 
 export const GetLocationsDocument = `
     query GetLocations($limit: Int, $offset: Int) {
@@ -1142,21 +1110,6 @@ export const GetLocationsDocument = `
 }
     `;
 
-export const useGetLocationsQuery = <
-      TData = GetLocationsQuery,
-      TError = unknown
-    >(
-      variables?: GetLocationsQueryVariables,
-      options?: Omit<UseQueryOptions<GetLocationsQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetLocationsQuery, TError, TData>['queryKey'] }
-    ) => {
-    
-    return useQuery<GetLocationsQuery, TError, TData>(
-      {
-    queryKey: variables === undefined ? ['GetLocations'] : ['GetLocations', variables],
-    queryFn: fetcher<GetLocationsQuery, GetLocationsQueryVariables>(GetLocationsDocument, variables),
-    ...options
-  }
-    )};
 
 export const GetMyTasksDocument = `
     query GetMyTasks {
@@ -1209,21 +1162,6 @@ export const GetMyTasksDocument = `
 }
     `;
 
-export const useGetMyTasksQuery = <
-      TData = GetMyTasksQuery,
-      TError = unknown
-    >(
-      variables?: GetMyTasksQueryVariables,
-      options?: Omit<UseQueryOptions<GetMyTasksQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetMyTasksQuery, TError, TData>['queryKey'] }
-    ) => {
-    
-    return useQuery<GetMyTasksQuery, TError, TData>(
-      {
-    queryKey: variables === undefined ? ['GetMyTasks'] : ['GetMyTasks', variables],
-    queryFn: fetcher<GetMyTasksQuery, GetMyTasksQueryVariables>(GetMyTasksDocument, variables),
-    ...options
-  }
-    )};
 
 export const GetOverviewDataDocument = `
     query GetOverviewData($recentPatientsFiltering: [FilterInput!], $recentPatientsSorting: [SortInput!], $recentPatientsPagination: PaginationInput, $recentPatientsSearch: FullTextSearchInput, $recentTasksFiltering: [FilterInput!], $recentTasksSorting: [SortInput!], $recentTasksPagination: PaginationInput, $recentTasksSearch: FullTextSearchInput) {
@@ -1333,21 +1271,6 @@ export const GetOverviewDataDocument = `
 }
     `;
 
-export const useGetOverviewDataQuery = <
-      TData = GetOverviewDataQuery,
-      TError = unknown
-    >(
-      variables?: GetOverviewDataQueryVariables,
-      options?: Omit<UseQueryOptions<GetOverviewDataQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetOverviewDataQuery, TError, TData>['queryKey'] }
-    ) => {
-    
-    return useQuery<GetOverviewDataQuery, TError, TData>(
-      {
-    queryKey: variables === undefined ? ['GetOverviewData'] : ['GetOverviewData', variables],
-    queryFn: fetcher<GetOverviewDataQuery, GetOverviewDataQueryVariables>(GetOverviewDataDocument, variables),
-    ...options
-  }
-    )};
 
 export const GetPatientDocument = `
     query GetPatient($id: ID!) {
@@ -1475,21 +1398,6 @@ export const GetPatientDocument = `
 }
     `;
 
-export const useGetPatientQuery = <
-      TData = GetPatientQuery,
-      TError = unknown
-    >(
-      variables: GetPatientQueryVariables,
-      options?: Omit<UseQueryOptions<GetPatientQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetPatientQuery, TError, TData>['queryKey'] }
-    ) => {
-    
-    return useQuery<GetPatientQuery, TError, TData>(
-      {
-    queryKey: ['GetPatient', variables],
-    queryFn: fetcher<GetPatientQuery, GetPatientQueryVariables>(GetPatientDocument, variables),
-    ...options
-  }
-    )};
 
 export const GetPatientsDocument = `
     query GetPatients($locationId: ID, $rootLocationIds: [ID!], $states: [PatientState!], $filtering: [FilterInput!], $sorting: [SortInput!], $pagination: PaginationInput, $search: FullTextSearchInput) {
@@ -1650,21 +1558,6 @@ export const GetPatientsDocument = `
 }
     `;
 
-export const useGetPatientsQuery = <
-      TData = GetPatientsQuery,
-      TError = unknown
-    >(
-      variables?: GetPatientsQueryVariables,
-      options?: Omit<UseQueryOptions<GetPatientsQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetPatientsQuery, TError, TData>['queryKey'] }
-    ) => {
-    
-    return useQuery<GetPatientsQuery, TError, TData>(
-      {
-    queryKey: variables === undefined ? ['GetPatients'] : ['GetPatients', variables],
-    queryFn: fetcher<GetPatientsQuery, GetPatientsQueryVariables>(GetPatientsDocument, variables),
-    ...options
-  }
-    )};
 
 export const GetTaskDocument = `
     query GetTask($id: ID!) {
@@ -1715,21 +1608,6 @@ export const GetTaskDocument = `
 }
     `;
 
-export const useGetTaskQuery = <
-      TData = GetTaskQuery,
-      TError = unknown
-    >(
-      variables: GetTaskQueryVariables,
-      options?: Omit<UseQueryOptions<GetTaskQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetTaskQuery, TError, TData>['queryKey'] }
-    ) => {
-    
-    return useQuery<GetTaskQuery, TError, TData>(
-      {
-    queryKey: ['GetTask', variables],
-    queryFn: fetcher<GetTaskQuery, GetTaskQueryVariables>(GetTaskDocument, variables),
-    ...options
-  }
-    )};
 
 export const GetTasksDocument = `
     query GetTasks($rootLocationIds: [ID!], $assigneeId: ID, $assigneeTeamId: ID, $filtering: [FilterInput!], $sorting: [SortInput!], $pagination: PaginationInput, $search: FullTextSearchInput) {
@@ -1818,21 +1696,6 @@ export const GetTasksDocument = `
 }
     `;
 
-export const useGetTasksQuery = <
-      TData = GetTasksQuery,
-      TError = unknown
-    >(
-      variables?: GetTasksQueryVariables,
-      options?: Omit<UseQueryOptions<GetTasksQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetTasksQuery, TError, TData>['queryKey'] }
-    ) => {
-    
-    return useQuery<GetTasksQuery, TError, TData>(
-      {
-    queryKey: variables === undefined ? ['GetTasks'] : ['GetTasks', variables],
-    queryFn: fetcher<GetTasksQuery, GetTasksQueryVariables>(GetTasksDocument, variables),
-    ...options
-  }
-    )};
 
 export const GetUserDocument = `
     query GetUser($id: ID!) {
@@ -1851,21 +1714,6 @@ export const GetUserDocument = `
 }
     `;
 
-export const useGetUserQuery = <
-      TData = GetUserQuery,
-      TError = unknown
-    >(
-      variables: GetUserQueryVariables,
-      options?: Omit<UseQueryOptions<GetUserQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetUserQuery, TError, TData>['queryKey'] }
-    ) => {
-    
-    return useQuery<GetUserQuery, TError, TData>(
-      {
-    queryKey: ['GetUser', variables],
-    queryFn: fetcher<GetUserQuery, GetUserQueryVariables>(GetUserDocument, variables),
-    ...options
-  }
-    )};
 
 export const GetUsersDocument = `
     query GetUsers {
@@ -1879,21 +1727,6 @@ export const GetUsersDocument = `
 }
     `;
 
-export const useGetUsersQuery = <
-      TData = GetUsersQuery,
-      TError = unknown
-    >(
-      variables?: GetUsersQueryVariables,
-      options?: Omit<UseQueryOptions<GetUsersQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetUsersQuery, TError, TData>['queryKey'] }
-    ) => {
-    
-    return useQuery<GetUsersQuery, TError, TData>(
-      {
-    queryKey: variables === undefined ? ['GetUsers'] : ['GetUsers', variables],
-    queryFn: fetcher<GetUsersQuery, GetUsersQueryVariables>(GetUsersDocument, variables),
-    ...options
-  }
-    )};
 
 export const GetGlobalDataDocument = `
     query GetGlobalData($rootLocationIds: [ID!]) {
@@ -1946,21 +1779,6 @@ export const GetGlobalDataDocument = `
 }
     `;
 
-export const useGetGlobalDataQuery = <
-      TData = GetGlobalDataQuery,
-      TError = unknown
-    >(
-      variables?: GetGlobalDataQueryVariables,
-      options?: Omit<UseQueryOptions<GetGlobalDataQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetGlobalDataQuery, TError, TData>['queryKey'] }
-    ) => {
-    
-    return useQuery<GetGlobalDataQuery, TError, TData>(
-      {
-    queryKey: variables === undefined ? ['GetGlobalData'] : ['GetGlobalData', variables],
-    queryFn: fetcher<GetGlobalDataQuery, GetGlobalDataQueryVariables>(GetGlobalDataDocument, variables),
-    ...options
-  }
-    )};
 
 export const CreatePatientDocument = `
     mutation CreatePatient($data: CreatePatientInput!) {
@@ -1999,18 +1817,6 @@ export const CreatePatientDocument = `
 }
     `;
 
-export const useCreatePatientMutation = <
-      TError = unknown,
-      TContext = unknown
-    >(options?: UseMutationOptions<CreatePatientMutation, TError, CreatePatientMutationVariables, TContext>) => {
-    
-    return useMutation<CreatePatientMutation, TError, CreatePatientMutationVariables, TContext>(
-      {
-    mutationKey: ['CreatePatient'],
-    mutationFn: (variables?: CreatePatientMutationVariables) => fetcher<CreatePatientMutation, CreatePatientMutationVariables>(CreatePatientDocument, variables)(),
-    ...options
-  }
-    )};
 
 export const UpdatePatientDocument = `
     mutation UpdatePatient($id: ID!, $data: UpdatePatientInput!) {
@@ -2068,18 +1874,6 @@ export const UpdatePatientDocument = `
 }
     `;
 
-export const useUpdatePatientMutation = <
-      TError = unknown,
-      TContext = unknown
-    >(options?: UseMutationOptions<UpdatePatientMutation, TError, UpdatePatientMutationVariables, TContext>) => {
-    
-    return useMutation<UpdatePatientMutation, TError, UpdatePatientMutationVariables, TContext>(
-      {
-    mutationKey: ['UpdatePatient'],
-    mutationFn: (variables?: UpdatePatientMutationVariables) => fetcher<UpdatePatientMutation, UpdatePatientMutationVariables>(UpdatePatientDocument, variables)(),
-    ...options
-  }
-    )};
 
 export const AdmitPatientDocument = `
     mutation AdmitPatient($id: ID!) {
@@ -2090,18 +1884,6 @@ export const AdmitPatientDocument = `
 }
     `;
 
-export const useAdmitPatientMutation = <
-      TError = unknown,
-      TContext = unknown
-    >(options?: UseMutationOptions<AdmitPatientMutation, TError, AdmitPatientMutationVariables, TContext>) => {
-    
-    return useMutation<AdmitPatientMutation, TError, AdmitPatientMutationVariables, TContext>(
-      {
-    mutationKey: ['AdmitPatient'],
-    mutationFn: (variables?: AdmitPatientMutationVariables) => fetcher<AdmitPatientMutation, AdmitPatientMutationVariables>(AdmitPatientDocument, variables)(),
-    ...options
-  }
-    )};
 
 export const DischargePatientDocument = `
     mutation DischargePatient($id: ID!) {
@@ -2112,18 +1894,6 @@ export const DischargePatientDocument = `
 }
     `;
 
-export const useDischargePatientMutation = <
-      TError = unknown,
-      TContext = unknown
-    >(options?: UseMutationOptions<DischargePatientMutation, TError, DischargePatientMutationVariables, TContext>) => {
-    
-    return useMutation<DischargePatientMutation, TError, DischargePatientMutationVariables, TContext>(
-      {
-    mutationKey: ['DischargePatient'],
-    mutationFn: (variables?: DischargePatientMutationVariables) => fetcher<DischargePatientMutation, DischargePatientMutationVariables>(DischargePatientDocument, variables)(),
-    ...options
-  }
-    )};
 
 export const MarkPatientDeadDocument = `
     mutation MarkPatientDead($id: ID!) {
@@ -2134,18 +1904,6 @@ export const MarkPatientDeadDocument = `
 }
     `;
 
-export const useMarkPatientDeadMutation = <
-      TError = unknown,
-      TContext = unknown
-    >(options?: UseMutationOptions<MarkPatientDeadMutation, TError, MarkPatientDeadMutationVariables, TContext>) => {
-    
-    return useMutation<MarkPatientDeadMutation, TError, MarkPatientDeadMutationVariables, TContext>(
-      {
-    mutationKey: ['MarkPatientDead'],
-    mutationFn: (variables?: MarkPatientDeadMutationVariables) => fetcher<MarkPatientDeadMutation, MarkPatientDeadMutationVariables>(MarkPatientDeadDocument, variables)(),
-    ...options
-  }
-    )};
 
 export const WaitPatientDocument = `
     mutation WaitPatient($id: ID!) {
@@ -2156,18 +1914,6 @@ export const WaitPatientDocument = `
 }
     `;
 
-export const useWaitPatientMutation = <
-      TError = unknown,
-      TContext = unknown
-    >(options?: UseMutationOptions<WaitPatientMutation, TError, WaitPatientMutationVariables, TContext>) => {
-    
-    return useMutation<WaitPatientMutation, TError, WaitPatientMutationVariables, TContext>(
-      {
-    mutationKey: ['WaitPatient'],
-    mutationFn: (variables?: WaitPatientMutationVariables) => fetcher<WaitPatientMutation, WaitPatientMutationVariables>(WaitPatientDocument, variables)(),
-    ...options
-  }
-    )};
 
 export const DeletePatientDocument = `
     mutation DeletePatient($id: ID!) {
@@ -2175,18 +1921,6 @@ export const DeletePatientDocument = `
 }
     `;
 
-export const useDeletePatientMutation = <
-      TError = unknown,
-      TContext = unknown
-    >(options?: UseMutationOptions<DeletePatientMutation, TError, DeletePatientMutationVariables, TContext>) => {
-    
-    return useMutation<DeletePatientMutation, TError, DeletePatientMutationVariables, TContext>(
-      {
-    mutationKey: ['DeletePatient'],
-    mutationFn: (variables?: DeletePatientMutationVariables) => fetcher<DeletePatientMutation, DeletePatientMutationVariables>(DeletePatientDocument, variables)(),
-    ...options
-  }
-    )};
 
 export const CreatePropertyDefinitionDocument = `
     mutation CreatePropertyDefinition($data: CreatePropertyDefinitionInput!) {
@@ -2202,18 +1936,6 @@ export const CreatePropertyDefinitionDocument = `
 }
     `;
 
-export const useCreatePropertyDefinitionMutation = <
-      TError = unknown,
-      TContext = unknown
-    >(options?: UseMutationOptions<CreatePropertyDefinitionMutation, TError, CreatePropertyDefinitionMutationVariables, TContext>) => {
-    
-    return useMutation<CreatePropertyDefinitionMutation, TError, CreatePropertyDefinitionMutationVariables, TContext>(
-      {
-    mutationKey: ['CreatePropertyDefinition'],
-    mutationFn: (variables?: CreatePropertyDefinitionMutationVariables) => fetcher<CreatePropertyDefinitionMutation, CreatePropertyDefinitionMutationVariables>(CreatePropertyDefinitionDocument, variables)(),
-    ...options
-  }
-    )};
 
 export const UpdatePropertyDefinitionDocument = `
     mutation UpdatePropertyDefinition($id: ID!, $data: UpdatePropertyDefinitionInput!) {
@@ -2229,18 +1951,6 @@ export const UpdatePropertyDefinitionDocument = `
 }
     `;
 
-export const useUpdatePropertyDefinitionMutation = <
-      TError = unknown,
-      TContext = unknown
-    >(options?: UseMutationOptions<UpdatePropertyDefinitionMutation, TError, UpdatePropertyDefinitionMutationVariables, TContext>) => {
-    
-    return useMutation<UpdatePropertyDefinitionMutation, TError, UpdatePropertyDefinitionMutationVariables, TContext>(
-      {
-    mutationKey: ['UpdatePropertyDefinition'],
-    mutationFn: (variables?: UpdatePropertyDefinitionMutationVariables) => fetcher<UpdatePropertyDefinitionMutation, UpdatePropertyDefinitionMutationVariables>(UpdatePropertyDefinitionDocument, variables)(),
-    ...options
-  }
-    )};
 
 export const DeletePropertyDefinitionDocument = `
     mutation DeletePropertyDefinition($id: ID!) {
@@ -2248,18 +1958,6 @@ export const DeletePropertyDefinitionDocument = `
 }
     `;
 
-export const useDeletePropertyDefinitionMutation = <
-      TError = unknown,
-      TContext = unknown
-    >(options?: UseMutationOptions<DeletePropertyDefinitionMutation, TError, DeletePropertyDefinitionMutationVariables, TContext>) => {
-    
-    return useMutation<DeletePropertyDefinitionMutation, TError, DeletePropertyDefinitionMutationVariables, TContext>(
-      {
-    mutationKey: ['DeletePropertyDefinition'],
-    mutationFn: (variables?: DeletePropertyDefinitionMutationVariables) => fetcher<DeletePropertyDefinitionMutation, DeletePropertyDefinitionMutationVariables>(DeletePropertyDefinitionDocument, variables)(),
-    ...options
-  }
-    )};
 
 export const GetPropertyDefinitionsDocument = `
     query GetPropertyDefinitions {
@@ -2275,21 +1973,6 @@ export const GetPropertyDefinitionsDocument = `
 }
     `;
 
-export const useGetPropertyDefinitionsQuery = <
-      TData = GetPropertyDefinitionsQuery,
-      TError = unknown
-    >(
-      variables?: GetPropertyDefinitionsQueryVariables,
-      options?: Omit<UseQueryOptions<GetPropertyDefinitionsQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetPropertyDefinitionsQuery, TError, TData>['queryKey'] }
-    ) => {
-    
-    return useQuery<GetPropertyDefinitionsQuery, TError, TData>(
-      {
-    queryKey: variables === undefined ? ['GetPropertyDefinitions'] : ['GetPropertyDefinitions', variables],
-    queryFn: fetcher<GetPropertyDefinitionsQuery, GetPropertyDefinitionsQueryVariables>(GetPropertyDefinitionsDocument, variables),
-    ...options
-  }
-    )};
 
 export const GetPropertiesForSubjectDocument = `
     query GetPropertiesForSubject($subjectId: ID!, $subjectType: PropertyEntity!) {
@@ -2305,21 +1988,6 @@ export const GetPropertiesForSubjectDocument = `
 }
     `;
 
-export const useGetPropertiesForSubjectQuery = <
-      TData = GetPropertiesForSubjectQuery,
-      TError = unknown
-    >(
-      variables: GetPropertiesForSubjectQueryVariables,
-      options?: Omit<UseQueryOptions<GetPropertiesForSubjectQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetPropertiesForSubjectQuery, TError, TData>['queryKey'] }
-    ) => {
-    
-    return useQuery<GetPropertiesForSubjectQuery, TError, TData>(
-      {
-    queryKey: ['GetPropertiesForSubject', variables],
-    queryFn: fetcher<GetPropertiesForSubjectQuery, GetPropertiesForSubjectQueryVariables>(GetPropertiesForSubjectDocument, variables),
-    ...options
-  }
-    )};
 
 export const PatientCreatedDocument = `
     subscription PatientCreated($rootLocationIds: [ID!]) {
@@ -2390,18 +2058,6 @@ export const CreateTaskDocument = `
 }
     `;
 
-export const useCreateTaskMutation = <
-      TError = unknown,
-      TContext = unknown
-    >(options?: UseMutationOptions<CreateTaskMutation, TError, CreateTaskMutationVariables, TContext>) => {
-    
-    return useMutation<CreateTaskMutation, TError, CreateTaskMutationVariables, TContext>(
-      {
-    mutationKey: ['CreateTask'],
-    mutationFn: (variables?: CreateTaskMutationVariables) => fetcher<CreateTaskMutation, CreateTaskMutationVariables>(CreateTaskDocument, variables)(),
-    ...options
-  }
-    )};
 
 export const UpdateTaskDocument = `
     mutation UpdateTask($id: ID!, $data: UpdateTaskInput!) {
@@ -2448,18 +2104,6 @@ export const UpdateTaskDocument = `
 }
     `;
 
-export const useUpdateTaskMutation = <
-      TError = unknown,
-      TContext = unknown
-    >(options?: UseMutationOptions<UpdateTaskMutation, TError, UpdateTaskMutationVariables, TContext>) => {
-    
-    return useMutation<UpdateTaskMutation, TError, UpdateTaskMutationVariables, TContext>(
-      {
-    mutationKey: ['UpdateTask'],
-    mutationFn: (variables?: UpdateTaskMutationVariables) => fetcher<UpdateTaskMutation, UpdateTaskMutationVariables>(UpdateTaskDocument, variables)(),
-    ...options
-  }
-    )};
 
 export const AssignTaskDocument = `
     mutation AssignTask($id: ID!, $userId: ID!) {
@@ -2476,18 +2120,6 @@ export const AssignTaskDocument = `
 }
     `;
 
-export const useAssignTaskMutation = <
-      TError = unknown,
-      TContext = unknown
-    >(options?: UseMutationOptions<AssignTaskMutation, TError, AssignTaskMutationVariables, TContext>) => {
-    
-    return useMutation<AssignTaskMutation, TError, AssignTaskMutationVariables, TContext>(
-      {
-    mutationKey: ['AssignTask'],
-    mutationFn: (variables?: AssignTaskMutationVariables) => fetcher<AssignTaskMutation, AssignTaskMutationVariables>(AssignTaskDocument, variables)(),
-    ...options
-  }
-    )};
 
 export const UnassignTaskDocument = `
     mutation UnassignTask($id: ID!) {
@@ -2504,18 +2136,6 @@ export const UnassignTaskDocument = `
 }
     `;
 
-export const useUnassignTaskMutation = <
-      TError = unknown,
-      TContext = unknown
-    >(options?: UseMutationOptions<UnassignTaskMutation, TError, UnassignTaskMutationVariables, TContext>) => {
-    
-    return useMutation<UnassignTaskMutation, TError, UnassignTaskMutationVariables, TContext>(
-      {
-    mutationKey: ['UnassignTask'],
-    mutationFn: (variables?: UnassignTaskMutationVariables) => fetcher<UnassignTaskMutation, UnassignTaskMutationVariables>(UnassignTaskDocument, variables)(),
-    ...options
-  }
-    )};
 
 export const DeleteTaskDocument = `
     mutation DeleteTask($id: ID!) {
@@ -2523,18 +2143,6 @@ export const DeleteTaskDocument = `
 }
     `;
 
-export const useDeleteTaskMutation = <
-      TError = unknown,
-      TContext = unknown
-    >(options?: UseMutationOptions<DeleteTaskMutation, TError, DeleteTaskMutationVariables, TContext>) => {
-    
-    return useMutation<DeleteTaskMutation, TError, DeleteTaskMutationVariables, TContext>(
-      {
-    mutationKey: ['DeleteTask'],
-    mutationFn: (variables?: DeleteTaskMutationVariables) => fetcher<DeleteTaskMutation, DeleteTaskMutationVariables>(DeleteTaskDocument, variables)(),
-    ...options
-  }
-    )};
 
 export const CompleteTaskDocument = `
     mutation CompleteTask($id: ID!) {
@@ -2546,18 +2154,6 @@ export const CompleteTaskDocument = `
 }
     `;
 
-export const useCompleteTaskMutation = <
-      TError = unknown,
-      TContext = unknown
-    >(options?: UseMutationOptions<CompleteTaskMutation, TError, CompleteTaskMutationVariables, TContext>) => {
-    
-    return useMutation<CompleteTaskMutation, TError, CompleteTaskMutationVariables, TContext>(
-      {
-    mutationKey: ['CompleteTask'],
-    mutationFn: (variables?: CompleteTaskMutationVariables) => fetcher<CompleteTaskMutation, CompleteTaskMutationVariables>(CompleteTaskDocument, variables)(),
-    ...options
-  }
-    )};
 
 export const ReopenTaskDocument = `
     mutation ReopenTask($id: ID!) {
@@ -2569,18 +2165,6 @@ export const ReopenTaskDocument = `
 }
     `;
 
-export const useReopenTaskMutation = <
-      TError = unknown,
-      TContext = unknown
-    >(options?: UseMutationOptions<ReopenTaskMutation, TError, ReopenTaskMutationVariables, TContext>) => {
-    
-    return useMutation<ReopenTaskMutation, TError, ReopenTaskMutationVariables, TContext>(
-      {
-    mutationKey: ['ReopenTask'],
-    mutationFn: (variables?: ReopenTaskMutationVariables) => fetcher<ReopenTaskMutation, ReopenTaskMutationVariables>(ReopenTaskDocument, variables)(),
-    ...options
-  }
-    )};
 
 export const AssignTaskToTeamDocument = `
     mutation AssignTaskToTeam($id: ID!, $teamId: ID!) {
@@ -2595,18 +2179,6 @@ export const AssignTaskToTeamDocument = `
 }
     `;
 
-export const useAssignTaskToTeamMutation = <
-      TError = unknown,
-      TContext = unknown
-    >(options?: UseMutationOptions<AssignTaskToTeamMutation, TError, AssignTaskToTeamMutationVariables, TContext>) => {
-    
-    return useMutation<AssignTaskToTeamMutation, TError, AssignTaskToTeamMutationVariables, TContext>(
-      {
-    mutationKey: ['AssignTaskToTeam'],
-    mutationFn: (variables?: AssignTaskToTeamMutationVariables) => fetcher<AssignTaskToTeamMutation, AssignTaskToTeamMutationVariables>(AssignTaskToTeamDocument, variables)(),
-    ...options
-  }
-    )};
 
 export const UnassignTaskFromTeamDocument = `
     mutation UnassignTaskFromTeam($id: ID!) {
@@ -2621,18 +2193,6 @@ export const UnassignTaskFromTeamDocument = `
 }
     `;
 
-export const useUnassignTaskFromTeamMutation = <
-      TError = unknown,
-      TContext = unknown
-    >(options?: UseMutationOptions<UnassignTaskFromTeamMutation, TError, UnassignTaskFromTeamMutationVariables, TContext>) => {
-    
-    return useMutation<UnassignTaskFromTeamMutation, TError, UnassignTaskFromTeamMutationVariables, TContext>(
-      {
-    mutationKey: ['UnassignTaskFromTeam'],
-    mutationFn: (variables?: UnassignTaskFromTeamMutationVariables) => fetcher<UnassignTaskFromTeamMutation, UnassignTaskFromTeamMutationVariables>(UnassignTaskFromTeamDocument, variables)(),
-    ...options
-  }
-    )};
 
 export const UpdateProfilePictureDocument = `
     mutation UpdateProfilePicture($data: UpdateProfilePictureInput!) {
@@ -2651,15 +2211,3 @@ export const UpdateProfilePictureDocument = `
 }
     `;
 
-export const useUpdateProfilePictureMutation = <
-      TError = unknown,
-      TContext = unknown
-    >(options?: UseMutationOptions<UpdateProfilePictureMutation, TError, UpdateProfilePictureMutationVariables, TContext>) => {
-    
-    return useMutation<UpdateProfilePictureMutation, TError, UpdateProfilePictureMutationVariables, TContext>(
-      {
-    mutationKey: ['UpdateProfilePicture'],
-    mutationFn: (variables?: UpdateProfilePictureMutationVariables) => fetcher<UpdateProfilePictureMutation, UpdateProfilePictureMutationVariables>(UpdateProfilePictureDocument, variables)(),
-    ...options
-  }
-    )};

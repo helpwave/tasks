@@ -1,8 +1,8 @@
 import { useMemo, useState, forwardRef, useImperativeHandle, useEffect, useCallback } from 'react'
-import { Chip, FillerCell, Button, SearchBar, ProgressIndicator, Tooltip, Checkbox, Drawer, Visibility, TableProvider, TableDisplay, TablePagination, TableColumnSwitcher } from '@helpwave/hightide'
+import { Chip, FillerCell, Button, LoadingContainer, SearchBar, ProgressIndicator, Tooltip, Checkbox, Drawer, Visibility, TableProvider, TableDisplay, TablePagination, TableColumnSwitcher } from '@helpwave/hightide'
 import { PlusIcon, Table as TableIcon, LayoutGrid, Printer } from 'lucide-react'
-import { GetPatientsDocument, Sex, PatientState, type GetPatientsQuery, type TaskType, useGetPropertyDefinitionsQuery, PropertyEntity, type FullTextSearchInput } from '@/api/gql/generated'
-import { usePaginatedGraphQLQuery } from '@/hooks/usePaginatedQuery'
+import { Sex, PatientState, type GetPatientsQuery, type TaskType, PropertyEntity, type FullTextSearchInput } from '@/api/gql/generated'
+import { usePropertyDefinitions, usePatientsPaginated, useRefreshingEntityIds } from '@/data'
 import { PatientDetailView } from '@/components/patients/PatientDetailView'
 import { SmartDate } from '@/utils/date'
 import { LocationChips } from '@/components/patients/LocationChips'
@@ -31,6 +31,7 @@ export type PatientViewModel = {
 }
 
 const STORAGE_KEY_SHOW_ALL_PATIENTS = 'patient-show-all-states'
+const DEFAULT_PATIENT_STATES: PatientState[] = [PatientState.Admitted]
 const STORAGE_KEY_COLUMN_VISIBILITY = 'patient-list-column-visibility'
 const STORAGE_KEY_COLUMN_FILTERS = 'patient-list-column-filters'
 const STORAGE_KEY_COLUMN_SORTING = 'patient-list-column-sorting'
@@ -52,6 +53,7 @@ type PatientListProps = {
 export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initialPatientId, onInitialPatientOpened, acceptedStates, rootLocationIds, locationId }, ref) => {
   const translation = useTasksTranslation()
   const { selectedRootLocationIds } = useTasksContext()
+  const { refreshingPatientIds } = useRefreshingEntityIds()
   const effectiveRootLocationIds = rootLocationIds ?? selectedRootLocationIds
   const { viewType, toggleView } = usePatientViewToggle()
   const [isPanelOpen, setIsPanelOpen] = useState(false)
@@ -91,7 +93,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
     defaultValue: {}
   })
 
-  const [isPrinting, setIsPrinting] = useState(false)
+  const [, setIsPrinting] = useState(false)
 
   const handleShowAllPatientsChange = (checked: boolean) => {
     setShowAllPatients(() => {
@@ -109,7 +111,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
     PatientState.Wait,
   ], [])
 
-  const patientStates = showAllPatients ? allPatientStates : (acceptedStates ?? [PatientState.Admitted])
+  const patientStates = showAllPatients ? allPatientStates : (acceptedStates ?? DEFAULT_PATIENT_STATES)
 
   const searchInput: FullTextSearchInput | undefined = searchQuery
     ? {
@@ -118,25 +120,17 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
     }
     : undefined
 
-  const { data: patientsData, refetch, totalCount } = usePaginatedGraphQLQuery<GetPatientsQuery, GetPatientsQuery['patients'][0], { locationId?: string, rootLocationIds?: string[], states?: PatientState[], search?: FullTextSearchInput }>({
-    queryKey: ['GetPatients', { locationId, rootLocationIds: effectiveRootLocationIds, states: patientStates, search: searchQuery }],
-    document: GetPatientsDocument,
-    baseVariables: {
+  const { data: patientsData, refetch, totalCount } = usePatientsPaginated(
+    {
       locationId: locationId || undefined,
       rootLocationIds: !locationId && effectiveRootLocationIds && effectiveRootLocationIds.length > 0 ? effectiveRootLocationIds : undefined,
       states: patientStates,
       search: searchInput,
     },
-    pageSize: 50,
-    extractItems: (result) => result.patients,
-    extractTotalCount: (result) => result.patientsTotal ?? undefined,
-    mode: 'infinite',
-    enabled: !isPrinting,
-    refetchOnWindowFocus: !isPrinting,
-    refetchOnMount: true,
-  })
+    { pageSize: 50 }
+  )
 
-  const { data: propertyDefinitionsData } = useGetPropertyDefinitionsQuery()
+  const { data: propertyDefinitionsData } = usePropertyDefinitions()
 
   useEffect(() => {
     if (propertyDefinitionsData?.propertyDefinitions) {
@@ -253,11 +247,14 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       createPropertyColumn<PatientViewModel>(prop))
   }, [propertyDefinitionsData])
 
+  const rowLoadingCell = useMemo(() => <LoadingContainer className="w-full min-h-8" />, [])
+
   const columns = useMemo<ColumnDef<PatientViewModel>[]>(() => [
     {
       id: 'name',
       header: translation('name'),
       accessorKey: 'name',
+      cell: ({ row }) => (refreshingPatientIds.has(row.original.id) ? rowLoadingCell : row.original.name),
       minSize: 200,
       size: 250,
       maxSize: 300,
@@ -267,9 +264,8 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       id: 'state',
       header: translation('status'),
       accessorFn: ({ state }) => [state],
-      cell: ({ row }) => (
-        <PatientStateChip state={row.original.state} />
-      ),
+      cell: ({ row }) =>
+        refreshingPatientIds.has(row.original.id) ? rowLoadingCell : <PatientStateChip state={row.original.state} />,
       minSize: 120,
       size: 144,
       maxSize: 180,
@@ -285,6 +281,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       header: translation('sex'),
       accessorFn: ({ sex }) => [sex],
       cell: ({ row }) => {
+        if (refreshingPatientIds.has(row.original.id)) return rowLoadingCell
         const sex = row.original.sex
         const colorClass = sex === Sex.Male
           ? '!gender-male'
@@ -327,9 +324,10 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       id: 'position',
       header: translation('location'),
       accessorFn: ({ position }) => position?.title,
-      cell: ({ row }) => (
-        <LocationChips locations={row.original.position ? [row.original.position] : []} small />
-      ),
+      cell: ({ row }) =>
+        refreshingPatientIds.has(row.original.id) ? rowLoadingCell : (
+          <LocationChips locations={row.original.position ? [row.original.position] : []} small />
+        ),
       minSize: 200,
       size: 250,
       maxSize: 400,
@@ -339,11 +337,10 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       id: 'birthdate',
       header: translation('birthdate'),
       accessorKey: 'birthdate',
-      cell: ({ row }) => {
-        return (
+      cell: ({ row }) =>
+        refreshingPatientIds.has(row.original.id) ? rowLoadingCell : (
           <SmartDate date={row.original.birthdate} showTime={false} />
-        )
-      },
+        ),
       minSize: 200,
       size: 200,
       maxSize: 200,
@@ -357,6 +354,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
         return total === 0 ? 0 : closedTasksCount / total
       },
       cell: ({ row }) => {
+        if (refreshingPatientIds.has(row.original.id)) return rowLoadingCell
         const { openTasksCount, closedTasksCount } = row.original
         const total = openTasksCount + closedTasksCount
         const progress = total === 0 ? 0 : closedTasksCount / total
@@ -378,8 +376,14 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       size: 150,
       maxSize: 200,
     },
-    ...patientPropertyColumns,
-  ], [allPatientStates, translation, patientPropertyColumns])
+    ...patientPropertyColumns.map((col) => ({
+      ...col,
+      cell: col.cell
+        ? (params: { row: { original: PatientViewModel } }) =>
+            refreshingPatientIds.has(params.row.original.id) ? rowLoadingCell : (col.cell as (p: unknown) => React.ReactNode)(params)
+        : undefined,
+    })),
+  ], [allPatientStates, translation, patientPropertyColumns, refreshingPatientIds, rowLoadingCell])
 
   const onRowClick = useCallback((row: Row<PatientViewModel>) => handleEdit(row.original), [handleEdit])
   const fillerRowCell = useCallback(() => (<FillerCell className="min-h-8" />), [])

@@ -3,8 +3,23 @@ from fastapi import Request
 from fastapi.responses import HTMLResponse
 from strawberry.fastapi import GraphQLRouter
 
+from api.context import get_user_from_connection_params
+
 
 class AuthedGraphQLRouter(GraphQLRouter):
+    async def on_ws_connect(self, context):
+        if (
+            hasattr(context, "connection_params")
+            and context.connection_params
+            and hasattr(context, "db")
+        ):
+            user = await get_user_from_connection_params(
+                context.connection_params, context.db
+            )
+            if user is not None:
+                context.user = user
+        return await super().on_ws_connect(context)
+
     async def render_graphql_ide(self, request: Request) -> HTMLResponse:
         response = await super().render_graphql_ide(request)
 

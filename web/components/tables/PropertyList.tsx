@@ -3,7 +3,8 @@ import { Plus } from 'lucide-react'
 import { useMemo, useState, useEffect } from 'react'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { PropertyEntry } from '@/components/properties/PropertyEntry'
-import { useGetPropertyDefinitionsQuery, FieldType, PropertyEntity } from '@/api/gql/generated'
+import { FieldType, PropertyEntity } from '@/api/gql/generated'
+import { usePropertyDefinitions } from '@/data'
 
 
 
@@ -131,7 +132,8 @@ export const PropertyList = ({
   const [removedPropertyIds, setRemovedPropertyIds] = useState<Set<string>>(new Set())
   const [pendingAdditions, setPendingAdditions] = useState<Map<string, { property: Property, value: PropertyValue }>>(new Map())
 
-  const { data: propertyDefinitionsData, isLoading: isLoadingDefinitions, isError: isErrorDefinitions } = useGetPropertyDefinitionsQuery()
+  const { data: propertyDefinitionsData, loading: isLoadingDefinitions, error: errorDefinitions } = usePropertyDefinitions()
+  const isErrorDefinitions = !!errorDefinitions
 
   const availableProperties = useMemo(() => {
     if (!propertyDefinitionsData?.propertyDefinitions) return []

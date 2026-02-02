@@ -16,12 +16,8 @@ import type { Property, PropertyFieldType, PropertySelectOption, PropertySubject
 import { propertyFieldTypeList, propertySubjectTypeList } from '@/components/tables/PropertyList'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { PlusIcon, XIcon } from 'lucide-react'
-import {
-  useCreatePropertyDefinitionMutation,
-  useUpdatePropertyDefinitionMutation,
-  FieldType,
-  PropertyEntity
-} from '@/api/gql/generated'
+import { FieldType, PropertyEntity } from '@/api/gql/generated'
+import { useCreatePropertyDefinition, useUpdatePropertyDefinition } from '@/data'
 
 interface PropertyDetailViewProps {
   id?: string,
@@ -75,32 +71,8 @@ export const PropertyDetailView = ({
     isCustom: false,
   })
 
-  const [isCreating, setIsCreating] = useState<boolean>(false)
-  const { mutate: createProperty } = useCreatePropertyDefinitionMutation({
-    onMutate: () => {
-      setIsCreating(true)
-    },
-    onSettled: () => {
-      setIsCreating(false)
-    },
-    onSuccess: () => {
-      onSuccess()
-      onClose()
-    }
-  })
-
-  const [isUpdating, setIsUpdating] = useState<boolean>(false)
-  const { mutate: updateProperty } = useUpdatePropertyDefinitionMutation({
-    onMutate: () => {
-      setIsUpdating(true)
-    },
-    onSettled: () => {
-      setIsUpdating(false)
-    },
-    onSuccess: () => {
-      onSuccess()
-    }
-  })
+  const [createProperty, { loading: isCreating }] = useCreatePropertyDefinition()
+  const [updateProperty, { loading: isUpdating }] = useUpdatePropertyDefinition()
 
   const persist = (updates: Partial<PropertyFormValues>) => {
     if (!isEditMode || !id) return
@@ -118,8 +90,8 @@ export const PropertyDetailView = ({
     }
 
     updateProperty({
-      id,
-      data: backendUpdates
+      variables: { id, data: backendUpdates },
+      onCompleted: () => onSuccess(),
     })
   }
 
@@ -149,7 +121,13 @@ export const PropertyDetailView = ({
         isActive: !values.isArchived,
       }
 
-      createProperty({ data: createData })
+      createProperty({
+        variables: { data: createData },
+        onCompleted: () => {
+          onSuccess()
+          onClose()
+        },
+      })
     },
     validators: {
       name: (value) => {

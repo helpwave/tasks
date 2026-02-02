@@ -6,30 +6,20 @@ import { ContentPanel } from '@/components/layout/ContentPanel'
 import type { TaskViewModel } from '@/components/tables/TaskList'
 import { TaskList } from '@/components/tables/TaskList'
 import { useMemo } from 'react'
-import { GetTasksDocument, type GetTasksQuery, type FullTextSearchInput } from '@/api/gql/generated'
 import { useRouter } from 'next/router'
 import { useTasksContext } from '@/hooks/useTasksContext'
-import { usePaginatedGraphQLQuery } from '@/hooks/usePaginatedQuery'
+import { useTasksPaginated } from '@/data'
 
 const TasksPage: NextPage = () => {
   const translation = useTasksTranslation()
   const router = useRouter()
   const { selectedRootLocationIds, user, myTasksCount } = useTasksContext()
-  const { data: tasksData, refetch, totalCount } = usePaginatedGraphQLQuery<GetTasksQuery, GetTasksQuery['tasks'][0], { rootLocationIds?: string[], assigneeId?: string, search?: FullTextSearchInput }>({
-    queryKey: ['GetTasks'],
-    document: GetTasksDocument,
-    baseVariables: {
-      rootLocationIds: selectedRootLocationIds,
-      assigneeId: user?.id,
-    },
-    pageSize: 50,
-    extractItems: (result) => result.tasks,
-    extractTotalCount: (result) => result.tasksTotal ?? undefined,
-    mode: 'infinite',
-    enabled: !!selectedRootLocationIds && !!user,
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
-  })
+  const { data: tasksData, refetch, totalCount } = useTasksPaginated(
+    !!selectedRootLocationIds && !!user
+      ? { rootLocationIds: selectedRootLocationIds, assigneeId: user?.id }
+      : undefined,
+    { pageSize: 50 }
+  )
   const taskId = router.query['taskId'] as string | undefined
 
   const tasks: TaskViewModel[] = useMemo(() => {

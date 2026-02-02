@@ -10,7 +10,8 @@ import { EditIcon, PlusIcon } from 'lucide-react'
 import { Drawer } from '@helpwave/hightide'
 import type { Property } from '@/components/tables/PropertyList'
 import { PropertyDetailView } from '@/components/properties/PropertyDetailView'
-import { useGetPropertyDefinitionsQuery, FieldType, PropertyEntity } from '@/api/gql/generated'
+import { FieldType, PropertyEntity } from '@/api/gql/generated'
+import { usePropertyDefinitions } from '@/data'
 
 const PropertiesPage: NextPage = () => {
   const translation = useTasksTranslation()
@@ -35,7 +36,7 @@ const PropertiesPage: NextPage = () => {
     return entity === PropertyEntity.Patient ? 'patient' : 'task'
   }
 
-  const { data: propertyDefinitionsData, refetch } = useGetPropertyDefinitionsQuery()
+  const { data: propertyDefinitionsData, refetch } = usePropertyDefinitions()
 
   const data = propertyDefinitionsData?.propertyDefinitions?.map(def => ({
     id: def.id,

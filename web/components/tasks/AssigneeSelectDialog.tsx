@@ -3,7 +3,7 @@ import { SearchBar, Dialog } from '@helpwave/hightide'
 import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { Users, Info } from 'lucide-react'
-import { useGetUsersQuery, useGetLocationsQuery } from '@/api/gql/generated'
+import { useUsers, useLocations } from '@/data'
 import clsx from 'clsx'
 
 interface AssigneeSelectDialogProps {
@@ -33,9 +33,8 @@ export const AssigneeSelectDialog = ({
   const [searchQuery, setSearchQuery] = useState('')
   const searchInputRef = useRef<HTMLDivElement>(null)
 
-  const { data: usersData } = useGetUsersQuery(undefined, {
-  })
-  const { data: locationsData } = useGetLocationsQuery(undefined, {})
+  const { data: usersData } = useUsers()
+  const { data: locationsData } = useLocations()
 
   const teams = useMemo(() => {
     if (!locationsData?.locationNodes) return []

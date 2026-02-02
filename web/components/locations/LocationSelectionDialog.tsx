@@ -10,7 +10,7 @@ import {
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import type { LocationNodeType } from '@/api/gql/generated'
 import { LocationType } from '@/api/gql/generated'
-import { useGetLocationsQuery } from '@/api/gql/generated'
+import { useLocations } from '@/data'
 import type { TreeNode } from '@/utils/tree'
 import { buildTree } from '@/utils/tree'
 import {
@@ -186,13 +186,7 @@ export const LocationSelectionDialog = ({
   useCase = 'default',
 }: LocationSelectionDialogProps) => {
   const translation = useTasksTranslation()
-  const { data, isLoading } = useGetLocationsQuery(
-    {},
-    {
-      enabled: isOpen,
-      refetchOnWindowFocus: true,
-    }
-  )
+  const { data, loading: isLoading } = useLocations({}, { skip: !isOpen })
 
   const storageKey = `location-selector-state-${useCase}`
   const signatureKey = `location-selector-signature-${useCase}`

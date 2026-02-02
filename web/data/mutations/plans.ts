@@ -1,0 +1,8 @@
+import '@/api/mutations/tasks/updateTask.plan'
+import '@/api/mutations/tasks/completeTask.plan'
+import '@/api/mutations/tasks/reopenTask.plan'
+import '@/api/mutations/patients/updatePatient.plan'
+import '@/api/mutations/patients/admitPatient.plan'
+import '@/api/mutations/patients/dischargePatient.plan'
+import '@/api/mutations/patients/waitPatient.plan'
+import '@/api/mutations/patients/markPatientDead.plan'

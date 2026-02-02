@@ -6,7 +6,7 @@ import { TaskCardView } from '@/components/tasks/TaskCardView'
 import clsx from 'clsx'
 import type { GetPatientQuery } from '@/api/gql/generated'
 import { TaskDetailView } from '@/components/tasks/TaskDetailView'
-import { useOptimisticCompleteTaskMutation, useOptimisticReopenTaskMutation } from '@/api/optimistic-updates/GetPatient'
+import { useCompleteTask, useReopenTask } from '@/data'
 
 interface PatientTasksViewProps {
   patientId: string,
@@ -33,33 +33,8 @@ export const PatientTasksView = ({
   const [isCreatingTask, setIsCreatingTask] = useState(false)
   const [optimisticTaskUpdates, setOptimisticTaskUpdates] = useState<Map<string, boolean>>(new Map())
 
-  const { mutate: completeTask } = useOptimisticCompleteTaskMutation({
-    id: patientId,
-    onSuccess: async () => {
-      onSuccess?.()
-    },
-    onError: (error, variables) => {
-      setOptimisticTaskUpdates(prev => {
-        const next = new Map(prev)
-        next.delete(variables.id)
-        return next
-      })
-    },
-  })
-
-  const { mutate: reopenTask } = useOptimisticReopenTaskMutation({
-    id: patientId,
-    onSuccess: async () => {
-      onSuccess?.()
-    },
-    onError: (error, variables) => {
-      setOptimisticTaskUpdates(prev => {
-        const next = new Map(prev)
-        next.delete(variables.id)
-        return next
-      })
-    },
-  })
+  const [completeTask] = useCompleteTask()
+  const [reopenTask] = useReopenTask()
 
   const tasks = useMemo(() => {
     const baseTasks = patientData?.patient?.tasks || []
@@ -86,9 +61,29 @@ export const PatientTasksView = ({
       return next
     })
     if (done) {
-      completeTask({ id: taskId })
+      completeTask({
+        variables: { id: taskId },
+        onCompleted: () => onSuccess?.(),
+        onError: () => {
+          setOptimisticTaskUpdates(prev => {
+            const next = new Map(prev)
+            next.delete(taskId)
+            return next
+          })
+        },
+      })
     } else {
-      reopenTask({ id: taskId })
+      reopenTask({
+        variables: { id: taskId },
+        onCompleted: () => onSuccess?.(),
+        onError: () => {
+          setOptimisticTaskUpdates(prev => {
+            const next = new Map(prev)
+            next.delete(taskId)
+            return next
+          })
+        },
+      })
     }
   }
 
