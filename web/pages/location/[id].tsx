@@ -37,7 +37,10 @@ const LocationPage: NextPage = () => {
     id ?? '',
     { skip: !id }
   )
-  const locationData = locationNode ? { locationNode } : undefined
+  const locationData = useMemo(
+    () => (locationNode ? { locationNode } : undefined),
+    [locationNode]
+  )
   const isLocationError = !!locationError
 
   const isTeamLocation = locationData?.locationNode?.kind === 'TEAM'

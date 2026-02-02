@@ -380,7 +380,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       ...col,
       cell: col.cell
         ? (params: { row: { original: PatientViewModel } }) =>
-            refreshingPatientIds.has(params.row.original.id) ? rowLoadingCell : (col.cell as (p: unknown) => React.ReactNode)(params)
+          refreshingPatientIds.has(params.row.original.id) ? rowLoadingCell : (col.cell as (p: unknown) => React.ReactNode)(params)
         : undefined,
     })),
   ], [allPatientStates, translation, patientPropertyColumns, refreshingPatientIds, rowLoadingCell])

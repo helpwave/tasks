@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import type { CreateTaskInput, UpdateTaskInput, TaskPriority } from '@/api/gql/generated'
 import { PatientState } from '@/api/gql/generated'
-import { useCreateTask, useDeleteTask, usePatients, useTask, useUpdateTask, useRefreshingEntityIds } from '@/data'
+import { useCreateTask, useDeleteTask, usePatients, useTask, useUpdateTask, useAssignTask, useAssignTaskToTeam, useUnassignTask, useRefreshingEntityIds } from '@/data'
 import type { FormFieldDataHandling } from '@helpwave/hightide'
 import {
   Button,
@@ -73,6 +73,9 @@ export const TaskDataEditor = ({
 
   const [createTask, { loading: isCreating }] = useCreateTask()
   const [updateTaskMutate] = useUpdateTask()
+  const [assignTask] = useAssignTask()
+  const [assignTaskToTeam] = useAssignTaskToTeam()
+  const [unassignTask] = useUnassignTask()
   const updateTask = (vars: { id: string, data: UpdateTaskInput }) => {
     updateTaskMutate({
       variables: vars,
@@ -295,18 +298,33 @@ export const TaskDataEditor = ({
               label={translation('assignedTo')}
             >
               {({ dataProps }) => (
-                // TODO add interaction states to AssigneeSelect
                 <AssigneeSelect
                   value={dataProps.value ?? ''}
                   onValueChanged={(value) => {
                     updateForm(prev => {
-                      if(value.startsWith('team:')) {
-                        return ({
-                          ...prev, assigneeId: null, assigneeTeamId: value.replace('team:', '') })
-                      } else {
-                        return ({ ...prev, assigneeId: value, assigneeTeamId: null })
+                      if (value.startsWith('team:')) {
+                        return { ...prev, assigneeId: null, assigneeTeamId: value.replace('team:', '') }
                       }
+                      return { ...prev, assigneeId: value || null, assigneeTeamId: null }
                     })
+                    if (isEditMode && taskId) {
+                      if (!value || value === '') {
+                        unassignTask({
+                          variables: { id: taskId },
+                          onCompleted: () => onSuccess?.(),
+                        }).catch(() => {})
+                      } else if (value.startsWith('team:')) {
+                        assignTaskToTeam({
+                          variables: { id: taskId, teamId: value.replace('team:', '') },
+                          onCompleted: () => onSuccess?.(),
+                        }).catch(() => {})
+                      } else {
+                        assignTask({
+                          variables: { id: taskId, userId: value },
+                          onCompleted: () => onSuccess?.(),
+                        }).catch(() => {})
+                      }
+                    }
                   }}
                   allowTeams={true}
                   allowUnassigned={true}

@@ -8,6 +8,7 @@ query GetTask($id: ID!) {
     priority
     estimatedTime
     checksum
+    updateDate
     patient {
       id
       name

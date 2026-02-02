@@ -4,20 +4,21 @@ import { getParsedDocument } from '@/data/hooks/queryHelpers'
 import { registerOptimisticPlan } from '@/data/mutations/registry'
 import type { OptimisticPlan, OptimisticPatch } from '@/data/mutations/types'
 
-type CompleteTaskVariables = { id: string, clientMutationId?: string }
+type AssignTaskVariables = { id: string, userId: string, clientMutationId?: string }
 
-export const completeTaskOptimisticPlanKey = 'CompleteTask'
+export const assignTaskOptimisticPlanKey = 'AssignTask'
 
-export const completeTaskOptimisticPlan: OptimisticPlan<CompleteTaskVariables> = {
+export const assignTaskOptimisticPlan: OptimisticPlan<AssignTaskVariables> = {
   getPatches(variables): OptimisticPatch[] {
     const snapshotRef: { current: GetTaskQuery | null } = { current: null }
     const taskId = variables.id
+    const userId = variables.userId
     const doc = getParsedDocument(GetTaskDocument)
 
     return [
       {
         apply(cache: ApolloCache, vars: unknown): void {
-          const v = vars as CompleteTaskVariables
+          const v = vars as AssignTaskVariables
           const existing = cache.readQuery<GetTaskQuery>({
             query: doc,
             variables: { id: v.id },
@@ -27,12 +28,13 @@ export const completeTaskOptimisticPlan: OptimisticPlan<CompleteTaskVariables> =
           cache.modify({
             id,
             fields: {
-              done: () => true,
+              assignee: () => ({ __ref: `UserType:${userId}` }),
+              assigneeTeam: () => null,
             },
           })
         },
         rollback(cache: ApolloCache, vars: unknown): void {
-          const v = vars as CompleteTaskVariables
+          const v = vars as AssignTaskVariables
           const previous = snapshotRef.current
           if (!previous) return
           cache.writeQuery<GetTaskQuery>({
@@ -46,4 +48,4 @@ export const completeTaskOptimisticPlan: OptimisticPlan<CompleteTaskVariables> =
   },
 }
 
-registerOptimisticPlan(completeTaskOptimisticPlanKey, completeTaskOptimisticPlan as OptimisticPlan<unknown>)
+registerOptimisticPlan(assignTaskOptimisticPlanKey, assignTaskOptimisticPlan as OptimisticPlan<unknown>)

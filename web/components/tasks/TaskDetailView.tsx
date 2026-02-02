@@ -92,7 +92,7 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
       },
       onCompleted: () => onSuccess(),
     })
-  }, [isEditMode, taskId, taskData, convertPropertyValueToInput, updateTask])
+  }, [isEditMode, taskId, taskData, convertPropertyValueToInput, updateTask, onSuccess])
 
 
   return (

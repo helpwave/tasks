@@ -283,396 +283,396 @@ export const PatientDataEditor = ({
       <FormProvider state={form}>
         <form onSubmit={event => {event.preventDefault(); form.submit() }} className="flex-col-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <FormField<PatientFormValues, 'firstname'>
-            name="firstname"
-            label={translation('firstName')}
-            required
-            showRequiredIndicator={!isEditMode}
-          >
-            {({ dataProps, focusableElementProps, interactionStates  }) => (
-              <Input
-                {...dataProps} {...focusableElementProps} {...interactionStates}
-                placeholder={translation('firstName')}
-              />
-            )}
-          </FormField>
-          <FormField<PatientFormValues, 'lastname'>
-            name="lastname"
-            label={translation('lastName')}
-            required
-            showRequiredIndicator={!isEditMode}
-          >
-            {({ dataProps, focusableElementProps, interactionStates  }) => (
-              <Input
-                {...dataProps} {...focusableElementProps} {...interactionStates}
-                placeholder={translation('lastName')}
-              />
-            )}
-          </FormField>
-        </div>
-
-        <FormField<PatientFormValues, 'birthdate'>
-          name="birthdate"
-          label={translation('birthdate')}
-          required
-          showRequiredIndicator={!isEditMode}
-        >
-          {({ dataProps, focusableElementProps, interactionStates  }) => (
-            <DateTimeInput
-              {...focusableElementProps} {...interactionStates}
-              value={convertBirthdateStringToDate(dataProps.value) ?? undefined}
-              onValueChange={(value) => dataProps.onValueChange(value ? toISODate(value) : undefined)}
-              onEditComplete={(value) => dataProps.onEditComplete(value ? toISODate(value) : undefined)}
-              pickerProps={{
-                start: startDate,
-                end: endDate
-              }}
-              mode="date"
-            />
-          )}
-        </FormField>
-
-        <FormField<PatientFormValues, 'sex'>
-          name="sex"
-          label={translation('sex')}
-          required
-          showRequiredIndicator={!isEditMode}
-        >
-          {({ dataProps, focusableElementProps, interactionStates  }) => (
-            <Select
-              {...dataProps as FormFieldDataHandling<string>}
-              {...focusableElementProps}
-              {...interactionStates}
+            <FormField<PatientFormValues, 'firstname'>
+              name="firstname"
+              label={translation('firstName')}
+              required
+              showRequiredIndicator={!isEditMode}
             >
-              {sexOptions.map(option => (
-                <SelectOption key={option.value} value={option.value}>
-                  {option.label}
-                </SelectOption>
-              ))}
-            </Select>
-          )}
-        </FormField>
-        <FormField<PatientFormValues, 'description'>
-          name="description"
-          label={translation('description')}
-          showRequiredIndicator={!isEditMode}
-        >
-          {({ dataProps, focusableElementProps, interactionStates  }) => (
-            <Textarea
-              {...dataProps} {...focusableElementProps} {...interactionStates}
-              value={dataProps.value || ''}
-              placeholder={translation('description')}
-            />
-          )}
-        </FormField>
+              {({ dataProps, focusableElementProps, interactionStates  }) => (
+                <Input
+                  {...dataProps} {...focusableElementProps} {...interactionStates}
+                  placeholder={translation('firstName')}
+                />
+              )}
+            </FormField>
+            <FormField<PatientFormValues, 'lastname'>
+              name="lastname"
+              label={translation('lastName')}
+              required
+              showRequiredIndicator={!isEditMode}
+            >
+              {({ dataProps, focusableElementProps, interactionStates  }) => (
+                <Input
+                  {...dataProps} {...focusableElementProps} {...interactionStates}
+                  placeholder={translation('lastName')}
+                />
+              )}
+            </FormField>
+          </div>
 
-        {!isEditMode && (
-          <FormField<PatientFormValues, 'state'>
-            name="state"
-            label={translation('status')}
+          <FormField<PatientFormValues, 'birthdate'>
+            name="birthdate"
+            label={translation('birthdate')}
+            required
+            showRequiredIndicator={!isEditMode}
+          >
+            {({ dataProps, focusableElementProps, interactionStates  }) => (
+              <DateTimeInput
+                {...focusableElementProps} {...interactionStates}
+                value={convertBirthdateStringToDate(dataProps.value) ?? undefined}
+                onValueChange={(value) => dataProps.onValueChange(value ? toISODate(value) : undefined)}
+                onEditComplete={(value) => dataProps.onEditComplete(value ? toISODate(value) : undefined)}
+                pickerProps={{
+                  start: startDate,
+                  end: endDate
+                }}
+                mode="date"
+              />
+            )}
+          </FormField>
+
+          <FormField<PatientFormValues, 'sex'>
+            name="sex"
+            label={translation('sex')}
+            required
+            showRequiredIndicator={!isEditMode}
+          >
+            {({ dataProps, focusableElementProps, interactionStates  }) => (
+              <Select
+                {...dataProps as FormFieldDataHandling<string>}
+                {...focusableElementProps}
+                {...interactionStates}
+              >
+                {sexOptions.map(option => (
+                  <SelectOption key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectOption>
+                ))}
+              </Select>
+            )}
+          </FormField>
+          <FormField<PatientFormValues, 'description'>
+            name="description"
+            label={translation('description')}
+            showRequiredIndicator={!isEditMode}
+          >
+            {({ dataProps, focusableElementProps, interactionStates  }) => (
+              <Textarea
+                {...dataProps} {...focusableElementProps} {...interactionStates}
+                value={dataProps.value || ''}
+                placeholder={translation('description')}
+              />
+            )}
+          </FormField>
+
+          {!isEditMode && (
+            <FormField<PatientFormValues, 'state'>
+              name="state"
+              label={translation('status')}
+              showRequiredIndicator={!isEditMode}
+            >
+              {({ dataProps: { value, onValueChange, onEditComplete }, focusableElementProps, interactionStates  }) => (
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    {...focusableElementProps} {...interactionStates}
+                    value={value === PatientState.Wait}
+                    onValueChange={(value) => onValueChange(value ? PatientState.Wait : PatientState.Admitted)}
+                    onEditComplete={(value) => onEditComplete(value ? PatientState.Wait : PatientState.Admitted)}
+                  />
+                  <span>{translation('waitingForPatient')}</span>
+                </div>
+              )}
+            </FormField>
+          )}
+
+          {isEditMode  &&(
+            <FormField<PatientFormValues, 'state'>
+              name="state"
+              label={translation('patientActions')}
+              showRequiredIndicator={!isEditMode}
+            >
+              {({ dataProps: { value }  }) => (
+                <div className="flex gap-4 flex-wrap">
+                  <Button
+                    disabled={value === PatientState.Admitted}
+                    onClick={() => admitPatient({ variables: { id: patientId! }, onCompleted: () => onSuccess?.() })}
+                    color={value === PatientState.Admitted ? 'positive' : 'neutral'}
+                  >
+                    <Visibility isVisible={value === PatientState.Admitted}>
+                      <CheckIcon className="size-4" aria-hidden="true" />
+                    </Visibility>
+                    {translation('admitPatient')}
+                  </Button>
+                  <Button
+                    disabled={value === PatientState.Discharged}
+                    onClick={() => setIsDischargeDialogOpen(true)}
+                    color="neutral"
+                  >
+                    <Visibility isVisible={value === PatientState.Admitted}>
+                      <CheckIcon className="size-4" aria-hidden="true" />
+                    </Visibility>
+                    {translation('dischargePatient')}
+                  </Button>
+                  <Button
+                    disabled={value === PatientState.Wait}
+                    onClick={() => waitPatient({ variables: { id: patientId! }, onCompleted: () => onSuccess?.() })}
+                    color={value === PatientState.Wait ? 'warning' : 'neutral'}
+                  >
+                    <Visibility isVisible={value === PatientState.Admitted}>
+                      <CheckIcon className="size-4" aria-hidden="true" />
+                    </Visibility>
+                    {translation('waitPatient')}
+                  </Button>
+                </div>
+              )}
+            </FormField>
+          )}
+
+          <FormField<PatientFormValues, 'clinic'>
+            name="clinic"
+            label={translation('clinic')}
+            required
             showRequiredIndicator={!isEditMode}
           >
             {({ dataProps: { value, onValueChange, onEditComplete }, focusableElementProps, interactionStates  }) => (
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  {...focusableElementProps} {...interactionStates}
-                  value={value === PatientState.Wait}
-                  onValueChange={(value) => onValueChange(value ? PatientState.Wait : PatientState.Admitted)}
-                  onEditComplete={(value) => onEditComplete(value ? PatientState.Wait : PatientState.Admitted)}
-                />
-                <span>{translation('waitingForPatient')}</span>
+              <div className="flex flex-col gap-2">
+                <div className="flex gap-2">
+                  <Input
+                    {...focusableElementProps} {...interactionStates}
+                    value={value ? (locationsMap.size > 0 ? formatLocationPathFromId(value.id, locationsMap) : formatLocationPath(value)) : ''}
+                    placeholder={translation('selectClinic')}
+                    readOnly
+                    className="flex-grow cursor-pointer"
+                    onClick={() => setIsClinicDialogOpen(true)}
+                  />
+                  <Button
+                    onClick={() => setIsClinicDialogOpen(true)}
+                    layout="icon"
+                    title={translation('selectClinic')}
+                  >
+                    <Building2 className="size-4" />
+                  </Button>
+                  {value && !isEditMode && (
+                    <Button
+                      onClick={() => {
+                        onValueChange(null)
+                        onEditComplete(null)
+                      }}
+                      layout="icon"
+                      color="neutral"
+                      title={translation('clear')}
+                    >
+                      <XIcon className="size-5" />
+                    </Button>
+                  )}
+                </div>
               </div>
             )}
           </FormField>
-        )}
 
-        {isEditMode  &&(
-          <FormField<PatientFormValues, 'state'>
-            name="state"
-            label={translation('patientActions')}
-            showRequiredIndicator={!isEditMode}
+          <FormField<PatientFormValues, 'position'>
+            name="position"
+            label={translation('position')}
           >
-            {({ dataProps: { value }  }) => (
-              <div className="flex gap-4 flex-wrap">
-                <Button
-                  disabled={value === PatientState.Admitted}
-                  onClick={() => admitPatient({ variables: { id: patientId! }, onCompleted: () => onSuccess?.() })}
-                  color={value === PatientState.Admitted ? 'positive' : 'neutral'}
-                >
-                  <Visibility isVisible={value === PatientState.Admitted}>
-                    <CheckIcon className="size-4" aria-hidden="true" />
-                  </Visibility>
-                  {translation('admitPatient')}
-                </Button>
-                <Button
-                  disabled={value === PatientState.Discharged}
-                  onClick={() => setIsDischargeDialogOpen(true)}
-                  color="neutral"
-                >
-                  <Visibility isVisible={value === PatientState.Admitted}>
-                    <CheckIcon className="size-4" aria-hidden="true" />
-                  </Visibility>
-                  {translation('dischargePatient')}
-                </Button>
-                <Button
-                  disabled={value === PatientState.Wait}
-                  onClick={() => waitPatient({ variables: { id: patientId! }, onCompleted: () => onSuccess?.() })}
-                  color={value === PatientState.Wait ? 'warning' : 'neutral'}
-                >
-                  <Visibility isVisible={value === PatientState.Admitted}>
-                    <CheckIcon className="size-4" aria-hidden="true" />
-                  </Visibility>
-                  {translation('waitPatient')}
-                </Button>
+            {({ dataProps: { value, onValueChange, onEditComplete }, focusableElementProps, interactionStates  }) => (
+              <div className="flex flex-col gap-2">
+                <div className="flex gap-2">
+                  <Input
+                    {...focusableElementProps} {...interactionStates}
+                    value={value ? (locationsMap.size > 0 ? formatLocationPathFromId(value.id, locationsMap) : formatLocationPath(value)) : ''}
+                    placeholder={translation('selectPosition')}
+                    readOnly
+                    className="flex-grow cursor-pointer"
+                    onClick={() => setIsPositionDialogOpen(true)}
+                  />
+                  <Button
+                    onClick={() => setIsPositionDialogOpen(true)}
+                    layout="icon"
+                    title={translation('selectPosition')}
+                  >
+                    <Locate className="size-4" />
+                  </Button>
+                  {value && (
+                    <Button
+                      onClick={() => {
+                        onValueChange(null)
+                        onEditComplete(null)
+                      }}
+                      layout="icon"
+                      color="neutral"
+                      title={translation('clear')}
+                    >
+                      <XIcon className="size-5" />
+                    </Button>
+                  )}
+                </div>
               </div>
             )}
           </FormField>
-        )}
 
-        <FormField<PatientFormValues, 'clinic'>
-          name="clinic"
-          label={translation('clinic')}
-          required
-          showRequiredIndicator={!isEditMode}
-        >
-          {({ dataProps: { value, onValueChange, onEditComplete }, focusableElementProps, interactionStates  }) => (
-            <div className="flex flex-col gap-2">
-              <div className="flex gap-2">
-                <Input
-                  {...focusableElementProps} {...interactionStates}
-                  value={value ? (locationsMap.size > 0 ? formatLocationPathFromId(value.id, locationsMap) : formatLocationPath(value)) : ''}
-                  placeholder={translation('selectClinic')}
-                  readOnly
-                  className="flex-grow cursor-pointer"
-                  onClick={() => setIsClinicDialogOpen(true)}
-                />
-                <Button
-                  onClick={() => setIsClinicDialogOpen(true)}
-                  layout="icon"
-                  title={translation('selectClinic')}
-                >
-                  <Building2 className="size-4" />
-                </Button>
-                {value && !isEditMode && (
+          <FormField<PatientFormValues, 'teams'>
+            name="teams"
+            label={translation('teams')}
+          >
+            {({ dataProps: { value, onValueChange, onEditComplete }, focusableElementProps, interactionStates  }) => (
+              <div className="flex flex-col gap-2">
+                <div className="flex gap-2">
+                  <Input
+                    {...focusableElementProps} {...interactionStates}
+                    value={value && value.length > 0
+                      ? value.map(loc => locationsMap.size > 0 ? formatLocationPathFromId(loc.id, locationsMap) : formatLocationPath(loc)).join(', ')
+                      : ''}
+                    placeholder={translation('selectTeams')}
+                    readOnly
+                    className="flex-grow cursor-pointer"
+                    onClick={() => setIsTeamsDialogOpen(true)}
+                  />
                   <Button
-                    onClick={() => {
-                      onValueChange(null)
-                      onEditComplete(null)
-                    }}
+                    onClick={() => setIsTeamsDialogOpen(true)}
                     layout="icon"
-                    color="neutral"
-                    title={translation('clear')}
+                    title={translation('selectTeams')}
                   >
-                    <XIcon className="size-5" />
+                    <Users className="size-4" />
                   </Button>
-                )}
+                  {value && value.length > 0 && (
+                    <Button
+                      onClick={() => {
+                        onValueChange([])
+                        onEditComplete([])
+                      }}
+                      layout="icon"
+                      color="neutral"
+                      title={translation('clear')}
+                    >
+                      <XIcon className="size-5" />
+                    </Button>
+                  )}
+                </div>
               </div>
-            </div>
-          )}
-        </FormField>
+            )}
+          </FormField>
 
-        <FormField<PatientFormValues, 'position'>
-          name="position"
-          label={translation('position')}
-        >
-          {({ dataProps: { value, onValueChange, onEditComplete }, focusableElementProps, interactionStates  }) => (
-            <div className="flex flex-col gap-2">
-              <div className="flex gap-2">
-                <Input
-                  {...focusableElementProps} {...interactionStates}
-                  value={value ? (locationsMap.size > 0 ? formatLocationPathFromId(value.id, locationsMap) : formatLocationPath(value)) : ''}
-                  placeholder={translation('selectPosition')}
-                  readOnly
-                  className="flex-grow cursor-pointer"
-                  onClick={() => setIsPositionDialogOpen(true)}
-                />
+          {isEditMode && patientId && patientData && (
+            <div className="pt-6 mt-6 border-t border-divider flex justify-end gap-2">
+              {patientData.state !== PatientState.Dead && (
                 <Button
-                  onClick={() => setIsPositionDialogOpen(true)}
-                  layout="icon"
-                  title={translation('selectPosition')}
+                  onClick={() => setIsMarkDeadDialogOpen(true)}
+                  color="negative"
+                  coloringStyle="outline"
                 >
-                  <Locate className="size-4" />
+                  {translation('markPatientDead')}
                 </Button>
-                {value && (
-                  <Button
-                    onClick={() => {
-                      onValueChange(null)
-                      onEditComplete(null)
-                    }}
-                    layout="icon"
-                    color="neutral"
-                    title={translation('clear')}
-                  >
-                    <XIcon className="size-5" />
-                  </Button>
-                )}
-              </div>
-            </div>
-          )}
-        </FormField>
-
-        <FormField<PatientFormValues, 'teams'>
-          name="teams"
-          label={translation('teams')}
-        >
-          {({ dataProps: { value, onValueChange, onEditComplete }, focusableElementProps, interactionStates  }) => (
-            <div className="flex flex-col gap-2">
-              <div className="flex gap-2">
-                <Input
-                  {...focusableElementProps} {...interactionStates}
-                  value={value && value.length > 0
-                    ? value.map(loc => locationsMap.size > 0 ? formatLocationPathFromId(loc.id, locationsMap) : formatLocationPath(loc)).join(', ')
-                    : ''}
-                  placeholder={translation('selectTeams')}
-                  readOnly
-                  className="flex-grow cursor-pointer"
-                  onClick={() => setIsTeamsDialogOpen(true)}
-                />
-                <Button
-                  onClick={() => setIsTeamsDialogOpen(true)}
-                  layout="icon"
-                  title={translation('selectTeams')}
-                >
-                  <Users className="size-4" />
-                </Button>
-                {value && value.length > 0 && (
-                  <Button
-                    onClick={() => {
-                      onValueChange([])
-                      onEditComplete([])
-                    }}
-                    layout="icon"
-                    color="neutral"
-                    title={translation('clear')}
-                  >
-                    <XIcon className="size-5" />
-                  </Button>
-                )}
-              </div>
-            </div>
-          )}
-        </FormField>
-
-        {isEditMode && patientId && patientData && (
-          <div className="pt-6 mt-6 border-t border-divider flex justify-end gap-2">
-            {patientData.state !== PatientState.Dead && (
+              )}
               <Button
-                onClick={() => setIsMarkDeadDialogOpen(true)}
+                onClick={() => setIsDeleteDialogOpen(true)}
                 color="negative"
                 coloringStyle="outline"
               >
-                {translation('markPatientDead')}
+                {translation('deletePatient') ?? 'Delete Patient'}
               </Button>
-            )}
+            </div>
+          )}
+        </form>
+
+        {!isEditMode && (
+          <div className="flex-none pt-4 mt-auto border-t border-divider flex justify-end gap-2">
             <Button
-              onClick={() => setIsDeleteDialogOpen(true)}
-              color="negative"
-              coloringStyle="outline"
+              onClick={form.submit}
+              disabled={isCreating}
             >
-              {translation('deletePatient') ?? 'Delete Patient'}
+              {translation('create')}
             </Button>
           </div>
         )}
-      </form>
 
-      {!isEditMode && (
-        <div className="flex-none pt-4 mt-auto border-t border-divider flex justify-end gap-2">
-          <Button
-            onClick={form.submit}
-            disabled={isCreating}
-          >
-            {translation('create')}
-          </Button>
-        </div>
-      )}
+        <ConfirmDialog
+          isOpen={isMarkDeadDialogOpen}
+          onCancel={() => setIsMarkDeadDialogOpen(false)}
+          onConfirm={() => {
+            if (patientId && markPatientDead) {
+              markPatientDead({ variables: { id: patientId }, onCompleted: () => onSuccess?.() })
+            }
+            setIsMarkDeadDialogOpen(false)
+          }}
+          titleElement={translation('markPatientDead')}
+          description={translation('markPatientDeadConfirmation')}
+          confirmType="negative"
+        />
 
-      <ConfirmDialog
-        isOpen={isMarkDeadDialogOpen}
-        onCancel={() => setIsMarkDeadDialogOpen(false)}
-        onConfirm={() => {
-          if (patientId && markPatientDead) {
-            markPatientDead({ variables: { id: patientId }, onCompleted: () => onSuccess?.() })
-          }
-          setIsMarkDeadDialogOpen(false)
-        }}
-        titleElement={translation('markPatientDead')}
-        description={translation('markPatientDeadConfirmation')}
-        confirmType="negative"
-      />
+        <ConfirmDialog
+          isOpen={isDischargeDialogOpen}
+          onCancel={() => setIsDischargeDialogOpen(false)}
+          onConfirm={() => {
+            if (patientId && dischargePatient) {
+              dischargePatient({ variables: { id: patientId }, onCompleted: () => onSuccess?.() })
+            }
+            setIsDischargeDialogOpen(false)
+          }}
+          titleElement={translation('dischargePatient')}
+          description={translation('dischargePatientConfirmation')}
+          confirmType="neutral"
+        />
 
-      <ConfirmDialog
-        isOpen={isDischargeDialogOpen}
-        onCancel={() => setIsDischargeDialogOpen(false)}
-        onConfirm={() => {
-          if (patientId && dischargePatient) {
-            dischargePatient({ variables: { id: patientId }, onCompleted: () => onSuccess?.() })
-          }
-          setIsDischargeDialogOpen(false)
-        }}
-        titleElement={translation('dischargePatient')}
-        description={translation('dischargePatientConfirmation')}
-        confirmType="neutral"
-      />
+        <ConfirmDialog
+          isOpen={isDeleteDialogOpen}
+          onCancel={() => setIsDeleteDialogOpen(false)}
+          onConfirm={() => {
+            if (patientId && deletePatient) {
+              deletePatient({
+                variables: { id: patientId },
+                onCompleted: () => {
+                  onSuccess?.()
+                  onClose?.()
+                },
+              })
+            }
+            setIsDeleteDialogOpen(false)
+          }}
+          titleElement={translation('deletePatient') ?? 'Delete Patient'}
+          description={translation('deletePatientConfirmation') ?? 'Are you sure you want to delete this patient? This action cannot be undone.'}
+          confirmType="negative"
+        />
 
-      <ConfirmDialog
-        isOpen={isDeleteDialogOpen}
-        onCancel={() => setIsDeleteDialogOpen(false)}
-        onConfirm={() => {
-          if (patientId && deletePatient) {
-            deletePatient({
-              variables: { id: patientId },
-              onCompleted: () => {
-                onSuccess?.()
-                onClose?.()
-              },
-            })
-          }
-          setIsDeleteDialogOpen(false)
-        }}
-        titleElement={translation('deletePatient') ?? 'Delete Patient'}
-        description={translation('deletePatientConfirmation') ?? 'Are you sure you want to delete this patient? This action cannot be undone.'}
-        confirmType="negative"
-      />
-
-      <LocationSelectionDialog
-        isOpen={isClinicDialogOpen}
-        onClose={() => setIsClinicDialogOpen(false)}
-        onSelect={(locations) => {
-          store.setTouched('clinic')
-          store.setValue('clinic', locations[0] ?? null, true)
-        }}
-        initialSelectedIds={clinic ? [clinic.id] : []}
-        multiSelect={false}
-        useCase="clinic"
-      />
-      <LocationSelectionDialog
-        isOpen={isPositionDialogOpen}
-        onClose={() => setIsPositionDialogOpen(false)}
-        onSelect={(locations) => {
-          store.setTouched('position')
-          store.setValue('position', locations[0] ?? null, true)
-        }}
-        initialSelectedIds={position ? [position.id] : []}
-        multiSelect={false}
-        useCase="position"
-      />
-      <LocationSelectionDialog
-        isOpen={isTeamsDialogOpen}
-        onClose={() => setIsTeamsDialogOpen(false)}
-        onSelect={(locations) => {
-          store.setTouched('teams')
-          store.setValue('teams', locations ?? [], true)
-        }}
-        initialSelectedIds={teams?.map(loc => loc.id)}
-        multiSelect={true}
-        useCase="teams"
-      />
-      <ErrorDialog
-        isOpen={errorDialog.isOpen}
-        onClose={() => setErrorDialog({ isOpen: false })}
-        message={errorDialog.message}
-      />
-    </FormProvider>
+        <LocationSelectionDialog
+          isOpen={isClinicDialogOpen}
+          onClose={() => setIsClinicDialogOpen(false)}
+          onSelect={(locations) => {
+            store.setTouched('clinic')
+            store.setValue('clinic', locations[0] ?? null, true)
+          }}
+          initialSelectedIds={clinic ? [clinic.id] : []}
+          multiSelect={false}
+          useCase="clinic"
+        />
+        <LocationSelectionDialog
+          isOpen={isPositionDialogOpen}
+          onClose={() => setIsPositionDialogOpen(false)}
+          onSelect={(locations) => {
+            store.setTouched('position')
+            store.setValue('position', locations[0] ?? null, true)
+          }}
+          initialSelectedIds={position ? [position.id] : []}
+          multiSelect={false}
+          useCase="position"
+        />
+        <LocationSelectionDialog
+          isOpen={isTeamsDialogOpen}
+          onClose={() => setIsTeamsDialogOpen(false)}
+          onSelect={(locations) => {
+            store.setTouched('teams')
+            store.setValue('teams', locations ?? [], true)
+          }}
+          initialSelectedIds={teams?.map(loc => loc.id)}
+          multiSelect={true}
+          useCase="teams"
+        />
+        <ErrorDialog
+          isOpen={errorDialog.isOpen}
+          onClose={() => setErrorDialog({ isOpen: false })}
+          message={errorDialog.message}
+        />
+      </FormProvider>
     </>
   )
 }

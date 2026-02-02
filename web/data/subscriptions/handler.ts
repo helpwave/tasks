@@ -1,6 +1,6 @@
-import { parse } from 'graphql'
 import type { ApolloClient } from '@apollo/client/core'
 import { GetTaskDocument, GetPatientDocument } from '@/api/gql/generated'
+import { getParsedDocument } from '../hooks/queryHelpers'
 import { hasPendingMutationForEntity } from '../mutations/queue'
 
 export type SubscriptionPayload = {
@@ -88,7 +88,7 @@ export async function mergeTaskUpdatedIntoCache(
   }
   if (isLikelyEcho('Task', taskId, payload.clientMutationId)) return
 
-  const doc = parse(GetTaskDocument)
+  const doc = getParsedDocument(GetTaskDocument)
   const result = await client.query<{ task?: unknown }>({
     query: doc,
     variables: { id: taskId },
@@ -133,7 +133,7 @@ export async function mergePatientUpdatedIntoCache(
   }
   if (isLikelyEcho('Patient', patientId, payload.clientMutationId)) return
 
-  const doc = parse(GetPatientDocument)
+  const doc = getParsedDocument(GetPatientDocument)
   const result = await client.query<{ patient?: unknown }>({
     query: doc,
     variables: { id: patientId },
