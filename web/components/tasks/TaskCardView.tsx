@@ -7,11 +7,9 @@ import { LocationChips } from '@/components/patients/LocationChips'
 import type { TaskViewModel } from '@/components/tables/TaskList'
 import { useRouter } from 'next/router'
 import type { TaskPriority } from '@/api/gql/generated'
-import { useCompleteTaskMutation, useReopenTaskMutation, type GetGlobalDataQuery } from '@/api/gql/generated'
+import { useCompleteTask, useReopenTask } from '@/data'
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { UserInfoPopup } from '@/components/UserInfoPopup'
-import { useQueryClient } from '@tanstack/react-query'
-import { useTasksContext } from '@/hooks/useTasksContext'
 import { PriorityUtils } from '@/utils/priority'
 
 type FlexibleTask = {
@@ -78,8 +76,6 @@ const toDate = (date: Date | string | null | undefined): Date | undefined => {
 
 export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showAssignee: _showAssignee = false, showPatient = true, onRefetch, className, fullWidth: _fullWidth = false }: TaskCardViewProps) => {
   const router = useRouter()
-  const queryClient = useQueryClient()
-  const { selectedRootLocationIds } = useTasksContext()
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
   const [optimisticDone, setOptimisticDone] = useState<boolean | null>(null)
   const pendingCheckedRef = useRef<boolean | null>(null)
@@ -88,72 +84,8 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
   const descriptionPreview = task.description
   const displayDone = optimisticDone !== null ? optimisticDone : task.done
 
-  const { mutate: completeTask } = useCompleteTaskMutation({
-    onMutate: async (variables) => {
-      const selectedRootLocationIdsForQuery = selectedRootLocationIds && selectedRootLocationIds.length > 0 ? selectedRootLocationIds : undefined
-      await queryClient.cancelQueries({ queryKey: ['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }] })
-      const previousData = queryClient.getQueryData<GetGlobalDataQuery>(['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }])
-      const newDone = pendingCheckedRef.current ?? true
-      if (previousData?.me?.tasks) {
-        queryClient.setQueryData<GetGlobalDataQuery>(['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }], {
-          ...previousData,
-          me: previousData.me ? {
-            ...previousData.me,
-            tasks: previousData.me.tasks.map(task => task.id === variables.id ? { ...task, done: newDone } : task)
-          } : null
-        })
-      }
-      return { previousData }
-    },
-    onSuccess: async () => {
-      pendingCheckedRef.current = null
-      setOptimisticDone(null)
-      await queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
-      await queryClient.invalidateQueries({ queryKey: ['GetOverviewData'] })
-      onRefetch?.()
-    },
-    onError: (error, variables, context) => {
-      pendingCheckedRef.current = null
-      setOptimisticDone(null)
-      if (context?.previousData) {
-        const selectedRootLocationIdsForQuery = selectedRootLocationIds && selectedRootLocationIds.length > 0 ? selectedRootLocationIds : undefined
-        queryClient.setQueryData(['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }], context.previousData)
-      }
-    }
-  })
-  const { mutate: reopenTask } = useReopenTaskMutation({
-    onMutate: async (variables) => {
-      const selectedRootLocationIdsForQuery = selectedRootLocationIds && selectedRootLocationIds.length > 0 ? selectedRootLocationIds : undefined
-      await queryClient.cancelQueries({ queryKey: ['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }] })
-      const previousData = queryClient.getQueryData<GetGlobalDataQuery>(['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }])
-      const newDone = pendingCheckedRef.current ?? false
-      if (previousData?.me?.tasks) {
-        queryClient.setQueryData<GetGlobalDataQuery>(['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }], {
-          ...previousData,
-          me: previousData.me ? {
-            ...previousData.me,
-            tasks: previousData.me.tasks.map(task => task.id === variables.id ? { ...task, done: newDone } : task)
-          } : null
-        })
-      }
-      return { previousData }
-    },
-    onSuccess: async () => {
-      pendingCheckedRef.current = null
-      setOptimisticDone(null)
-      await queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
-      await queryClient.invalidateQueries({ queryKey: ['GetOverviewData'] })
-      onRefetch?.()
-    },
-    onError: (error, variables, context) => {
-      pendingCheckedRef.current = null
-      setOptimisticDone(null)
-      if (context?.previousData) {
-        const selectedRootLocationIdsForQuery = selectedRootLocationIds && selectedRootLocationIds.length > 0 ? selectedRootLocationIds : undefined
-        queryClient.setQueryData(['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }], context.previousData)
-      }
-    }
-  })
+  const [completeTask] = useCompleteTask()
+  const [reopenTask] = useReopenTask()
 
   const dueDate = toDate(task.dueDate)
   const overdue = dueDate ? isOverdue(dueDate, task.done) : false
@@ -187,9 +119,31 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
     pendingCheckedRef.current = checked
     setOptimisticDone(checked)
     if (checked) {
-      completeTask({ id: task.id })
+      completeTask({
+        variables: { id: task.id },
+        onCompleted: () => {
+          pendingCheckedRef.current = null
+          setOptimisticDone(null)
+          onRefetch?.()
+        },
+        onError: () => {
+          pendingCheckedRef.current = null
+          setOptimisticDone(null)
+        },
+      })
     } else {
-      reopenTask({ id: task.id })
+      reopenTask({
+        variables: { id: task.id },
+        onCompleted: () => {
+          pendingCheckedRef.current = null
+          setOptimisticDone(null)
+          onRefetch?.()
+        },
+        onError: () => {
+          pendingCheckedRef.current = null
+          setOptimisticDone(null)
+        },
+      })
     }
   }
 

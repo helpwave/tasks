@@ -1,11 +1,7 @@
 import { useMemo, useCallback } from 'react'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
-import {
-  PropertyEntity,
-  useGetPropertyDefinitionsQuery,
-  useGetTaskQuery,
-  type PropertyValueInput
-} from '@/api/gql/generated'
+import { PropertyEntity, type PropertyValueInput } from '@/api/gql/generated'
+import { usePropertyDefinitions, useTask } from '@/data'
 import {
   TabList,
   TabPanel,
@@ -13,7 +9,7 @@ import {
 } from '@helpwave/hightide'
 import { PropertyList, type PropertyValue } from '@/components/tables/PropertyList'
 import { TaskDataEditor } from './TaskDataEditor'
-import { useOptimisticUpdateTaskMutation } from '@/api/optimistic-updates/GetTask'
+import { useUpdateTask } from '@/data'
 
 interface TaskDetailViewProps {
   taskId: string | null,
@@ -27,22 +23,14 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
 
   const isEditMode = !!taskId
 
-  const { data: taskData } = useGetTaskQuery(
-    { id: taskId! },
-    {
-      enabled: isEditMode,
-      refetchOnMount: true,
-    }
+  const { data: taskData } = useTask(
+    taskId ?? '',
+    { skip: !isEditMode }
   )
 
-  const { data: propertyDefinitionsData } = useGetPropertyDefinitionsQuery()
+  const { data: propertyDefinitionsData } = usePropertyDefinitions()
 
-  const { mutate: updateTask } = useOptimisticUpdateTaskMutation({
-    id: taskId!,
-    onSuccess: () => {
-      onSuccess()
-    },
-  })
+  const [updateTask] = useUpdateTask()
 
   const hasAvailableProperties = useMemo(() => {
     if (!propertyDefinitionsData?.propertyDefinitions) return false
@@ -66,9 +54,9 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
   }, [])
 
   const handlePropertyValueChange = useCallback((definitionId: string, value: PropertyValue | null) => {
-    if (!isEditMode || !taskId || !taskData?.task) return
+    if (!isEditMode || !taskId || !taskData) return
 
-    const currentProperties = taskData.task.properties || []
+    const currentProperties = taskData.properties || []
     const propertyInputs: PropertyValueInput[] = []
 
     // Add all existing properties except the one being changed
@@ -96,12 +84,15 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
     }
 
     updateTask({
-      id: taskId,
-      data: {
-        properties: propertyInputs,
+      variables: {
+        id: taskId,
+        data: {
+          properties: propertyInputs,
+        },
       },
+      onCompleted: () => onSuccess(),
     })
-  }, [isEditMode, taskId, taskData?.task, convertPropertyValueToInput, updateTask])
+  }, [isEditMode, taskId, taskData, convertPropertyValueToInput, updateTask])
 
 
   return (
@@ -123,7 +114,7 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
                 subjectId={taskId!}
                 subjectType="task"
                 fullWidthAddButton={true}
-                propertyValues={taskData?.task?.properties?.map(p => ({
+                propertyValues={taskData?.properties?.map(p => ({
                   ...p,
                   definition: {
                     ...p.definition,

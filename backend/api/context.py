@@ -1,9 +1,10 @@
 import asyncio
+import logging
 from datetime import datetime, timezone
 from typing import Any
 
 import strawberry
-from auth import get_user_payload
+from auth import get_token_from_connection_params, get_user_payload, verify_token
 from database.models.location import LocationNode, location_organizations
 from database.models.user import User, user_root_locations
 from database.session import get_db_session
@@ -15,6 +16,8 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.requests import HTTPConnection
 from strawberry.fastapi import BaseContext
+
+logger = logging.getLogger(__name__)
 
 
 class LockedAsyncSession:
@@ -64,6 +67,112 @@ class Context(BaseContext):
 Info = strawberry.Info[Context, Any]
 
 
+def _organizations_from_payload(user_payload: dict) -> str | None:
+    organizations_raw = user_payload.get("organization")
+    if not organizations_raw:
+        return None
+    if isinstance(organizations_raw, list):
+        org_list = [str(org) for org in organizations_raw if org]
+        return ",".join(org_list) if org_list else None
+    return str(organizations_raw)
+
+
+async def _resolve_user_from_payload(
+    session: AsyncSession | LockedAsyncSession,
+    user_payload: dict,
+) -> "User | None":
+    user_id = user_payload.get("sub")
+    if not user_id:
+        return None
+    username = user_payload.get("preferred_username") or user_payload.get("name")
+    firstname = user_payload.get("given_name")
+    lastname = user_payload.get("family_name")
+    email = user_payload.get("email")
+    picture = user_payload.get("picture")
+    organizations = _organizations_from_payload(user_payload)
+
+    result = await session.execute(select(User).where(User.id == user_id))
+    db_user = result.scalars().first()
+
+    if not db_user:
+        try:
+            new_user = User(
+                id=user_id,
+                username=username,
+                email=email,
+                firstname=firstname,
+                lastname=lastname,
+                title="User",
+                avatar_url=picture,
+                last_online=datetime.now(timezone.utc),
+            )
+            session.add(new_user)
+            await session.commit()
+            await session.refresh(new_user)
+            db_user = new_user
+        except IntegrityError:
+            await session.rollback()
+            result = await session.execute(
+                select(User).where(User.id == user_id),
+            )
+            db_user = result.scalars().first()
+        except Exception as e:
+            await session.rollback()
+            raise GraphQLError(
+                "Failed to create user. Please contact an administrator if you believe this is an error.",
+                extensions={"code": "INTERNAL_SERVER_ERROR"},
+            ) from e
+
+    if db_user and (
+        db_user.username != username
+        or db_user.firstname != firstname
+        or db_user.lastname != lastname
+        or db_user.email != email
+        or db_user.avatar_url != picture
+    ):
+        db_user.username = username
+        db_user.firstname = firstname
+        db_user.lastname = lastname
+        db_user.email = email
+        if picture:
+            db_user.avatar_url = picture
+        session.add(db_user)
+        await session.commit()
+        await session.refresh(db_user)
+
+    if db_user:
+        db_user.last_online = datetime.now(timezone.utc)
+        session.add(db_user)
+        try:
+            await _update_user_root_locations(
+                session,
+                db_user,
+                organizations,
+            )
+        except Exception as e:
+            raise GraphQLError(
+                "Failed to update user root locations. Please contact an administrator if you believe this is an error.",
+                extensions={"code": "INTERNAL_SERVER_ERROR"},
+            ) from e
+
+    return db_user
+
+
+async def get_user_from_connection_params(
+    connection_params: dict | None,
+    session: AsyncSession | LockedAsyncSession,
+) -> "User | None":
+    token = get_token_from_connection_params(connection_params)
+    if not token:
+        return None
+    try:
+        user_payload = verify_token(token)
+    except Exception as e:
+        logger.warning("WebSocket auth failed for token: %s", e)
+        return None
+    return await _resolve_user_from_payload(session, user_payload)
+
+
 async def get_context(
     connection: HTTPConnection,
     session=Depends(get_db_session),
@@ -73,97 +182,14 @@ async def get_context(
     organizations = None
 
     if user_payload:
-        user_id = user_payload.get("sub")
-        username = user_payload.get("preferred_username") or user_payload.get(
-            "name",
-        )
-        firstname = user_payload.get("given_name")
-        lastname = user_payload.get("family_name")
-        email = user_payload.get("email")
-        picture = user_payload.get("picture")
-
-        organizations_raw = user_payload.get("organization")
-        organizations = None
-        if organizations_raw:
-            if isinstance(organizations_raw, list):
-                org_list = [str(org) for org in organizations_raw if org]
-                if org_list:
-                    organizations = ",".join(org_list)
-            else:
-                organizations = str(organizations_raw) if organizations_raw else None
-
-        if user_id:
-            result = await session.execute(
-                select(User).where(User.id == user_id),
-            )
-            db_user = result.scalars().first()
-
-            if not db_user:
-                try:
-                    new_user = User(
-                        id=user_id,
-                        username=username,
-                        email=email,
-                        firstname=firstname,
-                        lastname=lastname,
-                        title="User",
-                        avatar_url=picture,
-                        last_online=datetime.now(timezone.utc),
-                    )
-                    session.add(new_user)
-                    await session.commit()
-                    await session.refresh(new_user)
-                    db_user = new_user
-                except IntegrityError:
-                    await session.rollback()
-                    result = await session.execute(
-                        select(User).where(User.id == user_id),
-                    )
-                    db_user = result.scalars().first()
-                except Exception as e:
-                    await session.rollback()
-                    raise GraphQLError(
-                        "Failed to create user. Please contact an administrator if you believe this is an error.",
-                        extensions={"code": "INTERNAL_SERVER_ERROR"},
-                    ) from e
-
-            if db_user and (
-                db_user.username != username
-                or db_user.firstname != firstname
-                or db_user.lastname != lastname
-                or db_user.email != email
-                or db_user.avatar_url != picture
-            ):
-                db_user.username = username
-                db_user.firstname = firstname
-                db_user.lastname = lastname
-                db_user.email = email
-                if picture:
-                    db_user.avatar_url = picture
-                session.add(db_user)
-                await session.commit()
-                await session.refresh(db_user)
-
-            if db_user:
-                db_user.last_online = datetime.now(timezone.utc)
-                session.add(db_user)
-                try:
-                    await _update_user_root_locations(
-                        session,
-                        db_user,
-                        organizations,
-                    )
-                except Exception as e:
-                    raise GraphQLError(
-                        "Failed to update user root locations. Please contact an administrator if you believe this is an error.",
-                        extensions={"code": "INTERNAL_SERVER_ERROR"},
-                    ) from e
+        organizations = _organizations_from_payload(user_payload)
+        db_user = await _resolve_user_from_payload(session, user_payload)
 
     return Context(db=session, user=db_user, organizations=organizations)
 
 
 async def _update_user_root_locations(
-    session: AsyncSession,
+    session: AsyncSession | LockedAsyncSession,
     user: User,
     organizations: str | None,
 ) -> None:

@@ -3,7 +3,7 @@ import { PropsUtil, Visibility } from '@helpwave/hightide'
 import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { Users, ChevronDown, Info, SearchIcon } from 'lucide-react'
-import { useGetUsersQuery, useGetLocationsQuery } from '@/api/gql/generated'
+import { useUsers, useLocations } from '@/data'
 import clsx from 'clsx'
 import { AssigneeSelectDialog } from './AssigneeSelectDialog'
 import { UserInfoPopup } from '../UserInfoPopup'
@@ -33,9 +33,8 @@ export const  AssigneeSelect = ({
   const [selectedUserPopupState, setSelectedUserPopupState] = useState<{ isOpen: boolean, userId: string | null }>({ isOpen: false, userId: null })
 
 
-  const { data: usersData } = useGetUsersQuery(undefined, {
-  })
-  const { data: locationsData } = useGetLocationsQuery(undefined, {})
+  const { data: usersData } = useUsers()
+  const { data: locationsData } = useLocations()
 
   const teams = useMemo(() => {
     if (!locationsData?.locationNodes) return []

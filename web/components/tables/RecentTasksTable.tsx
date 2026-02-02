@@ -9,7 +9,8 @@ import { ArrowRightIcon } from 'lucide-react'
 import { SmartDate } from '@/utils/date'
 import { DueDateUtils } from '@/utils/dueDate'
 import { PriorityUtils } from '@/utils/priority'
-import { useGetPropertyDefinitionsQuery, PropertyEntity } from '@/api/gql/generated'
+import { PropertyEntity } from '@/api/gql/generated'
+import { usePropertyDefinitions } from '@/data'
 import { createPropertyColumn } from '@/utils/propertyColumn'
 import { useStateWithLocalStorage } from '@/hooks/useStateWithLocalStorage'
 
@@ -38,7 +39,7 @@ export const RecentTasksTable = ({
   ...props
 }: RecentTasksTableProps) => {
   const translation = useTasksTranslation()
-  const { data: propertyDefinitionsData } = useGetPropertyDefinitionsQuery()
+  const { data: propertyDefinitionsData } = usePropertyDefinitions()
 
   const [pagination, setPagination] = useStateWithLocalStorage<PaginationState>({
     key: STORAGE_KEY_COLUMN_PAGINATION,

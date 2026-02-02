@@ -1,7 +1,7 @@
 import type { Dispatch, SetStateAction } from 'react'
 import { createContext, type PropsWithChildren, useContext, useEffect, useRef, useState } from 'react'
 import { usePathname } from 'next/navigation'
-import { useGetGlobalDataQuery, useGetLocationsQuery } from '@/api/gql/generated'
+import { useGlobalData, useLocations } from '@/data'
 import { useQueryClient } from '@tanstack/react-query'
 import { useAuth } from './useAuth'
 import { useLocalStorage } from '@helpwave/hightide'
@@ -124,27 +124,20 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
     selectedRootLocationIds: storedSelectedRootLocationIds.length > 0 ? storedSelectedRootLocationIds : undefined,
   })
 
-  const { data: allLocationsData } = useGetLocationsQuery(
+  const { data: allLocationsData } = useLocations(
     {},
-    {
-      enabled: !isAuthLoading && !!identity,
-      refetchOnWindowFocus: true,
-    }
+    { skip: isAuthLoading || !identity }
   )
 
   const selectedRootLocationIdsForQuery = state.selectedRootLocationIds && state.selectedRootLocationIds.length > 0
     ? state.selectedRootLocationIds
     : undefined
 
-  const { data } = useGetGlobalDataQuery(
+  const { data } = useGlobalData(
     {
       rootLocationIds: selectedRootLocationIdsForQuery
     },
-    {
-      enabled: !isAuthLoading && !!identity,
-      refetchOnWindowFocus: true,
-      refetchOnMount: true,
-    }
+    { skip: isAuthLoading || !identity }
   )
 
   const prevRootLocationIdsRef = useRef<string>('')
@@ -181,7 +174,24 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
     }
   }, [data?.me?.rootLocations, queryClient])
 
+  const myTasksCount = data?.me?.tasks?.filter(t => !t.done).length ?? 0
+  const waitingPatientsCountForKey = data?.waitingPatients?.filter(p => p.state === 'WAIT').length ?? data?.waitingPatients?.length ?? 0
+  const effectInputKey = [
+    data?.me?.id ?? '',
+    (data?.me?.rootLocations ?? []).map(l => l.id).sort().join(','),
+    (data?.patients ?? []).length,
+    (data?.me?.tasks ?? []).length,
+    myTasksCount,
+    waitingPatientsCountForKey,
+    (allLocationsData?.locationNodes ?? []).map(n => n.id).sort().join(','),
+    (storedSelectedRootLocationIds ?? []).slice().sort().join(','),
+  ].join('|')
+  const prevEffectKeyRef = useRef<string>('')
+
   useEffect(() => {
+    if (prevEffectKeyRef.current === effectInputKey) return
+    prevEffectKeyRef.current = effectInputKey
+
     const totalPatientsCount = data?.patients?.length ?? 0
     const waitingPatientsCount = data?.waitingPatients?.length ?? 0
     const backendRootLocations = data?.me?.rootLocations?.map(loc => ({ id: loc.id, title: loc.title, kind: loc.kind })) ?? []
@@ -261,7 +271,7 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
         selectedRootLocationIds,
       }
     })
-  }, [data, storedSelectedRootLocationIds, allLocationsData, setStoredSelectedRootLocationIds])
+  }, [effectInputKey, data, storedSelectedRootLocationIds, allLocationsData, setStoredSelectedRootLocationIds])
 
   const lastWrittenLocationIdsRef = useRef<string[] | undefined>(undefined)
 

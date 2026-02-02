@@ -1,14 +1,25 @@
 import { useState, useMemo, useEffect } from 'react'
 import type { FormFieldDataHandling } from '@helpwave/hightide'
 import { FormProvider, Input, DateTimeInput, Select, SelectOption, Textarea, Checkbox, Button, ConfirmDialog, LoadingContainer, useCreateForm, FormField, Visibility, useFormObserverKey } from '@helpwave/hightide'
+import { CenteredLoadingLogo } from '@/components/CenteredLoadingLogo'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import type { CreatePatientInput, LocationNodeType, UpdatePatientInput, GetPatientQuery } from '@/api/gql/generated'
-import { Sex, PatientState, useGetLocationsQuery, useGetPatientQuery } from '@/api/gql/generated'
+import { Sex, PatientState } from '@/api/gql/generated'
+import { useLocations, usePatient } from '@/data'
 import { Building2, CheckIcon, Locate, Users, XIcon } from 'lucide-react'
 import { formatLocationPath, formatLocationPathFromId } from '@/utils/location'
 import { toISODate } from './PatientDetailView'
 import { LocationSelectionDialog } from '@/components/locations/LocationSelectionDialog'
-import { useOptimisticCreatePatientMutation, useOptimisticAdmitPatientMutation, useOptimisticDischargePatientMutation, useOptimisticDeletePatientMutation, useOptimisticWaitPatientMutation, useOptimisticMarkPatientDeadMutation, useOptimisticUpdatePatientMutation } from '@/api/optimistic-updates/GetPatient'
+import {
+  useCreatePatient,
+  useAdmitPatient,
+  useDischargePatient,
+  useDeletePatient,
+  useWaitPatient,
+  useMarkPatientDead,
+  useUpdatePatient,
+  useRefreshingEntityIds
+} from '@/data'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { ErrorDialog } from '@/components/ErrorDialog'
 
@@ -56,13 +67,14 @@ export const PatientDataEditor = ({
 
   const isEditMode = id !== null
   const patientId = id
+  const { refreshingPatientIds } = useRefreshingEntityIds()
 
-  const { data: patientData, isLoading: isLoadingPatient } = useGetPatientQuery(
-    { id: patientId! },
-    { enabled: isEditMode }
+  const { data: patientData, loading: isLoadingPatient } = usePatient(
+    patientId ?? '',
+    { skip: !isEditMode }
   )
 
-  const { data: locationsData } = useGetLocationsQuery(undefined)
+  const { data: locationsData } = useLocations()
 
   const locationsMap = useMemo(() => {
     if (!locationsData?.locationNodes) return new Map()
@@ -73,65 +85,13 @@ export const PatientDataEditor = ({
     return map
   }, [locationsData])
 
-  const [isCreating, setIsCreating] = useState<boolean>(false)
-  const { mutate: createPatient } = useOptimisticCreatePatientMutation({
-    onMutate: () => {
-      setIsCreating(true)
-    },
-    onSettled: () => {
-      setIsCreating(false)
-    },
-    onSuccess: async () => {
-      onSuccess?.()
-      onClose?.()
-    },
-    onError: (error) => {
-      setErrorDialog({ isOpen: true, message: error instanceof Error ? error.message : 'Failed to create patient' })
-    },
-  })
-
-  const { mutate: admitPatient } = useOptimisticAdmitPatientMutation({
-    id: patientId!,
-    onSuccess: () => {
-      onSuccess?.()
-    },
-  })
-
-  const { mutate: dischargePatient } = useOptimisticDischargePatientMutation({
-    id: patientId!,
-    onSuccess: () => {
-      onSuccess?.()
-    },
-  })
-
-  const { mutate: deletePatient } = useOptimisticDeletePatientMutation({
-    onSuccess: async () => {
-      onSuccess?.()
-      onClose?.()
-    },
-  })
-
-
-  const { mutate: waitPatient } = useOptimisticWaitPatientMutation({
-    id: patientId!,
-    onSuccess: () => {
-      onSuccess?.()
-    },
-  })
-
-  const { mutate: markPatientDead } = useOptimisticMarkPatientDeadMutation({
-    id: patientId!,
-    onSuccess: () => {
-      onSuccess?.()
-    },
-  })
-
-  const { mutate: updatePatient } = useOptimisticUpdatePatientMutation({
-    id: patientId!,
-    onSuccess: () => {
-      onSuccess?.()
-    },
-  })
+  const [createPatient, { loading: isCreating }] = useCreatePatient()
+  const [admitPatient] = useAdmitPatient()
+  const [dischargePatient] = useDischargePatient()
+  const [deletePatient] = useDeletePatient()
+  const [waitPatient] = useWaitPatient()
+  const [markPatientDead] = useMarkPatientDead()
+  const [updatePatient] = useUpdatePatient()
 
 
   const form = useCreateForm<PatientFormValues>({
@@ -161,7 +121,16 @@ export const PatientDataEditor = ({
         state: values.state,
         description: values.description,
       }
-      createPatient({ data })
+      createPatient({
+        variables: { data },
+        onCompleted: () => {
+          onSuccess?.()
+          onClose?.()
+        },
+        onError: (error) => {
+          setErrorDialog({ isOpen: true, message: error instanceof Error ? error.message : 'Failed to create patient' })
+        },
+      })
     },
     validators: {
       firstname: (value) => {
@@ -197,39 +166,55 @@ export const PatientDataEditor = ({
       },
     },
     onValidUpdate: (_, updates) => {
-      if (isEditMode && patientId) {
-        const data: UpdatePatientInput = {
-          firstname: updates?.firstname,
-          lastname: updates.lastname,
-          birthdate: updates.birthdate,
-          sex: updates.sex,
-          assignedLocationIds: updates.assignedLocationIds,
-          clinicId: updates.clinic?.id,
-          teamIds: updates.teams?.map(t => t.id),
-          positionId: updates.position?.id,
-          description: updates.description,
-        }
-        updatePatient({ id: patientId, data })
+      if (!isEditMode || !patientId || !patientData) return
+      const data: UpdatePatientInput = {
+        firstname: updates?.firstname,
+        lastname: updates.lastname,
+        birthdate: updates.birthdate,
+        sex: updates.sex,
+        assignedLocationIds: updates.assignedLocationIds,
+        clinicId: updates.clinic?.id,
+        teamIds: updates.teams?.map(t => t.id),
+        positionId: updates.position?.id,
+        description: updates.description,
       }
+      const current = patientData
+      const sameFirstname = (data.firstname ?? current.firstname) === current.firstname
+      const sameLastname = (data.lastname ?? current.lastname) === current.lastname
+      const sameBirthdate = (data.birthdate ?? toISODate(current.birthdate)) === toISODate(current.birthdate)
+      const sameSex = (data.sex ?? current.sex) === current.sex
+      const sameAssignedIds = (data.assignedLocationIds ?? current.assignedLocations?.map((l: { id: string }) => l.id) ?? []).length === (current.assignedLocations?.length ?? 0) &&
+        (data.assignedLocationIds ?? []).every((id: string, i: number) => id === current.assignedLocations?.[i]?.id)
+      const sameClinic = (data.clinicId ?? current.clinic?.id) === current.clinic?.id
+      const sameTeamIds = (data.teamIds ?? current.teams?.map((t: { id: string }) => t.id) ?? []).length === (current.teams?.length ?? 0) &&
+        (data.teamIds ?? []).every((id: string, i: number) => id === current.teams?.[i]?.id)
+      const samePosition = (data.positionId ?? current.position?.id) === current.position?.id
+      const sameDescription = (data.description ?? current.description ?? '') === (current.description ?? '')
+      if (sameFirstname && sameLastname && sameBirthdate && sameSex && sameAssignedIds && sameClinic && sameTeamIds && samePosition && sameDescription) return
+      updatePatient({
+        variables: { id: patientId, data },
+        onCompleted: () => onSuccess?.(),
+      })
     }
   })
 
   const { store, update: updateForm } = form
 
   useEffect(() => {
-    if (patientData?.patient) {
-      const patient = patientData.patient
-      const { firstname, lastname, sex, birthdate, assignedLocations, clinic, position, teams, description } = patient
+    if (patientData) {
+      const patient = patientData
+      const { firstname, lastname, sex, birthdate, assignedLocations, clinic, position, teams, description, state } = patient
       const value: PatientFormValues = {
         firstname,
         lastname,
         sex,
         birthdate: toISODate(birthdate),
-        assignedLocationIds: assignedLocations.map(loc => loc.id),
+        assignedLocationIds: assignedLocations.map((loc: { id: string }) => loc.id),
         clinic: clinic || null,
         position: position || null,
         teams: teams || null,
         description: description,
+        state,
       }
       updateForm(prev => ({
         ...prev,
@@ -276,7 +261,7 @@ export const PatientDataEditor = ({
   }, [isEditMode, firstSelectedRootLocationId, locationsData, rootLocations, clinic, updateForm])
 
   if (isEditMode && isLoadingPatient) {
-    return <LoadingContainer />
+    return <CenteredLoadingLogo />
   }
 
   const sexOptions = [
@@ -285,11 +270,19 @@ export const PatientDataEditor = ({
     { label: translation('diverse'), value: Sex.Unknown }
   ]
 
+  const isRefreshing = isEditMode && patientId != null && refreshingPatientIds.has(patientId)
 
   return (
-    <FormProvider state={form}>
-      <form onSubmit={event => {event.preventDefault(); form.submit() }} className="flex-col-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <>
+      {isRefreshing && (
+        <div className="flex items-center gap-2 py-2 px-3 rounded-md bg-neutral-100 dark:bg-neutral-800 mb-4">
+          <LoadingContainer className="size-5 shrink-0" />
+          <span className="text-sm text-neutral-600 dark:text-neutral-400">{translation('refreshing')}</span>
+        </div>
+      )}
+      <FormProvider state={form}>
+        <form onSubmit={event => {event.preventDefault(); form.submit() }} className="flex-col-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField<PatientFormValues, 'firstname'>
             name="firstname"
             label={translation('firstName')}
@@ -403,7 +396,7 @@ export const PatientDataEditor = ({
               <div className="flex gap-4 flex-wrap">
                 <Button
                   disabled={value === PatientState.Admitted}
-                  onClick={() => admitPatient({ id: patientId! })}
+                  onClick={() => admitPatient({ variables: { id: patientId! }, onCompleted: () => onSuccess?.() })}
                   color={value === PatientState.Admitted ? 'positive' : 'neutral'}
                 >
                   <Visibility isVisible={value === PatientState.Admitted}>
@@ -423,7 +416,7 @@ export const PatientDataEditor = ({
                 </Button>
                 <Button
                   disabled={value === PatientState.Wait}
-                  onClick={() => waitPatient({ id: patientId! })}
+                  onClick={() => waitPatient({ variables: { id: patientId! }, onCompleted: () => onSuccess?.() })}
                   color={value === PatientState.Wait ? 'warning' : 'neutral'}
                 >
                   <Visibility isVisible={value === PatientState.Admitted}>
@@ -560,9 +553,9 @@ export const PatientDataEditor = ({
           )}
         </FormField>
 
-        {isEditMode && patientId && patientData?.patient && (
+        {isEditMode && patientId && patientData && (
           <div className="pt-6 mt-6 border-t border-divider flex justify-end gap-2">
-            {patientData.patient.state !== PatientState.Dead && (
+            {patientData.state !== PatientState.Dead && (
               <Button
                 onClick={() => setIsMarkDeadDialogOpen(true)}
                 color="negative"
@@ -598,7 +591,7 @@ export const PatientDataEditor = ({
         onCancel={() => setIsMarkDeadDialogOpen(false)}
         onConfirm={() => {
           if (patientId && markPatientDead) {
-            markPatientDead({ id: patientId })
+            markPatientDead({ variables: { id: patientId }, onCompleted: () => onSuccess?.() })
           }
           setIsMarkDeadDialogOpen(false)
         }}
@@ -612,7 +605,7 @@ export const PatientDataEditor = ({
         onCancel={() => setIsDischargeDialogOpen(false)}
         onConfirm={() => {
           if (patientId && dischargePatient) {
-            dischargePatient({ id: patientId })
+            dischargePatient({ variables: { id: patientId }, onCompleted: () => onSuccess?.() })
           }
           setIsDischargeDialogOpen(false)
         }}
@@ -626,7 +619,13 @@ export const PatientDataEditor = ({
         onCancel={() => setIsDeleteDialogOpen(false)}
         onConfirm={() => {
           if (patientId && deletePatient) {
-            deletePatient({ id: patientId })
+            deletePatient({
+              variables: { id: patientId },
+              onCompleted: () => {
+                onSuccess?.()
+                onClose?.()
+              },
+            })
           }
           setIsDeleteDialogOpen(false)
         }}
@@ -674,5 +673,6 @@ export const PatientDataEditor = ({
         message={errorDialog.message}
       />
     </FormProvider>
+    </>
   )
 }

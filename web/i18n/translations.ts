@@ -42,6 +42,9 @@ export type TasksTranslationEntries = {
   'confirmShiftHandoverDescription': string,
   'confirmShiftHandoverDescriptionWithName': (values: { taskCount: number, name: string }) => string,
   'conflictDetected': string,
+  'connectionConnected': string,
+  'connectionConnecting': string,
+  'connectionDisconnected': string,
   'create': string,
   'createdAt': string,
   'createTask': string,
@@ -171,6 +174,7 @@ export type TasksTranslationEntries = {
   'recentPatients': string,
   'recentTasks': string,
   'rEdit': (values: { name: string }) => string,
+  'refreshing': string,
   'removeProperty': string,
   'removePropertyConfirmation': string,
   'retakeSurvey': string,
@@ -288,6 +292,9 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
       return _out
     },
     'conflictDetected': `Konflikt erkannt`,
+    'connectionConnected': `Verbunden`,
+    'connectionConnecting': `Verbinde…`,
+    'connectionDisconnected': `Getrennt`,
     'create': `Erstellen`,
     'createdAt': `Erstellt am`,
     'createTask': `Aufgabe erstellen`,
@@ -513,6 +520,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'rEdit': ({ name }): string => {
       return `${name} ändern`
     },
+    'refreshing': `Aktualisiere…`,
     'removeProperty': `Eigenschaft entfernen`,
     'removePropertyConfirmation': `Sind Sie sicher, dass Sie diese Eigenschaft entfernen möchten? Diese Aktion kann nicht rückgängig gemacht werden.`,
     'retakeSurvey': `Umfrage erneut durchführen`,
@@ -663,6 +671,9 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
       return _out
     },
     'conflictDetected': `Conflict Detected`,
+    'connectionConnected': `Connected`,
+    'connectionConnecting': `Connecting…`,
+    'connectionDisconnected': `Disconnected`,
     'create': `Create`,
     'createdAt': `Created at`,
     'createTask': `Create Task`,
@@ -887,6 +898,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'rEdit': ({ name }): string => {
       return `Update ${name}!`
     },
+    'refreshing': `Refreshing…`,
     'removeProperty': `Remove Property`,
     'removePropertyConfirmation': `Are you sure you want to remove this property? This action cannot be undone.`,
     'retakeSurvey': `Retake Survey`,

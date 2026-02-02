@@ -34,10 +34,11 @@ import {
   MessageSquare
 } from 'lucide-react'
 import { Notifications } from '@/components/Notifications'
+import { ConnectionStatusIndicator } from '@/components/ConnectionStatusIndicator'
 import { TasksLogo } from '@/components/TasksLogo'
 import { useRouter } from 'next/router'
 import { useTasksContext } from '@/hooks/useTasksContext'
-import { useGetLocationsQuery } from '@/api/gql/generated'
+import { useLocations } from '@/data'
 import { hashString } from '@/utils/hash'
 import { useSwipeGesture } from '@/hooks/useSwipeGesture'
 import { LocationSelectionDialog } from '@/components/locations/LocationSelectionDialog'
@@ -216,11 +217,10 @@ const RootLocationSelector = ({ className, onSelect }: RootLocationSelectorProps
   const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false)
   const [selectedLocationsCache, setSelectedLocationsCache] = useState<Array<{ id: string, title: string, kind?: string }>>([])
 
-  const { data: locationsData } = useGetLocationsQuery(
+  const { data: locationsData } = useLocations(
     {},
     {
-      enabled: !!selectedRootLocationIds && selectedRootLocationIds.length > 0,
-      refetchOnWindowFocus: true,
+      skip: !selectedRootLocationIds || selectedRootLocationIds.length === 0,
     }
   )
 
@@ -335,7 +335,7 @@ export const Header = ({ onMenuClick, isMenuOpen, ...props }: HeaderProps) => {
           props.className
         )}
       >
-        <div className="flex-col-0 pl-4 lg:pl-0">
+        <div className="flex-col-0 lg:pl-0">
           <Button
             layout="icon"
             color="neutral"
@@ -348,6 +348,7 @@ export const Header = ({ onMenuClick, isMenuOpen, ...props }: HeaderProps) => {
         </div>
         <div className="flex-row-2 justify-end items-center gap-x-2">
           <RootLocationSelector className="hidden sm:flex" />
+          <ConnectionStatusIndicator />
           <Notifications />
           <Tooltip tooltip={translation('feedback')}>
             <Button coloringStyle="text" layout="icon" color="neutral" onClick={() => setIsFeedbackOpen(true)}>

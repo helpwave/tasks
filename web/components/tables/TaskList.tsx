@@ -1,9 +1,10 @@
 import { useMemo, useState, forwardRef, useImperativeHandle, useEffect, useRef, useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { Button, Checkbox, ConfirmDialog, FillerCell, SearchBar, TableColumnSwitcher, TableDisplay, TablePagination, TableProvider, Tooltip, useLocalStorage, Visibility } from '@helpwave/hightide'
+import { Button, Checkbox, ConfirmDialog, FillerCell, LoadingContainer, SearchBar, TableColumnSwitcher, TableDisplay, TablePagination, TableProvider, Tooltip, useLocalStorage, Visibility } from '@helpwave/hightide'
 import { PlusIcon, Table as TableIcon, LayoutGrid, UserCheck, Users, Printer } from 'lucide-react'
 import type { TaskPriority, GetTasksQuery } from '@/api/gql/generated'
-import { useAssignTaskMutation, useAssignTaskToTeamMutation, useCompleteTaskMutation, useReopenTaskMutation, useGetUsersQuery, useGetLocationsQuery, useGetPropertyDefinitionsQuery, PropertyEntity, type GetGlobalDataQuery } from '@/api/gql/generated'
+import { PropertyEntity } from '@/api/gql/generated'
+import { useAssignTask, useAssignTaskToTeam, useCompleteTask, useReopenTask, useUsers, useLocations, usePropertyDefinitions, useRefreshingEntityIds } from '@/data'
 import { AssigneeSelectDialog } from '@/components/tasks/AssigneeSelectDialog'
 import clsx from 'clsx'
 import { SmartDate } from '@/utils/date'
@@ -113,10 +114,11 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
   })
 
   const queryClient = useQueryClient()
-  const { totalPatientsCount, user, selectedRootLocationIds } = useTasksContext()
+  const { totalPatientsCount, user } = useTasksContext()
+  const { refreshingTaskIds } = useRefreshingEntityIds()
   const { viewType, toggleView } = useTaskViewToggle()
   const [optimisticUpdates, setOptimisticUpdates] = useState<Map<string, boolean>>(new Map())
-  const { data: propertyDefinitionsData } = useGetPropertyDefinitionsQuery()
+  const { data: propertyDefinitionsData } = usePropertyDefinitions()
 
   useEffect(() => {
     if (propertyDefinitionsData?.propertyDefinitions) {
@@ -135,104 +137,10 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
       }
     }
   }, [propertyDefinitionsData, columnVisibility, setColumnVisibility])
-  const { mutate: completeTask } = useCompleteTaskMutation({
-    onMutate: async (variables) => {
-      const selectedRootLocationIdsForQuery = selectedRootLocationIds && selectedRootLocationIds.length > 0 ? selectedRootLocationIds : undefined
-      await queryClient.cancelQueries({ queryKey: ['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }] })
-      const previousData = queryClient.getQueryData<GetGlobalDataQuery>(['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }])
-      if (previousData?.me?.tasks) {
-        queryClient.setQueryData<GetGlobalDataQuery>(['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }], {
-          ...previousData,
-          me: previousData.me ? {
-            ...previousData.me,
-            tasks: previousData.me.tasks.map(task => task.id === variables.id ? { ...task, done: true } : task)
-          } : null
-        })
-      }
-      setOptimisticUpdates(prev => {
-        const next = new Map(prev)
-        next.set(variables.id, true)
-        return next
-      })
-      return { previousData }
-    },
-    onSuccess: async () => {
-      setOptimisticUpdates(prev => {
-        const next = new Map(prev)
-        return next
-      })
-      await queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
-      await queryClient.invalidateQueries({ queryKey: ['GetTasks'] })
-      await queryClient.invalidateQueries({ queryKey: ['GetPatients'] })
-      onRefetch?.()
-    },
-    onError: (error, variables, context) => {
-      if (context?.previousData) {
-        const selectedRootLocationIdsForQuery = selectedRootLocationIds && selectedRootLocationIds.length > 0 ? selectedRootLocationIds : undefined
-        queryClient.setQueryData(['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }], context.previousData)
-      }
-      setOptimisticUpdates(prev => {
-        const next = new Map(prev)
-        next.delete(variables.id)
-        return next
-      })
-    }
-  })
-  const { mutate: reopenTask } = useReopenTaskMutation({
-    onMutate: async (variables) => {
-      const selectedRootLocationIdsForQuery = selectedRootLocationIds && selectedRootLocationIds.length > 0 ? selectedRootLocationIds : undefined
-      await queryClient.cancelQueries({ queryKey: ['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }] })
-      const previousData = queryClient.getQueryData<GetGlobalDataQuery>(['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }])
-      if (previousData?.me?.tasks) {
-        queryClient.setQueryData<GetGlobalDataQuery>(['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }], {
-          ...previousData,
-          me: previousData.me ? {
-            ...previousData.me,
-            tasks: previousData.me.tasks.map(task => task.id === variables.id ? { ...task, done: false } : task)
-          } : null
-        })
-      }
-      setOptimisticUpdates(prev => {
-        const next = new Map(prev)
-        next.set(variables.id, false)
-        return next
-      })
-      return { previousData }
-    },
-    onSuccess: async () => {
-      setOptimisticUpdates(prev => {
-        const next = new Map(prev)
-        return next
-      })
-      await queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
-      await queryClient.invalidateQueries({ queryKey: ['GetTasks'] })
-      await queryClient.invalidateQueries({ queryKey: ['GetPatients'] })
-      onRefetch?.()
-    },
-    onError: (error, variables, context) => {
-      if (context?.previousData) {
-        const selectedRootLocationIdsForQuery = selectedRootLocationIds && selectedRootLocationIds.length > 0 ? selectedRootLocationIds : undefined
-        queryClient.setQueryData(['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }], context.previousData)
-      }
-      setOptimisticUpdates(prev => {
-        const next = new Map(prev)
-        next.delete(variables.id)
-        return next
-      })
-    }
-  })
-  const { mutate: assignTask } = useAssignTaskMutation({
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
-      onRefetch?.()
-    }
-  })
-  const { mutate: assignTaskToTeam } = useAssignTaskToTeamMutation({
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
-      onRefetch?.()
-    }
-  })
+  const [completeTask] = useCompleteTask()
+  const [reopenTask] = useReopenTask()
+  const [assignTask] = useAssignTask()
+  const [assignTaskToTeam] = useAssignTaskToTeam()
 
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null)
   const [selectedUserPopupId, setSelectedUserPopupId] = useState<string | null>(null)
@@ -332,8 +240,8 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
 
   const canHandover = openTasks.length > 0
 
-  const { data: usersData } = useGetUsersQuery(undefined, {})
-  const { data: locationsData } = useGetLocationsQuery(undefined, {})
+  const { data: usersData } = useUsers()
+  const { data: locationsData } = useLocations()
 
   const teams = useMemo(() => {
     if (!locationsData?.locationNodes) return []
@@ -392,13 +300,17 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
 
     openTasks.forEach(task => {
       if (isTeam) {
-        assignTaskToTeam({ id: task.id, teamId: assigneeId })
+        assignTaskToTeam({
+          variables: { id: task.id, teamId: assigneeId },
+          onCompleted: () => onRefetch?.(),
+        })
       } else {
-        assignTask({ id: task.id, userId: assigneeId })
+        assignTask({
+          variables: { id: task.id, userId: assigneeId },
+          onCompleted: () => onRefetch?.(),
+        })
       }
     })
-
-    queryClient.invalidateQueries({ queryKey: ['GetTask'] })
     queryClient.invalidateQueries({ queryKey: ['GetTasks'] })
     queryClient.invalidateQueries({ queryKey: ['GetPatients'] })
     queryClient.invalidateQueries({ queryKey: ['GetOverviewData'] })
@@ -419,6 +331,8 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
   }, [taskProperties])
 
 
+  const rowLoadingCell = useMemo(() => <LoadingContainer className="w-full min-h-8" />, [])
+
   const columns = useMemo<ColumnDef<TaskViewModel>[]>(() => {
     const cols: ColumnDef<TaskViewModel>[] = [
       {
@@ -426,6 +340,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
         header: translation('done'),
         accessorKey: 'done',
         cell: ({ row }) => {
+          if (refreshingTaskIds.has(row.original.id)) return rowLoadingCell
           const task = row.original
           const optimisticDone = optimisticUpdates.get(task.id)
           const displayDone = optimisticDone !== undefined ? optimisticDone : task.done
@@ -439,9 +354,15 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
                   return next
                 })
                 if (checked) {
-                  completeTask({ id: task.id })
+                  completeTask({
+                    variables: { id: task.id },
+                    onCompleted: () => onRefetch?.(),
+                  })
                 } else {
-                  reopenTask({ id: task.id })
+                  reopenTask({
+                    variables: { id: task.id },
+                    onCompleted: () => onRefetch?.(),
+                  })
                 }
               }}
               onClick={(e) => e.stopPropagation()}
@@ -459,6 +380,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
         header: translation('title'),
         accessorKey: 'name',
         cell: ({ row }) => {
+          if (refreshingTaskIds.has(row.original.id)) return rowLoadingCell
           return (
             <div className="flex-row-2 items-center">
               {row.original.priority && (
@@ -477,6 +399,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
         header: translation('dueDate'),
         accessorKey: 'dueDate',
         cell: ({ row }) => {
+          if (refreshingTaskIds.has(row.original.id)) return rowLoadingCell
           if (!row.original.dueDate) return <span className="text-description">-</span>
           const overdue = isOverdue(row.original.dueDate, row.original.done)
           const closeToDue = isCloseToDueDate(row.original.dueDate, row.original.done)
@@ -505,6 +428,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
         header: translation('patient'),
         accessorFn: ({ patient }) => patient?.name,
         cell: ({ row }) => {
+          if (refreshingTaskIds.has(row.original.id)) return rowLoadingCell
           const data = row.original
           if (!data.patient) {
             return (
@@ -596,9 +520,19 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
       })
     }
 
-    return [...cols, ...taskPropertyColumns]
+    const colsWithRefreshing = [
+      ...cols,
+      ...taskPropertyColumns.map((col) => ({
+        ...col,
+        cell: col.cell
+          ? (params: { row: { original: TaskViewModel } }) =>
+              refreshingTaskIds.has(params.row.original.id) ? rowLoadingCell : (col.cell as (p: unknown) => React.ReactNode)(params)
+          : undefined,
+      })),
+    ]
+    return colsWithRefreshing
   },
-  [translation, completeTask, reopenTask, showAssignee, optimisticUpdates, taskPropertyColumns])
+  [translation, completeTask, reopenTask, showAssignee, optimisticUpdates, taskPropertyColumns, refreshingTaskIds, rowLoadingCell])
 
   const handleToggleDone = (taskId: string, checked: boolean) => {
     const task = initialTasks.find(t => t.id === taskId)
@@ -610,9 +544,15 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
       return next
     })
     if (checked) {
-      completeTask({ id: taskId })
+      completeTask({
+        variables: { id: taskId },
+        onCompleted: () => onRefetch?.(),
+      })
     } else {
-      reopenTask({ id: taskId })
+      reopenTask({
+        variables: { id: taskId },
+        onCompleted: () => onRefetch?.(),
+      })
     }
   }
 

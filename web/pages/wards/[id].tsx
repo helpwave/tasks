@@ -4,38 +4,30 @@ import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
 import { LoadingContainer, TabSwitcher, TabPanel } from '@helpwave/hightide'
+import { CenteredLoadingLogo } from '@/components/CenteredLoadingLogo'
 import { PatientList } from '@/components/tables/PatientList'
 import type { TaskViewModel } from '@/components/tables/TaskList'
 import { TaskList } from '@/components/tables/TaskList'
-import { useGetLocationNodeQuery, GetPatientsDocument, type GetPatientsQuery } from '@/api/gql/generated'
 import { useMemo } from 'react'
 import { useRouter } from 'next/router'
-import { usePaginatedGraphQLQuery } from '@/hooks/usePaginatedQuery'
+import { useLocationNode, usePatientsPaginated } from '@/data'
 
 const WardPage: NextPage = () => {
   const translation = useTasksTranslation()
   const router = useRouter()
   const id = Array.isArray(router.query['id']) ? router.query['id'][0] : router.query['id']
 
-  const { data: locationData, isLoading: isLoadingLocation, isError: isLocationError } = useGetLocationNodeQuery(
-    { id: id! },
-    {
-      enabled: !!id,
-      refetchOnWindowFocus: true,
-    }
+  const { data: locationNode, loading: isLoadingLocation, error: locationError } = useLocationNode(
+    id ?? '',
+    { skip: !id }
   )
+  const locationData = locationNode ? { locationNode } : undefined
+  const isLocationError = !!locationError
 
-  const { data: patientsData, refetch: refetchPatients, isLoading: isLoadingPatients } = usePaginatedGraphQLQuery<GetPatientsQuery, GetPatientsQuery['patients'][0], { locationId?: string }>({
-    queryKey: ['GetPatients', 'ward', id],
-    document: GetPatientsDocument,
-    baseVariables: { locationId: id },
-    pageSize: 50,
-    extractItems: (result) => result.patients,
-    mode: 'infinite',
-    enabled: !!id,
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
-  })
+  const { data: patientsData, refetch: refetchPatients, loading: isLoadingPatients } = usePatientsPaginated(
+    { locationId: id },
+    { pageSize: 50 }
+  )
 
   const tasks: TaskViewModel[] = useMemo(() => {
     if (!patientsData || patientsData.length === 0) return []
@@ -73,7 +65,7 @@ const WardPage: NextPage = () => {
         titleElement={locationData?.locationNode?.title ?? (<LoadingContainer className="w-16 h-7" />)}
       >
         {isLoading && (
-          <LoadingContainer className="flex-col-0 grow" />
+          <CenteredLoadingLogo />
         )}
         {!isLoading && isError && (
           <div className="bg-negative/20 flex-col-0 justify-center items-center p-4 rounded-md">

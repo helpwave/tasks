@@ -1,13 +1,8 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import type { CreateTaskInput, UpdateTaskInput, TaskPriority } from '@/api/gql/generated'
-import {
-  PatientState,
-  useCreateTaskMutation,
-  useDeleteTaskMutation,
-  useGetPatientsQuery,
-  useGetTaskQuery
-} from '@/api/gql/generated'
+import { PatientState } from '@/api/gql/generated'
+import { useCreateTask, useDeleteTask, usePatients, useTask, useUpdateTask, useRefreshingEntityIds } from '@/data'
 import type { FormFieldDataHandling } from '@helpwave/hightide'
 import {
   Button,
@@ -26,12 +21,12 @@ import {
   Visibility,
   FormObserver
 } from '@helpwave/hightide'
+import { CenteredLoadingLogo } from '@/components/CenteredLoadingLogo'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { User, Flag } from 'lucide-react'
 import { SmartDate } from '@/utils/date'
 import { AssigneeSelect } from './AssigneeSelect'
 import { localToUTCWithSameTime, PatientDetailView } from '@/components/patients/PatientDetailView'
-import { useOptimisticUpdateTaskMutation } from '@/api/optimistic-updates/GetTask'
 import { ErrorDialog } from '@/components/ErrorDialog'
 import clsx from 'clsx'
 import { PriorityUtils } from '@/utils/priority'
@@ -61,62 +56,37 @@ export const TaskDataEditor = ({
 
   const isEditMode = id !== null
   const taskId = id
+  const { refreshingTaskIds } = useRefreshingEntityIds()
 
-  const { data: taskData, isLoading: isLoadingTask } = useGetTaskQuery(
-    { id: taskId! },
-    {
-      enabled: isEditMode,
-      refetchOnMount: true,
-    }
+  const { data: taskData, loading: isLoadingTask } = useTask(
+    taskId ?? '',
+    { skip: !isEditMode }
   )
 
-  const { data: patientsData } = useGetPatientsQuery(
+  const { data: patientsData } = usePatients(
     {
       rootLocationIds: selectedRootLocationIds && selectedRootLocationIds.length > 0 ? selectedRootLocationIds : undefined,
       states: [PatientState.Admitted, PatientState.Wait],
     },
-    {
-      enabled: !isEditMode,
-    }
+    { skip: isEditMode }
   )
 
-  const [isCreating, setIsCreating] = useState<boolean>(false)
-  const { mutate: createTask } = useCreateTaskMutation({
-    onMutate: () => {
-      setIsCreating(true)
-    },
-    onSettled: () => {
-      setIsCreating(false)
-    },
-    onSuccess: async () => {
-      onSuccess?.()
-      onClose?.()
-    },
-    onError: (error) => {
-      setErrorDialog({ isOpen: true, message: error instanceof Error ? error.message : 'Failed to create task' })
-    },
-  })
+  const [createTask, { loading: isCreating }] = useCreateTask()
+  const [updateTaskMutate] = useUpdateTask()
+  const updateTask = (vars: { id: string, data: UpdateTaskInput }) => {
+    updateTaskMutate({
+      variables: vars,
+      onCompleted: () => onSuccess?.(),
+      onError: (err) => {
+        setErrorDialog({
+          isOpen: true,
+          message: err instanceof Error ? err.message : 'Update failed',
+        })
+      },
+    }).catch(() => {})
+  }
 
-  const { mutate: updateTask } = useOptimisticUpdateTaskMutation({
-    id: taskId!,
-    onSuccess: () => {
-      onSuccess?.()
-    },
-  })
-
-  const [isDeleting, setIsDeleting] = useState<boolean>(false)
-  const { mutate: deleteTask } = useDeleteTaskMutation({
-    onMutate: () => {
-      setIsDeleting(true)
-    },
-    onSettled: () => {
-      setIsDeleting(false)
-    },
-    onSuccess: () => {
-      onSuccess?.()
-      onClose?.()
-    },
-  })
+  const [deleteTask, { loading: isDeleting }] = useDeleteTask()
 
   const form = useCreateForm<TaskFormValues>({
     initialValues: {
@@ -132,17 +102,26 @@ export const TaskDataEditor = ({
     },
     onFormSubmit: (values) => {
       createTask({
-        data: {
-          title: values.title,
-          patientId: values.patientId,
-          description: values.description,
-          assigneeId: values.assigneeId,
-          assigneeTeamId: values.assigneeTeamId,
-          dueDate: values.dueDate ? localToUTCWithSameTime(values.dueDate)?.toISOString() : null,
-          priority: (values.priority as TaskPriority | null) || undefined,
-          estimatedTime: values.estimatedTime,
-          properties: values.properties
-        } as CreateTaskInput & { priority?: TaskPriority | null, estimatedTime?: number | null }
+        variables: {
+          data: {
+            title: values.title,
+            patientId: values.patientId,
+            description: values.description,
+            assigneeId: values.assigneeId,
+            assigneeTeamId: values.assigneeTeamId,
+            dueDate: values.dueDate ? localToUTCWithSameTime(values.dueDate)?.toISOString() : null,
+            priority: (values.priority as TaskPriority | null) || undefined,
+            estimatedTime: values.estimatedTime,
+            properties: values.properties
+          } as CreateTaskInput & { priority?: TaskPriority | null, estimatedTime?: number | null }
+        },
+        onCompleted: () => {
+          onSuccess?.()
+          onClose?.()
+        },
+        onError: (error) => {
+          setErrorDialog({ isOpen: true, message: error instanceof Error ? error.message : 'Failed to create task' })
+        },
       })
     },
     validators: {
@@ -160,27 +139,36 @@ export const TaskDataEditor = ({
       },
     },
     onValidUpdate: (_, updates) => {
-      if (isEditMode && taskId) {
-        const data: UpdateTaskInput = {
-          title: updates?.title,
-          description: updates?.description,
-          dueDate: updates?.dueDate ? localToUTCWithSameTime(updates.dueDate)?.toISOString() : undefined,
-          priority: updates?.priority as TaskPriority | null | undefined,
-          estimatedTime: updates?.estimatedTime,
-          done: updates?.done,
-          assigneeId: updates?.assigneeId,
-          assigneeTeamId: updates?.assigneeTeamId,
-        }
-        updateTask({ id: taskId, data })
+      if (!isEditMode || !taskId || !taskData) return
+      const data: UpdateTaskInput = {
+        title: updates?.title,
+        description: updates?.description,
+        dueDate: updates?.dueDate ? localToUTCWithSameTime(updates.dueDate)?.toISOString() : undefined,
+        priority: updates?.priority as TaskPriority | null | undefined,
+        estimatedTime: updates?.estimatedTime,
+        done: updates?.done,
+        assigneeId: updates?.assigneeId,
+        assigneeTeamId: updates?.assigneeTeamId,
       }
+      const current = taskData
+      const sameTitle = (data.title ?? current.title) === current.title
+      const sameDescription = (data.description ?? current.description ?? '') === (current.description ?? '')
+      const sameDueDate = (data.dueDate ?? current.dueDate ?? null) === (current.dueDate ?? null)
+      const samePriority = (data.priority ?? current.priority ?? null) === (current.priority ?? null)
+      const sameEstimatedTime = (data.estimatedTime ?? current.estimatedTime ?? null) === (current.estimatedTime ?? null)
+      const sameDone = (data.done ?? current.done) === current.done
+      const sameAssigneeId = (data.assigneeId ?? current.assignee?.id ?? null) === (current.assignee?.id ?? null)
+      const sameAssigneeTeamId = (data.assigneeTeamId ?? current.assigneeTeam?.id ?? null) === (current.assigneeTeam?.id ?? null)
+      if (sameTitle && sameDescription && sameDueDate && samePriority && sameEstimatedTime && sameDone && sameAssigneeId && sameAssigneeTeamId) return
+      updateTask({ id: taskId, data })
     }
   })
 
   const { update: updateForm } = form
 
   useEffect(() => {
-    if (taskData?.task && isEditMode) {
-      const task = taskData.task
+    if (taskData && isEditMode) {
+      const task = taskData
       updateForm(prev => ({
         ...prev,
         title: task.title,
@@ -196,7 +184,7 @@ export const TaskDataEditor = ({
     } else if (initialPatientId && !taskId) {
       updateForm(prev => ({ ...prev, patientId: initialPatientId }))
     }
-  }, [taskData?.task, isEditMode, initialPatientId, taskId, updateForm])
+  }, [taskData, isEditMode, initialPatientId, taskId, updateForm])
 
   const patients = patientsData?.patients || []
 
@@ -210,7 +198,7 @@ export const TaskDataEditor = ({
   }, [dueDate, estimatedTime])
 
   if (isEditMode && isLoadingTask) {
-    return <LoadingContainer/>
+    return <CenteredLoadingLogo />
   }
 
   const priorities = [
@@ -220,8 +208,16 @@ export const TaskDataEditor = ({
     { value: 'P4', label: translation('priority', { priority: 'P4' }) },
   ]
 
+  const isRefreshing = isEditMode && taskId != null && refreshingTaskIds.has(taskId)
+
   return (
     <>
+      {isRefreshing && (
+        <div className="flex items-center gap-2 py-2 px-3 rounded-md bg-neutral-100 dark:bg-neutral-800 mb-4">
+          <LoadingContainer className="size-5 shrink-0" />
+          <span className="text-sm text-neutral-600 dark:text-neutral-400">{translation('refreshing')}</span>
+        </div>
+      )}
       <FormProvider state={form}>
         <form onSubmit={event => { event.preventDefault(); form.submit() }}>
           <div className="flex flex-col gap-6 pt-4 pb-24">
@@ -287,7 +283,7 @@ export const TaskDataEditor = ({
                       className="w-fit"
                     >
                       <User className="size-4"/>
-                      { taskData?.task?.patient?.name}
+                      { taskData?.patient?.name}
                     </Button>
                   </div>
                 )
@@ -411,7 +407,13 @@ export const TaskDataEditor = ({
                 <Button
                   onClick={() => {
                     if (taskId) {
-                      deleteTask({ id: taskId })
+                      deleteTask({
+                        variables: { id: taskId },
+                        onCompleted: () => {
+                          onSuccess?.()
+                          onClose?.()
+                        },
+                      })
                     }
                   }}
                   disabled={isDeleting}
@@ -449,7 +451,7 @@ export const TaskDataEditor = ({
           description={undefined}
         >
           <PatientDetailView
-            patientId={taskData?.task?.patient?.id}
+            patientId={taskData?.patient?.id}
             onClose={() => setIsShowingPatientDialog(false)}
             onSuccess={() => {}}
           />

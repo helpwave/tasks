@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react'
 import { Button, Chip, PopUp, PopUpContext, PopUpOpener, PopUpRoot, Tooltip, useLocalStorage, Visibility } from '@helpwave/hightide'
 import { Bell } from 'lucide-react'
-import { useGetOverviewDataQuery } from '@/api/gql/generated'
+import { useOverviewData } from '@/data'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { SmartDate } from '@/utils/date'
 import { useRouter } from 'next/router'
@@ -21,9 +21,7 @@ export const Notifications = () => {
   const translation = useTasksTranslation()
   const router = useRouter()
   const { user } = useTasksContext()
-  const { data, refetch } = useGetOverviewDataQuery(undefined, {
-    refetchOnWindowFocus: true,
-  })
+  const { data, refetch } = useOverviewData()
 
   const {
     value: readNotificationsRaw,

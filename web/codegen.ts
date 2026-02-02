@@ -7,18 +7,7 @@ const config: CodegenConfig = {
   documents: 'api/graphql/**/*.graphql',
   generates: {
     'api/gql/generated.ts': {
-      plugins: [
-        'typescript',
-        'typescript-operations',
-        'typescript-react-query',
-      ],
-      config: {
-        fetcher: {
-          func: './fetcher#fetcher',
-          isReactHook: false,
-        },
-        reactQueryVersion: 5,
-      },
+      plugins: ['typescript', 'typescript-operations'],
     },
   },
 }

@@ -433,5 +433,9 @@
     }
   },
   "anonymousSubmission": "Anonymous Submission",
+  "connectionConnected": "Connected",
+  "connectionConnecting": "Connecting…",
+  "connectionDisconnected": "Disconnected",
+  "refreshing": "Refreshing…",
   "userInformation": "User Information"
 }

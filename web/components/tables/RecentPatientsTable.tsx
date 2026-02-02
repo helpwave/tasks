@@ -6,7 +6,8 @@ import type { TableProps } from '@helpwave/hightide'
 import { FillerCell, Table, TableColumnSwitcher, Tooltip } from '@helpwave/hightide'
 import { SmartDate } from '@/utils/date'
 import { LocationChips } from '@/components/patients/LocationChips'
-import { useGetPropertyDefinitionsQuery, PropertyEntity } from '@/api/gql/generated'
+import { PropertyEntity } from '@/api/gql/generated'
+import { usePropertyDefinitions } from '@/data'
 import { createPropertyColumn } from '@/utils/propertyColumn'
 import { useStateWithLocalStorage } from '@/hooks/useStateWithLocalStorage'
 
@@ -28,7 +29,7 @@ export const RecentPatientsTable = ({
   ...props
 }: RecentPatientsTableProps) => {
   const translation = useTasksTranslation()
-  const { data: propertyDefinitionsData } = useGetPropertyDefinitionsQuery()
+  const { data: propertyDefinitionsData } = usePropertyDefinitions()
 
   const [pagination, setPagination] = useStateWithLocalStorage<PaginationState>({
     key: STORAGE_KEY_COLUMN_PAGINATION,

@@ -4,10 +4,12 @@ import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
 import { LoadingContainer, TabSwitcher, Chip, Button, TabPanel } from '@helpwave/hightide'
+import { CenteredLoadingLogo } from '@/components/CenteredLoadingLogo'
 import { PatientList } from '@/components/tables/PatientList'
 import type { TaskViewModel } from '@/components/tables/TaskList'
 import { TaskList } from '@/components/tables/TaskList'
-import { useGetLocationNodeQuery, useGetPatientsQuery, useGetTasksQuery, type LocationType } from '@/api/gql/generated'
+import { type LocationType } from '@/api/gql/generated'
+import { useLocationNode, usePatients, useTasks } from '@/data'
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/router'
 import { LocationChips } from '@/components/patients/LocationChips'
@@ -31,35 +33,26 @@ const LocationPage: NextPage = () => {
   const id = Array.isArray(router.query['id']) ? router.query['id'][0] : router.query['id']
   const [showAllTasks, setShowAllTasks] = useState(false)
 
-  const { data: locationData, isLoading: isLoadingLocation, isError: isLocationError } = useGetLocationNodeQuery(
-    { id: id! },
-    {
-      enabled: !!id,
-      refetchOnWindowFocus: true,
-    }
+  const { data: locationNode, loading: isLoadingLocation, error: locationError } = useLocationNode(
+    id ?? '',
+    { skip: !id }
   )
+  const locationData = locationNode ? { locationNode } : undefined
+  const isLocationError = !!locationError
 
   const isTeamLocation = locationData?.locationNode?.kind === 'TEAM'
 
-  const { data: patientsData, refetch: refetchPatients, isLoading: isLoadingPatients } = useGetPatientsQuery(
+  const { data: patientsData, refetch: refetchPatients, loading: isLoadingPatients } = usePatients(
     { rootLocationIds: id ? [id] : undefined },
-    {
-      enabled: !!id && !isTeamLocation,
-      refetchOnWindowFocus: true,
-      refetchOnMount: true,
-    }
+    { skip: !id || isTeamLocation }
   )
 
-  const { data: tasksData, refetch: refetchTasks, isLoading: isLoadingTasks } = useGetTasksQuery(
+  const { data: tasksData, refetch: refetchTasks, loading: isLoadingTasks } = useTasks(
     {
       assigneeTeamId: isTeamLocation && !showAllTasks ? id : undefined,
       rootLocationIds: undefined,
     },
-    {
-      enabled: !!id && isTeamLocation,
-      refetchOnWindowFocus: true,
-      refetchOnMount: true,
-    }
+    { skip: !id || !isTeamLocation }
   )
 
   const tasks: TaskViewModel[] = useMemo(() => {
@@ -188,7 +181,7 @@ const LocationPage: NextPage = () => {
         }
       >
         {isLoading && (
-          <LoadingContainer className="flex-col-0 grow" />
+          <CenteredLoadingLogo />
         )}
         {!isLoading && isError && (
           <div className="bg-negative/20 flex-col-0 justify-center items-center p-4 rounded-md">
