@@ -127,7 +127,7 @@ export const PatientDetailView = ({
       },
       onCompleted: () => onSuccess(),
     })
-  }, [isEditMode, patientId, patientData, convertPropertyValueToInput, updatePatient])
+  }, [isEditMode, patientId, patientData, convertPropertyValueToInput, updatePatient, onSuccess])
 
   const taskStats: { totalTasks: number, openTasks: number, closedTasks: number, taskProgress: number } = useMemo(() => ({
     totalTasks: patientData?.tasks?.length ?? 0,

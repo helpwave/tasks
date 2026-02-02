@@ -13,7 +13,7 @@ function getServerSnapshot(): { taskIds: ReadonlySet<string>, patientIds: Readon
 export function useRefreshingEntityIds(): {
   refreshingTaskIds: ReadonlySet<string>,
   refreshingPatientIds: ReadonlySet<string>,
-} {
+  } {
   const snapshot = useSyncExternalStore(
     subscribeRefreshingEntities,
     getRefreshingEntitiesSnapshot,

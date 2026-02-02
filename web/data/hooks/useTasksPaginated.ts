@@ -59,7 +59,7 @@ export function useTasksPaginated(
 
   const refetch = useCallback(() => {
     result.refetch()
-  }, [result.refetch])
+  }, [result])
 
   return {
     data: flattenedTasks,

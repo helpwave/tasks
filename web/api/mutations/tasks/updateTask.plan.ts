@@ -1,10 +1,10 @@
-import { parse } from 'graphql'
 import type { ApolloCache } from '@apollo/client/cache'
 import {
   GetTaskDocument,
   type GetTaskQuery,
   type UpdateTaskInput
 } from '@/api/gql/generated'
+import { getParsedDocument } from '@/data/hooks/queryHelpers'
 import { registerOptimisticPlan } from '@/data/mutations/registry'
 import type { OptimisticPlan, OptimisticPatch } from '@/data/mutations/types'
 
@@ -21,7 +21,7 @@ export const updateTaskOptimisticPlan: OptimisticPlan<UpdateTaskVariables> = {
     const snapshotRef: { current: GetTaskQuery | null } = { current: null }
     const taskId = variables.id
     const data = variables.data
-    const doc = parse(GetTaskDocument)
+    const doc = getParsedDocument(GetTaskDocument)
 
     return [
       {

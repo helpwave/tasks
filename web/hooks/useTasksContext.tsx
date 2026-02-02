@@ -5,6 +5,7 @@ import { useGlobalData, useLocations } from '@/data'
 import { useQueryClient } from '@tanstack/react-query'
 import { useAuth } from './useAuth'
 import { useLocalStorage } from '@helpwave/hightide'
+import { useConnectionStatus } from './useConnectionStatus'
 
 function filterLocationsByRootSubtree(
   locations: Array<{ id: string, title: string, parentId?: string | null }>,
@@ -133,12 +134,14 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
     ? state.selectedRootLocationIds
     : undefined
 
-  const { data } = useGlobalData(
+  const { data, refetch: refetchGlobalData } = useGlobalData(
     {
       rootLocationIds: selectedRootLocationIdsForQuery
     },
     { skip: isAuthLoading || !identity }
   )
+  const connectionStatus = useConnectionStatus()
+  const prevConnectionStatusRef = useRef(connectionStatus)
 
   const prevRootLocationIdsRef = useRef<string>('')
   const prevSelectedRootLocationIdsRef = useRef<string>('')
@@ -173,6 +176,13 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
       prevRootLocationIdsRef.current = currentRootLocationIds
     }
   }, [data?.me?.rootLocations, queryClient])
+
+  useEffect(() => {
+    if (connectionStatus === 'connected' && prevConnectionStatusRef.current !== 'connected') {
+      refetchGlobalData()
+    }
+    prevConnectionStatusRef.current = connectionStatus
+  }, [connectionStatus, refetchGlobalData])
 
   const myTasksCount = data?.me?.tasks?.filter(t => !t.done).length ?? 0
   const waitingPatientsCountForKey = data?.waitingPatients?.filter(p => p.state === 'WAIT').length ?? data?.waitingPatients?.length ?? 0

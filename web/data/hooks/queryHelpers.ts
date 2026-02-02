@@ -6,7 +6,10 @@ import { useApolloClientOptional } from '@/providers/ApolloProviderWithData'
 
 const parsedCache = new Map<string, DocumentNode>()
 
-export function getParsedDocument(document: string): DocumentNode {
+export function getParsedDocument(document: string | DocumentNode): DocumentNode {
+  if (typeof document !== 'string') {
+    return document
+  }
   let node = parsedCache.get(document)
   if (!node) {
     node = parse(document) as DocumentNode
@@ -23,7 +26,7 @@ export type QueryResult<TData> = {
 }
 
 export function useQueryWhenReady<TData, TVariables extends Record<string, unknown>>(
-  document: string,
+  document: string | DocumentNode,
   variables: TVariables,
   options?: { skip?: boolean }
 ): QueryResult<TData> {

@@ -14,8 +14,19 @@ import {
   addRefreshingPatient,
   removeRefreshingPatient
 } from './refreshingEntities'
-import { GetGlobalDataDocument } from '@/api/gql/generated'
+import { getConnectionStatus, setConnectionStatus } from '@/data/connectionStatus'
+import {
+  GetGlobalDataDocument,
+  GetTasksDocument,
+  GetPatientsDocument
+} from '@/api/gql/generated'
 import { getParsedDocument } from '../hooks/queryHelpers'
+
+const QUERIES_TO_REFETCH_AFTER_MERGE = [
+  getParsedDocument(GetGlobalDataDocument),
+  getParsedDocument(GetTasksDocument),
+  getParsedDocument(GetPatientsDocument),
+]
 
 const TASK_UPDATED = `
   subscription TaskUpdated($taskId: ID, $rootLocationIds: [ID!]) {
@@ -34,6 +45,22 @@ const PATIENT_CREATED = `
     patientCreated(rootLocationIds: $rootLocationIds)
   }
 `
+
+function isFetchOrNetworkError(error: unknown): boolean {
+  if (error instanceof Error) {
+    const msg = error.message.toLowerCase()
+    return msg.includes('failed to fetch') || msg.includes('network error') || msg.includes('load failed')
+  }
+  return String(error).toLowerCase().includes('failed to fetch')
+}
+
+function handleSubscriptionError(error: unknown): void {
+  if (isFetchOrNetworkError(error)) {
+    if (typeof console !== 'undefined' && console.warn) {
+      console.warn('Subscription connection issue:', error)
+    }
+  }
+}
 
 function extractIdFromPayload(message: unknown): string | null {
   if (typeof message === 'string') return message
@@ -71,6 +98,9 @@ export function useApolloGlobalSubscriptions(
       })
       .subscribe({
         next: async (result: unknown) => {
+          if (getConnectionStatus() === 'disconnected') {
+            setConnectionStatus('connected')
+          }
           const value = result as { data?: Record<string, unknown> }
           const payload = value.data
           const taskId =
@@ -83,12 +113,12 @@ export function useApolloGlobalSubscriptions(
             await mergeTaskUpdatedIntoCache(client, taskId, payloadObj, optionsRef.current).catch(
               () => {}
             )
-            client.refetchQueries({ include: [getParsedDocument(GetGlobalDataDocument)] })
+            client.refetchQueries({ include: QUERIES_TO_REFETCH_AFTER_MERGE })
           } finally {
             removeRefreshingTask(taskId)
           }
         },
-        error: () => {},
+        error: (err) => handleSubscriptionError(err),
       })
 
     const patientUpdatedDoc = parse(PATIENT_UPDATED)
@@ -99,6 +129,9 @@ export function useApolloGlobalSubscriptions(
       })
       .subscribe({
         next: async (result: unknown) => {
+          if (getConnectionStatus() === 'disconnected') {
+            setConnectionStatus('connected')
+          }
           const value = result as { data?: Record<string, unknown> }
           const payload = value.data
           const patientId =
@@ -111,12 +144,12 @@ export function useApolloGlobalSubscriptions(
             await mergePatientUpdatedIntoCache(client, patientId, payloadObj, optionsRef.current).catch(
               () => {}
             )
-            client.refetchQueries({ include: [getParsedDocument(GetGlobalDataDocument)] })
+            client.refetchQueries({ include: QUERIES_TO_REFETCH_AFTER_MERGE })
           } finally {
             removeRefreshingPatient(patientId)
           }
         },
-        error: () => {},
+        error: (err) => handleSubscriptionError(err),
       })
 
     const patientCreatedDoc = parse(PATIENT_CREATED)
@@ -127,6 +160,9 @@ export function useApolloGlobalSubscriptions(
       })
       .subscribe({
         next: async (result: unknown) => {
+          if (getConnectionStatus() === 'disconnected') {
+            setConnectionStatus('connected')
+          }
           const value = result as { data?: Record<string, unknown> }
           const payload = value.data
           const patientId =
@@ -139,12 +175,12 @@ export function useApolloGlobalSubscriptions(
             await mergePatientUpdatedIntoCache(client, patientId, payloadObj, optionsRef.current).catch(
               () => {}
             )
-            client.refetchQueries({ include: [getParsedDocument(GetGlobalDataDocument)] })
+            client.refetchQueries({ include: QUERIES_TO_REFETCH_AFTER_MERGE })
           } finally {
             removeRefreshingPatient(patientId)
           }
         },
-        error: () => {},
+        error: (err) => handleSubscriptionError(err),
       })
 
     return () => {

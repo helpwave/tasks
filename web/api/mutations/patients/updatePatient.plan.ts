@@ -1,10 +1,10 @@
-import { parse } from 'graphql'
 import type { ApolloCache } from '@apollo/client/cache'
 import {
   GetPatientDocument,
   type GetPatientQuery,
   type UpdatePatientInput
 } from '@/api/gql/generated'
+import { getParsedDocument } from '@/data/hooks/queryHelpers'
 import { registerOptimisticPlan } from '@/data/mutations/registry'
 import type { OptimisticPlan, OptimisticPatch } from '@/data/mutations/types'
 
@@ -21,7 +21,7 @@ export const updatePatientOptimisticPlan: OptimisticPlan<UpdatePatientVariables>
     const snapshotRef: { current: GetPatientQuery | null } = { current: null }
     const patientId = variables.id
     const data = variables.data
-    const doc = parse(GetPatientDocument)
+    const doc = getParsedDocument(GetPatientDocument)
 
     return [
       {

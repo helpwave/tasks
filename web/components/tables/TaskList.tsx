@@ -526,13 +526,13 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
         ...col,
         cell: col.cell
           ? (params: { row: { original: TaskViewModel } }) =>
-              refreshingTaskIds.has(params.row.original.id) ? rowLoadingCell : (col.cell as (p: unknown) => React.ReactNode)(params)
+            refreshingTaskIds.has(params.row.original.id) ? rowLoadingCell : (col.cell as (p: unknown) => React.ReactNode)(params)
           : undefined,
       })),
     ]
     return colsWithRefreshing
   },
-  [translation, completeTask, reopenTask, showAssignee, optimisticUpdates, taskPropertyColumns, refreshingTaskIds, rowLoadingCell])
+  [translation, completeTask, reopenTask, showAssignee, optimisticUpdates, taskPropertyColumns, refreshingTaskIds, rowLoadingCell, onRefetch])
 
   const handleToggleDone = (taskId: string, checked: boolean) => {
     const task = initialTasks.find(t => t.id === taskId)

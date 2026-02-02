@@ -59,7 +59,7 @@ export function usePatientsPaginated(
 
   const refetch = useCallback(() => {
     result.refetch()
-  }, [result.refetch])
+  }, [result])
 
   return {
     data: flattenedPatients,
