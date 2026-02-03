@@ -181,7 +181,7 @@ export const PatientDetailView = ({
         </div>
       )}
       <TabSwitcher>
-        <TabList/>
+        <TabList />
         {isEditMode && patientId && (
           <TabPanel label={translation('tasks')} className="flex-col-0 px-1 pt-4 pb-16 overflow-y-auto">
             <PatientTasksView

@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "next dev",
     "build-intl": "npx build-intl -i locales -o ./i18n/translations.ts -n tasksTranslation -f",
-    "build": "npm run build-intl & next build",
+    "build": "BASELINE_BROWSER_MAPPING_IGNORE_OLD_DATA=true BROWSERSLIST_IGNORE_OLD_DATA=true npm run build-intl & BASELINE_BROWSER_MAPPING_IGNORE_OLD_DATA=true BROWSERSLIST_IGNORE_OLD_DATA=true next build",
     "start": "next start",
     "lint": "tsc --noEmit && eslint .",
     "generate-graphql": "graphql-codegen"
@@ -51,6 +51,7 @@
     "@types/react": "19.2.7",
     "@types/react-dom": "19.2.3",
     "autoprefixer": "10.4.23",
+    "baseline-browser-mapping": "^2.9.19",
     "eslint": "9.39.1",
     "graphql": "16.12.0",
     "graphql-request": "7.3.5"

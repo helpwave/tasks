@@ -199,8 +199,8 @@ export const PropertyList = ({
 
       const value: PropertyValue = {
         textValue: pv.textValue ?? undefined,
-        numberValue: pv.numberValue || undefined,
-        boolValue: pv.booleanValue || undefined,
+        numberValue: pv.numberValue ?? undefined,
+        boolValue: pv.booleanValue ?? undefined,
         dateValue: pv.dateValue ? (() => {
           const date = new Date(pv.dateValue)
           return !isNaN(date.getTime()) ? date : undefined
@@ -209,7 +209,7 @@ export const PropertyList = ({
           const date = new Date(pv.dateTimeValue)
           return !isNaN(date.getTime()) ? date : undefined
         })() : undefined,
-        singleSelectValue: pv.selectValue || undefined,
+        singleSelectValue: pv.selectValue ?? undefined,
         multiSelectValue: pv.multiSelectValues || undefined,
         userValue: pv.userValue ?? undefined,
       }
@@ -328,6 +328,8 @@ export const PropertyList = ({
           : {}
       case 'multiSelect':
         return { multiSelectValue: [] }
+      case 'user':
+        return { userValue: undefined }
       default:
         return {}
       }

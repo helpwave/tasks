@@ -3,7 +3,7 @@ import { Page } from '@/components/layout/Page'
 import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
-import { LoadingContainer, TabSwitcher, Chip, Button, TabPanel } from '@helpwave/hightide'
+import { LoadingContainer, TabSwitcher, Chip, Button, TabPanel, TabList } from '@helpwave/hightide'
 import { CenteredLoadingLogo } from '@/components/CenteredLoadingLogo'
 import { PatientList } from '@/components/tables/PatientList'
 import type { TaskViewModel } from '@/components/tables/TaskList'
@@ -120,8 +120,8 @@ const LocationPage: NextPage = () => {
     })
   }, [patientsData, tasksData, isTeamLocation])
 
-  const isLoading = isLoadingLocation || (isTeamLocation ? isLoadingTasks : isLoadingPatients)
-  const isError = isLocationError || !id
+  const isLoading = !id || isLoadingLocation || (isTeamLocation ? isLoadingTasks : isLoadingPatients)
+  const isError = !!id && isLocationError
 
   const handleRefetch = () => {
     if (isTeamLocation) {
@@ -183,37 +183,45 @@ const LocationPage: NextPage = () => {
           )
         }
       >
-        {isLoading && (
-          <CenteredLoadingLogo />
-        )}
-        {!isLoading && isError && (
-          <div className="bg-negative/20 flex-col-0 justify-center items-center p-4 rounded-md">
-            {translation('errorOccurred')}
-          </div>
-        )}
-        {!isLoading && !isError && (
+        {!id && <CenteredLoadingLogo />}
+        {id && (
           <TabSwitcher>
-            <TabPanel label={translation('patients')}>
-              <PatientList locationId={id || undefined} />
+            <TabList className="mb-8" />
+            <TabPanel label={translation('patients')} className="flex-col-0 min-h-48 overflow-auto">
+              {isError ? (
+                <div className="bg-negative/20 flex-col-0 justify-center items-center p-4 rounded-md">
+                  {translation('errorOccurred')}
+                </div>
+              ) : (
+                <PatientList locationId={id || undefined} />
+              )}
             </TabPanel>
-            <TabPanel label={translation('tasks')}>
-              <TaskList
-                tasks={tasks}
-                onRefetch={handleRefetch}
-                showAssignee={true}
-                headerActions={
-                  isTeamLocation ? (
-                    <Button
-                      onClick={() => setShowAllTasks(!showAllTasks)}
-                      color="neutral"
-                      coloringStyle="outline"
-                      className="w-full sm:w-auto flex-shrink-0"
-                    >
-                      {showAllTasks ? translation('showTeamTasks') ?? 'Show Team Tasks' : translation('showAllTasks') ?? 'Show All Tasks'}
-                    </Button>
-                  ) : undefined
-                }
-              />
+            <TabPanel label={translation('tasks')} className="flex-col-0 min-h-48 overflow-auto">
+              {isError ? (
+                <div className="bg-negative/20 flex-col-0 justify-center items-center p-4 rounded-md">
+                  {translation('errorOccurred')}
+                </div>
+              ) : (
+                <TaskList
+                  tasks={tasks}
+                  onRefetch={handleRefetch}
+                  showAssignee={true}
+                  loading={isTeamLocation ? isLoadingTasks : isLoadingPatients}
+                  showAllTasksMode={isTeamLocation && showAllTasks}
+                  headerActions={
+                    isTeamLocation ? (
+                      <Button
+                        onClick={() => setShowAllTasks(!showAllTasks)}
+                        color="neutral"
+                        coloringStyle="outline"
+                        className="w-full sm:w-auto flex-shrink-0"
+                      >
+                        {showAllTasks ? translation('showTeamTasks') ?? 'Show Team Tasks' : translation('showAllTasks') ?? 'Show All Tasks'}
+                      </Button>
+                    ) : undefined
+                  }
+                />
+              )}
             </TabPanel>
           </TabSwitcher>
         )}

@@ -292,6 +292,7 @@
   "selectLocationDescription": "Bitte wählen Sie den zugewiesenen Standort für den Patienten aus.",
   "searchLocations": "Standorte suchen...",
   "searchUsersOrTeams": "Benutzer oder Teams suchen...",
+  "searchUserOrTeam": "Nach Benutzer (oder Team) suchen...",
   "selectAll": "Alle auswählen",
   "deselectAll": "Auswahl aufheben",
   "loading": "Laden...",
@@ -322,6 +323,8 @@
   "chooseLanguage": "Sprache wählen",
   "chooseTheme": "Design wählen",
   "done": "Fertig",
+  "filterAll": "Alle",
+  "filterUndone": "Offen",
   "showDone": "Erledigte anzeigen",
   "showAllPatients": "Alle Patienten anzeigen",
   "profile": "Profil",
@@ -335,6 +338,12 @@
       }
     }
   },
+  "locationChipsShowFullPath": "Vollständigen Standortpfad in Chips anzeigen",
+  "locationClinic": "Klinik",
+  "locationWard": "Station",
+  "locationTeam": "Team",
+  "locationRoom": "Zimmer",
+  "locationBed": "Bett",
   "locationType": "{type, select, CLINIC{Klinik} WARD{Station} TEAM{Team} ROOM{Zimmer} BED{Bett} other{Sonstiges}}",
   "@locationType": {
     "placeholders": {
@@ -357,7 +366,6 @@
       }
     }
   },
-  "waitingroom": "Wartezimmer",
   "deleteTaskConfirmation": "Sind Sie sicher, dass Sie diese Aufgabe löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
   "markPatientDeadConfirmation": "Sind Sie sicher, dass Sie diesen Patienten als verstorben markieren möchten?",
   "dischargePatientConfirmation": "Sind Sie sicher, dass Sie diesen Patienten entlassen möchten? Diese Aktion ändert den Status des Patienten.",

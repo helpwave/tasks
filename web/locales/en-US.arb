@@ -292,6 +292,7 @@
   "selectLocationDescription": "Please select the assigned location for the patient.",
   "searchLocations": "Search locations...",
   "searchUsersOrTeams": "Search users or teams...",
+  "searchUserOrTeam": "Search for user (or team)...",
   "selectAll": "Select All",
   "deselectAll": "Deselect All",
   "loading": "Loading...",
@@ -322,6 +323,8 @@
   "chooseLanguage": "Choose Language",
   "chooseTheme": "Choose Theme",
   "done": "Done",
+  "filterAll": "All",
+  "filterUndone": "Undone",
   "showDone": "Show done",
   "showAllPatients": "Show all patients",
   "patientData": "Data",
@@ -334,6 +337,12 @@
       }
     }
   },
+  "locationChipsShowFullPath": "Show full location path in chips",
+  "locationClinic": "Clinic",
+  "locationWard": "Ward",
+  "locationTeam": "Team",
+  "locationRoom": "Room",
+  "locationBed": "Bed",
   "locationType": "{type, select, CLINIC{Clinic} WARD{Ward} TEAM{Team} ROOM{Room} BED{Bed} other{Other}}",
   "@locationType": {
     "placeholders": {
@@ -356,7 +365,6 @@
       }
     }
   },
-  "waitingroom": "Waitingroom",
   "deleteTaskConfirmation": "Are you sure you want to delete this task? This action cannot be undone.",
   "markPatientDeadConfirmation": "Are you sure you want to mark this patient as dead?",
   "dischargePatientConfirmation": "Are you sure you want to discharge this patient? This action will change the patient state.",

@@ -115,12 +115,8 @@ export const updateTaskOptimisticPlan: OptimisticPlan<UpdateTaskVariables> = {
           cache.modify({
             id: 'ROOT_QUERY',
             fields: {
-              tasks(existing, { readField }) {
+              tasks(existing) {
                 if (!Array.isArray(existing)) return existing
-                const hasTask = existing.some(
-                  (ref) => readField('id', ref) === v.id
-                )
-                if (!hasTask) return existing
                 return [...existing]
               },
             },

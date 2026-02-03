@@ -193,6 +193,7 @@ export const TaskDataEditor = ({
 
   const dueDate = useFormObserverKey({ formStore: form.store, formKey: 'dueDate' })?.value ?? null
   const estimatedTime = useFormObserverKey({ formStore: form.store, formKey: 'estimatedTime' })?.value ?? null
+  const assigneeTeamId = useFormObserverKey({ formStore: form.store, formKey: 'assigneeTeamId' })?.value as string | null | undefined
   const expectedFinishDate = useMemo(() => {
     if (!dueDate || !estimatedTime) return null
     const finishDate = new Date(dueDate)
@@ -299,7 +300,7 @@ export const TaskDataEditor = ({
             >
               {({ dataProps }) => (
                 <AssigneeSelect
-                  value={dataProps.value ?? ''}
+                  value={assigneeTeamId ? `team:${assigneeTeamId}` : (dataProps.value ?? '')}
                   onValueChanged={(value) => {
                     updateForm(prev => {
                       if (value.startsWith('team:')) {

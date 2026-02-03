@@ -1,6 +1,6 @@
 import { Chip, ProgressIndicator, Tooltip } from '@helpwave/hightide'
 import { SmartDate } from '@/utils/date'
-import { LocationChips } from '@/components/patients/LocationChips'
+import { LocationChipsBySetting } from '@/components/patients/LocationChipsBySetting'
 import { PatientStateChip } from '@/components/patients/PatientStateChip'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { Sex } from '@/api/gql/generated'
@@ -67,7 +67,7 @@ export const PatientCardView = ({ patient, onClick }: PatientCardViewProps) => {
             <span>{label}</span>
           </Chip>
           {patient.position && (
-            <LocationChips locations={[patient.position]} small />
+            <LocationChipsBySetting locations={[patient.position]} small />
           )}
           <PatientStateChip state={patient.state} />
         </div>

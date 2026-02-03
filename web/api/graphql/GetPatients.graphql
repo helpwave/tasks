@@ -60,15 +60,19 @@ query GetPatients($locationId: ID, $rootLocationIds: [ID!], $states: [PatientSta
       parent {
         id
         title
+        kind
         parent {
           id
           title
+          kind
           parent {
             id
             title
+            kind
             parent {
               id
               title
+              kind
             }
           }
         }

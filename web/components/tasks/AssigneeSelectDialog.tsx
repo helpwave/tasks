@@ -112,7 +112,7 @@ export const AssigneeSelectDialog = ({
     >
       <div ref={searchInputRef} className="flex-shrink-0">
         <SearchBar
-          placeholder={translation('searchUsersOrTeams') || 'Search users or teams...'}
+          placeholder={translation('searchUserOrTeam') || translation('searchUsersOrTeams') || 'Search for user (or team)...'}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onSearch={() => null}

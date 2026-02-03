@@ -20,12 +20,11 @@ import {
   GetTasksDocument,
   GetPatientsDocument
 } from '@/api/gql/generated'
-import { getParsedDocument } from '../hooks/queryHelpers'
 
 const QUERIES_TO_REFETCH_AFTER_MERGE = [
-  getParsedDocument(GetGlobalDataDocument),
-  getParsedDocument(GetTasksDocument),
-  getParsedDocument(GetPatientsDocument),
+  GetGlobalDataDocument,
+  GetTasksDocument,
+  GetPatientsDocument,
 ]
 
 const TASK_UPDATED = `

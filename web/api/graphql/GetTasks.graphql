@@ -27,9 +27,16 @@ query GetTasks($rootLocationIds: [ID!], $assigneeId: ID, $assigneeTeamId: ID, $f
         parent {
           id
           title
+          kind
           parent {
             id
             title
+            kind
+            parent {
+              id
+              title
+              kind
+            }
           }
         }
       }

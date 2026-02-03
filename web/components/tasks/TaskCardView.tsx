@@ -3,7 +3,7 @@ import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
 import { Clock, User, Users, Flag } from 'lucide-react'
 import clsx from 'clsx'
 import { SmartDate } from '@/utils/date'
-import { LocationChips } from '@/components/patients/LocationChips'
+import { LocationChipsBySetting } from '@/components/patients/LocationChipsBySetting'
 import type { TaskViewModel } from '@/components/tables/TaskList'
 import { useRouter } from 'next/router'
 import type { TaskPriority } from '@/api/gql/generated'
@@ -251,7 +251,7 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
           </Button>
           {task.patient.locations && task.patient.locations.length > 0 && (
             <div className="mt-1">
-              <LocationChips locations={task.patient.locations} small />
+              <LocationChipsBySetting locations={task.patient.locations} small />
             </div>
           )}
         </div>
