@@ -69,3 +69,4 @@ class PropertyValue(Base):
         String,
         nullable=True,
     )
+    user_value: Mapped[str | None] = mapped_column(String, nullable=True)

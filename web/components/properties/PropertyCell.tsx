@@ -1,8 +1,10 @@
 import { Chip, FillerCell, Tooltip } from '@helpwave/hightide'
+import { Users } from 'lucide-react'
 import { SmartDate } from '@/utils/date'
 import { FieldType } from '@/api/gql/generated'
 import type { PropertyValueType } from '@/api/gql/generated'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
+import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
 
 export interface PropertyCellProps {
   property?: PropertyValueType | undefined,
@@ -109,6 +111,37 @@ export const PropertyCell = ({
         <span className="truncate block max-w-full overflow-hidden text-ellipsis">{displayText}</span>
       </Tooltip>
     )
+  }
+  case FieldType.FieldTypeUser: {
+    if (property.user) {
+      return (
+        <div className="flex items-center gap-2 min-w-0">
+          <AvatarStatusComponent
+            size="sm"
+            isOnline={property.user.isOnline ?? null}
+            image={property.user.avatarUrl ? {
+              avatarUrl: property.user.avatarUrl,
+              alt: property.user.name,
+            } : undefined}
+          />
+          <span className="truncate">{property.user.name}</span>
+        </div>
+      )
+    }
+    if (property.team) {
+      return (
+        <div className="flex items-center gap-2 min-w-0">
+          <Users className="size-4 text-description flex-shrink-0" />
+          <span className="truncate">{property.team.title}</span>
+        </div>
+      )
+    }
+    if (property.userValue) {
+      return (
+        <span className="truncate block">{property.userValue}</span>
+      )
+    }
+    return <FillerCell />
   }
   default:
     return <FillerCell />

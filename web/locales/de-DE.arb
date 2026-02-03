@@ -272,7 +272,7 @@
       }
     }
   },
-  "sPropertyType": "{type, select, multiSelect{Multi-Auswahl} singleSelect{Einzel-Auswahl} number{Zahl} text{Text} date{Datum} dateTime{Zeitpunkt} checkbox{Checkbox} other{Undefinierter Typ}}",
+  "sPropertyType": "{type, select, multiSelect{Multi-Auswahl} singleSelect{Einzel-Auswahl} number{Zahl} text{Text} date{Datum} dateTime{Zeitpunkt} checkbox{Checkbox} user{Benutzer} other{Undefinierter Typ}}",
   "@sPropertyType": {
     "placeholders": {
       "type": {

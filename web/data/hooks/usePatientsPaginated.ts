@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   GetPatientsDocument,
   type GetPatientsQuery,
@@ -20,6 +20,18 @@ export type UsePatientsPaginatedResult = {
   refetch: () => void,
 }
 
+function propertyFingerprint(prop: { definition?: { id: string }, textValue?: string | null, numberValue?: number | null, userValue?: string | null }): string {
+  const defId = prop.definition?.id ?? ''
+  const val = prop.userValue ?? prop.textValue ?? prop.numberValue ?? ''
+  return `${defId}:${String(val)}`
+}
+
+function getPageDataKey(data: GetPatientsQuery | undefined): string {
+  if (!data?.patients?.length) return ''
+  return data.patients.map(p =>
+    `${p.id}[${(p.properties ?? []).map(propertyFingerprint).join(';')}]`).join('|')
+}
+
 export function usePatientsPaginated(
   variables: GetPatientsQueryVariables | undefined,
   options: UsePatientsPaginatedOptions
@@ -27,27 +39,47 @@ export function usePatientsPaginated(
   const { pageSize } = options
   const [pageIndex, setPageIndex] = useState(0)
   const [pages, setPages] = useState<(GetPatientsQuery | undefined)[]>([])
-  const variablesWithPagination: GetPatientsQueryVariables = {
+  const variablesWithPagination: GetPatientsQueryVariables = useMemo(() => ({
     ...(variables ?? {}),
     pagination: { pageIndex, pageSize },
-  }
+  }), [variables, pageIndex, pageSize])
+  const variablesKey = useMemo(
+    () => JSON.stringify(variablesWithPagination),
+    [variablesWithPagination]
+  )
   const result = useQueryWhenReady<GetPatientsQuery, GetPatientsQueryVariables>(
     GetPatientsDocument,
-    variablesWithPagination
+    variablesWithPagination,
+    { fetchPolicy: 'cache-and-network' }
   )
   const totalCount = result.data?.patientsTotal
+  const prevDataKeyRef = useRef<string>('')
+  const variablesKeyRef = useRef<string>('')
 
   useEffect(() => {
-    if (!result.loading && result.data !== undefined) {
-      setPages((prev) => {
-        const next = [...prev]
-        next[pageIndex] = result.data
-        return next
-      })
+    if (variablesKey !== variablesKeyRef.current) {
+      variablesKeyRef.current = variablesKey
+      prevDataKeyRef.current = ''
     }
-  }, [result.loading, result.data, pageIndex])
+    if (result.loading || result.data === undefined) return
+    const dataKey = getPageDataKey(result.data)
+    if (prevDataKeyRef.current === dataKey) return
+    prevDataKeyRef.current = dataKey
+    setPages((prev) => {
+      const next = [...prev]
+      next[pageIndex] = result.data
+      return next
+    })
+  }, [result.loading, result.data, pageIndex, variablesKey])
 
-  const flattenedPatients = pages.flatMap((p) => p?.patients ?? [])
+  const flattenedPatients = useMemo(() => {
+    const currentFromCache = !result.loading ? result.data?.patients : undefined
+    const before = pages.slice(0, pageIndex).flatMap((p) => p?.patients ?? [])
+    const current = currentFromCache ?? pages[pageIndex]?.patients ?? []
+    const after = pages.slice(pageIndex + 1).flatMap((p) => p?.patients ?? [])
+    return [...before, ...current, ...after]
+  }, [pageIndex, pages, result.data?.patients, result.loading])
+
   const hasNextPage =
     (totalCount !== undefined && flattenedPatients.length < totalCount) ?? false
 

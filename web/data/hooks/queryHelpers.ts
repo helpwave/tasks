@@ -28,7 +28,7 @@ export type QueryResult<TData> = {
 export function useQueryWhenReady<TData, TVariables extends Record<string, unknown>>(
   document: string | DocumentNode,
   variables: TVariables,
-  options?: { skip?: boolean }
+  options?: { skip?: boolean, fetchPolicy?: 'cache-first' | 'cache-and-network' | 'network-only' }
 ): QueryResult<TData> {
   const client = useApolloClientOptional()
   const doc = useMemo(() => getParsedDocument(document), [document])
@@ -36,6 +36,7 @@ export function useQueryWhenReady<TData, TVariables extends Record<string, unkno
   const result = useQuery<TData, TVariables>(doc, {
     variables,
     skip,
+    fetchPolicy: options?.fetchPolicy ?? 'cache-first',
   })
   return {
     data: result.data as TData | undefined,

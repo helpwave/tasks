@@ -8,7 +8,7 @@ import { usePropertyDefinitions } from '@/data'
 
 
 
-export const propertyFieldTypeList = ['multiSelect', 'singleSelect', 'number', 'text', 'date', 'dateTime', 'checkbox'] as const
+export const propertyFieldTypeList = ['multiSelect', 'singleSelect', 'number', 'text', 'date', 'dateTime', 'checkbox', 'user'] as const
 export type PropertyFieldType = typeof propertyFieldTypeList[number]
 
 export const propertySubjectTypeList = ['patient', 'task'] as const
@@ -46,6 +46,7 @@ export type PropertyValue = {
   dateTimeValue?: Date,
   singleSelectValue?: string,
   multiSelectValue?: string[],
+  userValue?: string,
 }
 
 export type AttachedProperty = {
@@ -74,6 +75,7 @@ export type PropertyListProps = {
     dateTimeValue?: string | null,
     selectValue?: string | null,
     multiSelectValues?: string[] | null,
+    userValue?: string | null,
   }>,
   onPropertyValueChange?: (definitionId: string, value: PropertyValue | null) => void,
   fullWidthAddButton?: boolean,
@@ -96,6 +98,8 @@ const getDefaultValue = (fieldType: PropertyFieldType, selectData?: PropertySele
       : {}
   case 'multiSelect':
     return { multiSelectValue: [] }
+  case 'user':
+    return { userValue: undefined }
   default:
     return {}
   }
@@ -110,6 +114,7 @@ const mapFieldTypeFromBackend = (fieldType: FieldType): PropertyFieldType => {
     [FieldType.FieldTypeDateTime]: 'dateTime',
     [FieldType.FieldTypeSelect]: 'singleSelect',
     [FieldType.FieldTypeMultiSelect]: 'multiSelect',
+    [FieldType.FieldTypeUser]: 'user',
     [FieldType.FieldTypeUnspecified]: 'text',
   }
   return mapping[fieldType] || 'text'
@@ -206,6 +211,7 @@ export const PropertyList = ({
         })() : undefined,
         singleSelectValue: pv.selectValue || undefined,
         multiSelectValue: pv.multiSelectValues || undefined,
+        userValue: pv.userValue ?? undefined,
       }
 
       return {
@@ -216,8 +222,15 @@ export const PropertyList = ({
     }).sort((a, b) => a.property.name.localeCompare(b.property.name))
   }, [propertyValues, subjectId])
 
+  const attachedDefinitionIdsKey = useMemo(() => {
+    if (!propertyValues?.length) return ''
+    return [...new Set(propertyValues.map(pv => pv.definition.id))].sort().join(',')
+  }, [propertyValues])
+
   useEffect(() => {
-    const currentPropertyIds = new Set(attachedProperties.map(ap => ap.property.id))
+    const currentPropertyIds = new Set(
+      attachedDefinitionIdsKey ? attachedDefinitionIdsKey.split(',') : []
+    )
     setRemovedPropertyIds(prev => {
       const next = new Set(prev)
       prev.forEach(id => {
@@ -236,7 +249,7 @@ export const PropertyList = ({
       })
       return next
     })
-  }, [attachedProperties])
+  }, [attachedDefinitionIdsKey])
 
   const displayedProperties = useMemo(() => {
     const attachedPropertyIds = new Set(attachedProperties.map(ap => ap.property.id))

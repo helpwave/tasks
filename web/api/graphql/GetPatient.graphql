@@ -102,6 +102,7 @@ query GetPatient($id: ID!) {
       }
     }
     properties {
+      id
       definition {
         id
         name
@@ -118,6 +119,19 @@ query GetPatient($id: ID!) {
       dateTimeValue
       selectValue
       multiSelectValues
+      userValue
+      user {
+        id
+        name
+        avatarUrl
+        lastOnline
+        isOnline
+      }
+      team {
+        id
+        title
+        kind
+      }
     }
   }
 }

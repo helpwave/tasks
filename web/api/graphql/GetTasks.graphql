@@ -47,6 +47,7 @@ query GetTasks($rootLocationIds: [ID!], $assigneeId: ID, $assigneeTeamId: ID, $f
       kind
     }
     properties {
+      id
       definition {
         id
         name
@@ -63,6 +64,19 @@ query GetTasks($rootLocationIds: [ID!], $assigneeId: ID, $assigneeTeamId: ID, $f
       dateTimeValue
       selectValue
       multiSelectValues
+      userValue
+      user {
+        id
+        name
+        avatarUrl
+        lastOnline
+        isOnline
+      }
+      team {
+        id
+        title
+        kind
+      }
     }
   }
   tasksTotal(rootLocationIds: $rootLocationIds, assigneeId: $assigneeId, assigneeTeamId: $assigneeTeamId, filtering: $filtering, sorting: $sorting, search: $search)

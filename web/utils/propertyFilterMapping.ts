@@ -23,6 +23,8 @@ export function getPropertyFilterFn(fieldType: FieldType): TableFilterCategory {
     return 'tagsSingle'
   case FieldType.FieldTypeMultiSelect:
     return 'tags'
+  case FieldType.FieldTypeUser:
+    return 'text'
   default:
     return 'text'
   }

@@ -1,5 +1,10 @@
 import type { InMemoryCacheConfig } from '@apollo/client/cache'
 
+const propertyValueKeyFields = (object: Readonly<Record<string, unknown>>): readonly ['id'] | false => {
+  const id = object?.['id']
+  return id != null && id !== '' ? ['id'] : false
+}
+
 export function buildCacheConfig(): InMemoryCacheConfig {
   return {
     typePolicies: {
@@ -7,11 +12,11 @@ export function buildCacheConfig(): InMemoryCacheConfig {
         fields: {
           task: { keyArgs: ['id'] },
           tasks: {
-            keyArgs: ['rootLocationIds', 'assigneeId', 'assigneeTeamId', 'filtering', 'sorting', 'search'],
+            keyArgs: ['rootLocationIds', 'assigneeId', 'assigneeTeamId', 'filtering', 'sorting', 'search', 'pagination'],
           },
           patient: { keyArgs: ['id'] },
           patients: {
-            keyArgs: ['rootLocationIds', 'states', 'filtering', 'sorting', 'search'],
+            keyArgs: ['locationId', 'rootLocationIds', 'states', 'filtering', 'sorting', 'search', 'pagination'],
           },
           locationNode: { keyArgs: ['id'] },
           locationNodes: {
@@ -28,8 +33,8 @@ export function buildCacheConfig(): InMemoryCacheConfig {
       UserType: { keyFields: ['id'] },
       LocationNode: { keyFields: ['id'] },
       LocationNodeType: { keyFields: ['id'] },
-      PropertyValue: { keyFields: ['definition'] },
-      PropertyValueType: { keyFields: ['definition'] },
+      PropertyValue: { keyFields: propertyValueKeyFields },
+      PropertyValueType: { keyFields: propertyValueKeyFields },
       PropertyDefinitionType: { keyFields: ['id'] },
     },
   }

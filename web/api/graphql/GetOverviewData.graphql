@@ -17,6 +17,7 @@ query GetOverviewData($recentPatientsFiltering: [FilterInput!], $recentPatientsS
       updateDate
     }
     properties {
+      id
       definition {
         id
         name
@@ -33,6 +34,19 @@ query GetOverviewData($recentPatientsFiltering: [FilterInput!], $recentPatientsS
       dateTimeValue
       selectValue
       multiSelectValues
+      userValue
+      user {
+        id
+        name
+        avatarUrl
+        lastOnline
+        isOnline
+      }
+      team {
+        id
+        title
+        kind
+      }
     }
   }
   recentPatientsTotal(filtering: $recentPatientsFiltering, sorting: $recentPatientsSorting, search: $recentPatientsSearch)
@@ -65,6 +79,7 @@ query GetOverviewData($recentPatientsFiltering: [FilterInput!], $recentPatientsS
       }
     }
     properties {
+      id
       definition {
         id
         name
@@ -81,6 +96,19 @@ query GetOverviewData($recentPatientsFiltering: [FilterInput!], $recentPatientsS
       dateTimeValue
       selectValue
       multiSelectValues
+      userValue
+      user {
+        id
+        name
+        avatarUrl
+        lastOnline
+        isOnline
+      }
+      team {
+        id
+        title
+        kind
+      }
     }
   }
   recentTasksTotal(filtering: $recentTasksFiltering, sorting: $recentTasksSorting, search: $recentTasksSearch)

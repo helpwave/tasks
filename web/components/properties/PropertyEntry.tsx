@@ -8,6 +8,7 @@ import {
   TextProperty
 } from '@helpwave/hightide'
 import type { PropertyFieldType, PropertySelectOption, PropertyValue } from '@/components/tables/PropertyList'
+import { AssigneeSelect } from '@/components/tasks/AssigneeSelect'
 
 type PropertyEntrySelectProps = {
   onAddOption?: (name: string) => void,
@@ -128,6 +129,22 @@ export const PropertyEntry = ({
         ))
         }
       </MultiSelectProperty>
+    )
+  case 'user':
+    return (
+      <AssigneeSelect
+        {...commonProps}
+        value={value.userValue ?? ''}
+        onValueChanged={userValue => {
+          onChange({ ...value, userValue: userValue || undefined })
+          onEditComplete({ ...value, userValue: userValue || undefined })
+        }}
+        onDialogClose={userValue => {
+          onEditComplete({ ...value, userValue: userValue || undefined })
+        }}
+        onValueClear={onValueClear}
+        allowTeams={false}
+      />
     )
   default:
     return <></>
