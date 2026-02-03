@@ -583,7 +583,7 @@ export const Page = ({
       />
       <div
         ref={mainContentRef as React.RefObject<HTMLDivElement>}
-        className="flex-col-4 pl-8 grow overflow-y-scroll"
+        className="flex-col-4 lg:pl-8 grow overflow-y-scroll"
       >
         <Header
           className="sticky top-0 right-0 p-4 bg-background text-on-background"
