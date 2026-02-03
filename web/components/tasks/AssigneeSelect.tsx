@@ -1,8 +1,8 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { PropsUtil, Visibility } from '@helpwave/hightide'
 import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
-import { Users, ChevronDown, Info, SearchIcon } from 'lucide-react'
+import { Users, ChevronDown, Info, SearchIcon, XIcon } from 'lucide-react'
 import { useUsers, useLocations } from '@/data'
 import clsx from 'clsx'
 import { AssigneeSelectDialog } from './AssigneeSelectDialog'
@@ -11,6 +11,8 @@ import { UserInfoPopup } from '../UserInfoPopup'
 interface AssigneeSelectProps {
   value: string,
   onValueChanged: (value: string) => void,
+  onDialogClose?: (value: string) => void,
+  onValueClear?: () => void,
   allowTeams?: boolean,
   allowUnassigned?: boolean,
   excludeUserIds?: string[],
@@ -22,6 +24,8 @@ interface AssigneeSelectProps {
 export const  AssigneeSelect = ({
   value,
   onValueChanged,
+  onDialogClose,
+  onValueClear,
   allowTeams = true,
   allowUnassigned: _allowUnassigned = false,
   excludeUserIds = [],
@@ -31,6 +35,7 @@ export const  AssigneeSelect = ({
   const translation = useTasksTranslation()
   const [isOpen, setIsOpen] = useState(false)
   const [selectedUserPopupState, setSelectedUserPopupState] = useState<{ isOpen: boolean, userId: string | null }>({ isOpen: false, userId: null })
+  const closedBySelectionRef = useRef(false)
 
 
   const { data: usersData } = useUsers()
@@ -60,7 +65,9 @@ export const  AssigneeSelect = ({
   const selectedItem = getSelectedUser()
 
   const handleSelect = (selectedValue: string) => {
+    closedBySelectionRef.current = true
     onValueChanged(selectedValue)
+    onDialogClose?.(selectedValue)
     setIsOpen(false)
   }
 
@@ -69,6 +76,10 @@ export const  AssigneeSelect = ({
   }
 
   const handleClose = () => {
+    if (!closedBySelectionRef.current) {
+      onDialogClose?.(value)
+    }
+    closedBySelectionRef.current = false
     setIsOpen(false)
   }
 
@@ -120,6 +131,20 @@ export const  AssigneeSelect = ({
                     aria-label="View user info"
                   >
                     <Info className="size-4" />
+                  </button>
+                )}
+                {onValueClear && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onValueClear()
+                    }}
+                    onKeyDown={(e) => e.stopPropagation()}
+                    className="p-1 hover:bg-surface-hover rounded transition-colors text-description hover:text-on-surface"
+                    aria-label="Clear selection"
+                  >
+                    <XIcon className="size-4" />
                   </button>
                 )}
                 <ChevronDown className={clsx('size-6 ml-2 flex-shrink-0 transition-transform duration-200 text-description', isOpen && 'rotate-180')} />

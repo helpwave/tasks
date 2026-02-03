@@ -1,23 +1,28 @@
 import type { ColumnDef } from '@tanstack/table-core'
-import { ColumnType, FieldType, type PropertyDefinitionType, type PropertyValueType } from '@/api/gql/generated'
+import { ColumnType, FieldType, type LocationType, type PropertyDefinitionType, type PropertyValueType } from '@/api/gql/generated'
 import { getPropertyFilterFn } from './propertyFilterMapping'
 import { PropertyCell } from '@/components/properties/PropertyCell'
 
-type PropertyValue = PropertyValueType & {
+export type PropertyValueRow = Pick<PropertyValueType, 'textValue' | 'numberValue' | 'booleanValue' | 'dateValue' | 'dateTimeValue' | 'selectValue' | 'multiSelectValues' | 'userValue'> & {
   definition: PropertyDefinitionType,
+  user?: { id: string, name: string, avatarUrl?: string | null, isOnline?: boolean } | null,
+  team?: { id: string, title: string, kind: LocationType } | null,
 }
 
 type RowWithProperties = {
-  properties?: PropertyValue[] | null,
+  properties?: PropertyValueRow[] | null,
 }
 
 function getPropertyAccessorValue(
-  property: PropertyValue | undefined,
+  property: PropertyValueRow | undefined,
   fieldType: FieldType
 ): string | number | boolean | string[] | null {
   if (!property) return null
   if (fieldType === FieldType.FieldTypeMultiSelect) {
     return property.multiSelectValues ?? null
+  }
+  if (fieldType === FieldType.FieldTypeUser) {
+    return property.userValue ?? null
   }
   return (
     property.textValue ??
@@ -63,7 +68,7 @@ export function createPropertyColumn<T extends RowWithProperties>(
       const property = row.original.properties?.find(
         p => p.definition.id === prop.id
       )
-      return (<PropertyCell property={property} fieldType={prop.fieldType} />)
+      return (<PropertyCell property={property as PropertyValueType} fieldType={prop.fieldType} />)
     },
     meta: {
       columnType: ColumnType.Property,

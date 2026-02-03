@@ -43,6 +43,7 @@ mutation UpdateTask($id: ID!, $data: UpdateTaskInput!) {
       isOnline
     }
     properties {
+      id
       definition {
         id
         name
@@ -59,6 +60,19 @@ mutation UpdateTask($id: ID!, $data: UpdateTaskInput!) {
       dateTimeValue
       selectValue
       multiSelectValues
+      userValue
+      user {
+        id
+        name
+        avatarUrl
+        lastOnline
+        isOnline
+      }
+      team {
+        id
+        title
+        kind
+      }
     }
   }
 }

@@ -58,6 +58,7 @@ class PropertyService:
                 existing_prop.date_time_value = prop_input.date_time_value
                 existing_prop.select_value = prop_input.select_value
                 existing_prop.multi_select_values = multi_select_value
+                existing_prop.user_value = prop_input.user_value
             else:
                 prop_value = models.PropertyValue(
                     definition_id=prop_input.definition_id,
@@ -68,6 +69,7 @@ class PropertyService:
                     date_time_value=prop_input.date_time_value,
                     select_value=prop_input.select_value,
                     multi_select_values=multi_select_value,
+                    user_value=prop_input.user_value,
                 )
 
                 if entity_kind == "patient":

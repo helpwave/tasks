@@ -50,6 +50,7 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
       dateTimeValue: value.dateTimeValue?.toISOString() ?? undefined,
       selectValue: value.singleSelectValue ?? undefined,
       multiSelectValues: value.multiSelectValue ?? undefined,
+      userValue: value.userValue ?? undefined,
     }
   }, [])
 
@@ -71,6 +72,7 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
           dateTimeValue: prop.dateTimeValue ?? undefined,
           selectValue: prop.selectValue ?? undefined,
           multiSelectValues: prop.multiSelectValues ?? undefined,
+          userValue: (prop as { userValue?: string | null }).userValue ?? undefined,
         })
       }
     }

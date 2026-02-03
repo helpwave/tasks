@@ -68,6 +68,7 @@ mutation UpdatePatient($id: ID!, $data: UpdatePatientInput!) {
       kind
     }
     properties {
+      id
       definition {
         id
         name
@@ -84,6 +85,19 @@ mutation UpdatePatient($id: ID!, $data: UpdatePatientInput!) {
       dateTimeValue
       selectValue
       multiSelectValues
+      userValue
+      user {
+        id
+        name
+        avatarUrl
+        lastOnline
+        isOnline
+      }
+      team {
+        id
+        title
+        kind
+      }
     }
   }
 }

@@ -47,6 +47,7 @@ const mapFieldTypeToBackend = (fieldType: PropertyFieldType): FieldType => {
     dateTime: FieldType.FieldTypeDateTime,
     singleSelect: FieldType.FieldTypeSelect,
     multiSelect: FieldType.FieldTypeMultiSelect,
+    user: FieldType.FieldTypeUser,
   }
   return mapping[fieldType]
 }

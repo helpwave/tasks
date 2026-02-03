@@ -37,6 +37,7 @@ def get_property_value_column(field_type: str) -> str:
         "FIELD_TYPE_DATE_TIME": "date_time_value",
         "FIELD_TYPE_SELECT": "select_value",
         "FIELD_TYPE_MULTI_SELECT": "multi_select_values",
+        "FIELD_TYPE_USER": "user_value",
     }
     return field_type_mapping.get(field_type, "text_value")
 

@@ -85,6 +85,7 @@ export const PatientDetailView = ({
       dateTimeValue: value.dateTimeValue?.toISOString() ?? undefined,
       selectValue: value.singleSelectValue ?? undefined,
       multiSelectValues: value.multiSelectValue ?? undefined,
+      userValue: value.userValue ?? undefined,
     }
   }, [])
 
@@ -106,6 +107,7 @@ export const PatientDetailView = ({
           dateTimeValue: prop.dateTimeValue ?? undefined,
           selectValue: prop.selectValue ?? undefined,
           multiSelectValues: prop.multiSelectValues ?? undefined,
+          userValue: (prop as { userValue?: string | null }).userValue ?? undefined,
         })
       }
     }

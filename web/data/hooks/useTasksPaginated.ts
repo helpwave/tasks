@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   GetTasksDocument,
   type GetTasksQuery,
@@ -33,7 +33,8 @@ export function useTasksPaginated(
   }
   const result = useQueryWhenReady<GetTasksQuery, GetTasksQueryVariables>(
     GetTasksDocument,
-    variablesWithPagination
+    variablesWithPagination,
+    { fetchPolicy: 'cache-and-network' }
   )
   const totalCount = result.data?.tasksTotal
 
@@ -47,7 +48,14 @@ export function useTasksPaginated(
     }
   }, [result.loading, result.data, pageIndex])
 
-  const flattenedTasks = pages.flatMap((p) => p?.tasks ?? [])
+  const flattenedTasks = useMemo(() => {
+    const currentFromCache = !result.loading ? result.data?.tasks : undefined
+    const before = pages.slice(0, pageIndex).flatMap((p) => p?.tasks ?? [])
+    const current = currentFromCache ?? pages[pageIndex]?.tasks ?? []
+    const after = pages.slice(pageIndex + 1).flatMap((p) => p?.tasks ?? [])
+    return [...before, ...current, ...after]
+  }, [pageIndex, pages, result.data?.tasks, result.loading])
+
   const hasNextPage =
     (totalCount !== undefined && flattenedTasks.length < totalCount) ?? false
 

@@ -119,6 +119,7 @@ query GetPatients($locationId: ID, $rootLocationIds: [ID!], $states: [PatientSta
       }
     }
     properties {
+      id
       definition {
         id
         name
@@ -135,6 +136,19 @@ query GetPatients($locationId: ID, $rootLocationIds: [ID!], $states: [PatientSta
       dateTimeValue
       selectValue
       multiSelectValues
+      userValue
+      user {
+        id
+        name
+        avatarUrl
+        lastOnline
+        isOnline
+      }
+      team {
+        id
+        title
+        kind
+      }
     }
   }
   patientsTotal(locationNodeId: $locationId, rootLocationIds: $rootLocationIds, states: $states, filtering: $filtering, sorting: $sorting, search: $search)

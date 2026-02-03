@@ -33,6 +33,7 @@ class FieldType(Enum):
     FIELD_TYPE_DATE_TIME = "FIELD_TYPE_DATE_TIME"
     FIELD_TYPE_SELECT = "FIELD_TYPE_SELECT"
     FIELD_TYPE_MULTI_SELECT = "FIELD_TYPE_MULTI_SELECT"
+    FIELD_TYPE_USER = "FIELD_TYPE_USER"
 
 
 @strawberry.enum
@@ -67,6 +68,7 @@ class PropertyValueInput:
     date_time_value: datetime | None = None
     select_value: str | None = None
     multi_select_values: list[str] | None = None
+    user_value: str | None = None
 
 
 @strawberry.input

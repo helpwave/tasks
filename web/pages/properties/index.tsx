@@ -27,6 +27,7 @@ const PropertiesPage: NextPage = () => {
       [FieldType.FieldTypeDateTime]: 'dateTime',
       [FieldType.FieldTypeSelect]: 'singleSelect',
       [FieldType.FieldTypeMultiSelect]: 'multiSelect',
+      [FieldType.FieldTypeUser]: 'user',
       [FieldType.FieldTypeUnspecified]: 'text',
     }
     return mapping[fieldType] || 'text'

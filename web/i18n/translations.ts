@@ -571,6 +571,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
         'date': `Datum`,
         'dateTime': `Zeitpunkt`,
         'checkbox': `Checkbox`,
+        'user': `Benutzer`,
         'other': `Undefinierter Typ`,
       })
     },
@@ -949,6 +950,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
         'date': `Date`,
         'dateTime': `Timepoint`,
         'checkbox': `Checkbox`,
+        'user': `User`,
         'other': `Undefined Type`,
       })
     },
