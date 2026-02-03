@@ -4,7 +4,7 @@ import type { GetOverviewDataQuery, TaskPriority } from '@/api/gql/generated'
 import { useCallback, useMemo, useEffect } from 'react'
 import clsx from 'clsx'
 import type { TableProps } from '@helpwave/hightide'
-import { Button, Checkbox, FillerCell, Table, Tooltip } from '@helpwave/hightide'
+import { Button, Checkbox, FillerCell, TableDisplay, TableProvider, Tooltip } from '@helpwave/hightide'
 import { ArrowRightIcon } from 'lucide-react'
 import { LocationChipsBySetting } from '@/components/patients/LocationChipsBySetting'
 import { SmartDate } from '@/utils/date'
@@ -230,38 +230,40 @@ export const RecentTasksTable = ({
     ...taskPropertyColumns,
   ], [translation, completeTask, reopenTask, onSelectPatient, taskPropertyColumns])
 
+  const fillerRowCell = useCallback(() => <FillerCell className="min-h-8" />, [])
+  const onRowClick = useCallback((row: Row<TaskViewModel>) => onSelectTask(row.original.id), [onSelectTask])
+
   return (
-    <Table
-      {...props}
-      table={{
-        data: tasks,
-        columns: taskColumns,
-        isUsingFillerRows: true,
-        fillerRowCell: useCallback(() => (<FillerCell className="min-h-8" />), []),
-        onRowClick: useCallback((row: Row<TaskViewModel>) => onSelectTask(row.original.id), [onSelectTask]),
-        initialState: {
-          pagination: {
-            pageSize: 10,
-          }
+    <TableProvider
+      data={tasks}
+      columns={taskColumns}
+      fillerRowCell={fillerRowCell}
+      onRowClick={onRowClick}
+      initialState={{
+        pagination: {
+          pageSize: 10,
         },
-        state: {
-          columnVisibility,
-          pagination,
-          sorting,
-          columnFilters: filters,
-        } as Partial<TableState> as TableState,
-        onColumnVisibilityChange: setColumnVisibility,
-        onPaginationChange: setPagination,
-        onSortingChange: setSorting,
-        onColumnFiltersChange: setFilters,
-        enableMultiSort: true,
       }}
-      header={(
+      state={{
+        columnVisibility,
+        pagination,
+        sorting,
+        columnFilters: filters,
+      } as Partial<TableState> as TableState}
+      onColumnVisibilityChange={setColumnVisibility}
+      onPaginationChange={setPagination}
+      onSortingChange={setSorting}
+      onColumnFiltersChange={setFilters}
+      enableMultiSort={true}
+      isUsingFillerRows={true}
+    >
+      <div className="flex flex-col h-full gap-4" {...props}>
         <div className="flex-col-0">
           <span className="typography-title-lg">{translation('recentTasks')}</span>
           <span className="text-description">{translation('tasksUpdatedRecently')}</span>
         </div>
-      )}
-    />
+        <TableDisplay className="print-content" />
+      </div>
+    </TableProvider>
   )
 }

@@ -3,7 +3,7 @@ import type { ColumnDef, Row, ColumnFiltersState, PaginationState, SortingState,
 import type { GetOverviewDataQuery } from '@/api/gql/generated'
 import { useCallback, useMemo, useEffect } from 'react'
 import type { TableProps } from '@helpwave/hightide'
-import { FillerCell, Table, Tooltip } from '@helpwave/hightide'
+import { FillerCell, TableDisplay, TableProvider, Tooltip } from '@helpwave/hightide'
 import { SmartDate } from '@/utils/date'
 import { LocationChipsBySetting } from '@/components/patients/LocationChipsBySetting'
 import { PropertyEntity } from '@/api/gql/generated'
@@ -138,37 +138,39 @@ export const RecentPatientsTable = ({
     ...patientPropertyColumns,
   ], [translation, patientPropertyColumns])
 
+  const fillerRowCell = useCallback(() => <FillerCell className="min-h-8" />, [])
+  const onRowClick = useCallback((row: Row<PatientViewModel>) => onSelectPatient(row.original.id), [onSelectPatient])
+
   return (
-    <Table
-      {...props}
-      table={{
-        data: patients,
-        columns: patientColumns,
-        fillerRowCell: useCallback(() => (<FillerCell className="min-h-8"/>), []),
-        onRowClick: useCallback((row: Row<PatientViewModel>) => onSelectPatient(row.original.id), [onSelectPatient]),
-        initialState: {
-          pagination: {
-            pageSize: 10,
-          }
+    <TableProvider
+      data={patients}
+      columns={patientColumns}
+      fillerRowCell={fillerRowCell}
+      onRowClick={onRowClick}
+      initialState={{
+        pagination: {
+          pageSize: 10,
         },
-        state: {
-          columnVisibility,
-          pagination,
-          sorting,
-          columnFilters: filters,
-        } as Partial<TableState> as TableState,
-        onColumnVisibilityChange: setColumnVisibility,
-        onPaginationChange: setPagination,
-        onSortingChange: setSorting,
-        onColumnFiltersChange: setFilters,
-        enableMultiSort: true,
       }}
-      header={(
+      state={{
+        columnVisibility,
+        pagination,
+        sorting,
+        columnFilters: filters,
+      } as Partial<TableState> as TableState}
+      onColumnVisibilityChange={setColumnVisibility}
+      onPaginationChange={setPagination}
+      onSortingChange={setSorting}
+      onColumnFiltersChange={setFilters}
+      enableMultiSort={true}
+    >
+      <div className="flex flex-col h-full gap-4" {...props}>
         <div className="flex-col-0">
           <span className="typography-title-lg">{translation('recentPatients')}</span>
           <span className="text-description">{translation('patientsUpdatedRecently')}</span>
         </div>
-      )}
-    />
+        <TableDisplay className="print-content" />
+      </div>
+    </TableProvider>
   )
 }

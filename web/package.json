@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "next dev",
     "build-intl": "npx build-intl -i locales -o ./i18n/translations.ts -n tasksTranslation -f",
-    "build": "BASELINE_BROWSER_MAPPING_IGNORE_OLD_DATA=true BROWSERSLIST_IGNORE_OLD_DATA=true npm run build-intl & BASELINE_BROWSER_MAPPING_IGNORE_OLD_DATA=true BROWSERSLIST_IGNORE_OLD_DATA=true next build",
+    "build": "npm run build-intl & next build",
     "start": "next start",
     "lint": "tsc --noEmit && eslint .",
     "generate-graphql": "graphql-codegen"
