@@ -1,6 +1,6 @@
 import { Chip, Tooltip } from '@helpwave/hightide'
 import { MapPin } from 'lucide-react'
-import { formatLocationPath } from '@/utils/location'
+import { formatLocationPath, LOCATION_PATH_SEPARATOR } from '@/utils/location'
 import Link from 'next/link'
 import type { LocationType } from '@/api/gql/generated'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
@@ -36,6 +36,7 @@ export const LocationChips = ({ locations, disableLink = false, small = false, p
   const translation = useTasksTranslation()
 
   const firstLocation = locations[0]
+  const leafLocation = locations[locations.length - 1]
   if (locations.length === 0 || !firstLocation) {
     return (
       <span  {...placeholderProps} className={clsx('text-description text-sm', placeholderProps?.className)}>
@@ -44,21 +45,24 @@ export const LocationChips = ({ locations, disableLink = false, small = false, p
     )
   }
 
-  const remainingCount = locations.length - 1
-  const remainingLocations = locations.slice(1)
+  const showFullPath = locations.length > 1
+  const displayTitle = showFullPath
+    ? locations.map(loc => loc.title).join(LOCATION_PATH_SEPARATOR)
+    : firstLocation.title
+  const linkTarget = leafLocation ?? firstLocation
 
   const chipContent = (
     <Chip
       size="sm"
       color="neutral"
-      className={`cursor-pointer hover:opacity-80 transition-opacity ${small ? 'text-xs' : ''}`}
+      className={clsx('cursor-pointer hover:opacity-80 transition-opacity max-w-full', small && 'text-xs')}
     >
-      <div className="flex items-center gap-1">
-        <MapPin className="size-force-3 print:hidden" />
-        <span>{firstLocation?.title}</span>
-        {firstLocation?.kind && (
-          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider ${getKindStyles(firstLocation.kind)}`}>
-            {translation('locationType', { type: firstLocation.kind })}
+      <div className="flex items-center gap-1 min-w-0">
+        <MapPin className="size-force-3 print:hidden shrink-0" />
+        <span className="truncate">{displayTitle}</span>
+        {linkTarget?.kind && (
+          <span className={clsx('text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0', getKindStyles(linkTarget.kind))}>
+            {translation('locationType', { type: linkTarget.kind })}
           </span>
         )}
       </div>
@@ -75,34 +79,19 @@ export const LocationChips = ({ locations, disableLink = false, small = false, p
       }}
     >
       <Tooltip
-        tooltip={formatLocationPath(firstLocation)}
+        tooltip={showFullPath ? displayTitle : formatLocationPath(firstLocation)}
         position="top"
       >
         {disableLink ? (
-          <div className="inline-block">
+          <div className="inline-block min-w-0 max-w-full">
             {chipContent}
           </div>
         ) : (
-          <Link href={`/location/${firstLocation.id}`} className="inline-block">
+          <Link href={`/location/${linkTarget.id}`} className="inline-block min-w-0 max-w-full">
             {chipContent}
           </Link>
         )}
       </Tooltip>
-      {remainingCount > 0 && (
-        <Tooltip
-          tooltip={remainingLocations.map(loc => formatLocationPath(loc)).join('\n')}
-          position="top"
-        >
-          <Chip
-            size="sm"
-            color="neutral"
-            className={`cursor-help whitespace-pre-line ${small ? 'text-xs' : ''}`}
-            onClick={(e) => e.stopPropagation()}
-          >
-            +{remainingCount}
-          </Chip>
-        </Tooltip>
-      )}
     </div>
   )
 }

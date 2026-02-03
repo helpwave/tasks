@@ -4,8 +4,9 @@ import type { GetOverviewDataQuery, TaskPriority } from '@/api/gql/generated'
 import { useCallback, useMemo, useEffect } from 'react'
 import clsx from 'clsx'
 import type { TableProps } from '@helpwave/hightide'
-import { Button, Checkbox, FillerCell, Table, TableColumnSwitcher, Tooltip } from '@helpwave/hightide'
+import { Button, Checkbox, FillerCell, TableDisplay, TableProvider, Tooltip } from '@helpwave/hightide'
 import { ArrowRightIcon } from 'lucide-react'
+import { LocationChipsBySetting } from '@/components/patients/LocationChipsBySetting'
 import { SmartDate } from '@/utils/date'
 import { DueDateUtils } from '@/utils/dueDate'
 import { PriorityUtils } from '@/utils/priority'
@@ -165,6 +166,23 @@ export const RecentTasksTable = ({
       filterFn: 'text',
     },
     {
+      id: 'location',
+      header: translation('location'),
+      accessorFn: (row) => row.patient?.position,
+      cell: ({ row }) => (
+        <LocationChipsBySetting
+          locations={row.original.patient?.position ? [row.original.patient.position] : []}
+          small
+          className="min-h-8"
+          placeholderProps={{ className: 'min-h-8 block' }}
+        />
+      ),
+      minSize: 200,
+      size: 260,
+      maxSize: 320,
+      filterFn: 'text' as const,
+    },
+    {
       id: 'dueDate',
       header: translation('dueDate'),
       accessorKey: 'dueDate',
@@ -212,43 +230,40 @@ export const RecentTasksTable = ({
     ...taskPropertyColumns,
   ], [translation, completeTask, reopenTask, onSelectPatient, taskPropertyColumns])
 
+  const fillerRowCell = useCallback(() => <FillerCell className="min-h-8" />, [])
+  const onRowClick = useCallback((row: Row<TaskViewModel>) => onSelectTask(row.original.id), [onSelectTask])
+
   return (
-    <Table
-      {...props}
-      table={{
-        data: tasks,
-        columns: taskColumns,
-        isUsingFillerRows: true,
-        fillerRowCell: useCallback(() => (<FillerCell className="min-h-8" />), []),
-        onRowClick: useCallback((row: Row<TaskViewModel>) => onSelectTask(row.original.id), [onSelectTask]),
-        initialState: {
-          pagination: {
-            pageSize: 10,
-          }
+    <TableProvider
+      data={tasks}
+      columns={taskColumns}
+      fillerRowCell={fillerRowCell}
+      onRowClick={onRowClick}
+      initialState={{
+        pagination: {
+          pageSize: 10,
         },
-        state: {
-          columnVisibility,
-          pagination,
-          sorting,
-          columnFilters: filters,
-        } as Partial<TableState> as TableState,
-        onColumnVisibilityChange: setColumnVisibility,
-        onPaginationChange: setPagination,
-        onSortingChange: setSorting,
-        onColumnFiltersChange: setFilters,
-        enableMultiSort: true,
       }}
-      header={(
-        <div className="flex-row-4 justify-between items-center">
-          <div className="flex-col-0">
-            <span className="typography-title-lg">{translation('recentTasks')}</span>
-            <span className="text-description">{translation('tasksUpdatedRecently')}</span>
-          </div>
-          <div>
-            <TableColumnSwitcher />
-          </div>
+      state={{
+        columnVisibility,
+        pagination,
+        sorting,
+        columnFilters: filters,
+      } as Partial<TableState> as TableState}
+      onColumnVisibilityChange={setColumnVisibility}
+      onPaginationChange={setPagination}
+      onSortingChange={setSorting}
+      onColumnFiltersChange={setFilters}
+      enableMultiSort={true}
+      isUsingFillerRows={true}
+    >
+      <div className="flex flex-col h-full gap-4" {...props}>
+        <div className="flex-col-0">
+          <span className="typography-title-lg">{translation('recentTasks')}</span>
+          <span className="text-description">{translation('tasksUpdatedRecently')}</span>
         </div>
-      )}
-    />
+        <TableDisplay className="print-content" />
+      </div>
+    </TableProvider>
   )
 }

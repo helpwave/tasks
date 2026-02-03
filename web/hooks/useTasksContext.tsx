@@ -14,7 +14,7 @@ function filterLocationsByRootSubtree(
   allLocations?: Array<{ id: string, title: string, parentId?: string | null }>
 ): Array<{ id: string, title: string, kind?: string }> {
   if (!selectedRootLocationIds || selectedRootLocationIds.length === 0) {
-    return []
+    return locations.map(loc => ({ id: loc.id, title: loc.title }))
   }
 
   const rootLocationSet = new Set(selectedRootLocationIds)

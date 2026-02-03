@@ -1,3 +1,4 @@
+import '@/api/mutations/tasks/assignTaskToTeam.plan'
 import '@/api/mutations/tasks/updateTask.plan'
 import '@/api/mutations/tasks/completeTask.plan'
 import '@/api/mutations/tasks/reopenTask.plan'

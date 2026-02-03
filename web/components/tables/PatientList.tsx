@@ -1,19 +1,20 @@
 import { useMemo, useState, forwardRef, useImperativeHandle, useEffect, useCallback } from 'react'
-import { Chip, FillerCell, Button, LoadingContainer, SearchBar, ProgressIndicator, Tooltip, Checkbox, Drawer, Visibility, TableProvider, TableDisplay, TablePagination, TableColumnSwitcher } from '@helpwave/hightide'
-import { PlusIcon, Table as TableIcon, LayoutGrid, Printer } from 'lucide-react'
-import { Sex, PatientState, type GetPatientsQuery, type TaskType, PropertyEntity, type FullTextSearchInput } from '@/api/gql/generated'
+import { Chip, FillerCell, Button, HelpwaveLogo, LoadingContainer, SearchBar, ProgressIndicator, Tooltip, Drawer, TableProvider, TableDisplay, TableColumnSwitcher } from '@helpwave/hightide'
+import { PlusIcon } from 'lucide-react'
+import { Sex, PatientState, type GetPatientsQuery, type TaskType, PropertyEntity, type FullTextSearchInput, type LocationType } from '@/api/gql/generated'
 import { usePropertyDefinitions, usePatientsPaginated, useRefreshingEntityIds } from '@/data'
 import { PatientDetailView } from '@/components/patients/PatientDetailView'
 import { SmartDate } from '@/utils/date'
 import { LocationChips } from '@/components/patients/LocationChips'
+import { LocationChipsBySetting } from '@/components/patients/LocationChipsBySetting'
 import { PatientStateChip } from '@/components/patients/PatientStateChip'
+import { getLocationNodesByKind, type LocationKindColumn } from '@/utils/location'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { useTasksContext } from '@/hooks/useTasksContext'
-import { usePatientViewToggle } from '@/hooks/useViewToggle'
-import { PatientCardView } from '@/components/patients/PatientCardView'
 import type { ColumnDef, Row, ColumnFiltersState, PaginationState, SortingState, TableState, VisibilityState } from '@tanstack/table-core'
 import { createPropertyColumn } from '@/utils/propertyColumn'
 import { useStateWithLocalStorage } from '@/hooks/useStateWithLocalStorage'
+import { TABLE_PAGE_SIZE } from '@/utils/tableConfig'
 
 export type PatientViewModel = {
   id: string,
@@ -30,12 +31,17 @@ export type PatientViewModel = {
   properties?: GetPatientsQuery['patients'][0]['properties'],
 }
 
-const STORAGE_KEY_SHOW_ALL_PATIENTS = 'patient-show-all-states'
-const DEFAULT_PATIENT_STATES: PatientState[] = [PatientState.Admitted]
 const STORAGE_KEY_COLUMN_VISIBILITY = 'patient-list-column-visibility'
 const STORAGE_KEY_COLUMN_FILTERS = 'patient-list-column-filters'
 const STORAGE_KEY_COLUMN_SORTING = 'patient-list-column-sorting'
 const STORAGE_KEY_COLUMN_PAGINATION = 'patient-list-column-pagination'
+
+const LOCATION_KIND_HEADERS: Record<LocationKindColumn, string> = {
+  CLINIC: 'locationClinic',
+  WARD: 'locationWard',
+  ROOM: 'locationRoom',
+  BED: 'locationBed',
+}
 
 export type PatientListRef = {
   openCreate: () => void,
@@ -50,28 +56,15 @@ type PatientListProps = {
   locationId?: string,
 }
 
-export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initialPatientId, onInitialPatientOpened, acceptedStates, rootLocationIds, locationId }, ref) => {
+export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initialPatientId, onInitialPatientOpened, acceptedStates: _acceptedStates, rootLocationIds, locationId }, ref) => {
   const translation = useTasksTranslation()
   const { selectedRootLocationIds } = useTasksContext()
   const { refreshingPatientIds } = useRefreshingEntityIds()
   const effectiveRootLocationIds = rootLocationIds ?? selectedRootLocationIds
-  const { viewType, toggleView } = usePatientViewToggle()
   const [isPanelOpen, setIsPanelOpen] = useState(false)
   const [selectedPatient, setSelectedPatient] = useState<PatientViewModel | undefined>(undefined)
   const [searchQuery, setSearchQuery] = useState('')
   const [openedPatientId, setOpenedPatientId] = useState<string | null>(null)
-  const [showAllPatients, setShowAllPatients] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem(STORAGE_KEY_SHOW_ALL_PATIENTS)
-      if (stored === 'true') {
-        return true
-      }
-      if (stored === 'false') {
-        return false
-      }
-    }
-    return false
-  })
 
   const [pagination, setPagination] = useStateWithLocalStorage<PaginationState>({
     key: STORAGE_KEY_COLUMN_PAGINATION,
@@ -93,25 +86,13 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
     defaultValue: {}
   })
 
-  const [, setIsPrinting] = useState(false)
-
-  const handleShowAllPatientsChange = (checked: boolean) => {
-    setShowAllPatients(() => {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(STORAGE_KEY_SHOW_ALL_PATIENTS, String(checked))
-      }
-      return checked
-    })
-  }
-
   const allPatientStates: PatientState[] = useMemo(() => [
     PatientState.Admitted,
     PatientState.Discharged,
     PatientState.Dead,
     PatientState.Wait,
   ], [])
-
-  const patientStates = showAllPatients ? allPatientStates : (acceptedStates ?? DEFAULT_PATIENT_STATES)
+  const patientStates = allPatientStates
 
   const searchInput: FullTextSearchInput | undefined = searchQuery
     ? {
@@ -120,14 +101,14 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
     }
     : undefined
 
-  const { data: patientsData, refetch, totalCount } = usePatientsPaginated(
+  const { data: patientsData, refetch, totalCount, loading: patientsLoading } = usePatientsPaginated(
     {
       locationId: locationId || undefined,
       rootLocationIds: !locationId && effectiveRootLocationIds && effectiveRootLocationIds.length > 0 ? effectiveRootLocationIds : undefined,
       states: patientStates,
       search: searchInput,
     },
-    { pageSize: 50 }
+    { pageSize: TABLE_PAGE_SIZE }
   )
 
   const { data: propertyDefinitionsData } = usePropertyDefinitions()
@@ -149,19 +130,6 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       }
     }
   }, [propertyDefinitionsData, columnVisibility, setColumnVisibility])
-
-  useEffect(() => {
-    const handleBeforePrint = () => setIsPrinting(true)
-    const handleAfterPrint = () => setIsPrinting(false)
-
-    window.addEventListener('beforeprint', handleBeforePrint)
-    window.addEventListener('afterprint', handleAfterPrint)
-
-    return () => {
-      window.removeEventListener('beforeprint', handleBeforePrint)
-      window.removeEventListener('afterprint', handleAfterPrint)
-    }
-  }, [])
 
   const patients: PatientViewModel[] = useMemo(() => {
     if (!patientsData || patientsData.length === 0) return []
@@ -197,19 +165,6 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
   }), [patients])
 
   useEffect(() => {
-    const handleBeforePrint = () => setIsPrinting(true)
-    const handleAfterPrint = () => setIsPrinting(false)
-
-    window.addEventListener('beforeprint', handleBeforePrint)
-    window.addEventListener('afterprint', handleAfterPrint)
-
-    return () => {
-      window.removeEventListener('beforeprint', handleBeforePrint)
-      window.removeEventListener('afterprint', handleAfterPrint)
-    }
-  }, [])
-
-  useEffect(() => {
     if (initialPatientId && openedPatientId !== initialPatientId) {
       const patient = patients.find(p => p.id === initialPatientId)
       if (patient) {
@@ -230,10 +185,6 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
     setIsPanelOpen(false)
     setSelectedPatient(undefined)
     setOpenedPatientId(null)
-  }
-
-  const handlePrint = () => {
-    window.print()
   }
 
   const patientPropertyColumns = useMemo<ColumnDef<PatientViewModel>[]>(() => {
@@ -323,16 +274,34 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
     {
       id: 'position',
       header: translation('location'),
-      accessorFn: ({ position }) => position?.title,
-      cell: ({ row }) =>
+      accessorFn: ({ position }: PatientViewModel) => position?.title,
+      cell: ({ row }: { row: Row<PatientViewModel> }) =>
         refreshingPatientIds.has(row.original.id) ? rowLoadingCell : (
-          <LocationChips locations={row.original.position ? [row.original.position] : []} small />
+          <LocationChipsBySetting locations={row.original.position ? [row.original.position] : []} small />
         ),
       minSize: 200,
-      size: 250,
-      maxSize: 400,
-      filterFn: 'text',
+      size: 260,
+      maxSize: 320,
+      filterFn: 'text' as const,
     },
+    ...(['CLINIC', 'WARD', 'ROOM', 'BED'] as const).map((kind): ColumnDef<PatientViewModel> => ({
+      id: `location-${kind}`,
+      header: translation(LOCATION_KIND_HEADERS[kind] as 'locationClinic' | 'locationWard' | 'locationRoom' | 'locationBed'),
+      accessorFn: (row: PatientViewModel) => {
+        const byKind = getLocationNodesByKind(row.position ?? null)
+        return byKind[kind]?.title ?? ''
+      },
+      cell: ({ row }: { row: Row<PatientViewModel> }) => {
+        if (refreshingPatientIds.has(row.original.id)) return rowLoadingCell
+        const byKind = getLocationNodesByKind(row.original.position ?? null)
+        const node = byKind[kind]
+        return <LocationChips locations={node ? [{ id: node.id, title: node.title, kind: node.kind as LocationType }] : []} small />
+      },
+      minSize: 160,
+      size: 220,
+      maxSize: 300,
+      filterFn: 'text' as const,
+    })),
     {
       id: 'birthdate',
       header: translation('birthdate'),
@@ -344,7 +313,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       minSize: 200,
       size: 200,
       maxSize: 200,
-      filterFn: 'date',
+      filterFn: 'date' as const,
     },
     {
       id: 'tasks',
@@ -421,52 +390,9 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
               onChange={(e) => setSearchQuery(e.target.value)}
               onSearch={() => null}
             />
-            <Visibility isVisible={viewType === 'table'}>
-              <TableColumnSwitcher />
-            </Visibility>
+            <TableColumnSwitcher />
           </div>
           <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto sm:ml-auto">
-            <div className="flex items-center gap-2">
-              <Checkbox
-                value={showAllPatients}
-                onValueChange={handleShowAllPatientsChange}
-              />
-              <span className="text-sm text-description whitespace-nowrap">{translation('showAllPatients') || 'Show all patients'}</span>
-            </div>
-            <Tooltip tooltip={translation(viewType !== 'table' ? 'printOnlyAvailableInTableMode' : 'print')} position="top">
-              <Button
-                layout="icon"
-                color="neutral"
-                coloringStyle="text"
-                onClick={handlePrint}
-                className="print-button"
-                disabled={viewType !== 'table'}
-              >
-                <Printer className="size-5" />
-              </Button>
-            </Tooltip>
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <Tooltip tooltip={translation('tableView')} position="top">
-                <Button
-                  layout="icon"
-                  color={viewType === 'table' ? 'primary' : 'neutral'}
-                  coloringStyle={viewType === 'table' ? undefined : 'text'}
-                  onClick={() => toggleView('table')}
-                >
-                  <TableIcon className="size-5" />
-                </Button>
-              </Tooltip>
-              <Tooltip tooltip={translation('cardView')} position="top">
-                <Button
-                  layout="icon"
-                  color={viewType === 'card' ? 'primary' : 'neutral'}
-                  coloringStyle={viewType === 'card' ? undefined : 'text'}
-                  onClick={() => toggleView('card')}
-                >
-                  <LayoutGrid className="size-5" />
-                </Button>
-              </Tooltip>
-            </div>
             <Tooltip tooltip={translation('addPatient')} position="top">
               <Button
                 onClick={() => {
@@ -480,29 +406,16 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
             </Tooltip>
           </div>
         </div>
-        <Visibility isVisible={viewType === 'table'}>
+        <div className="relative">
+          {patientsLoading && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center bg-surface/80 rounded-lg min-h-48">
+              <HelpwaveLogo animate="loading" color="currentColor" height={64} width={64} />
+            </div>
+          )}
           <TableDisplay
             className="print-content"
           />
-          <TablePagination />
-        </Visibility>
-        <Visibility isVisible={viewType === 'card'}>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 -mx-4 px-4 lg:mx-0 lg:pl-0 lg:pr-4 print-content">
-            {patients.length === 0 ? (
-              <div className="col-span-full text-center text-description py-8">
-                {translation('noPatient')}
-              </div>
-            ) : (
-              patients.map((patient) => (
-                <PatientCardView
-                  key={patient.id}
-                  patient={patient}
-                  onClick={handleEdit}
-                />
-              ))
-            )}
-          </div>
-        </Visibility>
+        </div>
         <Drawer
           isOpen={isPanelOpen}
           onClose={handleClose}

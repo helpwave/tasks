@@ -34,6 +34,7 @@ export function useUpdateTask() {
           variables: options.variables,
           optimisticPlan: updateTaskOptimisticPlan,
           optimisticPlanKey: updateTaskOptimisticPlanKey,
+          entityType: 'Task',
           onSuccess: (d) => options.onCompleted?.(d.updateTask),
           onError: (err) => {
             setError(err)

@@ -11,7 +11,8 @@ import {
   SelectOption,
   ThemeUtil,
   useLocale,
-  useTheme
+  useTheme,
+  useLocalStorage
 } from '@helpwave/hightide'
 import type { HightideTranslationLocales, ThemeType } from '@helpwave/hightide'
 import { useTasksContext } from '@/hooks/useTasksContext'
@@ -23,7 +24,6 @@ import { removeUser } from '@/api/auth/authService'
 import { useQueryClient } from '@tanstack/react-query'
 import { hashString } from '@/utils/hash'
 import { getConfig } from '@/utils/config'
-import { useLocalStorage } from '@helpwave/hightide'
 import { FeedbackDialog } from '@/components/FeedbackDialog'
 import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
 
@@ -316,6 +316,7 @@ const SettingsPage: NextPage = () => {
                   ))}
                 </Select>
               </div>
+
             </div>
           </div>
 

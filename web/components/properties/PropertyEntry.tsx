@@ -3,6 +3,7 @@ import {
   DateProperty,
   MultiSelectProperty,
   NumberProperty,
+  PropertyBase,
   SelectOption,
   SingleSelectProperty,
   TextProperty
@@ -95,7 +96,7 @@ export const PropertyEntry = ({
         {...commonProps}
         value={value.boolValue}
         onValueChange={boolValue => onChange({ ...value, boolValue })}
-        onEditComplete={boolValue => onChange({ ...value, boolValue })}
+        onEditComplete={boolValue => onEditComplete({ ...value, boolValue })}
       />
     )
   case 'singleSelect':
@@ -132,19 +133,30 @@ export const PropertyEntry = ({
     )
   case 'user':
     return (
-      <AssigneeSelect
-        {...commonProps}
-        value={value.userValue ?? ''}
-        onValueChanged={userValue => {
-          onChange({ ...value, userValue: userValue || undefined })
-          onEditComplete({ ...value, userValue: userValue || undefined })
-        }}
-        onDialogClose={userValue => {
-          onEditComplete({ ...value, userValue: userValue || undefined })
-        }}
+      <PropertyBase
+        name={name}
+        hasValue={!!(value.userValue)}
+        readOnly={readOnly}
+        onRemove={onRemove}
         onValueClear={onValueClear}
-        allowTeams={false}
-      />
+        allowClear={!!onValueClear}
+        allowRemove={!!onRemove}
+      >
+        {() => (
+          <AssigneeSelect
+            value={value.userValue ?? ''}
+            onValueChanged={userValue => {
+              onChange({ ...value, userValue: userValue || undefined })
+              onEditComplete({ ...value, userValue: userValue || undefined })
+            }}
+            onDialogClose={userValue => {
+              onEditComplete({ ...value, userValue: userValue || undefined })
+            }}
+            onValueClear={onValueClear}
+            allowTeams={true}
+          />
+        )}
+      </PropertyBase>
     )
   default:
     return <></>

@@ -9,16 +9,17 @@ import { useMemo } from 'react'
 import { useRouter } from 'next/router'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { useTasksPaginated } from '@/data'
+import { TABLE_PAGE_SIZE } from '@/utils/tableConfig'
 
 const TasksPage: NextPage = () => {
   const translation = useTasksTranslation()
   const router = useRouter()
   const { selectedRootLocationIds, user, myTasksCount } = useTasksContext()
-  const { data: tasksData, refetch, totalCount } = useTasksPaginated(
+  const { data: tasksData, refetch, totalCount, loading: tasksLoading } = useTasksPaginated(
     !!selectedRootLocationIds && !!user
       ? { rootLocationIds: selectedRootLocationIds, assigneeId: user?.id }
       : undefined,
-    { pageSize: 50 }
+    { pageSize: TABLE_PAGE_SIZE }
   )
   const taskId = router.query['taskId'] as string | undefined
 
@@ -61,6 +62,7 @@ const TasksPage: NextPage = () => {
           initialTaskId={taskId}
           onInitialTaskOpened={() => router.replace('/tasks', undefined, { shallow: true })}
           totalCount={totalCount}
+          loading={tasksLoading}
         />
       </ContentPanel>
     </Page>

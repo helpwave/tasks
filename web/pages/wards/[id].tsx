@@ -26,7 +26,7 @@ const WardPage: NextPage = () => {
 
   const { data: patientsData, refetch: refetchPatients, loading: isLoadingPatients } = usePatientsPaginated(
     { locationId: id },
-    { pageSize: 50 }
+    { pageSize: 10 }
   )
 
   const tasks: TaskViewModel[] = useMemo(() => {

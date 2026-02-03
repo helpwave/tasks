@@ -99,6 +99,7 @@ const TeamPage: NextPage = () => {
                 tasks={tasks}
                 onRefetch={handleRefetch}
                 showAssignee={true}
+                showAllTasksMode={showAllTasks}
                 headerActions={(
                   <Button
                     onClick={() => setShowAllTasks(!showAllTasks)}
