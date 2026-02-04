@@ -165,8 +165,6 @@ export type TasksTranslationEntries = {
   'place': string,
   'position': string,
   'preferences': string,
-  'print': string,
-  'printOnlyAvailableInTableMode': string,
   'priority': (values: { priority: string }) => string,
   'priorityLabel': string,
   'priorityNone': string,
@@ -505,8 +503,6 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'place': `Ort`,
     'position': `Standort`,
     'preferences': `Präferenzen`,
-    'print': `Drucken`,
-    'printOnlyAvailableInTableMode': `Drucken ist nur im Tabellenmodus verfügbar`,
     'priority': ({ priority }): string => {
       return TranslationGen.resolveSelect(priority, {
         'P1': `Normal`,
@@ -893,8 +889,6 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'place': `Place`,
     'position': `Location`,
     'preferences': `Preferences`,
-    'print': `Print`,
-    'printOnlyAvailableInTableMode': `Print is only available in table mode`,
     'priority': ({ priority }): string => {
       return TranslationGen.resolveSelect(priority, {
         'P1': `Normal`,

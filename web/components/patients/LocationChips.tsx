@@ -22,13 +22,13 @@ interface LocationChipsProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 const getKindStyles = (kind: LocationType | undefined) => {
-  if (kind === 'HOSPITAL') return 'not-print:location-hospital not-print:coloring-solid'
-  if (kind === 'PRACTICE') return 'not-print:location-practice not-print:coloring-solid'
-  if (kind === 'CLINIC') return 'not-print:location-clinic not-print:coloring-solid'
-  if (kind === 'TEAM') return 'not-print:location-team not-print:coloring-solid'
-  if (kind === 'WARD') return 'not-print:location-ward not-print:coloring-solid'
-  if (kind === 'ROOM') return 'not-print:location-room not-print:coloring-solid'
-  if (kind === 'BED') return 'not-print:location-bed not-print:coloring-solid'
+  if (kind === 'HOSPITAL') return 'location-hospital coloring-solid'
+  if (kind === 'PRACTICE') return 'location-practice coloring-solid'
+  if (kind === 'CLINIC') return 'location-clinic coloring-solid'
+  if (kind === 'TEAM') return 'location-team coloring-solid'
+  if (kind === 'WARD') return 'location-ward coloring-solid'
+  if (kind === 'ROOM') return 'location-room coloring-solid'
+  if (kind === 'BED') return 'location-bed coloring-solid'
   return ''
 }
 
@@ -58,7 +58,7 @@ export const LocationChips = ({ locations, disableLink = false, small = false, p
       className={clsx('cursor-pointer hover:opacity-80 transition-opacity max-w-full', small && 'text-xs')}
     >
       <div className="flex items-center gap-1 min-w-0">
-        <MapPin className="size-force-3 print:hidden shrink-0" />
+        <MapPin className="size-force-3 shrink-0" />
         <span className="truncate">{displayTitle}</span>
         {linkTarget?.kind && (
           <span className={clsx('text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0', getKindStyles(linkTarget.kind))}>

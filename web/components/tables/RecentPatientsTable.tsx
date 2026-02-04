@@ -170,12 +170,14 @@ export const RecentPatientsTable = ({
         onColumnFiltersChange={setFilters}
         enableMultiSort={true}
       >
-        <div className="flex flex-col h-full gap-4" {...props}>
+        <div className="flex flex-col h-full gap-4 w-full min-w-0" {...props}>
           <div className="flex-col-0">
             <span className="typography-title-lg">{translation('recentPatients')}</span>
             <span className="text-description">{translation('patientsUpdatedRecently')}</span>
           </div>
-          <TableDisplay className="print-content" />
+          <div className="w-full min-w-0 overflow-x-auto">
+            <TableDisplay className="min-w-full" />
+          </div>
         </div>
       </TableProvider>
     </div>

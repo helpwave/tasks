@@ -409,8 +409,6 @@
   },
   "priorityLabel": "Priority",
   "priorityNone": "None",
-  "print": "Print",
-  "printOnlyAvailableInTableMode": "Print is only available in table mode",
   "deletePatient": "Delete Patient",
   "deletePatientConfirmation": "Are you sure you want to delete this patient? This action cannot be undone.",
   "feedbackDescription": "Share your feedback, report bugs, or suggest improvements.",

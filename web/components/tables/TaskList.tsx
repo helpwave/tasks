@@ -468,22 +468,17 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
             )
           }
           return (
-            <>
-              <div className="flex flex-col gap-1 print:hidden">
-                <Button
-                  color="neutral"
-                  size="sm"
-                  onClick={event => {
-                    event.stopPropagation()
-                    setSelectedPatientId(data.patient?.id ?? null)
-                  }}
-                  className="flex-row-0 justify-start w-fit"
-                >
-                  {data.patient?.name}
-                </Button>
-              </div>
-              <span className="hidden print:block">{data.patient?.name}</span>
-            </>
+            <Button
+              color="neutral"
+              size="sm"
+              onClick={event => {
+                event.stopPropagation()
+                setSelectedPatientId(data.patient?.id ?? null)
+              }}
+              className="flex-row-0 justify-start w-fit"
+            >
+              {data.patient?.name}
+            </Button>
           )
         },
         sortingFn: 'text',
@@ -645,7 +640,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
               display: none !important;
             }
           `}</style>
-          <TableDisplay className="print-content" />
+          <TableDisplay />
         </div>
         <Drawer
           alignment="right"

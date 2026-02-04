@@ -119,20 +119,20 @@ const Dashboard: NextPage = () => {
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-4 2xl:flex-row 2xl:flex-nowrap print-content">
+        <div className="flex flex-col gap-4 w-full">
           <RecentTasksTable
             tasks={recentTasks}
             completeTask={useCallback((id) => completeTask({ variables: { id }, onCompleted: () => refetch() }), [completeTask, refetch])}
             reopenTask={useCallback((id) => reopenTask({ variables: { id }, onCompleted: () => refetch() }), [reopenTask, refetch])}
             onSelectPatient={setSelectedPatientId}
             onSelectTask={setSelectedTaskId}
-            className="w-full 2xl:min-w-150 flex-1"
+            className="w-full min-w-0"
           />
 
           <RecentPatientsTable
             patients={recentPatients}
             onSelectPatient={setSelectedPatientId}
-            className="w-full 2xl: min-w-100 2xl:w-2/5"
+            className="w-full min-w-0"
           />
         </div>
 

@@ -412,9 +412,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
               <HelpwaveLogo animate="loading" color="currentColor" height={64} width={64} />
             </div>
           )}
-          <TableDisplay
-            className="print-content"
-          />
+          <TableDisplay />
         </div>
         <Drawer
           isOpen={isPanelOpen}
