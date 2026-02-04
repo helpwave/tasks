@@ -15,9 +15,41 @@ from api.inputs import (
 from database import models
 from database.models.base import Base
 from sqlalchemy import Select, and_, func, or_, select
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
 T = TypeVar("T")
+
+
+async def get_property_field_types(
+    db: AsyncSession,
+    filtering: list[FilterInput] | None,
+    sorting: list[SortInput] | None,
+) -> dict[str, str]:
+    property_def_ids: set[str] = set()
+    if filtering:
+        for f in filtering:
+            if (
+                f.column_type == ColumnType.PROPERTY
+                and f.property_definition_id
+            ):
+                property_def_ids.add(f.property_definition_id)
+    if sorting:
+        for s in sorting:
+            if (
+                s.column_type == ColumnType.PROPERTY
+                and s.property_definition_id
+            ):
+                property_def_ids.add(s.property_definition_id)
+    if not property_def_ids:
+        return {}
+    result = await db.execute(
+        select(models.PropertyDefinition).where(
+            models.PropertyDefinition.id.in_(property_def_ids)
+        )
+    )
+    prop_defs = result.scalars().all()
+    return {str(p.id): p.field_type for p in prop_defs}
 
 
 def detect_entity_type(model_class: type[Base]) -> str | None:

@@ -1,10 +1,9 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   GetPatientsDocument,
   type GetPatientsQuery,
   type GetPatientsQueryVariables
 } from '@/api/gql/generated'
-import { useQueryWhenReady } from './queryHelpers'
+import { usePaginatedEntityQuery } from './usePaginatedEntityQuery'
 
 export type UsePatientsPaginatedOptions = {
   pageSize: number,
@@ -36,70 +35,15 @@ export function usePatientsPaginated(
   variables: GetPatientsQueryVariables | undefined,
   options: UsePatientsPaginatedOptions
 ): UsePatientsPaginatedResult {
-  const { pageSize } = options
-  const [pageIndex, setPageIndex] = useState(0)
-  const [pages, setPages] = useState<(GetPatientsQuery | undefined)[]>([])
-  const variablesWithPagination: GetPatientsQueryVariables = useMemo(() => ({
-    ...(variables ?? {}),
-    pagination: { pageIndex, pageSize },
-  }), [variables, pageIndex, pageSize])
-  const variablesKey = useMemo(
-    () => JSON.stringify(variablesWithPagination),
-    [variablesWithPagination]
-  )
-  const result = useQueryWhenReady<GetPatientsQuery, GetPatientsQueryVariables>(
+  return usePaginatedEntityQuery<
+    GetPatientsQuery,
+    GetPatientsQueryVariables,
+    GetPatientsQuery['patients'][0]
+  >(
     GetPatientsDocument,
-    variablesWithPagination,
-    { fetchPolicy: 'cache-and-network' }
+    variables,
+    { pageSize: options.pageSize, getPageDataKey },
+    (data) => data?.patients ?? [],
+    (data) => data?.patientsTotal
   )
-  const totalCount = result.data?.patientsTotal
-  const prevDataKeyRef = useRef<string>('')
-  const variablesKeyRef = useRef<string>('')
-
-  useEffect(() => {
-    if (variablesKey !== variablesKeyRef.current) {
-      variablesKeyRef.current = variablesKey
-      prevDataKeyRef.current = ''
-    }
-    if (result.loading || result.data === undefined) return
-    const dataKey = getPageDataKey(result.data)
-    if (prevDataKeyRef.current === dataKey) return
-    prevDataKeyRef.current = dataKey
-    setPages((prev) => {
-      const next = [...prev]
-      next[pageIndex] = result.data
-      return next
-    })
-  }, [result.loading, result.data, pageIndex, variablesKey])
-
-  const flattenedPatients = useMemo(() => {
-    const currentFromCache = !result.loading ? result.data?.patients : undefined
-    const before = pages.slice(0, pageIndex).flatMap((p) => p?.patients ?? [])
-    const current = currentFromCache ?? pages[pageIndex]?.patients ?? []
-    const after = pages.slice(pageIndex + 1).flatMap((p) => p?.patients ?? [])
-    return [...before, ...current, ...after]
-  }, [pageIndex, pages, result.data?.patients, result.loading])
-
-  const hasNextPage =
-    (totalCount !== undefined && flattenedPatients.length < totalCount) ?? false
-
-  const fetchNextPage = useCallback(() => {
-    if (hasNextPage && !result.loading) {
-      setPageIndex((i) => i + 1)
-    }
-  }, [hasNextPage, result.loading])
-
-  const refetch = useCallback(() => {
-    result.refetch()
-  }, [result])
-
-  return {
-    data: flattenedPatients,
-    loading: result.loading,
-    error: result.error,
-    fetchNextPage,
-    hasNextPage,
-    totalCount,
-    refetch,
-  }
 }

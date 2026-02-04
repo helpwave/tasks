@@ -1,85 +1,39 @@
 {
   "@@locale": "en-US",
-  "nOrganization": "{count, plural, =1{# Organization} other{# Organizations}}",
-  "@nOrganization": {
+  "account": "Account",
+  "active": "Active",
+  "addPatient": "Add Patient",
+  "addProperty": "Add Property",
+  "addTask": "Add Task",
+  "archivedPropertyDescription": "Archived Properties can no longer be assigned to objects.",
+  "archiveProperty": "Archive Property",
+  "assignedTo": "Assigned to",
+  "authenticationFailed": "Authentication Failed",
+  "birthdate": "Birthdate",
+  "cancel": "Cancel",
+  "clearCache": "Clear Cache",
+  "clinics": "Clinics",
+  "closedTasks": "Closed Tasks",
+  "conflictDetected": "Conflict Detected",
+  "confirm": "Confirm",
+  "confirmShiftHandover": "Confirm Shift Handover",
+  "confirmShiftHandoverDescription": "Are you sure you want to transfer all open tasks to the selected user?",
+  "confirmShiftHandoverDescriptionWithName": "Are you sure you want to transfer {taskCount, plural, =1{# open task} other{# open tasks}} to {name}?",
+  "@confirmShiftHandoverDescriptionWithName": {
     "placeholders": {
-      "count": {
+      "taskCount": {
         "type": "number"
-      }
-    }
-  },
-  "nWard": "{count, plural, =1{# Ward} other{# Wards}}",
-  "@nWard": {
-    "placeholders": {
-      "count": {
-        "type": "number"
-      }
-    }
-  },
-  "nRoom": "{count, plural, =1{# Room} other{# Rooms}}",
-  "@nRoom": {
-    "placeholders": {
-      "count": {
-        "type": "number"
-      }
-    }
-  },
-  "nBed": "{count, plural, =1{# Bed} other{# Beds}}",
-  "@nBed": {
-    "placeholders": {
-      "count": {
-        "type": "number"
-      }
-    }
-  },
-  "nPatient": "{count, plural, =1{# Patient} other{# Patients}}",
-  "@nPatient": {
-    "placeholders": {
-      "count": {
-        "type": "number"
-      }
-    }
-  },
-  "nTask": "{count, plural, =1{# Task} other{# Tasks}}",
-  "@nTask": {
-    "placeholders": {
-      "count": {
-        "type": "number"
-      }
-    }
-  },
-  "nTeam": "{count, plural, =1{# Team} other{# Teams}}",
-  "@nTeam": {
-    "placeholders": {
-      "count": {
-        "type": "number"
-      }
-    }
-  },
-  "nYear": "{count, plural, =1{# year old} other{# years old}}",
-  "@nYear": {
-    "placeholders": {
-      "count": {
-        "type": "number"
-      }
-    }
-  },
-  "nProperties": "{count, plural, =1{# Property} other{# Properties}}",
-  "@nProperties": {
-    "placeholders": {
-      "count": {
-        "type": "number"
-      }
-    }
-  },
-  "dashboardWelcome": "Good Morning, {name}!",
-  "@dashboardWelcome": {
-    "placeholders": {
+      },
       "name": {
         "type": "string"
       }
     }
   },
+  "create": "Create",
+  "createTask": "Create Task",
+  "currentTime": "Current Time",
+  "dashboard": "Dashboard",
+  "dashboardWelcomeDescription": "Here is what is happening today.",
   "dashboardWelcomeMorning": "Good Morning, {name}!",
   "@dashboardWelcomeMorning": {
     "placeholders": {
@@ -120,139 +74,112 @@
       }
     }
   },
-  "taskStatus": "{status, select, overdue{Overdue} upcoming{Upcoming} done{Done} other{-}}",
-  "@taskStatus": {
-    "placeholders": {
-      "status": {}
-    }
-  },
-  "age": "Age",
-  "assignedTo": "Assigned to",
-  "assignee": "Assignee",
-  "birthdate": "Birthdate",
-  "confirm": "Confirm",
-  "createdAt": "Created at",
-  "currentTime": "Current Time",
-  "dashboard": "Dashboard",
-  "dashboardWelcomeDescription": "Here is what is happening today.",
+  "delete": "Delete",
   "description": "Description",
+  "diverse": "Diverse",
   "descriptionPlaceholder": "Add more details...",
   "developmentAndPreviewInstance": "Development and preview instance",
   "dismiss": "Dismiss",
+  "done": "Done",
   "dueDate": "Due Date",
+  "editPatient": "Edit Patient",
+  "editTask": "Edit Task",
+  "errorOccurred": "An error occurred",
+  "estimatedTime": "Estimated Time (minutes)",
+  "feedback": "Feedback",
+  "female": "Female",
+  "filterAll": "All",
+  "filterUndone": "Undone",
+  "firstName": "First Name",
+  "freeBeds": "Free Beds",
   "homePage": "Home Page",
   "imprint": "Imprint",
-  "itsYou": "You",
+  "inactive": "Inactive",
+  "language": "Language",
+  "lastName": "Last Name",
   "location": "Location",
+  "locationBed": "Bed",
+  "locationClinic": "Clinic",
+  "locationRoom": "Room",
+  "locationType": "{type, select, CLINIC{Clinic} WARD{Ward} TEAM{Team} ROOM{Room} BED{Bed} other{Other}}",
+  "@locationType": {
+    "placeholders": {
+      "type": {
+        "type": "string"
+      }
+    }
+  },
+  "locationWard": "Ward",
   "login": "Login",
-  "loginRequired": "Login required",
-  "loginRequiredDescription": "To use this site you need to be logged in.",
   "logout": "Logout",
+  "male": "Male",
+  "myFavorites": "My Favorites",
   "myOpenTasks": "My Open Tasks",
   "myTasks": "My tasks",
   "name": "Name",
-  "newestAdmissions": "Newest admissions",
-  "patientsUpdatedRecently": "Patients updated recently",
+  "no": "No",
+  "noClosedTasks": "No closed tasks",
+  "noOpenTasks": "No open tasks",
   "noPatient": "No Patient",
+  "noResultsFound": "No results found",
   "notAssigned": "Not assigned",
-  "notes": "notes",
-  "pages.404.notFound": "404 - Page not found",
-  "pages.404.notFoundDescription1": "This is definitely not the page you're looking for",
-  "pages.404.notFoundDescription2": "Let me take you to the",
-  "patient": "Patient",
-  "patients": "Patients",
-  "place": "Place",
-  "preferences": "Preferences",
-  "privacy": "Privacy",
-  "private": "private",
-  "public": "public",
-  "publish": "publish",
-  "recentPatients": "Your Recent Patients",
-  "recentTasks": "Your Recent Tasks",
-  "rooms": "Rooms",
-  "settings": "Settings",
-  "settingsDescription": "Here you can change the app configuration.",
-  "sex": "Sex",
-  "stagingModalDisclaimerMarkdown": "This public instance of helpwave tasks is for '\\b{development and preview purposes}'. Please make sure to '\\b{only}' enter '\\b{non-confidential testing data}'. This instance can be '\\negative{\\b{deleted at any time}}'",
-  "status": "Status",
-  "task": "Task",
-  "tasks": "Tasks",
-  "tasksUpdatedRecently": "Tasks updated recently",
-  "teams": "Teams",
-  "clinics": "Clinics",
-  "clinic": "Clinic",
-  "position": "Location",
-  "selectClinic": "Select Clinic",
-  "selectPosition": "Select Location",
-  "selectTeams": "Select Teams",
-  "pickClinic": "Pick the clinic",
-  "pickClinicDescription": "Select the clinic for this patient. Only clinic locations can be selected.",
-  "pickPosition": "Pick the location",
-  "pickPositionDescription": "Select the location for this patient. You can select hospital, practice, clinic, ward, bed, or room locations.",
-  "pickTeams": "Pick teams",
-  "pickTeamsDescription": "Select one or more teams for this patient. You can select clinic, team, practice, or hospital locations.",
-  "totalPatients": "Total Patients",
-  "updated": "Updated",
-  "visibility": "Visibility",
-  "lastUpdate": "Last Update",
-  "wards": "Wards",
-  "overview": "Overview",
-  "nCurrentlyPatients": "Currently {count, plural, =1{# Patient} other{# Patients}}",
-  "@nCurrentlyPatients": {
+  "nPatient": "{count, plural, =1{# Patient} other{# Patients}}",
+  "@nPatient": {
     "placeholders": {
       "count": {
         "type": "number"
       }
     }
   },
-  "authenticationFailed": "Authentication Failed",
-  "returnHome": "Return Home",
-  "addPatient": "Add Patient",
-  "addTask": "Add Task",
-  "createTask": "Create Task",
-  "editPatient": "Edit Patient",
-  "editTask": "Edit Task",
-  "openTasks": "Open Tasks",
-  "closedTasks": "Closed Tasks",
-  "noOpenTasks": "No open tasks",
-  "noClosedTasks": "No closed tasks",
-  "save": "Save",
-  "cancel": "Cancel",
-  "create": "Create",
-  "delete": "Delete",
-  "firstName": "First Name",
-  "lastName": "Last Name",
-  "male": "Male",
-  "female": "Female",
-  "diverse": "Diverse",
-  "time.today": "Today",
-  "myFavorites": "My Favorites",
-  "freeBeds": "Free Beds",
-  "cardView": "Card View",
+  "nTask": "{count, plural, =1{# Task} other{# Tasks}}",
+  "@nTask": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
   "occupancy": "Occupancy",
+  "openSurvey": "Open Survey",
+  "openTasks": "Open Tasks",
+  "option": "Option",
+  "organizations": "Organizations",
+  "overview": "Overview",
+  "pages.404.notFound": "404 - Page not found",
+  "pages.404.notFoundDescription1": "This is definitely not the page you're looking for",
+  "pages.404.notFoundDescription2": "Let me take you to the",
+  "patient": "Patient",
+  "patientData": "Data",
+  "patients": "Patients",
+  "patientState": "{state, select, WAIT{Waiting} ADMITTED{Admitted} DISCHARGED{Discharged} DEAD{Dead} other{Unknown}}",
+  "@patientState": {
+    "placeholders": {
+      "state": {
+        "type": "string"
+      }
+    }
+  },
+  "patientsUpdatedRecently": "Patients updated recently",
+  "pThemes": "{count, plural, =1{Theme} other{Themes}}",
+  "@pThemes": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "preferences": "Preferences",
+  "priority": "{priority, select, P1{Normal} P2{Medium} P3{High} P4{Critical} other{-}}",
+  "@priority": {
+    "placeholders": {
+      "priority": {}
+    }
+  },
+  "priorityLabel": "Priority",
+  "priorityNone": "None",
+  "privacy": "Privacy",
   "properties": "Properties",
-  "addProperty": "Add Property",
-  "type": "Type",
-  "tableView": "Table View",
-  "subjectType": "Subject Type",
-  "active": "Active",
-  "inactive": "Inactive",
-  "rEdit": "Update {name}!",
-  "@rEdit": {
-    "placeholders": {
-      "name": {
-        "type": "string"
-      }
-    }
-  },
-  "rShow": "Show {name}",
-  "@rShow": {
-    "placeholders": {
-      "name": {
-        "type": "string"
-      }
-    }
-  },
+  "property": "Property",
   "rAdd": "Add {name}",
   "@rAdd": {
     "placeholders": {
@@ -261,9 +188,46 @@
       }
     }
   },
-  "property": "Property",
+  "rEdit": "Update {name}!",
+  "@rEdit": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "recentPatients": "Your Recent Patients",
+  "recentTasks": "Your Recent Tasks",
+  "refreshing": "Refreshing…",
+  "removeProperty": "Remove Property",
+  "removePropertyConfirmation": "Are you sure you want to remove this property? This action cannot be undone.",
+  "retakeSurvey": "Retake Survey",
+  "rShow": "Show {name}",
+  "@rShow": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "search": "Search",
+  "searchUserOrTeam": "Search for user (or team)...",
+  "searchUsersOrTeams": "Search users or teams...",
+  "security": "Security",
+  "selectAssignee": "Assign to...",
+  "selectLocation": "Select Location",
   "selectOptions": "Select Options",
-  "option": "Option",
+  "settings": "Settings",
+  "settingsDescription": "Here you can change the app configuration.",
+  "sex": "Sex",
+  "shiftHandover": "Shift Handover",
+  "showAllTasks": "Show All Tasks",
+  "showTeamTasks": "Show Team Tasks",
+  "stagingModalDisclaimerMarkdown": "This public instance of helpwave tasks is for '\\b{development and preview purposes}'. Please make sure to '\\b{only}' enter '\\b{non-confidential testing data}'. This instance can be '\\negative{\\b{deleted at any time}}'",
+  "status": "Status",
+  "subjectType": "Subject Type",
+  "surveyDescription": "Your feedback is valuable to us. Please take a moment to complete our survey.",
+  "surveyTitle": "Help us to improve helpwave tasks",
   "sPropertySubjectType": "{subject, select, patient{Patient} task{Task} other{Undefined Subject Type}}",
   "@sPropertySubjectType": {
     "placeholders": {
@@ -280,38 +244,12 @@
       }
     }
   },
-  "archiveProperty": "Archive Property",
-  "archivedPropertyDescription": "Archived Properties can no longer be assigned to objects.",
-  "title": "Title",
-  "taskTitlePlaceholder": "What needs to be done?",
-  "selectPatient": "Select a patient",
-  "currentPatient": "Current Patient",
-  "selectAssignee": "Assign to...",
-  "unassigned": "Unassigned",
-  "newPatient": "New Patient",
-  "selectLocationDescription": "Please select the assigned location for the patient.",
-  "searchLocations": "Search locations...",
-  "searchUsersOrTeams": "Search users or teams...",
-  "searchUserOrTeam": "Search for user (or team)...",
-  "selectAll": "Select All",
-  "deselectAll": "Deselect All",
-  "loading": "Loading...",
-  "noLocationsFound": "No locations found",
-  "noResultsFound": "No results found",
-  "confirmSelection": "Confirm Selection",
-  "expandAll": "Expand All",
-  "collapseAll": "Collapse All",
-  "assignedLocation": "Assigned Location",
-  "selectLocation": "Select Location",
-  "selectRootLocation": "Select Root Location",
-  "selectRootLocationDescription": "Select the root locations that define your accessible scope. Only hospitals, practices, clinics, and teams can be selected. Selecting a parent location includes all its children.",
-  "locations": "locations",
-  "organizations": "Organizations",
-  "selectOrganization": "Select Organization",
-  "selectOrganizations": "Select Organizations",
-  "clearCache": "Clear Cache",
-  "account": "Account",
   "system": "System",
+  "task": "Task",
+  "tasks": "Tasks",
+  "tasksUpdatedRecently": "Tasks updated recently",
+  "taskTitlePlaceholder": "What needs to be done?",
+  "teams": "Teams",
   "themeMode": "{theme, select, dark{Dark} light{Light} system{System} other{System}}",
   "@themeMode": {
     "placeholders": {
@@ -320,117 +258,35 @@
       }
     }
   },
-  "chooseLanguage": "Choose Language",
-  "chooseTheme": "Choose Theme",
-  "done": "Done",
-  "filterAll": "All",
-  "filterUndone": "Undone",
-  "showDone": "Show done",
-  "showAllPatients": "Show all patients",
-  "patientData": "Data",
-  "clickToAdd": "Click to add",
-  "rClickToAdd": "Click to add {name}!",
-  "@rClickToAdd": {
-    "placeholders": {
-      "name": {
-        "type": "string"
-      }
-    }
-  },
-  "locationChipsShowFullPath": "Show full location path in chips",
-  "locationClinic": "Clinic",
-  "locationWard": "Ward",
-  "locationTeam": "Team",
-  "locationRoom": "Room",
-  "locationBed": "Bed",
-  "locationType": "{type, select, CLINIC{Clinic} WARD{Ward} TEAM{Team} ROOM{Room} BED{Bed} other{Other}}",
-  "@locationType": {
-    "placeholders": {
-      "type": {
-        "type": "string"
-      }
-    }
-  },
-  "waitingForPatient": "Waiting for patient",
-  "patientActions": "Patient Actions",
-  "admitPatient": "Admit Patient",
-  "dischargePatient": "Discharge Patient",
-  "markPatientDead": "Mark Patient Dead",
-  "waitPatient": "Set Patient to Waiting",
-  "patientState": "{state, select, WAIT{Waiting} ADMITTED{Admitted} DISCHARGED{Discharged} DEAD{Dead} other{Unknown}}",
-  "@patientState": {
-    "placeholders": {
-      "state": {
-        "type": "string"
-      }
-    }
-  },
-  "deleteTaskConfirmation": "Are you sure you want to delete this task? This action cannot be undone.",
-  "markPatientDeadConfirmation": "Are you sure you want to mark this patient as dead?",
-  "dischargePatientConfirmation": "Are you sure you want to discharge this patient? This action will change the patient state.",
-  "updateLocation": "Update Location",
-  "updateLocationConfirmation": "Are you sure you want to update the patient''s location?",
-  "removeProperty": "Remove Property",
-  "removePropertyConfirmation": "Are you sure you want to remove this property? This action cannot be undone.",
-  "openSurvey": "Open Survey",
-  "retakeSurvey": "Retake Survey",
-  "feedback": "Feedback",
-  "surveyTitle": "Help us to improve helpwave tasks",
-  "surveyDescription": "Your feedback is valuable to us. Please take a moment to complete our survey.",
-  "installApp": "Install App",
-  "installAppDescription": "Install helpwave tasks for a better experience with offline support and faster access.",
-  "install": "Install",
-  "conflictDetected": "Conflict Detected",
-  "overwrite": "Overwrite",
-  "noNotifications": "No recent updates",
-  "notifications": "Notifications",
-  "dismissAll": "Dismiss All",
-  "security": "Security",
-  "shiftHandover": "Shift Handover",
-  "shiftHandoverDescription": "Select a user to transfer all open tasks assigned to you.",
-  "confirmShiftHandover": "Confirm Shift Handover",
-  "confirmShiftHandoverDescription": "Are you sure you want to transfer all open tasks to the selected user?",
-  "confirmShiftHandoverDescriptionWithName": "Are you sure you want to transfer {taskCount, plural, =1{# open task} other{# open tasks}} to {name}?",
-  "@confirmShiftHandoverDescriptionWithName": {
-    "placeholders": {
-      "taskCount": {
-        "type": "number"
-      },
-      "name": {
-        "type": "string"
-      }
-    }
-  },
-  "priority": "{priority, select, P1{Normal} P2{Medium} P3{High} P4{Critical} other{-}}",
-  "@priority": {
-    "placeholders": {
-      "priority": {}
-    }
-  },
-  "priorityLabel": "Priority",
-  "priorityNone": "None",
-  "print": "Print",
-  "printOnlyAvailableInTableMode": "Print is only available in table mode",
-  "deletePatient": "Delete Patient",
-  "deletePatientConfirmation": "Are you sure you want to delete this patient? This action cannot be undone.",
-  "feedbackDescription": "Share your feedback, report bugs, or suggest improvements.",
-  "url": "URL",
+  "title": "Title",
+  "totalPatients": "Total Patients",
+  "type": "Type",
+  "updated": "Updated",
+  "users": "Users",
+  "wards": "Wards",
+  "yes": "Yes",
+  "anonymous": "Anonymous",
+  "anonymousSubmission": "Anonymous Submission",
+  "collapseAll": "Collapse All",
+  "confirmSelection": "Confirm Selection",
+  "deselectAll": "Deselect All",
   "enterFeedback": "Enter your feedback here...",
+  "expandAll": "Expand All",
+  "feedbackDescription": "Share your feedback, report bugs, or suggest improvements.",
+  "noLocationsFound": "No locations found",
+  "pickClinic": "Pick the clinic",
+  "pickClinicDescription": "Select the clinic for this patient. Only clinic locations can be selected.",
+  "pickPosition": "Pick the location",
+  "pickPositionDescription": "Select the location for this patient. You can select hospital, practice, clinic, ward, bed, or room locations.",
+  "pickTeams": "Pick teams",
+  "pickTeamsDescription": "Select one or more teams for this patient. You can select clinic, team, practice, or hospital locations.",
+  "searchLocations": "Search locations...",
+  "selectAll": "Select All",
+  "selectLocationDescription": "Please select the assigned location for the patient.",
+  "selectRootLocation": "Select Root Location",
+  "selectRootLocationDescription": "Select the root locations that define your accessible scope. Only hospitals, practices, clinics, and teams can be selected. Selecting a parent location includes all its children.",
   "startRecording": "Start Recording",
   "stopRecording": "Stop Recording",
-  "submit": "Submit",
-  "username": "Username",
-  "anonymous": "Anonymous",
-  "withName": "With name (for follow-up questions)",
-  "enterName": "Enter your name...",
-  "users": "Users",
-  "showTeamTasks": "Show Team Tasks",
-  "showAllTasks": "Show All Tasks",
-  "error": "Error",
-  "errorOccurred": "An error occurred",
-  "estimatedTime": "Estimated Time (minutes)",
-  "ok": "OK",
-  "submitAnonymously": "Submit anonymously",
   "submissionDetails": "Submission Details",
   "submittingAs": "Submitting as {name}",
   "@submittingAs": {
@@ -440,10 +296,36 @@
       }
     }
   },
-  "anonymousSubmission": "Anonymous Submission",
+  "submit": "Submit",
+  "url": "URL",
+  "userInformation": "User Information",
+  "admitPatient": "Admit Patient",
+  "clear": "Clear",
+  "clinic": "Clinic",
   "connectionConnected": "Connected",
   "connectionConnecting": "Connecting…",
   "connectionDisconnected": "Disconnected",
-  "refreshing": "Refreshing…",
-  "userInformation": "User Information"
+  "deletePatient": "Delete Patient",
+  "deletePatientConfirmation": "Are you sure you want to delete this patient? This action cannot be undone.",
+  "dischargePatient": "Discharge Patient",
+  "dischargePatientConfirmation": "Are you sure you want to discharge this patient? This action will change the patient state.",
+  "dismissAll": "Dismiss All",
+  "error": "Error",
+  "install": "Install",
+  "installApp": "Install App",
+  "installAppDescription": "Install helpwave tasks for a better experience with offline support and faster access.",
+  "loginRequired": "Login required",
+  "loginRequiredDescription": "To use this site you need to be logged in.",
+  "markPatientDead": "Mark Patient Dead",
+  "markPatientDeadConfirmation": "Are you sure you want to mark this patient as dead?",
+  "noNotifications": "No recent updates",
+  "notifications": "Notifications",
+  "ok": "OK",
+  "patientActions": "Patient Actions",
+  "position": "Location",
+  "selectClinic": "Select Clinic",
+  "selectPosition": "Select Location",
+  "selectTeams": "Select Teams",
+  "waitPatient": "Set Patient to Waiting",
+  "waitingForPatient": "Waiting for patient"
 }

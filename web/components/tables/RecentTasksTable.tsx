@@ -1,7 +1,7 @@
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
-import type { ColumnDef, Row, ColumnFiltersState, PaginationState, SortingState, TableState, VisibilityState } from '@tanstack/react-table'
+import type { ColumnDef, Row, TableState } from '@tanstack/react-table'
 import type { GetOverviewDataQuery, TaskPriority } from '@/api/gql/generated'
-import { useCallback, useMemo, useEffect } from 'react'
+import { useCallback, useMemo } from 'react'
 import clsx from 'clsx'
 import type { TableProps } from '@helpwave/hightide'
 import { Button, Checkbox, FillerCell, TableDisplay, TableProvider, Tooltip } from '@helpwave/hightide'
@@ -11,15 +11,11 @@ import { DueDateUtils } from '@/utils/dueDate'
 import { PriorityUtils } from '@/utils/priority'
 import { PropertyEntity } from '@/api/gql/generated'
 import { usePropertyDefinitions } from '@/data'
-import { createPropertyColumn } from '@/utils/propertyColumn'
-import { useStateWithLocalStorage } from '@/hooks/useStateWithLocalStorage'
+import { getPropertyColumnsForEntity } from '@/utils/propertyColumn'
+import { useTableState } from '@/hooks/useTableState'
+import { usePropertyColumnVisibility } from '@/hooks/usePropertyColumnVisibility'
 
 type TaskViewModel = GetOverviewDataQuery['recentTasks'][0]
-
-const STORAGE_KEY_COLUMN_VISIBILITY = 'recent-tasks-column-visibility'
-const STORAGE_KEY_COLUMN_FILTERS = 'recent-tasks-column-filters'
-const STORAGE_KEY_COLUMN_SORTING = 'recent-tasks-column-sorting'
-const STORAGE_KEY_COLUMN_PAGINATION = 'recent-tasks-column-pagination'
 
 export interface RecentTasksTableProps extends Omit<TableProps<TaskViewModel>, 'table'> {
   tasks: TaskViewModel[],
@@ -41,54 +37,28 @@ export const RecentTasksTable = ({
   const translation = useTasksTranslation()
   const { data: propertyDefinitionsData } = usePropertyDefinitions()
 
-  const [pagination, setPagination] = useStateWithLocalStorage<PaginationState>({
-    key: STORAGE_KEY_COLUMN_PAGINATION,
-    defaultValue: {
-      pageSize: 10,
-      pageIndex: 0
-    }
-  })
-  const [sorting, setSorting] = useStateWithLocalStorage<SortingState>({
-    key: STORAGE_KEY_COLUMN_SORTING,
-    defaultValue: []
-  })
-  const [filters, setFilters] = useStateWithLocalStorage<ColumnFiltersState>({
-    key: STORAGE_KEY_COLUMN_FILTERS,
-    defaultValue: []
-  })
-  const [columnVisibility, setColumnVisibility] = useStateWithLocalStorage<VisibilityState>({
-    key: STORAGE_KEY_COLUMN_VISIBILITY,
-    defaultValue: {}
-  })
+  const {
+    pagination,
+    setPagination,
+    sorting,
+    setSorting,
+    filters,
+    setFilters,
+    columnVisibility,
+    setColumnVisibility,
+  } = useTableState('recent-tasks')
 
-  useEffect(() => {
-    if (propertyDefinitionsData?.propertyDefinitions) {
-      const taskProperties = propertyDefinitionsData.propertyDefinitions.filter(
-        def => def.isActive && def.allowedEntities.includes(PropertyEntity.Task)
-      )
-      const propertyColumnIds = taskProperties.map(prop => `property_${prop.id}`)
-      const hasPropertyColumnsInVisibility = propertyColumnIds.some(id => id in columnVisibility)
+  usePropertyColumnVisibility(
+    propertyDefinitionsData,
+    PropertyEntity.Task,
+    columnVisibility,
+    setColumnVisibility
+  )
 
-      if (!hasPropertyColumnsInVisibility && propertyColumnIds.length > 0) {
-        const initialVisibility: VisibilityState = { ...columnVisibility }
-        propertyColumnIds.forEach(id => {
-          initialVisibility[id] = false
-        })
-        setColumnVisibility(initialVisibility)
-      }
-    }
-  }, [propertyDefinitionsData, columnVisibility, setColumnVisibility])
-
-  const taskPropertyColumns = useMemo<ColumnDef<TaskViewModel>[]>(() => {
-    if (!propertyDefinitionsData?.propertyDefinitions) return []
-
-    const taskProperties = propertyDefinitionsData.propertyDefinitions.filter(
-      def => def.isActive && def.allowedEntities.includes(PropertyEntity.Task)
-    )
-
-    return taskProperties.map(prop =>
-      createPropertyColumn<TaskViewModel>(prop))
-  }, [propertyDefinitionsData])
+  const taskPropertyColumns = useMemo<ColumnDef<TaskViewModel>[]>(
+    () => getPropertyColumnsForEntity<TaskViewModel>(propertyDefinitionsData, PropertyEntity.Task),
+    [propertyDefinitionsData]
+  )
 
   const taskColumns = useMemo<ColumnDef<TaskViewModel>[]>(() => [
     {
@@ -217,7 +187,7 @@ export const RecentTasksTable = ({
 
   const fixedPagination = useMemo(() => ({
     ...pagination,
-    pageSize: 10
+    pageSize: 5
   }), [pagination])
 
   return (
@@ -229,7 +199,7 @@ export const RecentTasksTable = ({
         onRowClick={onRowClick}
         initialState={{
           pagination: {
-            pageSize: 10,
+            pageSize: 5,
           },
         }}
         state={{
@@ -245,12 +215,14 @@ export const RecentTasksTable = ({
         enableMultiSort={true}
         isUsingFillerRows={true}
       >
-        <div className="flex flex-col h-full gap-4" {...props}>
+        <div className="flex flex-col h-full gap-4 w-full min-w-0" {...props}>
           <div className="flex-col-0">
             <span className="typography-title-lg">{translation('recentTasks')}</span>
             <span className="text-description">{translation('tasksUpdatedRecently')}</span>
           </div>
-          <TableDisplay className="print-content" />
+          <div className="w-full min-w-0 overflow-x-auto mt-4">
+            <TableDisplay className="min-w-full" />
+          </div>
         </div>
       </TableProvider>
     </div>

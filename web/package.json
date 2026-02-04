@@ -9,7 +9,8 @@
     "build": "npm run build-intl & next build",
     "start": "next start",
     "lint": "tsc --noEmit && eslint .",
-    "generate-graphql": "graphql-codegen"
+    "generate-graphql": "graphql-codegen",
+    "check-translations": "node scripts/check-translation-keys.mjs"
   },
   "dependencies": {
     "@apollo/client": "4.0.11",

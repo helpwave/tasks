@@ -2,12 +2,11 @@
 
 import type { ComponentType, PropsWithChildren, ReactNode } from 'react'
 import { createContext, useCallback, useContext, useEffect, useState } from 'react'
-import { LoadingAnimation } from '@helpwave/hightide'
+import { HelpwaveLogo } from '@helpwave/hightide'
 import { login, logout, onTokenExpiringCallback, removeUser, renewToken, restoreSession } from '@/api/auth/authService'
 import type { User } from 'oidc-client-ts'
 import { getConfig } from '@/utils/config'
 import { usePathname } from 'next/navigation'
-import { LoginPage } from '@/components/pages/login'
 
 const config = getConfig()
 
@@ -124,27 +123,28 @@ export const AuthProvider = ({
       .catch(() => {})
   }, [])
 
+  useEffect(() => {
+    if (isIgnored || isUnprotected || identity || isLoading) return
+    login(
+      config.auth.redirect_uri +
+      `?redirect_uri=${encodeURIComponent(window.location.href)}`
+    ).catch(() => {})
+  }, [identity, isLoading, isIgnored, isUnprotected])
+
+  const authLoadingContent = (
+    <div className="flex flex-col items-center justify-center w-screen h-screen bg-surface">
+      <HelpwaveLogo
+        animate="loading"
+        color="currentColor"
+        height={128}
+        width={128}
+      />
+    </div>
+  )
+
   let content: ReactNode = children
   if (!isUnprotected && !isIgnored && !identity) {
-    if (isLoading) {
-      content = (
-        <div className="flex-col-0 items-center justify-center w-screen h-screen">
-          <LoadingAnimation loadingText="Logging in..."/>
-        </div>
-      )
-    } else {
-      content = (
-        <LoginPage
-          login={async () => {
-            await login(
-              config.auth.redirect_uri +
-              `?redirect_uri=${encodeURIComponent(window.location.href)}`
-            )
-            return true
-          }}
-        />
-      )
-    }
+    content = authLoadingContent
   }
 
   return (

@@ -15,10 +15,12 @@ import { PatientDetailView } from '@/components/patients/PatientDetailView'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { UserInfoPopup } from '@/components/UserInfoPopup'
-import type { ColumnDef, ColumnFiltersState, PaginationState, SortingState, TableState, VisibilityState } from '@tanstack/table-core'
+import type { ColumnDef, ColumnFiltersState, TableState } from '@tanstack/table-core'
+import { DueDateUtils } from '@/utils/dueDate'
 import { PriorityUtils } from '@/utils/priority'
-import { createPropertyColumn } from '@/utils/propertyColumn'
-import { useStateWithLocalStorage } from '@/hooks/useStateWithLocalStorage'
+import { getPropertyColumnsForEntity } from '@/utils/propertyColumn'
+import { useTableState } from '@/hooks/useTableState'
+import { usePropertyColumnVisibility } from '@/hooks/usePropertyColumnVisibility'
 
 export type TaskViewModel = {
   id: string,
@@ -65,47 +67,33 @@ type TaskListProps = {
   showAllTasksMode?: boolean,
 }
 
-const isOverdue = (dueDate: Date | undefined, done: boolean): boolean => {
-  if (!dueDate || done) return false
-  return dueDate.getTime() < Date.now()
-}
-
-const isCloseToDueDate = (dueDate: Date | undefined, done: boolean): boolean => {
-  if (!dueDate || done) return false
-  const now = Date.now()
-  const dueTime = dueDate.getTime()
-  const oneHour = 60 * 60 * 1000
-  return dueTime > now && dueTime - now <= oneHour
-}
-
-
-
-const STORAGE_KEY_COLUMN_VISIBILITY = 'task-list-column-visibility'
-const STORAGE_KEY_COLUMN_FILTERS = 'task-list-column-filters'
-const STORAGE_KEY_COLUMN_SORTING = 'task-list-column-sorting'
-const STORAGE_KEY_COLUMN_PAGINATION = 'task-list-column-pagination'
-
 export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initialTasks, onRefetch, showAssignee = false, initialTaskId, onInitialTaskOpened, headerActions, totalCount, loading = false, showAllTasksMode = false }, ref) => {
   const translation = useTasksTranslation()
+  const { data: propertyDefinitionsData } = usePropertyDefinitions()
 
-  const [pagination, setPagination] = useStateWithLocalStorage<PaginationState>({
-    key: STORAGE_KEY_COLUMN_PAGINATION,
-    defaultValue: {
-      pageSize: 10,
-      pageIndex: 0
-    }
-  })
-  const [sorting, setSorting] = useStateWithLocalStorage<SortingState>({
-    key: STORAGE_KEY_COLUMN_SORTING,
-    defaultValue: [
+  const {
+    pagination,
+    setPagination,
+    sorting,
+    setSorting,
+    filters,
+    setFilters,
+    columnVisibility,
+    setColumnVisibility,
+  } = useTableState('task-list', {
+    defaultSorting: [
       { id: 'done', desc: false },
       { id: 'dueDate', desc: false },
-    ]
+    ],
   })
-  const [filters, setFilters] = useStateWithLocalStorage<ColumnFiltersState>({
-    key: STORAGE_KEY_COLUMN_FILTERS,
-    defaultValue: []
-  })
+
+  usePropertyColumnVisibility(
+    propertyDefinitionsData,
+    PropertyEntity.Task,
+    columnVisibility,
+    setColumnVisibility
+  )
+
   const normalizeDoneFilterValue = useCallback((value: unknown): boolean | undefined => {
     if (value === true || value === 'true' || value === 'done') return true
     if (value === false || value === 'false' || value === 'undone') return false
@@ -136,34 +124,11 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
       })
     })
   }, [setFilters, normalizeDoneFilterValue])
-  const [columnVisibility, setColumnVisibility] = useStateWithLocalStorage<VisibilityState>({
-    key: STORAGE_KEY_COLUMN_VISIBILITY,
-    defaultValue: {}
-  })
 
   const queryClient = useQueryClient()
   const { totalPatientsCount, user } = useTasksContext()
   const { refreshingTaskIds } = useRefreshingEntityIds()
   const [optimisticUpdates, setOptimisticUpdates] = useState<Map<string, boolean>>(new Map())
-  const { data: propertyDefinitionsData } = usePropertyDefinitions()
-
-  useEffect(() => {
-    if (propertyDefinitionsData?.propertyDefinitions) {
-      const taskProperties = propertyDefinitionsData.propertyDefinitions.filter(
-        def => def.isActive && def.allowedEntities.includes(PropertyEntity.Task)
-      )
-      const propertyColumnIds = taskProperties.map(prop => `property_${prop.id}`)
-      const hasPropertyColumnsInVisibility = propertyColumnIds.some(id => id in columnVisibility)
-
-      if (!hasPropertyColumnsInVisibility && propertyColumnIds.length > 0) {
-        const initialVisibility: VisibilityState = { ...columnVisibility }
-        propertyColumnIds.forEach(id => {
-          initialVisibility[id] = false
-        })
-        setColumnVisibility(initialVisibility)
-      }
-    }
-  }, [propertyDefinitionsData, columnVisibility, setColumnVisibility])
   const [completeTask] = useCompleteTask()
   const [reopenTask] = useReopenTask()
   const [assignTask] = useAssignTask()
@@ -343,14 +308,10 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
     setIsHandoverDialogOpen(false)
   }
 
-  const taskProperties = useMemo(() => {
-    return propertyDefinitionsData?.propertyDefinitions
-      .filter(def => def.isActive && def.allowedEntities.includes(PropertyEntity.Task)) ?? []
-  }, [propertyDefinitionsData])
-
-  const taskPropertyColumns = useMemo<ColumnDef<TaskViewModel>[]>(() => {
-    return taskProperties.map(prop => createPropertyColumn<TaskViewModel>(prop))
-  }, [taskProperties])
+  const taskPropertyColumns = useMemo<ColumnDef<TaskViewModel>[]>(
+    () => getPropertyColumnsForEntity<TaskViewModel>(propertyDefinitionsData, PropertyEntity.Task),
+    [propertyDefinitionsData]
+  )
 
 
   const rowLoadingCell = useMemo(() => <LoadingContainer className="w-full min-h-8" />, [])
@@ -431,8 +392,8 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
         cell: ({ row }) => {
           if (refreshingTaskIds.has(row.original.id)) return rowLoadingCell
           if (!row.original.dueDate) return <span className="text-description">-</span>
-          const overdue = isOverdue(row.original.dueDate, row.original.done)
-          const closeToDue = isCloseToDueDate(row.original.dueDate, row.original.done)
+          const overdue = DueDateUtils.isOverdue(row.original.dueDate, row.original.done)
+          const closeToDue = DueDateUtils.isCloseToDueDate(row.original.dueDate, row.original.done)
           let colorClass = ''
           if (overdue) {
             colorClass = '!text-red-500'
@@ -468,22 +429,17 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
             )
           }
           return (
-            <>
-              <div className="flex flex-col gap-1 print:hidden">
-                <Button
-                  color="neutral"
-                  size="sm"
-                  onClick={event => {
-                    event.stopPropagation()
-                    setSelectedPatientId(data.patient?.id ?? null)
-                  }}
-                  className="flex-row-0 justify-start w-fit"
-                >
-                  {data.patient?.name}
-                </Button>
-              </div>
-              <span className="hidden print:block">{data.patient?.name}</span>
-            </>
+            <Button
+              color="neutral"
+              size="sm"
+              onClick={event => {
+                event.stopPropagation()
+                setSelectedPatientId(data.patient?.id ?? null)
+              }}
+              className="flex-row-0 justify-start w-fit"
+            >
+              {data.patient?.name}
+            </Button>
           )
         },
         sortingFn: 'text',
@@ -645,7 +601,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
               display: none !important;
             }
           `}</style>
-          <TableDisplay className="print-content" />
+          <TableDisplay />
         </div>
         <Drawer
           alignment="right"

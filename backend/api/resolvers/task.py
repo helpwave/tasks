@@ -3,17 +3,18 @@ from collections.abc import AsyncGenerator
 import strawberry
 from api.audit import audit_log
 from api.context import Info
+from api.errors import raise_forbidden
 from api.decorators.filter_sort import (
     apply_filtering,
     apply_sorting,
     filtered_and_sorted_query,
+    get_property_field_types,
 )
 from api.decorators.full_text_search import (
     apply_full_text_search,
     full_text_search_query,
 )
 from api.inputs import (
-    ColumnType,
     FilterInput,
     FullTextSearchInput,
     PaginationInput,
@@ -45,10 +46,7 @@ class TaskQuery:
         if task and task.patient:
             auth_service = AuthorizationService(info.context.db)
             if not await auth_service.can_access_patient(info.context.user, task.patient, info.context):
-                raise GraphQLError(
-                    "Insufficient permission. Please contact an administrator if you believe this is an error.",
-                    extensions={"code": "FORBIDDEN"},
-                )
+                raise_forbidden()
         return task
 
     @strawberry.field
@@ -70,10 +68,7 @@ class TaskQuery:
 
         if patient_id:
             if not await auth_service.can_access_patient_id(info.context.user, patient_id, info.context):
-                raise GraphQLError(
-                    "Insufficient permission. Please contact an administrator if you believe this is an error.",
-                    extensions={"code": "FORBIDDEN"},
-                )
+                raise_forbidden()
 
             query = select(models.Task).options(
                 selectinload(models.Task.patient).selectinload(models.Patient.assigned_locations)
@@ -110,10 +105,7 @@ class TaskQuery:
         if root_location_ids:
             invalid_ids = [lid for lid in root_location_ids if lid not in accessible_location_ids]
             if invalid_ids:
-                raise GraphQLError(
-                    "Insufficient permission. Please contact an administrator if you believe this is an error.",
-                    extensions={"code": "FORBIDDEN"},
-                )
+                raise_forbidden()
             root_cte = (
                 select(models.LocationNode.id)
                 .where(models.LocationNode.id.in_(root_location_ids))
@@ -129,10 +121,7 @@ class TaskQuery:
         team_location_cte = None
         if assignee_team_id:
             if assignee_team_id not in accessible_location_ids:
-                raise GraphQLError(
-                    "Insufficient permission. Please contact an administrator if you believe this is an error.",
-                    extensions={"code": "FORBIDDEN"},
-                )
+                raise_forbidden()
             team_location_cte = (
                 select(models.LocationNode.id)
                 .where(models.LocationNode.id == assignee_team_id)
@@ -198,10 +187,7 @@ class TaskQuery:
 
         if patient_id:
             if not await auth_service.can_access_patient_id(info.context.user, patient_id, info.context):
-                raise GraphQLError(
-                    "Insufficient permission. Please contact an administrator if you believe this is an error.",
-                    extensions={"code": "FORBIDDEN"},
-                )
+                raise_forbidden()
 
             query = select(models.Task).where(models.Task.patient_id == patient_id)
 
@@ -234,10 +220,7 @@ class TaskQuery:
             if root_location_ids:
                 invalid_ids = [lid for lid in root_location_ids if lid not in accessible_location_ids]
                 if invalid_ids:
-                    raise GraphQLError(
-                        "Insufficient permission. Please contact an administrator if you believe this is an error.",
-                        extensions={"code": "FORBIDDEN"},
-                    )
+                    raise_forbidden()
                 root_cte = (
                     select(models.LocationNode.id)
                     .where(models.LocationNode.id.in_(root_location_ids))
@@ -253,10 +236,7 @@ class TaskQuery:
             team_location_cte = None
             if assignee_team_id:
                 if assignee_team_id not in accessible_location_ids:
-                    raise GraphQLError(
-                        "Insufficient permission. Please contact an administrator if you believe this is an error.",
-                        extensions={"code": "FORBIDDEN"},
-                    )
+                    raise_forbidden()
                 team_location_cte = (
                     select(models.LocationNode.id)
                     .where(models.LocationNode.id == assignee_team_id)
@@ -304,45 +284,17 @@ class TaskQuery:
         if search and search is not strawberry.UNSET:
             query = apply_full_text_search(query, search, models.Task)
 
+        property_field_types = await get_property_field_types(
+            info.context.db, filtering, sorting
+        )
         if filtering:
-            property_field_types: dict[str, str] = {}
-            property_def_ids = set()
-            for f in filtering:
-                if f.column_type == ColumnType.PROPERTY and f.property_definition_id:
-                    property_def_ids.add(f.property_definition_id)
-
-            if property_def_ids:
-                prop_defs_result = await info.context.db.execute(
-                    select(models.PropertyDefinition).where(
-                        models.PropertyDefinition.id.in_(property_def_ids)
-                    )
-                )
-                prop_defs = prop_defs_result.scalars().all()
-                property_field_types = {
-                    str(prop_def.id): prop_def.field_type for prop_def in prop_defs
-                }
-
-            query = apply_filtering(query, filtering, models.Task, property_field_types)
-
+            query = apply_filtering(
+                query, filtering, models.Task, property_field_types
+            )
         if sorting:
-            property_field_types: dict[str, str] = {}
-            property_def_ids = set()
-            for s in sorting:
-                if s.column_type == ColumnType.PROPERTY and s.property_definition_id:
-                    property_def_ids.add(s.property_definition_id)
-
-            if property_def_ids:
-                prop_defs_result = await info.context.db.execute(
-                    select(models.PropertyDefinition).where(
-                        models.PropertyDefinition.id.in_(property_def_ids)
-                    )
-                )
-                prop_defs = prop_defs_result.scalars().all()
-                property_field_types = {
-                    str(prop_def.id): prop_def.field_type for prop_def in prop_defs
-                }
-
-            query = apply_sorting(query, sorting, models.Task, property_field_types)
+            query = apply_sorting(
+                query, sorting, models.Task, property_field_types
+            )
 
         subquery = query.subquery()
         count_query = select(func.count(func.distinct(subquery.c.id)))
@@ -478,45 +430,17 @@ class TaskQuery:
         if search and search is not strawberry.UNSET:
             query = apply_full_text_search(query, search, models.Task)
 
+        property_field_types = await get_property_field_types(
+            info.context.db, filtering, sorting
+        )
         if filtering:
-            property_field_types: dict[str, str] = {}
-            property_def_ids = set()
-            for f in filtering:
-                if f.column_type == ColumnType.PROPERTY and f.property_definition_id:
-                    property_def_ids.add(f.property_definition_id)
-
-            if property_def_ids:
-                prop_defs_result = await info.context.db.execute(
-                    select(models.PropertyDefinition).where(
-                        models.PropertyDefinition.id.in_(property_def_ids)
-                    )
-                )
-                prop_defs = prop_defs_result.scalars().all()
-                property_field_types = {
-                    str(prop_def.id): prop_def.field_type for prop_def in prop_defs
-                }
-
-            query = apply_filtering(query, filtering, models.Task, property_field_types)
-
+            query = apply_filtering(
+                query, filtering, models.Task, property_field_types
+            )
         if sorting:
-            property_field_types: dict[str, str] = {}
-            property_def_ids = set()
-            for s in sorting:
-                if s.column_type == ColumnType.PROPERTY and s.property_definition_id:
-                    property_def_ids.add(s.property_definition_id)
-
-            if property_def_ids:
-                prop_defs_result = await info.context.db.execute(
-                    select(models.PropertyDefinition).where(
-                        models.PropertyDefinition.id.in_(property_def_ids)
-                    )
-                )
-                prop_defs = prop_defs_result.scalars().all()
-                property_field_types = {
-                    str(prop_def.id): prop_def.field_type for prop_def in prop_defs
-                }
-
-            query = apply_sorting(query, sorting, models.Task, property_field_types)
+            query = apply_sorting(
+                query, sorting, models.Task, property_field_types
+            )
 
         subquery = query.subquery()
         count_query = select(func.count(func.distinct(subquery.c.id)))
@@ -535,10 +459,7 @@ class TaskMutation(BaseMutationResolver[models.Task]):
     async def create_task(self, info: Info, data: CreateTaskInput) -> TaskType:
         auth_service = AuthorizationService(info.context.db)
         if not await auth_service.can_access_patient_id(info.context.user, data.patient_id, info.context):
-            raise GraphQLError(
-                "Insufficient permission. Please contact an administrator if you believe this is an error.",
-                extensions={"code": "FORBIDDEN"},
-            )
+            raise_forbidden()
 
         if data.assignee_id and data.assignee_team_id:
             raise GraphQLError(
@@ -602,10 +523,7 @@ class TaskMutation(BaseMutationResolver[models.Task]):
         if task.patient:
             auth_service = AuthorizationService(db)
             if not await auth_service.can_access_patient(info.context.user, task.patient, info.context):
-                raise GraphQLError(
-                    "Insufficient permission. Please contact an administrator if you believe this is an error.",
-                    extensions={"code": "FORBIDDEN"},
-                )
+                raise_forbidden()
 
         if data.checksum:
             validate_checksum(task, data.checksum, "Task")
@@ -681,10 +599,7 @@ class TaskMutation(BaseMutationResolver[models.Task]):
         if task.patient:
             auth_service = AuthorizationService(db)
             if not await auth_service.can_access_patient(info.context.user, task.patient, info.context):
-                raise GraphQLError(
-                    "Insufficient permission. Please contact an administrator if you believe this is an error.",
-                    extensions={"code": "FORBIDDEN"},
-                )
+                raise_forbidden()
 
         field_updater(task)
         await BaseMutationResolver.update_and_notify(
@@ -793,10 +708,7 @@ class TaskMutation(BaseMutationResolver[models.Task]):
         if task.patient:
             auth_service = AuthorizationService(db)
             if not await auth_service.can_access_patient(info.context.user, task.patient, info.context):
-                raise GraphQLError(
-                    "Insufficient permission. Please contact an administrator if you believe this is an error.",
-                    extensions={"code": "FORBIDDEN"},
-                )
+                raise_forbidden()
 
         patient_id = task.patient_id
         await BaseMutationResolver.delete_entity(
@@ -813,53 +725,23 @@ class TaskSubscription(BaseSubscriptionResolver):
         info: Info,
         root_location_ids: list[strawberry.ID] | None = None,
     ) -> AsyncGenerator[strawberry.ID, None]:
-        import logging
-
         from api.services.subscription import (
+            subscribe_with_location_filter,
             task_belongs_to_root_locations,
         )
-
-        logger = logging.getLogger(__name__)
 
         root_location_ids_str = (
             [str(lid) for lid in root_location_ids]
             if root_location_ids
             else None
         )
-
-        logger.info(
-            f"[SUBSCRIPTION] Initializing task_created subscription: "
-            f"root_location_ids={root_location_ids_str}"
-        )
-
-        async for task_id in BaseSubscriptionResolver.entity_created(
-            info, "task"
+        base = BaseSubscriptionResolver.entity_created(info, "task")
+        async for task_id in subscribe_with_location_filter(
+            base,
+            info.context.db,
+            root_location_ids_str,
+            task_belongs_to_root_locations,
         ):
-            logger.info(
-                f"[SUBSCRIPTION] TaskSubscription received task_created event: "
-                f"task_id={task_id}, root_location_ids={root_location_ids_str}"
-            )
-            if root_location_ids_str:
-                belongs = await task_belongs_to_root_locations(
-                    info.context.db,
-                    str(task_id),
-                    root_location_ids_str,
-                )
-                if not belongs:
-                    logger.debug(
-                        f"[SUBSCRIPTION] TaskSubscription filtered out task_created event "
-                        f"(location mismatch): task_id={task_id}, "
-                        f"root_location_ids={root_location_ids_str}"
-                    )
-                    continue
-                logger.debug(
-                    f"[SUBSCRIPTION] TaskSubscription passed location filter: "
-                    f"task_id={task_id}, root_location_ids={root_location_ids_str}"
-                )
-            logger.info(
-                f"[SUBSCRIPTION] TaskSubscription yielding task_created event: "
-                f"task_id={task_id}"
-            )
             yield task_id
 
     @strawberry.subscription
@@ -869,54 +751,25 @@ class TaskSubscription(BaseSubscriptionResolver):
         task_id: strawberry.ID | None = None,
         root_location_ids: list[strawberry.ID] | None = None,
     ) -> AsyncGenerator[strawberry.ID, None]:
-        import logging
-
         from api.services.subscription import (
+            subscribe_with_location_filter,
             task_belongs_to_root_locations,
         )
-
-        logger = logging.getLogger(__name__)
 
         root_location_ids_str = (
             [str(lid) for lid in root_location_ids]
             if root_location_ids
             else None
         )
-
-        logger.info(
-            f"[SUBSCRIPTION] Initializing task_updated subscription: "
-            f"task_id={task_id}, root_location_ids={root_location_ids_str}"
-        )
-
-        async for updated_id in BaseSubscriptionResolver.entity_updated(
+        base = BaseSubscriptionResolver.entity_updated(
             info, "task", task_id
+        )
+        async for updated_id in subscribe_with_location_filter(
+            base,
+            info.context.db,
+            root_location_ids_str,
+            task_belongs_to_root_locations,
         ):
-            logger.info(
-                f"[SUBSCRIPTION] TaskSubscription received task_updated event: "
-                f"updated_id={updated_id}, filter_task_id={task_id}, "
-                f"root_location_ids={root_location_ids_str}"
-            )
-            if root_location_ids_str:
-                belongs = await task_belongs_to_root_locations(
-                    info.context.db,
-                    str(updated_id),
-                    root_location_ids_str,
-                )
-                if not belongs:
-                    logger.debug(
-                        f"[SUBSCRIPTION] TaskSubscription filtered out task_updated event "
-                        f"(location mismatch): updated_id={updated_id}, "
-                        f"root_location_ids={root_location_ids_str}"
-                    )
-                    continue
-                logger.debug(
-                    f"[SUBSCRIPTION] TaskSubscription passed location filter: "
-                    f"updated_id={updated_id}, root_location_ids={root_location_ids_str}"
-                )
-            logger.info(
-                f"[SUBSCRIPTION] TaskSubscription yielding task_updated event: "
-                f"updated_id={updated_id}"
-            )
             yield updated_id
 
     @strawberry.subscription
@@ -925,51 +778,21 @@ class TaskSubscription(BaseSubscriptionResolver):
         info: Info,
         root_location_ids: list[strawberry.ID] | None = None,
     ) -> AsyncGenerator[strawberry.ID, None]:
-        import logging
-
         from api.services.subscription import (
+            subscribe_with_location_filter,
             task_belongs_to_root_locations,
         )
-
-        logger = logging.getLogger(__name__)
 
         root_location_ids_str = (
             [str(lid) for lid in root_location_ids]
             if root_location_ids
             else None
         )
-
-        logger.info(
-            f"[SUBSCRIPTION] Initializing task_deleted subscription: "
-            f"root_location_ids={root_location_ids_str}"
-        )
-
-        async for task_id in BaseSubscriptionResolver.entity_deleted(
-            info, "task"
+        base = BaseSubscriptionResolver.entity_deleted(info, "task")
+        async for task_id in subscribe_with_location_filter(
+            base,
+            info.context.db,
+            root_location_ids_str,
+            task_belongs_to_root_locations,
         ):
-            logger.info(
-                f"[SUBSCRIPTION] TaskSubscription received task_deleted event: "
-                f"task_id={task_id}, root_location_ids={root_location_ids_str}"
-            )
-            if root_location_ids_str:
-                belongs = await task_belongs_to_root_locations(
-                    info.context.db,
-                    str(task_id),
-                    root_location_ids_str,
-                )
-                if not belongs:
-                    logger.debug(
-                        f"[SUBSCRIPTION] TaskSubscription filtered out task_deleted event "
-                        f"(location mismatch): task_id={task_id}, "
-                        f"root_location_ids={root_location_ids_str}"
-                    )
-                    continue
-                logger.debug(
-                    f"[SUBSCRIPTION] TaskSubscription passed location filter: "
-                    f"task_id={task_id}, root_location_ids={root_location_ids_str}"
-                )
-            logger.info(
-                f"[SUBSCRIPTION] TaskSubscription yielding task_deleted event: "
-                f"task_id={task_id}"
-            )
             yield task_id

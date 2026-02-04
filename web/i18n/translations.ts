@@ -5,7 +5,7 @@
 import type { Translation } from '@helpwave/internationalization'
 import { TranslationGen } from '@helpwave/internationalization'
 
-export const tasksTranslationLocales = ['de-DE', 'en-US'] as const
+export const tasksTranslationLocales = ['de-DE', 'en-US', 'es-ES', 'fr-FR', 'nl-NL', 'pt-BR'] as const
 
 export type TasksTranslationLocales = typeof tasksTranslationLocales[number]
 
@@ -16,22 +16,16 @@ export type TasksTranslationEntries = {
   'addProperty': string,
   'addTask': string,
   'admitPatient': string,
-  'age': string,
   'anonymous': string,
   'anonymousSubmission': string,
   'archivedPropertyDescription': string,
   'archiveProperty': string,
-  'assignedLocation': string,
   'assignedTo': string,
-  'assignee': string,
   'authenticationFailed': string,
   'birthdate': string,
   'cancel': string,
-  'cardView': string,
-  'chooseLanguage': string,
-  'chooseTheme': string,
+  'clear': string,
   'clearCache': string,
-  'clickToAdd': string,
   'clinic': string,
   'clinics': string,
   'closedTasks': string,
@@ -46,12 +40,9 @@ export type TasksTranslationEntries = {
   'connectionConnecting': string,
   'connectionDisconnected': string,
   'create': string,
-  'createdAt': string,
   'createTask': string,
-  'currentPatient': string,
   'currentTime': string,
   'dashboard': string,
-  'dashboardWelcome': (values: { name: string }) => string,
   'dashboardWelcomeAfternoon': (values: { name: string }) => string,
   'dashboardWelcomeDescription': string,
   'dashboardWelcomeEvening': (values: { name: string }) => string,
@@ -61,7 +52,6 @@ export type TasksTranslationEntries = {
   'delete': string,
   'deletePatient': string,
   'deletePatientConfirmation': string,
-  'deleteTaskConfirmation': string,
   'description': string,
   'descriptionPlaceholder': string,
   'deselectAll': string,
@@ -76,7 +66,6 @@ export type TasksTranslationEntries = {
   'editPatient': string,
   'editTask': string,
   'enterFeedback': string,
-  'enterName': string,
   'error': string,
   'errorOccurred': string,
   'estimatedTime': string,
@@ -94,17 +83,12 @@ export type TasksTranslationEntries = {
   'install': string,
   'installApp': string,
   'installAppDescription': string,
-  'itsYou': string,
+  'language': string,
   'lastName': string,
-  'lastUpdate': string,
-  'loading': string,
   'location': string,
   'locationBed': string,
-  'locationChipsShowFullPath': string,
   'locationClinic': string,
   'locationRoom': string,
-  'locations': string,
-  'locationTeam': string,
   'locationType': (values: { type: string }) => string,
   'locationWard': string,
   'login': string,
@@ -118,27 +102,17 @@ export type TasksTranslationEntries = {
   'myOpenTasks': string,
   'myTasks': string,
   'name': string,
-  'nBed': (values: { count: number }) => string,
-  'nCurrentlyPatients': (values: { count: number }) => string,
-  'newestAdmissions': string,
-  'newPatient': string,
+  'no': string,
   'noClosedTasks': string,
   'noLocationsFound': string,
   'noNotifications': string,
   'noOpenTasks': string,
   'noPatient': string,
   'noResultsFound': string,
-  'nOrganization': (values: { count: number }) => string,
   'notAssigned': string,
-  'notes': string,
   'notifications': string,
   'nPatient': (values: { count: number }) => string,
-  'nProperties': (values: { count: number }) => string,
-  'nRoom': (values: { count: number }) => string,
   'nTask': (values: { count: number }) => string,
-  'nTeam': (values: { count: number }) => string,
-  'nWard': (values: { count: number }) => string,
-  'nYear': (values: { count: number }) => string,
   'occupancy': string,
   'ok': string,
   'openSurvey': string,
@@ -146,7 +120,6 @@ export type TasksTranslationEntries = {
   'option': string,
   'organizations': string,
   'overview': string,
-  'overwrite': string,
   'pages.404.notFound': string,
   'pages.404.notFoundDescription1': string,
   'pages.404.notFoundDescription2': string,
@@ -162,23 +135,16 @@ export type TasksTranslationEntries = {
   'pickPositionDescription': string,
   'pickTeams': string,
   'pickTeamsDescription': string,
-  'place': string,
   'position': string,
   'preferences': string,
-  'print': string,
-  'printOnlyAvailableInTableMode': string,
   'priority': (values: { priority: string }) => string,
   'priorityLabel': string,
   'priorityNone': string,
   'privacy': string,
-  'private': string,
-  'profile': string,
   'properties': string,
   'property': string,
-  'public': string,
-  'publish': string,
+  'pThemes': (values: { count: number }) => string,
   'rAdd': (values: { name: string }) => string,
-  'rClickToAdd': (values: { name: string }) => string,
   'recentPatients': string,
   'recentTasks': string,
   'rEdit': (values: { name: string }) => string,
@@ -186,10 +152,8 @@ export type TasksTranslationEntries = {
   'removeProperty': string,
   'removePropertyConfirmation': string,
   'retakeSurvey': string,
-  'returnHome': string,
-  'rooms': string,
   'rShow': (values: { name: string }) => string,
-  'save': string,
+  'search': string,
   'searchLocations': string,
   'searchUserOrTeam': string,
   'searchUsersOrTeams': string,
@@ -200,9 +164,6 @@ export type TasksTranslationEntries = {
   'selectLocation': string,
   'selectLocationDescription': string,
   'selectOptions': string,
-  'selectOrganization': string,
-  'selectOrganizations': string,
-  'selectPatient': string,
   'selectPosition': string,
   'selectRootLocation': string,
   'selectRootLocationDescription': string,
@@ -211,10 +172,7 @@ export type TasksTranslationEntries = {
   'settingsDescription': string,
   'sex': string,
   'shiftHandover': string,
-  'shiftHandoverDescription': string,
-  'showAllPatients': string,
   'showAllTasks': string,
-  'showDone': string,
   'showTeamTasks': string,
   'sPropertySubjectType': (values: { subject: string }) => string,
   'sPropertyType': (values: { type: string }) => string,
@@ -225,36 +183,27 @@ export type TasksTranslationEntries = {
   'subjectType': string,
   'submissionDetails': string,
   'submit': string,
-  'submitAnonymously': string,
   'submittingAs': (values: { name: string }) => string,
   'surveyDescription': string,
   'surveyTitle': string,
   'system': string,
-  'tableView': string,
   'task': string,
   'tasks': string,
-  'taskStatus': (values: { status: string }) => string,
   'tasksUpdatedRecently': string,
   'taskTitlePlaceholder': string,
   'teams': string,
   'themeMode': (values: { theme: string }) => string,
-  'time.today': string,
   'title': string,
   'totalPatients': string,
   'type': string,
-  'unassigned': string,
   'updated': string,
-  'updateLocation': string,
-  'updateLocationConfirmation': string,
   'url': string,
   'userInformation': string,
-  'username': string,
   'users': string,
-  'visibility': string,
   'waitingForPatient': string,
   'waitPatient': string,
   'wards': string,
-  'withName': string,
+  'yes': string,
 }
 
 export const tasksTranslation: Translation<TasksTranslationLocales, Partial<TasksTranslationEntries>> = {
@@ -265,22 +214,16 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'addProperty': `Eigenschaften hinzufügen`,
     'addTask': `Aufgabe hinzufügen`,
     'admitPatient': `Patient aufnehmen`,
-    'age': `Alter`,
     'anonymous': `Anonym`,
     'anonymousSubmission': `Anonyme Übermittlung`,
     'archivedPropertyDescription': `Archivierte Eigenschaften können nicht mehr neu Objekten hinzugeügt werden.`,
     'archiveProperty': `Eigenschaft Archivieren`,
-    'assignedLocation': `Zugewiesener Standort`,
     'assignedTo': `Zugewiesen an`,
-    'assignee': `Verantwortlich`,
     'authenticationFailed': `Authentifizierung fehlgeschlagen`,
     'birthdate': `Geburtsdatum`,
     'cancel': `Abbrechen`,
-    'cardView': `Kachelansicht`,
-    'chooseLanguage': `Sprache wählen`,
-    'chooseTheme': `Design wählen`,
+    'clear': `Löschen`,
     'clearCache': `Cache leeren`,
-    'clickToAdd': `Klicken um hinzuzufügen`,
     'clinic': `Klinik`,
     'clinics': `Kliniken`,
     'closedTasks': `Erledigte Aufgaben`,
@@ -304,14 +247,9 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'connectionConnecting': `Verbinde…`,
     'connectionDisconnected': `Getrennt`,
     'create': `Erstellen`,
-    'createdAt': `Erstellt am`,
     'createTask': `Aufgabe erstellen`,
-    'currentPatient': `Aktueller Patient`,
     'currentTime': `Aktuelle Zeit`,
     'dashboard': `Dashboard`,
-    'dashboardWelcome': ({ name }): string => {
-      return `Guten Morgen, ${name}!`
-    },
     'dashboardWelcomeAfternoon': ({ name }): string => {
       return `Guten Nachmittag, ${name}!`
     },
@@ -331,7 +269,6 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'delete': `Löschen`,
     'deletePatient': `Patient löschen`,
     'deletePatientConfirmation': `Sind Sie sicher, dass Sie diesen Patienten löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.`,
-    'deleteTaskConfirmation': `Sind Sie sicher, dass Sie diese Aufgabe löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.`,
     'description': `Beschreibung`,
     'descriptionPlaceholder': `Weitere Details hinzufügen...`,
     'deselectAll': `Auswahl aufheben`,
@@ -346,7 +283,6 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'editPatient': `Patient bearbeiten`,
     'editTask': `Aufgabe bearbeiten`,
     'enterFeedback': `Geben Sie hier Ihr Feedback ein...`,
-    'enterName': `Geben Sie Ihren Namen ein...`,
     'error': `Fehler`,
     'errorOccurred': `Ein Fehler ist aufgetreten`,
     'estimatedTime': `Geschätzte Zeit (Minuten)`,
@@ -364,17 +300,12 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'install': `Installieren`,
     'installApp': `App installieren`,
     'installAppDescription': `Installieren Sie helpwave tasks für eine bessere Erfahrung mit Offline-Unterstützung und schnellerem Zugriff.`,
-    'itsYou': `Du bist es`,
+    'language': `Sprache`,
     'lastName': `Nachname`,
-    'lastUpdate': `Letzte Änderung`,
-    'loading': `Laden...`,
     'location': `Ort`,
     'locationBed': `Bett`,
-    'locationChipsShowFullPath': `Vollständigen Standortpfad in Chips anzeigen`,
     'locationClinic': `Klinik`,
     'locationRoom': `Zimmer`,
-    'locations': `Standorte`,
-    'locationTeam': `Team`,
     'locationType': ({ type }): string => {
       return TranslationGen.resolveSelect(type, {
         'CLINIC': `Klinik`,
@@ -397,37 +328,14 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'myOpenTasks': `Meine offenen Aufgaben`,
     'myTasks': `Meine Aufgaben`,
     'name': `Name`,
-    'nBed': ({ count }): string => {
-      return TranslationGen.resolvePlural(count, {
-        '=1': `${count} Bett`,
-        'other': `${count} Betten`,
-      })
-    },
-    'nCurrentlyPatients': ({ count }): string => {
-      let _out: string = ''
-      _out += `Aktuell `
-      _out += TranslationGen.resolvePlural(count, {
-        '=1': `${count} Patient`,
-        'other': `${count} Patienten`,
-      })
-      return _out
-    },
-    'newestAdmissions': `Neueste Aufnahmen`,
-    'newPatient': `Neuer Patient`,
+    'no': `Nein`,
     'noClosedTasks': `Keine erledigten Aufgaben`,
     'noLocationsFound': `Keine Standorte gefunden`,
     'noNotifications': `Keine aktuellen Updates`,
     'noOpenTasks': `Keine offenen Aufgaben`,
     'noPatient': `Kein Patient`,
     'noResultsFound': `Keine Ergebnisse gefunden`,
-    'nOrganization': ({ count }): string => {
-      return TranslationGen.resolvePlural(count, {
-        '=1': `${count} Organisation`,
-        'other': `${count} Organisationen`,
-      })
-    },
     'notAssigned': `Nicht zugewiesen`,
-    'notes': `Notizen`,
     'notifications': `Benachrichtigungen`,
     'nPatient': ({ count }): string => {
       return TranslationGen.resolvePlural(count, {
@@ -435,40 +343,10 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
         'other': `${count} Patienten`,
       })
     },
-    'nProperties': ({ count }): string => {
-      return TranslationGen.resolvePlural(count, {
-        '=1': `${count} Eigenschaft`,
-        'other': `${count} Eigenschaften`,
-      })
-    },
-    'nRoom': ({ count }): string => {
-      return TranslationGen.resolvePlural(count, {
-        '=1': `${count} Zimmer`,
-        'other': `${count} Zimmer`,
-      })
-    },
     'nTask': ({ count }): string => {
       return TranslationGen.resolvePlural(count, {
         '=1': `${count} Aufgabe`,
         'other': `${count} Aufgaben`,
-      })
-    },
-    'nTeam': ({ count }): string => {
-      return TranslationGen.resolvePlural(count, {
-        '=1': `${count} Team`,
-        'other': `${count} Teams`,
-      })
-    },
-    'nWard': ({ count }): string => {
-      return TranslationGen.resolvePlural(count, {
-        '=1': `${count} Station`,
-        'other': `${count} Stationen`,
-      })
-    },
-    'nYear': ({ count }): string => {
-      return TranslationGen.resolvePlural(count, {
-        '=1': `${count} Jahr alt`,
-        'other': `${count} Jahre alt`,
       })
     },
     'occupancy': `Belegung`,
@@ -478,7 +356,6 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'option': `Option`,
     'organizations': `Organisationen`,
     'overview': `Übersicht`,
-    'overwrite': `Überschreiben`,
     'pages.404.notFound': `404 - Seite nicht gefunden`,
     'pages.404.notFoundDescription1': `Das ist definitiv nicht die Seite nach der Sie suchen`,
     'pages.404.notFoundDescription2': `Zurück zur`,
@@ -502,11 +379,8 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'pickPositionDescription': `Wählen Sie den Standort für diesen Patienten aus. Sie können Krankenhaus-, Praxis-, Klinik-, Station-, Bett- oder Zimmer-Standorte auswählen.`,
     'pickTeams': `Teams auswählen`,
     'pickTeamsDescription': `Wählen Sie ein oder mehrere Teams für diesen Patienten aus. Sie können Klinik-, Team-, Praxis- oder Krankenhaus-Standorte auswählen.`,
-    'place': `Ort`,
     'position': `Standort`,
     'preferences': `Präferenzen`,
-    'print': `Drucken`,
-    'printOnlyAvailableInTableMode': `Drucken ist nur im Tabellenmodus verfügbar`,
     'priority': ({ priority }): string => {
       return TranslationGen.resolveSelect(priority, {
         'P1': `Normal`,
@@ -519,17 +393,16 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'priorityLabel': `Priorität`,
     'priorityNone': `Keine`,
     'privacy': `Datenschutz`,
-    'private': `Privat`,
-    'profile': `Profil`,
     'properties': `Eigenschaften`,
     'property': `Eigenschaft`,
-    'public': `Öffentlich`,
-    'publish': `Veröffentlichen`,
+    'pThemes': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `Design`,
+        'other': `Designs`,
+      })
+    },
     'rAdd': ({ name }): string => {
       return `${name} hinzufügen`
-    },
-    'rClickToAdd': ({ name }): string => {
-      return `Klicken um ${name} hinzuzufügen`
     },
     'recentPatients': `Deine kürzlichen Patienten`,
     'recentTasks': `Deine kürzlichen Aufgaben`,
@@ -540,12 +413,10 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'removeProperty': `Eigenschaft entfernen`,
     'removePropertyConfirmation': `Sind Sie sicher, dass Sie diese Eigenschaft entfernen möchten? Diese Aktion kann nicht rückgängig gemacht werden.`,
     'retakeSurvey': `Umfrage erneut durchführen`,
-    'returnHome': `Zur Homepage`,
-    'rooms': `Zimmer`,
     'rShow': ({ name }): string => {
       return `${name} anzeigen`
     },
-    'save': `Speichern`,
+    'search': `Suchen`,
     'searchLocations': `Standorte suchen...`,
     'searchUserOrTeam': `Nach Benutzer (oder Team) suchen...`,
     'searchUsersOrTeams': `Benutzer oder Teams suchen...`,
@@ -556,9 +427,6 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'selectLocation': `Standort auswählen`,
     'selectLocationDescription': `Bitte wählen Sie den zugewiesenen Standort für den Patienten aus.`,
     'selectOptions': `Auswahl Optionen`,
-    'selectOrganization': `Organisation auswählen`,
-    'selectOrganizations': `Organisationen auswählen`,
-    'selectPatient': `Patient auswählen`,
     'selectPosition': `Standort auswählen`,
     'selectRootLocation': `Stammstandort auswählen`,
     'selectRootLocationDescription': `Wählen Sie die Stammstandorte aus, die Ihren zugänglichen Bereich definieren. Es können nur Krankenhäuser, Praxen, Kliniken und Teams ausgewählt werden. Die Auswahl eines übergeordneten Standorts umfasst alle untergeordneten Standorte.`,
@@ -567,10 +435,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'settingsDescription': `Hier kannst du die App Konfiguration ändern.`,
     'sex': `Geschlecht`,
     'shiftHandover': `Schichtübergabe`,
-    'shiftHandoverDescription': `Wählen Sie einen Benutzer aus, um alle Ihnen zugewiesenen offenen Aufgaben zu übertragen.`,
-    'showAllPatients': `Alle Patienten anzeigen`,
     'showAllTasks': `Alle Aufgaben anzeigen`,
-    'showDone': `Erledigte anzeigen`,
     'showTeamTasks': `Team-Aufgaben anzeigen`,
     'sPropertySubjectType': ({ subject }): string => {
       return TranslationGen.resolveSelect(subject, {
@@ -599,24 +464,14 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'subjectType': `Subjekt Type`,
     'submissionDetails': `Übermittlungsdetails`,
     'submit': `Absenden`,
-    'submitAnonymously': `Anonym absenden`,
     'submittingAs': ({ name }): string => {
       return `Übermitteln als ${name}`
     },
     'surveyDescription': `Ihr Feedback ist wertvoll für uns. Bitte nehmen Sie sich einen Moment Zeit, um unsere Umfrage auszufüllen.`,
     'surveyTitle': `Helfen Sie uns, helpwave tasks zu verbessern`,
     'system': `System`,
-    'tableView': `Tabellenansicht`,
     'task': `Aufgabe`,
     'tasks': `Aufgaben`,
-    'taskStatus': ({ status }): string => {
-      return TranslationGen.resolveSelect(status, {
-        'overdue': `Überfällig`,
-        'upcoming': `Anstehend`,
-        'done': `Fertig`,
-        'other': `-`,
-      })
-    },
     'tasksUpdatedRecently': `Kürzlich aktualisierte Aufgaben`,
     'taskTitlePlaceholder': `Was muss erledigt werden?`,
     'teams': `Teams`,
@@ -628,23 +483,17 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
         'other': `System`,
       })
     },
-    'time.today': `Heute`,
     'title': `Titel`,
     'totalPatients': `Gesamtpatienten`,
     'type': `Typ`,
-    'unassigned': `Nicht zugewiesen`,
     'updated': `Aktualisiert`,
-    'updateLocation': `Standort aktualisieren`,
-    'updateLocationConfirmation': `Sind Sie sicher, dass Sie den Standort des Patienten aktualisieren möchten?`,
     'url': `URL`,
     'userInformation': `Benutzerinformationen`,
-    'username': `Benutzername`,
     'users': `Benutzer`,
-    'visibility': `Sichtbarkeit`,
     'waitingForPatient': `Warten auf Patient`,
     'waitPatient': `Patient auf Warteliste setzen`,
     'wards': `Stationen`,
-    'withName': `Mit Namen (für Nachfragen)`
+    'yes': `Ja`
   },
   'en-US': {
     'account': `Account`,
@@ -653,22 +502,16 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'addProperty': `Add Property`,
     'addTask': `Add Task`,
     'admitPatient': `Admit Patient`,
-    'age': `Age`,
     'anonymous': `Anonymous`,
     'anonymousSubmission': `Anonymous Submission`,
     'archivedPropertyDescription': `Archived Properties can no longer be assigned to objects.`,
     'archiveProperty': `Archive Property`,
-    'assignedLocation': `Assigned Location`,
     'assignedTo': `Assigned to`,
-    'assignee': `Assignee`,
     'authenticationFailed': `Authentication Failed`,
     'birthdate': `Birthdate`,
     'cancel': `Cancel`,
-    'cardView': `Card View`,
-    'chooseLanguage': `Choose Language`,
-    'chooseTheme': `Choose Theme`,
+    'clear': `Clear`,
     'clearCache': `Clear Cache`,
-    'clickToAdd': `Click to add`,
     'clinic': `Clinic`,
     'clinics': `Clinics`,
     'closedTasks': `Closed Tasks`,
@@ -692,14 +535,9 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'connectionConnecting': `Connecting…`,
     'connectionDisconnected': `Disconnected`,
     'create': `Create`,
-    'createdAt': `Created at`,
     'createTask': `Create Task`,
-    'currentPatient': `Current Patient`,
     'currentTime': `Current Time`,
     'dashboard': `Dashboard`,
-    'dashboardWelcome': ({ name }): string => {
-      return `Good Morning, ${name}!`
-    },
     'dashboardWelcomeAfternoon': ({ name }): string => {
       return `Good Afternoon, ${name}!`
     },
@@ -719,7 +557,6 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'delete': `Delete`,
     'deletePatient': `Delete Patient`,
     'deletePatientConfirmation': `Are you sure you want to delete this patient? This action cannot be undone.`,
-    'deleteTaskConfirmation': `Are you sure you want to delete this task? This action cannot be undone.`,
     'description': `Description`,
     'descriptionPlaceholder': `Add more details...`,
     'deselectAll': `Deselect All`,
@@ -734,7 +571,6 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'editPatient': `Edit Patient`,
     'editTask': `Edit Task`,
     'enterFeedback': `Enter your feedback here...`,
-    'enterName': `Enter your name...`,
     'error': `Error`,
     'errorOccurred': `An error occurred`,
     'estimatedTime': `Estimated Time (minutes)`,
@@ -752,17 +588,12 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'install': `Install`,
     'installApp': `Install App`,
     'installAppDescription': `Install helpwave tasks for a better experience with offline support and faster access.`,
-    'itsYou': `You`,
+    'language': `Language`,
     'lastName': `Last Name`,
-    'lastUpdate': `Last Update`,
-    'loading': `Loading...`,
     'location': `Location`,
     'locationBed': `Bed`,
-    'locationChipsShowFullPath': `Show full location path in chips`,
     'locationClinic': `Clinic`,
     'locationRoom': `Room`,
-    'locations': `locations`,
-    'locationTeam': `Team`,
     'locationType': ({ type }): string => {
       return TranslationGen.resolveSelect(type, {
         'CLINIC': `Clinic`,
@@ -785,37 +616,14 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'myOpenTasks': `My Open Tasks`,
     'myTasks': `My tasks`,
     'name': `Name`,
-    'nBed': ({ count }): string => {
-      return TranslationGen.resolvePlural(count, {
-        '=1': `${count} Bed`,
-        'other': `${count} Beds`,
-      })
-    },
-    'nCurrentlyPatients': ({ count }): string => {
-      let _out: string = ''
-      _out += `Currently `
-      _out += TranslationGen.resolvePlural(count, {
-        '=1': `${count} Patient`,
-        'other': `${count} Patients`,
-      })
-      return _out
-    },
-    'newestAdmissions': `Newest admissions`,
-    'newPatient': `New Patient`,
+    'no': `No`,
     'noClosedTasks': `No closed tasks`,
     'noLocationsFound': `No locations found`,
     'noNotifications': `No recent updates`,
     'noOpenTasks': `No open tasks`,
     'noPatient': `No Patient`,
     'noResultsFound': `No results found`,
-    'nOrganization': ({ count }): string => {
-      return TranslationGen.resolvePlural(count, {
-        '=1': `${count} Organization`,
-        'other': `${count} Organizations`,
-      })
-    },
     'notAssigned': `Not assigned`,
-    'notes': `notes`,
     'notifications': `Notifications`,
     'nPatient': ({ count }): string => {
       return TranslationGen.resolvePlural(count, {
@@ -823,40 +631,10 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
         'other': `${count} Patients`,
       })
     },
-    'nProperties': ({ count }): string => {
-      return TranslationGen.resolvePlural(count, {
-        '=1': `${count} Property`,
-        'other': `${count} Properties`,
-      })
-    },
-    'nRoom': ({ count }): string => {
-      return TranslationGen.resolvePlural(count, {
-        '=1': `${count} Room`,
-        'other': `${count} Rooms`,
-      })
-    },
     'nTask': ({ count }): string => {
       return TranslationGen.resolvePlural(count, {
         '=1': `${count} Task`,
         'other': `${count} Tasks`,
-      })
-    },
-    'nTeam': ({ count }): string => {
-      return TranslationGen.resolvePlural(count, {
-        '=1': `${count} Team`,
-        'other': `${count} Teams`,
-      })
-    },
-    'nWard': ({ count }): string => {
-      return TranslationGen.resolvePlural(count, {
-        '=1': `${count} Ward`,
-        'other': `${count} Wards`,
-      })
-    },
-    'nYear': ({ count }): string => {
-      return TranslationGen.resolvePlural(count, {
-        '=1': `${count} year old`,
-        'other': `${count} years old`,
       })
     },
     'occupancy': `Occupancy`,
@@ -866,7 +644,6 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'option': `Option`,
     'organizations': `Organizations`,
     'overview': `Overview`,
-    'overwrite': `Overwrite`,
     'pages.404.notFound': `404 - Page not found`,
     'pages.404.notFoundDescription1': `This is definitely not the page you're looking for`,
     'pages.404.notFoundDescription2': `Let me take you to the`,
@@ -890,11 +667,8 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'pickPositionDescription': `Select the location for this patient. You can select hospital, practice, clinic, ward, bed, or room locations.`,
     'pickTeams': `Pick teams`,
     'pickTeamsDescription': `Select one or more teams for this patient. You can select clinic, team, practice, or hospital locations.`,
-    'place': `Place`,
     'position': `Location`,
     'preferences': `Preferences`,
-    'print': `Print`,
-    'printOnlyAvailableInTableMode': `Print is only available in table mode`,
     'priority': ({ priority }): string => {
       return TranslationGen.resolveSelect(priority, {
         'P1': `Normal`,
@@ -907,16 +681,16 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'priorityLabel': `Priority`,
     'priorityNone': `None`,
     'privacy': `Privacy`,
-    'private': `private`,
     'properties': `Properties`,
     'property': `Property`,
-    'public': `public`,
-    'publish': `publish`,
+    'pThemes': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `Theme`,
+        'other': `Themes`,
+      })
+    },
     'rAdd': ({ name }): string => {
       return `Add ${name}`
-    },
-    'rClickToAdd': ({ name }): string => {
-      return `Click to add ${name}!`
     },
     'recentPatients': `Your Recent Patients`,
     'recentTasks': `Your Recent Tasks`,
@@ -927,12 +701,10 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'removeProperty': `Remove Property`,
     'removePropertyConfirmation': `Are you sure you want to remove this property? This action cannot be undone.`,
     'retakeSurvey': `Retake Survey`,
-    'returnHome': `Return Home`,
-    'rooms': `Rooms`,
     'rShow': ({ name }): string => {
       return `Show ${name}`
     },
-    'save': `Save`,
+    'search': `Search`,
     'searchLocations': `Search locations...`,
     'searchUserOrTeam': `Search for user (or team)...`,
     'searchUsersOrTeams': `Search users or teams...`,
@@ -943,9 +715,6 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'selectLocation': `Select Location`,
     'selectLocationDescription': `Please select the assigned location for the patient.`,
     'selectOptions': `Select Options`,
-    'selectOrganization': `Select Organization`,
-    'selectOrganizations': `Select Organizations`,
-    'selectPatient': `Select a patient`,
     'selectPosition': `Select Location`,
     'selectRootLocation': `Select Root Location`,
     'selectRootLocationDescription': `Select the root locations that define your accessible scope. Only hospitals, practices, clinics, and teams can be selected. Selecting a parent location includes all its children.`,
@@ -954,10 +723,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'settingsDescription': `Here you can change the app configuration.`,
     'sex': `Sex`,
     'shiftHandover': `Shift Handover`,
-    'shiftHandoverDescription': `Select a user to transfer all open tasks assigned to you.`,
-    'showAllPatients': `Show all patients`,
     'showAllTasks': `Show All Tasks`,
-    'showDone': `Show done`,
     'showTeamTasks': `Show Team Tasks`,
     'sPropertySubjectType': ({ subject }): string => {
       return TranslationGen.resolveSelect(subject, {
@@ -986,24 +752,14 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'subjectType': `Subject Type`,
     'submissionDetails': `Submission Details`,
     'submit': `Submit`,
-    'submitAnonymously': `Submit anonymously`,
     'submittingAs': ({ name }): string => {
       return `Submitting as ${name}`
     },
     'surveyDescription': `Your feedback is valuable to us. Please take a moment to complete our survey.`,
     'surveyTitle': `Help us to improve helpwave tasks`,
     'system': `System`,
-    'tableView': `Table View`,
     'task': `Task`,
     'tasks': `Tasks`,
-    'taskStatus': ({ status }): string => {
-      return TranslationGen.resolveSelect(status, {
-        'overdue': `Overdue`,
-        'upcoming': `Upcoming`,
-        'done': `Done`,
-        'other': `-`,
-      })
-    },
     'tasksUpdatedRecently': `Tasks updated recently`,
     'taskTitlePlaceholder': `What needs to be done?`,
     'teams': `Teams`,
@@ -1015,23 +771,1172 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
         'other': `System`,
       })
     },
-    'time.today': `Today`,
     'title': `Title`,
     'totalPatients': `Total Patients`,
     'type': `Type`,
-    'unassigned': `Unassigned`,
     'updated': `Updated`,
-    'updateLocation': `Update Location`,
-    'updateLocationConfirmation': `Are you sure you want to update the patient's location?`,
     'url': `URL`,
     'userInformation': `User Information`,
-    'username': `Username`,
     'users': `Users`,
-    'visibility': `Visibility`,
     'waitingForPatient': `Waiting for patient`,
     'waitPatient': `Set Patient to Waiting`,
     'wards': `Wards`,
-    'withName': `With name (for follow-up questions)`
+    'yes': `Yes`
+  },
+  'es-ES': {
+    'account': `Cuenta`,
+    'active': `Activo`,
+    'addPatient': `Añadir paciente`,
+    'addProperty': `Añadir propiedad`,
+    'addTask': `Añadir tarea`,
+    'admitPatient': `Ingresar paciente`,
+    'anonymous': `Anónimo`,
+    'anonymousSubmission': `Envío anónimo`,
+    'archivedPropertyDescription': `Las propiedades archivadas ya no pueden asignarse a objetos.`,
+    'archiveProperty': `Archivar propiedad`,
+    'assignedTo': `Asignado a`,
+    'authenticationFailed': `Error de autenticación`,
+    'birthdate': `Fecha de nacimiento`,
+    'cancel': `Cancelar`,
+    'clear': `Borrar`,
+    'clearCache': `Vaciar caché`,
+    'clinic': `Clínica`,
+    'clinics': `Clínicas`,
+    'closedTasks': `Tareas cerradas`,
+    'collapseAll': `Contraer todo`,
+    'confirm': `Confirmar`,
+    'confirmSelection': `Confirmar selección`,
+    'confirmShiftHandover': `Confirmar traspaso de turno`,
+    'confirmShiftHandoverDescription': `¿Está seguro de que desea transferir todas las tareas abiertas al usuario seleccionado?`,
+    'confirmShiftHandoverDescriptionWithName': ({ taskCount, name }): string => {
+      let _out: string = ''
+      _out += `¿Está seguro de que desea transferir `
+      _out += TranslationGen.resolvePlural(taskCount, {
+        '=1': `${taskCount} tarea abierta`,
+        'other': `${taskCount} tareas abiertas`,
+      })
+      _out += ` a ${name}?`
+      return _out
+    },
+    'conflictDetected': `Conflicto detectado`,
+    'connectionConnected': `Conectado`,
+    'connectionConnecting': `Conectando…`,
+    'connectionDisconnected': `Desconectado`,
+    'create': `Crear`,
+    'createTask': `Crear tarea`,
+    'currentTime': `Hora actual`,
+    'dashboard': `Panel`,
+    'dashboardWelcomeAfternoon': ({ name }): string => {
+      return `Buenas tardes, ${name}!`
+    },
+    'dashboardWelcomeDescription': `Esto es lo que ocurre hoy.`,
+    'dashboardWelcomeEvening': ({ name }): string => {
+      return `Buenas noches, ${name}!`
+    },
+    'dashboardWelcomeMorning': ({ name }): string => {
+      return `Buenos días, ${name}!`
+    },
+    'dashboardWelcomeNight': ({ name }): string => {
+      return `Buenas noches, ${name}!`
+    },
+    'dashboardWelcomeNoon': ({ name }): string => {
+      return `Buenas tardes, ${name}!`
+    },
+    'delete': `Eliminar`,
+    'deletePatient': `Eliminar paciente`,
+    'deletePatientConfirmation': `¿Está seguro de que desea eliminar este paciente? Esta acción no se puede deshacer.`,
+    'description': `Descripción`,
+    'descriptionPlaceholder': `Añadir más detalles...`,
+    'deselectAll': `Deseleccionar todo`,
+    'developmentAndPreviewInstance': `Instancia de desarrollo y vista previa`,
+    'dischargePatient': `Dar de alta al paciente`,
+    'dischargePatientConfirmation': `¿Está seguro de que desea dar de alta a este paciente? Esta acción cambiará el estado del paciente.`,
+    'dismiss': `Cerrar`,
+    'dismissAll': `Cerrar todo`,
+    'diverse': `Diverso`,
+    'done': `Hecho`,
+    'dueDate': `Fecha de vencimiento`,
+    'editPatient': `Editar paciente`,
+    'editTask': `Editar tarea`,
+    'enterFeedback': `Escriba aquí sus comentarios...`,
+    'error': `Error`,
+    'errorOccurred': `Se ha producido un error`,
+    'estimatedTime': `Tiempo estimado (minutos)`,
+    'expandAll': `Expandir todo`,
+    'feedback': `Comentarios`,
+    'feedbackDescription': `Comparta sus comentarios, reporte errores o sugiera mejoras.`,
+    'female': `Femenino`,
+    'filterAll': `Todos`,
+    'filterUndone': `Pendientes`,
+    'firstName': `Nombre`,
+    'freeBeds': `Camas libres`,
+    'homePage': `Página principal`,
+    'imprint': `Aviso legal`,
+    'inactive': `Inactivo`,
+    'install': `Instalar`,
+    'installApp': `Instalar aplicación`,
+    'installAppDescription': `Instale helpwave tasks para una mejor experiencia con soporte offline y acceso más rápido.`,
+    'language': `Idioma`,
+    'lastName': `Apellido`,
+    'location': `Ubicación`,
+    'locationBed': `Cama`,
+    'locationClinic': `Clínica`,
+    'locationRoom': `Habitación`,
+    'locationType': ({ type }): string => {
+      return TranslationGen.resolveSelect(type, {
+        'CLINIC': `Clínica`,
+        'WARD': `Planta`,
+        'TEAM': `Equipo`,
+        'ROOM': `Habitación`,
+        'BED': `Cama`,
+        'other': `Otro`,
+      })
+    },
+    'locationWard': `Planta`,
+    'login': `Iniciar sesión`,
+    'loginRequired': `Inicio de sesión requerido`,
+    'loginRequiredDescription': `Para usar este sitio debe iniciar sesión.`,
+    'logout': `Cerrar sesión`,
+    'male': `Masculino`,
+    'markPatientDead': `Marcar paciente como fallecido`,
+    'markPatientDeadConfirmation': `¿Está seguro de que desea marcar este paciente como fallecido?`,
+    'myFavorites': `Mis favoritos`,
+    'myOpenTasks': `Mis tareas abiertas`,
+    'myTasks': `Mis tareas`,
+    'name': `Nombre`,
+    'no': `No`,
+    'noClosedTasks': `No hay tareas cerradas`,
+    'noLocationsFound': `No se encontraron ubicaciones`,
+    'noNotifications': `Sin actualizaciones recientes`,
+    'noOpenTasks': `No hay tareas abiertas`,
+    'noPatient': `Sin paciente`,
+    'noResultsFound': `No se encontraron resultados`,
+    'notAssigned': `No asignado`,
+    'notifications': `Notificaciones`,
+    'nPatient': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} Paciente`,
+        'other': `${count} Pacientes`,
+      })
+    },
+    'nTask': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} Tarea`,
+        'other': `${count} Tareas`,
+      })
+    },
+    'occupancy': `Ocupación`,
+    'ok': `OK`,
+    'openSurvey': `Abrir encuesta`,
+    'openTasks': `Tareas abiertas`,
+    'option': `Opción`,
+    'organizations': `Organizaciones`,
+    'overview': `Resumen`,
+    'pages.404.notFound': `404 - Página no encontrada`,
+    'pages.404.notFoundDescription1': `Esta no es la página que busca`,
+    'pages.404.notFoundDescription2': `Volver a la`,
+    'patient': `Paciente`,
+    'patientActions': `Acciones del paciente`,
+    'patientData': `Datos`,
+    'patients': `Pacientes`,
+    'patientState': ({ state }): string => {
+      return TranslationGen.resolveSelect(state, {
+        'WAIT': `En espera`,
+        'ADMITTED': `Ingresado`,
+        'DISCHARGED': `Alta`,
+        'DEAD': `Fallecido`,
+        'other': `Desconocido`,
+      })
+    },
+    'patientsUpdatedRecently': `Pacientes actualizados recientemente`,
+    'pickClinic': `Elegir la clínica`,
+    'pickClinicDescription': `Seleccione la clínica para este paciente. Solo se pueden seleccionar ubicaciones de tipo clínica.`,
+    'pickPosition': `Elegir la ubicación`,
+    'pickPositionDescription': `Seleccione la ubicación para este paciente. Puede elegir hospital, consulta, clínica, planta, cama o habitación.`,
+    'pickTeams': `Elegir equipos`,
+    'pickTeamsDescription': `Seleccione uno o más equipos para este paciente. Puede elegir clínica, equipo, consulta u hospital.`,
+    'position': `Ubicación`,
+    'preferences': `Preferencias`,
+    'priority': ({ priority }): string => {
+      return TranslationGen.resolveSelect(priority, {
+        'P1': `Normal`,
+        'P2': `Media`,
+        'P3': `Alta`,
+        'P4': `Crítica`,
+        'other': `-`,
+      })
+    },
+    'priorityLabel': `Prioridad`,
+    'priorityNone': `Ninguna`,
+    'privacy': `Privacidad`,
+    'properties': `Propiedades`,
+    'property': `Propiedad`,
+    'pThemes': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `Tema`,
+        'other': `Temas`,
+      })
+    },
+    'rAdd': ({ name }): string => {
+      return `Añadir ${name}`
+    },
+    'recentPatients': `Tus pacientes recientes`,
+    'recentTasks': `Tus tareas recientes`,
+    'rEdit': ({ name }): string => {
+      return `Actualizar ${name}!`
+    },
+    'refreshing': `Actualizando…`,
+    'removeProperty': `Eliminar propiedad`,
+    'removePropertyConfirmation': `¿Está seguro de que desea eliminar esta propiedad? Esta acción no se puede deshacer.`,
+    'retakeSurvey': `Repetir encuesta`,
+    'rShow': ({ name }): string => {
+      return `Mostrar ${name}`
+    },
+    'search': `Buscar`,
+    'searchLocations': `Buscar ubicaciones...`,
+    'searchUserOrTeam': `Buscar usuario (o equipo)...`,
+    'searchUsersOrTeams': `Buscar usuarios o equipos...`,
+    'security': `Seguridad`,
+    'selectAll': `Seleccionar todo`,
+    'selectAssignee': `Asignar a...`,
+    'selectClinic': `Seleccionar clínica`,
+    'selectLocation': `Seleccionar ubicación`,
+    'selectLocationDescription': `Seleccione la ubicación asignada para el paciente.`,
+    'selectOptions': `Opciones`,
+    'selectPosition': `Seleccionar ubicación`,
+    'selectRootLocation': `Seleccionar ubicación raíz`,
+    'selectRootLocationDescription': `Seleccione las ubicaciones raíz que definen su ámbito. Solo se pueden seleccionar hospitales, consultas, clínicas y equipos. Al seleccionar una ubicación padre se incluyen todas las hijas.`,
+    'selectTeams': `Seleccionar equipos`,
+    'settings': `Ajustes`,
+    'settingsDescription': `Aquí puede cambiar la configuración de la aplicación.`,
+    'sex': `Sexo`,
+    'shiftHandover': `Traspaso de turno`,
+    'showAllTasks': `Mostrar todas las tareas`,
+    'showTeamTasks': `Mostrar tareas del equipo`,
+    'sPropertySubjectType': ({ subject }): string => {
+      return TranslationGen.resolveSelect(subject, {
+        'patient': `Paciente`,
+        'task': `Tarea`,
+        'other': `Tipo de sujeto no definido`,
+      })
+    },
+    'sPropertyType': ({ type }): string => {
+      return TranslationGen.resolveSelect(type, {
+        'multiSelect': `Selección múltiple`,
+        'singleSelect': `Selección única`,
+        'number': `Número`,
+        'text': `Texto`,
+        'date': `Fecha`,
+        'dateTime': `Punto temporal`,
+        'checkbox': `Casilla`,
+        'user': `Usuario`,
+        'other': `Tipo no definido`,
+      })
+    },
+    'stagingModalDisclaimerMarkdown': `Esta instancia pública de helpwave tasks es para \\b{desarrollo y vista previa}. Asegúrese de \\b{solo} introducir \\b{datos de prueba no confidenciales}. Esta instancia puede \\negative{\\b{eliminarse en cualquier momento}}`,
+    'startRecording': `Iniciar grabación`,
+    'status': `Estado`,
+    'stopRecording': `Detener grabación`,
+    'subjectType': `Tipo de sujeto`,
+    'submissionDetails': `Detalles del envío`,
+    'submit': `Enviar`,
+    'submittingAs': ({ name }): string => {
+      return `Enviando como ${name}`
+    },
+    'surveyDescription': `Su opinión es valiosa. Dedique un momento a completar nuestra encuesta.`,
+    'surveyTitle': `Ayúdenos a mejorar helpwave tasks`,
+    'system': `Sistema`,
+    'task': `Tarea`,
+    'tasks': `Tareas`,
+    'tasksUpdatedRecently': `Tareas actualizadas recientemente`,
+    'taskTitlePlaceholder': `¿Qué hay que hacer?`,
+    'teams': `Equipos`,
+    'themeMode': ({ theme }): string => {
+      return TranslationGen.resolveSelect(theme, {
+        'dark': `Oscuro`,
+        'light': `Claro`,
+        'system': `Sistema`,
+        'other': `Sistema`,
+      })
+    },
+    'title': `Título`,
+    'totalPatients': `Total de pacientes`,
+    'type': `Tipo`,
+    'updated': `Actualizado`,
+    'url': `URL`,
+    'userInformation': `Información del usuario`,
+    'users': `Usuarios`,
+    'waitingForPatient': `En espera de paciente`,
+    'waitPatient': `Poner paciente en espera`,
+    'wards': `Plantas`,
+    'yes': `Sí`
+  },
+  'fr-FR': {
+    'account': `Compte`,
+    'active': `Actif`,
+    'addPatient': `Ajouter un patient`,
+    'addProperty': `Ajouter une propriété`,
+    'addTask': `Ajouter une tâche`,
+    'admitPatient': `Admettre le patient`,
+    'anonymous': `Anonyme`,
+    'anonymousSubmission': `Envoi anonyme`,
+    'archivedPropertyDescription': `Les propriétés archivées ne peuvent plus être assignées aux objets.`,
+    'archiveProperty': `Archiver la propriété`,
+    'assignedTo': `Assigné à`,
+    'authenticationFailed': `Échec de l'authentification`,
+    'birthdate': `Date de naissance`,
+    'cancel': `Annuler`,
+    'clear': `Effacer`,
+    'clearCache': `Vider le cache`,
+    'clinic': `Clinique`,
+    'clinics': `Cliniques`,
+    'closedTasks': `Tâches terminées`,
+    'collapseAll': `Tout réduire`,
+    'confirm': `Confirmer`,
+    'confirmSelection': `Confirmer la sélection`,
+    'confirmShiftHandover': `Confirmer la passation`,
+    'confirmShiftHandoverDescription': `Êtes-vous sûr de vouloir transférer toutes les tâches ouvertes à l'utilisateur sélectionné ?`,
+    'confirmShiftHandoverDescriptionWithName': ({ taskCount, name }): string => {
+      let _out: string = ''
+      _out += `Êtes-vous sûr de vouloir transférer `
+      _out += TranslationGen.resolvePlural(taskCount, {
+        '=1': `${taskCount} tâche ouverte`,
+        'other': `${taskCount} tâches ouvertes`,
+      })
+      _out += ` à ${name} ?`
+      return _out
+    },
+    'conflictDetected': `Conflit détecté`,
+    'connectionConnected': `Connecté`,
+    'connectionConnecting': `Connexion…`,
+    'connectionDisconnected': `Déconnecté`,
+    'create': `Créer`,
+    'createTask': `Créer une tâche`,
+    'currentTime': `Heure actuelle`,
+    'dashboard': `Tableau de bord`,
+    'dashboardWelcomeAfternoon': ({ name }): string => {
+      return `Bon après-midi, ${name} !`
+    },
+    'dashboardWelcomeDescription': `Voici ce qui se passe aujourd'hui.`,
+    'dashboardWelcomeEvening': ({ name }): string => {
+      return `Bonsoir, ${name} !`
+    },
+    'dashboardWelcomeMorning': ({ name }): string => {
+      return `Bonjour, ${name} !`
+    },
+    'dashboardWelcomeNight': ({ name }): string => {
+      return `Bonne nuit, ${name} !`
+    },
+    'dashboardWelcomeNoon': ({ name }): string => {
+      return `Bon après-midi, ${name} !`
+    },
+    'delete': `Supprimer`,
+    'deletePatient': `Supprimer le patient`,
+    'deletePatientConfirmation': `Êtes-vous sûr de vouloir supprimer ce patient ? Cette action est irréversible.`,
+    'description': `Description`,
+    'descriptionPlaceholder': `Ajouter plus de détails...`,
+    'deselectAll': `Tout désélectionner`,
+    'developmentAndPreviewInstance': `Instance de développement et d'aperçu`,
+    'dischargePatient': `Sortir le patient`,
+    'dischargePatientConfirmation': `Êtes-vous sûr de vouloir sortir ce patient ? Cette action modifiera son état.`,
+    'dismiss': `Fermer`,
+    'dismissAll': `Tout fermer`,
+    'diverse': `Divers`,
+    'done': `Terminé`,
+    'dueDate': `Date d'échéance`,
+    'editPatient': `Modifier le patient`,
+    'editTask': `Modifier la tâche`,
+    'enterFeedback': `Entrez vos commentaires ici...`,
+    'error': `Erreur`,
+    'errorOccurred': `Une erreur s'est produite`,
+    'estimatedTime': `Temps estimé (minutes)`,
+    'expandAll': `Tout développer`,
+    'feedback': `Commentaires`,
+    'feedbackDescription': `Partagez vos commentaires, signalez des bugs ou suggérez des améliorations.`,
+    'female': `Féminin`,
+    'filterAll': `Tous`,
+    'filterUndone': `En attente`,
+    'firstName': `Prénom`,
+    'freeBeds': `Lits disponibles`,
+    'homePage': `Page d'accueil`,
+    'imprint': `Mentions légales`,
+    'inactive': `Inactif`,
+    'install': `Installer`,
+    'installApp': `Installer l'application`,
+    'installAppDescription': `Installez helpwave tasks pour une meilleure expérience avec prise en charge hors ligne et accès plus rapide.`,
+    'language': `Langue`,
+    'lastName': `Nom de famille`,
+    'location': `Emplacement`,
+    'locationBed': `Lit`,
+    'locationClinic': `Clinique`,
+    'locationRoom': `Chambre`,
+    'locationType': ({ type }): string => {
+      return TranslationGen.resolveSelect(type, {
+        'CLINIC': `Clinique`,
+        'WARD': `Service`,
+        'TEAM': `Équipe`,
+        'ROOM': `Chambre`,
+        'BED': `Lit`,
+        'other': `Autre`,
+      })
+    },
+    'locationWard': `Service`,
+    'login': `Connexion`,
+    'loginRequired': `Connexion requise`,
+    'loginRequiredDescription': `Pour utiliser ce site, vous devez être connecté.`,
+    'logout': `Déconnexion`,
+    'male': `Masculin`,
+    'markPatientDead': `Déclarer le patient décédé`,
+    'markPatientDeadConfirmation': `Êtes-vous sûr de vouloir déclarer ce patient décédé ?`,
+    'myFavorites': `Mes favoris`,
+    'myOpenTasks': `Mes tâches ouvertes`,
+    'myTasks': `Mes tâches`,
+    'name': `Nom`,
+    'no': `Non`,
+    'noClosedTasks': `Aucune tâche terminée`,
+    'noLocationsFound': `Aucun emplacement trouvé`,
+    'noNotifications': `Aucune mise à jour récente`,
+    'noOpenTasks': `Aucune tâche ouverte`,
+    'noPatient': `Aucun patient`,
+    'noResultsFound': `Aucun résultat trouvé`,
+    'notAssigned': `Non assigné`,
+    'notifications': `Notifications`,
+    'nPatient': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} Patient`,
+        'other': `${count} Patients`,
+      })
+    },
+    'nTask': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} Tâche`,
+        'other': `${count} Tâches`,
+      })
+    },
+    'occupancy': `Occupation`,
+    'ok': `OK`,
+    'openSurvey': `Ouvrir l'enquête`,
+    'openTasks': `Tâches ouvertes`,
+    'option': `Option`,
+    'organizations': `Organisations`,
+    'overview': `Aperçu`,
+    'pages.404.notFound': `404 - Page non trouvée`,
+    'pages.404.notFoundDescription1': `Ce n'est définitivement pas la page que vous cherchez`,
+    'pages.404.notFoundDescription2': `Retour à la`,
+    'patient': `Patient`,
+    'patientActions': `Actions patient`,
+    'patientData': `Données`,
+    'patients': `Patients`,
+    'patientState': ({ state }): string => {
+      return TranslationGen.resolveSelect(state, {
+        'WAIT': `En attente`,
+        'ADMITTED': `Admis`,
+        'DISCHARGED': `Sorti`,
+        'DEAD': `Décédé`,
+        'other': `Inconnu`,
+      })
+    },
+    'patientsUpdatedRecently': `Patients mis à jour récemment`,
+    'pickClinic': `Choisir la clinique`,
+    'pickClinicDescription': `Sélectionnez la clinique pour ce patient. Seules les emplacements de type clinique peuvent être sélectionnés.`,
+    'pickPosition': `Choisir l'emplacement`,
+    'pickPositionDescription': `Sélectionnez l'emplacement pour ce patient. Vous pouvez choisir hôpital, cabinet, clinique, service, lit ou chambre.`,
+    'pickTeams': `Choisir les équipes`,
+    'pickTeamsDescription': `Sélectionnez une ou plusieurs équipes pour ce patient. Vous pouvez choisir clinique, équipe, cabinet ou hôpital.`,
+    'position': `Emplacement`,
+    'preferences': `Préférences`,
+    'priority': ({ priority }): string => {
+      return TranslationGen.resolveSelect(priority, {
+        'P1': `Normal`,
+        'P2': `Moyenne`,
+        'P3': `Haute`,
+        'P4': `Critique`,
+        'other': `-`,
+      })
+    },
+    'priorityLabel': `Priorité`,
+    'priorityNone': `Aucune`,
+    'privacy': `Confidentialité`,
+    'properties': `Propriétés`,
+    'property': `Propriété`,
+    'pThemes': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `Thème`,
+        'other': `Thèmes`,
+      })
+    },
+    'rAdd': ({ name }): string => {
+      return `Ajouter ${name}`
+    },
+    'recentPatients': `Vos patients récents`,
+    'recentTasks': `Vos tâches récentes`,
+    'rEdit': ({ name }): string => {
+      return `Mettre à jour ${name} !`
+    },
+    'refreshing': `Actualisation…`,
+    'removeProperty': `Supprimer la propriété`,
+    'removePropertyConfirmation': `Êtes-vous sûr de vouloir supprimer cette propriété ? Cette action est irréversible.`,
+    'retakeSurvey': `Refaire l'enquête`,
+    'rShow': ({ name }): string => {
+      return `Afficher ${name}`
+    },
+    'search': `Rechercher`,
+    'searchLocations': `Rechercher des emplacements...`,
+    'searchUserOrTeam': `Rechercher un utilisateur (ou une équipe)...`,
+    'searchUsersOrTeams': `Rechercher des utilisateurs ou des équipes...`,
+    'security': `Sécurité`,
+    'selectAll': `Tout sélectionner`,
+    'selectAssignee': `Assigner à...`,
+    'selectClinic': `Sélectionner la clinique`,
+    'selectLocation': `Sélectionner l'emplacement`,
+    'selectLocationDescription': `Veuillez sélectionner l'emplacement assigné au patient.`,
+    'selectOptions': `Options`,
+    'selectPosition': `Sélectionner l'emplacement`,
+    'selectRootLocation': `Sélectionner l'emplacement racine`,
+    'selectRootLocationDescription': `Sélectionnez les emplacements racine qui définissent votre périmètre. Seuls les hôpitaux, cabinets, cliniques et équipes peuvent être sélectionnés. La sélection d'un emplacement parent inclut tous ses enfants.`,
+    'selectTeams': `Sélectionner les équipes`,
+    'settings': `Paramètres`,
+    'settingsDescription': `Ici vous pouvez modifier la configuration de l'application.`,
+    'sex': `Sexe`,
+    'shiftHandover': `Passation`,
+    'showAllTasks': `Afficher toutes les tâches`,
+    'showTeamTasks': `Afficher les tâches d'équipe`,
+    'sPropertySubjectType': ({ subject }): string => {
+      return TranslationGen.resolveSelect(subject, {
+        'patient': `Patient`,
+        'task': `Tâche`,
+        'other': `Type de sujet non défini`,
+      })
+    },
+    'sPropertyType': ({ type }): string => {
+      return TranslationGen.resolveSelect(type, {
+        'multiSelect': `Sélection multiple`,
+        'singleSelect': `Sélection unique`,
+        'number': `Nombre`,
+        'text': `Texte`,
+        'date': `Date`,
+        'dateTime': `Date et heure`,
+        'checkbox': `Case à cocher`,
+        'user': `Utilisateur`,
+        'other': `Type non défini`,
+      })
+    },
+    'stagingModalDisclaimerMarkdown': `Cette instance publique de helpwave tasks est destinée au \\b{développement et à laperçu}. Veuillez \\b{ne} saisir \\b{que des données de test non confidentielles}. Cette instance peut \\negative{\\b{être supprimée à tout moment}}`,
+    'startRecording': `Démarrer l'enregistrement`,
+    'status': `Statut`,
+    'stopRecording': `Arrêter l'enregistrement`,
+    'subjectType': `Type de sujet`,
+    'submissionDetails': `Détails de l'envoi`,
+    'submit': `Envoyer`,
+    'submittingAs': ({ name }): string => {
+      return `Envoi en tant que ${name}`
+    },
+    'surveyDescription': `Vos commentaires sont précieux. Veuillez prendre un moment pour remplir notre enquête.`,
+    'surveyTitle': `Aidez-nous à améliorer helpwave tasks`,
+    'system': `Système`,
+    'task': `Tâche`,
+    'tasks': `Tâches`,
+    'tasksUpdatedRecently': `Tâches mises à jour récemment`,
+    'taskTitlePlaceholder': `Que faut-il faire ?`,
+    'teams': `Équipes`,
+    'themeMode': ({ theme }): string => {
+      return TranslationGen.resolveSelect(theme, {
+        'dark': `Sombre`,
+        'light': `Clair`,
+        'system': `Système`,
+        'other': `Système`,
+      })
+    },
+    'title': `Titre`,
+    'totalPatients': `Total des patients`,
+    'type': `Type`,
+    'updated': `Mis à jour`,
+    'url': `URL`,
+    'userInformation': `Informations utilisateur`,
+    'users': `Utilisateurs`,
+    'waitingForPatient': `En attente du patient`,
+    'waitPatient': `Mettre le patient en attente`,
+    'wards': `Services`,
+    'yes': `Oui`
+  },
+  'nl-NL': {
+    'account': `Account`,
+    'active': `Actief`,
+    'addPatient': `Patiënt toevoegen`,
+    'addProperty': `Eigenschap toevoegen`,
+    'addTask': `Taak toevoegen`,
+    'admitPatient': `Patiënt opnemen`,
+    'anonymous': `Anoniem`,
+    'anonymousSubmission': `Anonieme inzending`,
+    'archivedPropertyDescription': `Gearchiveerde eigenschappen kunnen niet meer aan objecten worden toegewezen.`,
+    'archiveProperty': `Eigenschap archiveren`,
+    'assignedTo': `Toegewezen aan`,
+    'authenticationFailed': `Authenticatie mislukt`,
+    'birthdate': `Geboortedatum`,
+    'cancel': `Annuleren`,
+    'clear': `Wissen`,
+    'clearCache': `Cache legen`,
+    'clinic': `Kliniek`,
+    'clinics': `Klinieken`,
+    'closedTasks': `Afgeronde taken`,
+    'collapseAll': `Alles invouwen`,
+    'confirm': `Bevestigen`,
+    'confirmSelection': `Selectie bevestigen`,
+    'confirmShiftHandover': `Dienstwissel bevestigen`,
+    'confirmShiftHandoverDescription': `Weet u zeker dat u alle open taken wilt overdragen aan de geselecteerde gebruiker?`,
+    'confirmShiftHandoverDescriptionWithName': ({ taskCount, name }): string => {
+      let _out: string = ''
+      _out += `Weet u zeker dat u `
+      _out += TranslationGen.resolvePlural(taskCount, {
+        '=1': `${taskCount} open taak`,
+        'other': `${taskCount} open taken`,
+      })
+      _out += ` wilt overdragen aan ${name}?`
+      return _out
+    },
+    'conflictDetected': `Conflict gedetecteerd`,
+    'connectionConnected': `Verbonden`,
+    'connectionConnecting': `Verbinden…`,
+    'connectionDisconnected': `Verbinding verbroken`,
+    'create': `Aanmaken`,
+    'createTask': `Taak aanmaken`,
+    'currentTime': `Huidige tijd`,
+    'dashboard': `Dashboard`,
+    'dashboardWelcomeAfternoon': ({ name }): string => {
+      return `Goedemiddag, ${name}!`
+    },
+    'dashboardWelcomeDescription': `Dit is wat er vandaag gebeurt.`,
+    'dashboardWelcomeEvening': ({ name }): string => {
+      return `Goedenavond, ${name}!`
+    },
+    'dashboardWelcomeMorning': ({ name }): string => {
+      return `Goedemorgen, ${name}!`
+    },
+    'dashboardWelcomeNight': ({ name }): string => {
+      return `Welterusten, ${name}!`
+    },
+    'dashboardWelcomeNoon': ({ name }): string => {
+      return `Goedemiddag, ${name}!`
+    },
+    'delete': `Verwijderen`,
+    'deletePatient': `Patiënt verwijderen`,
+    'deletePatientConfirmation': `Weet u zeker dat u deze patiënt wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.`,
+    'description': `Beschrijving`,
+    'descriptionPlaceholder': `Meer details toevoegen...`,
+    'deselectAll': `Alles deselecteren`,
+    'developmentAndPreviewInstance': `Ontwikkel- en voorbeeldinstantie`,
+    'dischargePatient': `Patiënt ontslaan`,
+    'dischargePatientConfirmation': `Weet u zeker dat u deze patiënt wilt ontslaan? Deze actie wijzigt de status van de patiënt.`,
+    'dismiss': `Sluiten`,
+    'dismissAll': `Alles sluiten`,
+    'diverse': `Divers`,
+    'done': `Klaar`,
+    'dueDate': `Vervaldatum`,
+    'editPatient': `Patiënt bewerken`,
+    'editTask': `Taak bewerken`,
+    'enterFeedback': `Voer hier uw feedback in...`,
+    'error': `Fout`,
+    'errorOccurred': `Er is een fout opgetreden`,
+    'estimatedTime': `Geschatte tijd (minuten)`,
+    'expandAll': `Alles uitvouwen`,
+    'feedback': `Feedback`,
+    'feedbackDescription': `Deel uw feedback, meld bugs of stel verbeteringen voor.`,
+    'female': `Vrouw`,
+    'filterAll': `Alle`,
+    'filterUndone': `Open`,
+    'firstName': `Voornaam`,
+    'freeBeds': `Vrije bedden`,
+    'homePage': `Startpagina`,
+    'imprint': `Impressum`,
+    'inactive': `Inactief`,
+    'install': `Installeren`,
+    'installApp': `App installeren`,
+    'installAppDescription': `Installeer helpwave tasks voor een betere ervaring met offline ondersteuning en snellere toegang.`,
+    'language': `Taal`,
+    'lastName': `Achternaam`,
+    'location': `Locatie`,
+    'locationBed': `Bed`,
+    'locationClinic': `Kliniek`,
+    'locationRoom': `Kamer`,
+    'locationType': ({ type }): string => {
+      return TranslationGen.resolveSelect(type, {
+        'CLINIC': `Kliniek`,
+        'WARD': `Afdeling`,
+        'TEAM': `Team`,
+        'ROOM': `Kamer`,
+        'BED': `Bed`,
+        'other': `Overig`,
+      })
+    },
+    'locationWard': `Afdeling`,
+    'login': `Inloggen`,
+    'loginRequired': `Inloggen vereist`,
+    'loginRequiredDescription': `Om deze site te gebruiken moet u zijn ingelogd.`,
+    'logout': `Uitloggen`,
+    'male': `Man`,
+    'markPatientDead': `Patiënt als overleden markeren`,
+    'markPatientDeadConfirmation': `Weet u zeker dat u deze patiënt als overleden wilt markeren?`,
+    'myFavorites': `Mijn favorieten`,
+    'myOpenTasks': `Mijn open taken`,
+    'myTasks': `Mijn taken`,
+    'name': `Naam`,
+    'no': `Nee`,
+    'noClosedTasks': `Geen afgeronde taken`,
+    'noLocationsFound': `Geen locaties gevonden`,
+    'noNotifications': `Geen recente updates`,
+    'noOpenTasks': `Geen open taken`,
+    'noPatient': `Geen patiënt`,
+    'noResultsFound': `Geen resultaten gevonden`,
+    'notAssigned': `Niet toegewezen`,
+    'notifications': `Meldingen`,
+    'nPatient': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} Patiënt`,
+        'other': `${count} Patiënten`,
+      })
+    },
+    'nTask': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} Taak`,
+        'other': `${count} Taken`,
+      })
+    },
+    'occupancy': `Bezetting`,
+    'ok': `OK`,
+    'openSurvey': `Enquête openen`,
+    'openTasks': `Open taken`,
+    'option': `Optie`,
+    'organizations': `Organisaties`,
+    'overview': `Overzicht`,
+    'pages.404.notFound': `404 - Pagina niet gevonden`,
+    'pages.404.notFoundDescription1': `Dit is zeker niet de pagina die u zoekt`,
+    'pages.404.notFoundDescription2': `Terug naar de`,
+    'patient': `Patiënt`,
+    'patientActions': `Patiëntacties`,
+    'patientData': `Gegevens`,
+    'patients': `Patiënten`,
+    'patientState': ({ state }): string => {
+      return TranslationGen.resolveSelect(state, {
+        'WAIT': `Wachtend`,
+        'ADMITTED': `Opgenomen`,
+        'DISCHARGED': `Ontslagen`,
+        'DEAD': `Overleden`,
+        'other': `Onbekend`,
+      })
+    },
+    'patientsUpdatedRecently': `Recent bijgewerkte patiënten`,
+    'pickClinic': `Kies de kliniek`,
+    'pickClinicDescription': `Selecteer de kliniek voor deze patiënt. Alleen klinieklocaties kunnen worden geselecteerd.`,
+    'pickPosition': `Kies de locatie`,
+    'pickPositionDescription': `Selecteer de locatie voor deze patiënt. U kunt ziekenhuis, praktijk, kliniek, afdeling, bed of kamer selecteren.`,
+    'pickTeams': `Kies teams`,
+    'pickTeamsDescription': `Selecteer een of meer teams voor deze patiënt. U kunt kliniek, team, praktijk of ziekenhuis selecteren.`,
+    'position': `Locatie`,
+    'preferences': `Voorkeuren`,
+    'priority': ({ priority }): string => {
+      return TranslationGen.resolveSelect(priority, {
+        'P1': `Normaal`,
+        'P2': `Medium`,
+        'P3': `Hoog`,
+        'P4': `Kritiek`,
+        'other': `-`,
+      })
+    },
+    'priorityLabel': `Prioriteit`,
+    'priorityNone': `Geen`,
+    'privacy': `Privacy`,
+    'properties': `Eigenschappen`,
+    'property': `Eigenschap`,
+    'pThemes': ({ count }): string => {
+      let _out: string = ''
+      _out += `'`
+      _out += TranslationGen.resolvePlural(count, {
+        '=1': `Thema`,
+        'other': `Themas`,
+      })
+      return _out
+    },
+    'rAdd': ({ name }): string => {
+      return `${name} toevoegen`
+    },
+    'recentPatients': `Uw recente patiënten`,
+    'recentTasks': `Uw recente taken`,
+    'rEdit': ({ name }): string => {
+      return `${name} bijwerken!`
+    },
+    'refreshing': `Bijwerken…`,
+    'removeProperty': `Eigenschap verwijderen`,
+    'removePropertyConfirmation': `Weet u zeker dat u deze eigenschap wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.`,
+    'retakeSurvey': `Enquête opnieuw doen`,
+    'rShow': ({ name }): string => {
+      return `${name} tonen`
+    },
+    'search': `Zoeken`,
+    'searchLocations': `Locaties zoeken...`,
+    'searchUserOrTeam': `Zoek gebruiker (of team)...`,
+    'searchUsersOrTeams': `Zoek gebruikers of teams...`,
+    'security': `Beveiliging`,
+    'selectAll': `Alles selecteren`,
+    'selectAssignee': `Toewijzen aan...`,
+    'selectClinic': `Kliniek selecteren`,
+    'selectLocation': `Locatie selecteren`,
+    'selectLocationDescription': `Selecteer de toegewezen locatie voor de patiënt.`,
+    'selectOptions': `Opties`,
+    'selectPosition': `Locatie selecteren`,
+    'selectRootLocation': `Hooflocatie selecteren`,
+    'selectRootLocationDescription': `Selecteer de hoofdlocaties die uw bereik bepalen. Alleen ziekenhuizen, praktijken, klinieken en teams kunnen worden geselecteerd. Het selecteren van een bovenliggende locatie omvat alle onderliggende.`,
+    'selectTeams': `Teams selecteren`,
+    'settings': `Instellingen`,
+    'settingsDescription': `Hier kunt u de app-configuratie wijzigen.`,
+    'sex': `Geslacht`,
+    'shiftHandover': `Dienstwissel`,
+    'showAllTasks': `Alle taken tonen`,
+    'showTeamTasks': `Teamtaken tonen`,
+    'sPropertySubjectType': ({ subject }): string => {
+      return TranslationGen.resolveSelect(subject, {
+        'patient': `Patiënt`,
+        'task': `Taak`,
+        'other': `Ongedefinieerd onderwerptype`,
+      })
+    },
+    'sPropertyType': ({ type }): string => {
+      return TranslationGen.resolveSelect(type, {
+        'multiSelect': `Meerdere selectie`,
+        'singleSelect': `Enkele selectie`,
+        'number': `Getal`,
+        'text': `Tekst`,
+        'date': `Datum`,
+        'dateTime': `Tijdstip`,
+        'checkbox': `Selectievakje`,
+        'user': `Gebruiker`,
+        'other': `Ongedefinieerd type`,
+      })
+    },
+    'stagingModalDisclaimerMarkdown': `Deze openbare instantie van helpwave tasks is voor \\b{ontwikkeling en voorbeeld}. Zorg ervoor dat u \\b{alleen} \\b{niet-vertrouwelijke testgegevens} invoert. Deze instantie kan \\negative{\\b{op elk moment worden verwijderd}}`,
+    'startRecording': `Opname starten`,
+    'status': `Status`,
+    'stopRecording': `Opname stoppen`,
+    'subjectType': `Onderwerptype`,
+    'submissionDetails': `Inzendingsgegevens`,
+    'submit': `Verzenden`,
+    'submittingAs': ({ name }): string => {
+      return `Verzenden als ${name}`
+    },
+    'surveyDescription': `Uw feedback is waardevol. Neem een moment om onze enquête in te vullen.`,
+    'surveyTitle': `Help ons helpwave tasks te verbeteren`,
+    'system': `Systeem`,
+    'task': `Taak`,
+    'tasks': `Taken`,
+    'tasksUpdatedRecently': `Recent bijgewerkte taken`,
+    'taskTitlePlaceholder': `Wat moet er gedaan worden?`,
+    'teams': `Teams`,
+    'themeMode': ({ theme }): string => {
+      return TranslationGen.resolveSelect(theme, {
+        'dark': `Donker`,
+        'light': `Licht`,
+        'system': `Systeem`,
+        'other': `Systeem`,
+      })
+    },
+    'title': `Titel`,
+    'totalPatients': `Totaal patiënten`,
+    'type': `Type`,
+    'updated': `Bijgewerkt`,
+    'url': `URL`,
+    'userInformation': `Gebruikersinformatie`,
+    'users': `Gebruikers`,
+    'waitingForPatient': `Wachten op patiënt`,
+    'waitPatient': `Patiënt in wachtrij zetten`,
+    'wards': `Afdelingen`,
+    'yes': `Ja`
+  },
+  'pt-BR': {
+    'account': `Conta`,
+    'active': `Ativo`,
+    'addPatient': `Adicionar paciente`,
+    'addProperty': `Adicionar propriedade`,
+    'addTask': `Adicionar tarefa`,
+    'admitPatient': `Internar paciente`,
+    'anonymous': `Anônimo`,
+    'anonymousSubmission': `Envio anônimo`,
+    'archivedPropertyDescription': `Propriedades arquivadas não podem mais ser atribuídas a objetos.`,
+    'archiveProperty': `Arquivar propriedade`,
+    'assignedTo': `Atribuído a`,
+    'authenticationFailed': `Falha na autenticação`,
+    'birthdate': `Data de nascimento`,
+    'cancel': `Cancelar`,
+    'clear': `Limpar`,
+    'clearCache': `Limpar cache`,
+    'clinic': `Clínica`,
+    'clinics': `Clínicas`,
+    'closedTasks': `Tarefas concluídas`,
+    'collapseAll': `Recolher tudo`,
+    'confirm': `Confirmar`,
+    'confirmSelection': `Confirmar seleção`,
+    'confirmShiftHandover': `Confirmar passagem de turno`,
+    'confirmShiftHandoverDescription': `Tem certeza de que deseja transferir todas as tarefas abertas para o usuário selecionado?`,
+    'confirmShiftHandoverDescriptionWithName': ({ taskCount, name }): string => {
+      let _out: string = ''
+      _out += `Tem certeza de que deseja transferir `
+      _out += TranslationGen.resolvePlural(taskCount, {
+        '=1': `${taskCount} tarefa aberta`,
+        'other': `${taskCount} tarefas abertas`,
+      })
+      _out += ` para ${name}?`
+      return _out
+    },
+    'conflictDetected': `Conflito detectado`,
+    'connectionConnected': `Conectado`,
+    'connectionConnecting': `Conectando…`,
+    'connectionDisconnected': `Desconectado`,
+    'create': `Criar`,
+    'createTask': `Criar tarefa`,
+    'currentTime': `Hora atual`,
+    'dashboard': `Painel`,
+    'dashboardWelcomeAfternoon': ({ name }): string => {
+      return `Boa tarde, ${name}!`
+    },
+    'dashboardWelcomeDescription': `Eis o que está acontecendo hoje.`,
+    'dashboardWelcomeEvening': ({ name }): string => {
+      return `Boa noite, ${name}!`
+    },
+    'dashboardWelcomeMorning': ({ name }): string => {
+      return `Bom dia, ${name}!`
+    },
+    'dashboardWelcomeNight': ({ name }): string => {
+      return `Boa noite, ${name}!`
+    },
+    'dashboardWelcomeNoon': ({ name }): string => {
+      return `Boa tarde, ${name}!`
+    },
+    'delete': `Excluir`,
+    'deletePatient': `Excluir paciente`,
+    'deletePatientConfirmation': `Tem certeza de que deseja excluir este paciente? Esta ação não pode ser desfeita.`,
+    'description': `Descrição`,
+    'descriptionPlaceholder': `Adicionar mais detalhes...`,
+    'deselectAll': `Desmarcar todos`,
+    'developmentAndPreviewInstance': `Instância de desenvolvimento e pré-visualização`,
+    'dischargePatient': `Dar alta ao paciente`,
+    'dischargePatientConfirmation': `Tem certeza de que deseja dar alta a este paciente? Esta ação alterará o estado do paciente.`,
+    'dismiss': `Fechar`,
+    'dismissAll': `Descartar todas`,
+    'diverse': `Diverso`,
+    'done': `Concluído`,
+    'dueDate': `Data de vencimento`,
+    'editPatient': `Editar paciente`,
+    'editTask': `Editar tarefa`,
+    'enterFeedback': `Digite seu feedback aqui...`,
+    'error': `Erro`,
+    'errorOccurred': `Ocorreu um erro`,
+    'estimatedTime': `Tempo estimado (minutos)`,
+    'expandAll': `Expandir tudo`,
+    'feedback': `Feedback`,
+    'feedbackDescription': `Compartilhe seu feedback, reporte bugs ou sugira melhorias.`,
+    'female': `Feminino`,
+    'filterAll': `Todos`,
+    'filterUndone': `Pendentes`,
+    'firstName': `Nome`,
+    'freeBeds': `Leitos livres`,
+    'homePage': `Página inicial`,
+    'imprint': `Impresso`,
+    'inactive': `Inativo`,
+    'install': `Instalar`,
+    'installApp': `Instalar aplicativo`,
+    'installAppDescription': `Instale o helpwave tasks para uma melhor experiência com suporte offline e acesso mais rápido.`,
+    'language': `Idioma`,
+    'lastName': `Sobrenome`,
+    'location': `Localização`,
+    'locationBed': `Leito`,
+    'locationClinic': `Clínica`,
+    'locationRoom': `Quarto`,
+    'locationType': ({ type }): string => {
+      return TranslationGen.resolveSelect(type, {
+        'CLINIC': `Clínica`,
+        'WARD': `Enfermaria`,
+        'TEAM': `Equipe`,
+        'ROOM': `Quarto`,
+        'BED': `Leito`,
+        'other': `Outro`,
+      })
+    },
+    'locationWard': `Enfermaria`,
+    'login': `Entrar`,
+    'loginRequired': `Login necessário`,
+    'loginRequiredDescription': `Para usar este site você precisa estar conectado.`,
+    'logout': `Sair`,
+    'male': `Masculino`,
+    'markPatientDead': `Marcar paciente como óbito`,
+    'markPatientDeadConfirmation': `Tem certeza de que deseja marcar este paciente como óbito?`,
+    'myFavorites': `Meus favoritos`,
+    'myOpenTasks': `Minhas tarefas abertas`,
+    'myTasks': `Minhas tarefas`,
+    'name': `Nome`,
+    'no': `Não`,
+    'noClosedTasks': `Nenhuma tarefa concluída`,
+    'noLocationsFound': `Nenhuma localização encontrada`,
+    'noNotifications': `Nenhuma atualização recente`,
+    'noOpenTasks': `Nenhuma tarefa aberta`,
+    'noPatient': `Sem paciente`,
+    'noResultsFound': `Nenhum resultado encontrado`,
+    'notAssigned': `Não atribuído`,
+    'notifications': `Notificações`,
+    'nPatient': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} Paciente`,
+        'other': `${count} Pacientes`,
+      })
+    },
+    'nTask': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} Tarefa`,
+        'other': `${count} Tarefas`,
+      })
+    },
+    'occupancy': `Ocupação`,
+    'ok': `OK`,
+    'openSurvey': `Abrir pesquisa`,
+    'openTasks': `Tarefas abertas`,
+    'option': `Opção`,
+    'organizations': `Organizações`,
+    'overview': `Visão geral`,
+    'pages.404.notFound': `404 - Página não encontrada`,
+    'pages.404.notFoundDescription1': `Esta não é a página que você procura`,
+    'pages.404.notFoundDescription2': `Voltar para a`,
+    'patient': `Paciente`,
+    'patientActions': `Ações do paciente`,
+    'patientData': `Dados`,
+    'patients': `Pacientes`,
+    'patientState': ({ state }): string => {
+      return TranslationGen.resolveSelect(state, {
+        'WAIT': `Aguardando`,
+        'ADMITTED': `Internado`,
+        'DISCHARGED': `Alta`,
+        'DEAD': `Óbito`,
+        'other': `Desconhecido`,
+      })
+    },
+    'patientsUpdatedRecently': `Pacientes atualizados recentemente`,
+    'pickClinic': `Escolher a clínica`,
+    'pickClinicDescription': `Selecione a clínica para este paciente. Apenas localizações do tipo clínica podem ser selecionadas.`,
+    'pickPosition': `Escolher a localização`,
+    'pickPositionDescription': `Selecione a localização para este paciente. Você pode escolher hospital, consultório, clínica, enfermaria, leito ou quarto.`,
+    'pickTeams': `Escolher equipes`,
+    'pickTeamsDescription': `Selecione uma ou mais equipes para este paciente. Você pode escolher clínica, equipe, consultório ou hospital.`,
+    'position': `Localização`,
+    'preferences': `Preferências`,
+    'priority': ({ priority }): string => {
+      return TranslationGen.resolveSelect(priority, {
+        'P1': `Normal`,
+        'P2': `Média`,
+        'P3': `Alta`,
+        'P4': `Crítica`,
+        'other': `-`,
+      })
+    },
+    'priorityLabel': `Prioridade`,
+    'priorityNone': `Nenhuma`,
+    'privacy': `Privacidade`,
+    'properties': `Propriedades`,
+    'property': `Propriedade`,
+    'pThemes': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `Tema`,
+        'other': `Temas`,
+      })
+    },
+    'rAdd': ({ name }): string => {
+      return `Adicionar ${name}`
+    },
+    'recentPatients': `Seus pacientes recentes`,
+    'recentTasks': `Suas tarefas recentes`,
+    'rEdit': ({ name }): string => {
+      return `Atualizar ${name}!`
+    },
+    'refreshing': `Atualizando…`,
+    'removeProperty': `Remover propriedade`,
+    'removePropertyConfirmation': `Tem certeza de que deseja remover esta propriedade? Esta ação não pode ser desfeita.`,
+    'retakeSurvey': `Refazer pesquisa`,
+    'rShow': ({ name }): string => {
+      return `Mostrar ${name}`
+    },
+    'search': `Pesquisar`,
+    'searchLocations': `Pesquisar localizações...`,
+    'searchUserOrTeam': `Pesquisar usuário (ou equipe)...`,
+    'searchUsersOrTeams': `Pesquisar usuários ou equipes...`,
+    'security': `Segurança`,
+    'selectAll': `Selecionar todos`,
+    'selectAssignee': `Atribuir a...`,
+    'selectClinic': `Selecionar clínica`,
+    'selectLocation': `Selecionar localização`,
+    'selectLocationDescription': `Selecione a localização atribuída ao paciente.`,
+    'selectOptions': `Opções`,
+    'selectPosition': `Selecionar localização`,
+    'selectRootLocation': `Selecionar localização raiz`,
+    'selectRootLocationDescription': `Selecione as localizações raiz que definem seu escopo. Apenas hospitais, consultórios, clínicas e equipes podem ser selecionados. Selecionar uma localização pai inclui todas as filhas.`,
+    'selectTeams': `Selecionar equipes`,
+    'settings': `Configurações`,
+    'settingsDescription': `Aqui você pode alterar a configuração do aplicativo.`,
+    'sex': `Sexo`,
+    'shiftHandover': `Passagem de turno`,
+    'showAllTasks': `Mostrar todas as tarefas`,
+    'showTeamTasks': `Mostrar tarefas da equipe`,
+    'sPropertySubjectType': ({ subject }): string => {
+      return TranslationGen.resolveSelect(subject, {
+        'patient': `Paciente`,
+        'task': `Tarefa`,
+        'other': `Tipo de sujeito indefinido`,
+      })
+    },
+    'sPropertyType': ({ type }): string => {
+      return TranslationGen.resolveSelect(type, {
+        'multiSelect': `Seleção múltipla`,
+        'singleSelect': `Seleção única`,
+        'number': `Número`,
+        'text': `Texto`,
+        'date': `Data`,
+        'dateTime': `Data/hora`,
+        'checkbox': `Caixa de seleção`,
+        'user': `Usuário`,
+        'other': `Tipo indefinido`,
+      })
+    },
+    'stagingModalDisclaimerMarkdown': `Esta instância pública do helpwave tasks é para \\b{desenvolvimento e pré-visualização}. Certifique-se de \\b{apenas} inserir \\b{dados de teste não confidenciais}. Esta instância pode \\negative{\\b{ser excluída a qualquer momento}}`,
+    'startRecording': `Iniciar gravação`,
+    'status': `Status`,
+    'stopRecording': `Parar gravação`,
+    'subjectType': `Tipo de sujeito`,
+    'submissionDetails': `Detalhes do envio`,
+    'submit': `Enviar`,
+    'submittingAs': ({ name }): string => {
+      return `Enviando como ${name}`
+    },
+    'surveyDescription': `Seu feedback é valioso. Por favor, dedique um momento para responder nossa pesquisa.`,
+    'surveyTitle': `Ajude-nos a melhorar o helpwave tasks`,
+    'system': `Sistema`,
+    'task': `Tarefa`,
+    'tasks': `Tarefas`,
+    'tasksUpdatedRecently': `Tarefas atualizadas recentemente`,
+    'taskTitlePlaceholder': `O que precisa ser feito?`,
+    'teams': `Equipes`,
+    'themeMode': ({ theme }): string => {
+      return TranslationGen.resolveSelect(theme, {
+        'dark': `Escuro`,
+        'light': `Claro`,
+        'system': `Sistema`,
+        'other': `Sistema`,
+      })
+    },
+    'title': `Título`,
+    'totalPatients': `Total de pacientes`,
+    'type': `Tipo`,
+    'updated': `Atualizado`,
+    'url': `URL`,
+    'userInformation': `Informações do usuário`,
+    'users': `Usuários`,
+    'waitingForPatient': `Aguardando paciente`,
+    'waitPatient': `Colocar paciente em espera`,
+    'wards': `Enfermarias`,
+    'yes': `Sim`
   }
 }
 

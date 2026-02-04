@@ -1,5 +1,5 @@
 import type { ColumnDef } from '@tanstack/table-core'
-import { ColumnType, FieldType, type LocationType, type PropertyDefinitionType, type PropertyValueType } from '@/api/gql/generated'
+import { ColumnType, FieldType, type LocationType, type PropertyDefinitionType, type PropertyValueType, type PropertyEntity } from '@/api/gql/generated'
 import { getPropertyFilterFn } from './propertyFilterMapping'
 import { PropertyCell } from '@/components/properties/PropertyCell'
 
@@ -81,4 +81,19 @@ export function createPropertyColumn<T extends RowWithProperties>(
     maxSize: 300,
     filterFn,
   } as ColumnDef<T>
+}
+
+type PropertyDefinitionsData = {
+  propertyDefinitions?: PropertyDefinitionType[],
+} | null | undefined
+
+export function getPropertyColumnsForEntity<T extends RowWithProperties>(
+  propertyDefinitionsData: PropertyDefinitionsData,
+  entity: PropertyEntity
+): ColumnDef<T>[] {
+  if (!propertyDefinitionsData?.propertyDefinitions) return []
+  const properties = propertyDefinitionsData.propertyDefinitions.filter(
+    def => def.isActive && def.allowedEntities.includes(entity)
+  )
+  return properties.map(prop => createPropertyColumn<T>(prop))
 }
