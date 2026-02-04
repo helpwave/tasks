@@ -7,13 +7,13 @@ from api.decorators.filter_sort import (
     apply_filtering,
     apply_sorting,
     filtered_and_sorted_query,
+    get_property_field_types,
 )
 from api.decorators.full_text_search import (
     apply_full_text_search,
     full_text_search_query,
 )
 from api.inputs import (
-    ColumnType,
     FilterInput,
     FullTextSearchInput,
     PaginationInput,
@@ -27,8 +27,8 @@ from api.services.location import LocationService
 from api.services.notifications import notify_entity_deleted
 from api.services.property import PropertyService
 from api.types.patient import PatientType
+from api.errors import raise_forbidden
 from database import models
-from graphql import GraphQLError
 from sqlalchemy import func, select
 from sqlalchemy.orm import aliased, selectinload
 from sqlalchemy.sql import Select
@@ -73,13 +73,7 @@ class PatientQuery:
         filter_cte = None
         if location_node_id:
             if location_node_id not in accessible_location_ids:
-                raise GraphQLError(
-                    (
-                        "Insufficient permission. Please contact an administrator "
-                        "if you believe this is an error."
-                    ),
-                    extensions={"code": "FORBIDDEN"},
-                )
+                raise_forbidden()
             filter_cte = (
                 select(models.LocationNode.id)
                 .where(models.LocationNode.id == location_node_id)
@@ -172,13 +166,7 @@ class PatientQuery:
             if not await auth_service.can_access_patient(
                 info.context.user, patient, info.context
             ):
-                raise GraphQLError(
-                    (
-                        "Insufficient permission. Please contact an administrator "
-                        "if you believe this is an error."
-                    ),
-                    extensions={"code": "FORBIDDEN"},
-                )
+                raise_forbidden()
         return patient
 
     @strawberry.field
@@ -218,54 +206,17 @@ class PatientQuery:
         if search and search is not strawberry.UNSET:
             query = apply_full_text_search(query, search, models.Patient)
 
+        property_field_types = await get_property_field_types(
+            info.context.db, filtering, sorting
+        )
         if filtering:
-            property_field_types: dict[str, str] = {}
-            property_def_ids = set()
-            for f in filtering:
-                if (
-                    f.column_type == ColumnType.PROPERTY
-                    and f.property_definition_id
-                ):
-                    property_def_ids.add(f.property_definition_id)
-
-            if property_def_ids:
-                prop_defs_result = await info.context.db.execute(
-                    select(models.PropertyDefinition).where(
-                        models.PropertyDefinition.id.in_(property_def_ids)
-                    )
-                )
-                prop_defs = prop_defs_result.scalars().all()
-                property_field_types = {
-                    str(prop_def.id): prop_def.field_type
-                    for prop_def in prop_defs
-                }
-
             query = apply_filtering(
                 query, filtering, models.Patient, property_field_types
             )
-
         if sorting:
-            property_field_types: dict[str, str] = {}
-            property_def_ids = set()
-            for s in sorting:
-                if (
-                    s.column_type == ColumnType.PROPERTY
-                    and s.property_definition_id
-                ):
-                    property_def_ids.add(s.property_definition_id)
-
-            if property_def_ids:
-                prop_defs_result = await info.context.db.execute(
-                    select(models.PropertyDefinition).where(
-                        models.PropertyDefinition.id.in_(property_def_ids)
-                    )
-                )
-                prop_defs = prop_defs_result.scalars().all()
-                property_field_types = {
-                    str(prop_def.id): prop_def.field_type for prop_def in prop_defs
-                }
-
-            query = apply_sorting(query, sorting, models.Patient, property_field_types)
+            query = apply_sorting(
+                query, sorting, models.Patient, property_field_types
+            )
 
         subquery = query.subquery()
         count_query = select(func.count(func.distinct(subquery.c.id)))
@@ -363,54 +314,17 @@ class PatientQuery:
         if search and search is not strawberry.UNSET:
             query = apply_full_text_search(query, search, models.Patient)
 
+        property_field_types = await get_property_field_types(
+            info.context.db, filtering, sorting
+        )
         if filtering:
-            property_field_types: dict[str, str] = {}
-            property_def_ids = set()
-            for f in filtering:
-                if (
-                    f.column_type == ColumnType.PROPERTY
-                    and f.property_definition_id
-                ):
-                    property_def_ids.add(f.property_definition_id)
-
-            if property_def_ids:
-                prop_defs_result = await info.context.db.execute(
-                    select(models.PropertyDefinition).where(
-                        models.PropertyDefinition.id.in_(property_def_ids)
-                    )
-                )
-                prop_defs = prop_defs_result.scalars().all()
-                property_field_types = {
-                    str(prop_def.id): prop_def.field_type
-                    for prop_def in prop_defs
-                }
-
             query = apply_filtering(
                 query, filtering, models.Patient, property_field_types
             )
-
         if sorting:
-            property_field_types: dict[str, str] = {}
-            property_def_ids = set()
-            for s in sorting:
-                if (
-                    s.column_type == ColumnType.PROPERTY
-                    and s.property_definition_id
-                ):
-                    property_def_ids.add(s.property_definition_id)
-
-            if property_def_ids:
-                prop_defs_result = await info.context.db.execute(
-                    select(models.PropertyDefinition).where(
-                        models.PropertyDefinition.id.in_(property_def_ids)
-                    )
-                )
-                prop_defs = prop_defs_result.scalars().all()
-                property_field_types = {
-                    str(prop_def.id): prop_def.field_type for prop_def in prop_defs
-                }
-
-            query = apply_sorting(query, sorting, models.Patient, property_field_types)
+            query = apply_sorting(
+                query, sorting, models.Patient, property_field_types
+            )
 
         subquery = query.subquery()
         count_query = select(func.count(func.distinct(subquery.c.id)))
@@ -449,44 +363,23 @@ class PatientMutation(BaseMutationResolver[models.Patient]):
         )
 
         if not accessible_location_ids:
-            raise GraphQLError(
-                (
-                    "Insufficient permission. Please contact an "
-                    "administrator if you believe this is an error."
-                ),
-                extensions={"code": "FORBIDDEN"},
-            )
+            raise_forbidden()
 
         if data.clinic_id not in accessible_location_ids:
-            raise GraphQLError(
-                (
-                    "Insufficient permission. Please contact an administrator "
-                    "if you believe this is an error."
-                ),
-                extensions={"code": "FORBIDDEN"},
-            )
+            raise_forbidden()
 
         await location_service.validate_and_get_clinic(data.clinic_id)
 
         if data.position_id:
             if data.position_id not in accessible_location_ids:
-                raise GraphQLError(
-                    "Insufficient permission. Please contact an administrator if you believe this is an error.",
-                    extensions={"code": "FORBIDDEN"},
-                )
+                raise_forbidden()
             await location_service.validate_and_get_position(data.position_id)
 
         teams = []
         if data.team_ids:
             for team_id in data.team_ids:
                 if team_id not in accessible_location_ids:
-                    raise GraphQLError(
-                        (
-                            "Insufficient permission. Please contact an "
-                            "administrator if you believe this is an error."
-                        ),
-                        extensions={"code": "FORBIDDEN"},
-                    )
+                    raise_forbidden()
             teams = await location_service.validate_and_get_teams(
                 data.team_ids
             )
@@ -509,10 +402,7 @@ class PatientMutation(BaseMutationResolver[models.Patient]):
         if data.assigned_location_ids:
             for loc_id in data.assigned_location_ids:
                 if loc_id not in accessible_location_ids:
-                    raise GraphQLError(
-                        "Insufficient permission. Please contact an administrator if you believe this is an error.",
-                        extensions={"code": "FORBIDDEN"},
-                    )
+                    raise_forbidden()
             locations = await location_service.get_locations_by_ids(
                 data.assigned_location_ids
             )
@@ -522,13 +412,7 @@ class PatientMutation(BaseMutationResolver[models.Patient]):
                 data.assigned_location_id
                 not in accessible_location_ids
             ):
-                raise GraphQLError(
-                    (
-                        "Insufficient permission. Please contact an "
-                        "administrator if you believe this is an error."
-                    ),
-                    extensions={"code": "FORBIDDEN"},
-                )
+                raise_forbidden()
             location = await location_service.get_location_by_id(
                 data.assigned_location_id
             )
@@ -573,10 +457,7 @@ class PatientMutation(BaseMutationResolver[models.Patient]):
         if not await auth_service.can_access_patient(
             info.context.user, patient, info.context
         ):
-            raise GraphQLError(
-                "Forbidden: You do not have access to this patient",
-                extensions={"code": "FORBIDDEN"},
-            )
+            raise_forbidden()
 
         if data.checksum:
             validate_checksum(patient, data.checksum, "Patient")
@@ -601,10 +482,7 @@ class PatientMutation(BaseMutationResolver[models.Patient]):
 
         if data.clinic_id is not None:
             if data.clinic_id not in accessible_location_ids:
-                raise GraphQLError(
-                    "Insufficient permission. Please contact an administrator if you believe this is an error.",
-                    extensions={"code": "FORBIDDEN"},
-                )
+                raise_forbidden()
             await location_service.validate_and_get_clinic(data.clinic_id)
             patient.clinic_id = data.clinic_id
 
@@ -613,13 +491,7 @@ class PatientMutation(BaseMutationResolver[models.Patient]):
                 patient.position_id = None
             else:
                 if data.position_id not in accessible_location_ids:
-                    raise GraphQLError(
-                        (
-                            "Insufficient permission. Please contact an "
-                            "administrator if you believe this is an error."
-                        ),
-                        extensions={"code": "FORBIDDEN"},
-                    )
+                    raise_forbidden()
                 await location_service.validate_and_get_position(
                     data.position_id
                 )
@@ -631,10 +503,7 @@ class PatientMutation(BaseMutationResolver[models.Patient]):
             else:
                 for team_id in data.team_ids:
                     if team_id not in accessible_location_ids:
-                        raise GraphQLError(
-                            "Insufficient permission. Please contact an administrator if you believe this is an error.",
-                            extensions={"code": "FORBIDDEN"},
-                        )
+                        raise_forbidden()
                 patient.teams = await location_service.validate_and_get_teams(
                     data.team_ids
                 )
@@ -642,10 +511,7 @@ class PatientMutation(BaseMutationResolver[models.Patient]):
         if data.assigned_location_ids is not None:
             for loc_id in data.assigned_location_ids:
                 if loc_id not in accessible_location_ids:
-                    raise GraphQLError(
-                        "Insufficient permission. Please contact an administrator if you believe this is an error.",
-                        extensions={"code": "FORBIDDEN"},
-                    )
+                    raise_forbidden()
             locations = await location_service.get_locations_by_ids(
                 data.assigned_location_ids
             )
@@ -655,13 +521,7 @@ class PatientMutation(BaseMutationResolver[models.Patient]):
                 data.assigned_location_id
                 not in accessible_location_ids
             ):
-                raise GraphQLError(
-                    (
-                        "Insufficient permission. Please contact an "
-                        "administrator if you believe this is an error."
-                    ),
-                    extensions={"code": "FORBIDDEN"},
-                )
+                raise_forbidden()
             location = await location_service.get_location_by_id(
                 data.assigned_location_id
             )
@@ -700,10 +560,7 @@ class PatientMutation(BaseMutationResolver[models.Patient]):
         if not await auth_service.can_access_patient(
             info.context.user, patient, info.context
         ):
-            raise GraphQLError(
-                "Forbidden: You do not have access to this patient",
-                extensions={"code": "FORBIDDEN"},
-            )
+            raise_forbidden()
 
         patient.deleted = True
         await BaseMutationResolver.update_and_notify(
@@ -736,10 +593,7 @@ class PatientMutation(BaseMutationResolver[models.Patient]):
         if not await auth_service.can_access_patient(
             info.context.user, patient, info.context
         ):
-            raise GraphQLError(
-                "Forbidden: You do not have access to this patient",
-                extensions={"code": "FORBIDDEN"},
-            )
+            raise_forbidden()
 
         patient.state = state.value
         await BaseMutationResolver.update_and_notify(
@@ -788,53 +642,23 @@ class PatientSubscription(BaseSubscriptionResolver):
         info: Info,
         root_location_ids: list[strawberry.ID] | None = None,
     ) -> AsyncGenerator[strawberry.ID, None]:
-        import logging
-
         from api.services.subscription import (
             patient_belongs_to_root_locations,
+            subscribe_with_location_filter,
         )
-
-        logger = logging.getLogger(__name__)
 
         root_location_ids_str = (
             [str(lid) for lid in root_location_ids]
             if root_location_ids
             else None
         )
-
-        logger.info(
-            f"[SUBSCRIPTION] Initializing patient_created subscription: "
-            f"root_location_ids={root_location_ids_str}"
-        )
-
-        async for patient_id in BaseSubscriptionResolver.entity_created(
-            info, "patient"
+        base = BaseSubscriptionResolver.entity_created(info, "patient")
+        async for patient_id in subscribe_with_location_filter(
+            base,
+            info.context.db,
+            root_location_ids_str,
+            patient_belongs_to_root_locations,
         ):
-            logger.info(
-                f"[SUBSCRIPTION] PatientSubscription received patient_created event: "
-                f"patient_id={patient_id}, root_location_ids={root_location_ids_str}"
-            )
-            if root_location_ids_str:
-                belongs = await patient_belongs_to_root_locations(
-                    info.context.db,
-                    str(patient_id),
-                    root_location_ids_str,
-                )
-                if not belongs:
-                    logger.debug(
-                        f"[SUBSCRIPTION] PatientSubscription filtered out patient_created event "
-                        f"(location mismatch): patient_id={patient_id}, "
-                        f"root_location_ids={root_location_ids_str}"
-                    )
-                    continue
-                logger.debug(
-                    f"[SUBSCRIPTION] PatientSubscription passed location filter: "
-                    f"patient_id={patient_id}, root_location_ids={root_location_ids_str}"
-                )
-            logger.info(
-                f"[SUBSCRIPTION] PatientSubscription yielding patient_created event: "
-                f"patient_id={patient_id}"
-            )
             yield patient_id
 
     @strawberry.subscription
@@ -844,54 +668,25 @@ class PatientSubscription(BaseSubscriptionResolver):
         patient_id: strawberry.ID | None = None,
         root_location_ids: list[strawberry.ID] | None = None,
     ) -> AsyncGenerator[strawberry.ID, None]:
-        import logging
-
         from api.services.subscription import (
             patient_belongs_to_root_locations,
+            subscribe_with_location_filter,
         )
-
-        logger = logging.getLogger(__name__)
 
         root_location_ids_str = (
             [str(lid) for lid in root_location_ids]
             if root_location_ids
             else None
         )
-
-        logger.info(
-            f"[SUBSCRIPTION] Initializing patient_updated subscription: "
-            f"patient_id={patient_id}, root_location_ids={root_location_ids_str}"
-        )
-
-        async for updated_id in BaseSubscriptionResolver.entity_updated(
+        base = BaseSubscriptionResolver.entity_updated(
             info, "patient", patient_id
+        )
+        async for updated_id in subscribe_with_location_filter(
+            base,
+            info.context.db,
+            root_location_ids_str,
+            patient_belongs_to_root_locations,
         ):
-            logger.info(
-                f"[SUBSCRIPTION] PatientSubscription received patient_updated event: "
-                f"updated_id={updated_id}, filter_patient_id={patient_id}, "
-                f"root_location_ids={root_location_ids_str}"
-            )
-            if root_location_ids_str:
-                belongs = await patient_belongs_to_root_locations(
-                    info.context.db,
-                    str(updated_id),
-                    root_location_ids_str,
-                )
-                if not belongs:
-                    logger.debug(
-                        f"[SUBSCRIPTION] PatientSubscription filtered out patient_updated event "
-                        f"(location mismatch): updated_id={updated_id}, "
-                        f"root_location_ids={root_location_ids_str}"
-                    )
-                    continue
-                logger.debug(
-                    f"[SUBSCRIPTION] PatientSubscription passed location filter: "
-                    f"updated_id={updated_id}, root_location_ids={root_location_ids_str}"
-                )
-            logger.info(
-                f"[SUBSCRIPTION] PatientSubscription yielding patient_updated event: "
-                f"updated_id={updated_id}"
-            )
             yield updated_id
 
     @strawberry.subscription
@@ -901,56 +696,27 @@ class PatientSubscription(BaseSubscriptionResolver):
         patient_id: strawberry.ID | None = None,
         root_location_ids: list[strawberry.ID] | None = None,
     ) -> AsyncGenerator[strawberry.ID, None]:
-        import logging
-
         from api.services.subscription import (
             create_redis_subscription,
             patient_belongs_to_root_locations,
+            subscribe_with_location_filter,
         )
-
-        logger = logging.getLogger(__name__)
 
         root_location_ids_str = (
             [str(lid) for lid in root_location_ids]
             if root_location_ids
             else None
         )
-
-        logger.info(
-            f"[SUBSCRIPTION] Initializing patient_state_changed subscription: "
-            f"patient_id={patient_id}, root_location_ids={root_location_ids_str}"
-        )
-
-        async for updated_id in create_redis_subscription(
+        base = create_redis_subscription(
             "patient_state_changed",
             str(patient_id) if patient_id else None,
+        )
+        async for updated_id in subscribe_with_location_filter(
+            base,
+            info.context.db,
+            root_location_ids_str,
+            patient_belongs_to_root_locations,
         ):
-            logger.info(
-                f"[SUBSCRIPTION] PatientSubscription received patient_state_changed event: "
-                f"updated_id={updated_id}, filter_patient_id={patient_id}, "
-                f"root_location_ids={root_location_ids_str}"
-            )
-            if root_location_ids_str:
-                belongs = await patient_belongs_to_root_locations(
-                    info.context.db,
-                    str(updated_id),
-                    root_location_ids_str,
-                )
-                if not belongs:
-                    logger.debug(
-                        f"[SUBSCRIPTION] PatientSubscription filtered out patient_state_changed event "
-                        f"(location mismatch): updated_id={updated_id}, "
-                        f"root_location_ids={root_location_ids_str}"
-                    )
-                    continue
-                logger.debug(
-                    f"[SUBSCRIPTION] PatientSubscription passed location filter: "
-                    f"updated_id={updated_id}, root_location_ids={root_location_ids_str}"
-                )
-            logger.info(
-                f"[SUBSCRIPTION] PatientSubscription yielding patient_state_changed event: "
-                f"updated_id={updated_id}"
-            )
             yield updated_id
 
     @strawberry.subscription
@@ -959,51 +725,21 @@ class PatientSubscription(BaseSubscriptionResolver):
         info: Info,
         root_location_ids: list[strawberry.ID] | None = None,
     ) -> AsyncGenerator[strawberry.ID, None]:
-        import logging
-
         from api.services.subscription import (
             patient_belongs_to_root_locations,
+            subscribe_with_location_filter,
         )
-
-        logger = logging.getLogger(__name__)
 
         root_location_ids_str = (
             [str(lid) for lid in root_location_ids]
             if root_location_ids
             else None
         )
-
-        logger.info(
-            f"[SUBSCRIPTION] Initializing patient_deleted subscription: "
-            f"root_location_ids={root_location_ids_str}"
-        )
-
-        async for patient_id in BaseSubscriptionResolver.entity_deleted(
-            info, "patient"
+        base = BaseSubscriptionResolver.entity_deleted(info, "patient")
+        async for patient_id in subscribe_with_location_filter(
+            base,
+            info.context.db,
+            root_location_ids_str,
+            patient_belongs_to_root_locations,
         ):
-            logger.info(
-                f"[SUBSCRIPTION] PatientSubscription received patient_deleted event: "
-                f"patient_id={patient_id}, root_location_ids={root_location_ids_str}"
-            )
-            if root_location_ids_str:
-                belongs = await patient_belongs_to_root_locations(
-                    info.context.db,
-                    str(patient_id),
-                    root_location_ids_str,
-                )
-                if not belongs:
-                    logger.debug(
-                        f"[SUBSCRIPTION] PatientSubscription filtered out patient_deleted event "
-                        f"(location mismatch): patient_id={patient_id}, "
-                        f"root_location_ids={root_location_ids_str}"
-                    )
-                    continue
-                logger.debug(
-                    f"[SUBSCRIPTION] PatientSubscription passed location filter: "
-                    f"patient_id={patient_id}, root_location_ids={root_location_ids_str}"
-                )
-            logger.info(
-                f"[SUBSCRIPTION] PatientSubscription yielding patient_deleted event: "
-                f"patient_id={patient_id}"
-            )
             yield patient_id

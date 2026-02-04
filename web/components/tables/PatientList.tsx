@@ -11,9 +11,10 @@ import { PatientStateChip } from '@/components/patients/PatientStateChip'
 import { getLocationNodesByKind, type LocationKindColumn } from '@/utils/location'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { useTasksContext } from '@/hooks/useTasksContext'
-import type { ColumnDef, Row, ColumnFiltersState, PaginationState, SortingState, TableState, VisibilityState } from '@tanstack/table-core'
-import { createPropertyColumn } from '@/utils/propertyColumn'
-import { useStateWithLocalStorage } from '@/hooks/useStateWithLocalStorage'
+import type { ColumnDef, Row, TableState } from '@tanstack/table-core'
+import { getPropertyColumnsForEntity } from '@/utils/propertyColumn'
+import { useTableState } from '@/hooks/useTableState'
+import { usePropertyColumnVisibility } from '@/hooks/usePropertyColumnVisibility'
 import { TABLE_PAGE_SIZE } from '@/utils/tableConfig'
 
 export type PatientViewModel = {
@@ -30,11 +31,6 @@ export type PatientViewModel = {
   tasks: TaskType[],
   properties?: GetPatientsQuery['patients'][0]['properties'],
 }
-
-const STORAGE_KEY_COLUMN_VISIBILITY = 'patient-list-column-visibility'
-const STORAGE_KEY_COLUMN_FILTERS = 'patient-list-column-filters'
-const STORAGE_KEY_COLUMN_SORTING = 'patient-list-column-sorting'
-const STORAGE_KEY_COLUMN_PAGINATION = 'patient-list-column-pagination'
 
 const LOCATION_KIND_HEADERS: Record<LocationKindColumn, string> = {
   CLINIC: 'locationClinic',
@@ -60,31 +56,30 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
   const translation = useTasksTranslation()
   const { selectedRootLocationIds } = useTasksContext()
   const { refreshingPatientIds } = useRefreshingEntityIds()
+  const { data: propertyDefinitionsData } = usePropertyDefinitions()
   const effectiveRootLocationIds = rootLocationIds ?? selectedRootLocationIds
   const [isPanelOpen, setIsPanelOpen] = useState(false)
   const [selectedPatient, setSelectedPatient] = useState<PatientViewModel | undefined>(undefined)
   const [searchQuery, setSearchQuery] = useState('')
   const [openedPatientId, setOpenedPatientId] = useState<string | null>(null)
 
-  const [pagination, setPagination] = useStateWithLocalStorage<PaginationState>({
-    key: STORAGE_KEY_COLUMN_PAGINATION,
-    defaultValue: {
-      pageSize: 10,
-      pageIndex: 0
-    }
-  })
-  const [sorting, setSorting] = useStateWithLocalStorage<SortingState>({
-    key: STORAGE_KEY_COLUMN_SORTING,
-    defaultValue: []
-  })
-  const [filters, setFilters] = useStateWithLocalStorage<ColumnFiltersState>({
-    key: STORAGE_KEY_COLUMN_FILTERS,
-    defaultValue: []
-  })
-  const [columnVisibility, setColumnVisibility] = useStateWithLocalStorage<VisibilityState>({
-    key: STORAGE_KEY_COLUMN_VISIBILITY,
-    defaultValue: {}
-  })
+  const {
+    pagination,
+    setPagination,
+    sorting,
+    setSorting,
+    filters,
+    setFilters,
+    columnVisibility,
+    setColumnVisibility,
+  } = useTableState('patient-list')
+
+  usePropertyColumnVisibility(
+    propertyDefinitionsData,
+    PropertyEntity.Patient,
+    columnVisibility,
+    setColumnVisibility
+  )
 
   const allPatientStates: PatientState[] = useMemo(() => [
     PatientState.Admitted,
@@ -110,26 +105,6 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
     },
     { pageSize: TABLE_PAGE_SIZE }
   )
-
-  const { data: propertyDefinitionsData } = usePropertyDefinitions()
-
-  useEffect(() => {
-    if (propertyDefinitionsData?.propertyDefinitions) {
-      const patientProperties = propertyDefinitionsData.propertyDefinitions.filter(
-        def => def.isActive && def.allowedEntities.includes(PropertyEntity.Patient)
-      )
-      const propertyColumnIds = patientProperties.map(prop => `property_${prop.id}`)
-      const hasPropertyColumnsInVisibility = propertyColumnIds.some(id => id in columnVisibility)
-
-      if (!hasPropertyColumnsInVisibility && propertyColumnIds.length > 0) {
-        const initialVisibility: VisibilityState = { ...columnVisibility }
-        propertyColumnIds.forEach(id => {
-          initialVisibility[id] = false
-        })
-        setColumnVisibility(initialVisibility)
-      }
-    }
-  }, [propertyDefinitionsData, columnVisibility, setColumnVisibility])
 
   const patients: PatientViewModel[] = useMemo(() => {
     if (!patientsData || patientsData.length === 0) return []
@@ -187,16 +162,10 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
     setOpenedPatientId(null)
   }
 
-  const patientPropertyColumns = useMemo<ColumnDef<PatientViewModel>[]>(() => {
-    if (!propertyDefinitionsData?.propertyDefinitions) return []
-
-    const patientProperties = propertyDefinitionsData.propertyDefinitions.filter(
-      def => def.isActive && def.allowedEntities.includes(PropertyEntity.Patient)
-    )
-
-    return patientProperties.map(prop =>
-      createPropertyColumn<PatientViewModel>(prop))
-  }, [propertyDefinitionsData])
+  const patientPropertyColumns = useMemo<ColumnDef<PatientViewModel>[]>(
+    () => getPropertyColumnsForEntity<PatientViewModel>(propertyDefinitionsData, PropertyEntity.Patient),
+    [propertyDefinitionsData]
+  )
 
   const rowLoadingCell = useMemo(() => <LoadingContainer className="w-full min-h-8" />, [])
 

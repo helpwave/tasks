@@ -1,5 +1,5 @@
 import logging
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, Awaitable, Callable
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -142,3 +142,20 @@ async def task_belongs_to_root_locations(
     return await patient_belongs_to_root_locations(
         db, task.patient.id, root_location_ids
     )
+
+
+async def subscribe_with_location_filter(
+    entity_id_iterator: AsyncGenerator[str, None],
+    db: AsyncSession,
+    root_location_ids: list[str] | None,
+    belongs_check: Callable[
+        [AsyncSession, str, list[str]], Awaitable[bool]
+    ],
+) -> AsyncGenerator[str, None]:
+    if not root_location_ids:
+        async for entity_id in entity_id_iterator:
+            yield entity_id
+        return
+    async for entity_id in entity_id_iterator:
+        if await belongs_check(db, str(entity_id), root_location_ids):
+            yield entity_id

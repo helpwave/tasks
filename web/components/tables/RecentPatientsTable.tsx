@@ -1,22 +1,18 @@
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
-import type { ColumnDef, Row, ColumnFiltersState, PaginationState, SortingState, TableState, VisibilityState } from '@tanstack/react-table'
+import type { ColumnDef, Row, TableState } from '@tanstack/react-table'
 import type { GetOverviewDataQuery } from '@/api/gql/generated'
-import { useCallback, useMemo, useEffect } from 'react'
+import { useCallback, useMemo } from 'react'
 import type { TableProps } from '@helpwave/hightide'
 import { FillerCell, TableDisplay, TableProvider, Tooltip } from '@helpwave/hightide'
 import { SmartDate } from '@/utils/date'
 import { LocationChipsBySetting } from '@/components/patients/LocationChipsBySetting'
 import { PropertyEntity } from '@/api/gql/generated'
 import { usePropertyDefinitions } from '@/data'
-import { createPropertyColumn } from '@/utils/propertyColumn'
-import { useStateWithLocalStorage } from '@/hooks/useStateWithLocalStorage'
+import { getPropertyColumnsForEntity } from '@/utils/propertyColumn'
+import { useTableState } from '@/hooks/useTableState'
+import { usePropertyColumnVisibility } from '@/hooks/usePropertyColumnVisibility'
 
 type PatientViewModel = GetOverviewDataQuery['recentPatients'][0]
-
-const STORAGE_KEY_COLUMN_VISIBILITY = 'recent-patients-column-visibility'
-const STORAGE_KEY_COLUMN_FILTERS = 'recent-patients-column-filters'
-const STORAGE_KEY_COLUMN_SORTING = 'recent-patients-column-sorting'
-const STORAGE_KEY_COLUMN_PAGINATION = 'recent-patients-column-pagination'
 
 export interface RecentPatientsTableProps extends Omit<TableProps<PatientViewModel>, 'table'> {
   patients: PatientViewModel[],
@@ -31,54 +27,28 @@ export const RecentPatientsTable = ({
   const translation = useTasksTranslation()
   const { data: propertyDefinitionsData } = usePropertyDefinitions()
 
-  const [pagination, setPagination] = useStateWithLocalStorage<PaginationState>({
-    key: STORAGE_KEY_COLUMN_PAGINATION,
-    defaultValue: {
-      pageSize: 10,
-      pageIndex: 0
-    }
-  })
-  const [sorting, setSorting] = useStateWithLocalStorage<SortingState>({
-    key: STORAGE_KEY_COLUMN_SORTING,
-    defaultValue: []
-  })
-  const [filters, setFilters] = useStateWithLocalStorage<ColumnFiltersState>({
-    key: STORAGE_KEY_COLUMN_FILTERS,
-    defaultValue: []
-  })
-  const [columnVisibility, setColumnVisibility] = useStateWithLocalStorage<VisibilityState>({
-    key: STORAGE_KEY_COLUMN_VISIBILITY,
-    defaultValue: {}
-  })
+  const {
+    pagination,
+    setPagination,
+    sorting,
+    setSorting,
+    filters,
+    setFilters,
+    columnVisibility,
+    setColumnVisibility,
+  } = useTableState('recent-patients')
 
-  useEffect(() => {
-    if (propertyDefinitionsData?.propertyDefinitions) {
-      const patientProperties = propertyDefinitionsData.propertyDefinitions.filter(
-        def => def.isActive && def.allowedEntities.includes(PropertyEntity.Patient)
-      )
-      const propertyColumnIds = patientProperties.map(prop => `property_${prop.id}`)
-      const hasPropertyColumnsInVisibility = propertyColumnIds.some(id => id in columnVisibility)
+  usePropertyColumnVisibility(
+    propertyDefinitionsData,
+    PropertyEntity.Patient,
+    columnVisibility,
+    setColumnVisibility
+  )
 
-      if (!hasPropertyColumnsInVisibility && propertyColumnIds.length > 0) {
-        const initialVisibility: VisibilityState = { ...columnVisibility }
-        propertyColumnIds.forEach(id => {
-          initialVisibility[id] = false
-        })
-        setColumnVisibility(initialVisibility)
-      }
-    }
-  }, [propertyDefinitionsData, columnVisibility, setColumnVisibility])
-
-  const patientPropertyColumns = useMemo<ColumnDef<PatientViewModel>[]>(() => {
-    if (!propertyDefinitionsData?.propertyDefinitions) return []
-
-    const patientProperties = propertyDefinitionsData.propertyDefinitions.filter(
-      def => def.isActive && def.allowedEntities.includes(PropertyEntity.Patient)
-    )
-
-    return patientProperties.map(prop =>
-      createPropertyColumn<PatientViewModel>(prop))
-  }, [propertyDefinitionsData])
+  const patientPropertyColumns = useMemo<ColumnDef<PatientViewModel>[]>(
+    () => getPropertyColumnsForEntity<PatientViewModel>(propertyDefinitionsData, PropertyEntity.Patient),
+    [propertyDefinitionsData]
+  )
 
   const patientColumns = useMemo<ColumnDef<PatientViewModel>[]>(() => [
     {
@@ -175,7 +145,7 @@ export const RecentPatientsTable = ({
             <span className="typography-title-lg">{translation('recentPatients')}</span>
             <span className="text-description">{translation('patientsUpdatedRecently')}</span>
           </div>
-          <div className="w-full min-w-0 overflow-x-auto">
+          <div className="w-full min-w-0 overflow-x-auto mt-4">
             <TableDisplay className="min-w-full" />
           </div>
         </div>

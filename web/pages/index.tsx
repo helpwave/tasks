@@ -119,7 +119,7 @@ const Dashboard: NextPage = () => {
           </div>
         </div>
 
-        <div className="flex flex-col gap-4 w-full">
+        <div className="flex flex-col gap-4 w-full print-content">
           <RecentTasksTable
             tasks={recentTasks}
             completeTask={useCallback((id) => completeTask({ variables: { id }, onCompleted: () => refetch() }), [completeTask, refetch])}
