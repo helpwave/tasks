@@ -2,7 +2,7 @@ import { useMemo, useState, forwardRef, useImperativeHandle, useEffect, useRef, 
 import { useQueryClient } from '@tanstack/react-query'
 import { Button, Checkbox, ConfirmDialog, FillerCell, HelpwaveLogo, LoadingContainer, SearchBar, Select, SelectOption, TableColumnSwitcher, TableDisplay, TableProvider, Tooltip } from '@helpwave/hightide'
 import { PlusIcon, UserCheck, Users } from 'lucide-react'
-import type { TaskPriority, GetTasksQuery, LocationType } from '@/api/gql/generated'
+import type { TaskPriority, GetTasksQuery } from '@/api/gql/generated'
 import { PropertyEntity } from '@/api/gql/generated'
 import { useAssignTask, useAssignTaskToTeam, useCompleteTask, useReopenTask, useUsers, useLocations, usePropertyDefinitions, useRefreshingEntityIds } from '@/data'
 import { AssigneeSelectDialog } from '@/components/tasks/AssigneeSelectDialog'
@@ -12,9 +12,6 @@ import { Drawer } from '@helpwave/hightide'
 import { TaskDetailView } from '@/components/tasks/TaskDetailView'
 import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
 import { PatientDetailView } from '@/components/patients/PatientDetailView'
-import { LocationChips } from '@/components/patients/LocationChips'
-import { LocationChipsBySetting } from '@/components/patients/LocationChipsBySetting'
-import { getLocationNodesByKind, type LocationKindColumn } from '@/utils/location'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { UserInfoPopup } from '@/components/UserInfoPopup'
@@ -87,13 +84,6 @@ const STORAGE_KEY_COLUMN_VISIBILITY = 'task-list-column-visibility'
 const STORAGE_KEY_COLUMN_FILTERS = 'task-list-column-filters'
 const STORAGE_KEY_COLUMN_SORTING = 'task-list-column-sorting'
 const STORAGE_KEY_COLUMN_PAGINATION = 'task-list-column-pagination'
-
-const LOCATION_KIND_HEADERS: Record<LocationKindColumn, string> = {
-  CLINIC: 'locationClinic',
-  WARD: 'locationWard',
-  ROOM: 'locationRoom',
-  BED: 'locationBed',
-}
 
 export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initialTasks, onRefetch, showAssignee = false, initialTaskId, onInitialTaskOpened, headerActions, totalCount, loading = false, showAllTasksMode = false }, ref) => {
   const translation = useTasksTranslation()
@@ -491,7 +481,6 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
                 >
                   {data.patient?.name}
                 </Button>
-                <LocationChipsBySetting locations={data.patient.locations || []} small />
               </div>
               <span className="hidden print:block">{data.patient?.name}</span>
             </>
@@ -503,29 +492,6 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
         size: 250,
         maxSize: 350,
       },
-      ...(['CLINIC', 'WARD', 'ROOM', 'BED'] as const).map((kind): ColumnDef<TaskViewModel> => {
-        type LocNode = { id: string, title: string, kind?: string, parent?: LocNode | null }
-        const leaf = (row: TaskViewModel): LocNode | null => {
-          const locs = row.patient?.locations
-          if (!locs?.length) return null
-          return locs[locs.length - 1] as LocNode
-        }
-        return {
-          id: `location-${kind}`,
-          header: translation(LOCATION_KIND_HEADERS[kind] as 'locationClinic' | 'locationWard' | 'locationRoom' | 'locationBed'),
-          accessorFn: (row) => getLocationNodesByKind(leaf(row))[kind]?.title ?? '',
-          cell: ({ row }) => {
-            if (refreshingTaskIds.has(row.original.id)) return rowLoadingCell
-            const byKind = getLocationNodesByKind(leaf(row.original))
-            const node = byKind[kind]
-            return <LocationChips locations={node ? [{ id: node.id, title: node.title, kind: node.kind as LocationType }] : []} small />
-          },
-          minSize: 160,
-          size: 220,
-          maxSize: 300,
-          filterFn: 'text' as const,
-        }
-      }),
     ]
 
     if (showAssignee) {

@@ -125,9 +125,9 @@ export const RecentPatientsTable = ({
       },
       cell: ({ getValue }) => {
         const date = getValue() as Date | undefined
-        if (!date) return <FillerCell/>
+        if (!date) return <FillerCell />
         return (
-          <SmartDate date={date}/>
+          <SmartDate date={date} />
         )
       },
       minSize: 200,
@@ -147,35 +147,37 @@ export const RecentPatientsTable = ({
   }), [pagination])
 
   return (
-    <TableProvider
-      data={patients}
-      columns={patientColumns}
-      fillerRowCell={fillerRowCell}
-      onRowClick={onRowClick}
-      initialState={{
-        pagination: {
-          pageSize: 10,
-        },
-      }}
-      state={{
-        columnVisibility,
-        pagination: fixedPagination,
-        sorting,
-        columnFilters: filters,
-      } as Partial<TableState> as TableState}
-      onColumnVisibilityChange={setColumnVisibility}
-      onPaginationChange={setPagination}
-      onSortingChange={setSorting}
-      onColumnFiltersChange={setFilters}
-      enableMultiSort={true}
-    >
-      <div className="flex flex-col h-full gap-4" {...props}>
-        <div className="flex-col-0">
-          <span className="typography-title-lg">{translation('recentPatients')}</span>
-          <span className="text-description">{translation('patientsUpdatedRecently')}</span>
+    <div className="mt-2">
+      <TableProvider
+        data={patients}
+        columns={patientColumns}
+        fillerRowCell={fillerRowCell}
+        onRowClick={onRowClick}
+        initialState={{
+          pagination: {
+            pageSize: 10,
+          },
+        }}
+        state={{
+          columnVisibility,
+          pagination: fixedPagination,
+          sorting,
+          columnFilters: filters,
+        } as Partial<TableState> as TableState}
+        onColumnVisibilityChange={setColumnVisibility}
+        onPaginationChange={setPagination}
+        onSortingChange={setSorting}
+        onColumnFiltersChange={setFilters}
+        enableMultiSort={true}
+      >
+        <div className="flex flex-col h-full gap-4" {...props}>
+          <div className="flex-col-0">
+            <span className="typography-title-lg">{translation('recentPatients')}</span>
+            <span className="text-description">{translation('patientsUpdatedRecently')}</span>
+          </div>
+          <TableDisplay className="print-content" />
         </div>
-        <TableDisplay className="print-content" />
-      </div>
-    </TableProvider>
+      </TableProvider>
+    </div>
   )
 }

@@ -6,7 +6,6 @@ import clsx from 'clsx'
 import type { TableProps } from '@helpwave/hightide'
 import { Button, Checkbox, FillerCell, TableDisplay, TableProvider, Tooltip } from '@helpwave/hightide'
 import { ArrowRightIcon } from 'lucide-react'
-import { LocationChipsBySetting } from '@/components/patients/LocationChipsBySetting'
 import { SmartDate } from '@/utils/date'
 import { DueDateUtils } from '@/utils/dueDate'
 import { PriorityUtils } from '@/utils/priority'
@@ -166,23 +165,6 @@ export const RecentTasksTable = ({
       filterFn: 'text',
     },
     {
-      id: 'location',
-      header: translation('location'),
-      accessorFn: (row) => row.patient?.position,
-      cell: ({ row }) => (
-        <LocationChipsBySetting
-          locations={row.original.patient?.position ? [row.original.patient.position] : []}
-          small
-          className="min-h-8"
-          placeholderProps={{ className: 'min-h-8 block' }}
-        />
-      ),
-      minSize: 200,
-      size: 260,
-      maxSize: 320,
-      filterFn: 'text' as const,
-    },
-    {
       id: 'dueDate',
       header: translation('dueDate'),
       accessorKey: 'dueDate',
@@ -239,36 +221,38 @@ export const RecentTasksTable = ({
   }), [pagination])
 
   return (
-    <TableProvider
-      data={tasks}
-      columns={taskColumns}
-      fillerRowCell={fillerRowCell}
-      onRowClick={onRowClick}
-      initialState={{
-        pagination: {
-          pageSize: 10,
-        },
-      }}
-      state={{
-        columnVisibility,
-        pagination: fixedPagination,
-        sorting,
-        columnFilters: filters,
-      } as Partial<TableState> as TableState}
-      onColumnVisibilityChange={setColumnVisibility}
-      onPaginationChange={setPagination}
-      onSortingChange={setSorting}
-      onColumnFiltersChange={setFilters}
-      enableMultiSort={true}
-      isUsingFillerRows={true}
-    >
-      <div className="flex flex-col h-full gap-4" {...props}>
-        <div className="flex-col-0">
-          <span className="typography-title-lg">{translation('recentTasks')}</span>
-          <span className="text-description">{translation('tasksUpdatedRecently')}</span>
+    <div className="mt-2">
+      <TableProvider
+        data={tasks}
+        columns={taskColumns}
+        fillerRowCell={fillerRowCell}
+        onRowClick={onRowClick}
+        initialState={{
+          pagination: {
+            pageSize: 10,
+          },
+        }}
+        state={{
+          columnVisibility,
+          pagination: fixedPagination,
+          sorting,
+          columnFilters: filters,
+        } as Partial<TableState> as TableState}
+        onColumnVisibilityChange={setColumnVisibility}
+        onPaginationChange={setPagination}
+        onSortingChange={setSorting}
+        onColumnFiltersChange={setFilters}
+        enableMultiSort={true}
+        isUsingFillerRows={true}
+      >
+        <div className="flex flex-col h-full gap-4" {...props}>
+          <div className="flex-col-0">
+            <span className="typography-title-lg">{translation('recentTasks')}</span>
+            <span className="text-description">{translation('tasksUpdatedRecently')}</span>
+          </div>
+          <TableDisplay className="print-content" />
         </div>
-        <TableDisplay className="print-content" />
-      </div>
-    </TableProvider>
+      </TableProvider>
+    </div>
   )
 }
