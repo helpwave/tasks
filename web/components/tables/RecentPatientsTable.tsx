@@ -141,6 +141,11 @@ export const RecentPatientsTable = ({
   const fillerRowCell = useCallback(() => <FillerCell className="min-h-8" />, [])
   const onRowClick = useCallback((row: Row<PatientViewModel>) => onSelectPatient(row.original.id), [onSelectPatient])
 
+  const fixedPagination = useMemo(() => ({
+    ...pagination,
+    pageSize: 10
+  }), [pagination])
+
   return (
     <TableProvider
       data={patients}
@@ -154,7 +159,7 @@ export const RecentPatientsTable = ({
       }}
       state={{
         columnVisibility,
-        pagination,
+        pagination: fixedPagination,
         sorting,
         columnFilters: filters,
       } as Partial<TableState> as TableState}

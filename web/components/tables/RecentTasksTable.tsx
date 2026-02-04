@@ -233,6 +233,11 @@ export const RecentTasksTable = ({
   const fillerRowCell = useCallback(() => <FillerCell className="min-h-8" />, [])
   const onRowClick = useCallback((row: Row<TaskViewModel>) => onSelectTask(row.original.id), [onSelectTask])
 
+  const fixedPagination = useMemo(() => ({
+    ...pagination,
+    pageSize: 10
+  }), [pagination])
+
   return (
     <TableProvider
       data={tasks}
@@ -246,7 +251,7 @@ export const RecentTasksTable = ({
       }}
       state={{
         columnVisibility,
-        pagination,
+        pagination: fixedPagination,
         sorting,
         columnFilters: filters,
       } as Partial<TableState> as TableState}

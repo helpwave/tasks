@@ -316,12 +316,12 @@ def apply_tags_filter(column: Any, operator: FilterOperator, parameter: Any) -> 
         conditions = []
         for tag in search_tags:
             conditions.append(column.contains(tag))
-        return and_(*conditions)
+        return or_(*conditions)
     if operator == FilterOperator.TAGS_NOT_CONTAINS:
         conditions = []
         for tag in search_tags:
             conditions.append(~column.contains(tag))
-        return or_(*conditions)
+        return and_(*conditions)
 
     return None
 
