@@ -4,7 +4,7 @@ Conventions, patterns, and how to extend.
 
 ## Conventions
 
-- **No comments**: Code should be self-explanatory; avoid comments.
+- **No comments**: Code should be self-explanatory; avoid self-explanatory comments.
 - **Clean code**: Clear naming, explicit typing, modern syntax, consistent spacing.
 - **Atomic components**: Small, reusable pieces; parameters sliced so they can be reused.
 - **Utils**: Shared logic lives in `web/utils/` (e.g. `date`, `dueDate`, `priority`, `propertyColumn`); add new helpers there or in a new util file as needed.
