@@ -1,85 +1,39 @@
 {
   "@@locale": "de-DE",
-  "nOrganization": "{count, plural, =1{# Organisation} other{# Organisationen}}",
-  "@nOrganization": {
+  "account": "Konto",
+  "active": "Aktiv",
+  "addPatient": "Patient hinzufügen",
+  "addProperty": "Eigenschaften hinzufügen",
+  "addTask": "Aufgabe hinzufügen",
+  "archivedPropertyDescription": "Archivierte Eigenschaften können nicht mehr neu Objekten hinzugeügt werden.",
+  "archiveProperty": "Eigenschaft Archivieren",
+  "assignedTo": "Zugewiesen an",
+  "authenticationFailed": "Authentifizierung fehlgeschlagen",
+  "birthdate": "Geburtsdatum",
+  "cancel": "Abbrechen",
+  "clearCache": "Cache leeren",
+  "clinics": "Kliniken",
+  "closedTasks": "Erledigte Aufgaben",
+  "conflictDetected": "Konflikt erkannt",
+  "confirm": "Bestätigen",
+  "confirmShiftHandover": "Schichtübergabe bestätigen",
+  "confirmShiftHandoverDescription": "Sind Sie sicher, dass Sie alle offenen Aufgaben an den ausgewählten Benutzer übertragen möchten?",
+  "confirmShiftHandoverDescriptionWithName": "Sind Sie sicher, dass Sie {taskCount, plural, =1{# offene Aufgabe} other{# offene Aufgaben}} an {name} übertragen möchten?",
+  "@confirmShiftHandoverDescriptionWithName": {
     "placeholders": {
-      "count": {
+      "taskCount": {
         "type": "number"
-      }
-    }
-  },
-  "nWard": "{count, plural, =1{# Station} other{# Stationen}}",
-  "@nWard": {
-    "placeholders": {
-      "count": {
-        "type": "number"
-      }
-    }
-  },
-  "nRoom": "{count, plural, =1{# Zimmer} other{# Zimmer}}",
-  "@nRoom": {
-    "placeholders": {
-      "count": {
-        "type": "number"
-      }
-    }
-  },
-  "nBed": "{count, plural, =1{# Bett} other{# Betten}}",
-  "@nBed": {
-    "placeholders": {
-      "count": {
-        "type": "number"
-      }
-    }
-  },
-  "nPatient": "{count, plural, =1{# Patient} other{# Patienten}}",
-  "@nPatient": {
-    "placeholders": {
-      "count": {
-        "type": "number"
-      }
-    }
-  },
-  "nTask": "{count, plural, =1{# Aufgabe} other{# Aufgaben}}",
-  "@nTask": {
-    "placeholders": {
-      "count": {
-        "type": "number"
-      }
-    }
-  },
-  "nTeam": "{count, plural, =1{# Team} other{# Teams}}",
-  "@nTeam": {
-    "placeholders": {
-      "count": {
-        "type": "number"
-      }
-    }
-  },
-  "nYear": "{count, plural, =1{# Jahr alt} other{# Jahre alt}}",
-  "@nYear": {
-    "placeholders": {
-      "count": {
-        "type": "number"
-      }
-    }
-  },
-  "nProperties": "{count, plural, =1{# Eigenschaft} other{# Eigenschaften}}",
-  "@nProperties": {
-    "placeholders": {
-      "count": {
-        "type": "number"
-      }
-    }
-  },
-  "dashboardWelcome": "Guten Morgen, {name}!",
-  "@dashboardWelcome": {
-    "placeholders": {
+      },
       "name": {
         "type": "string"
       }
     }
   },
+  "create": "Erstellen",
+  "createTask": "Aufgabe erstellen",
+  "currentTime": "Aktuelle Zeit",
+  "dashboard": "Dashboard",
+  "dashboardWelcomeDescription": "Hier ist, was heute passiert.",
   "dashboardWelcomeMorning": "Guten Morgen, {name}!",
   "@dashboardWelcomeMorning": {
     "placeholders": {
@@ -120,139 +74,112 @@
       }
     }
   },
-  "taskStatus": "{status, select, overdue{Überfällig} upcoming{Anstehend} done{Fertig} other{-}}",
-  "@taskStatus": {
-    "placeholders": {
-      "status": {}
-    }
-  },
-  "age": "Alter",
-  "assignedTo": "Zugewiesen an",
-  "assignee": "Verantwortlich",
-  "birthdate": "Geburtsdatum",
-  "confirm": "Bestätigen",
-  "createdAt": "Erstellt am",
-  "currentTime": "Aktuelle Zeit",
-  "dashboard": "Dashboard",
-  "dashboardWelcomeDescription": "Hier ist, was heute passiert.",
+  "delete": "Löschen",
   "description": "Beschreibung",
   "descriptionPlaceholder": "Weitere Details hinzufügen...",
   "developmentAndPreviewInstance": "Entwicklungs- und Vorschauinstanz",
   "dismiss": "Schließen",
+  "diverse": "Divers",
+  "done": "Fertig",
   "dueDate": "Fälligkeitsdatum",
+  "editPatient": "Patient bearbeiten",
+  "editTask": "Aufgabe bearbeiten",
+  "errorOccurred": "Ein Fehler ist aufgetreten",
+  "estimatedTime": "Geschätzte Zeit (Minuten)",
+  "feedback": "Feedback",
+  "female": "Weiblich",
+  "filterAll": "Alle",
+  "filterUndone": "Offen",
+  "firstName": "Vorname",
+  "freeBeds": "Freie Betten",
   "homePage": "Startseite",
   "imprint": "Impressum",
-  "itsYou": "Du bist es",
+  "inactive": "Inaktiv",
+  "language": "Sprache",
+  "lastName": "Nachname",
   "location": "Ort",
+  "locationBed": "Bett",
+  "locationClinic": "Klinik",
+  "locationRoom": "Zimmer",
+  "locationType": "{type, select, CLINIC{Klinik} WARD{Station} TEAM{Team} ROOM{Zimmer} BED{Bett} other{Sonstiges}}",
+  "@locationType": {
+    "placeholders": {
+      "type": {
+        "type": "string"
+      }
+    }
+  },
+  "locationWard": "Station",
   "login": "Login",
-  "loginRequired": "Login benötigt",
-  "loginRequiredDescription": "Um diese Seite benutzen zu können musst du eingeloggt sein.",
   "logout": "Abmelden",
+  "male": "Männlich",
+  "myFavorites": "Meine Favoriten",
   "myOpenTasks": "Meine offenen Aufgaben",
   "myTasks": "Meine Aufgaben",
   "name": "Name",
-  "newestAdmissions": "Neueste Aufnahmen",
-  "patientsUpdatedRecently": "Kürzlich aktualisierte Patienten",
+  "no": "Nein",
+  "noClosedTasks": "Keine erledigten Aufgaben",
+  "noOpenTasks": "Keine offenen Aufgaben",
   "noPatient": "Kein Patient",
+  "noResultsFound": "Keine Ergebnisse gefunden",
   "notAssigned": "Nicht zugewiesen",
-  "notes": "Notizen",
-  "pages.404.notFound": "404 - Seite nicht gefunden",
-  "pages.404.notFoundDescription1": "Das ist definitiv nicht die Seite nach der Sie suchen",
-  "pages.404.notFoundDescription2": "Zurück zur",
-  "patient": "Patient",
-  "patients": "Patienten",
-  "place": "Ort",
-  "preferences": "Präferenzen",
-  "privacy": "Datenschutz",
-  "private": "Privat",
-  "public": "Öffentlich",
-  "publish": "Veröffentlichen",
-  "recentPatients": "Deine kürzlichen Patienten",
-  "recentTasks": "Deine kürzlichen Aufgaben",
-  "rooms": "Zimmer",
-  "settings": "Einstellungen",
-  "settingsDescription": "Hier kannst du die App Konfiguration ändern.",
-  "sex": "Geschlecht",
-  "stagingModalDisclaimerMarkdown": "Diese öffentliche Instanz von helpwave tasks ist für '\\b{Entwicklungs- und Vorschauzwecke}' gedacht. Bitte stellen Sie sicher, dass Sie '\\b{ausschließlich nicht-vertrauliche Testdaten}' eingeben. Diese Instanz kann '\\negative{\\b{jederzeit gelöscht}}' werden.",
-  "status": "Status",
-  "task": "Aufgabe",
-  "tasks": "Aufgaben",
-  "tasksUpdatedRecently": "Kürzlich aktualisierte Aufgaben",
-  "teams": "Teams",
-  "clinics": "Kliniken",
-  "clinic": "Klinik",
-  "position": "Standort",
-  "selectClinic": "Klinik auswählen",
-  "selectPosition": "Standort auswählen",
-  "selectTeams": "Teams auswählen",
-  "pickClinic": "Klinik auswählen",
-  "pickClinicDescription": "Wählen Sie die Klinik für diesen Patienten aus. Es können nur Klinik-Standorte ausgewählt werden.",
-  "pickPosition": "Standort auswählen",
-  "pickPositionDescription": "Wählen Sie den Standort für diesen Patienten aus. Sie können Krankenhaus-, Praxis-, Klinik-, Station-, Bett- oder Zimmer-Standorte auswählen.",
-  "pickTeams": "Teams auswählen",
-  "pickTeamsDescription": "Wählen Sie ein oder mehrere Teams für diesen Patienten aus. Sie können Klinik-, Team-, Praxis- oder Krankenhaus-Standorte auswählen.",
-  "totalPatients": "Gesamtpatienten",
-  "updated": "Aktualisiert",
-  "visibility": "Sichtbarkeit",
-  "lastUpdate": "Letzte Änderung",
-  "wards": "Stationen",
-  "overview": "Übersicht",
-  "nCurrentlyPatients": "Aktuell {count, plural, =1{# Patient} other{# Patienten}}",
-  "@nCurrentlyPatients": {
+  "nPatient": "{count, plural, =1{# Patient} other{# Patienten}}",
+  "@nPatient": {
     "placeholders": {
       "count": {
         "type": "number"
       }
     }
   },
-  "authenticationFailed": "Authentifizierung fehlgeschlagen",
-  "returnHome": "Zur Homepage",
-  "addPatient": "Patient hinzufügen",
-  "addTask": "Aufgabe hinzufügen",
-  "createTask": "Aufgabe erstellen",
-  "editPatient": "Patient bearbeiten",
-  "editTask": "Aufgabe bearbeiten",
-  "openTasks": "Offene Aufgaben",
-  "closedTasks": "Erledigte Aufgaben",
-  "noOpenTasks": "Keine offenen Aufgaben",
-  "noClosedTasks": "Keine erledigten Aufgaben",
-  "save": "Speichern",
-  "cancel": "Abbrechen",
-  "create": "Erstellen",
-  "delete": "Löschen",
-  "firstName": "Vorname",
-  "lastName": "Nachname",
-  "male": "Männlich",
-  "female": "Weiblich",
-  "diverse": "Divers",
-  "time.today": "Heute",
-  "myFavorites": "Meine Favoriten",
-  "freeBeds": "Freie Betten",
-  "cardView": "Kachelansicht",
+  "nTask": "{count, plural, =1{# Aufgabe} other{# Aufgaben}}",
+  "@nTask": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
   "occupancy": "Belegung",
+  "openSurvey": "Umfrage öffnen",
+  "openTasks": "Offene Aufgaben",
+  "option": "Option",
+  "organizations": "Organisationen",
+  "overview": "Übersicht",
+  "pages.404.notFound": "404 - Seite nicht gefunden",
+  "pages.404.notFoundDescription1": "Das ist definitiv nicht die Seite nach der Sie suchen",
+  "pages.404.notFoundDescription2": "Zurück zur",
+  "patient": "Patient",
+  "patientData": "Daten",
+  "patients": "Patienten",
+  "patientState": "{state, select, WAIT{Wartend} ADMITTED{Aufgenommen} DISCHARGED{Entlassen} DEAD{Verstorben} other{Unbekannt}}",
+  "@patientState": {
+    "placeholders": {
+      "state": {
+        "type": "string"
+      }
+    }
+  },
+  "patientsUpdatedRecently": "Kürzlich aktualisierte Patienten",
+  "pThemes": "{count, plural, =1{Design} other{Designs}}",
+  "@pThemes": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "preferences": "Präferenzen",
+  "priority": "{priority, select, P1{Normal} P2{Mittel} P3{Hoch} P4{Kritisch} other{-}}",
+  "@priority": {
+    "placeholders": {
+      "priority": {}
+    }
+  },
+  "priorityLabel": "Priorität",
+  "priorityNone": "Keine",
+  "privacy": "Datenschutz",
   "properties": "Eigenschaften",
-  "addProperty": "Eigenschaften hinzufügen",
-  "type": "Typ",
-  "tableView": "Tabellenansicht",
-  "subjectType": "Subjekt Type",
-  "active": "Aktiv",
-  "inactive": "Inaktiv",
-  "rEdit": "{name} ändern",
-  "@rEdit": {
-    "placeholders": {
-      "name": {
-        "type": "string"
-      }
-    }
-  },
-  "rShow": "{name} anzeigen",
-  "@rShow": {
-    "placeholders": {
-      "name": {
-        "type": "string"
-      }
-    }
-  },
+  "property": "Eigenschaft",
   "rAdd": "{name} hinzufügen",
   "@rAdd": {
     "placeholders": {
@@ -261,9 +188,46 @@
       }
     }
   },
-  "property": "Eigenschaft",
+  "rEdit": "{name} ändern",
+  "@rEdit": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "recentPatients": "Deine kürzlichen Patienten",
+  "recentTasks": "Deine kürzlichen Aufgaben",
+  "refreshing": "Aktualisiere…",
+  "removeProperty": "Eigenschaft entfernen",
+  "removePropertyConfirmation": "Sind Sie sicher, dass Sie diese Eigenschaft entfernen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
+  "retakeSurvey": "Umfrage erneut durchführen",
+  "rShow": "{name} anzeigen",
+  "@rShow": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "search": "Suchen",
+  "searchUserOrTeam": "Nach Benutzer (oder Team) suchen...",
+  "searchUsersOrTeams": "Benutzer oder Teams suchen...",
+  "security": "Sicherheit",
+  "selectAssignee": "Zuweisen an...",
+  "selectLocation": "Standort auswählen",
   "selectOptions": "Auswahl Optionen",
-  "option": "Option",
+  "settings": "Einstellungen",
+  "settingsDescription": "Hier kannst du die App Konfiguration ändern.",
+  "sex": "Geschlecht",
+  "shiftHandover": "Schichtübergabe",
+  "showAllTasks": "Alle Aufgaben anzeigen",
+  "showTeamTasks": "Team-Aufgaben anzeigen",
+  "stagingModalDisclaimerMarkdown": "Diese öffentliche Instanz von helpwave tasks ist für '\\b{Entwicklungs- und Vorschauzwecke}' gedacht. Bitte stellen Sie sicher, dass Sie '\\b{ausschließlich nicht-vertrauliche Testdaten}' eingeben. Diese Instanz kann '\\negative{\\b{jederzeit gelöscht}}' werden.",
+  "status": "Status",
+  "subjectType": "Subjekt Type",
+  "surveyDescription": "Ihr Feedback ist wertvoll für uns. Bitte nehmen Sie sich einen Moment Zeit, um unsere Umfrage auszufüllen.",
+  "surveyTitle": "Helfen Sie uns, helpwave tasks zu verbessern",
   "sPropertySubjectType": "{subject, select, patient{Patient} task{Aufgabe} other{Undefinierter Subjekt Typ}}",
   "@sPropertySubjectType": {
     "placeholders": {
@@ -280,38 +244,12 @@
       }
     }
   },
-  "archiveProperty": "Eigenschaft Archivieren",
-  "archivedPropertyDescription": "Archivierte Eigenschaften können nicht mehr neu Objekten hinzugeügt werden.",
-  "title": "Titel",
-  "taskTitlePlaceholder": "Was muss erledigt werden?",
-  "selectPatient": "Patient auswählen",
-  "currentPatient": "Aktueller Patient",
-  "selectAssignee": "Zuweisen an...",
-  "unassigned": "Nicht zugewiesen",
-  "newPatient": "Neuer Patient",
-  "selectLocationDescription": "Bitte wählen Sie den zugewiesenen Standort für den Patienten aus.",
-  "searchLocations": "Standorte suchen...",
-  "searchUsersOrTeams": "Benutzer oder Teams suchen...",
-  "searchUserOrTeam": "Nach Benutzer (oder Team) suchen...",
-  "selectAll": "Alle auswählen",
-  "deselectAll": "Auswahl aufheben",
-  "loading": "Laden...",
-  "noLocationsFound": "Keine Standorte gefunden",
-  "noResultsFound": "Keine Ergebnisse gefunden",
-  "confirmSelection": "Auswahl bestätigen",
-  "expandAll": "Alle ausklappen",
-  "collapseAll": "Alle einklappen",
-  "assignedLocation": "Zugewiesener Standort",
-  "selectLocation": "Standort auswählen",
-  "selectRootLocation": "Stammstandort auswählen",
-  "selectRootLocationDescription": "Wählen Sie die Stammstandorte aus, die Ihren zugänglichen Bereich definieren. Es können nur Krankenhäuser, Praxen, Kliniken und Teams ausgewählt werden. Die Auswahl eines übergeordneten Standorts umfasst alle untergeordneten Standorte.",
-  "locations": "Standorte",
-  "organizations": "Organisationen",
-  "selectOrganization": "Organisation auswählen",
-  "selectOrganizations": "Organisationen auswählen",
-  "clearCache": "Cache leeren",
-  "account": "Konto",
   "system": "System",
+  "task": "Aufgabe",
+  "tasks": "Aufgaben",
+  "tasksUpdatedRecently": "Kürzlich aktualisierte Aufgaben",
+  "taskTitlePlaceholder": "Was muss erledigt werden?",
+  "teams": "Teams",
   "themeMode": "{theme, select, dark{Dunkel} light{Hell} system{System} other{System}}",
   "@themeMode": {
     "placeholders": {
@@ -320,114 +258,35 @@
       }
     }
   },
-  "chooseLanguage": "Sprache wählen",
-  "chooseTheme": "Design wählen",
-  "done": "Fertig",
-  "filterAll": "Alle",
-  "filterUndone": "Offen",
-  "showDone": "Erledigte anzeigen",
-  "showAllPatients": "Alle Patienten anzeigen",
-  "profile": "Profil",
-  "patientData": "Daten",
-  "clickToAdd": "Klicken um hinzuzufügen",
-  "rClickToAdd": "Klicken um {name} hinzuzufügen",
-  "@rClickToAdd": {
-    "placeholders": {
-      "name": {
-        "type": "string"
-      }
-    }
-  },
-  "locationChipsShowFullPath": "Vollständigen Standortpfad in Chips anzeigen",
-  "locationClinic": "Klinik",
-  "locationWard": "Station",
-  "locationTeam": "Team",
-  "locationRoom": "Zimmer",
-  "locationBed": "Bett",
-  "locationType": "{type, select, CLINIC{Klinik} WARD{Station} TEAM{Team} ROOM{Zimmer} BED{Bett} other{Sonstiges}}",
-  "@locationType": {
-    "placeholders": {
-      "type": {
-        "type": "string"
-      }
-    }
-  },
-  "waitingForPatient": "Warten auf Patient",
-  "patientActions": "Patientenaktionen",
-  "admitPatient": "Patient aufnehmen",
-  "dischargePatient": "Patient entlassen",
-  "markPatientDead": "Patient als verstorben markieren",
-  "waitPatient": "Patient auf Warteliste setzen",
-  "patientState": "{state, select, WAIT{Wartend} ADMITTED{Aufgenommen} DISCHARGED{Entlassen} DEAD{Verstorben} other{Unbekannt}}",
-  "@patientState": {
-    "placeholders": {
-      "state": {
-        "type": "string"
-      }
-    }
-  },
-  "deleteTaskConfirmation": "Sind Sie sicher, dass Sie diese Aufgabe löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
-  "markPatientDeadConfirmation": "Sind Sie sicher, dass Sie diesen Patienten als verstorben markieren möchten?",
-  "dischargePatientConfirmation": "Sind Sie sicher, dass Sie diesen Patienten entlassen möchten? Diese Aktion ändert den Status des Patienten.",
-  "updateLocation": "Standort aktualisieren",
-  "updateLocationConfirmation": "Sind Sie sicher, dass Sie den Standort des Patienten aktualisieren möchten?",
-  "removeProperty": "Eigenschaft entfernen",
-  "removePropertyConfirmation": "Sind Sie sicher, dass Sie diese Eigenschaft entfernen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
-  "openSurvey": "Umfrage öffnen",
-  "retakeSurvey": "Umfrage erneut durchführen",
-  "feedback": "Feedback",
-  "surveyTitle": "Helfen Sie uns, helpwave tasks zu verbessern",
-  "surveyDescription": "Ihr Feedback ist wertvoll für uns. Bitte nehmen Sie sich einen Moment Zeit, um unsere Umfrage auszufüllen.",
-  "installApp": "App installieren",
-  "installAppDescription": "Installieren Sie helpwave tasks für eine bessere Erfahrung mit Offline-Unterstützung und schnellerem Zugriff.",
-  "install": "Installieren",
-  "noNotifications": "Keine aktuellen Updates",
-  "notifications": "Benachrichtigungen",
-  "dismissAll": "Alle verwerfen",
-  "security": "Sicherheit",
-  "shiftHandover": "Schichtübergabe",
-  "shiftHandoverDescription": "Wählen Sie einen Benutzer aus, um alle Ihnen zugewiesenen offenen Aufgaben zu übertragen.",
-  "confirmShiftHandover": "Schichtübergabe bestätigen",
-  "confirmShiftHandoverDescription": "Sind Sie sicher, dass Sie alle offenen Aufgaben an den ausgewählten Benutzer übertragen möchten?",
-  "confirmShiftHandoverDescriptionWithName": "Sind Sie sicher, dass Sie {taskCount, plural, =1{# offene Aufgabe} other{# offene Aufgaben}} an {name} übertragen möchten?",
-  "@confirmShiftHandoverDescriptionWithName": {
-    "placeholders": {
-      "taskCount": {
-        "type": "number"
-      },
-      "name": {
-        "type": "string"
-      }
-    }
-  },
-  "priority": "{priority, select, P1{Normal} P2{Mittel} P3{Hoch} P4{Kritisch} other{-}}",
-  "@priority": {
-    "placeholders": {
-      "priority": {}
-    }
-  },
-  "priorityLabel": "Priorität",
-  "priorityNone": "Keine",
-  "deletePatient": "Patient löschen",
-  "deletePatientConfirmation": "Sind Sie sicher, dass Sie diesen Patienten löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
-  "feedbackDescription": "Teilen Sie Ihr Feedback, melden Sie Fehler oder schlagen Sie Verbesserungen vor.",
-  "url": "URL",
+  "title": "Titel",
+  "totalPatients": "Gesamtpatienten",
+  "type": "Typ",
+  "updated": "Aktualisiert",
+  "users": "Benutzer",
+  "wards": "Stationen",
+  "yes": "Ja",
+  "anonymous": "Anonym",
+  "anonymousSubmission": "Anonyme Übermittlung",
+  "collapseAll": "Alle einklappen",
+  "confirmSelection": "Auswahl bestätigen",
+  "deselectAll": "Auswahl aufheben",
   "enterFeedback": "Geben Sie hier Ihr Feedback ein...",
+  "expandAll": "Alle ausklappen",
+  "feedbackDescription": "Teilen Sie Ihr Feedback, melden Sie Fehler oder schlagen Sie Verbesserungen vor.",
+  "noLocationsFound": "Keine Standorte gefunden",
+  "pickClinic": "Klinik auswählen",
+  "pickClinicDescription": "Wählen Sie die Klinik für diesen Patienten aus. Es können nur Klinik-Standorte ausgewählt werden.",
+  "pickPosition": "Standort auswählen",
+  "pickPositionDescription": "Wählen Sie den Standort für diesen Patienten aus. Sie können Krankenhaus-, Praxis-, Klinik-, Station-, Bett- oder Zimmer-Standorte auswählen.",
+  "pickTeams": "Teams auswählen",
+  "pickTeamsDescription": "Wählen Sie ein oder mehrere Teams für diesen Patienten aus. Sie können Klinik-, Team-, Praxis- oder Krankenhaus-Standorte auswählen.",
+  "searchLocations": "Standorte suchen...",
+  "selectAll": "Alle auswählen",
+  "selectLocationDescription": "Bitte wählen Sie den zugewiesenen Standort für den Patienten aus.",
+  "selectRootLocation": "Stammstandort auswählen",
+  "selectRootLocationDescription": "Wählen Sie die Stammstandorte aus, die Ihren zugänglichen Bereich definieren. Es können nur Krankenhäuser, Praxen, Kliniken und Teams ausgewählt werden. Die Auswahl eines übergeordneten Standorts umfasst alle untergeordneten Standorte.",
   "startRecording": "Aufnahme starten",
   "stopRecording": "Aufnahme stoppen",
-  "submit": "Absenden",
-  "username": "Benutzername",
-  "anonymous": "Anonym",
-  "withName": "Mit Namen (für Nachfragen)",
-  "enterName": "Geben Sie Ihren Namen ein...",
-  "users": "Benutzer",
-  "showTeamTasks": "Team-Aufgaben anzeigen",
-  "showAllTasks": "Alle Aufgaben anzeigen",
-  "error": "Fehler",
-  "errorOccurred": "Ein Fehler ist aufgetreten",
-  "estimatedTime": "Geschätzte Zeit (Minuten)",
-  "ok": "OK",
-  "submitAnonymously": "Anonym absenden",
   "submissionDetails": "Übermittlungsdetails",
   "submittingAs": "Übermitteln als {name}",
   "@submittingAs": {
@@ -437,12 +296,36 @@
       }
     }
   },
-  "anonymousSubmission": "Anonyme Übermittlung",
-  "conflictDetected": "Konflikt erkannt",
-  "overwrite": "Überschreiben",
-  "refreshing": "Aktualisiere…",
+  "submit": "Absenden",
+  "url": "URL",
+  "userInformation": "Benutzerinformationen",
+  "admitPatient": "Patient aufnehmen",
+  "clear": "Löschen",
+  "clinic": "Klinik",
   "connectionConnected": "Verbunden",
   "connectionConnecting": "Verbinde…",
   "connectionDisconnected": "Getrennt",
-  "userInformation": "Benutzerinformationen"
+  "deletePatient": "Patient löschen",
+  "deletePatientConfirmation": "Sind Sie sicher, dass Sie diesen Patienten löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
+  "dischargePatient": "Patient entlassen",
+  "dischargePatientConfirmation": "Sind Sie sicher, dass Sie diesen Patienten entlassen möchten? Diese Aktion ändert den Status des Patienten.",
+  "dismissAll": "Alle verwerfen",
+  "error": "Fehler",
+  "install": "Installieren",
+  "installApp": "App installieren",
+  "installAppDescription": "Installieren Sie helpwave tasks für eine bessere Erfahrung mit Offline-Unterstützung und schnellerem Zugriff.",
+  "loginRequired": "Login benötigt",
+  "loginRequiredDescription": "Um diese Seite benutzen zu können musst du eingeloggt sein.",
+  "markPatientDead": "Patient als verstorben markieren",
+  "markPatientDeadConfirmation": "Sind Sie sicher, dass Sie diesen Patienten als verstorben markieren möchten?",
+  "noNotifications": "Keine aktuellen Updates",
+  "notifications": "Benachrichtigungen",
+  "ok": "OK",
+  "patientActions": "Patientenaktionen",
+  "position": "Standort",
+  "selectClinic": "Klinik auswählen",
+  "selectPosition": "Standort auswählen",
+  "selectTeams": "Teams auswählen",
+  "waitPatient": "Patient auf Warteliste setzen",
+  "waitingForPatient": "Warten auf Patient"
 }

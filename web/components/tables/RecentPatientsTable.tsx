@@ -113,7 +113,7 @@ export const RecentPatientsTable = ({
 
   const fixedPagination = useMemo(() => ({
     ...pagination,
-    pageSize: 10
+    pageSize: 5
   }), [pagination])
 
   return (
@@ -125,7 +125,7 @@ export const RecentPatientsTable = ({
         onRowClick={onRowClick}
         initialState={{
           pagination: {
-            pageSize: 10,
+            pageSize: 5,
           },
         }}
         state={{

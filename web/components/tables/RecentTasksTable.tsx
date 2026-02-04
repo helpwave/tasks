@@ -187,7 +187,7 @@ export const RecentTasksTable = ({
 
   const fixedPagination = useMemo(() => ({
     ...pagination,
-    pageSize: 10
+    pageSize: 5
   }), [pagination])
 
   return (
@@ -199,7 +199,7 @@ export const RecentTasksTable = ({
         onRowClick={onRowClick}
         initialState={{
           pagination: {
-            pageSize: 10,
+            pageSize: 5,
           },
         }}
         state={{
