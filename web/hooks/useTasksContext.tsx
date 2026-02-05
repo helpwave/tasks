@@ -246,7 +246,7 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
           avatarUrl: data.me.avatarUrl,
           organizations: data.me.organizations ?? null,
           isOnline: data.me.isOnline ?? null
-        } : undefined,
+        } : prevState.user,
         myTasksCount: data?.me?.tasks?.filter(t => !t.done).length ?? 0,
         totalPatientsCount,
         waitingPatientsCount,

@@ -31,7 +31,15 @@ export function buildCacheConfig(): InMemoryCacheConfig {
       Task: { keyFields: ['id'] },
       Patient: { keyFields: ['id'] },
       User: { keyFields: ['id'] },
-      UserType: { keyFields: ['id'] },
+      UserType: {
+        keyFields: ['id'],
+        fields: {
+          tasks: {
+            keyArgs: ['rootLocationIds'],
+            merge: (_existing, incoming) => incoming,
+          },
+        },
+      },
       LocationNode: { keyFields: ['id'] },
       LocationNodeType: { keyFields: ['id'] },
       PropertyValue: { keyFields: propertyValueKeyFields },

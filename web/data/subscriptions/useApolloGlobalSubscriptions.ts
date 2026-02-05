@@ -15,17 +15,6 @@ import {
   removeRefreshingPatient
 } from './refreshingEntities'
 import { getConnectionStatus, setConnectionStatus } from '@/data/connectionStatus'
-import {
-  GetGlobalDataDocument,
-  GetTasksDocument,
-  GetPatientsDocument
-} from '@/api/gql/generated'
-
-const QUERIES_TO_REFETCH_AFTER_MERGE = [
-  GetGlobalDataDocument,
-  GetTasksDocument,
-  GetPatientsDocument,
-]
 
 const TASK_UPDATED = `
   subscription TaskUpdated($taskId: ID, $rootLocationIds: [ID!]) {
@@ -112,7 +101,7 @@ export function useApolloGlobalSubscriptions(
             await mergeTaskUpdatedIntoCache(client, taskId, payloadObj, optionsRef.current).catch(
               () => {}
             )
-            client.refetchQueries({ include: QUERIES_TO_REFETCH_AFTER_MERGE })
+            client.refetchQueries({ include: 'active' })
           } finally {
             removeRefreshingTask(taskId)
           }
@@ -143,7 +132,7 @@ export function useApolloGlobalSubscriptions(
             await mergePatientUpdatedIntoCache(client, patientId, payloadObj, optionsRef.current).catch(
               () => {}
             )
-            client.refetchQueries({ include: QUERIES_TO_REFETCH_AFTER_MERGE })
+            client.refetchQueries({ include: 'active' })
           } finally {
             removeRefreshingPatient(patientId)
           }
@@ -174,7 +163,7 @@ export function useApolloGlobalSubscriptions(
             await mergePatientUpdatedIntoCache(client, patientId, payloadObj, optionsRef.current).catch(
               () => {}
             )
-            client.refetchQueries({ include: QUERIES_TO_REFETCH_AFTER_MERGE })
+            client.refetchQueries({ include: 'active' })
           } finally {
             removeRefreshingPatient(patientId)
           }
