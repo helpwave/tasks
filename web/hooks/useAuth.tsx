@@ -1,7 +1,7 @@
 'use client'
 
 import type { ComponentType, PropsWithChildren, ReactNode } from 'react'
-import { createContext, useCallback, useContext, useEffect, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { HelpwaveLogo } from '@helpwave/hightide'
 import { login, logout, onTokenExpiringCallback, removeUser, renewToken, restoreSession } from '@/api/auth/authService'
 import type { User } from 'oidc-client-ts'
@@ -9,6 +9,7 @@ import { getConfig } from '@/utils/config'
 import { usePathname } from 'next/navigation'
 
 const config = getConfig()
+const LOGIN_REDIRECT_COOLDOWN_MS = 5000
 
 type AuthState = {
   identity?: User,
@@ -42,6 +43,18 @@ export const AuthProvider = ({
     pathname.startsWith(pattern))
   const isIgnored = !!pathname && ignoredURLs.some(pattern =>
     pathname.startsWith(pattern))
+  const loginTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const scheduleLoginRedirect = useCallback(() => {
+    if (loginTimeoutRef.current) return
+    loginTimeoutRef.current = setTimeout(() => {
+      loginTimeoutRef.current = null
+      login(
+        config.auth.redirect_uri +
+        `?redirect_uri=${encodeURIComponent(window.location.href)}`
+      ).catch(() => {})
+    }, LOGIN_REDIRECT_COOLDOWN_MS)
+  }, [])
 
   useEffect(() => {
     if(isIgnored) {
@@ -68,11 +81,7 @@ export const AuthProvider = ({
           })
         } else {
           if (!isUnprotected) {
-            login(
-              config.auth.redirect_uri +
-              `?redirect_uri=${encodeURIComponent(window.location.href)}`
-            ).catch(() => {
-            })
+            scheduleLoginRedirect()
           } else {
             removeUser()
               .then(() => {
@@ -95,11 +104,7 @@ export const AuthProvider = ({
           if (isAuthenticationServerUnavailable) {
             setAuthState({ isLoading: false })
           } else {
-            login(
-              config.auth.redirect_uri +
-              `?redirect_uri=${encodeURIComponent(window.location.href)}`
-            ).catch(() => {
-            })
+            scheduleLoginRedirect()
           }
         } else {
           removeUser()
@@ -114,8 +119,12 @@ export const AuthProvider = ({
 
     return () => {
       isMounted = false
+      if (loginTimeoutRef.current) {
+        clearTimeout(loginTimeoutRef.current)
+        loginTimeoutRef.current = null
+      }
     }
-  }, [isIgnored, isUnprotected])
+  }, [isIgnored, isUnprotected, scheduleLoginRedirect])
 
   const logoutAndReset = useCallback(() => {
     logout()
@@ -125,11 +134,14 @@ export const AuthProvider = ({
 
   useEffect(() => {
     if (isIgnored || isUnprotected || identity || isLoading) return
-    login(
-      config.auth.redirect_uri +
-      `?redirect_uri=${encodeURIComponent(window.location.href)}`
-    ).catch(() => {})
-  }, [identity, isLoading, isIgnored, isUnprotected])
+    scheduleLoginRedirect()
+    return () => {
+      if (loginTimeoutRef.current) {
+        clearTimeout(loginTimeoutRef.current)
+        loginTimeoutRef.current = null
+      }
+    }
+  }, [identity, isLoading, isIgnored, isUnprotected, scheduleLoginRedirect])
 
   const authLoadingContent = (
     <div className="flex flex-col items-center justify-center w-screen h-screen bg-surface">

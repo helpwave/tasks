@@ -129,6 +129,11 @@ export const removeUser = async () => {
   return await userManager.removeUser()
 }
 
+export const invalidateRestoreSessionCache = () => {
+  lastRestoreSessionResult = null
+  lastRestoreSessionTime = 0
+}
+
 export const restoreSession = async (): Promise<User | undefined> => {
   if (typeof window === 'undefined') return
 

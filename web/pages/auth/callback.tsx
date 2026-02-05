@@ -1,57 +1,65 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { handleCallback } from '@/api/auth/authService'
+import { useEffect, useRef, useState } from 'react'
+import { handleCallback, invalidateRestoreSessionCache } from '@/api/auth/authService'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
-import { Button } from '@helpwave/hightide'
+import { HelpwaveLogo } from '@helpwave/hightide'
+
+const REDIRECT_COOLDOWN_MS = 5000
 
 export default function AuthCallback() {
   const translation = useTasksTranslation()
-
   const router = useRouter()
   const searchParams = useSearchParams()
   const [hasError, setHasError] = useState<boolean>(false)
   const [hasProcessed, setHasProcessed] = useState<boolean>(false)
+  const redirectTarget = useRef<string | null>(null)
 
   useEffect(() => {
-    if (hasProcessed) {
-      return
-    }
-    const checkAuthCallback = async () => {
-      if (searchParams.get('code') && searchParams.get('state')) {
-        setHasProcessed(true)
+    if (hasProcessed) return
+    const code = searchParams.get('code')
+    const state = searchParams.get('state')
+    if (!code || !state) return
 
-        try {
-          await handleCallback()
-          const redirect = searchParams.get('redirect_uri')
-          const isValidRedirect = redirect && new URL(redirect).host === window.location.host
-          const defaultRedirect = '/'
-          if (!isValidRedirect) {
+    setHasProcessed(true)
+    const redirect = searchParams.get('redirect_uri')
+    const isValidRedirect = redirect && new URL(redirect).host === window.location.host
+    redirectTarget.current = isValidRedirect ? redirect : '/'
 
-            await router.push(defaultRedirect)
-          } else {
-
-            await router.push(redirect ?? defaultRedirect)
-          }
-        } catch {
-          setHasError(true)
-        }
+    const run = async () => {
+      try {
+        await handleCallback()
+        invalidateRestoreSessionCache()
+      } catch {
+        setHasError(true)
+        redirectTarget.current = '/'
       }
     }
-    checkAuthCallback().catch(() => {})
-  }, [searchParams]) // eslint-disable-line react-hooks/exhaustive-deps
+    run().catch(() => {})
+  }, [searchParams, hasProcessed])
+
+  useEffect(() => {
+    if (!hasProcessed || redirectTarget.current === null) return
+    const id = setTimeout(() => {
+      router.push(redirectTarget.current ?? '/')
+    }, REDIRECT_COOLDOWN_MS)
+    return () => clearTimeout(id)
+  }, [hasProcessed, router])
 
   return (
-    <div className="flex-col-0 justify-center items-center w-screen h-screen">
-      <div className="flex-col-2 max-w-64">
-        {hasError && (
-          <span className="text-negative"> {translation('authenticationFailed')}</span>
-        )}
-        <Button onClick={() => router.push('/')}>
-          Return Home
-        </Button>
-      </div>
+    <div className="flex flex-col items-center justify-center w-screen h-screen bg-surface">
+      <HelpwaveLogo
+        animate="loading"
+        color="currentColor"
+        height={128}
+        width={128}
+      />
+      {hasError && (
+        <span className="mt-4 text-negative typography-body">
+          {translation('authenticationFailed')}
+        </span>
+      )}
     </div>
   )
 }
