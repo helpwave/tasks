@@ -12,9 +12,9 @@ export default function AuthCallback() {
   const translation = useTasksTranslation()
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [hasError, setHasError] = useState<boolean>(false)
-  const [hasProcessed, setHasProcessed] = useState<boolean>(false)
-  const redirectTarget = useRef<string | null>(null)
+  const [hasError, setHasError] = useState(false)
+  const [hasProcessed, setHasProcessed] = useState(false)
+  const redirectTarget = useRef<string>('/')
 
   useEffect(() => {
     if (hasProcessed) return
@@ -23,38 +23,41 @@ export default function AuthCallback() {
     if (!code || !state) return
 
     setHasProcessed(true)
-    const redirect = searchParams.get('redirect_uri')
-    const isValidRedirect = redirect && new URL(redirect).host === window.location.host
-    redirectTarget.current = isValidRedirect ? redirect : '/'
 
-    const run = async () => {
+    const redirect = searchParams.get('redirect_uri')
+    if (redirect) {
+      try {
+        const url = new URL(redirect)
+        redirectTarget.current = url.host === window.location.host ? url.pathname + url.search + url.hash : '/'
+      } catch {
+        redirectTarget.current = '/'
+      }
+    } else {
+      redirectTarget.current = '/'
+    }
+
+    ; (async () => {
       try {
         await handleCallback()
         invalidateRestoreSessionCache()
+        router.replace(redirectTarget.current)
       } catch {
         setHasError(true)
-        redirectTarget.current = '/'
       }
-    }
-    run().catch(() => {})
-  }, [searchParams, hasProcessed])
+    })().catch(() => { })
+  }, [searchParams, hasProcessed, router])
 
   useEffect(() => {
-    if (!hasProcessed || redirectTarget.current === null) return
+    if (!hasProcessed || !hasError) return
     const id = setTimeout(() => {
-      router.push(redirectTarget.current ?? '/')
+      router.replace('/')
     }, REDIRECT_COOLDOWN_MS)
     return () => clearTimeout(id)
-  }, [hasProcessed, router])
+  }, [hasProcessed, hasError, router])
 
   return (
     <div className="flex flex-col items-center justify-center w-screen h-screen bg-surface">
-      <HelpwaveLogo
-        animate="loading"
-        color="currentColor"
-        height={128}
-        width={128}
-      />
+      <HelpwaveLogo animate="loading" color="currentColor" height={128} width={128} />
       {hasError && (
         <span className="mt-4 text-negative typography-body">
           {translation('authenticationFailed')}

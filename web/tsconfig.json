@@ -37,9 +37,9 @@
     "**/*.tsx",
     "next-env.d.ts",
     "public/ga.js",
-    "build/types/**/*.ts"
   ],
   "exclude": [
-    "build/dev"
+    "build/dev",
+    "build/types"
   ]
 }

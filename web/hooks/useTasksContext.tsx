@@ -113,7 +113,7 @@ export const useTasksContext = (): TasksContextType => {
 }
 
 export const TasksContextProvider = ({ children }: PropsWithChildren) => {
-  const pathName = usePathname()
+  const pathName = usePathname() ?? ''
   const { identity, isLoading: isAuthLoading } = useAuth()
   const queryClient = useQueryClient()
   const {
