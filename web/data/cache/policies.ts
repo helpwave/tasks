@@ -17,6 +17,7 @@ export function buildCacheConfig(): InMemoryCacheConfig {
           patient: { keyArgs: ['id'] },
           patients: {
             keyArgs: ['locationId', 'rootLocationIds', 'states', 'filtering', 'sorting', 'search', 'pagination'],
+            merge: (_existing, incoming) => incoming,
           },
           locationNode: { keyArgs: ['id'] },
           locationNodes: {

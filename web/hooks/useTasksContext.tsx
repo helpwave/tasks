@@ -1,6 +1,7 @@
 import type { Dispatch, SetStateAction } from 'react'
 import { createContext, type PropsWithChildren, useContext, useEffect, useRef, useState } from 'react'
 import { usePathname } from 'next/navigation'
+import { HelpwaveLogo } from '@helpwave/hightide'
 import { useGlobalData, useLocations } from '@/data'
 import { useQueryClient } from '@tanstack/react-query'
 import { useAuth } from './useAuth'
@@ -92,6 +93,7 @@ export type TasksContextState = {
   sidebar: SidebarContextType,
   user?: User,
   rootLocations?: LocationNode[],
+  isRootLocationReinitializing?: boolean,
 }
 
 export type TasksContextType = TasksContextState & {
@@ -125,6 +127,7 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
       isShowingClinics: false,
     },
     selectedRootLocationIds: storedSelectedRootLocationIds.length > 0 ? storedSelectedRootLocationIds : undefined,
+    isRootLocationReinitializing: false,
   })
 
   const { data: allLocationsData } = useLocations(
@@ -152,19 +155,8 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
     const currentSelectedIds = (state.selectedRootLocationIds || []).sort().join(',')
     if (prevSelectedRootLocationIdsRef.current !== currentSelectedIds) {
       prevSelectedRootLocationIdsRef.current = currentSelectedIds
-
+      setState(prev => ({ ...prev, isRootLocationReinitializing: true }))
       queryClient.invalidateQueries()
-      queryClient.removeQueries({
-        predicate: (query) => {
-          const queryKey = query.queryKey as unknown[]
-          const queryKeyStr = JSON.stringify(queryKey)
-          return queryKeyStr.includes('GetPatients') ||
-            queryKeyStr.includes('GetTasks') ||
-            queryKeyStr.includes('GetLocations') ||
-            queryKeyStr.includes('GetGlobalData') ||
-            queryKeyStr.includes('GetOverviewData')
-        }
-      })
     }
   }, [state.selectedRootLocationIds, queryClient])
 
@@ -281,6 +273,7 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
         ),
         rootLocations,
         selectedRootLocationIds,
+        isRootLocationReinitializing: false,
       }
     })
   }, [effectInputKey, data, storedSelectedRootLocationIds, allLocationsData, setStoredSelectedRootLocationIds])
@@ -318,6 +311,19 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
       }}
     >
       {children}
+      {state.isRootLocationReinitializing && (
+        <div
+          className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-surface/90"
+          aria-hidden="true"
+        >
+          <HelpwaveLogo
+            animate="loading"
+            color="currentColor"
+            height={128}
+            width={128}
+          />
+        </div>
+      )}
     </TasksContext.Provider>
   )
 }
