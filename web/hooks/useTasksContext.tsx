@@ -17,12 +17,14 @@ function filterLocationsByRootSubtree(
     return locations.map(loc => ({ id: loc.id, title: loc.title }))
   }
 
+  if (!allLocations || allLocations.length === 0) {
+    return locations.map(loc => ({ id: loc.id, title: loc.title }))
+  }
+
   const rootLocationSet = new Set(selectedRootLocationIds)
   const allLocationsMap = new Map<string, { id: string, title: string, parentId?: string | null }>()
 
-  if (allLocations) {
-    allLocations.forEach(loc => allLocationsMap.set(loc.id, loc))
-  }
+  allLocations.forEach(loc => allLocationsMap.set(loc.id, loc))
   locations.forEach(loc => allLocationsMap.set(loc.id, loc))
   rootLocations.forEach(loc => allLocationsMap.set(loc.id, { id: loc.id, title: loc.title, parentId: null }))
 

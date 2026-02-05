@@ -468,8 +468,7 @@ export const Sidebar = ({ isOpen, onClose, ...props }: SidebarProps) => {
             <span className="flex grow">{translation('patients')}</span>
             {context?.totalPatientsCount !== undefined && (<span className="text-description">{context.totalPatientsCount}</span>)}
           </SidebarLink>
-          {(context?.teams ?? []).length > 0 && (
-            <ExpandableRoot
+          <ExpandableRoot
               className="shadow-none"
               isExpanded={context?.sidebar?.isShowingTeams ?? false}
               onExpandedChange={isExpanded => context?.update(prevState => ({
@@ -494,10 +493,8 @@ export const Sidebar = ({ isOpen, onClose, ...props }: SidebarProps) => {
                 ))}
               </ExpandableContent>
             </ExpandableRoot>
-          )}
 
-          {(context?.wards ?? []).length > 0 && (
-            <ExpandableRoot
+          <ExpandableRoot
               className="shadow-none"
               isExpanded={context?.sidebar?.isShowingWards ?? false}
               onExpandedChange={isExpanded => context?.update(prevState => ({
@@ -522,10 +519,8 @@ export const Sidebar = ({ isOpen, onClose, ...props }: SidebarProps) => {
                 ))}
               </ExpandableContent>
             </ExpandableRoot>
-          )}
 
-          {(context?.clinics ?? []).length > 0 && (
-            <ExpandableRoot
+          <ExpandableRoot
               className="shadow-none"
               isExpanded={context?.sidebar?.isShowingClinics ?? false}
               onExpandedChange={isExpanded => context?.update(prevState => ({
@@ -550,7 +545,6 @@ export const Sidebar = ({ isOpen, onClose, ...props }: SidebarProps) => {
                 ))}
               </ExpandableContent>
             </ExpandableRoot>
-          )}
         </nav>
         <div className="mt-auto pt-4 border-t border-on-surface/20 sm:hidden">
           <RootLocationSelector onSelect={onClose} />
