@@ -160,7 +160,7 @@ export const PatientDetailView = ({
               {taskStats.totalTasks > 0 && (
                 <Tooltip
                   tooltip={`${translation('openTasks')}: ${taskStats.openTasks}\n${translation('closedTasks')}: ${taskStats.closedTasks}`}
-                  position="top"
+                  alignment="top"
                   tooltipClassName="whitespace-pre-line"
                 >
                   <div className="w-12">
@@ -182,18 +182,18 @@ export const PatientDetailView = ({
       )}
       <TabSwitcher>
         <TabList />
-        {isEditMode && patientId && (
-          <TabPanel label={translation('tasks')} className="flex-col-0 px-1 pt-4 pb-16 overflow-y-auto">
+        <TabPanel label={translation('tasks')} className="flex-col-0 px-1 pt-4 overflow-y-auto" disabled={!(isEditMode && patientId)}>
+          {patientId && (
             <PatientTasksView
               patientId={patientId}
               patientData={patientData ? { patient: patientData } : undefined}
               onSuccess={onSuccess}
             />
-          </TabPanel>
-        )}
+          )}
+        </TabPanel>
 
-        {isEditMode && hasAvailableProperties && patientId && (
-          <TabPanel label={translation('properties')} className="flex-col-0 px-1 pt-4 pb-16 overflow-y-auto">
+        <TabPanel label={translation('properties')} className="flex-col-0 px-2 pt-4 overflow-y-auto" disabled={!(isEditMode && hasAvailableProperties && patientId)}>
+          {patientId && (
             <PropertyList
               subjectId={patientId}
               subjectType="patient"
@@ -201,10 +201,10 @@ export const PatientDetailView = ({
               propertyValues={patientData?.properties}
               onPropertyValueChange={handlePropertyValueChange}
             />
-          </TabPanel>
-        )}
+          )}
+        </TabPanel>
 
-        <TabPanel label={translation('patientData')} className="flex-col-0 px-1 pt-4 pb-16 overflow-y-auto">
+        <TabPanel label={translation('patientData')} className="flex-col-0">
           <PatientDataEditor
             id={patientId || null}
             initialCreateData={initialCreateData}
@@ -213,11 +213,11 @@ export const PatientDetailView = ({
           />
         </TabPanel>
 
-        {isEditMode && patientId && (
-          <TabPanel label="Audit Log" className="flex-col-0 px-1 pt-4 pb-16 overflow-y-auto">
+        <TabPanel label="Audit Log" className="flex-col-0 px-2 pt-4 overflow-y-auto" disabled={!(isEditMode && patientId)}>
+          {patientId && (
             <AuditLogTimeline caseId={patientId} enabled={true} />
-          </TabPanel>
-        )}
+          )}
+        </TabPanel>
       </TabSwitcher>
     </div>
   )

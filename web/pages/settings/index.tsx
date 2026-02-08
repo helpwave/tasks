@@ -12,7 +12,7 @@ import {
   ThemeUtil,
   useLocale,
   useTheme,
-  useLocalStorage
+  useStorage
 } from '@helpwave/hightide'
 import type { HightideTranslationLocales, ThemeType } from '@helpwave/hightide'
 import { useTasksContext } from '@/hooks/useTasksContext'
@@ -65,11 +65,11 @@ const SettingsPage: NextPage = () => {
 
   const {
     setValue: setOnboardingSurveyCompleted
-  } = useLocalStorage('onboarding-survey-completed', 0)
+  } = useStorage({ key: 'onboarding-survey-completed', defaultValue: 0 })
 
   const {
     setValue: setWeeklySurveyLastCompleted
-  } = useLocalStorage('weekly-survey-last-completed', 0)
+  } = useStorage({ key: 'weekly-survey-last-completed', defaultValue: 0 })
 
   const handleClearCache = async () => {
     queryClient.clear()

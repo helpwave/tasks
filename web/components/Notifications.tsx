@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react'
-import { Button, Chip, PopUp, PopUpContext, PopUpOpener, PopUpRoot, Tooltip, useLocalStorage, Visibility } from '@helpwave/hightide'
+import { Button, Chip, IconButton, PopUp, PopUpContext, PopUpOpener, PopUpRoot, useStorage, Visibility } from '@helpwave/hightide'
 import { Bell } from 'lucide-react'
 import { useOverviewData } from '@/data'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
@@ -26,12 +26,12 @@ export const Notifications = () => {
   const {
     value: readNotificationsRaw,
     setValue: setReadNotificationsRaw
-  } = useLocalStorage<string[]>('read-notifications', [])
+  } = useStorage<string[]>({ key: 'read-notifications', defaultValue: [] })
 
   const {
     value: dismissedNotificationsRaw,
     setValue: setDismissedNotificationsRaw
-  } = useLocalStorage<string[]>('dismissed-notifications', [])
+  } = useStorage<string[]>({ key: 'dismissed-notifications', defaultValue: [] })
 
   const readNotifications = useMemo(() => {
     return new Set(readNotificationsRaw || [])
@@ -131,29 +131,23 @@ export const Notifications = () => {
 
   return (
     <PopUpRoot>
-      <PopUpContext.Consumer>
-        {({ isOpen }) => (
-          <Tooltip tooltip={translation('notifications')} disabled={isOpen}>
-            <PopUpOpener>
-              {({ props }) => (
-                <Button
-                  {...props}
-                  coloringStyle="text"
-                  layout="icon"
-                  color="neutral"
-                >
-                  <Bell className="size-5" />
-                  {unreadCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 flex-row-0 min-w-4.5 h-4.5 items-center justify-center rounded-full bg-primary text-on-primary text-xs font-bold leading-none">
-                      {unreadCount > 9 ? '9+' : unreadCount}
-                    </span>
-                  )}
-                </Button>
-              )}
-            </PopUpOpener>
-          </Tooltip>
+      <PopUpOpener>
+        {({ props }) => (
+          <IconButton
+            {...props}
+            tooltip={translation('notifications')}
+            coloringStyle="text"
+            color="neutral"
+          >
+            <Bell className="size-5" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 flex-row-0 min-w-4.5 h-4.5 items-center justify-center rounded-full bg-primary text-on-primary text-xs font-bold leading-none">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
+          </IconButton>
         )}
-      </PopUpContext.Consumer>
+      </PopUpOpener>
       <PopUp
         options={{
           horizontalAlignment: 'center'

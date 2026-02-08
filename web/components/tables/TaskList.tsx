@@ -1,6 +1,6 @@
 import { useMemo, useState, forwardRef, useImperativeHandle, useEffect, useRef, useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { Button, Checkbox, ConfirmDialog, FillerCell, HelpwaveLogo, LoadingContainer, SearchBar, Select, SelectOption, TableColumnSwitcher, TableDisplay, TableProvider, Tooltip } from '@helpwave/hightide'
+import { Button, Checkbox, ConfirmDialog, FillerCell, HelpwaveLogo, IconButton, LoadingContainer, SearchBar, Select, SelectOption, TableColumnSwitcher, TableDisplay, TableProvider } from '@helpwave/hightide'
 import { PlusIcon, UserCheck, Users } from 'lucide-react'
 import type { TaskPriority, GetTasksQuery } from '@/api/gql/generated'
 import { PropertyEntity } from '@/api/gql/generated'
@@ -551,11 +551,11 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onSearch={() => null}
-              containerProps={{ className: 'max-w-80 h-10' }}
+              containerProps={{ className: 'max-w-80' }}
             />
             <TableColumnSwitcher />
           </div>
-          <div className="flex flex-wrap items-center justify-end gap-4 w-full sm:w-auto sm:ml-auto lg:pr-4">
+          <div className="flex flex-wrap items-center justify-end gap-4 w-full sm:w-auto sm:ml-auto">
             <Select
               value={doneFilterValue}
               onValueChange={(v: string) => setDoneFilter(v === 'all' ? 'all' : v === 'done')}
@@ -576,15 +576,14 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
                 {translation('shiftHandover') || 'Shift Handover'}
               </Button>
             )}
-            <Tooltip tooltip={translation('addTask')} position="top">
-              <Button
-                onClick={() => setTaskDialogState({ isOpen: true })}
-                disabled={!hasPatients}
-                layout="icon"
-              >
-                <PlusIcon/>
-              </Button>
-            </Tooltip>
+            <IconButton
+              tooltip={translation('addTask')}
+              color="primary"
+              onClick={() => setTaskDialogState({ isOpen: true })}
+              disabled={!hasPatients}
+            >
+              <PlusIcon/>
+            </IconButton>
           </div>
         </div>
         <div className="flex-col-3 items-center relative">

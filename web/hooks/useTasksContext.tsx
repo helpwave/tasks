@@ -5,7 +5,7 @@ import { HelpwaveLogo } from '@helpwave/hightide'
 import { useGlobalData, useLocations } from '@/data'
 import { useQueryClient } from '@tanstack/react-query'
 import { useAuth } from './useAuth'
-import { useLocalStorage } from '@helpwave/hightide'
+import { useStorage } from '@helpwave/hightide'
 import { useConnectionStatus } from './useConnectionStatus'
 
 function filterLocationsByRootSubtree(
@@ -119,7 +119,7 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
   const {
     value: storedSelectedRootLocationIds,
     setValue: setStoredSelectedRootLocationIds
-  } = useLocalStorage<string[]>('selected-root-location-ids', [])
+  } = useStorage<string[]>({ key: 'selected-root-location-ids', defaultValue: [] })
   const [state, setState] = useState<TasksContextState>({
     sidebar: {
       isShowingTeams: false,

@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import type { FormFieldDataHandling } from '@helpwave/hightide'
-import { FormProvider, Input, DateTimeInput, Select, SelectOption, Textarea, Checkbox, Button, ConfirmDialog, LoadingContainer, useCreateForm, FormField, Visibility, useFormObserverKey } from '@helpwave/hightide'
+import { FormProvider, Input, DateTimeInput, Select, SelectOption, Textarea, Checkbox, Button, ConfirmDialog, LoadingContainer, useCreateForm, FormField, Visibility, useFormObserverKey, IconButton } from '@helpwave/hightide'
 import { CenteredLoadingLogo } from '@/components/CenteredLoadingLogo'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import type { CreatePatientInput, LocationNodeType, UpdatePatientInput, GetPatientQuery } from '@/api/gql/generated'
@@ -275,13 +275,13 @@ export const PatientDataEditor = ({
   return (
     <>
       {isRefreshing && (
-        <div className="flex items-center gap-2 py-2 px-3 rounded-md bg-neutral-100 dark:bg-neutral-800 mb-4">
+        <div className="flex items-center gap-2 py-2 px-3 rounded-md bg-surface-neutral mb-4">
           <LoadingContainer className="size-5 shrink-0" />
-          <span className="text-sm text-neutral-600 dark:text-neutral-400">{translation('refreshing')}</span>
+          <span className="text-sm text-on-surface">{translation('refreshing')}</span>
         </div>
       )}
       <FormProvider state={form}>
-        <form onSubmit={event => {event.preventDefault(); form.submit() }} className="flex-col-4">
+        <form onSubmit={event => {event.preventDefault(); form.submit() }} className="flex-col-6 pb-16 overflow-y-auto px-2 pt-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormField<PatientFormValues, 'firstname'>
               name="firstname"
@@ -377,7 +377,9 @@ export const PatientDataEditor = ({
                   <Checkbox
                     {...focusableElementProps} {...interactionStates}
                     value={value === PatientState.Wait}
-                    onValueChange={(value) => onValueChange(value ? PatientState.Wait : PatientState.Admitted)}
+                    onValueChange={(value) => {
+                      onValueChange(value ? PatientState.Wait : PatientState.Admitted)}
+                    }
                     onEditComplete={(value) => onEditComplete(value ? PatientState.Wait : PatientState.Admitted)}
                   />
                   <span>{translation('waitingForPatient')}</span>
@@ -446,25 +448,23 @@ export const PatientDataEditor = ({
                     className="flex-grow cursor-pointer"
                     onClick={() => setIsClinicDialogOpen(true)}
                   />
-                  <Button
+                  <IconButton
                     onClick={() => setIsClinicDialogOpen(true)}
-                    layout="icon"
-                    title={translation('selectClinic')}
+                    tooltip={translation('selectClinic')}
                   >
                     <Building2 className="size-4" />
-                  </Button>
+                  </IconButton>
                   {value && !isEditMode && (
-                    <Button
+                    <IconButton
                       onClick={() => {
                         onValueChange(null)
                         onEditComplete(null)
                       }}
-                      layout="icon"
+                      tooltip={translation('clear')}
                       color="neutral"
-                      title={translation('clear')}
                     >
                       <XIcon className="size-5" />
-                    </Button>
+                    </IconButton>
                   )}
                 </div>
               </div>
@@ -486,25 +486,23 @@ export const PatientDataEditor = ({
                     className="flex-grow cursor-pointer"
                     onClick={() => setIsPositionDialogOpen(true)}
                   />
-                  <Button
+                  <IconButton
                     onClick={() => setIsPositionDialogOpen(true)}
-                    layout="icon"
-                    title={translation('selectPosition')}
+                    tooltip={translation('selectPosition')}
                   >
                     <Locate className="size-4" />
-                  </Button>
+                  </IconButton>
                   {value && (
-                    <Button
+                    <IconButton
                       onClick={() => {
                         onValueChange(null)
                         onEditComplete(null)
                       }}
-                      layout="icon"
+                      tooltip={translation('clear')}
                       color="neutral"
-                      title={translation('clear')}
                     >
                       <XIcon className="size-5" />
-                    </Button>
+                    </IconButton>
                   )}
                 </div>
               </div>
@@ -528,25 +526,24 @@ export const PatientDataEditor = ({
                     className="flex-grow cursor-pointer"
                     onClick={() => setIsTeamsDialogOpen(true)}
                   />
-                  <Button
+                  <IconButton
                     onClick={() => setIsTeamsDialogOpen(true)}
-                    layout="icon"
-                    title={translation('selectTeams')}
+                    tooltip={translation('selectTeams')}
                   >
                     <Users className="size-4" />
-                  </Button>
+                  </IconButton>
                   {value && value.length > 0 && (
-                    <Button
+                    <IconButton
                       onClick={() => {
                         onValueChange([])
                         onEditComplete([])
                       }}
-                      layout="icon"
+                      tooltip={translation('clear')}
                       color="neutral"
                       title={translation('clear')}
                     >
                       <XIcon className="size-5" />
-                    </Button>
+                    </IconButton>
                   )}
                 </div>
               </div>

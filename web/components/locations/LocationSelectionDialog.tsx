@@ -5,7 +5,8 @@ import {
   Checkbox,
   Button,
   SearchBar,
-  useLocalStorage
+  useStorage,
+  IconButton
 } from '@helpwave/hightide'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import type { LocationNodeType } from '@/api/gql/generated'
@@ -148,14 +149,15 @@ const LocationTreeItem = ({
   return (
     <div className="flex flex-col mb-3">
       <Expandable
-        label={labelContent}
-        clickOnlyOnHeader={true}
+        trigger={labelContent}
         isExpanded={isExpanded}
-        onChange={(isOpen) => {
+        onExpandedChange={(isOpen) => {
           onExpandToggle(node.id, isOpen)
         }}
         className="!shadow-none !bg-transparent !rounded-none w-full"
-        headerClassName="px-2 hover:bg-surface-hover rounded-lg transition-colors !text-text-primary hover:!text-text-primary flex-row-reverse justify-end cursor-pointer"
+        triggerProps={{
+          className: 'px-2 hover:bg-surface-hover rounded-lg transition-colors !text-text-primary hover:!text-text-primary flex-row-reverse justify-end cursor-pointer'
+        }}
         contentExpandedClassName="!max-h-none !h-auto !min-h-0 !overflow-visible !flex !flex-col px-1 data-[expanded]:py-2 border-l-2 border-divider ml-5 pl-2 pr-0 mt-1"
       >
         <div className="flex flex-col gap-1">
@@ -194,12 +196,12 @@ export const LocationSelectionDialog = ({
   const {
     value: storedExpandedIds,
     setValue: setStoredExpandedIds
-  } = useLocalStorage<string[]>(storageKey, [])
+  } = useStorage<string[]>({ key: storageKey, defaultValue: [] })
 
   const {
     value: storedTreeSignature,
     setValue: setStoredTreeSignature
-  } = useLocalStorage<string>(signatureKey, '')
+  } = useStorage<string>({ key: signatureKey, defaultValue: '' })
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set(initialSelectedIds))
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
@@ -481,22 +483,22 @@ export const LocationSelectionDialog = ({
           </div>
 
           <div className="flex gap-1 border-l border-divider pl-2 ml-1">
-            <Button layout="icon" size="sm" onClick={handleExpandAll} title={translation('expandAll')}>
+            <IconButton size="sm" onClick={handleExpandAll} tooltip={translation('expandAll')}>
               <ChevronsDown className="size-4" />
-            </Button>
-            <Button layout="icon" size="sm" onClick={handleCollapseAll} title={translation('collapseAll')}>
+            </IconButton>
+            <IconButton size="sm" onClick={handleCollapseAll} tooltip={translation('collapseAll')}>
               <ChevronsUp className="size-4" />
-            </Button>
+            </IconButton>
           </div>
 
           {multiSelect && useCase !== 'root' && (
             <div className="flex gap-1 border-l border-divider pl-2">
-              <Button layout="icon" size="sm" onClick={handleSelectAll} title={translation('selectAll')}>
+              <IconButton size="sm" onClick={handleSelectAll} tooltip={translation('selectAll')}>
                 <CheckSquare className="size-4" />
-              </Button>
-              <Button layout="icon" size="sm" onClick={handleDeselectAll} title={translation('deselectAll')}>
+              </IconButton>
+              <IconButton size="sm" onClick={handleDeselectAll} tooltip={translation('deselectAll')}>
                 <Square className="size-4" />
-              </Button>
+              </IconButton>
             </div>
           )}
         </div>

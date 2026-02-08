@@ -1,5 +1,5 @@
 import { useMemo, useState, forwardRef, useImperativeHandle, useEffect, useCallback } from 'react'
-import { Chip, FillerCell, Button, HelpwaveLogo, LoadingContainer, SearchBar, ProgressIndicator, Tooltip, Drawer, TableProvider, TableDisplay, TableColumnSwitcher } from '@helpwave/hightide'
+import { Chip, FillerCell, HelpwaveLogo, LoadingContainer, SearchBar, ProgressIndicator, Tooltip, Drawer, TableProvider, TableDisplay, TableColumnSwitcher, IconButton } from '@helpwave/hightide'
 import { PlusIcon } from 'lucide-react'
 import { Sex, PatientState, type GetPatientsQuery, type TaskType, PropertyEntity, type FullTextSearchInput, type LocationType } from '@/api/gql/generated'
 import { usePropertyDefinitions, usePatientsPaginated, useRefreshingEntityIds } from '@/data'
@@ -189,7 +189,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       minSize: 120,
       size: 144,
       maxSize: 180,
-      filterFn: 'tags',
+      filterFn: 'singleTag',
       meta: {
         filterData: {
           tags: allPatientStates.map(state => ({ label: translation('patientState', { state: state as string }), tag: state })),
@@ -229,7 +229,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       minSize: 160,
       size: 160,
       maxSize: 200,
-      filterFn: 'tags',
+      filterFn: 'singleTag',
       meta: {
         filterData: {
           tags: [
@@ -301,7 +301,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
         return (
           <Tooltip
             tooltip={tooltipText}
-            position="top"
+            alignment="top"
             tooltipClassName="whitespace-pre-line"
           >
             <div className="w-full max-w-[80px]">
@@ -362,17 +362,16 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
             <TableColumnSwitcher />
           </div>
           <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto sm:ml-auto">
-            <Tooltip tooltip={translation('addPatient')} position="top">
-              <Button
-                onClick={() => {
-                  setSelectedPatient(undefined)
-                  setIsPanelOpen(true)
-                }}
-                layout="icon"
-              >
-                <PlusIcon />
-              </Button>
-            </Tooltip>
+            <IconButton
+              tooltip={translation('addPatient')}
+              onClick={() => {
+                setSelectedPatient(undefined)
+                setIsPanelOpen(true)
+              }}
+              color="primary"
+            >
+              <PlusIcon />
+            </IconButton>
           </div>
         </div>
         <div className="relative">
