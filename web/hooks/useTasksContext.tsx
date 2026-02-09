@@ -209,6 +209,18 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
       }
     })
 
+    const validStoredIds =
+      allowedRootLocationIds.size > 0
+        ? storedSelectedRootLocationIds.filter(id => allowedRootLocationIds.has(id))
+        : []
+
+    if (
+      allowedRootLocationIds.size > 0 &&
+      validStoredIds.length !== storedSelectedRootLocationIds.length
+    ) {
+      setStoredSelectedRootLocationIds(validStoredIds)
+    }
+
     setState(prevState => {
       let selectedRootLocationIds = prevState.selectedRootLocationIds || []
 
@@ -220,9 +232,8 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
           selectedRootLocationIds = validSelectedIds
         }
 
-        const validStoredIds = storedSelectedRootLocationIds.filter(id => allowedRootLocationIds.has(id))
-        if (validStoredIds.length !== storedSelectedRootLocationIds.length) {
-          setStoredSelectedRootLocationIds(validStoredIds)
+        if (selectedRootLocationIds.length === 0 && validStoredIds.length > 0) {
+          selectedRootLocationIds = validStoredIds
         }
 
         if (isInitialSet && selectedRootLocationIds.length === 0) {
@@ -281,15 +292,24 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
   const lastWrittenLocationIdsRef = useRef<string[] | undefined>(undefined)
 
   useEffect(() => {
-    if (state.selectedRootLocationIds !== undefined) {
-      const currentIds = state.selectedRootLocationIds
-      const lastWritten = lastWrittenLocationIdsRef.current
-      if (JSON.stringify(currentIds) !== JSON.stringify(lastWritten)) {
-        lastWrittenLocationIdsRef.current = currentIds
-        setStoredSelectedRootLocationIds(currentIds)
-      }
+    if (state.selectedRootLocationIds === undefined) return
+    const currentIds = state.selectedRootLocationIds
+    if (
+      currentIds.length === 0 &&
+      storedSelectedRootLocationIds.length > 0
+    ) {
+      return
     }
-  }, [state.selectedRootLocationIds, setStoredSelectedRootLocationIds])
+    const lastWritten = lastWrittenLocationIdsRef.current
+    if (JSON.stringify(currentIds) !== JSON.stringify(lastWritten)) {
+      lastWrittenLocationIdsRef.current = currentIds
+      setStoredSelectedRootLocationIds(currentIds)
+    }
+  }, [
+    state.selectedRootLocationIds,
+    storedSelectedRootLocationIds.length,
+    setStoredSelectedRootLocationIds,
+  ])
 
   const updateState: Dispatch<SetStateAction<TasksContextState>> = (updater) => {
     setState(prevState => {
