@@ -70,6 +70,7 @@
   "locationType": "{type, select, CLINIC{Kliniek} WARD{Afdeling} TEAM{Team} ROOM{Kamer} BED{Bed} other{Overig}}",
   "@locationType": { "placeholders": { "type": { "type": "string" } } },
   "locationWard": "Afdeling",
+  "loading": "Laden...",
   "login": "Inloggen",
   "logout": "Uitloggen",
   "male": "Man",
