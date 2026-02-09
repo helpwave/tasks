@@ -1,5 +1,5 @@
 import type { Dispatch, SetStateAction } from 'react'
-import { createContext, type PropsWithChildren, useContext, useEffect, useRef, useState } from 'react'
+import { createContext, type PropsWithChildren, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { HelpwaveLogo } from '@helpwave/hightide'
 import { useGlobalData, useLocations } from '@/data'
@@ -117,9 +117,18 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
   const { identity, isLoading: isAuthLoading } = useAuth()
   const queryClient = useQueryClient()
   const {
-    value: storedSelectedRootLocationIds,
+    value: storedSelectedRootLocationIdsRaw,
     setValue: setStoredSelectedRootLocationIds
   } = useLocalStorage<string[]>('selected-root-location-ids', [])
+
+  const storedSelectedRootLocationIds = useMemo(
+    () =>
+      Array.isArray(storedSelectedRootLocationIdsRaw)
+        ? storedSelectedRootLocationIdsRaw.filter((id): id is string => typeof id === 'string')
+        : [],
+    [storedSelectedRootLocationIdsRaw]
+  )
+
   const [state, setState] = useState<TasksContextState>({
     sidebar: {
       isShowingTeams: false,
@@ -131,7 +140,7 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
   })
 
   const { data: allLocationsData } = useLocations(
-    {},
+    { limit: 1000 },
     { skip: isAuthLoading || !identity }
   )
 
@@ -191,9 +200,11 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
     (storedSelectedRootLocationIds ?? []).slice().sort().join(','),
   ].join('|')
   const prevEffectKeyRef = useRef<string>('')
+  const hasCompletedFirstSyncRef = useRef(false)
 
   useEffect(() => {
-    if (prevEffectKeyRef.current === effectInputKey) return
+    const skipped = prevEffectKeyRef.current === effectInputKey
+    if (skipped) return
     prevEffectKeyRef.current = effectInputKey
 
     const totalPatientsCount = data?.patients?.length ?? 0
@@ -214,21 +225,34 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
         ? storedSelectedRootLocationIds.filter(id => allowedRootLocationIds.has(id))
         : []
 
+    const trimWouldWipeSelection =
+      validStoredIds.length === 0 && storedSelectedRootLocationIds.length > 0
     if (
       allowedRootLocationIds.size > 0 &&
-      validStoredIds.length !== storedSelectedRootLocationIds.length
+      validStoredIds.length !== storedSelectedRootLocationIds.length &&
+      !trimWouldWipeSelection
     ) {
-      setStoredSelectedRootLocationIds(validStoredIds)
+      try {
+        setStoredSelectedRootLocationIds(validStoredIds)
+      } catch {
+        void 0
+      }
     }
 
     setState(prevState => {
       let selectedRootLocationIds = prevState.selectedRootLocationIds || []
 
       if (allowedRootLocationIds.size > 0) {
-        const isInitialSet = storedSelectedRootLocationIds.length === 0
+        const isInitialSet =
+          storedSelectedRootLocationIds.length === 0 && hasCompletedFirstSyncRef.current
 
         const validSelectedIds = selectedRootLocationIds.filter(id => allowedRootLocationIds.has(id))
-        if (validSelectedIds.length !== selectedRootLocationIds.length) {
+        const filterWouldWipeSelection =
+          validSelectedIds.length === 0 && storedSelectedRootLocationIds.length > 0
+        if (
+          validSelectedIds.length !== selectedRootLocationIds.length &&
+          !filterWouldWipeSelection
+        ) {
           selectedRootLocationIds = validSelectedIds
         }
 
@@ -237,7 +261,8 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
         }
 
         if (isInitialSet && selectedRootLocationIds.length === 0) {
-          selectedRootLocationIds = backendRootLocations.map(loc => loc.id)
+          const backendIds = backendRootLocations.map(loc => loc.id)
+          selectedRootLocationIds = backendIds
         }
       }
 
@@ -287,23 +312,30 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
         isRootLocationReinitializing: false,
       }
     })
+    hasCompletedFirstSyncRef.current = true
   }, [effectInputKey, data, storedSelectedRootLocationIds, allLocationsData, setStoredSelectedRootLocationIds])
 
   const lastWrittenLocationIdsRef = useRef<string[] | undefined>(undefined)
 
   useEffect(() => {
-    if (state.selectedRootLocationIds === undefined) return
+    if (state.selectedRootLocationIds === undefined) {
+      return
+    }
     const currentIds = state.selectedRootLocationIds
-    if (
-      currentIds.length === 0 &&
-      storedSelectedRootLocationIds.length > 0
-    ) {
+    const skipBecauseStoredHasContent =
+      currentIds.length === 0 && storedSelectedRootLocationIds.length > 0
+    if (skipBecauseStoredHasContent) {
       return
     }
     const lastWritten = lastWrittenLocationIdsRef.current
-    if (JSON.stringify(currentIds) !== JSON.stringify(lastWritten)) {
+    const shouldWrite = JSON.stringify(currentIds) !== JSON.stringify(lastWritten)
+    if (shouldWrite) {
       lastWrittenLocationIdsRef.current = currentIds
-      setStoredSelectedRootLocationIds(currentIds)
+      try {
+        setStoredSelectedRootLocationIds(currentIds)
+      } catch {
+        void 0
+      }
     }
   }, [
     state.selectedRootLocationIds,
@@ -315,8 +347,14 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
     setState(prevState => {
       const newState = typeof updater === 'function' ? updater(prevState) : updater
       if (newState.selectedRootLocationIds !== prevState.selectedRootLocationIds) {
-        const idsToStore = newState.selectedRootLocationIds || []
-        setStoredSelectedRootLocationIds(idsToStore)
+        const idsToStore = Array.isArray(newState.selectedRootLocationIds)
+          ? newState.selectedRootLocationIds.filter((id): id is string => typeof id === 'string')
+          : []
+        try {
+          setStoredSelectedRootLocationIds(idsToStore)
+        } catch {
+          void 0
+        }
       }
       return newState
     })
