@@ -110,6 +110,7 @@
     }
   },
   "locationWard": "Ward",
+  "loading": "Loading...",
   "login": "Login",
   "logout": "Logout",
   "male": "Male",

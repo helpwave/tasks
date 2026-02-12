@@ -110,6 +110,7 @@
     }
   },
   "locationWard": "Station",
+  "loading": "Laden...",
   "login": "Login",
   "logout": "Abmelden",
   "male": "Männlich",

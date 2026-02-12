@@ -1,4 +1,5 @@
 {
+  "loading": "Loading...",
   "notFound": "404 - Page not found",
   "notFoundDescription1": "This is definitely not the page you''re looking for",
   "notFoundDescription2": "Let me take you to the"

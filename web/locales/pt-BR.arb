@@ -70,6 +70,7 @@
   "locationType": "{type, select, CLINIC{Clínica} WARD{Enfermaria} TEAM{Equipe} ROOM{Quarto} BED{Leito} other{Outro}}",
   "@locationType": { "placeholders": { "type": { "type": "string" } } },
   "locationWard": "Enfermaria",
+  "loading": "Carregando...",
   "login": "Entrar",
   "logout": "Sair",
   "male": "Masculino",
