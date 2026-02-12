@@ -3,7 +3,22 @@ from collections.abc import AsyncGenerator
 import strawberry
 from api.audit import audit_log
 from api.context import Info
-from api.decorators.pagination import apply_pagination
+from api.decorators.filter_sort import (
+    apply_filtering,
+    apply_sorting,
+    filtered_and_sorted_query,
+)
+from api.decorators.full_text_search import (
+    apply_full_text_search,
+    full_text_search_query,
+)
+from api.inputs import (
+    ColumnType,
+    FilterInput,
+    FullTextSearchInput,
+    PaginationInput,
+    SortInput,
+)
 from api.inputs import CreateTaskInput, UpdateTaskInput
 from api.resolvers.base import BaseMutationResolver, BaseSubscriptionResolver
 from api.services.authorization import AuthorizationService
@@ -13,7 +28,7 @@ from api.services.property import PropertyService
 from api.types.task import TaskType
 from database import models
 from graphql import GraphQLError
-from sqlalchemy import desc, select
+from sqlalchemy import desc, func, select
 from sqlalchemy.orm import aliased, selectinload
 
 
@@ -37,6 +52,8 @@ class TaskQuery:
         return task
 
     @strawberry.field
+    @filtered_and_sorted_query()
+    @full_text_search_query()
     async def tasks(
         self,
         info: Info,
@@ -44,8 +61,10 @@ class TaskQuery:
         assignee_id: strawberry.ID | None = None,
         assignee_team_id: strawberry.ID | None = None,
         root_location_ids: list[strawberry.ID] | None = None,
-        limit: int | None = None,
-        offset: int | None = None,
+        filtering: list[FilterInput] | None = None,
+        sorting: list[SortInput] | None = None,
+        pagination: PaginationInput | None = None,
+        search: FullTextSearchInput | None = None,
     ) -> list[TaskType]:
         auth_service = AuthorizationService(info.context.db)
 
@@ -65,10 +84,7 @@ class TaskQuery:
             if assignee_team_id:
                 query = query.where(models.Task.assignee_team_id == assignee_team_id)
 
-            query = apply_pagination(query, limit=limit, offset=offset)
-
-            result = await info.context.db.execute(query)
-            return result.scalars().all()
+            return query
 
         accessible_location_ids = await auth_service.get_user_accessible_location_ids(
             info.context.user, info.context
@@ -164,16 +180,185 @@ class TaskQuery:
                 models.Task.assignee_team_id.in_(select(team_location_cte.c.id))
             )
 
-        query = apply_pagination(query, limit=limit, offset=offset)
-
-        result = await info.context.db.execute(query)
-        return result.scalars().all()
+        return query
 
     @strawberry.field
+    async def tasksTotal(
+        self,
+        info: Info,
+        patient_id: strawberry.ID | None = None,
+        assignee_id: strawberry.ID | None = None,
+        assignee_team_id: strawberry.ID | None = None,
+        root_location_ids: list[strawberry.ID] | None = None,
+        filtering: list[FilterInput] | None = None,
+        sorting: list[SortInput] | None = None,
+        search: FullTextSearchInput | None = None,
+    ) -> int:
+        auth_service = AuthorizationService(info.context.db)
+
+        if patient_id:
+            if not await auth_service.can_access_patient_id(info.context.user, patient_id, info.context):
+                raise GraphQLError(
+                    "Insufficient permission. Please contact an administrator if you believe this is an error.",
+                    extensions={"code": "FORBIDDEN"},
+                )
+
+            query = select(models.Task).where(models.Task.patient_id == patient_id)
+
+            if assignee_id:
+                query = query.where(models.Task.assignee_id == assignee_id)
+            if assignee_team_id:
+                query = query.where(models.Task.assignee_team_id == assignee_team_id)
+        else:
+            accessible_location_ids = await auth_service.get_user_accessible_location_ids(
+                info.context.user, info.context
+            )
+
+            if not accessible_location_ids:
+                return 0
+
+            patient_locations = aliased(models.patient_locations)
+            patient_teams = aliased(models.patient_teams)
+
+            cte = (
+                select(models.LocationNode.id)
+                .where(models.LocationNode.id.in_(accessible_location_ids))
+                .cte(name="accessible_locations", recursive=True)
+            )
+
+            children = select(models.LocationNode.id).join(
+                cte, models.LocationNode.parent_id == cte.c.id
+            )
+            cte = cte.union_all(children)
+
+            if root_location_ids:
+                invalid_ids = [lid for lid in root_location_ids if lid not in accessible_location_ids]
+                if invalid_ids:
+                    raise GraphQLError(
+                        "Insufficient permission. Please contact an administrator if you believe this is an error.",
+                        extensions={"code": "FORBIDDEN"},
+                    )
+                root_cte = (
+                    select(models.LocationNode.id)
+                    .where(models.LocationNode.id.in_(root_location_ids))
+                    .cte(name="root_location_descendants", recursive=True)
+                )
+                root_children = select(models.LocationNode.id).join(
+                    root_cte, models.LocationNode.parent_id == root_cte.c.id
+                )
+                root_cte = root_cte.union_all(root_children)
+            else:
+                root_cte = cte
+
+            team_location_cte = None
+            if assignee_team_id:
+                if assignee_team_id not in accessible_location_ids:
+                    raise GraphQLError(
+                        "Insufficient permission. Please contact an administrator if you believe this is an error.",
+                        extensions={"code": "FORBIDDEN"},
+                    )
+                team_location_cte = (
+                    select(models.LocationNode.id)
+                    .where(models.LocationNode.id == assignee_team_id)
+                    .cte(name="team_location_descendants", recursive=True)
+                )
+                team_children = select(models.LocationNode.id).join(
+                    team_location_cte, models.LocationNode.parent_id == team_location_cte.c.id
+                )
+                team_location_cte = team_location_cte.union_all(team_children)
+
+            query = (
+                select(models.Task)
+                .join(models.Patient, models.Task.patient_id == models.Patient.id)
+                .outerjoin(
+                    patient_locations,
+                    models.Patient.id == patient_locations.c.patient_id,
+                )
+                .outerjoin(
+                    patient_teams,
+                    models.Patient.id == patient_teams.c.patient_id,
+                )
+                .where(
+                    (models.Patient.clinic_id.in_(select(root_cte.c.id)))
+                    | (
+                        models.Patient.position_id.isnot(None)
+                        & models.Patient.position_id.in_(select(root_cte.c.id))
+                    )
+                    | (
+                        models.Patient.assigned_location_id.isnot(None)
+                        & models.Patient.assigned_location_id.in_(select(root_cte.c.id))
+                    )
+                    | (patient_locations.c.location_id.in_(select(root_cte.c.id)))
+                    | (patient_teams.c.location_id.in_(select(root_cte.c.id)))
+                )
+                .distinct()
+            )
+
+            if assignee_id:
+                query = query.where(models.Task.assignee_id == assignee_id)
+            if assignee_team_id:
+                query = query.where(
+                    models.Task.assignee_team_id.in_(select(team_location_cte.c.id))
+                )
+
+        if search and search is not strawberry.UNSET:
+            query = apply_full_text_search(query, search, models.Task)
+
+        if filtering:
+            property_field_types: dict[str, str] = {}
+            property_def_ids = set()
+            for f in filtering:
+                if f.column_type == ColumnType.PROPERTY and f.property_definition_id:
+                    property_def_ids.add(f.property_definition_id)
+
+            if property_def_ids:
+                prop_defs_result = await info.context.db.execute(
+                    select(models.PropertyDefinition).where(
+                        models.PropertyDefinition.id.in_(property_def_ids)
+                    )
+                )
+                prop_defs = prop_defs_result.scalars().all()
+                property_field_types = {
+                    str(prop_def.id): prop_def.field_type for prop_def in prop_defs
+                }
+
+            query = apply_filtering(query, filtering, models.Task, property_field_types)
+
+        if sorting:
+            property_field_types: dict[str, str] = {}
+            property_def_ids = set()
+            for s in sorting:
+                if s.column_type == ColumnType.PROPERTY and s.property_definition_id:
+                    property_def_ids.add(s.property_definition_id)
+
+            if property_def_ids:
+                prop_defs_result = await info.context.db.execute(
+                    select(models.PropertyDefinition).where(
+                        models.PropertyDefinition.id.in_(property_def_ids)
+                    )
+                )
+                prop_defs = prop_defs_result.scalars().all()
+                property_field_types = {
+                    str(prop_def.id): prop_def.field_type for prop_def in prop_defs
+                }
+
+            query = apply_sorting(query, sorting, models.Task, property_field_types)
+
+        subquery = query.subquery()
+        count_query = select(func.count(func.distinct(subquery.c.id)))
+        result = await info.context.db.execute(count_query)
+        return result.scalar() or 0
+
+    @strawberry.field
+    @filtered_and_sorted_query()
+    @full_text_search_query()
     async def recent_tasks(
         self,
         info: Info,
-        limit: int = 10,
+        filtering: list[FilterInput] | None = None,
+        sorting: list[SortInput] | None = None,
+        pagination: PaginationInput | None = None,
+        search: FullTextSearchInput | None = None,
     ) -> list[TaskType]:
         auth_service = AuthorizationService(info.context.db)
         accessible_location_ids = await auth_service.get_user_accessible_location_ids(
@@ -224,13 +409,119 @@ class TaskQuery:
                 | (patient_locations.c.location_id.in_(select(cte.c.id)))
                 | (patient_teams.c.location_id.in_(select(cte.c.id)))
             )
-            .order_by(desc(models.Task.update_date))
-            .limit(limit)
             .distinct()
         )
 
-        result = await info.context.db.execute(query)
-        return result.scalars().all()
+        default_sorting = sorting is None or len(sorting) == 0
+        if default_sorting:
+            query = query.order_by(desc(models.Task.update_date))
+
+        return query
+
+    @strawberry.field
+    async def recentTasksTotal(
+        self,
+        info: Info,
+        filtering: list[FilterInput] | None = None,
+        sorting: list[SortInput] | None = None,
+        search: FullTextSearchInput | None = None,
+    ) -> int:
+        auth_service = AuthorizationService(info.context.db)
+        accessible_location_ids = await auth_service.get_user_accessible_location_ids(
+            info.context.user, info.context
+        )
+
+        if not accessible_location_ids:
+            return 0
+
+        patient_locations = aliased(models.patient_locations)
+        patient_teams = aliased(models.patient_teams)
+
+        cte = (
+            select(models.LocationNode.id)
+            .where(models.LocationNode.id.in_(accessible_location_ids))
+            .cte(name="accessible_locations", recursive=True)
+        )
+
+        children = select(models.LocationNode.id).join(
+            cte, models.LocationNode.parent_id == cte.c.id
+        )
+        cte = cte.union_all(children)
+
+        query = (
+            select(models.Task)
+            .join(models.Patient, models.Task.patient_id == models.Patient.id)
+            .outerjoin(
+                patient_locations,
+                models.Patient.id == patient_locations.c.patient_id,
+            )
+            .outerjoin(
+                patient_teams,
+                models.Patient.id == patient_teams.c.patient_id,
+            )
+            .where(
+                (models.Patient.clinic_id.in_(select(cte.c.id)))
+                | (
+                    models.Patient.position_id.isnot(None)
+                    & models.Patient.position_id.in_(select(cte.c.id))
+                )
+                | (
+                    models.Patient.assigned_location_id.isnot(None)
+                    & models.Patient.assigned_location_id.in_(select(cte.c.id))
+                )
+                | (patient_locations.c.location_id.in_(select(cte.c.id)))
+                | (patient_teams.c.location_id.in_(select(cte.c.id)))
+            )
+            .distinct()
+        )
+
+        if search and search is not strawberry.UNSET:
+            query = apply_full_text_search(query, search, models.Task)
+
+        if filtering:
+            property_field_types: dict[str, str] = {}
+            property_def_ids = set()
+            for f in filtering:
+                if f.column_type == ColumnType.PROPERTY and f.property_definition_id:
+                    property_def_ids.add(f.property_definition_id)
+
+            if property_def_ids:
+                prop_defs_result = await info.context.db.execute(
+                    select(models.PropertyDefinition).where(
+                        models.PropertyDefinition.id.in_(property_def_ids)
+                    )
+                )
+                prop_defs = prop_defs_result.scalars().all()
+                property_field_types = {
+                    str(prop_def.id): prop_def.field_type for prop_def in prop_defs
+                }
+
+            query = apply_filtering(query, filtering, models.Task, property_field_types)
+
+        if sorting:
+            property_field_types: dict[str, str] = {}
+            property_def_ids = set()
+            for s in sorting:
+                if s.column_type == ColumnType.PROPERTY and s.property_definition_id:
+                    property_def_ids.add(s.property_definition_id)
+
+            if property_def_ids:
+                prop_defs_result = await info.context.db.execute(
+                    select(models.PropertyDefinition).where(
+                        models.PropertyDefinition.id.in_(property_def_ids)
+                    )
+                )
+                prop_defs = prop_defs_result.scalars().all()
+                property_field_types = {
+                    str(prop_def.id): prop_def.field_type for prop_def in prop_defs
+                }
+
+            query = apply_sorting(query, sorting, models.Task, property_field_types)
+
+        subquery = query.subquery()
+        count_query = select(func.count(func.distinct(subquery.c.id)))
+        result = await info.context.db.execute(count_query)
+        return result.scalar() or 0
 
 
 @strawberry.type
@@ -339,7 +630,11 @@ class TaskMutation(BaseMutationResolver[models.Task]):
         if data.estimated_time is not strawberry.UNSET:
             task.estimated_time = data.estimated_time
 
-        if data.assignee_id is not None and data.assignee_team_id is not strawberry.UNSET and data.assignee_team_id is not None:
+        if (
+            data.assignee_id is not None
+            and data.assignee_team_id is not strawberry.UNSET
+            and data.assignee_team_id is not None
+        ):
             raise GraphQLError(
                 "Cannot assign both a user and a team. Please assign either a user or a team.",
                 extensions={"code": "BAD_REQUEST"},

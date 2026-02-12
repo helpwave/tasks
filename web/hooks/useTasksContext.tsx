@@ -49,6 +49,13 @@ function filterLocationsByRootSubtree(
     .map(loc => ({ id: loc.id, title: loc.title }))
 }
 
+const ROOT_LOCATION_KINDS = new Set<string>(['HOSPITAL', 'PRACTICE', 'CLINIC', 'TEAM', 'WARD'])
+
+function isAllowedRootKind(kind: string | undefined): boolean {
+  if (!kind) return false
+  return ROOT_LOCATION_KINDS.has(kind.toString().toUpperCase())
+}
+
 type User = {
   id: string,
   name: string,
@@ -154,10 +161,10 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
           const queryKey = query.queryKey as unknown[]
           const queryKeyStr = JSON.stringify(queryKey)
           return queryKeyStr.includes('GetPatients') ||
-                 queryKeyStr.includes('GetTasks') ||
-                 queryKeyStr.includes('GetLocations') ||
-                 queryKeyStr.includes('GetGlobalData') ||
-                 queryKeyStr.includes('GetOverviewData')
+            queryKeyStr.includes('GetTasks') ||
+            queryKeyStr.includes('GetLocations') ||
+            queryKeyStr.includes('GetGlobalData') ||
+            queryKeyStr.includes('GetOverviewData')
         }
       })
     }
@@ -177,14 +184,45 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
   useEffect(() => {
     const totalPatientsCount = data?.patients?.length ?? 0
     const waitingPatientsCount = data?.waitingPatients?.length ?? 0
-    const rootLocations = data?.me?.rootLocations?.map(loc => ({ id: loc.id, title: loc.title, kind: loc.kind })) ?? []
+    const backendRootLocations = data?.me?.rootLocations?.map(loc => ({ id: loc.id, title: loc.title, kind: loc.kind })) ?? []
+    const backendRootIds = new Set(backendRootLocations.map(loc => loc.id))
+
+    const allNodes = allLocationsData?.locationNodes ?? []
+    const allowedRootLocationIds = new Set(backendRootIds)
+    allNodes.forEach((node: { id: string, kind?: string }) => {
+      if (isAllowedRootKind(node.kind)) {
+        allowedRootLocationIds.add(node.id)
+      }
+    })
 
     setState(prevState => {
       let selectedRootLocationIds = prevState.selectedRootLocationIds || []
 
-      if (rootLocations.length > 0 && selectedRootLocationIds.length === 0 && storedSelectedRootLocationIds.length === 0) {
-        selectedRootLocationIds = [rootLocations[0]!.id]
+      if (allowedRootLocationIds.size > 0) {
+        const isInitialSet = storedSelectedRootLocationIds.length === 0
+
+        const validSelectedIds = selectedRootLocationIds.filter(id => allowedRootLocationIds.has(id))
+        if (validSelectedIds.length !== selectedRootLocationIds.length) {
+          selectedRootLocationIds = validSelectedIds
+        }
+
+        const validStoredIds = storedSelectedRootLocationIds.filter(id => allowedRootLocationIds.has(id))
+        if (validStoredIds.length !== storedSelectedRootLocationIds.length) {
+          setStoredSelectedRootLocationIds(validStoredIds)
+        }
+
+        if (isInitialSet && selectedRootLocationIds.length === 0) {
+          selectedRootLocationIds = backendRootLocations.map(loc => loc.id)
+        }
       }
+
+      const selectedIdsSet = new Set(selectedRootLocationIds)
+      const rootLocations: Array<{ id: string, title: string, kind?: string }> = [...backendRootLocations]
+      allNodes.forEach((node: { id: string, title: string, kind?: string }) => {
+        if (selectedIdsSet.has(node.id) && isAllowedRootKind(node.kind) && !backendRootIds.has(node.id)) {
+          rootLocations.push({ id: node.id, title: node.title, kind: node.kind })
+        }
+      })
 
       return {
         ...prevState,
@@ -223,7 +261,7 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
         selectedRootLocationIds,
       }
     })
-  }, [data, storedSelectedRootLocationIds, allLocationsData])
+  }, [data, storedSelectedRootLocationIds, allLocationsData, setStoredSelectedRootLocationIds])
 
   const lastWrittenLocationIdsRef = useRef<string[] | undefined>(undefined)
 
@@ -242,7 +280,8 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
     setState(prevState => {
       const newState = typeof updater === 'function' ? updater(prevState) : updater
       if (newState.selectedRootLocationIds !== prevState.selectedRootLocationIds) {
-        setStoredSelectedRootLocationIds(newState.selectedRootLocationIds || [])
+        const idsToStore = newState.selectedRootLocationIds || []
+        setStoredSelectedRootLocationIds(idsToStore)
       }
       return newState
     })

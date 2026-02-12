@@ -1,11 +1,11 @@
+import type { UseMutationOptions } from '@tanstack/react-query'
 import { useQueryClient, useMutation } from '@tanstack/react-query'
 import { cleanGraphQLInput, extractConflictError } from '@/utils/graphql'
 
 export type ConflictResolutionStrategy = 'auto-merge' | 'manual' | 'overwrite'
 
-export interface SafeMutationOptions<TData, TVariables, TContext> {
+export interface SafeMutationOptions<TData, TVariables, TContext> extends Omit<UseMutationOptions<TData, Error, TVariables, TContext>, 'mutationFn'> {
   mutationFn: (variables: TVariables) => Promise<TData>,
-  onMutate?: (variables: TVariables) => Promise<TContext> | TContext,
   onSuccess?: (data: TData, variables: TVariables, context: TContext | undefined) => void | Promise<void>,
   onError?: (error: Error, variables: TVariables, context: TContext | undefined) => void | Promise<void>,
   onConflict?: (
@@ -20,8 +20,7 @@ export interface SafeMutationOptions<TData, TVariables, TContext> {
     context: TContext | undefined
   ) => Promise<'keep-local' | 'use-server' | 'merge'>,
   conflictResolutionStrategy?: ConflictResolutionStrategy,
-  queryKey?: unknown[],
-  invalidateQueries?: unknown[][],
+  affectedQueryKeys?: unknown[][],
   optimisticUpdate?: (variables: TVariables) => {
     queryKey: unknown[],
     updateFn: (oldData: unknown) => unknown,
@@ -40,18 +39,19 @@ export function useSafeMutation<
   onConflict,
   handleConflict,
   conflictResolutionStrategy = 'manual',
-  queryKey,
-  invalidateQueries = [],
+  affectedQueryKeys = [],
   optimisticUpdate,
+  ...options
 }: SafeMutationOptions<TData, TVariables, TContext>) {
   const queryClient = useQueryClient()
 
   return useMutation<TData, Error, TVariables, TContext & { previousData?: Map<unknown[], unknown> }>({
+    ...options,
     mutationFn: async (variables) => {
       const cleanedVariables = cleanGraphQLInput(variables as Record<string, unknown>) as TVariables
       return mutationFn(cleanedVariables)
     },
-    onMutate: async (variables) => {
+    onMutate: async (variables, options) => {
       const previousData = new Map<unknown[], unknown>()
 
       if (optimisticUpdate) {
@@ -67,15 +67,11 @@ export function useSafeMutation<
         }
       }
 
-      const context = onMutate ? await onMutate(variables) : undefined as TContext
+      const context = onMutate ? await onMutate(variables, options) : undefined as TContext
       return { ...context, previousData } as TContext & { previousData: Map<unknown[], unknown> }
     },
     onSuccess: async (data, variables, context) => {
-      if (queryKey) {
-        await queryClient.invalidateQueries({ queryKey })
-      }
-
-      for (const key of invalidateQueries) {
+      for (const key of affectedQueryKeys) {
         await queryClient.invalidateQueries({ queryKey: key })
       }
 
@@ -107,11 +103,7 @@ export function useSafeMutation<
               const cleanedVariables = cleanGraphQLInput(variables as Record<string, unknown>) as TVariables
               const result = await mutationFn(cleanedVariables)
 
-              if (queryKey) {
-                await queryClient.invalidateQueries({ queryKey })
-              }
-
-              for (const key of invalidateQueries) {
+              for (const key of affectedQueryKeys) {
                 await queryClient.invalidateQueries({ queryKey: key })
               }
 
@@ -120,11 +112,7 @@ export function useSafeMutation<
               }
               return
             } else if (choice === 'use-server') {
-              if (queryKey) {
-                await queryClient.invalidateQueries({ queryKey })
-              }
-
-              for (const key of invalidateQueries) {
+              for (const key of affectedQueryKeys) {
                 await queryClient.invalidateQueries({ queryKey: key })
               }
               return
@@ -153,11 +141,7 @@ export function useSafeMutation<
               const cleanedVariables = cleanGraphQLInput(variables as Record<string, unknown>) as TVariables
               const result = await mutationFn(cleanedVariables)
 
-              if (queryKey) {
-                await queryClient.invalidateQueries({ queryKey })
-              }
-
-              for (const key of invalidateQueries) {
+              for (const key of affectedQueryKeys) {
                 await queryClient.invalidateQueries({ queryKey: key })
               }
 

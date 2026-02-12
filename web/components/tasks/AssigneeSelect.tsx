@@ -1,11 +1,12 @@
 import { useState, useMemo } from 'react'
-import { SearchBar } from '@helpwave/hightide'
+import { PropsUtil, Visibility } from '@helpwave/hightide'
 import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
-import { Users, ChevronDown, Info } from 'lucide-react'
+import { Users, ChevronDown, Info, SearchIcon } from 'lucide-react'
 import { useGetUsersQuery, useGetLocationsQuery } from '@/api/gql/generated'
 import clsx from 'clsx'
 import { AssigneeSelectDialog } from './AssigneeSelectDialog'
+import { UserInfoPopup } from '../UserInfoPopup'
 
 interface AssigneeSelectProps {
   value: string,
@@ -15,11 +16,10 @@ interface AssigneeSelectProps {
   excludeUserIds?: string[],
   id?: string,
   className?: string,
-  onUserInfoClick?: (userId: string) => void,
   [key: string]: unknown,
 }
 
-export const AssigneeSelect = ({
+export const  AssigneeSelect = ({
   value,
   onValueChanged,
   allowTeams = true,
@@ -27,11 +27,11 @@ export const AssigneeSelect = ({
   excludeUserIds = [],
   id,
   className,
-  onUserInfoClick,
 }: AssigneeSelectProps) => {
   const translation = useTasksTranslation()
-  const [searchQuery, setSearchQuery] = useState('')
   const [isOpen, setIsOpen] = useState(false)
+  const [selectedUserPopupState, setSelectedUserPopupState] = useState<{ isOpen: boolean, userId: string | null }>({ isOpen: false, userId: null })
+
 
   const { data: usersData } = useGetUsersQuery(undefined, {
   })
@@ -73,42 +73,30 @@ export const AssigneeSelect = ({
     setIsOpen(false)
   }
 
-  const showSearchBar = !selectedItem
 
   return (
     <>
       <div
         id={id}
-        className={clsx(
-          'relative w-full',
-          className
-        )}
+        className={clsx('flex-row-4 justify-between items-center input-element h-12 px-2 py-2 rounded-md w-full hover:cursor-pointer', className)}
+
+        role="button"
+        tabIndex={0}
+        {...PropsUtil.aria.click(handleInputClick)}
       >
-        <div className="relative flex items-center w-full transition-all duration-200">
-          {showSearchBar ? (
-            <SearchBar
-              placeholder={translation('selectAssignee') || 'Assign to...'}
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value)
-              }}
-              onSearch={() => null}
-              onClick={handleInputClick}
-              onFocus={handleInputClick}
-              className="w-full"
-            />
-          ) : (
-            <div
-              onClick={handleInputClick}
-              className="flex items-center gap-2 justify-between w-full h-10 px-3 border-2 border-border rounded-md bg-surface text-on-surface hover:bg-surface-hover focus-within:outline-none focus-within:ring-2 focus-within:ring-primary transition-all duration-200 cursor-pointer ml-0.5"
-            >
+        <Visibility isVisible={!selectedItem}>
+          <span className="truncate">{translation('selectAssignee')}</span>
+          <SearchIcon className="size-4 text-description" />
+        </Visibility>
+        <Visibility isVisible={!!selectedItem}>
+          {selectedItem && (
+            <>
               <div className="flex items-center gap-2 min-w-0 flex-1">
                 {selectedItem.type === 'team' ? (
                   <Users className="size-5 text-description flex-shrink-0" />
                 ) : (
                   <AvatarStatusComponent
                     size="sm"
-                    fullyRounded={true}
                     isOnline={selectedItem.user.isOnline ?? null}
                     image={selectedItem.user.avatarUrl ? {
                       avatarUrl: selectedItem.user.avatarUrl,
@@ -119,15 +107,16 @@ export const AssigneeSelect = ({
                 <span className="truncate">{selectedItem?.name}</span>
               </div>
               <div className="flex items-center gap-1">
-                {selectedItem && selectedItem.type === 'user' && onUserInfoClick && (
+                {selectedItem && selectedItem.type === 'user' && (
                   <button
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation()
                       if (selectedItem) {
-                        onUserInfoClick(selectedItem.id)
+                        setSelectedUserPopupState({ isOpen: true, userId: selectedItem.id })
                       }
                     }}
+                    onKeyDown={(e) => e.stopPropagation()}
                     className="p-1 hover:bg-surface-hover rounded transition-colors text-description hover:text-on-surface"
                     aria-label="View user info"
                   >
@@ -136,9 +125,9 @@ export const AssigneeSelect = ({
                 )}
                 <ChevronDown className={clsx('size-6 ml-2 flex-shrink-0 transition-transform duration-200 text-description', isOpen && 'rotate-180')} />
               </div>
-            </div>
+            </>
           )}
-        </div>
+        </Visibility>
       </div>
       <AssigneeSelectDialog
         value={value}
@@ -148,7 +137,12 @@ export const AssigneeSelect = ({
         excludeUserIds={excludeUserIds}
         isOpen={isOpen}
         onClose={handleClose}
-        onUserInfoClick={onUserInfoClick}
+        onUserInfoClick={(userId) => setSelectedUserPopupState({ isOpen: true, userId })}
+      />
+      <UserInfoPopup
+        userId={selectedUserPopupState.userId}
+        isOpen={selectedUserPopupState.isOpen && selectedUserPopupState.userId !== null}
+        onClose={() => setSelectedUserPopupState(prev => ({ ...prev, isOpen: false }))}
       />
     </>
   )

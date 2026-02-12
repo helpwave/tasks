@@ -1,8 +1,16 @@
 import os
+from enum import Enum
 
 from dotenv import load_dotenv
 
 load_dotenv()
+
+
+class ScaffoldStrategy(str, Enum):
+    CHECK = "CHECK"
+    MERGE = "MERGE"
+    FORCE = "FORCE"
+
 
 _db_hostname = os.getenv("DATABASE_HOSTNAME", "postgres")
 _db_name = os.getenv("DATABASE_NAME", "postgres")
@@ -56,6 +64,12 @@ else:
     ]
 
 SCAFFOLD_DIRECTORY = os.getenv("SCAFFOLD_DIRECTORY", None)
+
+_raw_scaffold_strategy = os.getenv("SCAFFOLD_STRATEGY", "CHECK").strip().upper()
+try:
+    SCAFFOLD_STRATEGY = ScaffoldStrategy(_raw_scaffold_strategy)
+except ValueError:
+    SCAFFOLD_STRATEGY = ScaffoldStrategy.CHECK
 
 INFLUXDB_URL = os.getenv("INFLUXDB_URL", "http://localhost:8086")
 INFLUXDB_TOKEN = os.getenv("INFLUXDB_TOKEN", None)

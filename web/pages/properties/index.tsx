@@ -3,12 +3,12 @@ import { Page } from '@/components/layout/Page'
 import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
-import { Button, Chip, FillerRowElement, LoadingContainer, Table } from '@helpwave/hightide'
-import { useMemo, useState } from 'react'
+import { Button, Chip, FillerCell, LoadingContainer, Table } from '@helpwave/hightide'
+import { useCallback, useMemo, useState } from 'react'
 import type { ColumnDef } from '@tanstack/table-core'
 import { EditIcon, PlusIcon } from 'lucide-react'
-import { SidePanel } from '@/components/layout/SidePanel'
-import type { Property } from '@/components/PropertyList'
+import { Drawer } from '@helpwave/hightide'
+import type { Property } from '@/components/tables/PropertyList'
 import { PropertyDetailView } from '@/components/properties/PropertyDetailView'
 import { useGetPropertyDefinitionsQuery, FieldType, PropertyEntity } from '@/api/gql/generated'
 
@@ -84,28 +84,30 @@ const PropertiesPage: NextPage = () => {
       minSize: 200,
       size: 250,
       maxSize: 300,
+      filterFn: 'text',
     },
     {
       id: 'fieldType',
       header: translation('type'),
-      accessorKey: 'fieldType',
+      accessorFn: ({ fieldType }) => fieldType.toString(),
       cell: ({ row }) => {
         const value = row.original.fieldType
 
         return (
-          <Chip size="small" className="coloring-tonal" color="primary">
+          <Chip className="coloring-tonal" color="primary">
             <span>{translation('sPropertyType', { type: value })}</span>
           </Chip>
         )
       },
-      minSize: 100,
-      size: 100,
-      maxSize: 150,
+      minSize: 160,
+      size: 160,
+      maxSize: 250,
+      filterFn: 'text',
     },
     {
       id: 'subjectType',
       header: translation('subjectType'),
-      accessorKey: 'subjectType',
+      accessorFn: ({ subjectType }) => subjectType.toString(),
       cell: ({ row }) => {
         const data = row.original
         return (
@@ -114,14 +116,15 @@ const PropertiesPage: NextPage = () => {
           </span>
         )
       },
-      minSize: 150,
-      size: 150,
+      minSize: 200,
+      size: 200,
       maxSize: 250,
+      filterFn: 'text',
     },
     {
       id: 'active',
       header: translation('status'),
-      accessorKey: 'isArchived',
+      accessorFn: ({ isArchived }) => !isArchived,
       cell: ({ row }) => {
         return (
           <Chip className="coloring-tonal" color={row.original.isArchived ? 'negative' : 'positive'}>
@@ -131,6 +134,7 @@ const PropertiesPage: NextPage = () => {
       },
       minSize: 100,
       size: 120,
+      filterFn: 'boolean',
     },
     {
       id: 'actions',
@@ -159,24 +163,36 @@ const PropertiesPage: NextPage = () => {
         titleElement={translation('properties')}
         description={data ?  translation('nPatient', { count: data.length }) : (<LoadingContainer/>) }
         actionElement={(
-          <Button startIcon={<PlusIcon/>} onClick={handleAdd}>
+          <Button onClick={handleAdd}>
+            <PlusIcon/>
             {translation('rAdd', { name: translation('property') })}
           </Button>
         )}
       >
         <div className="overflow-x-auto -mx-4 px-4 lg:mx-0 lg:px-0">
           <Table
-            className="w-full h-full min-w-[600px]"
-            data={data ?? []}
-            columns={columns}
-            fillerRow={() => (<FillerRowElement className="min-h-12"/>)}
+            className="w-full h-full min-w-150"
+            table={{
+              data: data ?? [],
+              columns,
+              isUsingFillerRows: true,
+              fillerRowCell: useCallback(() => (<FillerCell className="min-h-12"/>), []),
+              initialState: {
+                pagination: {
+                  pageSize: 25,
+                }
+              }
+            }}
           />
         </div>
       </ContentPanel>
-      <SidePanel
+
+      <Drawer
+        alignment="right"
+        titleElement={translation(!selected ? 'rAdd': 'rEdit', { name: translation('property') })}
+        description={undefined}
         isOpen={isPanelOpen}
         onClose={handleClose}
-        title={translation(!selected ? 'rAdd': 'rEdit', { name: translation('property') })}
       >
         <PropertyDetailView
           id={selected?.id}
@@ -184,7 +200,7 @@ const PropertiesPage: NextPage = () => {
           onClose={handleClose}
           onSuccess={refetch}
         />
-      </SidePanel>
+      </Drawer>
     </Page>
   )
 }

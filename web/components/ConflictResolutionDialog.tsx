@@ -50,10 +50,10 @@ export const ConflictResolutionDialog = ({
     ? fields
     : localData && serverData
       ? Object.keys({ ...localData, ...serverData }).map(field => ({
-          field,
-          localValue: localData[field],
-          serverValue: serverData[field],
-        })).filter(f => JSON.stringify(f.localValue) !== JSON.stringify(f.serverValue))
+        field,
+        localValue: localData[field],
+        serverValue: serverData[field],
+      })).filter(f => JSON.stringify(f.localValue) !== JSON.stringify(f.serverValue))
       : []
 
   return (

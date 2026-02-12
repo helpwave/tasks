@@ -7,10 +7,12 @@ from api.resolvers import Mutation, Query, Subscription
 from api.router import AuthedGraphQLRouter
 from auth import UnauthenticatedRedirect, unauthenticated_redirect_handler
 from config import ALLOWED_ORIGINS, IS_DEV, LOGGER
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from routers import auth
 from scaffold import load_scaffold_data
+from starlette.requests import ClientDisconnect
 from strawberry import Schema
 
 logger = logging.getLogger(LOGGER)
@@ -49,6 +51,14 @@ app.add_exception_handler(
     UnauthenticatedRedirect,
     unauthenticated_redirect_handler,
 )
+
+
+@app.exception_handler(ClientDisconnect)
+async def client_disconnect_handler(request: Request, exc: ClientDisconnect):
+    logger.debug(f"Client disconnected: {request.url}")
+    return JSONResponse(
+        status_code=499, content={"detail": "Client disconnected"}
+    )
 
 app.include_router(auth.router)
 app.include_router(graphql_app, prefix="/graphql")

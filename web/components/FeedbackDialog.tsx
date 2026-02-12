@@ -1,14 +1,19 @@
-import { useState, useEffect, useRef } from 'react'
-import { Dialog, Button, Textarea, FormElementWrapper, Checkbox } from '@helpwave/hightide'
+import { useState, useEffect, useRef, useMemo } from 'react'
+import { Dialog, Button, Textarea, FormField, FormProvider, Checkbox, useCreateForm, useTranslatedValidators, useFormObserverKey } from '@helpwave/hightide'
 import { useTasksTranslation, useLocale } from '@/i18n/useTasksTranslation'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { Mic, Pause } from 'lucide-react'
-import clsx from 'clsx'
 
 interface FeedbackDialogProps {
   isOpen: boolean,
   onClose: () => void,
   hideUrl?: boolean,
+}
+
+type FeedbackFormValues = {
+  url?: string,
+  feedback: string,
+  isAnonymous: boolean,
 }
 
 interface SpeechRecognitionEvent {
@@ -35,14 +40,78 @@ export const FeedbackDialog = ({ isOpen, onClose, hideUrl = false }: FeedbackDia
   const translation = useTasksTranslation()
   const { locale } = useLocale()
   const { user } = useTasksContext()
-  const [feedback, setFeedback] = useState('')
   const [isRecording, setIsRecording] = useState(false)
   const [isSupported, setIsSupported] = useState(false)
-  const [isAnonymous, setIsAnonymous] = useState(false)
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null)
   const isRecordingRef = useRef(false)
   const finalTranscriptRef = useRef('')
   const lastFinalLengthRef = useRef(0)
+  const validators = useTranslatedValidators()
+
+
+
+  const form = useCreateForm<FeedbackFormValues>({
+    initialValues: {
+      url: typeof window !== 'undefined' ? window.location.href : '',
+      feedback: '',
+      isAnonymous: false,
+    },
+    validators:{
+      feedback: validators.notEmpty
+    },
+    onFormSubmit: async (values) => {
+      if (!values.feedback.trim()) return
+
+      const feedbackData: {
+        url?: string,
+        feedback: string,
+        timestamp: string,
+        username: string,
+        userId?: string,
+      } = {
+        feedback: values.feedback.trim(),
+        timestamp: new Date().toISOString(),
+        username: values.isAnonymous ? 'Anonymous' : (user?.name || 'Unknown User'),
+        userId: values.isAnonymous ? undefined : user?.id,
+      }
+
+      if (!hideUrl) {
+        feedbackData.url = values.url || (typeof window !== 'undefined' ? window.location.href : '')
+      }
+
+      try {
+        const response = await fetch('/api/feedback', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(feedbackData),
+        })
+
+        if (response.ok) {
+          form.update(prev => ({
+            ...prev,
+            feedback: '',
+            isAnonymous: false,
+          }))
+          onClose()
+        }
+      } catch {
+        void 0
+      }
+    },
+  })
+
+  const { update: updateForm } = form
+
+  const isAnonymous = useFormObserverKey({ formStore: form.store, formKey: 'isAnonymous' })?.value ?? false
+
+  const submissionName = useMemo(() => {
+    if(isAnonymous) {
+      return translation('anonymous')
+    }
+    return user?.name || 'Unknown User'
+  }, [isAnonymous, translation, user?.name])
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -91,7 +160,7 @@ export const FeedbackDialog = ({ isOpen, onClose, hideUrl = false }: FeedbackDia
             ? finalTranscriptRef.current.trim() + '\n\n' + interimTranscript
             : (finalTranscriptRef.current + interimTranscript).trim()
 
-          setFeedback(displayText)
+          updateForm(prev => ({ ...prev, feedback: displayText }))
         }
 
         recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
@@ -117,13 +186,13 @@ export const FeedbackDialog = ({ isOpen, onClose, hideUrl = false }: FeedbackDia
             setIsRecording(false)
           }
           lastFinalLengthRef.current = finalTranscriptRef.current.length
-          setFeedback(finalTranscriptRef.current.trim())
+          updateForm(prev => ({ ...prev, feedback: finalTranscriptRef.current.trim() }))
         }
 
         recognitionRef.current = recognition
       }
     }
-  }, [locale])
+  }, [locale, updateForm])
 
   const handleToggleRecording = () => {
     if (!recognitionRef.current) return
@@ -143,8 +212,10 @@ export const FeedbackDialog = ({ isOpen, onClose, hideUrl = false }: FeedbackDia
 
   useEffect(() => {
     if (!isOpen) {
-      setFeedback('')
-      setIsAnonymous(false)
+      updateForm(prev => ({
+        ...prev,
+        feedback: '',
+      }))
       finalTranscriptRef.current = ''
       lastFinalLengthRef.current = 0
       if (recognitionRef.current && isRecording) {
@@ -153,123 +224,111 @@ export const FeedbackDialog = ({ isOpen, onClose, hideUrl = false }: FeedbackDia
         setIsRecording(false)
       }
     }
-  }, [isOpen, isRecording])
+  }, [isOpen, isRecording, updateForm])
 
-  const handleSubmit = async () => {
-    if (!feedback.trim()) return
-
-    const feedbackData: {
-      url?: string,
-      feedback: string,
-      timestamp: string,
-      username: string,
-      userId?: string,
-    } = {
-      feedback: feedback.trim(),
-      timestamp: new Date().toISOString(),
-      username: isAnonymous ? 'Anonymous' : (user?.name || 'Unknown User'),
-      userId: user?.id,
+  useEffect(() => {
+    if (isOpen && user) {
+      updateForm(prev => ({
+        ...prev,
+        username: isAnonymous ? 'Anonymous' : (user.name || 'Unknown User'),
+        userId: isAnonymous ? undefined : user.id,
+      }))
     }
-
-    if (!hideUrl) {
-      feedbackData.url = typeof window !== 'undefined' ? window.location.href : ''
-    }
-
-    try {
-      const response = await fetch('/api/feedback', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(feedbackData),
-      })
-
-      if (response.ok) {
-        setFeedback('')
-        setIsAnonymous(false)
-        onClose()
-      }
-    } catch {
-      void 0
-    }
-  }
+  }, [isOpen, user, updateForm, isAnonymous])
 
   return (
-    <Dialog
-      isOpen={isOpen}
-      onClose={onClose}
-      titleElement={translation('feedback') ?? 'Feedback'}
-      description={translation('feedbackDescription') ?? 'Share your feedback, report bugs, or suggest improvements.'}
-    >
-      <div className="flex flex-col gap-4">
-        {!hideUrl && (
-          <FormElementWrapper label={translation('url') ?? 'URL'}>
-            {() => (
-              <div className="text-description text-sm break-all">
-                {typeof window !== 'undefined' ? window.location.href : ''}
-              </div>
+    <FormProvider state={form}>
+      <Dialog
+        isOpen={isOpen}
+        onClose={onClose}
+        titleElement={translation('feedback') ?? 'Feedback'}
+        description={translation('feedbackDescription') ?? 'Share your feedback, report bugs, or suggest improvements.'}
+      >
+        <form onSubmit={event => { event.preventDefault(); form.submit() }}>
+          <div className="flex flex-col gap-4">
+            {!hideUrl && (
+              <FormField<FeedbackFormValues, 'url'>
+                name="url"
+                label={translation('url')}
+              >
+                {({ dataProps }) => (
+                  <div className="text-description text-sm break-all">
+                    {dataProps.value || (typeof window !== 'undefined' ? window.location.href : '')}
+                  </div>
+                )}
+              </FormField>
             )}
-          </FormElementWrapper>
-        )}
 
-        <FormElementWrapper label="">
-          {() => (
-            <div className="flex items-center gap-2">
-              <Checkbox
-                checked={isAnonymous}
-                onCheckedChange={setIsAnonymous}
-              />
-              <span className="text-sm text-description">
-                {translation('submitAnonymously') ?? 'Submit anonymously'}
-              </span>
-            </div>
-          )}
-        </FormElementWrapper>
-
-        <FormElementWrapper label={translation('feedback') ?? 'Feedback'}>
-          {() => (
-            <div className="relative">
-              <Textarea
-                value={feedback}
-                onChange={(e) => setFeedback(e.target.value)}
-                placeholder={translation('enterFeedback') ?? 'Enter your feedback here...'}
-                rows={6}
-                className="pr-12 pb-3"
-              />
-              {isSupported && (
-                <button
-                  type="button"
-                  onClick={handleToggleRecording}
-                  className={clsx(
-                    'absolute bottom-3 right-3 flex items-center justify-center w-8 h-8 rounded-full hover:rounded-full transition-all',
-                    isRecording ? 'text-negative hover:text-negative hover:bg-negative/10' : 'text-description hover:text-on-background hover:bg-surface-subdued'
-                  )}
-                  title={isRecording ? translation('stopRecording') ?? 'Stop Recording' : translation('startRecording') ?? 'Start Recording'}
-                >
-                  {isRecording ? <Pause className="size-4" /> : <Mic className="size-4" />}
-                </button>
+            <FormField<FeedbackFormValues, 'isAnonymous'>
+              name="isAnonymous"
+              label={translation('submissionDetails')}
+            >
+              {({ dataProps, focusableElementProps, interactionStates }) => (
+                <div className="flex-col-2 gap-2">
+                  <span className="text-description">
+                    {translation('submittingAs', { name: submissionName })}
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <Checkbox
+                      {...dataProps}
+                      {...focusableElementProps}
+                      {...interactionStates}
+                      size="sm"
+                    />
+                    <span className="text-description">
+                      {translation('anonymousSubmission')}
+                    </span>
+                  </div>
+                </div>
               )}
-            </div>
-          )}
-        </FormElementWrapper>
+            </FormField>
 
-        <div className="flex-row-2 justify-end gap-2">
-          <Button
-            color="neutral"
-            coloringStyle="outline"
-            onClick={onClose}
-          >
-            {translation('cancel') ?? 'Cancel'}
-          </Button>
-          <Button
-            color="primary"
-            onClick={handleSubmit}
-            disabled={!feedback.trim()}
-          >
-            {translation('submit') ?? 'Submit'}
-          </Button>
-        </div>
-      </div>
-    </Dialog>
+            <FormField<FeedbackFormValues, 'feedback'>
+              name="feedback"
+              label={translation('feedback')}
+            >
+              {({ dataProps, focusableElementProps, interactionStates }) => (
+                <div className="relative">
+                  <Textarea
+                    {...dataProps} {...focusableElementProps} {...interactionStates}
+                    value={dataProps.value || ''}
+                    placeholder={translation('enterFeedback')}
+                    rows={6}
+                    className="pr-12 pb-3"
+                  />
+                  {isSupported && (
+                    <Button
+                      color={isRecording ? 'negative' : 'primary'}
+                      coloringStyle={isRecording ? 'solid' : 'tonal'}
+                      onClick={handleToggleRecording}
+                      className="absolute bottom-3 right-3 rounded-full"
+                      title={isRecording ? translation('stopRecording') : translation('startRecording')}
+                    >
+                      {isRecording ? <Pause className="size-4" /> : <Mic className="size-4" />}
+                    </Button>
+                  )}
+                </div>
+              )}
+            </FormField>
+
+            <div className="flex-row-2 justify-end gap-2">
+              <Button
+                color="neutral"
+                coloringStyle="outline"
+                onClick={onClose}
+              >
+                {translation('cancel')}
+              </Button>
+              <Button
+                color="primary"
+                onClick={() => form.submit()}
+              >
+                {translation('submit')}
+              </Button>
+            </div>
+          </div>
+        </form>
+      </Dialog>
+    </FormProvider>
   )
 }

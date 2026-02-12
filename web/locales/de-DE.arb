@@ -181,14 +181,14 @@
   "teams": "Teams",
   "clinics": "Kliniken",
   "clinic": "Klinik",
-  "position": "Position",
+  "position": "Standort",
   "selectClinic": "Klinik auswählen",
-  "selectPosition": "Position auswählen",
+  "selectPosition": "Standort auswählen",
   "selectTeams": "Teams auswählen",
   "pickClinic": "Klinik auswählen",
   "pickClinicDescription": "Wählen Sie die Klinik für diesen Patienten aus. Es können nur Klinik-Standorte ausgewählt werden.",
-  "pickPosition": "Position auswählen",
-  "pickPositionDescription": "Wählen Sie die Position für diesen Patienten aus. Sie können Krankenhaus-, Praxis-, Klinik-, Station-, Bett- oder Zimmer-Standorte auswählen.",
+  "pickPosition": "Standort auswählen",
+  "pickPositionDescription": "Wählen Sie den Standort für diesen Patienten aus. Sie können Krankenhaus-, Praxis-, Klinik-, Station-, Bett- oder Zimmer-Standorte auswählen.",
   "pickTeams": "Teams auswählen",
   "pickTeamsDescription": "Wählen Sie ein oder mehrere Teams für diesen Patienten aus. Sie können Klinik-, Team-, Praxis- oder Krankenhaus-Standorte auswählen.",
   "totalPatients": "Gesamtpatienten",
@@ -228,15 +228,25 @@
   "time.today": "Heute",
   "myFavorites": "Meine Favoriten",
   "freeBeds": "Freie Betten",
+  "cardView": "Kachelansicht",
   "occupancy": "Belegung",
   "properties": "Eigenschaften",
   "addProperty": "Eigenschaften hinzufügen",
   "type": "Typ",
+  "tableView": "Tabellenansicht",
   "subjectType": "Subjekt Type",
   "active": "Aktiv",
   "inactive": "Inaktiv",
   "rEdit": "{name} ändern",
   "@rEdit": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "rShow": "{name} anzeigen",
+  "@rShow": {
     "placeholders": {
       "name": {
         "type": "string"
@@ -390,6 +400,8 @@
   },
   "priorityLabel": "Priorität",
   "priorityNone": "Keine",
+  "print": "Drucken",
+  "printOnlyAvailableInTableMode": "Drucken ist nur im Tabellenmodus verfügbar",
   "deletePatient": "Patient löschen",
   "deletePatientConfirmation": "Sind Sie sicher, dass Sie diesen Patienten löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
   "feedbackDescription": "Teilen Sie Ihr Feedback, melden Sie Fehler oder schlagen Sie Verbesserungen vor.",
@@ -410,6 +422,16 @@
   "estimatedTime": "Geschätzte Zeit (Minuten)",
   "ok": "OK",
   "submitAnonymously": "Anonym absenden",
+  "submissionDetails": "Übermittlungsdetails",
+  "submittingAs": "Übermitteln als {name}",
+  "@submittingAs": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "anonymousSubmission": "Anonyme Übermittlung",
   "conflictDetected": "Konflikt erkannt",
   "overwrite": "Überschreiben",
   "userInformation": "Benutzerinformationen"

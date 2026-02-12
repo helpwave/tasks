@@ -104,9 +104,9 @@ const LocationTreeItem = ({
           className="flex-shrink-0"
         >
           <Checkbox
-            checked={isSelected}
+            value={isSelected}
             indeterminate={isIndeterminate}
-            onCheckedChange={handleCheck}
+            onValueChange={handleCheck}
             onClick={(e) => e.stopPropagation()}
             onMouseDown={(e) => e.stopPropagation()}
           />
@@ -138,15 +138,15 @@ const LocationTreeItem = ({
 
   if (!hasChildren) {
     return (
-      <div className="flex-row-2 items-center rounded-lg px-4 py-1 transition-colors hover:bg-surface-hover">
-        <MinusIcon className="size-6 text-description" />
+      <div className="flex-row-2 items-center rounded-lg px-2 py-1 transition-colors hover:bg-surface-hover">
+        <MinusIcon className="size-6 text-description flex-shrink-0" />
         {labelContent}
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col mb-3">
       <Expandable
         label={labelContent}
         clickOnlyOnHeader={true}
@@ -154,9 +154,9 @@ const LocationTreeItem = ({
         onChange={(isOpen) => {
           onExpandToggle(node.id, isOpen)
         }}
-        className="!shadow-none !bg-transparent !rounded-none"
+        className="!shadow-none !bg-transparent !rounded-none w-full"
         headerClassName="px-2 hover:bg-surface-hover rounded-lg transition-colors !text-text-primary hover:!text-text-primary flex-row-reverse justify-end cursor-pointer"
-        contentExpandedClassName="!max-h-none !overflow-visible border-l-2 border-divider ml-5 pl-2 pr-0 mt-1"
+        contentExpandedClassName="!max-h-none !h-auto !min-h-0 !overflow-visible !flex !flex-col px-1 data-[expanded]:py-2 border-l-2 border-divider ml-5 pl-2 pr-0 mt-1"
       >
         <div className="flex flex-col gap-1">
           {node.children.map(child => (
@@ -259,15 +259,17 @@ export const LocationSelectionDialog = ({
         LocationType.Practice,
         LocationType.Clinic,
         LocationType.Team,
+        LocationType.Ward,
         'HOSPITAL',
         'PRACTICE',
         'CLINIC',
         'TEAM',
+        'WARD',
       ])
       return (node: LocationNodeType) => {
         const kindStr = node.kind.toString().toUpperCase()
         return allowedKinds.has(node.kind as LocationType) ||
-               allowedKinds.has(kindStr)
+          allowedKinds.has(kindStr)
       }
     } else if (useCase === 'clinic') {
       return (node: LocationNodeType) => {
@@ -290,7 +292,7 @@ export const LocationSelectionDialog = ({
       return (node: LocationNodeType) => {
         const kindStr = node.kind.toString().toUpperCase()
         return allowedKinds.has(node.kind as LocationType) ||
-               allowedKinds.has(kindStr)
+          allowedKinds.has(kindStr)
       }
     } else if (useCase === 'teams') {
       const allowedKinds = new Set<string>([
@@ -304,7 +306,7 @@ export const LocationSelectionDialog = ({
       return (node: LocationNodeType) => {
         const kindStr = node.kind.toString().toUpperCase()
         return allowedKinds.has(node.kind as LocationType) ||
-               allowedKinds.has(kindStr)
+          allowedKinds.has(kindStr)
       }
     }
 
@@ -457,18 +459,18 @@ export const LocationSelectionDialog = ({
         <div className="flex items-center gap-2">
           <MapPin className="size-6 text-primary" />
           {useCase === 'clinic' ? translation('pickClinic') :
-           useCase === 'position' ? translation('pickPosition') :
-           useCase === 'teams' ? translation('pickTeams') :
-           useCase === 'root' ? translation('selectRootLocation') :
-           translation('selectLocation')}
+            useCase === 'position' ? translation('pickPosition') :
+              useCase === 'teams' ? translation('pickTeams') :
+                useCase === 'root' ? translation('selectRootLocation') :
+                  translation('selectLocation')}
         </div>
       )}
       description={
         useCase === 'clinic' ? translation('pickClinicDescription') :
-        useCase === 'position' ? translation('pickPositionDescription') :
-        useCase === 'teams' ? translation('pickTeamsDescription') :
-        useCase === 'root' ? translation('selectRootLocationDescription') :
-        translation('selectLocationDescription')
+          useCase === 'position' ? translation('pickPositionDescription') :
+            useCase === 'teams' ? translation('pickTeamsDescription') :
+              useCase === 'root' ? translation('selectRootLocationDescription') :
+                translation('selectLocationDescription')
       }
       className="w-[600px] h-[80vh] flex flex-col max-w-full"
     >
@@ -485,20 +487,20 @@ export const LocationSelectionDialog = ({
           </div>
 
           <div className="flex gap-1 border-l border-divider pl-2 ml-1">
-            <Button layout="icon" size="small" onClick={handleExpandAll} title={translation('expandAll')}>
+            <Button layout="icon" size="sm" onClick={handleExpandAll} title={translation('expandAll')}>
               <ChevronsDown className="size-4" />
             </Button>
-            <Button layout="icon" size="small" onClick={handleCollapseAll} title={translation('collapseAll')}>
+            <Button layout="icon" size="sm" onClick={handleCollapseAll} title={translation('collapseAll')}>
               <ChevronsUp className="size-4" />
             </Button>
           </div>
 
           {multiSelect && useCase !== 'root' && (
             <div className="flex gap-1 border-l border-divider pl-2">
-              <Button layout="icon" size="small" onClick={handleSelectAll} title={translation('selectAll')}>
+              <Button layout="icon" size="sm" onClick={handleSelectAll} title={translation('selectAll')}>
                 <CheckSquare className="size-4" />
               </Button>
-              <Button layout="icon" size="small" onClick={handleDeselectAll} title={translation('deselectAll')}>
+              <Button layout="icon" size="sm" onClick={handleDeselectAll} title={translation('deselectAll')}>
                 <Square className="size-4" />
               </Button>
             </div>

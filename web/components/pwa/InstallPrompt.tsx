@@ -101,6 +101,7 @@ export const InstallPrompt = () => {
     <Dialog
       isModal={false}
       isOpen={isOpen}
+      onClose={handleDismiss}
       titleElement={translation('installApp')}
       description={translation('installAppDescription')}
       className={clsx('z-20 w-96')}
@@ -110,7 +111,8 @@ export const InstallPrompt = () => {
         <Button color="neutral" coloringStyle="outline" onClick={handleDismiss}>
           {translation('dismiss')}
         </Button>
-        <Button color="positive" onClick={handleInstall} startIcon={<Download className="size-4" />}>
+        <Button color="positive" onClick={handleInstall}>
+          <Download className="size-4" />
           {translation('install')}
         </Button>
       </div>
