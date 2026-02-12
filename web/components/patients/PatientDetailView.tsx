@@ -182,7 +182,7 @@ export const PatientDetailView = ({
       )}
       <TabSwitcher>
         <TabList />
-        <TabPanel label={translation('tasks')} className="flex-col-0 px-1 pt-4 overflow-y-auto" disabled={!(isEditMode && patientId)}>
+        <TabPanel label={translation('tasks')} className="flex-col-0 flex-1overflow-hidden h-full" disabled={!(isEditMode && patientId)}>
           {patientId && (
             <PatientTasksView
               patientId={patientId}

@@ -10,7 +10,8 @@ import {
   FormField,
   FormProvider,
   useCreateForm,
-  FormObserverKey
+  FormObserverKey,
+  IconButton
 } from '@helpwave/hightide'
 import type { Property, PropertyFieldType, PropertySelectOption, PropertySubjectType } from '@/components/tables/PropertyList'
 import { propertyFieldTypeList, propertySubjectTypeList } from '@/components/tables/PropertyList'
@@ -327,11 +328,11 @@ export const PropertyDetailView = ({
                               }}
                               className="pr-11 w-full"
                             />
-                            <Button
+                            <IconButton
+                              tooltip={translation('delete')}
                               coloringStyle="text"
                               color="negative"
                               size="sm"
-                              layout="icon"
                               className="absolute right-1 top-1 rounded"
                               onClick={() => {
                                 const update = {
@@ -345,7 +346,7 @@ export const PropertyDetailView = ({
                               }}
                             >
                               <XIcon />
-                            </Button>
+                            </IconButton>
                           </div>
                         ))
                       }}
@@ -395,11 +396,11 @@ export const PropertyDetailView = ({
                               className="pr-16 w-full"
                               placeholder={translation('rAdd', { name: translation('option') })}
                             />
-                            <Button
+                            <IconButton
+                              tooltip={translation('add')}
                               coloringStyle="text"
                               color="primary"
                               size="sm"
-                              layout="icon"
                               className="absolute right-1 top-1 rounded"
                               disabled={!newOption.name}
                               onClick={() => {
@@ -432,7 +433,7 @@ export const PropertyDetailView = ({
                               }}
                             >
                               <PlusIcon />
-                            </Button>
+                            </IconButton>
                           </div>
                         )
                       }}

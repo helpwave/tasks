@@ -9,7 +9,7 @@ import { LocationChipsBySetting } from '@/components/patients/LocationChipsBySet
 import { PropertyEntity } from '@/api/gql/generated'
 import { usePropertyDefinitions } from '@/data'
 import { getPropertyColumnsForEntity } from '@/utils/propertyColumn'
-import { useTableState } from '@/hooks/useTableState'
+import { useStorageSyncedTableState } from '@/hooks/useTableState'
 import { usePropertyColumnVisibility } from '@/hooks/usePropertyColumnVisibility'
 
 type PatientViewModel = GetOverviewDataQuery['recentPatients'][0]
@@ -36,7 +36,7 @@ export const RecentPatientsTable = ({
     setFilters,
     columnVisibility,
     setColumnVisibility,
-  } = useTableState('recent-patients')
+  } = useStorageSyncedTableState('recent-patients')
 
   usePropertyColumnVisibility(
     propertyDefinitionsData,

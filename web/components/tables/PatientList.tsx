@@ -13,7 +13,7 @@ import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import type { ColumnDef, Row, TableState } from '@tanstack/table-core'
 import { getPropertyColumnsForEntity } from '@/utils/propertyColumn'
-import { useTableState } from '@/hooks/useTableState'
+import { useStorageSyncedTableState } from '@/hooks/useTableState'
 import { usePropertyColumnVisibility } from '@/hooks/usePropertyColumnVisibility'
 import { TABLE_PAGE_SIZE } from '@/utils/tableConfig'
 
@@ -72,7 +72,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
     setFilters,
     columnVisibility,
     setColumnVisibility,
-  } = useTableState('patient-list')
+  } = useStorageSyncedTableState('patient-list')
 
   usePropertyColumnVisibility(
     propertyDefinitionsData,

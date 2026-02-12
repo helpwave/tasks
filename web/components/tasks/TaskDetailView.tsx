@@ -101,7 +101,7 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
     <div className="flex-grow overflow-hidden flex flex-col">
       <TabSwitcher>
         <TabList/>
-        <TabPanel label={translation('overview')} className="h-full overflow-y-auto px-1">
+        <TabPanel label={translation('overview')} className="overflow-hidden h-full">
           <TaskDataEditor
             id={taskId}
             initialPatientId={initialPatientId}
@@ -109,24 +109,22 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
             onClose={onClose}
           />
         </TabPanel>
-        {isEditMode && hasAvailableProperties && (
-          <TabPanel label={translation('properties')} className="h-full overflow-y-auto pr-2">
-            <div className="flex flex-col gap-4 pt-4">
-              <PropertyList
-                subjectId={taskId!}
-                subjectType="task"
-                fullWidthAddButton={true}
-                propertyValues={taskData?.properties?.map(p => ({
-                  ...p,
-                  definition: {
-                    ...p.definition,
-                  },
-                }))}
-                onPropertyValueChange={handlePropertyValueChange}
-              />
-            </div>
-          </TabPanel>
-        )}
+        <TabPanel label={translation('properties')} className="h-full overflow-y-auto pr-2" disabled={!(isEditMode && hasAvailableProperties)}>
+          <div className="flex flex-col gap-4 pt-4">
+            <PropertyList
+              subjectId={taskId!}
+              subjectType="task"
+              fullWidthAddButton={true}
+              propertyValues={taskData?.properties?.map(p => ({
+                ...p,
+                definition: {
+                  ...p.definition,
+                },
+              }))}
+              onPropertyValueChange={handlePropertyValueChange}
+            />
+          </div>
+        </TabPanel>
       </TabSwitcher>
     </div>
   )

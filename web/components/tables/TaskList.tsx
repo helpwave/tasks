@@ -19,7 +19,7 @@ import type { ColumnDef, ColumnFiltersState, TableState } from '@tanstack/table-
 import { DueDateUtils } from '@/utils/dueDate'
 import { PriorityUtils } from '@/utils/priority'
 import { getPropertyColumnsForEntity } from '@/utils/propertyColumn'
-import { useTableState } from '@/hooks/useTableState'
+import { useStorageSyncedTableState } from '@/hooks/useTableState'
 import { usePropertyColumnVisibility } from '@/hooks/usePropertyColumnVisibility'
 
 export type TaskViewModel = {
@@ -80,7 +80,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
     setFilters,
     columnVisibility,
     setColumnVisibility,
-  } = useTableState('task-list', {
+  } = useStorageSyncedTableState('task-list', {
     defaultSorting: [
       { id: 'done', desc: false },
       { id: 'dueDate', desc: false },

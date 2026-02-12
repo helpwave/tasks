@@ -100,7 +100,7 @@ export const SmartDate = ({ date, className, showTime = true, mode = 'relative' 
   const tooltipString = mode === 'relative' ? absoluteString : relativeString
 
   return (
-    <Tooltip tooltip={tooltipString} position="top">
+    <Tooltip tooltip={tooltipString} alignment="top">
       <span className={clsx('cursor-help underline decoration-dotted decoration-neutral-300 underline-offset-2', className)}>
         {displayString}
       </span>
@@ -145,7 +145,7 @@ export const CurrentTime = ({ className, showDate = false }: CurrentTimeProps) =
   const formattedExpanded = formatCurrentTime(now, locale, true)
 
   return (
-    <Tooltip tooltip={formattedExpanded} position="top">
+    <Tooltip tooltip={formattedExpanded} alignment="top">
       <span className={clsx('tabular-nums cursor-default', className)}>
         {formatted}
       </span>

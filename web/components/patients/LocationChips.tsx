@@ -80,7 +80,7 @@ export const LocationChips = ({ locations, disableLink = false, small = false, p
     >
       <Tooltip
         tooltip={showFullPath ? displayTitle : formatLocationPath(firstLocation)}
-        position="top"
+        alignment="top"
       >
         {disableLink ? (
           <div className="inline-block min-w-0 max-w-full">

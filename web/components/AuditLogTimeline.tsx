@@ -152,9 +152,6 @@ export const AuditLogTimeline: React.FC<AuditLogTimelineProps> = ({ caseId, clas
 
   return (
     <div className={clsx('flex-col-2', className)}>
-      <div className="text-sm font-semibold mb-4">
-        Audit Log
-      </div>
       {isLoading && (
         <div className="flex items-center justify-center py-12">
           <HelpwaveLogo className="w-16 h-16" animate="loading" />

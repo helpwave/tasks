@@ -37,7 +37,7 @@ function getPropertyAccessorValue(
 
 function getFilterData(prop: PropertyDefinitionType) {
   const filterFn = getPropertyFilterFn(prop.fieldType)
-  if (filterFn === 'tags' || filterFn === 'tagsSingle') {
+  if (filterFn === 'multiTags' || filterFn === 'singleTag') {
     return {
       tags: prop.options.map((opt, idx) => ({
         label: opt,

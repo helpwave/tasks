@@ -43,7 +43,7 @@ export const PatientCardView = ({ patient, onClick }: PatientCardViewProps) => {
           {total > 0 && (
             <Tooltip
               tooltip={tooltipText}
-              position="top"
+              alignment="top"
               tooltipClassName="whitespace-pre-line"
             >
               <div className="shrink-0">
