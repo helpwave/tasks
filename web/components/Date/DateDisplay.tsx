@@ -19,7 +19,7 @@ export const DateDisplay = ({ date, className, showTime = true, mode = 'relative
   const tooltipString = mode === 'relative' ? absolute : relative
 
   return (
-    <Tooltip tooltip={tooltipString} alignment="top">
+    <Tooltip tooltip={tooltipString} alignment="top" containerClassName="w-fit">
       <span className={clsx('cursor-help underline decoration-dotted decoration-neutral-300 underline-offset-2', className)}>
         {displayString}
       </span>
