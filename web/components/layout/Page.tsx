@@ -217,21 +217,19 @@ const RootLocationSelector = ({ className, onSelect }: RootLocationSelectorProps
   const {
     value: storedSelectedRootLocationsRaw,
     setValue: setStoredSelectedRootLocations
-  } = useLocalStorage<Array<{ id: string, title: string, kind?: string }>>(
-    'selected-root-location-nodes',
-    []
-  )
+  } = useStorage<Array<{ id: string, title: string, kind?: string }>>({
+    key: 'selected-root-location-nodes',
+    defaultValue: []
+  })
 
-  const storedSelectedRootLocations = useMemo(
-    () =>
-      Array.isArray(storedSelectedRootLocationsRaw)
-        ? storedSelectedRootLocationsRaw.filter(
-          (loc): loc is { id: string, title: string, kind?: string } =>
-            Boolean(loc && typeof loc.id === 'string' && typeof loc.title === 'string')
-        )
-        : [],
-    [storedSelectedRootLocationsRaw]
-  )
+  const storedSelectedRootLocations = useMemo(() =>
+    Array.isArray(storedSelectedRootLocationsRaw)
+      ? storedSelectedRootLocationsRaw.filter(
+        (loc): loc is { id: string, title: string, kind?: string } =>
+          Boolean(loc && typeof loc.id === 'string' && typeof loc.title === 'string')
+      )
+      : [],
+  [storedSelectedRootLocationsRaw])
 
   const { data: locationsData } = useLocations(
     { limit: 1000 },
