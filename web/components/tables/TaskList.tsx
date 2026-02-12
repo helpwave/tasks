@@ -81,10 +81,10 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
     columnVisibility,
     setColumnVisibility,
   } = useStorageSyncedTableState('task-list', {
-    defaultSorting: [
+    defaultSorting: useMemo(() => [
       { id: 'done', desc: false },
       { id: 'dueDate', desc: false },
-    ],
+    ], []),
   })
 
   usePropertyColumnVisibility(
