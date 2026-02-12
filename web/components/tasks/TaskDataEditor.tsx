@@ -24,7 +24,7 @@ import {
 import { CenteredLoadingLogo } from '@/components/CenteredLoadingLogo'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { User, Flag } from 'lucide-react'
-import { SmartDate } from '@/utils/date'
+import { DateDisplay } from '@/components/Date/DateDisplay'
 import { AssigneeSelect } from './AssigneeSelect'
 import { localToUTCWithSameTime, PatientDetailView } from '@/components/patients/PatientDetailView'
 import { ErrorDialog } from '@/components/ErrorDialog'
@@ -402,7 +402,7 @@ export const TaskDataEditor = ({
             {expectedFinishDate && (
               <div className="flex items-center gap-2">
                 <Flag className="size-4" />
-                <SmartDate date={expectedFinishDate} mode="relative" showTime={true} />
+                <DateDisplay date={expectedFinishDate} mode="relative" showTime={true} />
               </div>
             )}
 

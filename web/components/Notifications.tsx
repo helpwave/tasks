@@ -3,7 +3,7 @@ import { Button, Chip, IconButton, PopUp, PopUpContext, PopUpOpener, PopUpRoot, 
 import { Bell } from 'lucide-react'
 import { useOverviewData } from '@/data'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
-import { SmartDate } from '@/utils/date'
+import { DateDisplay } from '@/components/Date/DateDisplay'
 import { useRouter } from 'next/router'
 import { useTasksContext } from '@/hooks/useTasksContext'
 
@@ -203,7 +203,7 @@ export const Notifications = () => {
                         <span className="typography-body-xs text-description truncate">
                           {notification.subtitle}
                           {notification.date && (
-                            <> • <SmartDate date={notification.date} showTime={true} /></>
+                            <> • <DateDisplay date={notification.date} showTime={true} /></>
                           )}
                         </span>
                       </div>

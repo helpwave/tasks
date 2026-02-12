@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { SmartDate } from '@/utils/date'
+import { DateDisplay } from '@/components/Date/DateDisplay'
 import clsx from 'clsx'
 import { fetcher } from '@/api/gql/fetcher'
 import { UserInfoPopup } from '@/components/UserInfoPopup'
@@ -210,7 +210,7 @@ export const AuditLogTimeline: React.FC<AuditLogTimelineProps> = ({ caseId, clas
                       )}
                     </div>
                     <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                      <SmartDate date={new Date(entry.timestamp)} />
+                      <DateDisplay date={new Date(entry.timestamp)} />
                     </div>
                   </div>
                   {hasDetails && (

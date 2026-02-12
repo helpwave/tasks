@@ -4,7 +4,7 @@ import { PlusIcon } from 'lucide-react'
 import { Sex, PatientState, type GetPatientsQuery, type TaskType, PropertyEntity, type FullTextSearchInput, type LocationType } from '@/api/gql/generated'
 import { usePropertyDefinitions, usePatientsPaginated, useRefreshingEntityIds } from '@/data'
 import { PatientDetailView } from '@/components/patients/PatientDetailView'
-import { SmartDate } from '@/utils/date'
+import { DateDisplay } from '@/components/Date/DateDisplay'
 import { LocationChips } from '@/components/patients/LocationChips'
 import { LocationChipsBySetting } from '@/components/patients/LocationChipsBySetting'
 import { PatientStateChip } from '@/components/patients/PatientStateChip'
@@ -277,7 +277,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       accessorKey: 'birthdate',
       cell: ({ row }) =>
         refreshingPatientIds.has(row.original.id) ? rowLoadingCell : (
-          <SmartDate date={row.original.birthdate} showTime={false} />
+          <DateDisplay date={row.original.birthdate} showTime={false} />
         ),
       minSize: 200,
       size: 200,

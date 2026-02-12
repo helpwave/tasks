@@ -4,7 +4,7 @@ import type { GetOverviewDataQuery } from '@/api/gql/generated'
 import { useCallback, useMemo } from 'react'
 import type { TableProps } from '@helpwave/hightide'
 import { FillerCell, TableDisplay, TableProvider, Tooltip } from '@helpwave/hightide'
-import { SmartDate } from '@/utils/date'
+import { DateDisplay } from '@/components/Date/DateDisplay'
 import { LocationChipsBySetting } from '@/components/patients/LocationChipsBySetting'
 import { PropertyEntity } from '@/api/gql/generated'
 import { usePropertyDefinitions } from '@/data'
@@ -97,7 +97,7 @@ export const RecentPatientsTable = ({
         const date = getValue() as Date | undefined
         if (!date) return <FillerCell />
         return (
-          <SmartDate date={date} />
+          <DateDisplay date={date} />
         )
       },
       minSize: 200,

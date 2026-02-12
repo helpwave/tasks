@@ -5,7 +5,7 @@ import { useCallback, useMemo } from 'react'
 import clsx from 'clsx'
 import type { TableProps } from '@helpwave/hightide'
 import { Button, Checkbox, FillerCell, TableDisplay, TableProvider, Tooltip } from '@helpwave/hightide'
-import { SmartDate } from '@/utils/date'
+import { DateDisplay } from '@/components/Date/DateDisplay'
 import { DueDateUtils } from '@/utils/dueDate'
 import { PriorityUtils } from '@/utils/priority'
 import { PropertyEntity } from '@/api/gql/generated'
@@ -147,7 +147,7 @@ export const RecentTasksTable = ({
           colorClass = '!text-orange-500'
         }
         return (
-          <SmartDate
+          <DateDisplay
             date={new Date(row.original.dueDate)}
             mode="relative"
             className={clsx(colorClass)}
@@ -168,7 +168,7 @@ export const RecentTasksTable = ({
         const date = getValue() as Date | undefined
         if (!date) return <FillerCell />
         return (
-          <SmartDate date={date} />
+          <DateDisplay date={date} />
         )
       },
       minSize: 220,

@@ -7,7 +7,7 @@ import { PropertyEntity } from '@/api/gql/generated'
 import { useAssignTask, useAssignTaskToTeam, useCompleteTask, useReopenTask, useUsers, useLocations, usePropertyDefinitions, useRefreshingEntityIds } from '@/data'
 import { AssigneeSelectDialog } from '@/components/tasks/AssigneeSelectDialog'
 import clsx from 'clsx'
-import { SmartDate } from '@/utils/date'
+import { DateDisplay } from '@/components/Date/DateDisplay'
 import { Drawer } from '@helpwave/hightide'
 import { TaskDetailView } from '@/components/tasks/TaskDetailView'
 import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
@@ -401,7 +401,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
             colorClass = '!text-orange-500'
           }
           return (
-            <SmartDate
+            <DateDisplay
               date={row.original.dueDate}
               mode="relative"
               className={clsx(colorClass)}

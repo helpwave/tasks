@@ -1,5 +1,5 @@
 import { Chip, ProgressIndicator, Tooltip } from '@helpwave/hightide'
-import { SmartDate } from '@/utils/date'
+import { DateDisplay } from '@/components/Date/DateDisplay'
 import { LocationChipsBySetting } from '@/components/patients/LocationChipsBySetting'
 import { PatientStateChip } from '@/components/patients/PatientStateChip'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
@@ -55,7 +55,7 @@ export const PatientCardView = ({ patient, onClick }: PatientCardViewProps) => {
 
         <div className="flex items-center gap-2 text-sm text-description">
           <span className="font-medium">{translation('birthdate')}:</span>
-          <SmartDate date={patient.birthdate} showTime={false} />
+          <DateDisplay date={patient.birthdate} showTime={false} />
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
