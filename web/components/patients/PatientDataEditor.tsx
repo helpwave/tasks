@@ -321,8 +321,14 @@ export const PatientDataEditor = ({
               <DateTimeInput
                 {...focusableElementProps} {...interactionStates}
                 value={convertBirthdateStringToDate(dataProps.value) ?? undefined}
-                onValueChange={(value) => dataProps.onValueChange(value ? toISODate(value) : undefined)}
-                onEditComplete={(value) => dataProps.onEditComplete(value ? toISODate(value) : undefined)}
+                onValueChange={(value) => {
+                  if(!value) return
+                  dataProps.onValueChange(value)
+                }}
+                onEditComplete={(value) => {
+                  if(!value) return
+                  dataProps.onEditComplete(toISODate(value))
+                }}
                 pickerProps={{
                   start: startDate,
                   end: endDate
