@@ -158,6 +158,7 @@ const LocationTreeItem = ({
         triggerProps={{
           className: 'px-2 hover:bg-surface-hover rounded-lg transition-colors !text-text-primary hover:!text-text-primary flex-row-reverse justify-end cursor-pointer'
         }}
+        contentProps={{ className: '!shadow-none !bg-transparent' }}
         contentExpandedClassName="!max-h-none !h-auto !min-h-0 !overflow-visible !flex !flex-col px-1 data-[expanded]:py-2 border-l-2 border-divider ml-5 pl-2 pr-0 mt-1"
       >
         <div className="flex flex-col gap-1">
@@ -447,6 +448,22 @@ export const LocationSelectionDialog = ({
     setSelectedIds(new Set())
   }
 
+  const titleTranslationMap: Record<LocationPickerUseCase, string> = {
+    clinic: translation('pickClinic'),
+    position: translation('pickPosition'),
+    teams: translation('pickTeams'),
+    root: translation('selectRootLocation'),
+    default:  translation('selectLocation')
+  }
+
+  const descriptionTranslationMap: Record<LocationPickerUseCase, string> = {
+    clinic: translation('pickClinicDescription'),
+    position: translation('pickPositionDescription'),
+    teams: translation('pickTeamsDescription'),
+    root: translation('selectRootLocationDescription'),
+    default:  translation('selectLocationDescription')
+  }
+
   return (
     <Dialog
       isOpen={isOpen}
@@ -454,21 +471,11 @@ export const LocationSelectionDialog = ({
       titleElement={(
         <div className="flex items-center gap-2">
           <MapPin className="size-6 text-primary" />
-          {useCase === 'clinic' ? translation('pickClinic') :
-            useCase === 'position' ? translation('pickPosition') :
-              useCase === 'teams' ? translation('pickTeams') :
-                useCase === 'root' ? translation('selectRootLocation') :
-                  translation('selectLocation')}
+          {titleTranslationMap[useCase]}
         </div>
       )}
-      description={
-        useCase === 'clinic' ? translation('pickClinicDescription') :
-          useCase === 'position' ? translation('pickPositionDescription') :
-            useCase === 'teams' ? translation('pickTeamsDescription') :
-              useCase === 'root' ? translation('selectRootLocationDescription') :
-                translation('selectLocationDescription')
-      }
-      className="w-[600px] h-[80vh] flex flex-col max-w-full"
+      description={descriptionTranslationMap[useCase]}
+      className="w-150 h-[80vh] flex flex-col max-w-full"
     >
       <div className="flex flex-col gap-4 mt-4 h-full overflow-hidden">
         <div className="flex items-center gap-2 flex-none">
@@ -483,21 +490,21 @@ export const LocationSelectionDialog = ({
           </div>
 
           <div className="flex gap-1 border-l border-divider pl-2 ml-1">
-            <IconButton size="sm" onClick={handleExpandAll} tooltip={translation('expandAll')}>
-              <ChevronsDown className="size-4" />
+            <IconButton onClick={handleExpandAll} tooltip={translation('expandAll')}>
+              <ChevronsDown />
             </IconButton>
-            <IconButton size="sm" onClick={handleCollapseAll} tooltip={translation('collapseAll')}>
-              <ChevronsUp className="size-4" />
+            <IconButton onClick={handleCollapseAll} tooltip={translation('collapseAll')}>
+              <ChevronsUp />
             </IconButton>
           </div>
 
           {multiSelect && useCase !== 'root' && (
             <div className="flex gap-1 border-l border-divider pl-2">
-              <IconButton size="sm" onClick={handleSelectAll} tooltip={translation('selectAll')}>
-                <CheckSquare className="size-4" />
+              <IconButton onClick={handleSelectAll} tooltip={translation('selectAll')}>
+                <CheckSquare />
               </IconButton>
-              <IconButton size="sm" onClick={handleDeselectAll} tooltip={translation('deselectAll')}>
-                <Square className="size-4" />
+              <IconButton onClick={handleDeselectAll} tooltip={translation('deselectAll')}>
+                <Square />
               </IconButton>
             </div>
           )}
@@ -506,7 +513,7 @@ export const LocationSelectionDialog = ({
         <div className="flex-grow overflow-y-auto min-h-0 border border-divider rounded-lg p-2 bg-surface-subdued">
           {isLoading ? (
             <div className="flex h-full items-center justify-center">
-              Loading...
+              {translation('loading') + '...'}
             </div>
           ) : (
             <div className="flex flex-col gap-1 pb-2">

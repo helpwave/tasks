@@ -1,8 +1,7 @@
 import { useMemo, useCallback } from 'react'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import type { CreatePatientInput, PropertyValueInput } from '@/api/gql/generated'
-import { PropertyEntity } from '@/api/gql/generated'
-import { usePatient, usePropertyDefinitions } from '@/data'
+import { usePatient } from '@/data'
 import {
   ProgressIndicator,
   TabList,
@@ -63,16 +62,7 @@ export const PatientDetailView = ({
     { skip: !isEditMode }
   )
 
-  const { data: propertyDefinitionsData } = usePropertyDefinitions()
-
   const [updatePatient] = useUpdatePatient()
-
-  const hasAvailableProperties = useMemo(() => {
-    if (!propertyDefinitionsData?.propertyDefinitions) return false
-    return propertyDefinitionsData.propertyDefinitions.some(
-      def => def.isActive && def.allowedEntities.includes(PropertyEntity.Patient)
-    )
-  }, [propertyDefinitionsData])
 
   const convertPropertyValueToInput = useCallback((definitionId: string, value: PropertyValue | null): PropertyValueInput | null => {
     if (!value) return null
@@ -192,7 +182,7 @@ export const PatientDetailView = ({
           )}
         </TabPanel>
 
-        <TabPanel label={translation('properties')} className="flex-col-0 px-2 pt-4 overflow-y-auto" disabled={!(isEditMode && hasAvailableProperties && patientId)}>
+        <TabPanel label={translation('properties')} className="flex-col-0 px-2 pt-4 overflow-y-auto" disabled={!(isEditMode && patientId)}>
           {patientId && (
             <PropertyList
               subjectId={patientId}

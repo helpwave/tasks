@@ -144,6 +144,14 @@
       }
     }
   },
+  "nYears": "{years, plural, =0{0 Jahre} =1{1 Jahr} other{# Jahre}}",
+  "@nYears": {
+    "placeholders": {
+      "years": {
+        "type": "number"
+      }
+    }
+  },
   "occupancy": "Belegung",
   "openSurvey": "Umfrage öffnen",
   "openTasks": "Offene Aufgaben",

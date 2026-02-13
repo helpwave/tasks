@@ -118,6 +118,7 @@ export type TasksTranslationEntries = {
   'notifications': string,
   'nPatient': (values: { count: number }) => string,
   'nTask': (values: { count: number }) => string,
+  'nYears': (values: { years: number }) => string,
   'occupancy': string,
   'ok': string,
   'openSurvey': string,
@@ -358,6 +359,13 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
       return TranslationGen.resolvePlural(count, {
         '=1': `${count} Aufgabe`,
         'other': `${count} Aufgaben`,
+      })
+    },
+    'nYears': ({ years }): string => {
+      return TranslationGen.resolvePlural(years, {
+        '=0': `0 Jahre`,
+        '=1': `1 Jahr`,
+        'other': `${years} Jahre`,
       })
     },
     'occupancy': `Belegung`,
@@ -654,6 +662,13 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
         'other': `${count} Tasks`,
       })
     },
+    'nYears': ({ years }): string => {
+      return TranslationGen.resolvePlural(years, {
+        '=0': `0 years`,
+        '=1': `1 year`,
+        'other': `${years} years`,
+      })
+    },
     'occupancy': `Occupancy`,
     'ok': `OK`,
     'openSurvey': `Open Survey`,
@@ -946,6 +961,13 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
       return TranslationGen.resolvePlural(count, {
         '=1': `${count} Tarea`,
         'other': `${count} Tareas`,
+      })
+    },
+    'nYears': ({ years }): string => {
+      return TranslationGen.resolvePlural(years, {
+        '=0': `0 años`,
+        '=1': `1 año`,
+        'other': `${years} años`,
       })
     },
     'occupancy': `Ocupación`,
@@ -1241,6 +1263,13 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
         'other': `${count} Tâches`,
       })
     },
+    'nYears': ({ years }): string => {
+      return TranslationGen.resolvePlural(years, {
+        '=0': `0 an`,
+        '=1': `1 an`,
+        'other': `${years} ans`,
+      })
+    },
     'occupancy': `Occupation`,
     'ok': `OK`,
     'openSurvey': `Ouvrir l'enquête`,
@@ -1532,6 +1561,13 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
       return TranslationGen.resolvePlural(count, {
         '=1': `${count} Taak`,
         'other': `${count} Taken`,
+      })
+    },
+    'nYears': ({ years }): string => {
+      return TranslationGen.resolvePlural(years, {
+        '=0': `0 jaar`,
+        '=1': `1 jaar`,
+        'other': `${years} jaar`,
       })
     },
     'occupancy': `Bezetting`,
@@ -1828,6 +1864,13 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
       return TranslationGen.resolvePlural(count, {
         '=1': `${count} Tarefa`,
         'other': `${count} Tarefas`,
+      })
+    },
+    'nYears': ({ years }): string => {
+      return TranslationGen.resolvePlural(years, {
+        '=0': `0 anos`,
+        '=1': `1 ano`,
+        'other': `${years} anos`,
       })
     },
     'occupancy': `Ocupação`,

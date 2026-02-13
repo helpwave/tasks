@@ -92,6 +92,8 @@
   "@nPatient": { "placeholders": { "count": { "type": "number" } } },
   "nTask": "{count, plural, =1{# Taak} other{# Taken}}",
   "@nTask": { "placeholders": { "count": { "type": "number" } } },
+  "nYears": "{years, plural, =0{0 jaar} =1{1 jaar} other{# jaar}}",
+  "@nYears": { "placeholders": { "years": { "type": "number" } } },
   "occupancy": "Bezetting",
   "openSurvey": "Enquête openen",
   "openTasks": "Open taken",

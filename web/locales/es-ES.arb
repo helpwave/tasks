@@ -92,6 +92,8 @@
   "@nPatient": { "placeholders": { "count": { "type": "number" } } },
   "nTask": "{count, plural, =1{# Tarea} other{# Tareas}}",
   "@nTask": { "placeholders": { "count": { "type": "number" } } },
+  "nYears": "{years, plural, =0{0 años} =1{1 año} other{# años}}",
+  "@nYears": { "placeholders": { "years": { "type": "number" } } },
   "occupancy": "Ocupación",
   "openSurvey": "Abrir encuesta",
   "openTasks": "Tareas abiertas",
