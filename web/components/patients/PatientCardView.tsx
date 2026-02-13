@@ -30,7 +30,6 @@ export const PatientCardView = ({ patient, onClick }: PatientCardViewProps) => {
   const { openTasksCount, closedTasksCount } = patient
   const total = openTasksCount + closedTasksCount
   const progress = total === 0 ? 0 : closedTasksCount / total
-  const tooltipText = `${translation('openTasks')}: ${openTasksCount}\n${translation('closedTasks')}: ${closedTasksCount}`
 
   return (
     <button
@@ -42,9 +41,13 @@ export const PatientCardView = ({ patient, onClick }: PatientCardViewProps) => {
           <h3 className="font-semibold text-lg flex-1">{patient.name}</h3>
           {total > 0 && (
             <Tooltip
-              tooltip={tooltipText}
+              tooltip={(
+                <div>
+                  <span>{`${translation('openTasks')}: ${openTasksCount}`}</span>
+                  <span>{`${translation('closedTasks')}: ${closedTasksCount}`}</span>
+                </div>
+              )}
               alignment="top"
-              tooltipClassName="whitespace-pre-line"
             >
               <div className="shrink-0">
                 <ProgressIndicator progress={progress} rotation={-90} />

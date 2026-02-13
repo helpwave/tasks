@@ -171,7 +171,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
     year: 'numeric',
     month: '2-digit',
     day: '2-digit'
-  }), [])
+  }), [locale])
 
   const rowLoadingCell = useMemo(() => <LoadingContainer className="w-full min-h-8" />, [])
 

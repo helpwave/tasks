@@ -107,7 +107,7 @@ export const PropertyCell = ({
       ? `${textValue.substring(0, 15)}...`
       : String(textValue)
     return (
-      <Tooltip tooltip={textValue} tooltipClassName="whitespace-wrap">
+      <Tooltip tooltip={textValue}>
         <span className="truncate block max-w-full overflow-hidden text-ellipsis">{displayText}</span>
       </Tooltip>
     )
