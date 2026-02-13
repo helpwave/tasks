@@ -9,7 +9,3 @@
     @apply w-screen max-w-screen h-screen max-h-screen overflow-hidden;
   }
 }
-
-*:focus-visible {
-    @apply !outline-none;
-}
