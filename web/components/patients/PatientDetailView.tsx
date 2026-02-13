@@ -10,7 +10,7 @@ import {
   Tooltip
 } from '@helpwave/hightide'
 import { PatientStateChip } from '@/components/patients/PatientStateChip'
-import { LocationChips } from '@/components/patients/LocationChips'
+import { LocationChips } from '@/components/locations/LocationChips'
 import { PatientTasksView } from './PatientTasksView'
 import { PatientDataEditor } from './PatientDataEditor'
 import { AuditLogTimeline } from '@/components/AuditLogTimeline'
@@ -149,9 +149,13 @@ export const PatientDetailView = ({
             <div className="flex items-center gap-2">
               {taskStats.totalTasks > 0 && (
                 <Tooltip
-                  tooltip={`${translation('openTasks')}: ${taskStats.openTasks}\n${translation('closedTasks')}: ${taskStats.closedTasks}`}
+                  tooltip={(
+                    <div className="flex-col-0">
+                      <span>{`${translation('openTasks')}: ${taskStats.openTasks}`}</span>
+                      <span>{`${translation('closedTasks')}: ${taskStats.closedTasks}`}</span>
+                    </div>
+                  )}
                   alignment="top"
-                  tooltipClassName="whitespace-pre-line"
                 >
                   <div className="w-12">
                     <ProgressIndicator progress={taskStats.taskProgress} rotation={-90} />

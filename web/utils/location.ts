@@ -111,3 +111,19 @@ export const formatLocationPathFromId = (
 ): string => {
   return buildLocationPathFromId(locationId, allLocations).join(separator)
 }
+
+const toChipColor = (kind: string) => {
+  const k = kind.toUpperCase()
+  if (k === 'HOSPITAL') return 'coloring-solid location-hospital'
+  if (k === 'PRACTICE') return 'coloring-solid location-practice'
+  if (k === 'CLINIC') return 'coloring-solid location-clinic'
+  if (k === 'TEAM') return 'coloring-solid location-team'
+  if (k === 'WARD') return 'coloring-solid location-ward'
+  if (k === 'ROOM') return 'coloring-solid location-room'
+  if (k === 'BED') return 'coloring-solid location-bed'
+  return ''
+}
+
+export const LocationUtils = {
+  toChipColor
+}

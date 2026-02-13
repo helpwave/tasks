@@ -12,7 +12,7 @@ import { type LocationType } from '@/api/gql/generated'
 import { useLocationNode, usePatients, useTasks } from '@/data'
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/router'
-import { LocationChips } from '@/components/patients/LocationChips'
+import { LocationChips } from '@/components/locations/LocationChips'
 import { LOCATION_PATH_SEPARATOR } from '@/utils/location'
 
 const getKindStyles = (kind: string) => {
