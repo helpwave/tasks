@@ -15,7 +15,6 @@ import type { ColumnDef, Row, TableState } from '@tanstack/table-core'
 import { getPropertyColumnsForEntity } from '@/utils/propertyColumn'
 import { useTableState } from '@/hooks/useTableState'
 import { usePropertyColumnVisibility } from '@/hooks/usePropertyColumnVisibility'
-import { TABLE_PAGE_SIZE } from '@/utils/tableConfig'
 
 export type PatientViewModel = {
   id: string,
@@ -103,7 +102,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       states: patientStates,
       search: searchInput,
     },
-    { pageSize: TABLE_PAGE_SIZE }
+    { pageSize: pagination.pageSize }
   )
 
   const patients: PatientViewModel[] = useMemo(() => {
