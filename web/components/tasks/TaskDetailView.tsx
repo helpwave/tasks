@@ -101,7 +101,7 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
     <div className="flex-grow overflow-hidden flex flex-col">
       <TabSwitcher>
         <TabList/>
-        <TabPanel label={translation('overview')} className="overflow-hidden h-full">
+        <TabPanel label={translation('overview')} className="overflow-hidden h-full" initiallyActive={true}>
           <TaskDataEditor
             id={taskId}
             initialPatientId={initialPatientId}
@@ -109,7 +109,11 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
             onClose={onClose}
           />
         </TabPanel>
-        <TabPanel label={translation('properties')} className="h-full overflow-y-auto pr-2" disabled={!(isEditMode && hasAvailableProperties)}>
+        <TabPanel
+          label={translation('properties')}
+          className="h-full overflow-y-auto pr-2"
+          disabled={!(isEditMode && hasAvailableProperties)}
+        >
           <div className="flex flex-col gap-4 pt-4">
             <PropertyList
               subjectId={taskId!}

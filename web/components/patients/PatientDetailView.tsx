@@ -198,7 +198,7 @@ export const PatientDetailView = ({
           )}
         </TabPanel>
 
-        <TabPanel label={translation('patientData')} className="flex-col-0">
+        <TabPanel label={translation('patientData')} className="flex-col-0" initiallyActive={true}>
           <PatientDataEditor
             id={patientId || null}
             initialCreateData={initialCreateData}
