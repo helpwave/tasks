@@ -1,7 +1,7 @@
-import { useMemo, useCallback } from 'react'
+import { useCallback } from 'react'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
-import { PropertyEntity, type PropertyValueInput } from '@/api/gql/generated'
-import { usePropertyDefinitions, useTask } from '@/data'
+import { type PropertyValueInput } from '@/api/gql/generated'
+import { useTask } from '@/data'
 import {
   TabList,
   TabPanel,
@@ -28,16 +28,7 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
     { skip: !isEditMode }
   )
 
-  const { data: propertyDefinitionsData } = usePropertyDefinitions()
-
   const [updateTask] = useUpdateTask()
-
-  const hasAvailableProperties = useMemo(() => {
-    if (!propertyDefinitionsData?.propertyDefinitions) return false
-    return propertyDefinitionsData.propertyDefinitions.some(
-      def => def.isActive && def.allowedEntities.includes(PropertyEntity.Task)
-    )
-  }, [propertyDefinitionsData])
 
   const convertPropertyValueToInput = useCallback((definitionId: string, value: PropertyValue | null): PropertyValueInput | null => {
     if (!value) return null
@@ -112,7 +103,7 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
         <TabPanel
           label={translation('properties')}
           className="h-full overflow-y-auto pr-2"
-          disabled={!(isEditMode && hasAvailableProperties)}
+          disabled={!isEditMode}
         >
           <div className="flex flex-col gap-4 pt-4">
             <PropertyList
