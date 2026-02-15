@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
-import { Dialog, Button, Textarea, FormField, FormProvider, Checkbox, useCreateForm, useTranslatedValidators, useFormObserverKey } from '@helpwave/hightide'
+import { Dialog, Button, Textarea, FormField, FormProvider, Checkbox, useCreateForm, useTranslatedValidators, useFormObserverKey, IconButton } from '@helpwave/hightide'
 import { useTasksTranslation, useLocale } from '@/i18n/useTasksTranslation'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { Mic, Pause } from 'lucide-react'
@@ -89,11 +89,6 @@ export const FeedbackDialog = ({ isOpen, onClose, hideUrl = false }: FeedbackDia
         })
 
         if (response.ok) {
-          form.update(prev => ({
-            ...prev,
-            feedback: '',
-            isAnonymous: false,
-          }))
           onClose()
         }
       } catch {
@@ -212,10 +207,7 @@ export const FeedbackDialog = ({ isOpen, onClose, hideUrl = false }: FeedbackDia
 
   useEffect(() => {
     if (!isOpen) {
-      updateForm(prev => ({
-        ...prev,
-        feedback: '',
-      }))
+      form.reset()
       finalTranscriptRef.current = ''
       lastFinalLengthRef.current = 0
       if (recognitionRef.current && isRecording) {
@@ -224,7 +216,7 @@ export const FeedbackDialog = ({ isOpen, onClose, hideUrl = false }: FeedbackDia
         setIsRecording(false)
       }
     }
-  }, [isOpen, isRecording, updateForm])
+  }, [form, isOpen, isRecording, updateForm])
 
   useEffect(() => {
     if (isOpen && user) {
@@ -297,21 +289,21 @@ export const FeedbackDialog = ({ isOpen, onClose, hideUrl = false }: FeedbackDia
                     className="pr-12 pb-3"
                   />
                   {isSupported && (
-                    <Button
+                    <IconButton
+                      tooltip={isRecording ? translation('stopRecording') : translation('startRecording')}
                       color={isRecording ? 'negative' : 'primary'}
                       coloringStyle={isRecording ? 'solid' : 'tonal'}
                       onClick={handleToggleRecording}
                       className="absolute bottom-3 right-3 rounded-full"
-                      title={isRecording ? translation('stopRecording') : translation('startRecording')}
                     >
                       {isRecording ? <Pause className="size-4" /> : <Mic className="size-4" />}
-                    </Button>
+                    </IconButton>
                   )}
                 </div>
               )}
             </FormField>
 
-            <div className="flex-row-2 justify-end gap-2">
+            <div className="flex-row-2 justify-end gap-2 mt-4">
               <Button
                 color="neutral"
                 coloringStyle="outline"

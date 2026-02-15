@@ -5,7 +5,8 @@ import {
   Checkbox,
   Button,
   SearchBar,
-  useLocalStorage
+  useStorage,
+  IconButton
 } from '@helpwave/hightide'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import type { LocationNodeType } from '@/api/gql/generated'
@@ -21,6 +22,7 @@ import {
   ChevronsUp,
   MinusIcon
 } from 'lucide-react'
+import { LocationTypeChip } from './LocationTypeChip'
 
 export type LocationPickerUseCase =
   | 'default'
@@ -51,18 +53,6 @@ interface LocationTreeItemProps {
   onExpandToggle: (nodeId: string, isOpen: boolean) => void,
   level?: number,
   isSelectable?: boolean,
-}
-
-const getKindStyles = (kind: string) => {
-  const k = kind.toUpperCase()
-  if (k === 'HOSPITAL') return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
-  if (k === 'PRACTICE') return 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300'
-  if (k === 'CLINIC') return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
-  if (k === 'TEAM') return 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
-  if (k === 'WARD') return 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300'
-  if (k === 'ROOM') return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
-  if (k === 'BED') return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
-  return 'bg-surface-subdued text-text-tertiary'
 }
 
 const LocationTreeItem = ({
@@ -126,12 +116,10 @@ const LocationTreeItem = ({
           }
         }}
       >
-        <span className={`text-text-primary font-medium ${isSelectable ? 'group-hover:text-text-primary' : 'opacity-75'} transition-colors truncate`}>
+        <span className={`font-medium ${isSelectable ? '' : 'opacity-75'} transition-colors truncate`}>
           {node.title}
         </span>
-        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider flex-shrink-0 ${getKindStyles(node.kind)}`}>
-          {node.kind}
-        </span>
+        <LocationTypeChip type={node.kind} />
       </div>
     </div>
   )
@@ -148,14 +136,16 @@ const LocationTreeItem = ({
   return (
     <div className="flex flex-col mb-3">
       <Expandable
-        label={labelContent}
-        clickOnlyOnHeader={true}
+        trigger={labelContent}
         isExpanded={isExpanded}
-        onChange={(isOpen) => {
+        onExpandedChange={(isOpen) => {
           onExpandToggle(node.id, isOpen)
         }}
         className="!shadow-none !bg-transparent !rounded-none w-full"
-        headerClassName="px-2 hover:bg-surface-hover rounded-lg transition-colors !text-text-primary hover:!text-text-primary flex-row-reverse justify-end cursor-pointer"
+        triggerProps={{
+          className: 'px-2 hover:bg-surface-hover rounded-lg transition-colors !text-text-primary hover:!text-text-primary flex-row-reverse justify-end cursor-pointer'
+        }}
+        contentProps={{ className: '!shadow-none !bg-transparent' }}
         contentExpandedClassName="!max-h-none !h-auto !min-h-0 !overflow-visible !flex !flex-col px-1 data-[expanded]:py-2 border-l-2 border-divider ml-5 pl-2 pr-0 mt-1"
       >
         <div className="flex flex-col gap-1">
@@ -194,12 +184,12 @@ export const LocationSelectionDialog = ({
   const {
     value: storedExpandedIds,
     setValue: setStoredExpandedIds
-  } = useLocalStorage<string[]>(storageKey, [])
+  } = useStorage<string[]>({ key: storageKey, defaultValue: [] })
 
   const {
     value: storedTreeSignature,
     setValue: setStoredTreeSignature
-  } = useLocalStorage<string>(signatureKey, '')
+  } = useStorage<string>({ key: signatureKey, defaultValue: '' })
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set(initialSelectedIds))
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
@@ -445,6 +435,22 @@ export const LocationSelectionDialog = ({
     setSelectedIds(new Set())
   }
 
+  const titleTranslationMap: Record<LocationPickerUseCase, string> = {
+    clinic: translation('pickClinic'),
+    position: translation('pickPosition'),
+    teams: translation('pickTeams'),
+    root: translation('selectRootLocation'),
+    default:  translation('selectLocation')
+  }
+
+  const descriptionTranslationMap: Record<LocationPickerUseCase, string> = {
+    clinic: translation('pickClinicDescription'),
+    position: translation('pickPositionDescription'),
+    teams: translation('pickTeamsDescription'),
+    root: translation('selectRootLocationDescription'),
+    default:  translation('selectLocationDescription')
+  }
+
   return (
     <Dialog
       isOpen={isOpen}
@@ -452,21 +458,11 @@ export const LocationSelectionDialog = ({
       titleElement={(
         <div className="flex items-center gap-2">
           <MapPin className="size-6 text-primary" />
-          {useCase === 'clinic' ? translation('pickClinic') :
-            useCase === 'position' ? translation('pickPosition') :
-              useCase === 'teams' ? translation('pickTeams') :
-                useCase === 'root' ? translation('selectRootLocation') :
-                  translation('selectLocation')}
+          {titleTranslationMap[useCase]}
         </div>
       )}
-      description={
-        useCase === 'clinic' ? translation('pickClinicDescription') :
-          useCase === 'position' ? translation('pickPositionDescription') :
-            useCase === 'teams' ? translation('pickTeamsDescription') :
-              useCase === 'root' ? translation('selectRootLocationDescription') :
-                translation('selectLocationDescription')
-      }
-      className="w-[600px] h-[80vh] flex flex-col max-w-full"
+      description={descriptionTranslationMap[useCase]}
+      className="w-150 h-[80vh] flex flex-col max-w-full"
     >
       <div className="flex flex-col gap-4 mt-4 h-full overflow-hidden">
         <div className="flex items-center gap-2 flex-none">
@@ -481,22 +477,22 @@ export const LocationSelectionDialog = ({
           </div>
 
           <div className="flex gap-1 border-l border-divider pl-2 ml-1">
-            <Button layout="icon" size="sm" onClick={handleExpandAll} title={translation('expandAll')}>
-              <ChevronsDown className="size-4" />
-            </Button>
-            <Button layout="icon" size="sm" onClick={handleCollapseAll} title={translation('collapseAll')}>
-              <ChevronsUp className="size-4" />
-            </Button>
+            <IconButton onClick={handleExpandAll} tooltip={translation('expandAll')}>
+              <ChevronsDown />
+            </IconButton>
+            <IconButton onClick={handleCollapseAll} tooltip={translation('collapseAll')}>
+              <ChevronsUp />
+            </IconButton>
           </div>
 
           {multiSelect && useCase !== 'root' && (
             <div className="flex gap-1 border-l border-divider pl-2">
-              <Button layout="icon" size="sm" onClick={handleSelectAll} title={translation('selectAll')}>
-                <CheckSquare className="size-4" />
-              </Button>
-              <Button layout="icon" size="sm" onClick={handleDeselectAll} title={translation('deselectAll')}>
-                <Square className="size-4" />
-              </Button>
+              <IconButton onClick={handleSelectAll} tooltip={translation('selectAll')}>
+                <CheckSquare />
+              </IconButton>
+              <IconButton onClick={handleDeselectAll} tooltip={translation('deselectAll')}>
+                <Square />
+              </IconButton>
             </div>
           )}
         </div>
@@ -504,7 +500,7 @@ export const LocationSelectionDialog = ({
         <div className="flex-grow overflow-y-auto min-h-0 border border-divider rounded-lg p-2 bg-surface-subdued">
           {isLoading ? (
             <div className="flex h-full items-center justify-center">
-              Loading...
+              {translation('loading') + '...'}
             </div>
           ) : (
             <div className="flex flex-col gap-1 pb-2">

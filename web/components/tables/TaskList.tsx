@@ -1,13 +1,13 @@
 import { useMemo, useState, forwardRef, useImperativeHandle, useEffect, useRef, useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { Button, Checkbox, ConfirmDialog, FillerCell, HelpwaveLogo, LoadingContainer, SearchBar, Select, SelectOption, TableColumnSwitcher, TableDisplay, TableProvider, Tooltip } from '@helpwave/hightide'
+import { Button, Checkbox, ConfirmDialog, FillerCell, HelpwaveLogo, IconButton, LoadingContainer, SearchBar, Select, SelectOption, TableColumnSwitcher, TableDisplay, TableProvider } from '@helpwave/hightide'
 import { PlusIcon, UserCheck, Users } from 'lucide-react'
 import type { TaskPriority, GetTasksQuery } from '@/api/gql/generated'
 import { PropertyEntity } from '@/api/gql/generated'
 import { useAssignTask, useAssignTaskToTeam, useCompleteTask, useReopenTask, useUsers, useLocations, usePropertyDefinitions, useRefreshingEntityIds } from '@/data'
 import { AssigneeSelectDialog } from '@/components/tasks/AssigneeSelectDialog'
 import clsx from 'clsx'
-import { SmartDate } from '@/utils/date'
+import { DateDisplay } from '@/components/Date/DateDisplay'
 import { Drawer } from '@helpwave/hightide'
 import { TaskDetailView } from '@/components/tasks/TaskDetailView'
 import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
@@ -19,7 +19,7 @@ import type { ColumnDef, ColumnFiltersState, TableState } from '@tanstack/table-
 import { DueDateUtils } from '@/utils/dueDate'
 import { PriorityUtils } from '@/utils/priority'
 import { getPropertyColumnsForEntity } from '@/utils/propertyColumn'
-import { useTableState } from '@/hooks/useTableState'
+import { useStorageSyncedTableState } from '@/hooks/useTableState'
 import { usePropertyColumnVisibility } from '@/hooks/usePropertyColumnVisibility'
 
 export type TaskViewModel = {
@@ -80,11 +80,11 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
     setFilters,
     columnVisibility,
     setColumnVisibility,
-  } = useTableState('task-list', {
-    defaultSorting: [
+  } = useStorageSyncedTableState('task-list', {
+    defaultSorting: useMemo(() => [
       { id: 'done', desc: false },
       { id: 'dueDate', desc: false },
-    ],
+    ], []),
   })
 
   usePropertyColumnVisibility(
@@ -401,7 +401,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
             colorClass = '!text-orange-500'
           }
           return (
-            <SmartDate
+            <DateDisplay
               date={row.original.dueDate}
               mode="relative"
               className={clsx(colorClass)}
@@ -551,11 +551,11 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onSearch={() => null}
-              containerProps={{ className: 'max-w-80 h-10' }}
+              containerProps={{ className: 'max-w-80' }}
             />
             <TableColumnSwitcher />
           </div>
-          <div className="flex flex-wrap items-center justify-end gap-4 w-full sm:w-auto sm:ml-auto lg:pr-4">
+          <div className="flex flex-wrap items-center justify-end gap-4 w-full sm:w-auto sm:ml-auto">
             <Select
               value={doneFilterValue}
               onValueChange={(v: string) => setDoneFilter(v === 'all' ? 'all' : v === 'done')}
@@ -576,15 +576,14 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
                 {translation('shiftHandover') || 'Shift Handover'}
               </Button>
             )}
-            <Tooltip tooltip={translation('addTask')} position="top">
-              <Button
-                onClick={() => setTaskDialogState({ isOpen: true })}
-                disabled={!hasPatients}
-                layout="icon"
-              >
-                <PlusIcon/>
-              </Button>
-            </Tooltip>
+            <IconButton
+              tooltip={translation('addTask')}
+              color="primary"
+              onClick={() => setTaskDialogState({ isOpen: true })}
+              disabled={!hasPatients}
+            >
+              <PlusIcon/>
+            </IconButton>
           </div>
         </div>
         <div className="flex-col-3 items-center relative">

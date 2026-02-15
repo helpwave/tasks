@@ -2,6 +2,7 @@
   "@@locale": "de-DE",
   "account": "Konto",
   "active": "Aktiv",
+  "add": "Hinzufügen",
   "addPatient": "Patient hinzufügen",
   "addProperty": "Eigenschaften hinzufügen",
   "addTask": "Aufgabe hinzufügen",
@@ -12,6 +13,7 @@
   "birthdate": "Geburtsdatum",
   "cancel": "Abbrechen",
   "clearCache": "Cache leeren",
+  "close": "Schließen",
   "clinics": "Kliniken",
   "closedTasks": "Erledigte Aufgaben",
   "conflictDetected": "Konflikt erkannt",
@@ -82,6 +84,7 @@
   "diverse": "Divers",
   "done": "Fertig",
   "dueDate": "Fälligkeitsdatum",
+  "edit": "Bearbeiten",
   "editPatient": "Patient bearbeiten",
   "editTask": "Aufgabe bearbeiten",
   "errorOccurred": "Ein Fehler ist aufgetreten",
@@ -114,6 +117,7 @@
   "login": "Login",
   "logout": "Abmelden",
   "male": "Männlich",
+  "menu": "Menü",
   "myFavorites": "Meine Favoriten",
   "myOpenTasks": "Meine offenen Aufgaben",
   "myTasks": "Meine Aufgaben",
@@ -136,6 +140,14 @@
   "@nTask": {
     "placeholders": {
       "count": {
+        "type": "number"
+      }
+    }
+  },
+  "nYears": "{years, plural, =0{0 Jahre} =1{1 Jahr} other{# Jahre}}",
+  "@nYears": {
+    "placeholders": {
+      "years": {
         "type": "number"
       }
     }

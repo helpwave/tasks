@@ -20,9 +20,9 @@ export function getPropertyFilterFn(fieldType: FieldType): TableFilterCategory {
   case FieldType.FieldTypeNumber:
     return 'number'
   case FieldType.FieldTypeSelect:
-    return 'tagsSingle'
+    return 'singleTag'
   case FieldType.FieldTypeMultiSelect:
-    return 'tags'
+    return 'multiTags'
   case FieldType.FieldTypeUser:
     return 'text'
   default:

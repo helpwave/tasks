@@ -1,6 +1,6 @@
 import { Chip, FillerCell, Tooltip } from '@helpwave/hightide'
 import { Users } from 'lucide-react'
-import { SmartDate } from '@/utils/date'
+import { DateDisplay } from '@/components/Date/DateDisplay'
 import { FieldType } from '@/api/gql/generated'
 import type { PropertyValueType } from '@/api/gql/generated'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
@@ -44,7 +44,7 @@ export const PropertyCell = ({
       return <FillerCell />
     }
     return (
-      <SmartDate date={date} showTime={false} />
+      <DateDisplay date={date} showTime={false} />
     )
   }
   case FieldType.FieldTypeDateTime: {
@@ -58,7 +58,7 @@ export const PropertyCell = ({
       return <FillerCell />
     }
     return (
-      <SmartDate date={date} />
+      <DateDisplay date={date} />
     )
   }
   case FieldType.FieldTypeSelect: {
@@ -107,7 +107,7 @@ export const PropertyCell = ({
       ? `${textValue.substring(0, 15)}...`
       : String(textValue)
     return (
-      <Tooltip tooltip={textValue} tooltipClassName="whitespace-wrap">
+      <Tooltip tooltip={textValue}>
         <span className="truncate block max-w-full overflow-hidden text-ellipsis">{displayText}</span>
       </Tooltip>
     )

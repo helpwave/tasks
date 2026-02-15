@@ -6,6 +6,7 @@ import type { LocationType } from '@/api/gql/generated'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import type { HTMLAttributes } from 'react'
 import clsx from 'clsx'
+import { LocationTypeChip } from './LocationTypeChip'
 
 type PartialLocationNode = {
   id: string,
@@ -19,17 +20,6 @@ interface LocationChipsProps extends HTMLAttributes<HTMLDivElement> {
   disableLink?: boolean,
   small?: boolean,
   placeholderProps?: HTMLAttributes<HTMLSpanElement>,
-}
-
-const getKindStyles = (kind: LocationType | undefined) => {
-  if (kind === 'HOSPITAL') return 'location-hospital coloring-solid'
-  if (kind === 'PRACTICE') return 'location-practice coloring-solid'
-  if (kind === 'CLINIC') return 'location-clinic coloring-solid'
-  if (kind === 'TEAM') return 'location-team coloring-solid'
-  if (kind === 'WARD') return 'location-ward coloring-solid'
-  if (kind === 'ROOM') return 'location-room coloring-solid'
-  if (kind === 'BED') return 'location-bed coloring-solid'
-  return ''
 }
 
 export const LocationChips = ({ locations, disableLink = false, small = false, placeholderProps, ...props }: LocationChipsProps) => {
@@ -61,9 +51,7 @@ export const LocationChips = ({ locations, disableLink = false, small = false, p
         <MapPin className="size-force-3 shrink-0" />
         <span className="truncate">{displayTitle}</span>
         {linkTarget?.kind && (
-          <span className={clsx('text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0', getKindStyles(linkTarget.kind))}>
-            {translation('locationType', { type: linkTarget.kind })}
-          </span>
+          <LocationTypeChip type={linkTarget.kind} />
         )}
       </div>
     </Chip>
@@ -80,7 +68,7 @@ export const LocationChips = ({ locations, disableLink = false, small = false, p
     >
       <Tooltip
         tooltip={showFullPath ? displayTitle : formatLocationPath(firstLocation)}
-        position="top"
+        alignment="top"
       >
         {disableLink ? (
           <div className="inline-block min-w-0 max-w-full">

@@ -12,6 +12,7 @@ export type TasksTranslationLocales = typeof tasksTranslationLocales[number]
 export type TasksTranslationEntries = {
   'account': string,
   'active': string,
+  'add': string,
   'addPatient': string,
   'addProperty': string,
   'addTask': string,
@@ -28,6 +29,7 @@ export type TasksTranslationEntries = {
   'clearCache': string,
   'clinic': string,
   'clinics': string,
+  'close': string,
   'closedTasks': string,
   'collapseAll': string,
   'confirm': string,
@@ -63,6 +65,7 @@ export type TasksTranslationEntries = {
   'diverse': string,
   'done': string,
   'dueDate': string,
+  'edit': string,
   'editPatient': string,
   'editTask': string,
   'enterFeedback': string,
@@ -99,6 +102,7 @@ export type TasksTranslationEntries = {
   'male': string,
   'markPatientDead': string,
   'markPatientDeadConfirmation': string,
+  'menu': string,
   'myFavorites': string,
   'myOpenTasks': string,
   'myTasks': string,
@@ -114,6 +118,7 @@ export type TasksTranslationEntries = {
   'notifications': string,
   'nPatient': (values: { count: number }) => string,
   'nTask': (values: { count: number }) => string,
+  'nYears': (values: { years: number }) => string,
   'occupancy': string,
   'ok': string,
   'openSurvey': string,
@@ -212,6 +217,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
   'de-DE': {
     'account': `Konto`,
     'active': `Aktiv`,
+    'add': `Hinzufügen`,
     'addPatient': `Patient hinzufügen`,
     'addProperty': `Eigenschaften hinzufügen`,
     'addTask': `Aufgabe hinzufügen`,
@@ -228,6 +234,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'clearCache': `Cache leeren`,
     'clinic': `Klinik`,
     'clinics': `Kliniken`,
+    'close': `Schließen`,
     'closedTasks': `Erledigte Aufgaben`,
     'collapseAll': `Alle einklappen`,
     'confirm': `Bestätigen`,
@@ -282,6 +289,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'diverse': `Divers`,
     'done': `Fertig`,
     'dueDate': `Fälligkeitsdatum`,
+    'edit': `Bearbeiten`,
     'editPatient': `Patient bearbeiten`,
     'editTask': `Aufgabe bearbeiten`,
     'enterFeedback': `Geben Sie hier Ihr Feedback ein...`,
@@ -327,6 +335,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'male': `Männlich`,
     'markPatientDead': `Patient als verstorben markieren`,
     'markPatientDeadConfirmation': `Sind Sie sicher, dass Sie diesen Patienten als verstorben markieren möchten?`,
+    'menu': `Menü`,
     'myFavorites': `Meine Favoriten`,
     'myOpenTasks': `Meine offenen Aufgaben`,
     'myTasks': `Meine Aufgaben`,
@@ -350,6 +359,13 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
       return TranslationGen.resolvePlural(count, {
         '=1': `${count} Aufgabe`,
         'other': `${count} Aufgaben`,
+      })
+    },
+    'nYears': ({ years }): string => {
+      return TranslationGen.resolvePlural(years, {
+        '=0': `0 Jahre`,
+        '=1': `1 Jahr`,
+        'other': `${years} Jahre`,
       })
     },
     'occupancy': `Belegung`,
@@ -502,6 +518,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
   'en-US': {
     'account': `Account`,
     'active': `Active`,
+    'add': `Add`,
     'addPatient': `Add Patient`,
     'addProperty': `Add Property`,
     'addTask': `Add Task`,
@@ -518,6 +535,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'clearCache': `Clear Cache`,
     'clinic': `Clinic`,
     'clinics': `Clinics`,
+    'close': `Close`,
     'closedTasks': `Closed Tasks`,
     'collapseAll': `Collapse All`,
     'confirm': `Confirm`,
@@ -572,6 +590,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'diverse': `Diverse`,
     'done': `Done`,
     'dueDate': `Due Date`,
+    'edit': `Edit`,
     'editPatient': `Edit Patient`,
     'editTask': `Edit Task`,
     'enterFeedback': `Enter your feedback here...`,
@@ -617,6 +636,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'male': `Male`,
     'markPatientDead': `Mark Patient Dead`,
     'markPatientDeadConfirmation': `Are you sure you want to mark this patient as dead?`,
+    'menu': `Menu`,
     'myFavorites': `My Favorites`,
     'myOpenTasks': `My Open Tasks`,
     'myTasks': `My tasks`,
@@ -640,6 +660,13 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
       return TranslationGen.resolvePlural(count, {
         '=1': `${count} Task`,
         'other': `${count} Tasks`,
+      })
+    },
+    'nYears': ({ years }): string => {
+      return TranslationGen.resolvePlural(years, {
+        '=0': `0 years`,
+        '=1': `1 year`,
+        'other': `${years} years`,
       })
     },
     'occupancy': `Occupancy`,
@@ -792,6 +819,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
   'es-ES': {
     'account': `Cuenta`,
     'active': `Activo`,
+    'add': `Añadir`,
     'addPatient': `Añadir paciente`,
     'addProperty': `Añadir propiedad`,
     'addTask': `Añadir tarea`,
@@ -808,6 +836,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'clearCache': `Vaciar caché`,
     'clinic': `Clínica`,
     'clinics': `Clínicas`,
+    'close': `Cerrar`,
     'closedTasks': `Tareas cerradas`,
     'collapseAll': `Contraer todo`,
     'confirm': `Confirmar`,
@@ -862,6 +891,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'diverse': `Diverso`,
     'done': `Hecho`,
     'dueDate': `Fecha de vencimiento`,
+    'edit': `Editar`,
     'editPatient': `Editar paciente`,
     'editTask': `Editar tarea`,
     'enterFeedback': `Escriba aquí sus comentarios...`,
@@ -907,6 +937,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'male': `Masculino`,
     'markPatientDead': `Marcar paciente como fallecido`,
     'markPatientDeadConfirmation': `¿Está seguro de que desea marcar este paciente como fallecido?`,
+    'menu': `Menú`,
     'myFavorites': `Mis favoritos`,
     'myOpenTasks': `Mis tareas abiertas`,
     'myTasks': `Mis tareas`,
@@ -930,6 +961,13 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
       return TranslationGen.resolvePlural(count, {
         '=1': `${count} Tarea`,
         'other': `${count} Tareas`,
+      })
+    },
+    'nYears': ({ years }): string => {
+      return TranslationGen.resolvePlural(years, {
+        '=0': `0 años`,
+        '=1': `1 año`,
+        'other': `${years} años`,
       })
     },
     'occupancy': `Ocupación`,
@@ -1081,6 +1119,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
   'fr-FR': {
     'account': `Compte`,
     'active': `Actif`,
+    'add': `Ajouter`,
     'addPatient': `Ajouter un patient`,
     'addProperty': `Ajouter une propriété`,
     'addTask': `Ajouter une tâche`,
@@ -1097,6 +1136,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'clearCache': `Vider le cache`,
     'clinic': `Clinique`,
     'clinics': `Cliniques`,
+    'close': `Fermer`,
     'closedTasks': `Tâches terminées`,
     'collapseAll': `Tout réduire`,
     'confirm': `Confirmer`,
@@ -1151,6 +1191,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'diverse': `Divers`,
     'done': `Terminé`,
     'dueDate': `Date d'échéance`,
+    'edit': `Modifier`,
     'editPatient': `Modifier le patient`,
     'editTask': `Modifier la tâche`,
     'enterFeedback': `Entrez vos commentaires ici...`,
@@ -1196,6 +1237,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'male': `Masculin`,
     'markPatientDead': `Déclarer le patient décédé`,
     'markPatientDeadConfirmation': `Êtes-vous sûr de vouloir déclarer ce patient décédé ?`,
+    'menu': `Menu`,
     'myFavorites': `Mes favoris`,
     'myOpenTasks': `Mes tâches ouvertes`,
     'myTasks': `Mes tâches`,
@@ -1219,6 +1261,13 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
       return TranslationGen.resolvePlural(count, {
         '=1': `${count} Tâche`,
         'other': `${count} Tâches`,
+      })
+    },
+    'nYears': ({ years }): string => {
+      return TranslationGen.resolvePlural(years, {
+        '=0': `0 an`,
+        '=1': `1 an`,
+        'other': `${years} ans`,
       })
     },
     'occupancy': `Occupation`,
@@ -1370,6 +1419,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
   'nl-NL': {
     'account': `Account`,
     'active': `Actief`,
+    'add': `Toevoegen`,
     'addPatient': `Patiënt toevoegen`,
     'addProperty': `Eigenschap toevoegen`,
     'addTask': `Taak toevoegen`,
@@ -1386,6 +1436,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'clearCache': `Cache legen`,
     'clinic': `Kliniek`,
     'clinics': `Klinieken`,
+    'close': `Sluiten`,
     'closedTasks': `Afgeronde taken`,
     'collapseAll': `Alles invouwen`,
     'confirm': `Bevestigen`,
@@ -1440,6 +1491,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'diverse': `Divers`,
     'done': `Klaar`,
     'dueDate': `Vervaldatum`,
+    'edit': `Bewerken`,
     'editPatient': `Patiënt bewerken`,
     'editTask': `Taak bewerken`,
     'enterFeedback': `Voer hier uw feedback in...`,
@@ -1485,6 +1537,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'male': `Man`,
     'markPatientDead': `Patiënt als overleden markeren`,
     'markPatientDeadConfirmation': `Weet u zeker dat u deze patiënt als overleden wilt markeren?`,
+    'menu': `Menu`,
     'myFavorites': `Mijn favorieten`,
     'myOpenTasks': `Mijn open taken`,
     'myTasks': `Mijn taken`,
@@ -1508,6 +1561,13 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
       return TranslationGen.resolvePlural(count, {
         '=1': `${count} Taak`,
         'other': `${count} Taken`,
+      })
+    },
+    'nYears': ({ years }): string => {
+      return TranslationGen.resolvePlural(years, {
+        '=0': `0 jaar`,
+        '=1': `1 jaar`,
+        'other': `${years} jaar`,
       })
     },
     'occupancy': `Bezetting`,
@@ -1662,6 +1722,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
   'pt-BR': {
     'account': `Conta`,
     'active': `Ativo`,
+    'add': `Adicionar`,
     'addPatient': `Adicionar paciente`,
     'addProperty': `Adicionar propriedade`,
     'addTask': `Adicionar tarefa`,
@@ -1678,6 +1739,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'clearCache': `Limpar cache`,
     'clinic': `Clínica`,
     'clinics': `Clínicas`,
+    'close': `Fechar`,
     'closedTasks': `Tarefas concluídas`,
     'collapseAll': `Recolher tudo`,
     'confirm': `Confirmar`,
@@ -1732,6 +1794,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'diverse': `Diverso`,
     'done': `Concluído`,
     'dueDate': `Data de vencimento`,
+    'edit': `Editar`,
     'editPatient': `Editar paciente`,
     'editTask': `Editar tarefa`,
     'enterFeedback': `Digite seu feedback aqui...`,
@@ -1777,6 +1840,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'male': `Masculino`,
     'markPatientDead': `Marcar paciente como óbito`,
     'markPatientDeadConfirmation': `Tem certeza de que deseja marcar este paciente como óbito?`,
+    'menu': `Menu`,
     'myFavorites': `Meus favoritos`,
     'myOpenTasks': `Minhas tarefas abertas`,
     'myTasks': `Minhas tarefas`,
@@ -1800,6 +1864,13 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
       return TranslationGen.resolvePlural(count, {
         '=1': `${count} Tarefa`,
         'other': `${count} Tarefas`,
+      })
+    },
+    'nYears': ({ years }): string => {
+      return TranslationGen.resolvePlural(years, {
+        '=0': `0 anos`,
+        '=1': `1 ano`,
+        'other': `${years} anos`,
       })
     },
     'occupancy': `Ocupação`,

@@ -2,7 +2,7 @@ import { Button, Checkbox } from '@helpwave/hightide'
 import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
 import { Clock, User, Users, Flag } from 'lucide-react'
 import clsx from 'clsx'
-import { SmartDate } from '@/utils/date'
+import { DateDisplay } from '@/components/Date/DateDisplay'
 import { LocationChipsBySetting } from '@/components/patients/LocationChipsBySetting'
 import type { TaskViewModel } from '@/components/tables/TaskList'
 import { useRouter } from 'next/router'
@@ -271,14 +271,14 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
           {dueDate && (
             <div className={clsx('flex items-center gap-2', dueDateColorClass)}>
               <Clock className="size-4" />
-              <SmartDate date={dueDate} mode="relative" showTime={true} />
+              <DateDisplay date={dueDate} mode="relative" showTime={true} />
             </div>
           )}
         </div>
         {expectedFinishDate && (
           <div className="flex items-center gap-2 text-xs">
             <Flag className="size-4" />
-            <SmartDate date={expectedFinishDate} mode="relative" showTime={true} />
+            <DateDisplay date={expectedFinishDate} mode="relative" showTime={true} />
           </div>
         )}
       </div>

@@ -24,7 +24,7 @@ import {
 import { CenteredLoadingLogo } from '@/components/CenteredLoadingLogo'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { User, Flag } from 'lucide-react'
-import { SmartDate } from '@/utils/date'
+import { DateDisplay } from '@/components/Date/DateDisplay'
 import { AssigneeSelect } from './AssigneeSelect'
 import { localToUTCWithSameTime, PatientDetailView } from '@/components/patients/PatientDetailView'
 import { ErrorDialog } from '@/components/ErrorDialog'
@@ -223,8 +223,8 @@ export const TaskDataEditor = ({
         </div>
       )}
       <FormProvider state={form}>
-        <form onSubmit={event => { event.preventDefault(); form.submit() }}>
-          <div className="flex flex-col gap-6 pt-4 pb-24">
+        <form onSubmit={event => { event.preventDefault(); form.submit() }} className="flex-col-0 overflow-hidden">
+          <div className="flex flex-col gap-6 pt-4 pb-24 overflow-y-auto px-2">
             <div className="flex items-center gap-3">
               <Visibility isVisible={isEditMode}>
                 <FormObserver>
@@ -340,8 +340,7 @@ export const TaskDataEditor = ({
               {({ dataProps, focusableElementProps, interactionStates }) => (
                 <DateTimeInput
                   {...dataProps} {...focusableElementProps} {...interactionStates}
-                  value={dataProps.value ?? undefined}
-                  isControlled={true}
+                  value={dataProps.value ?? null}
                   mode="dateTime"
                 />
               )}
@@ -403,7 +402,7 @@ export const TaskDataEditor = ({
             {expectedFinishDate && (
               <div className="flex items-center gap-2">
                 <Flag className="size-4" />
-                <SmartDate date={expectedFinishDate} mode="relative" showTime={true} />
+                <DateDisplay date={expectedFinishDate} mode="relative" showTime={true} />
               </div>
             )}
 

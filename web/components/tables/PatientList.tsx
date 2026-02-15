@@ -1,11 +1,10 @@
 import { useMemo, useState, forwardRef, useImperativeHandle, useEffect, useCallback } from 'react'
-import { Chip, FillerCell, Button, HelpwaveLogo, LoadingContainer, SearchBar, ProgressIndicator, Tooltip, Drawer, TableProvider, TableDisplay, TableColumnSwitcher } from '@helpwave/hightide'
+import { Chip, FillerCell, HelpwaveLogo, LoadingContainer, SearchBar, ProgressIndicator, Tooltip, Drawer, TableProvider, TableDisplay, TableColumnSwitcher, IconButton, useLocale } from '@helpwave/hightide'
 import { PlusIcon } from 'lucide-react'
 import { Sex, PatientState, type GetPatientsQuery, type TaskType, PropertyEntity, type FullTextSearchInput, type LocationType } from '@/api/gql/generated'
 import { usePropertyDefinitions, usePatientsPaginated, useRefreshingEntityIds } from '@/data'
 import { PatientDetailView } from '@/components/patients/PatientDetailView'
-import { SmartDate } from '@/utils/date'
-import { LocationChips } from '@/components/patients/LocationChips'
+import { LocationChips } from '@/components/locations/LocationChips'
 import { LocationChipsBySetting } from '@/components/patients/LocationChipsBySetting'
 import { PatientStateChip } from '@/components/patients/PatientStateChip'
 import { getLocationNodesByKind, type LocationKindColumn } from '@/utils/location'
@@ -13,7 +12,7 @@ import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import type { ColumnDef, Row, TableState } from '@tanstack/table-core'
 import { getPropertyColumnsForEntity } from '@/utils/propertyColumn'
-import { useTableState } from '@/hooks/useTableState'
+import { useStorageSyncedTableState } from '@/hooks/useTableState'
 import { usePropertyColumnVisibility } from '@/hooks/usePropertyColumnVisibility'
 import { TABLE_PAGE_SIZE } from '@/utils/tableConfig'
 
@@ -54,6 +53,7 @@ type PatientListProps = {
 
 export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initialPatientId, onInitialPatientOpened, acceptedStates: _acceptedStates, rootLocationIds, locationId }, ref) => {
   const translation = useTasksTranslation()
+  const { locale } = useLocale()
   const { selectedRootLocationIds } = useTasksContext()
   const { refreshingPatientIds } = useRefreshingEntityIds()
   const { data: propertyDefinitionsData } = usePropertyDefinitions()
@@ -72,7 +72,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
     setFilters,
     columnVisibility,
     setColumnVisibility,
-  } = useTableState('patient-list')
+  } = useStorageSyncedTableState('patient-list')
 
   usePropertyColumnVisibility(
     propertyDefinitionsData,
@@ -167,6 +167,12 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
     [propertyDefinitionsData]
   )
 
+  const dateFormat = useMemo(() => Intl.DateTimeFormat(locale, {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }), [locale])
+
   const rowLoadingCell = useMemo(() => <LoadingContainer className="w-full min-h-8" />, [])
 
   const columns = useMemo<ColumnDef<PatientViewModel>[]>(() => [
@@ -189,7 +195,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       minSize: 120,
       size: 144,
       maxSize: 180,
-      filterFn: 'tags',
+      filterFn: 'singleTag',
       meta: {
         filterData: {
           tags: allPatientStates.map(state => ({ label: translation('patientState', { state: state as string }), tag: state })),
@@ -229,7 +235,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       minSize: 160,
       size: 160,
       maxSize: 200,
-      filterFn: 'tags',
+      filterFn: 'singleTag',
       meta: {
         filterData: {
           tags: [
@@ -275,10 +281,26 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       id: 'birthdate',
       header: translation('birthdate'),
       accessorKey: 'birthdate',
-      cell: ({ row }) =>
-        refreshingPatientIds.has(row.original.id) ? rowLoadingCell : (
-          <SmartDate date={row.original.birthdate} showTime={false} />
-        ),
+      cell: ({ row }) => {
+        if(refreshingPatientIds.has(row.original.id))
+          return rowLoadingCell
+
+        const now = new Date()
+        const birthdate = row.original.birthdate
+        let years = now.getFullYear() - birthdate.getFullYear()
+        const monthDiff = now.getMonth() - birthdate.getMonth()
+        const dayDiff = now.getDate() - birthdate.getDate()
+
+        if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
+          years--
+        }
+
+        return (
+          <Tooltip tooltip={dateFormat.format(row.original.birthdate)} containerClassName="w-fit">
+            {translation('nYears', { years })}
+          </Tooltip>
+        )
+      },
       minSize: 200,
       size: 200,
       maxSize: 200,
@@ -296,13 +318,16 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
         const { openTasksCount, closedTasksCount } = row.original
         const total = openTasksCount + closedTasksCount
         const progress = total === 0 ? 0 : closedTasksCount / total
-        const tooltipText = `${translation('openTasks')}: ${openTasksCount}\n${translation('closedTasks')}: ${closedTasksCount}`
 
         return (
           <Tooltip
-            tooltip={tooltipText}
-            position="top"
-            tooltipClassName="whitespace-pre-line"
+            tooltip={(
+              <div className="flex-col-0">
+                <span>{`${translation('openTasks')}: ${openTasksCount}`}</span>
+                <span>{`${translation('closedTasks')}: ${closedTasksCount}`}</span>
+              </div>
+            )}
+            alignment="top"
           >
             <div className="w-full max-w-[80px]">
               <ProgressIndicator progress={progress} rotation={-90} />
@@ -321,7 +346,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
           refreshingPatientIds.has(params.row.original.id) ? rowLoadingCell : (col.cell as (p: unknown) => React.ReactNode)(params)
         : undefined,
     })),
-  ], [allPatientStates, translation, patientPropertyColumns, refreshingPatientIds, rowLoadingCell])
+  ], [translation, allPatientStates, patientPropertyColumns, refreshingPatientIds, rowLoadingCell, dateFormat])
 
   const onRowClick = useCallback((row: Row<PatientViewModel>) => handleEdit(row.original), [handleEdit])
   const fillerRowCell = useCallback(() => (<FillerCell className="min-h-8" />), [])
@@ -362,17 +387,16 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
             <TableColumnSwitcher />
           </div>
           <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto sm:ml-auto">
-            <Tooltip tooltip={translation('addPatient')} position="top">
-              <Button
-                onClick={() => {
-                  setSelectedPatient(undefined)
-                  setIsPanelOpen(true)
-                }}
-                layout="icon"
-              >
-                <PlusIcon />
-              </Button>
-            </Tooltip>
+            <IconButton
+              tooltip={translation('addPatient')}
+              onClick={() => {
+                setSelectedPatient(undefined)
+                setIsPanelOpen(true)
+              }}
+              color="primary"
+            >
+              <PlusIcon />
+            </IconButton>
           </div>
         </div>
         <div className="relative">

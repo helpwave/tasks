@@ -11,9 +11,10 @@ import {
   ExpandableContent,
   ExpandableHeader,
   ExpandableRoot,
+  IconButton,
   MarkdownInterpreter,
   Tooltip,
-  useLocalStorage
+  useStorage
 } from '@helpwave/hightide'
 import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
 import { getConfig } from '@/utils/config'
@@ -49,7 +50,7 @@ export const StagingDisclaimerDialog = () => {
   const {
     value: lastTimeStagingDisclaimerDismissed,
     setValue: setLastTimeStagingDisclaimerDismissed
-  } = useLocalStorage('staging-disclaimer-dismissed-time', 0)
+  } = useStorage({ key: 'staging-disclaimer-dismissed-time', defaultValue: 0 })
 
   const dismissStagingDisclaimer = () => {
     setLastTimeStagingDisclaimerDismissed(new Date().getTime())
@@ -102,17 +103,17 @@ export const SurveyModal = () => {
   const {
     value: onboardingSurveyCompleted,
     setValue: setOnboardingSurveyCompleted
-  } = useLocalStorage('onboarding-survey-completed', 0)
+  } = useStorage({ key: 'onboarding-survey-completed', defaultValue: 0 })
 
   const {
     value: weeklySurveyLastCompleted,
     setValue: setWeeklySurveyLastCompleted
-  } = useLocalStorage('weekly-survey-last-completed', 0)
+  } = useStorage({ key: 'weekly-survey-last-completed', defaultValue: 0 })
 
   const {
     value: surveyLastDismissed,
     setValue: setSurveyLastDismissed
-  } = useLocalStorage('survey-last-dismissed', 0)
+  } = useStorage({ key: 'survey-last-dismissed', defaultValue: 0 })
 
   useEffect(() => {
     if (!config.onboardingSurveyUrl && !config.weeklySurveyUrl) {
@@ -216,21 +217,19 @@ const RootLocationSelector = ({ className, onSelect }: RootLocationSelectorProps
   const {
     value: storedSelectedRootLocationsRaw,
     setValue: setStoredSelectedRootLocations
-  } = useLocalStorage<Array<{ id: string, title: string, kind?: string }>>(
-    'selected-root-location-nodes',
-    []
-  )
+  } = useStorage<Array<{ id: string, title: string, kind?: string }>>({
+    key: 'selected-root-location-nodes',
+    defaultValue: []
+  })
 
-  const storedSelectedRootLocations = useMemo(
-    () =>
-      Array.isArray(storedSelectedRootLocationsRaw)
-        ? storedSelectedRootLocationsRaw.filter(
-          (loc): loc is { id: string, title: string, kind?: string } =>
-            Boolean(loc && typeof loc.id === 'string' && typeof loc.title === 'string')
-        )
-        : [],
-    [storedSelectedRootLocationsRaw]
-  )
+  const storedSelectedRootLocations = useMemo(() =>
+    Array.isArray(storedSelectedRootLocationsRaw)
+      ? storedSelectedRootLocationsRaw.filter(
+        (loc): loc is { id: string, title: string, kind?: string } =>
+          Boolean(loc && typeof loc.id === 'string' && typeof loc.title === 'string')
+      )
+      : [],
+  [storedSelectedRootLocationsRaw])
 
   const { data: locationsData } = useLocations(
     { limit: 1000 },
@@ -406,33 +405,38 @@ export const Header = ({ onMenuClick, isMenuOpen, ...props }: HeaderProps) => {
         )}
       >
         <div className="flex-col-0 lg:pl-0">
-          <Button
-            layout="icon"
+          <IconButton
+            tooltip={translation('menu')}
             color="neutral"
             coloringStyle="text"
             onClick={onMenuClick}
             className="lg:hidden"
           >
             {isMenuOpen ? <X className="size-6" /> : <MenuIcon className="size-6" />}
-          </Button>
+          </IconButton>
         </div>
         <div className="flex-row-2 justify-end items-center gap-x-2">
           <RootLocationSelector className="hidden sm:flex" />
-          <Tooltip tooltip={translation('feedback')}>
-            <Button coloringStyle="text" layout="icon" color="neutral" onClick={() => setIsFeedbackOpen(true)}>
-              <MessageSquare />
-            </Button>
-          </Tooltip>
-          <Tooltip tooltip={translation('settings')}>
-            <Button coloringStyle="text" layout="icon" color="neutral" onClick={() => router.push('/settings')}>
-              <SettingsIcon />
-            </Button>
-          </Tooltip>
+          <IconButton
+            tooltip={translation('feedback')}
+            coloringStyle="text" color="neutral"
+            onClick={() => setIsFeedbackOpen(true)}
+          >
+            <MessageSquare />
+          </IconButton>
+          <IconButton
+            tooltip={translation('settings')}
+            coloringStyle="text" color="neutral"
+            onClick={() => router.push('/settings')}
+          >
+            <SettingsIcon />
+          </IconButton>
           <Tooltip tooltip={user?.isOnline ? 'Online' : 'Offline'}>
             <Button
               onClick={() => setIsUserInfoOpen(!!user?.id)}
               coloringStyle="text"
               color="neutral"
+              className="min-w-auto"
             >
               <span className="hidden sm:inline typography-title-sm">{user?.name}</span>
               <AvatarStatusComponent
@@ -517,15 +521,15 @@ export const Sidebar = ({ isOpen, onClose, ...props }: SidebarProps) => {
               <TasksLogo />
               <span className="typography-title-md whitespace-nowrap">{'helpwave tasks'}</span>
             </Link>
-            <Button
-              layout="icon"
+            <IconButton
+              tooltip={translation('close')}
               color="neutral"
               coloringStyle="text"
               onClick={onClose}
               className="lg:hidden"
             >
               <X className="size-6" />
-            </Button>
+            </IconButton>
           </div>
           <SidebarLink href="/" onClick={onClose}>
             <Grid2X2PlusIcon className="-rotate-90 size-5" />

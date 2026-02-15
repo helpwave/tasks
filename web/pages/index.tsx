@@ -3,7 +3,7 @@ import { Page } from '@/components/layout/Page'
 import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { Avatar } from '@helpwave/hightide'
-import { CurrentTime } from '@/utils/date'
+import { CurrentTime } from '@/components/Date/CurrentTime'
 import { ClockIcon, ListCheckIcon, UsersIcon } from 'lucide-react'
 import { useCallback, useMemo, useState, type ReactNode } from 'react'
 import { useTasksContext } from '@/hooks/useTasksContext'
@@ -15,7 +15,6 @@ import { useOverviewData, useCompleteTask, useReopenTask } from '@/data'
 import { RecentTasksTable } from '@/components/tables/RecentTasksTable'
 import { RecentPatientsTable } from '@/components/tables/RecentPatientsTable'
 import clsx from 'clsx'
-
 
 
 const getGreetingKey = () => {

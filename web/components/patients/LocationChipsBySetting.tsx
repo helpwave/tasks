@@ -1,4 +1,4 @@
-import { LocationChips } from '@/components/patients/LocationChips'
+import { LocationChips } from '@/components/locations/LocationChips'
 import type { LocationType } from '@/api/gql/generated'
 import type { HTMLAttributes } from 'react'
 

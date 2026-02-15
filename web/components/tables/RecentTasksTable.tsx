@@ -5,14 +5,13 @@ import { useCallback, useMemo } from 'react'
 import clsx from 'clsx'
 import type { TableProps } from '@helpwave/hightide'
 import { Button, Checkbox, FillerCell, TableDisplay, TableProvider, Tooltip } from '@helpwave/hightide'
-import { ArrowRightIcon } from 'lucide-react'
-import { SmartDate } from '@/utils/date'
+import { DateDisplay } from '@/components/Date/DateDisplay'
 import { DueDateUtils } from '@/utils/dueDate'
 import { PriorityUtils } from '@/utils/priority'
 import { PropertyEntity } from '@/api/gql/generated'
 import { usePropertyDefinitions } from '@/data'
 import { getPropertyColumnsForEntity } from '@/utils/propertyColumn'
-import { useTableState } from '@/hooks/useTableState'
+import { useStorageSyncedTableState } from '@/hooks/useTableState'
 import { usePropertyColumnVisibility } from '@/hooks/usePropertyColumnVisibility'
 
 type TaskViewModel = GetOverviewDataQuery['recentTasks'][0]
@@ -46,7 +45,7 @@ export const RecentTasksTable = ({
     setFilters,
     columnVisibility,
     setColumnVisibility,
-  } = useTableState('recent-tasks')
+  } = useStorageSyncedTableState('recent-tasks')
 
   usePropertyColumnVisibility(
     propertyDefinitionsData,
@@ -125,7 +124,6 @@ export const RecentTasksTable = ({
               className="flex-row-1 w-full justify-between"
             >
               <span className="truncate block">{patient.name}</span>
-              <ArrowRightIcon className="size-force-5" />
             </Button>
           </Tooltip>
         )
@@ -149,7 +147,7 @@ export const RecentTasksTable = ({
           colorClass = '!text-orange-500'
         }
         return (
-          <SmartDate
+          <DateDisplay
             date={new Date(row.original.dueDate)}
             mode="relative"
             className={clsx(colorClass)}
@@ -170,7 +168,7 @@ export const RecentTasksTable = ({
         const date = getValue() as Date | undefined
         if (!date) return <FillerCell />
         return (
-          <SmartDate date={date} />
+          <DateDisplay date={date} />
         )
       },
       minSize: 220,

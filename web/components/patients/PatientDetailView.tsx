@@ -1,8 +1,7 @@
 import { useMemo, useCallback } from 'react'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import type { CreatePatientInput, PropertyValueInput } from '@/api/gql/generated'
-import { PropertyEntity } from '@/api/gql/generated'
-import { usePatient, usePropertyDefinitions } from '@/data'
+import { usePatient } from '@/data'
 import {
   ProgressIndicator,
   TabList,
@@ -11,7 +10,7 @@ import {
   Tooltip
 } from '@helpwave/hightide'
 import { PatientStateChip } from '@/components/patients/PatientStateChip'
-import { LocationChips } from '@/components/patients/LocationChips'
+import { LocationChips } from '@/components/locations/LocationChips'
 import { PatientTasksView } from './PatientTasksView'
 import { PatientDataEditor } from './PatientDataEditor'
 import { AuditLogTimeline } from '@/components/AuditLogTimeline'
@@ -63,16 +62,7 @@ export const PatientDetailView = ({
     { skip: !isEditMode }
   )
 
-  const { data: propertyDefinitionsData } = usePropertyDefinitions()
-
   const [updatePatient] = useUpdatePatient()
-
-  const hasAvailableProperties = useMemo(() => {
-    if (!propertyDefinitionsData?.propertyDefinitions) return false
-    return propertyDefinitionsData.propertyDefinitions.some(
-      def => def.isActive && def.allowedEntities.includes(PropertyEntity.Patient)
-    )
-  }, [propertyDefinitionsData])
 
   const convertPropertyValueToInput = useCallback((definitionId: string, value: PropertyValue | null): PropertyValueInput | null => {
     if (!value) return null
@@ -159,9 +149,13 @@ export const PatientDetailView = ({
             <div className="flex items-center gap-2">
               {taskStats.totalTasks > 0 && (
                 <Tooltip
-                  tooltip={`${translation('openTasks')}: ${taskStats.openTasks}\n${translation('closedTasks')}: ${taskStats.closedTasks}`}
-                  position="top"
-                  tooltipClassName="whitespace-pre-line"
+                  tooltip={(
+                    <div className="flex-col-0">
+                      <span>{`${translation('openTasks')}: ${taskStats.openTasks}`}</span>
+                      <span>{`${translation('closedTasks')}: ${taskStats.closedTasks}`}</span>
+                    </div>
+                  )}
+                  alignment="top"
                 >
                   <div className="w-12">
                     <ProgressIndicator progress={taskStats.taskProgress} rotation={-90} />
@@ -182,18 +176,18 @@ export const PatientDetailView = ({
       )}
       <TabSwitcher>
         <TabList />
-        {isEditMode && patientId && (
-          <TabPanel label={translation('tasks')} className="flex-col-0 px-1 pt-4 pb-16 overflow-y-auto">
+        <TabPanel label={translation('tasks')} className="flex-col-0 flex-1overflow-hidden h-full" disabled={!(isEditMode && patientId)}>
+          {patientId && (
             <PatientTasksView
               patientId={patientId}
               patientData={patientData ? { patient: patientData } : undefined}
               onSuccess={onSuccess}
             />
-          </TabPanel>
-        )}
+          )}
+        </TabPanel>
 
-        {isEditMode && hasAvailableProperties && patientId && (
-          <TabPanel label={translation('properties')} className="flex-col-0 px-1 pt-4 pb-16 overflow-y-auto">
+        <TabPanel label={translation('properties')} className="flex-col-0 px-2 pt-4 overflow-y-auto" disabled={!(isEditMode && patientId)}>
+          {patientId && (
             <PropertyList
               subjectId={patientId}
               subjectType="patient"
@@ -201,10 +195,10 @@ export const PatientDetailView = ({
               propertyValues={patientData?.properties}
               onPropertyValueChange={handlePropertyValueChange}
             />
-          </TabPanel>
-        )}
+          )}
+        </TabPanel>
 
-        <TabPanel label={translation('patientData')} className="flex-col-0 px-1 pt-4 pb-16 overflow-y-auto">
+        <TabPanel label={translation('patientData')} className="flex-col-0" initiallyActive={true}>
           <PatientDataEditor
             id={patientId || null}
             initialCreateData={initialCreateData}
@@ -213,11 +207,11 @@ export const PatientDetailView = ({
           />
         </TabPanel>
 
-        {isEditMode && patientId && (
-          <TabPanel label="Audit Log" className="flex-col-0 px-1 pt-4 pb-16 overflow-y-auto">
+        <TabPanel label="Audit Log" className="flex-col-0 px-2 pt-4 overflow-y-auto" disabled={!(isEditMode && patientId)}>
+          {patientId && (
             <AuditLogTimeline caseId={patientId} enabled={true} />
-          </TabPanel>
-        )}
+          )}
+        </TabPanel>
       </TabSwitcher>
     </div>
   )
