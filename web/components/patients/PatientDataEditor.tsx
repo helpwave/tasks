@@ -146,7 +146,7 @@ export const PatientDataEditor = ({
         return null
       },
       birthdate: (value) => {
-        if (!value || !value.trim()) {
+        if (!value) {
           return translation('birthdate') + ' is required'
         }
         return null
@@ -170,7 +170,7 @@ export const PatientDataEditor = ({
       const data: UpdatePatientInput = {
         firstname: updates?.firstname,
         lastname: updates.lastname,
-        birthdate: updates.birthdate,
+        birthdate: toISODate(updates.birthdate),
         sex: updates.sex,
         assignedLocationIds: updates.assignedLocationIds,
         clinicId: updates.clinic?.id,
@@ -320,19 +320,17 @@ export const PatientDataEditor = ({
             {({ dataProps, focusableElementProps, interactionStates  }) => (
               <DateTimeInput
                 {...focusableElementProps} {...interactionStates}
-                value={convertBirthdateStringToDate(dataProps.value) ?? undefined}
+                value={convertBirthdateStringToDate(dataProps.value) ?? null}
                 onValueChange={(value) => {
                   if(!value) return
                   dataProps.onValueChange(value)
                 }}
                 onEditComplete={(value) => {
                   if(!value) return
-                  dataProps.onEditComplete(toISODate(value))
+                  dataProps.onEditComplete(value)
                 }}
-                pickerProps={{
-                  start: startDate,
-                  end: endDate
-                }}
+                start={startDate}
+                end={endDate}
                 mode="date"
               />
             )}
