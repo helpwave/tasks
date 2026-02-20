@@ -619,7 +619,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
             }
           `}</style>
           <TableDisplay />
-          {totalCount != null && totalCount > 0 && (
+          {totalCount != null && (
             <TablePagination
               allowChangingPageSize={true}
               pageSizeOptions={[10, 25, 50]}

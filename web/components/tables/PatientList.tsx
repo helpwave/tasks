@@ -418,7 +418,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
             </div>
           )}
           <TableDisplay />
-          {totalCount != null && totalCount > 0 && (
+          {totalCount != null && (
             <TablePagination
               allowChangingPageSize={true}
               pageSizeOptions={[10, 25, 50]}
