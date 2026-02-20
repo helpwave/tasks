@@ -1,6 +1,6 @@
 import { getConfig } from '@/utils/config'
 import { GraphQLClient } from 'graphql-request'
-import { getUser, login, removeUser } from '@/api/auth/authService'
+import { getUser, removeUser, dispatchSessionExpired } from '@/api/auth/authService'
 
 const config = getConfig()
 const url = config.graphqlEndpoint
@@ -26,7 +26,7 @@ const handleError = async (error: any) => {
 
   if (isInvalidGrant || isUnauthorized) {
     await removeUser()
-    await login()
+    dispatchSessionExpired()
     throw new Error('Session expired')
   }
 }

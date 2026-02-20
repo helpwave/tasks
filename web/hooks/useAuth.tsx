@@ -12,7 +12,8 @@ import {
   onTokenExpiringCallback,
   removeUser,
   renewToken,
-  restoreSession
+  restoreSession,
+  SESSION_EXPIRED_EVENT
 } from '@/api/auth/authService'
 
 type AuthState = {
@@ -125,6 +126,15 @@ export const AuthProvider = ({
       if (typeof unsubscribe === 'function') unsubscribe()
     }
   }, [routePolicy, redirectToLogin])
+
+  useEffect(() => {
+    const handleSessionExpired = () => {
+      setAuthState({ identity: undefined, isLoading: false })
+      redirectToLogin()
+    }
+    window.addEventListener(SESSION_EXPIRED_EVENT, handleSessionExpired)
+    return () => window.removeEventListener(SESSION_EXPIRED_EVENT, handleSessionExpired)
+  }, [redirectToLogin])
 
   const logoutAndReset = useCallback(() => {
     logout()

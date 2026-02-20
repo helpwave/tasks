@@ -1,6 +1,6 @@
 import { useMemo, useState, forwardRef, useImperativeHandle, useEffect, useRef, useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { Button, Checkbox, ConfirmDialog, FillerCell, HelpwaveLogo, IconButton, LoadingContainer, SearchBar, Select, SelectOption, TableColumnSwitcher, TableDisplay, TableProvider } from '@helpwave/hightide'
+import { Button, Checkbox, ConfirmDialog, FillerCell, HelpwaveLogo, IconButton, LoadingContainer, SearchBar, Select, SelectOption, TableColumnSwitcher, TableDisplay, TablePagination, TableProvider } from '@helpwave/hightide'
 import { PlusIcon, UserCheck, Users } from 'lucide-react'
 import type { TaskPriority, GetTasksQuery } from '@/api/gql/generated'
 import { PropertyEntity } from '@/api/gql/generated'
@@ -15,7 +15,8 @@ import { PatientDetailView } from '@/components/patients/PatientDetailView'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { UserInfoPopup } from '@/components/UserInfoPopup'
-import type { ColumnDef, ColumnFiltersState, TableState } from '@tanstack/table-core'
+import type { ColumnDef, ColumnFiltersState, PaginationState, SortingState, TableState, VisibilityState } from '@tanstack/table-core'
+import type { Dispatch, SetStateAction } from 'react'
 import { DueDateUtils } from '@/utils/dueDate'
 import { PriorityUtils } from '@/utils/priority'
 import { getPropertyColumnsForEntity } from '@/utils/propertyColumn'
@@ -55,6 +56,17 @@ type TaskDialogState = {
   taskId?: string,
 }
 
+type TaskListTableState = {
+  pagination: PaginationState,
+  setPagination: Dispatch<SetStateAction<PaginationState>>,
+  sorting: SortingState,
+  setSorting: Dispatch<SetStateAction<SortingState>>,
+  filters: ColumnFiltersState,
+  setFilters: Dispatch<SetStateAction<ColumnFiltersState>>,
+  columnVisibility: VisibilityState,
+  setColumnVisibility: Dispatch<SetStateAction<VisibilityState>>,
+}
+
 type TaskListProps = {
   tasks: TaskViewModel[],
   onRefetch?: () => void,
@@ -65,27 +77,32 @@ type TaskListProps = {
   totalCount?: number,
   loading?: boolean,
   showAllTasksMode?: boolean,
+  tableState?: TaskListTableState,
 }
 
-export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initialTasks, onRefetch, showAssignee = false, initialTaskId, onInitialTaskOpened, headerActions, totalCount, loading = false, showAllTasksMode = false }, ref) => {
+export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initialTasks, onRefetch, showAssignee = false, initialTaskId, onInitialTaskOpened, headerActions, totalCount, loading = false, showAllTasksMode = false, tableState: controlledTableState }, ref) => {
   const translation = useTasksTranslation()
   const { data: propertyDefinitionsData } = usePropertyDefinitions()
 
-  const {
-    pagination,
-    setPagination,
-    sorting,
-    setSorting,
-    filters,
-    setFilters,
-    columnVisibility,
-    setColumnVisibility,
-  } = useStorageSyncedTableState('task-list', {
+  const internalState = useStorageSyncedTableState('task-list', {
     defaultSorting: useMemo(() => [
       { id: 'done', desc: false },
       { id: 'dueDate', desc: false },
     ], []),
   })
+
+  const lastTotalCountRef = useRef<number | undefined>(undefined)
+  if (totalCount != null) lastTotalCountRef.current = totalCount
+  const stableTotalCount = totalCount ?? lastTotalCountRef.current
+
+  const pagination = controlledTableState?.pagination ?? internalState.pagination
+  const setPagination = controlledTableState?.setPagination ?? internalState.setPagination
+  const sorting = controlledTableState?.sorting ?? internalState.sorting
+  const setSorting = controlledTableState?.setSorting ?? internalState.setSorting
+  const filters = controlledTableState?.filters ?? internalState.filters
+  const setFilters = controlledTableState?.setFilters ?? internalState.setFilters
+  const columnVisibility = controlledTableState?.columnVisibility ?? internalState.columnVisibility
+  const setColumnVisibility = controlledTableState?.setColumnVisibility ?? internalState.setColumnVisibility
 
   usePropertyColumnVisibility(
     propertyDefinitionsData,
@@ -523,7 +540,8 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
     <TableProvider
       data={tasks}
       columns={columns}
-      fillerRowCell={useCallback(() => (<FillerCell className="min-h-12"/>), [])}
+      fillerRowCell={useCallback(() => (<FillerCell className="min-h-12" />), [])}
+      manualPagination={true}
       initialState={{
         pagination: {
           pageSize: 10,
@@ -541,7 +559,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
       onColumnFiltersChange={setFiltersNormalized}
       enableMultiSort={true}
       onRowClick={row => setTaskDialogState({ isOpen: true, taskId: row.original.id })}
-      pageCount={totalCount ? Math.ceil(totalCount / pagination.pageSize) : undefined}
+      pageCount={stableTotalCount != null ? Math.ceil(stableTotalCount / pagination.pageSize) : -1}
     >
       <div className="flex flex-col h-full gap-4">
         <div className="flex flex-col sm:flex-row justify-between w-full gap-4">
@@ -572,7 +590,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
                 onClick={handleHandoverClick}
                 className="w-fit"
               >
-                <UserCheck className="size-5"/>
+                <UserCheck className="size-5" />
                 {translation('shiftHandover') || 'Shift Handover'}
               </Button>
             )}
@@ -582,7 +600,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
               onClick={() => setTaskDialogState({ isOpen: true })}
               disabled={!hasPatients}
             >
-              <PlusIcon/>
+              <PlusIcon />
             </IconButton>
           </div>
         </div>
@@ -601,6 +619,13 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
             }
           `}</style>
           <TableDisplay />
+          {totalCount != null && (
+            <TablePagination
+              allowChangingPageSize={true}
+              pageSizeOptions={[10, 25, 50]}
+              className="mt-2"
+            />
+          )}
         </div>
         <Drawer
           alignment="right"

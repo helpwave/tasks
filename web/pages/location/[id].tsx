@@ -8,7 +8,7 @@ import { CenteredLoadingLogo } from '@/components/CenteredLoadingLogo'
 import { PatientList } from '@/components/tables/PatientList'
 import type { TaskViewModel } from '@/components/tables/TaskList'
 import { TaskList } from '@/components/tables/TaskList'
-import { type LocationType } from '@/api/gql/generated'
+import { type LocationType, PatientState } from '@/api/gql/generated'
 import { useLocationNode, usePatients, useTasks } from '@/data'
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/router'
@@ -87,8 +87,9 @@ const LocationPage: NextPage = () => {
 
     if (!patientsData?.patients) return []
 
+    const admittedOrWaitingStates: PatientState[] = [PatientState.Admitted, PatientState.Wait]
     return patientsData.patients.flatMap(patient => {
-      if (!patient.tasks) return []
+      if (!admittedOrWaitingStates.includes(patient.state) || !patient.tasks) return []
 
       const mergedLocations = [
         ...(patient.clinic ? [patient.clinic] : []),

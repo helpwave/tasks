@@ -2,6 +2,7 @@ from datetime import datetime, timezone, timedelta
 from typing import TYPE_CHECKING, Annotated
 
 import strawberry
+from api.inputs import PatientState
 from database import models
 from sqlalchemy import select
 
@@ -127,6 +128,11 @@ class UserType:
                         )
                     )
                     | (patient_teams.c.location_id.in_(select(root_cte.c.id)))
+                )
+            )
+            .where(
+                models.Patient.state.notin_(
+                    [PatientState.DISCHARGED.value, PatientState.DEAD.value]
                 )
             )
             .distinct()

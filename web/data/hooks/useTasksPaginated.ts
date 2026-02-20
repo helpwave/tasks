@@ -3,18 +3,19 @@ import {
   type GetTasksQuery,
   type GetTasksQueryVariables
 } from '@/api/gql/generated'
+import type { FilterInput, SortInput } from '@/api/gql/generated'
 import { usePaginatedEntityQuery } from './usePaginatedEntityQuery'
 
 export type UseTasksPaginatedOptions = {
-  pageSize: number,
+  pagination: { pageIndex: number, pageSize: number },
+  sorting?: SortInput[],
+  filtering?: FilterInput[],
 }
 
 export type UseTasksPaginatedResult = {
   data: GetTasksQuery['tasks'],
   loading: boolean,
   error: Error | undefined,
-  fetchNextPage: () => void,
-  hasNextPage: boolean,
   totalCount: number | undefined,
   refetch: () => void,
 }
@@ -30,7 +31,11 @@ export function useTasksPaginated(
   >(
     GetTasksDocument,
     variables,
-    { pageSize: options.pageSize },
+    {
+      pagination: options.pagination,
+      sorting: options.sorting,
+      filtering: options.filtering,
+    },
     (data) => data?.tasks ?? [],
     (data) => data?.tasksTotal
   )

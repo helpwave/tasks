@@ -5,9 +5,9 @@ import {
   Checkbox,
   Button,
   SearchBar,
-  useStorage,
   IconButton
 } from '@helpwave/hightide'
+import { useStorage } from '@/hooks/useStorage'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import type { LocationNodeType } from '@/api/gql/generated'
 import { LocationType } from '@/api/gql/generated'

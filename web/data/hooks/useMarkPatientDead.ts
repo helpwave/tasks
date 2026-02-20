@@ -47,7 +47,7 @@ export function useMarkPatientDead() {
           },
           onConflict: onConflict ?? undefined,
         })
-        clientRef.current?.refetchQueries({ include: [getParsedDocument(GetGlobalDataDocument)] })
+        await clientRef.current?.refetchQueries({ include: [getParsedDocument(GetGlobalDataDocument)] })
         return data?.markPatientDead
       } catch (e) {
         const err = e instanceof Error ? e : new Error(String(e))
