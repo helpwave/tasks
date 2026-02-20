@@ -38,6 +38,8 @@ const LOCATION_KIND_HEADERS: Record<LocationKindColumn, string> = {
   BED: 'locationBed',
 }
 
+const ADMITTED_OR_WAITING_STATES: PatientState[] = [PatientState.Admitted, PatientState.Wait]
+
 export type PatientListRef = {
   openCreate: () => void,
   openPatient: (patientId: string) => void,
@@ -120,20 +122,23 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
   const patients: PatientViewModel[] = useMemo(() => {
     if (!patientsData || patientsData.length === 0) return []
 
-    return patientsData.map(p => ({
-      id: p.id,
-      name: p.name,
-      firstname: p.firstname,
-      lastname: p.lastname,
-      birthdate: new Date(p.birthdate),
-      sex: p.sex,
-      state: p.state,
-      position: p.position,
-      openTasksCount: p.tasks?.filter(t => !t.done).length ?? 0,
-      closedTasksCount: p.tasks?.filter(t => t.done).length ?? 0,
-      tasks: [],
-      properties: p.properties ?? [],
-    }))
+    return patientsData.map(p => {
+      const countForAggregate = ADMITTED_OR_WAITING_STATES.includes(p.state)
+      return {
+        id: p.id,
+        name: p.name,
+        firstname: p.firstname,
+        lastname: p.lastname,
+        birthdate: new Date(p.birthdate),
+        sex: p.sex,
+        state: p.state,
+        position: p.position,
+        openTasksCount: countForAggregate ? (p.tasks?.filter(t => !t.done).length ?? 0) : 0,
+        closedTasksCount: countForAggregate ? (p.tasks?.filter(t => t.done).length ?? 0) : 0,
+        tasks: [],
+        properties: p.properties ?? [],
+      }
+    })
   }, [patientsData])
 
   useImperativeHandle(ref, () => ({
