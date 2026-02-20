@@ -9,17 +9,42 @@ import { useMemo } from 'react'
 import { useRouter } from 'next/router'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { useTasksPaginated } from '@/data'
-import { TABLE_PAGE_SIZE } from '@/utils/tableConfig'
+import { useStorageSyncedTableState } from '@/hooks/useTableState'
+import { columnFiltersToFilterInput, paginationStateToPaginationInput, sortingStateToSortInput } from '@/utils/tableStateToApi'
 
 const TasksPage: NextPage = () => {
   const translation = useTasksTranslation()
   const router = useRouter()
   const { selectedRootLocationIds, user, myTasksCount } = useTasksContext()
+  const {
+    pagination,
+    setPagination,
+    sorting,
+    setSorting,
+    filters,
+    setFilters,
+    columnVisibility,
+    setColumnVisibility,
+  } = useStorageSyncedTableState('task-list', {
+    defaultSorting: useMemo(() => [
+      { id: 'done', desc: false },
+      { id: 'dueDate', desc: false },
+    ], []),
+  })
+
+  const apiFiltering = useMemo(() => columnFiltersToFilterInput(filters, 'task'), [filters])
+  const apiSorting = useMemo(() => sortingStateToSortInput(sorting, 'task'), [sorting])
+  const apiPagination = useMemo(() => paginationStateToPaginationInput(pagination), [pagination])
+
   const { data: tasksData, refetch, totalCount, loading: tasksLoading } = useTasksPaginated(
     !!selectedRootLocationIds && !!user
       ? { rootLocationIds: selectedRootLocationIds, assigneeId: user?.id }
       : undefined,
-    { pageSize: TABLE_PAGE_SIZE }
+    {
+      pagination: apiPagination,
+      sorting: apiSorting.length > 0 ? apiSorting : undefined,
+      filtering: apiFiltering.length > 0 ? apiFiltering : undefined,
+    }
   )
   const taskId = router.query['taskId'] as string | undefined
 
@@ -63,6 +88,16 @@ const TasksPage: NextPage = () => {
           onInitialTaskOpened={() => router.replace('/tasks', undefined, { shallow: true })}
           totalCount={totalCount}
           loading={tasksLoading}
+          tableState={{
+            pagination,
+            setPagination,
+            sorting,
+            setSorting,
+            filters,
+            setFilters,
+            columnVisibility,
+            setColumnVisibility,
+          }}
         />
       </ContentPanel>
     </Page>

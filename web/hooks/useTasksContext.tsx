@@ -5,7 +5,7 @@ import { HelpwaveLogo } from '@helpwave/hightide'
 import { useGlobalData, useLocations } from '@/data'
 import { useQueryClient } from '@tanstack/react-query'
 import { useAuth } from './useAuth'
-import { useStorage } from '@helpwave/hightide'
+import { useStorage } from './useStorage'
 import { useConnectionStatus } from './useConnectionStatus'
 
 function filterLocationsByRootSubtree(

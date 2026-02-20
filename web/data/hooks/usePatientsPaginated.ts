@@ -3,18 +3,19 @@ import {
   type GetPatientsQuery,
   type GetPatientsQueryVariables
 } from '@/api/gql/generated'
+import type { FilterInput, SortInput } from '@/api/gql/generated'
 import { usePaginatedEntityQuery } from './usePaginatedEntityQuery'
 
 export type UsePatientsPaginatedOptions = {
-  pageSize: number,
+  pagination: { pageIndex: number, pageSize: number },
+  sorting?: SortInput[],
+  filtering?: FilterInput[],
 }
 
 export type UsePatientsPaginatedResult = {
   data: GetPatientsQuery['patients'],
   loading: boolean,
   error: Error | undefined,
-  fetchNextPage: () => void,
-  hasNextPage: boolean,
   totalCount: number | undefined,
   refetch: () => void,
 }
@@ -42,7 +43,12 @@ export function usePatientsPaginated(
   >(
     GetPatientsDocument,
     variables,
-    { pageSize: options.pageSize, getPageDataKey },
+    {
+      pagination: options.pagination,
+      sorting: options.sorting,
+      filtering: options.filtering,
+      getPageDataKey,
+    },
     (data) => data?.patients ?? [],
     (data) => data?.patientsTotal
   )

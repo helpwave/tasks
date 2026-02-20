@@ -6,7 +6,7 @@ import type {
 } from '@tanstack/react-table'
 import type { Dispatch, SetStateAction } from 'react'
 import type { DateFilterParameter, DatetimeFilterParameter, TableFilterValue } from '@helpwave/hightide'
-import { useStorage } from '@helpwave/hightide'
+import { useStorage } from '@/hooks/useStorage'
 
 const defaultPagination: PaginationState = {
   pageSize: 10,

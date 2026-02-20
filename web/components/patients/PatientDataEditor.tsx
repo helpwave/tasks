@@ -223,16 +223,6 @@ export const PatientDataEditor = ({
     }
   }, [updateForm, patientData])
 
-  const startDate = useMemo(() => {
-    const year = new Date()
-    year.setFullYear(year.getFullYear() - 100)
-    return year
-  }, [])
-
-  const endDate = useMemo(() => {
-    return new Date()
-  }, [])
-
   const clinic = useFormObserverKey({ formStore: form.store, formKey: 'clinic' })?.value ?? null
   const position = useFormObserverKey({ formStore: form.store, formKey: 'position' })?.value ?? null
   const teams = useFormObserverKey({ formStore: form.store, formKey: 'teams' })?.value ?? []
@@ -329,8 +319,6 @@ export const PatientDataEditor = ({
                   if(!value) return
                   dataProps.onEditComplete(value)
                 }}
-                start={startDate}
-                end={endDate}
                 mode="date"
               />
             )}

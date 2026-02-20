@@ -3,7 +3,6 @@ from collections.abc import AsyncGenerator
 import strawberry
 from api.audit import audit_log
 from api.context import Info
-from api.errors import raise_forbidden
 from api.decorators.filter_sort import (
     apply_filtering,
     apply_sorting,
@@ -14,13 +13,16 @@ from api.decorators.full_text_search import (
     apply_full_text_search,
     full_text_search_query,
 )
+from api.errors import raise_forbidden
 from api.inputs import (
+    CreateTaskInput,
     FilterInput,
     FullTextSearchInput,
     PaginationInput,
+    PatientState,
     SortInput,
+    UpdateTaskInput,
 )
-from api.inputs import CreateTaskInput, UpdateTaskInput
 from api.resolvers.base import BaseMutationResolver, BaseSubscriptionResolver
 from api.services.authorization import AuthorizationService
 from api.services.checksum import validate_checksum
@@ -40,12 +42,20 @@ class TaskQuery:
         result = await info.context.db.execute(
             select(models.Task)
             .where(models.Task.id == id)
-            .options(selectinload(models.Task.patient).selectinload(models.Patient.assigned_locations))
+            .options(
+                selectinload(models.Task.patient).selectinload(
+                    models.Patient.assigned_locations,
+                ),
+            ),
         )
         task = result.scalars().first()
         if task and task.patient:
             auth_service = AuthorizationService(info.context.db)
-            if not await auth_service.can_access_patient(info.context.user, task.patient, info.context):
+            if not await auth_service.can_access_patient(
+                info.context.user,
+                task.patient,
+                info.context,
+            ):
                 raise_forbidden()
         return task
 
@@ -67,22 +77,37 @@ class TaskQuery:
         auth_service = AuthorizationService(info.context.db)
 
         if patient_id:
-            if not await auth_service.can_access_patient_id(info.context.user, patient_id, info.context):
+            if not await auth_service.can_access_patient_id(
+                info.context.user,
+                patient_id,
+                info.context,
+            ):
                 raise_forbidden()
 
-            query = select(models.Task).options(
-                selectinload(models.Task.patient).selectinload(models.Patient.assigned_locations)
-            ).where(models.Task.patient_id == patient_id)
+            query = (
+                select(models.Task)
+                .options(
+                    selectinload(models.Task.patient).selectinload(
+                        models.Patient.assigned_locations,
+                    ),
+                )
+                .where(models.Task.patient_id == patient_id)
+            )
 
             if assignee_id:
                 query = query.where(models.Task.assignee_id == assignee_id)
             if assignee_team_id:
-                query = query.where(models.Task.assignee_team_id == assignee_team_id)
+                query = query.where(
+                    models.Task.assignee_team_id == assignee_team_id,
+                )
 
             return query
 
-        accessible_location_ids = await auth_service.get_user_accessible_location_ids(
-            info.context.user, info.context
+        accessible_location_ids = (
+            await auth_service.get_user_accessible_location_ids(
+                info.context.user,
+                info.context,
+            )
         )
 
         if not accessible_location_ids:
@@ -98,12 +123,17 @@ class TaskQuery:
         )
 
         children = select(models.LocationNode.id).join(
-            cte, models.LocationNode.parent_id == cte.c.id
+            cte,
+            models.LocationNode.parent_id == cte.c.id,
         )
         cte = cte.union_all(children)
 
         if root_location_ids:
-            invalid_ids = [lid for lid in root_location_ids if lid not in accessible_location_ids]
+            invalid_ids = [
+                lid
+                for lid in root_location_ids
+                if lid not in accessible_location_ids
+            ]
             if invalid_ids:
                 raise_forbidden()
             root_cte = (
@@ -112,7 +142,8 @@ class TaskQuery:
                 .cte(name="root_location_descendants", recursive=True)
             )
             root_children = select(models.LocationNode.id).join(
-                root_cte, models.LocationNode.parent_id == root_cte.c.id
+                root_cte,
+                models.LocationNode.parent_id == root_cte.c.id,
             )
             root_cte = root_cte.union_all(root_children)
         else:
@@ -128,14 +159,17 @@ class TaskQuery:
                 .cte(name="team_location_descendants", recursive=True)
             )
             team_children = select(models.LocationNode.id).join(
-                team_location_cte, models.LocationNode.parent_id == team_location_cte.c.id
+                team_location_cte,
+                models.LocationNode.parent_id == team_location_cte.c.id,
             )
             team_location_cte = team_location_cte.union_all(team_children)
 
         query = (
             select(models.Task)
             .options(
-                selectinload(models.Task.patient).selectinload(models.Patient.assigned_locations)
+                selectinload(models.Task.patient).selectinload(
+                    models.Patient.assigned_locations,
+                ),
             )
             .join(models.Patient, models.Task.patient_id == models.Patient.id)
             .outerjoin(
@@ -154,10 +188,17 @@ class TaskQuery:
                 )
                 | (
                     models.Patient.assigned_location_id.isnot(None)
-                    & models.Patient.assigned_location_id.in_(select(root_cte.c.id))
+                    & models.Patient.assigned_location_id.in_(
+                        select(root_cte.c.id),
+                    )
                 )
                 | (patient_locations.c.location_id.in_(select(root_cte.c.id)))
-                | (patient_teams.c.location_id.in_(select(root_cte.c.id)))
+                | (patient_teams.c.location_id.in_(select(root_cte.c.id))),
+            )
+            .where(
+                models.Patient.state.notin_(
+                    [PatientState.DISCHARGED.value, PatientState.DEAD.value]
+                )
             )
             .distinct()
         )
@@ -166,7 +207,9 @@ class TaskQuery:
             query = query.where(models.Task.assignee_id == assignee_id)
         if assignee_team_id:
             query = query.where(
-                models.Task.assignee_team_id.in_(select(team_location_cte.c.id))
+                models.Task.assignee_team_id.in_(
+                    select(team_location_cte.c.id),
+                ),
             )
 
         return query
@@ -186,18 +229,29 @@ class TaskQuery:
         auth_service = AuthorizationService(info.context.db)
 
         if patient_id:
-            if not await auth_service.can_access_patient_id(info.context.user, patient_id, info.context):
+            if not await auth_service.can_access_patient_id(
+                info.context.user,
+                patient_id,
+                info.context,
+            ):
                 raise_forbidden()
 
-            query = select(models.Task).where(models.Task.patient_id == patient_id)
+            query = select(models.Task).where(
+                models.Task.patient_id == patient_id,
+            )
 
             if assignee_id:
                 query = query.where(models.Task.assignee_id == assignee_id)
             if assignee_team_id:
-                query = query.where(models.Task.assignee_team_id == assignee_team_id)
+                query = query.where(
+                    models.Task.assignee_team_id == assignee_team_id,
+                )
         else:
-            accessible_location_ids = await auth_service.get_user_accessible_location_ids(
-                info.context.user, info.context
+            accessible_location_ids = (
+                await auth_service.get_user_accessible_location_ids(
+                    info.context.user,
+                    info.context,
+                )
             )
 
             if not accessible_location_ids:
@@ -213,12 +267,17 @@ class TaskQuery:
             )
 
             children = select(models.LocationNode.id).join(
-                cte, models.LocationNode.parent_id == cte.c.id
+                cte,
+                models.LocationNode.parent_id == cte.c.id,
             )
             cte = cte.union_all(children)
 
             if root_location_ids:
-                invalid_ids = [lid for lid in root_location_ids if lid not in accessible_location_ids]
+                invalid_ids = [
+                    lid
+                    for lid in root_location_ids
+                    if lid not in accessible_location_ids
+                ]
                 if invalid_ids:
                     raise_forbidden()
                 root_cte = (
@@ -227,7 +286,8 @@ class TaskQuery:
                     .cte(name="root_location_descendants", recursive=True)
                 )
                 root_children = select(models.LocationNode.id).join(
-                    root_cte, models.LocationNode.parent_id == root_cte.c.id
+                    root_cte,
+                    models.LocationNode.parent_id == root_cte.c.id,
                 )
                 root_cte = root_cte.union_all(root_children)
             else:
@@ -243,13 +303,17 @@ class TaskQuery:
                     .cte(name="team_location_descendants", recursive=True)
                 )
                 team_children = select(models.LocationNode.id).join(
-                    team_location_cte, models.LocationNode.parent_id == team_location_cte.c.id
+                    team_location_cte,
+                    models.LocationNode.parent_id == team_location_cte.c.id,
                 )
                 team_location_cte = team_location_cte.union_all(team_children)
 
             query = (
                 select(models.Task)
-                .join(models.Patient, models.Task.patient_id == models.Patient.id)
+                .join(
+                    models.Patient,
+                    models.Task.patient_id == models.Patient.id,
+                )
                 .outerjoin(
                     patient_locations,
                     models.Patient.id == patient_locations.c.patient_id,
@@ -266,10 +330,21 @@ class TaskQuery:
                     )
                     | (
                         models.Patient.assigned_location_id.isnot(None)
-                        & models.Patient.assigned_location_id.in_(select(root_cte.c.id))
+                        & models.Patient.assigned_location_id.in_(
+                            select(root_cte.c.id),
+                        )
                     )
-                    | (patient_locations.c.location_id.in_(select(root_cte.c.id)))
-                    | (patient_teams.c.location_id.in_(select(root_cte.c.id)))
+                    | (
+                        patient_locations.c.location_id.in_(
+                            select(root_cte.c.id),
+                        )
+                    )
+                    | (patient_teams.c.location_id.in_(select(root_cte.c.id))),
+                )
+                .where(
+                    models.Patient.state.notin_(
+                        [PatientState.DISCHARGED.value, PatientState.DEAD.value]
+                    )
                 )
                 .distinct()
             )
@@ -278,22 +353,32 @@ class TaskQuery:
                 query = query.where(models.Task.assignee_id == assignee_id)
             if assignee_team_id:
                 query = query.where(
-                    models.Task.assignee_team_id.in_(select(team_location_cte.c.id))
+                    models.Task.assignee_team_id.in_(
+                        select(team_location_cte.c.id),
+                    ),
                 )
 
         if search and search is not strawberry.UNSET:
             query = apply_full_text_search(query, search, models.Task)
 
         property_field_types = await get_property_field_types(
-            info.context.db, filtering, sorting
+            info.context.db,
+            filtering,
+            sorting,
         )
         if filtering:
             query = apply_filtering(
-                query, filtering, models.Task, property_field_types
+                query,
+                filtering,
+                models.Task,
+                property_field_types,
             )
         if sorting:
             query = apply_sorting(
-                query, sorting, models.Task, property_field_types
+                query,
+                sorting,
+                models.Task,
+                property_field_types,
             )
 
         subquery = query.subquery()
@@ -307,14 +392,18 @@ class TaskQuery:
     async def recent_tasks(
         self,
         info: Info,
+        root_location_ids: list[strawberry.ID] | None = None,
         filtering: list[FilterInput] | None = None,
         sorting: list[SortInput] | None = None,
         pagination: PaginationInput | None = None,
         search: FullTextSearchInput | None = None,
     ) -> list[TaskType]:
         auth_service = AuthorizationService(info.context.db)
-        accessible_location_ids = await auth_service.get_user_accessible_location_ids(
-            info.context.user, info.context
+        accessible_location_ids = (
+            await auth_service.get_user_accessible_location_ids(
+                info.context.user,
+                info.context,
+            )
         )
 
         if not accessible_location_ids:
@@ -330,14 +419,39 @@ class TaskQuery:
         )
 
         children = select(models.LocationNode.id).join(
-            cte, models.LocationNode.parent_id == cte.c.id
+            cte,
+            models.LocationNode.parent_id == cte.c.id,
         )
         cte = cte.union_all(children)
+
+        if root_location_ids:
+            invalid_ids = [
+                lid
+                for lid in root_location_ids
+                if lid not in accessible_location_ids
+            ]
+            if invalid_ids:
+                raise_forbidden()
+            root_cte = (
+                select(models.LocationNode.id)
+                .where(models.LocationNode.id.in_(root_location_ids))
+                .cte(name="recent_tasks_root_descendants", recursive=True)
+            )
+            root_children = select(models.LocationNode.id).join(
+                root_cte,
+                models.LocationNode.parent_id == root_cte.c.id,
+            )
+            root_cte = root_cte.union_all(root_children)
+            location_cte = root_cte
+        else:
+            location_cte = cte
 
         query = (
             select(models.Task)
             .options(
-                selectinload(models.Task.patient).selectinload(models.Patient.assigned_locations)
+                selectinload(models.Task.patient).selectinload(
+                    models.Patient.assigned_locations,
+                ),
             )
             .join(models.Patient, models.Task.patient_id == models.Patient.id)
             .outerjoin(
@@ -349,17 +463,28 @@ class TaskQuery:
                 models.Patient.id == patient_teams.c.patient_id,
             )
             .where(
-                (models.Patient.clinic_id.in_(select(cte.c.id)))
+                (models.Patient.clinic_id.in_(select(location_cte.c.id)))
                 | (
                     models.Patient.position_id.isnot(None)
-                    & models.Patient.position_id.in_(select(cte.c.id))
+                    & models.Patient.position_id.in_(select(location_cte.c.id))
                 )
                 | (
                     models.Patient.assigned_location_id.isnot(None)
-                    & models.Patient.assigned_location_id.in_(select(cte.c.id))
+                    & models.Patient.assigned_location_id.in_(
+                        select(location_cte.c.id),
+                    )
                 )
-                | (patient_locations.c.location_id.in_(select(cte.c.id)))
-                | (patient_teams.c.location_id.in_(select(cte.c.id)))
+                | (
+                    patient_locations.c.location_id.in_(
+                        select(location_cte.c.id),
+                    )
+                )
+                | (patient_teams.c.location_id.in_(select(location_cte.c.id))),
+            )
+            .where(
+                models.Patient.state.notin_(
+                    [PatientState.DISCHARGED.value, PatientState.DEAD.value]
+                )
             )
             .distinct()
         )
@@ -374,13 +499,17 @@ class TaskQuery:
     async def recentTasksTotal(
         self,
         info: Info,
+        root_location_ids: list[strawberry.ID] | None = None,
         filtering: list[FilterInput] | None = None,
         sorting: list[SortInput] | None = None,
         search: FullTextSearchInput | None = None,
     ) -> int:
         auth_service = AuthorizationService(info.context.db)
-        accessible_location_ids = await auth_service.get_user_accessible_location_ids(
-            info.context.user, info.context
+        accessible_location_ids = (
+            await auth_service.get_user_accessible_location_ids(
+                info.context.user,
+                info.context,
+            )
         )
 
         if not accessible_location_ids:
@@ -396,9 +525,32 @@ class TaskQuery:
         )
 
         children = select(models.LocationNode.id).join(
-            cte, models.LocationNode.parent_id == cte.c.id
+            cte,
+            models.LocationNode.parent_id == cte.c.id,
         )
         cte = cte.union_all(children)
+
+        if root_location_ids:
+            invalid_ids = [
+                lid
+                for lid in root_location_ids
+                if lid not in accessible_location_ids
+            ]
+            if invalid_ids:
+                raise_forbidden()
+            root_cte = (
+                select(models.LocationNode.id)
+                .where(models.LocationNode.id.in_(root_location_ids))
+                .cte(name="recent_tasks_total_root", recursive=True)
+            )
+            root_children = select(models.LocationNode.id).join(
+                root_cte,
+                models.LocationNode.parent_id == root_cte.c.id,
+            )
+            root_cte = root_cte.union_all(root_children)
+            location_cte = root_cte
+        else:
+            location_cte = cte
 
         query = (
             select(models.Task)
@@ -412,17 +564,28 @@ class TaskQuery:
                 models.Patient.id == patient_teams.c.patient_id,
             )
             .where(
-                (models.Patient.clinic_id.in_(select(cte.c.id)))
+                (models.Patient.clinic_id.in_(select(location_cte.c.id)))
                 | (
                     models.Patient.position_id.isnot(None)
-                    & models.Patient.position_id.in_(select(cte.c.id))
+                    & models.Patient.position_id.in_(select(location_cte.c.id))
                 )
                 | (
                     models.Patient.assigned_location_id.isnot(None)
-                    & models.Patient.assigned_location_id.in_(select(cte.c.id))
+                    & models.Patient.assigned_location_id.in_(
+                        select(location_cte.c.id),
+                    )
                 )
-                | (patient_locations.c.location_id.in_(select(cte.c.id)))
-                | (patient_teams.c.location_id.in_(select(cte.c.id)))
+                | (
+                    patient_locations.c.location_id.in_(
+                        select(location_cte.c.id),
+                    )
+                )
+                | (patient_teams.c.location_id.in_(select(location_cte.c.id))),
+            )
+            .where(
+                models.Patient.state.notin_(
+                    [PatientState.DISCHARGED.value, PatientState.DEAD.value]
+                )
             )
             .distinct()
         )
@@ -431,15 +594,23 @@ class TaskQuery:
             query = apply_full_text_search(query, search, models.Task)
 
         property_field_types = await get_property_field_types(
-            info.context.db, filtering, sorting
+            info.context.db,
+            filtering,
+            sorting,
         )
         if filtering:
             query = apply_filtering(
-                query, filtering, models.Task, property_field_types
+                query,
+                filtering,
+                models.Task,
+                property_field_types,
             )
         if sorting:
             query = apply_sorting(
-                query, sorting, models.Task, property_field_types
+                query,
+                sorting,
+                models.Task,
+                property_field_types,
             )
 
         subquery = query.subquery()
@@ -458,7 +629,11 @@ class TaskMutation(BaseMutationResolver[models.Task]):
     @audit_log("create_task")
     async def create_task(self, info: Info, data: CreateTaskInput) -> TaskType:
         auth_service = AuthorizationService(info.context.db)
-        if not await auth_service.can_access_patient_id(info.context.user, data.patient_id, info.context):
+        if not await auth_service.can_access_patient_id(
+            info.context.user,
+            data.patient_id,
+            info.context,
+        ):
             raise_forbidden()
 
         if data.assignee_id and data.assignee_team_id:
@@ -472,16 +647,22 @@ class TaskMutation(BaseMutationResolver[models.Task]):
             description=data.description,
             patient_id=data.patient_id,
             assignee_id=data.assignee_id,
-            assignee_team_id=data.assignee_team_id if not data.assignee_id else None,
+            assignee_team_id=(
+                data.assignee_team_id if not data.assignee_id else None
+            ),
             due_date=normalize_datetime_to_utc(data.due_date),
             priority=data.priority.value if data.priority else None,
             estimated_time=data.estimated_time,
         )
 
         if data.properties is not None:
-            property_service = TaskMutation._get_property_service(info.context.db)
+            property_service = TaskMutation._get_property_service(
+                info.context.db,
+            )
             await property_service.process_properties(
-                new_task, data.properties, "task"
+                new_task,
+                data.properties,
+                "task",
             )
 
         task = await BaseMutationResolver.create_and_notify(
@@ -490,15 +671,18 @@ class TaskMutation(BaseMutationResolver[models.Task]):
             models.Task,
             "task",
             "patient" if new_task.patient_id else None,
-            new_task.patient_id if new_task.patient_id else None,
+            new_task.patient_id or None,
         )
         if task.patient_id:
             from api.audit import AuditLogger
+
             AuditLogger.log_activity(
                 case_id=task.patient_id,
                 activity_name="task_created",
                 user_id=info.context.user.id if info.context.user else None,
-                context={"payload": {"task_id": task.id, "task_title": task.title}},
+                context={
+                    "payload": {"task_id": task.id, "task_title": task.title},
+                },
             )
         return task
 
@@ -514,7 +698,11 @@ class TaskMutation(BaseMutationResolver[models.Task]):
         result = await db.execute(
             select(models.Task)
             .where(models.Task.id == id)
-            .options(selectinload(models.Task.patient).selectinload(models.Patient.assigned_locations))
+            .options(
+                selectinload(models.Task.patient).selectinload(
+                    models.Patient.assigned_locations,
+                ),
+            ),
         )
         task = result.scalars().first()
         if not task:
@@ -522,7 +710,11 @@ class TaskMutation(BaseMutationResolver[models.Task]):
 
         if task.patient:
             auth_service = AuthorizationService(db)
-            if not await auth_service.can_access_patient(info.context.user, task.patient, info.context):
+            if not await auth_service.can_access_patient(
+                info.context.user,
+                task.patient,
+                info.context,
+            ):
                 raise_forbidden()
 
         if data.checksum:
@@ -568,7 +760,9 @@ class TaskMutation(BaseMutationResolver[models.Task]):
         if data.properties is not None:
             property_service = TaskMutation._get_property_service(db)
             await property_service.process_properties(
-                task, data.properties, "task"
+                task,
+                data.properties,
+                "task",
             )
 
         return await BaseMutationResolver.update_and_notify(
@@ -590,7 +784,11 @@ class TaskMutation(BaseMutationResolver[models.Task]):
         result = await db.execute(
             select(models.Task)
             .where(models.Task.id == id)
-            .options(selectinload(models.Task.patient).selectinload(models.Patient.assigned_locations))
+            .options(
+                selectinload(models.Task.patient).selectinload(
+                    models.Patient.assigned_locations,
+                ),
+            ),
         )
         task = result.scalars().first()
         if not task:
@@ -598,12 +796,21 @@ class TaskMutation(BaseMutationResolver[models.Task]):
 
         if task.patient:
             auth_service = AuthorizationService(db)
-            if not await auth_service.can_access_patient(info.context.user, task.patient, info.context):
+            if not await auth_service.can_access_patient(
+                info.context.user,
+                task.patient,
+                info.context,
+            ):
                 raise_forbidden()
 
         field_updater(task)
         await BaseMutationResolver.update_and_notify(
-            info, task, models.Task, "task", "patient", task.patient_id
+            info,
+            task,
+            models.Task,
+            "task",
+            "patient",
+            task.patient_id,
         )
         return task
 
@@ -620,7 +827,7 @@ class TaskMutation(BaseMutationResolver[models.Task]):
             id,
             lambda task: (
                 setattr(task, "assignee_id", user_id),
-                setattr(task, "assignee_team_id", None)
+                setattr(task, "assignee_team_id", None),
             ),
         )
 
@@ -632,7 +839,7 @@ class TaskMutation(BaseMutationResolver[models.Task]):
             id,
             lambda task: (
                 setattr(task, "assignee_id", None),
-                setattr(task, "assignee_team_id", None)
+                setattr(task, "assignee_team_id", None),
             ),
         )
 
@@ -649,19 +856,23 @@ class TaskMutation(BaseMutationResolver[models.Task]):
             id,
             lambda task: (
                 setattr(task, "assignee_id", None),
-                setattr(task, "assignee_team_id", team_id)
+                setattr(task, "assignee_team_id", team_id),
             ),
         )
 
     @strawberry.mutation
     @audit_log("unassign_task_from_team")
-    async def unassign_task_from_team(self, info: Info, id: strawberry.ID) -> TaskType:
+    async def unassign_task_from_team(
+        self,
+        info: Info,
+        id: strawberry.ID,
+    ) -> TaskType:
         return await TaskMutation._update_task_field(
             info,
             id,
             lambda task: (
                 setattr(task, "assignee_id", None),
-                setattr(task, "assignee_team_id", None)
+                setattr(task, "assignee_team_id", None),
             ),
         )
 
@@ -675,11 +886,14 @@ class TaskMutation(BaseMutationResolver[models.Task]):
         )
         if task.patient_id:
             from api.audit import AuditLogger
+
             AuditLogger.log_activity(
                 case_id=task.patient_id,
                 activity_name="task_completed",
                 user_id=info.context.user.id if info.context.user else None,
-                context={"payload": {"task_id": task.id, "task_title": task.title}},
+                context={
+                    "payload": {"task_id": task.id, "task_title": task.title},
+                },
             )
         return task
 
@@ -699,7 +913,11 @@ class TaskMutation(BaseMutationResolver[models.Task]):
         result = await db.execute(
             select(models.Task)
             .where(models.Task.id == id)
-            .options(selectinload(models.Task.patient).selectinload(models.Patient.assigned_locations))
+            .options(
+                selectinload(models.Task.patient).selectinload(
+                    models.Patient.assigned_locations,
+                ),
+            ),
         )
         task = result.scalars().first()
         if not task:
@@ -707,12 +925,21 @@ class TaskMutation(BaseMutationResolver[models.Task]):
 
         if task.patient:
             auth_service = AuthorizationService(db)
-            if not await auth_service.can_access_patient(info.context.user, task.patient, info.context):
+            if not await auth_service.can_access_patient(
+                info.context.user,
+                task.patient,
+                info.context,
+            ):
                 raise_forbidden()
 
         patient_id = task.patient_id
         await BaseMutationResolver.delete_entity(
-            info, task, models.Task, "task", "patient", patient_id
+            info,
+            task,
+            models.Task,
+            "task",
+            "patient",
+            patient_id,
         )
         return True
 
@@ -762,7 +989,9 @@ class TaskSubscription(BaseSubscriptionResolver):
             else None
         )
         base = BaseSubscriptionResolver.entity_updated(
-            info, "task", task_id
+            info,
+            "task",
+            task_id,
         )
         async for updated_id in subscribe_with_location_filter(
             base,

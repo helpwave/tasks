@@ -195,3 +195,11 @@ export const restoreSession = async (): Promise<User | undefined> => {
 export const onTokenExpiringCallback = (callback: () => void) => {
   userManager.events.addAccessTokenExpiring(callback)
 }
+
+export const SESSION_EXPIRED_EVENT = 'sessionExpired'
+
+export const dispatchSessionExpired = () => {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent(SESSION_EXPIRED_EVENT))
+  }
+}

@@ -1,5 +1,5 @@
-import { useMemo, useState, forwardRef, useImperativeHandle, useEffect, useCallback } from 'react'
-import { Chip, FillerCell, HelpwaveLogo, LoadingContainer, SearchBar, ProgressIndicator, Tooltip, Drawer, TableProvider, TableDisplay, TableColumnSwitcher, IconButton, useLocale } from '@helpwave/hightide'
+import { useMemo, useState, forwardRef, useImperativeHandle, useEffect, useCallback, useRef } from 'react'
+import { Chip, FillerCell, HelpwaveLogo, LoadingContainer, SearchBar, ProgressIndicator, Tooltip, Drawer, TableProvider, TableDisplay, TableColumnSwitcher, TablePagination, IconButton, useLocale } from '@helpwave/hightide'
 import { PlusIcon } from 'lucide-react'
 import { Sex, PatientState, type GetPatientsQuery, type TaskType, PropertyEntity, type FullTextSearchInput, type LocationType } from '@/api/gql/generated'
 import { usePropertyDefinitions, usePatientsPaginated, useRefreshingEntityIds } from '@/data'
@@ -14,7 +14,7 @@ import type { ColumnDef, Row, TableState } from '@tanstack/table-core'
 import { getPropertyColumnsForEntity } from '@/utils/propertyColumn'
 import { useStorageSyncedTableState } from '@/hooks/useTableState'
 import { usePropertyColumnVisibility } from '@/hooks/usePropertyColumnVisibility'
-import { TABLE_PAGE_SIZE } from '@/utils/tableConfig'
+import { columnFiltersToFilterInput, paginationStateToPaginationInput, sortingStateToSortInput } from '@/utils/tableStateToApi'
 
 export type PatientViewModel = {
   id: string,
@@ -96,6 +96,11 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
     }
     : undefined
 
+  const apiFiltering = useMemo(() => columnFiltersToFilterInput(filters), [filters])
+  const apiSorting = useMemo(() => sortingStateToSortInput(sorting), [sorting])
+  const apiPagination = useMemo(() => paginationStateToPaginationInput(pagination), [pagination])
+
+  const lastTotalCountRef = useRef<number | undefined>(undefined)
   const { data: patientsData, refetch, totalCount, loading: patientsLoading } = usePatientsPaginated(
     {
       locationId: locationId || undefined,
@@ -103,8 +108,14 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       states: patientStates,
       search: searchInput,
     },
-    { pageSize: TABLE_PAGE_SIZE }
+    {
+      pagination: apiPagination,
+      sorting: apiSorting.length > 0 ? apiSorting : undefined,
+      filtering: apiFiltering.length > 0 ? apiFiltering : undefined,
+    }
   )
+  if (totalCount != null) lastTotalCountRef.current = totalCount
+  const stableTotalCount = totalCount ?? lastTotalCountRef.current
 
   const patients: PatientViewModel[] = useMemo(() => {
     if (!patientsData || patientsData.length === 0) return []
@@ -282,7 +293,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       header: translation('birthdate'),
       accessorKey: 'birthdate',
       cell: ({ row }) => {
-        if(refreshingPatientIds.has(row.original.id))
+        if (refreshingPatientIds.has(row.original.id))
           return rowLoadingCell
 
         const now = new Date()
@@ -357,6 +368,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       columns={columns}
       fillerRowCell={fillerRowCell}
       onRowClick={onRowClick}
+      manualPagination={true}
       initialState={{
         pagination: {
           pageSize: 10,
@@ -373,7 +385,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       onSortingChange={setSorting}
       onColumnFiltersChange={setFilters}
       enableMultiSort={true}
-      pageCount={totalCount ? Math.ceil(totalCount / pagination.pageSize) : undefined}
+      pageCount={stableTotalCount != null ? Math.ceil(stableTotalCount / pagination.pageSize) : -1}
     >
       <div className="flex flex-col h-full gap-4">
         <div className="flex flex-col sm:flex-row justify-between w-full gap-4">
@@ -406,6 +418,13 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
             </div>
           )}
           <TableDisplay />
+          {totalCount != null && totalCount > 0 && (
+            <TablePagination
+              allowChangingPageSize={true}
+              pageSizeOptions={[10, 25, 50]}
+              className="mt-2"
+            />
+          )}
         </div>
         <Drawer
           isOpen={isPanelOpen}

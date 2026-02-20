@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from 'react'
-import { Button, Chip, IconButton, PopUp, PopUpContext, PopUpOpener, PopUpRoot, useStorage, Visibility } from '@helpwave/hightide'
+import { Button, Chip, IconButton, PopUp, PopUpContext, PopUpOpener, PopUpRoot, Visibility } from '@helpwave/hightide'
+import { useStorage } from '@/hooks/useStorage'
 import { Bell } from 'lucide-react'
 import { useOverviewData } from '@/data'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'

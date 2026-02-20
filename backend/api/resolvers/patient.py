@@ -229,6 +229,7 @@ class PatientQuery:
     async def recent_patients(
         self,
         info: Info,
+        root_location_ids: list[strawberry.ID] | None = None,
         filtering: list[FilterInput] | None = None,
         sorting: list[SortInput] | None = None,
         pagination: PaginationInput | None = None,
@@ -270,12 +271,52 @@ class PatientQuery:
             info.context.user, query, accessible_location_ids
         )
 
+        if root_location_ids:
+            valid_root_ids = [lid for lid in root_location_ids if lid in accessible_location_ids]
+            if valid_root_ids:
+                root_cte = (
+                    select(models.LocationNode.id)
+                    .where(models.LocationNode.id.in_(valid_root_ids))
+                    .cte(name="recent_root_descendants", recursive=True)
+                )
+                root_children = select(models.LocationNode.id).join(
+                    root_cte, models.LocationNode.parent_id == root_cte.c.id
+                )
+                root_cte = root_cte.union_all(root_children)
+                patient_locations_root = aliased(models.patient_locations)
+                patient_teams_root = aliased(models.patient_teams)
+                query = (
+                    query.outerjoin(
+                        patient_locations_root,
+                        models.Patient.id == patient_locations_root.c.patient_id,
+                    )
+                    .outerjoin(
+                        patient_teams_root,
+                        models.Patient.id == patient_teams_root.c.patient_id,
+                    )
+                    .where(
+                        (models.Patient.clinic_id.in_(select(root_cte.c.id)))
+                        | (
+                            models.Patient.position_id.isnot(None)
+                            & models.Patient.position_id.in_(select(root_cte.c.id))
+                        )
+                        | (
+                            models.Patient.assigned_location_id.isnot(None)
+                            & models.Patient.assigned_location_id.in_(select(root_cte.c.id))
+                        )
+                        | (patient_locations_root.c.location_id.in_(select(root_cte.c.id)))
+                        | (patient_teams_root.c.location_id.in_(select(root_cte.c.id)))
+                    )
+                    .distinct()
+                )
+
         return query
 
     @strawberry.field
     async def recentPatientsTotal(
         self,
         info: Info,
+        root_location_ids: list[strawberry.ID] | None = None,
         filtering: list[FilterInput] | None = None,
         sorting: list[SortInput] | None = None,
         search: FullTextSearchInput | None = None,
@@ -310,6 +351,45 @@ class PatientQuery:
         query = auth_service.filter_patients_by_access(
             info.context.user, query, accessible_location_ids
         )
+
+        if root_location_ids:
+            valid_root_ids = [lid for lid in root_location_ids if lid in accessible_location_ids]
+            if valid_root_ids:
+                root_cte = (
+                    select(models.LocationNode.id)
+                    .where(models.LocationNode.id.in_(valid_root_ids))
+                    .cte(name="recent_patients_total_root", recursive=True)
+                )
+                root_children = select(models.LocationNode.id).join(
+                    root_cte, models.LocationNode.parent_id == root_cte.c.id
+                )
+                root_cte = root_cte.union_all(root_children)
+                patient_locations_root = aliased(models.patient_locations)
+                patient_teams_root = aliased(models.patient_teams)
+                query = (
+                    query.outerjoin(
+                        patient_locations_root,
+                        models.Patient.id == patient_locations_root.c.patient_id,
+                    )
+                    .outerjoin(
+                        patient_teams_root,
+                        models.Patient.id == patient_teams_root.c.patient_id,
+                    )
+                    .where(
+                        (models.Patient.clinic_id.in_(select(root_cte.c.id)))
+                        | (
+                            models.Patient.position_id.isnot(None)
+                            & models.Patient.position_id.in_(select(root_cte.c.id))
+                        )
+                        | (
+                            models.Patient.assigned_location_id.isnot(None)
+                            & models.Patient.assigned_location_id.in_(select(root_cte.c.id))
+                        )
+                        | (patient_locations_root.c.location_id.in_(select(root_cte.c.id)))
+                        | (patient_teams_root.c.location_id.in_(select(root_cte.c.id)))
+                    )
+                    .distinct()
+                )
 
         if search and search is not strawberry.UNSET:
             query = apply_full_text_search(query, search, models.Patient)

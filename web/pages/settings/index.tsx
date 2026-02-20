@@ -11,9 +11,9 @@ import {
   SelectOption,
   ThemeUtil,
   useLocale,
-  useTheme,
-  useStorage
+  useTheme
 } from '@helpwave/hightide'
+import { useStorage } from '@/hooks/useStorage'
 import type { HightideTranslationLocales, ThemeType } from '@helpwave/hightide'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { useAuth } from '@/hooks/useAuth'

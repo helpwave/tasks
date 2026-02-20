@@ -67,11 +67,16 @@ class PropertyValueType:
     async def team(
         self,
         info: Info,
-    ) -> Annotated["LocationNodeType", strawberry.lazy("api.types.location")] | None:
+    ) -> (
+        Annotated["LocationNodeType", strawberry.lazy("api.types.location")]
+        | None
+    ):
         if not self.user_value or not self.user_value.startswith("team:"):
             return None
         team_id = self.user_value[5:]
         result = await info.context.db.execute(
-            select(models.LocationNode).where(models.LocationNode.id == team_id),
+            select(models.LocationNode).where(
+                models.LocationNode.id == team_id,
+            ),
         )
         return result.scalars().first()

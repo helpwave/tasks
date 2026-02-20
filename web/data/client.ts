@@ -3,6 +3,7 @@ import { getMainDefinition } from '@apollo/client/utilities'
 import { buildCacheConfig } from './cache/policies'
 import { createAuthHttpLink } from './link/http'
 import { createWsLink } from './link/ws'
+import { createSessionExpiredErrorLink } from './link/error'
 import type { GetToken } from './link/http'
 
 export type CreateApolloClientOptions = {
@@ -11,7 +12,7 @@ export type CreateApolloClientOptions = {
 
 export function createApolloClient(options: CreateApolloClientOptions): ApolloClient {
   const { getToken } = options
-  const http = createAuthHttpLink(getToken)
+  const http = createSessionExpiredErrorLink().concat(createAuthHttpLink(getToken))
   const ws = createWsLink(getToken)
   const link =
     typeof window !== 'undefined'

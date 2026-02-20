@@ -72,11 +72,12 @@ const StatCard = ({ label, value, icon, iconWrapperClassName, className }: StatC
 
 const Dashboard: NextPage = () => {
   const translation = useTasksTranslation()
-  const { user, myTasksCount, totalPatientsCount } = useTasksContext()
+  const { user, myTasksCount, totalPatientsCount, selectedRootLocationIds } = useTasksContext()
   const overviewVariables = useMemo(() => ({
+    rootLocationIds: selectedRootLocationIds ?? undefined,
     recentTasksPagination: { pageSize: 5, pageIndex: 0 },
     recentPatientsPagination: { pageSize: 5, pageIndex: 0 },
-  }), [])
+  }), [selectedRootLocationIds])
   const { data, refetch } = useOverviewData(overviewVariables)
   const [completeTask] = useCompleteTask()
   const [reopenTask] = useReopenTask()
