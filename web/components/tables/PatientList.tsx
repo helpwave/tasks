@@ -206,8 +206,15 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       id: 'state',
       header: translation('status'),
       accessorFn: ({ state }) => [state],
-      cell: ({ row }) =>
-        refreshingPatientIds.has(row.original.id) ? rowLoadingCell : <PatientStateChip state={row.original.state} />,
+      cell: ({ row }) => {
+        if (refreshingPatientIds.has(row.original.id)) return rowLoadingCell
+        return (
+          <>
+            <span className="print:block hidden">{translation('patientState', { state: row.original.state as string })}</span>
+            <PatientStateChip state={row.original.state} className="print:hidden" />
+          </>
+        )
+      },
       minSize: 120,
       size: 144,
       maxSize: 180,
@@ -238,14 +245,17 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
         }[sex] || sex
 
         return (
-          <Chip
-            color={sex === Sex.Unknown ? 'neutral' : undefined}
-            coloringStyle="tonal"
-            size="sm"
-            className={`${colorClass} font-[var(--font-space-grotesk)] uppercase text-xs`}
-          >
-            <span>{label}</span>
-          </Chip>
+          <>
+            <span className="print:block hidden">{label}</span>
+            <Chip
+              color={sex === Sex.Unknown ? 'neutral' : undefined}
+              coloringStyle="tonal"
+              size="sm"
+              className={`${colorClass} font-[var(--font-space-grotesk)] uppercase text-xs print:hidden`}
+            >
+              <span>{label}</span>
+            </Chip>
+          </>
         )
       },
       minSize: 160,
@@ -266,10 +276,15 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       id: 'position',
       header: translation('location'),
       accessorFn: ({ position }: PatientViewModel) => position?.title,
-      cell: ({ row }: { row: Row<PatientViewModel> }) =>
-        refreshingPatientIds.has(row.original.id) ? rowLoadingCell : (
-          <LocationChipsBySetting locations={row.original.position ? [row.original.position] : []} small />
-        ),
+      cell: ({ row }: { row: Row<PatientViewModel> }) => {
+        if (refreshingPatientIds.has(row.original.id)) return rowLoadingCell
+        return (
+          <>
+            <span className="print:block hidden">{row.original.position?.title}</span>
+            <LocationChipsBySetting locations={row.original.position ? [row.original.position] : []} small className="print:hidden" />
+          </>
+        )
+      },
       minSize: 200,
       size: 260,
       maxSize: 320,
@@ -286,7 +301,12 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
         if (refreshingPatientIds.has(row.original.id)) return rowLoadingCell
         const byKind = getLocationNodesByKind(row.original.position ?? null)
         const node = byKind[kind]
-        return <LocationChips locations={node ? [{ id: node.id, title: node.title, kind: node.kind as LocationType }] : []} small />
+        return (
+          <>
+            <span className="print:block hidden">{node?.title}</span>
+            <LocationChips locations={node ? [{ id: node.id, title: node.title, kind: node.kind as LocationType }] : []} small className="print:hidden" />
+          </>
+        )
       },
       minSize: 160,
       size: 220,
@@ -312,9 +332,9 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
         }
 
         return (
-          <Tooltip tooltip={dateFormat.format(row.original.birthdate)} containerClassName="w-fit">
-            {translation('nYears', { years })}
-          </Tooltip>
+          <span>
+            {dateFormat.format(row.original.birthdate) + ' (' + translation('nYears', { years }) + ')'}
+          </span>
         )
       },
       minSize: 200,
@@ -422,7 +442,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
               <HelpwaveLogo animate="loading" color="currentColor" height={64} width={64} />
             </div>
           )}
-          <TableDisplay />
+          <TableDisplay className="print-content"/>
           {totalCount != null && (
             <TablePagination
               allowChangingPageSize={true}

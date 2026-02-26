@@ -22,7 +22,7 @@ interface LocationChipsProps extends HTMLAttributes<HTMLDivElement> {
   placeholderProps?: HTMLAttributes<HTMLSpanElement>,
 }
 
-export const LocationChips = ({ locations, disableLink = false, small = false, placeholderProps, ...props }: LocationChipsProps) => {
+export const LocationChips = ({ locations, disableLink = false, small = false, placeholderProps, className, ...props }: LocationChipsProps) => {
   const translation = useTasksTranslation()
 
   const firstLocation = locations[0]
@@ -45,7 +45,7 @@ export const LocationChips = ({ locations, disableLink = false, small = false, p
     <Chip
       size="sm"
       color="neutral"
-      className={clsx('cursor-pointer hover:opacity-80 transition-opacity max-w-full', small && 'text-xs')}
+      className={clsx('cursor-pointer hover:opacity-80 transition-opacity max-w-full', { 'text-xs': small }, className)}
     >
       <div className="flex items-center gap-1 min-w-0">
         <MapPin className="size-force-3 shrink-0" />
@@ -60,7 +60,7 @@ export const LocationChips = ({ locations, disableLink = false, small = false, p
   return (
     <div
       {...props}
-      className={clsx('flex flex-wrap items-center gap-1.5', props.className)}
+      className={clsx('flex flex-wrap items-center gap-1.5', className)}
       onClick={(e) => {
         e.stopPropagation()
         props.onClick?.(e)
