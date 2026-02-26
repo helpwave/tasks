@@ -103,12 +103,9 @@ export const PropertyCell = ({
     )
   case FieldType.FieldTypeText: {
     const textValue = property.textValue ?? property.numberValue ?? ''
-    const displayText = typeof textValue === 'string' && textValue.length > 15
-      ? `${textValue.substring(0, 15)}...`
-      : String(textValue)
     return (
       <Tooltip tooltip={textValue}>
-        <span className="truncate block max-w-full overflow-hidden text-ellipsis">{displayText}</span>
+        <span className="truncate block max-w-full overflow-hidden text-ellipsis">{textValue}</span>
       </Tooltip>
     )
   }

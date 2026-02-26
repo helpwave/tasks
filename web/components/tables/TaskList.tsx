@@ -374,7 +374,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
                 }
               }}
               onClick={(e) => e.stopPropagation()}
-              className={clsx('rounded-full', PriorityUtils.toCheckboxColor(task.priority as TaskPriority | null | undefined))}
+              className={clsx('not-print:rounded-full', PriorityUtils.toCheckboxColor(task.priority as TaskPriority | null | undefined))}
             />
           )
         },
@@ -413,9 +413,9 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
           const closeToDue = DueDateUtils.isCloseToDueDate(row.original.dueDate, row.original.done)
           let colorClass = ''
           if (overdue) {
-            colorClass = '!text-red-500'
+            colorClass = 'text-red-500'
           } else if (closeToDue) {
-            colorClass = '!text-orange-500'
+            colorClass = 'text-orange-500'
           }
           return (
             <DateDisplay
@@ -446,17 +446,20 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
             )
           }
           return (
-            <Button
-              color="neutral"
-              size="sm"
-              onClick={event => {
-                event.stopPropagation()
-                setSelectedPatientId(data.patient?.id ?? null)
-              }}
-              className="flex-row-0 justify-start w-fit"
-            >
-              {data.patient?.name}
-            </Button>
+            <>
+              <span className="print:block hidden">{data.patient?.name}</span>
+              <Button
+                color="neutral"
+                size="sm"
+                onClick={event => {
+                  event.stopPropagation()
+                  setSelectedPatientId(data.patient?.id ?? null)
+                }}
+                className="flex-row-0 justify-start w-fit print:hidden"
+              >
+                {data.patient?.name}
+              </Button>
+            </>
           )
         },
         sortingFn: 'text',
@@ -486,7 +489,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
           if (assigneeTeam) {
             return (
               <div className="flex-row-2 items-center">
-                <Users className="size-5 text-description" />
+                <Users className="size-5 text-description print:hidden" />
                 <span>{assigneeTeam.title}</span>
               </div>
             )
@@ -494,19 +497,22 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
 
           if (assignee) {
             return (
-              <button
-                onClick={() => setSelectedUserPopupId(assignee.id)}
-                className="flex-row-2 items-center hover:opacity-75 transition-opacity"
-              >
-                <AvatarStatusComponent
-                  isOnline={assignee?.isOnline ?? null}
-                  image={{
-                    avatarUrl: assignee.avatarURL || 'https://cdn.helpwave.de/boringavatar.svg',
-                    alt: assignee.name
-                  }}
-                />
-                <span>{assignee.name}</span>
-              </button>
+              <>
+                <span className="print:block hidden">{assignee.name}</span>
+                <button
+                  onClick={() => setSelectedUserPopupId(assignee.id)}
+                  className="flex-row-2 items-center hover:opacity-75 transition-opacity print:hidden"
+                >
+                  <AvatarStatusComponent
+                    isOnline={assignee?.isOnline ?? null}
+                    image={{
+                      avatarUrl: assignee.avatarURL || 'https://cdn.helpwave.de/boringavatar.svg',
+                      alt: assignee.name
+                    }}
+                  />
+                  <span>{assignee.name}</span>
+                </button>
+              </>
             )
           }
 
@@ -618,7 +624,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
               display: none !important;
             }
           `}</style>
-          <TableDisplay />
+          <TableDisplay className="print-content"/>
           {totalCount != null && (
             <TablePagination
               allowChangingPageSize={true}

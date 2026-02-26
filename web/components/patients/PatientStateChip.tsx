@@ -1,12 +1,14 @@
+import type { ChipProps } from '@helpwave/hightide'
 import { Chip } from '@helpwave/hightide'
 import { PatientState } from '@/api/gql/generated'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
+import clsx from 'clsx'
 
-type PatientStateChipProps = {
+export interface PatientStateChipProps extends Omit<ChipProps, 'children' | 'color'> {
   state: PatientState,
 }
 
-export const PatientStateChip = ({ state }: PatientStateChipProps) => {
+export const PatientStateChip = ({ state, ...props }: PatientStateChipProps) => {
   const translation = useTasksTranslation()
 
   const getColor = (state: PatientState): 'positive' | 'warning' | 'neutral' | 'negative' => {
@@ -25,7 +27,12 @@ export const PatientStateChip = ({ state }: PatientStateChipProps) => {
   }
 
   return (
-    <Chip color={getColor(state)} size="sm" className="font-[var(--font-space-grotesk)] uppercase text-xs">
+    <Chip
+      {...props}
+      color={getColor(state)}
+      size={props.size ?? 'sm'}
+      className={clsx('font-[var(--font-space-grotesk)] uppercase text-xs', props.className)}
+    >
       {translation('patientState', { state: state as string })}
     </Chip>
   )
