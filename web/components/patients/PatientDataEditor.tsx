@@ -47,6 +47,13 @@ const convertBirthdateStringToDate = (birthdate: string | null | undefined): Dat
   return new Date(birthdate)
 }
 
+const normalizeBirthdateValue = (value: Date | string | null | undefined): string | null => {
+  if (!value) return null
+  if (value instanceof Date) return toISODate(value)
+  const s = String(value)
+  return s.length >= 10 ? s.slice(0, 10) : s
+}
+
 export const PatientDataEditor = ({
   id,
   initialCreateData = {},
@@ -112,7 +119,7 @@ export const PatientDataEditor = ({
       const data: CreatePatientInput = {
         firstname: values.firstname,
         lastname: values.lastname,
-        birthdate: values.birthdate,
+        birthdate: toISODate(values.birthdate)!,
         sex: values.sex,
         assignedLocationIds: values.assignedLocationIds,
         clinicId: values.clinic!.id,
@@ -312,12 +319,12 @@ export const PatientDataEditor = ({
                 {...focusableElementProps} {...interactionStates}
                 value={convertBirthdateStringToDate(dataProps.value) ?? null}
                 onValueChange={(value) => {
-                  if(!value) return
-                  dataProps.onValueChange(value)
+                  const normalized = normalizeBirthdateValue(value)
+                  if (normalized) dataProps.onValueChange(normalized)
                 }}
                 onEditComplete={(value) => {
-                  if(!value) return
-                  dataProps.onEditComplete(value)
+                  const normalized = normalizeBirthdateValue(value)
+                  if (normalized) dataProps.onEditComplete(normalized)
                 }}
                 mode="date"
               />
