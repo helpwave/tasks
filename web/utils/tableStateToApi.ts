@@ -84,6 +84,12 @@ function toFilterParameter(value: TableFilterValue): FilterParameter {
   if (Array.isArray(p['searchTags'])) {
     param.searchTags = (p['searchTags'] as unknown[]).filter((t): t is string => typeof t === 'string')
   }
+  if (Array.isArray(p['searchTagsContains']) && (param.searchTags == null || param.searchTags.length === 0)) {
+    param.searchTags = (p['searchTagsContains'] as unknown[]).filter((t): t is string => typeof t === 'string')
+  }
+  if (param.searchTags == null && p['searchTag'] != null) {
+    param.searchTags = [String(p['searchTag'])]
+  }
   if (typeof p['propertyDefinitionId'] === 'string') {
     param.propertyDefinitionId = p['propertyDefinitionId']
   }

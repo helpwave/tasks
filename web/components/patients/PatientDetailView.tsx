@@ -19,6 +19,9 @@ import { useUpdatePatient } from '@/data'
 
 export const toISODate = (d: Date | string | null | undefined): string | null => {
   if (!d) return null
+  if (typeof d === 'string' && d.length >= 10 && d[10] === 'T') {
+    return d.slice(0, 10)
+  }
   const date = typeof d === 'string' ? new Date(d) : d
   if (!(date instanceof Date) || isNaN(date.getTime())) return null
   const year = date.getFullYear()

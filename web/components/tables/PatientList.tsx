@@ -89,7 +89,20 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
     PatientState.Dead,
     PatientState.Wait,
   ], [])
-  const patientStates = allPatientStates
+
+  const apiFiltering = useMemo(() => columnFiltersToFilterInput(filters), [filters])
+  const patientStates = useMemo(() => {
+    const stateFilter = apiFiltering.find(
+      f => f.column === 'state' &&
+        (f.operator === 'TAGS_SINGLE_EQUALS' || f.operator === 'TAGS_SINGLE_CONTAINS') &&
+        f.parameter?.searchTags != null &&
+        f.parameter.searchTags.length > 0
+    )
+    if (!stateFilter?.parameter?.searchTags) return allPatientStates
+    const allowed = new Set(allPatientStates as unknown as string[])
+    const filtered = (stateFilter.parameter.searchTags as string[]).filter(s => allowed.has(s))
+    return filtered.length > 0 ? (filtered as PatientState[]) : allPatientStates
+  }, [apiFiltering, allPatientStates])
 
   const searchInput: FullTextSearchInput | undefined = searchQuery
     ? {
@@ -97,8 +110,6 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       includeProperties: true,
     }
     : undefined
-
-  const apiFiltering = useMemo(() => columnFiltersToFilterInput(filters), [filters])
   const apiSorting = useMemo(() => sortingStateToSortInput(sorting), [sorting])
   const apiPagination = useMemo(() => paginationStateToPaginationInput(pagination), [pagination])
 
@@ -205,7 +216,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
     {
       id: 'state',
       header: translation('status'),
-      accessorFn: ({ state }) => [state],
+      accessorFn: ({ state }) => state,
       cell: ({ row }) => {
         if (refreshingPatientIds.has(row.original.id)) return rowLoadingCell
         return (
@@ -228,7 +239,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
     {
       id: 'sex',
       header: translation('sex'),
-      accessorFn: ({ sex }) => [sex],
+      accessorFn: ({ sex }) => sex,
       cell: ({ row }) => {
         if (refreshingPatientIds.has(row.original.id)) return rowLoadingCell
         const sex = row.original.sex
