@@ -273,9 +273,7 @@ export const TaskDataEditor = ({
                   >
                     {patients.map(patient => {
                       return (
-                        <SelectOption key={patient.id} value={patient.id}>
-                          {patient.name}
-                        </SelectOption>
+                        <SelectOption key={patient.id} value={patient.id} label={patient.name} />
                       )
                     })}
                   </Select>
@@ -362,9 +360,9 @@ export const TaskDataEditor = ({
                       dataProps.onEditComplete?.(priority)
                     }}
                   >
-                    <SelectOption value="none" iconAppearance="right">{translation('priorityNone')}</SelectOption>
+                    <SelectOption value="none" iconAppearance="right" label={translation('priorityNone')} />
                     {priorities.map(({ value, label }) => (
-                      <SelectOption key={value} value={value} iconAppearance="right">
+                      <SelectOption key={value} value={value} iconAppearance="right" label={label}>
                         <div className="flex items-center gap-2">
                           <span className={`w-2 h-2 rounded-full ${PriorityUtils.toBackgroundColor(value as TaskPriority | null | undefined)}`} />
                           <span>{label}</span>

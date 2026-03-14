@@ -274,40 +274,38 @@ const SettingsPage: NextPage = () => {
 
               <div className="flex-col-2">
                 <span className="typography-label-lg">{translation('language')}</span>
-                <Select
+                <Select<HightideTranslationLocales>
                   value={locale}
-                  onValueChange={(language: string) => setLocale(language as HightideTranslationLocales)}
+                  onValueChange={(language) => setLocale(language)}
                   buttonProps={{
-                    selectedDisplay: (l) => LocalizationUtil.languagesLocalNames[l as HightideTranslationLocales],
+                    selectedDisplay: (selected) => selected ? LocalizationUtil.languagesLocalNames[selected.value] : '',
                     className: 'w-full'
                   }}
                 >
                   {LocalizationUtil.locals.map((local) => (
-                    <SelectOption key={local} value={local}>
-                      {LocalizationUtil.languagesLocalNames[local]}
-                    </SelectOption>
+                    <SelectOption key={local} value={local} label={LocalizationUtil.languagesLocalNames[local]} />
                   ))}
                 </Select>
               </div>
 
               <div className="flex-col-2">
                 <span className="typography-label-lg">{translation('pThemes', { count: 1 })}</span>
-                <Select
+                <Select<ThemeType>
                   value={theme}
-                  onValueChange={(theme) => setTheme(theme as ThemeType)}
+                  onValueChange={(theme) => setTheme(theme)}
                   iconAppearance="right"
                   buttonProps={{
-                    selectedDisplay: (value) => (
+                    selectedDisplay: (selected) => selected && (
                       <div className="flex-row-2 items-center">
                         <ThemeIcon theme={theme} />
-                        {translation('themeMode', { theme: value })}
+                        {translation('themeMode', { theme: selected.value })}
                       </div>
                     ),
                     className: 'w-full',
                   }}
                 >
                   {ThemeUtil.themes.map((t) => (
-                    <SelectOption key={t} value={t} className="gap-x-6 justify-between">
+                    <SelectOption key={t} value={t} className="gap-x-6 justify-between" label={translation('themeMode', { theme: t })} >
                       <div className="flex-row-2 items-center">
                         <ThemeIcon theme={t} />
                         {translation('themeMode', { theme: t })}

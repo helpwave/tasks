@@ -1,7 +1,9 @@
 import { useMemo, useState, forwardRef, useImperativeHandle, useEffect, useCallback, useRef } from 'react'
-import { Chip, FillerCell, HelpwaveLogo, LoadingContainer, SearchBar, ProgressIndicator, Tooltip, Drawer, TableProvider, TableDisplay, TableColumnSwitcher, TablePagination, IconButton, useLocale } from '@helpwave/hightide'
+import type { IdentifierFilterValue, FilterListItem, FilterListPopUpBuilderProps } from '@helpwave/hightide'
+import { Chip, FillerCell, HelpwaveLogo, LoadingContainer, SearchBar, ProgressIndicator, Tooltip, Drawer, TableProvider, TableDisplay, TableColumnSwitcher, TablePagination, IconButton, useLocale, FilterList } from '@helpwave/hightide'
 import { PlusIcon } from 'lucide-react'
-import { Sex, PatientState, type GetPatientsQuery, type TaskType, PropertyEntity, type FullTextSearchInput, type LocationType } from '@/api/gql/generated'
+import type { LocationType } from '@/api/gql/generated'
+import { Sex, PatientState, type GetPatientsQuery, type TaskType, PropertyEntity, type FullTextSearchInput, FieldType } from '@/api/gql/generated'
 import { usePropertyDefinitions, usePatientsPaginated, useRefreshingEntityIds } from '@/data'
 import { PatientDetailView } from '@/components/patients/PatientDetailView'
 import { LocationChips } from '@/components/locations/LocationChips'
@@ -15,6 +17,8 @@ import { getPropertyColumnsForEntity } from '@/utils/propertyColumn'
 import { useStorageSyncedTableState } from '@/hooks/useTableState'
 import { usePropertyColumnVisibility } from '@/hooks/usePropertyColumnVisibility'
 import { columnFiltersToFilterInput, paginationStateToPaginationInput, sortingStateToSortInput } from '@/utils/tableStateToApi'
+import { getPropertyFilterFn as getPropertyDatatype } from '@/utils/propertyFilterMapping'
+import { UserSelectFilterPopUp } from './UserSelectFilterPopUp'
 
 export type PatientViewModel = {
   id: string,
@@ -190,7 +194,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
   }
 
   const patientPropertyColumns = useMemo<ColumnDef<PatientViewModel>[]>(
-    () => getPropertyColumnsForEntity<PatientViewModel>(propertyDefinitionsData, PropertyEntity.Patient),
+    () => getPropertyColumnsForEntity<PatientViewModel>(propertyDefinitionsData, PropertyEntity.Patient, false),
     [propertyDefinitionsData]
   )
 
@@ -211,7 +215,6 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       minSize: 200,
       size: 250,
       maxSize: 300,
-      filterFn: 'text',
     },
     {
       id: 'state',
@@ -229,7 +232,6 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       minSize: 120,
       size: 144,
       maxSize: 180,
-      filterFn: 'singleTag',
       meta: {
         filterData: {
           tags: allPatientStates.map(state => ({ label: translation('patientState', { state: state as string }), tag: state })),
@@ -272,7 +274,6 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       minSize: 160,
       size: 160,
       maxSize: 200,
-      filterFn: 'singleTag',
       meta: {
         filterData: {
           tags: [
@@ -299,7 +300,6 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       minSize: 200,
       size: 260,
       maxSize: 320,
-      filterFn: 'text' as const,
     },
     ...(['CLINIC', 'WARD', 'ROOM', 'BED'] as const).map((kind): ColumnDef<PatientViewModel> => ({
       id: `location-${kind}`,
@@ -322,7 +322,6 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       minSize: 160,
       size: 220,
       maxSize: 300,
-      filterFn: 'text' as const,
     })),
     {
       id: 'birthdate',
@@ -351,7 +350,6 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       minSize: 200,
       size: 200,
       maxSize: 200,
-      filterFn: 'date' as const,
     },
     {
       id: 'tasks',
@@ -395,6 +393,62 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
     })),
   ], [translation, allPatientStates, patientPropertyColumns, refreshingPatientIds, rowLoadingCell, dateFormat])
 
+  const availableFilters: FilterListItem[] = useMemo(() => [
+    {
+      id: 'name',
+      label: translation('name'),
+      dataType: 'text',
+      tags: [],
+    },
+    {
+      id: 'state',
+      label: translation('status'),
+      dataType: 'singleTag',
+      tags: allPatientStates.map(state => ({ label: translation('patientState', { state: state as string }), tag: state })),
+    },
+    {
+      id: 'sex',
+      label: translation('sex'),
+      dataType: 'singleTag',
+      tags: [
+        { label: translation('male'), tag: Sex.Male },
+        { label: translation('female'), tag: Sex.Female },
+        { label: translation('diverse'), tag: Sex.Unknown },
+      ],
+    },
+    ...(['CLINIC', 'WARD', 'ROOM', 'BED'] as const).map((kind): FilterListItem => ({
+      id: `location-${kind}`,
+      label: translation(LOCATION_KIND_HEADERS[kind] as 'locationClinic' | 'locationWard' | 'locationRoom' | 'locationBed'),
+      dataType: 'text',
+      tags: [],
+    })),
+    {
+      id: 'birthdate',
+      label: translation('birthdate'),
+      dataType: 'date',
+      tags: [],
+    },
+    {
+      id: 'tasks',
+      label: translation('tasks'),
+      dataType: 'number',
+      tags: [],
+    },
+    ...propertyDefinitionsData?.propertyDefinitions.map(def => {
+      const dataType = getPropertyDatatype(def.fieldType)
+      return {
+        id:  `property_${def.id}`,
+        label: def.name,
+        dataType,
+        tags: def.options.map((opt, idx) => ({
+          label: opt,
+          tag: `${def.id}-opt-${idx}`,
+        })),
+        popUpBuilder: def.fieldType === FieldType.FieldTypeUser ? (props: FilterListPopUpBuilderProps) => (<UserSelectFilterPopUp {...props}/>) : undefined,
+      }
+    }) ?? [],
+  ], [allPatientStates, propertyDefinitionsData?.propertyDefinitions, translation])
+
   const onRowClick = useCallback((row: Row<PatientViewModel>) => handleEdit(row.original), [handleEdit])
   const fillerRowCell = useCallback(() => (<FillerCell className="min-h-8" />), [])
 
@@ -431,6 +485,14 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onSearch={() => null}
+              containerProps={{ className: 'max-w-80' }}
+            />
+            <FilterList
+              value={filters as IdentifierFilterValue[]}
+              onValueChange={value => {
+                setFilters(value)
+              }}
+              availableItems={availableFilters}
             />
             <TableColumnSwitcher />
           </div>

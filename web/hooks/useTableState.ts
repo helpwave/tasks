@@ -1,11 +1,12 @@
 import type {
+  ColumnFilter,
   ColumnFiltersState,
   PaginationState,
   SortingState,
   VisibilityState
 } from '@tanstack/react-table'
 import type { Dispatch, SetStateAction } from 'react'
-import type { DateFilterParameter, DatetimeFilterParameter, TableFilterValue } from '@helpwave/hightide'
+import type { DataType, FilterOperator, FilterParameter, FilterValue } from '@helpwave/hightide'
 import { useStorage } from '@/hooks/useStorage'
 
 const defaultPagination: PaginationState = {
@@ -59,24 +60,13 @@ export function useStorageSyncedTableState(
     defaultValue: initialFilters,
     serialize: (value) => {
       const mappedColumnFilter = value.map((filter) => {
-        const tableFilterValue = filter.value as TableFilterValue
-        let parameter: Record<string, unknown> = tableFilterValue.parameter
-        if(tableFilterValue.operator.startsWith('dateTime')) {
-          const dateTimeParameter: DatetimeFilterParameter = parameter as DatetimeFilterParameter
-          parameter = {
-            ...parameter,
-            compareDatetime: dateTimeParameter.compareDatetime ? dateTimeParameter.compareDatetime.toISOString() : undefined,
-            min: dateTimeParameter.min ? dateTimeParameter.min.toISOString() : undefined,
-            max: dateTimeParameter.max ? dateTimeParameter.max.toISOString() : undefined,
-          }
-        } else if(tableFilterValue.operator.startsWith('date')) {
-          const dateParameter: DateFilterParameter = parameter as DateFilterParameter
-          parameter = {
-            ...parameter,
-            compareDate: dateParameter.compareDate ? dateParameter.compareDate.toISOString() : undefined,
-            min: dateParameter.min ? dateParameter.min.toISOString() : undefined,
-            max: dateParameter.max ? dateParameter.max.toISOString() : undefined,
-          }
+        const tableFilterValue = filter.value as FilterValue
+        const filterParameter = tableFilterValue.parameter
+        const parameter: Record<string, unknown> = {
+          ...filterParameter,
+          compareDate: filterParameter.compareDate ? filterParameter.compareDate.toISOString() : undefined,
+          minDate: filterParameter.minDate ? filterParameter.minDate.toISOString() : undefined,
+          maxDate: filterParameter.maxDate ? filterParameter.maxDate.toISOString() : undefined,
         }
         return {
           ...filter,
@@ -91,34 +81,25 @@ export function useStorageSyncedTableState(
     },
     deserialize: (value) => {
       const mappedColumnFilter = JSON.parse(value) as Record<string, unknown>[]
-      return mappedColumnFilter.map((filter) => {
-        const filterValue = filter['value'] as Record<string, unknown>
-        const operator: string = filterValue['operator'] as string
-        let parameter: Record<string, unknown> = filterValue['parameter'] as Record<string, unknown>
-        if(operator.startsWith('dateTime')) {
-          parameter = {
-            ...parameter,
-            compareDatetime: parameter['compareDatetime'] ? new Date(parameter['compareDatetime'] as string) : undefined,
-            min: parameter['min'] ? new Date(parameter['min'] as string) : undefined,
-            max: parameter['max'] ? new Date(parameter['max'] as string) : undefined,
-          }
+      return mappedColumnFilter.map((filter): ColumnFilter => {
+        const value = filter['value'] as Record<string, unknown>
+        const parameter: Record<string, unknown> = value['parameter'] as Record<string, unknown>
+        const filterParameter: FilterParameter = {
+          ...parameter,
+          compareDate: parameter['compareDate'] ? new Date(parameter['compareDate'] as string) : undefined,
+          minDate: parameter['minDate'] ? new Date(parameter['minDate'] as string) : undefined,
+          maxDate: parameter['maxDate'] ? new Date(parameter['maxDate'] as string) : undefined,
         }
-        else if(operator.startsWith('date')) {
-          parameter = {
-            ...parameter,
-            compareDate: parameter['compareDate'] ? new Date(parameter['compareDate'] as string) : undefined,
-            min: parameter['min'] ? new Date(parameter['min'] as string) : undefined,
-            max: parameter['max'] ? new Date(parameter['max'] as string) : undefined,
-          }
+        const mappedValue: FilterValue = {
+          operator: value['operator'] as FilterOperator,
+          dataType: value['dataType'] as DataType,
+          parameter: filterParameter,
         }
         return {
           ...filter,
-          value: {
-            ...filterValue,
-            parameter,
-          },
-        }
-      }) as unknown as ColumnFiltersState
+          value: mappedValue,
+        } as ColumnFilter
+      })
     },
   })
   const { value: columnVisibility, setValue: setColumnVisibility } = useStorage<VisibilityState>({

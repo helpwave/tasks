@@ -344,9 +344,7 @@ export const PatientDataEditor = ({
                 {...interactionStates}
               >
                 {sexOptions.map(option => (
-                  <SelectOption key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectOption>
+                  <SelectOption key={option.value} value={option.value} label={option.label} />
                 ))}
               </Select>
             )}

@@ -249,9 +249,7 @@ export const PropertyDetailView = ({
                 }}
               >
                 {propertySubjectTypeList.map(v => (
-                  <SelectOption key={v} value={v}>
-                    {translation('sPropertySubjectType', { subject: v })}
-                  </SelectOption>
+                  <SelectOption key={v} value={v} label={translation('sPropertySubjectType', { subject: v })} />
                 ))}
               </Select>
             )}
@@ -276,9 +274,7 @@ export const PropertyDetailView = ({
                 }}
               >
                 {propertyFieldTypeList.map(v => (
-                  <SelectOption key={v} value={v}>
-                    {translation('sPropertyType', { type: v })}
-                  </SelectOption>
+                  <SelectOption key={v} value={v} label={translation('sPropertyType', { type: v })} />
                 ))}
               </Select>
             )}
