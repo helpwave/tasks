@@ -586,9 +586,9 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
               buttonProps={{ className: 'min-w-32' }}
               contentPanelProps={{ className: 'min-w-32' }}
             >
-              <SelectOption value="all">{translation('filterAll') || 'All'}</SelectOption>
-              <SelectOption value="undone">{translation('filterUndone') || 'Undone'}</SelectOption>
-              <SelectOption value="done">{translation('done')}</SelectOption>
+              <SelectOption value="all" label={translation('filterAll') || 'All'} />
+              <SelectOption value="undone" label={translation('filterUndone') || 'Undone'} />
+              <SelectOption value="done" label={translation('done')} />
             </Select>
             {headerActions}
             {canHandover && (
