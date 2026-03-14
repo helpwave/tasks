@@ -49,7 +49,8 @@ function getFilterData(prop: PropertyDefinitionType) {
 }
 
 export function createPropertyColumn<T extends RowWithProperties>(
-  prop: PropertyDefinitionType
+  prop: PropertyDefinitionType,
+  hasFilter?: boolean
 ): ColumnDef<T> {
   const columnId = `property_${prop.id}`
   const filterFn = getPropertyFilterFn(prop.fieldType)
@@ -79,7 +80,7 @@ export function createPropertyColumn<T extends RowWithProperties>(
     minSize: 220,
     size: 220,
     maxSize: 300,
-    filterFn,
+    filterFn: hasFilter ? filterFn : undefined,
   } as ColumnDef<T>
 }
 
@@ -89,11 +90,12 @@ type PropertyDefinitionsData = {
 
 export function getPropertyColumnsForEntity<T extends RowWithProperties>(
   propertyDefinitionsData: PropertyDefinitionsData,
-  entity: PropertyEntity
+  entity: PropertyEntity,
+  hasFilter?: boolean
 ): ColumnDef<T>[] {
   if (!propertyDefinitionsData?.propertyDefinitions) return []
   const properties = propertyDefinitionsData.propertyDefinitions.filter(
     def => def.isActive && def.allowedEntities.includes(entity)
   )
-  return properties.map(prop => createPropertyColumn<T>(prop))
+  return properties.map(prop => createPropertyColumn<T>(prop, hasFilter))
 }
