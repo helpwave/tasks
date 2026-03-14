@@ -11,9 +11,9 @@
   --color-gender-on-male: var(--color-white);
   --color-gender-male-hover: var(--color-blue-600);
 
-  --color-gender-neutral: var(--color-blue-500);
+  --color-gender-neutral: var(--color-gray-600);
   --color-gender-on-neutral: var(--color-white);
-  --color-gender-neutral-hover: var(--color-blue-600);
+  --color-gender-neutral-hover: var(--color-gray-700);
 
   --color-location-hospital: var(--color-red-100);
   --color-location-on-hospital: var(--color-red-700);
