@@ -3,6 +3,8 @@
   "account": "Account",
   "active": "Active",
   "add": "Add",
+  "addFastAccess": "Add Fast Access",
+  "addFastAccessDescription": "Add a name for the new fast access.",
   "addPatient": "Add Patient",
   "addProperty": "Add Property",
   "addTask": "Add Task",
@@ -31,6 +33,9 @@
       }
     }
   },
+  "copyShareLink": "Copy link",
+  "copyViewToMyViews": "Copy to my views",
+  "confirmDeleteView": "Delete this saved view? This cannot be undone.",
   "create": "Create",
   "createTask": "Create Task",
   "currentTime": "Current Time",
@@ -82,6 +87,7 @@
   "descriptionPlaceholder": "Add more details...",
   "developmentAndPreviewInstance": "Development and preview instance",
   "dismiss": "Dismiss",
+  "duplicate": "Duplicate",
   "done": "Done",
   "dueDate": "Due Date",
   "edit": "Edit",
@@ -126,8 +132,25 @@
   "noClosedTasks": "No closed tasks",
   "noOpenTasks": "No open tasks",
   "noPatient": "No Patient",
+  "noPatientsInTaskView": "No patients found for this task view.",
   "noResultsFound": "No results found",
   "notAssigned": "Not assigned",
+  "nFilter": "{count, plural, =1{# filter} other{# filters}}",
+  "@nFilter": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "nSorting": "{count, plural, =1{# sort} other{# sorts}}",
+  "@nSorting": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
   "nPatient": "{count, plural, =1{# Patient} other{# Patients}}",
   "@nPatient": {
     "placeholders": {
@@ -155,6 +178,7 @@
   "occupancy": "Occupancy",
   "openSurvey": "Open Survey",
   "openTasks": "Open Tasks",
+  "openView": "Open",
   "option": "Option",
   "organizations": "Organizations",
   "overview": "Overview",
@@ -214,7 +238,16 @@
   "refreshing": "Refreshing…",
   "removeProperty": "Remove Property",
   "removePropertyConfirmation": "Are you sure you want to remove this property? This action cannot be undone.",
+  "readOnlyView": "Read-only",
   "retakeSurvey": "Retake Survey",
+  "saveView": "Save view",
+  "saveViewDescription": "Name this view. Filters, sorting, search, and location scope are stored.",
+  "savedViews": "Saved views",
+  "viewDerivedPatientsHint": "Patients that appear on tasks matching this view (distinct).",
+  "viewSettings": "View settings",
+  "viewSettingsDescription": "Manage saved task and patient views.",
+  "viewsEntityPatient": "Patients",
+  "viewsEntityTask": "Tasks",
   "rShow": "Show {name}",
   "@rShow": {
     "placeholders": {

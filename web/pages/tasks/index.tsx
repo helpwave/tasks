@@ -11,11 +11,20 @@ import { useTasksContext } from '@/hooks/useTasksContext'
 import { useTasksPaginated } from '@/data'
 import { useStorageSyncedTableState } from '@/hooks/useTableState'
 import { columnFiltersToQueryFilterClauses, paginationStateToPaginationInput, sortingStateToQuerySortClauses } from '@/utils/tableStateToApi'
+import { Button, Visibility } from '@helpwave/hightide'
+import { SaveViewDialog } from '@/components/views/SaveViewDialog'
+import { SavedViewEntityType } from '@/api/gql/generated'
+import { serializeColumnFiltersForView, serializeSortingForView, stringifyViewParameters } from '@/utils/viewDefinition'
+import type { ColumnFiltersState } from '@tanstack/react-table'
 
 const TasksPage: NextPage = () => {
   const translation = useTasksTranslation()
   const router = useRouter()
   const { selectedRootLocationIds, user, myTasksCount } = useTasksContext()
+  const defaultSorting = useMemo(() => [
+    { id: 'done', desc: false },
+    { id: 'dueDate', desc: false },
+  ], [])
   const {
     pagination,
     setPagination,
@@ -26,12 +35,20 @@ const TasksPage: NextPage = () => {
     columnVisibility,
     setColumnVisibility,
   } = useStorageSyncedTableState('task-list', {
-    defaultSorting: useMemo(() => [
-      { id: 'done', desc: false },
-      { id: 'dueDate', desc: false },
-    ], []),
+    defaultSorting,
   })
 
+  const baselineFilters = useMemo((): ColumnFiltersState => [], [])
+  const filtersChanged = useMemo(
+    () => serializeColumnFiltersForView(filters as ColumnFiltersState) !== serializeColumnFiltersForView(baselineFilters),
+    [filters, baselineFilters]
+  )
+  const sortingChanged = useMemo(
+    () => serializeSortingForView(sorting) !== serializeSortingForView(defaultSorting),
+    [sorting, defaultSorting]
+  )
+
+  const [isSaveViewOpen, setIsSaveViewOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const apiFilters = useMemo(() => columnFiltersToQueryFilterClauses(filters), [filters])
   const apiSorting = useMemo(() => sortingStateToQuerySortClauses(sorting), [sorting])
@@ -85,6 +102,25 @@ const TasksPage: NextPage = () => {
         titleElement={translation('myTasks')}
         description={myTasksCount !== undefined ? translation('nTask', { count: myTasksCount }) : undefined}
       >
+        <Visibility isVisible={filtersChanged || sortingChanged}>
+          <div className="flex justify-end mb-2">
+            <Button color="primary" onClick={() => setIsSaveViewOpen(true)}>
+              {translation('saveView')}
+            </Button>
+          </div>
+        </Visibility>
+        <SaveViewDialog
+          isOpen={isSaveViewOpen}
+          onClose={() => setIsSaveViewOpen(false)}
+          baseEntityType={SavedViewEntityType.Task}
+          filterDefinition={serializeColumnFiltersForView(filters as ColumnFiltersState)}
+          sortDefinition={serializeSortingForView(sorting)}
+          parameters={stringifyViewParameters({
+            rootLocationIds: selectedRootLocationIds ?? undefined,
+            assigneeId: user?.id,
+          })}
+          onCreated={(id) => router.push(`/view/${id}`)}
+        />
         <TaskList
           tasks={tasks}
           onRefetch={refetch}

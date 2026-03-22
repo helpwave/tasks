@@ -13,6 +13,8 @@ export type TasksTranslationEntries = {
   'account': string,
   'active': string,
   'add': string,
+  'addFastAccess': string,
+  'addFastAccessDescription': string,
   'addPatient': string,
   'addProperty': string,
   'addTask': string,
@@ -33,6 +35,7 @@ export type TasksTranslationEntries = {
   'closedTasks': string,
   'collapseAll': string,
   'confirm': string,
+  'confirmDeleteView': string,
   'confirmSelection': string,
   'confirmShiftHandover': string,
   'confirmShiftHandoverDescription': string,
@@ -41,6 +44,8 @@ export type TasksTranslationEntries = {
   'connectionConnected': string,
   'connectionConnecting': string,
   'connectionDisconnected': string,
+  'copyShareLink': string,
+  'copyViewToMyViews': string,
   'create': string,
   'createTask': string,
   'currentTime': string,
@@ -65,6 +70,7 @@ export type TasksTranslationEntries = {
   'diverse': string,
   'done': string,
   'dueDate': string,
+  'duplicate': string,
   'edit': string,
   'editPatient': string,
   'editTask': string,
@@ -107,22 +113,26 @@ export type TasksTranslationEntries = {
   'myOpenTasks': string,
   'myTasks': string,
   'name': string,
+  'nFilter': (values: { count: number }) => string,
   'no': string,
   'noClosedTasks': string,
   'noLocationsFound': string,
   'noNotifications': string,
   'noOpenTasks': string,
   'noPatient': string,
+  'noPatientsInTaskView': string,
   'noResultsFound': string,
   'notAssigned': string,
   'notifications': string,
   'nPatient': (values: { count: number }) => string,
+  'nSorting': (values: { count: number }) => string,
   'nTask': (values: { count: number }) => string,
   'nYears': (values: { years: number }) => string,
   'occupancy': string,
   'ok': string,
   'openSurvey': string,
   'openTasks': string,
+  'openView': string,
   'option': string,
   'organizations': string,
   'overview': string,
@@ -152,6 +162,7 @@ export type TasksTranslationEntries = {
   'property': string,
   'pThemes': (values: { count: number }) => string,
   'rAdd': (values: { name: string }) => string,
+  'readOnlyView': string,
   'recentPatients': string,
   'recentTasks': string,
   'rEdit': (values: { name: string }) => string,
@@ -160,6 +171,9 @@ export type TasksTranslationEntries = {
   'removePropertyConfirmation': string,
   'retakeSurvey': string,
   'rShow': (values: { name: string }) => string,
+  'savedViews': string,
+  'saveView': string,
+  'saveViewDescription': string,
   'search': string,
   'searchLocations': string,
   'searchUserOrTeam': string,
@@ -208,6 +222,11 @@ export type TasksTranslationEntries = {
   'user': string,
   'userInformation': string,
   'users': string,
+  'viewDerivedPatientsHint': string,
+  'viewsEntityPatient': string,
+  'viewsEntityTask': string,
+  'viewSettings': string,
+  'viewSettingsDescription': string,
   'waitingForPatient': string,
   'waitPatient': string,
   'wards': string,
@@ -219,6 +238,8 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'account': `Konto`,
     'active': `Aktiv`,
     'add': `Hinzufügen`,
+    'addFastAccess': `Schnellzugriff erstellen`,
+    'addFastAccessDescription': `Geben Sie dem neuen Schnellzugriff einen Namen.`,
     'addPatient': `Patient hinzufügen`,
     'addProperty': `Eigenschaften hinzufügen`,
     'addTask': `Aufgabe hinzufügen`,
@@ -239,6 +260,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'closedTasks': `Erledigte Aufgaben`,
     'collapseAll': `Alle einklappen`,
     'confirm': `Bestätigen`,
+    'confirmDeleteView': `Diese gespeicherte Ansicht löschen? Dies kann nicht rückgängig gemacht werden.`,
     'confirmSelection': `Auswahl bestätigen`,
     'confirmShiftHandover': `Schichtübergabe bestätigen`,
     'confirmShiftHandoverDescription': `Sind Sie sicher, dass Sie alle offenen Aufgaben an den ausgewählten Benutzer übertragen möchten?`,
@@ -256,6 +278,8 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'connectionConnected': `Verbunden`,
     'connectionConnecting': `Verbinde…`,
     'connectionDisconnected': `Getrennt`,
+    'copyShareLink': `Link kopieren`,
+    'copyViewToMyViews': `In „Meine Ansichten“ kopieren`,
     'create': `Erstellen`,
     'createTask': `Aufgabe erstellen`,
     'currentTime': `Aktuelle Zeit`,
@@ -290,6 +314,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'diverse': `Divers`,
     'done': `Fertig`,
     'dueDate': `Fälligkeitsdatum`,
+    'duplicate': `Duplizieren`,
     'edit': `Bearbeiten`,
     'editPatient': `Patient bearbeiten`,
     'editTask': `Aufgabe bearbeiten`,
@@ -341,12 +366,19 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'myOpenTasks': `Meine offenen Aufgaben`,
     'myTasks': `Meine Aufgaben`,
     'name': `Name`,
+    'nFilter': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} Filter`,
+        'other': `${count} Filter`,
+      })
+    },
     'no': `Nein`,
     'noClosedTasks': `Keine erledigten Aufgaben`,
     'noLocationsFound': `Keine Standorte gefunden`,
     'noNotifications': `Keine aktuellen Updates`,
     'noOpenTasks': `Keine offenen Aufgaben`,
     'noPatient': `Kein Patient`,
+    'noPatientsInTaskView': `Keine Patienten für diese Aufgabenansicht.`,
     'noResultsFound': `Keine Ergebnisse gefunden`,
     'notAssigned': `Nicht zugewiesen`,
     'notifications': `Benachrichtigungen`,
@@ -354,6 +386,12 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
       return TranslationGen.resolvePlural(count, {
         '=1': `${count} Patient`,
         'other': `${count} Patienten`,
+      })
+    },
+    'nSorting': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} Sortierung`,
+        'other': `${count} Sortierungen`,
       })
     },
     'nTask': ({ count }): string => {
@@ -373,6 +411,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'ok': `OK`,
     'openSurvey': `Umfrage öffnen`,
     'openTasks': `Offene Aufgaben`,
+    'openView': `Öffnen`,
     'option': `Option`,
     'organizations': `Organisationen`,
     'overview': `Übersicht`,
@@ -425,6 +464,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'rAdd': ({ name }): string => {
       return `${name} hinzufügen`
     },
+    'readOnlyView': `Nur lesen`,
     'recentPatients': `Deine kürzlichen Patienten`,
     'recentTasks': `Deine kürzlichen Aufgaben`,
     'rEdit': ({ name }): string => {
@@ -437,6 +477,9 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'rShow': ({ name }): string => {
       return `${name} anzeigen`
     },
+    'savedViews': `Gespeicherte Ansichten`,
+    'saveView': `Ansicht speichern`,
+    'saveViewDescription': `Geben Sie dieser Ansicht einen Namen. Filter, Sortierung, Suche und Standort werden gespeichert.`,
     'search': `Suchen`,
     'searchLocations': `Standorte suchen...`,
     'searchUserOrTeam': `Nach Benutzer (oder Team) suchen...`,
@@ -512,6 +555,11 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'user': `Benutzer`,
     'userInformation': `Benutzerinformationen`,
     'users': `Benutzer`,
+    'viewDerivedPatientsHint': `Patienten, die in den Aufgaben dieser Ansicht vorkommen (eindeutig).`,
+    'viewsEntityPatient': `Patienten`,
+    'viewsEntityTask': `Aufgaben`,
+    'viewSettings': `Ansichten`,
+    'viewSettingsDescription': `Gespeicherte Aufgaben- und Patientenansichten verwalten.`,
     'waitingForPatient': `Warten auf Patient`,
     'waitPatient': `Patient auf Warteliste setzen`,
     'wards': `Stationen`,
@@ -521,6 +569,8 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'account': `Account`,
     'active': `Active`,
     'add': `Add`,
+    'addFastAccess': `Add Fast Access`,
+    'addFastAccessDescription': `Add a name for the new fast access.`,
     'addPatient': `Add Patient`,
     'addProperty': `Add Property`,
     'addTask': `Add Task`,
@@ -541,6 +591,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'closedTasks': `Closed Tasks`,
     'collapseAll': `Collapse All`,
     'confirm': `Confirm`,
+    'confirmDeleteView': `Delete this saved view? This cannot be undone.`,
     'confirmSelection': `Confirm Selection`,
     'confirmShiftHandover': `Confirm Shift Handover`,
     'confirmShiftHandoverDescription': `Are you sure you want to transfer all open tasks to the selected user?`,
@@ -558,6 +609,8 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'connectionConnected': `Connected`,
     'connectionConnecting': `Connecting…`,
     'connectionDisconnected': `Disconnected`,
+    'copyShareLink': `Copy link`,
+    'copyViewToMyViews': `Copy to my views`,
     'create': `Create`,
     'createTask': `Create Task`,
     'currentTime': `Current Time`,
@@ -592,6 +645,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'diverse': `Diverse`,
     'done': `Done`,
     'dueDate': `Due Date`,
+    'duplicate': `Duplicate`,
     'edit': `Edit`,
     'editPatient': `Edit Patient`,
     'editTask': `Edit Task`,
@@ -643,12 +697,19 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'myOpenTasks': `My Open Tasks`,
     'myTasks': `My tasks`,
     'name': `Name`,
+    'nFilter': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} filter`,
+        'other': `${count} filters`,
+      })
+    },
     'no': `No`,
     'noClosedTasks': `No closed tasks`,
     'noLocationsFound': `No locations found`,
     'noNotifications': `No recent updates`,
     'noOpenTasks': `No open tasks`,
     'noPatient': `No Patient`,
+    'noPatientsInTaskView': `No patients found for this task view.`,
     'noResultsFound': `No results found`,
     'notAssigned': `Not assigned`,
     'notifications': `Notifications`,
@@ -656,6 +717,12 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
       return TranslationGen.resolvePlural(count, {
         '=1': `${count} Patient`,
         'other': `${count} Patients`,
+      })
+    },
+    'nSorting': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} sort`,
+        'other': `${count} sorts`,
       })
     },
     'nTask': ({ count }): string => {
@@ -675,6 +742,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'ok': `OK`,
     'openSurvey': `Open Survey`,
     'openTasks': `Open Tasks`,
+    'openView': `Open`,
     'option': `Option`,
     'organizations': `Organizations`,
     'overview': `Overview`,
@@ -727,6 +795,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'rAdd': ({ name }): string => {
       return `Add ${name}`
     },
+    'readOnlyView': `Read-only`,
     'recentPatients': `Your Recent Patients`,
     'recentTasks': `Your Recent Tasks`,
     'rEdit': ({ name }): string => {
@@ -739,6 +808,9 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'rShow': ({ name }): string => {
       return `Show ${name}`
     },
+    'savedViews': `Saved views`,
+    'saveView': `Save view`,
+    'saveViewDescription': `Name this view. Filters, sorting, search, and location scope are stored.`,
     'search': `Search`,
     'searchLocations': `Search locations...`,
     'searchUserOrTeam': `Search for user (or team)...`,
@@ -814,6 +886,11 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'user': `User`,
     'userInformation': `User Information`,
     'users': `Users`,
+    'viewDerivedPatientsHint': `Patients that appear on tasks matching this view (distinct).`,
+    'viewsEntityPatient': `Patients`,
+    'viewsEntityTask': `Tasks`,
+    'viewSettings': `View settings`,
+    'viewSettingsDescription': `Manage saved task and patient views.`,
     'waitingForPatient': `Waiting for patient`,
     'waitPatient': `Set Patient to Waiting`,
     'wards': `Wards`,
@@ -823,6 +900,8 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'account': `Cuenta`,
     'active': `Activo`,
     'add': `Añadir`,
+    'addFastAccess': `Añadir acceso rápido`,
+    'addFastAccessDescription': `Añada un nombre para el nuevo acceso rápido.`,
     'addPatient': `Añadir paciente`,
     'addProperty': `Añadir propiedad`,
     'addTask': `Añadir tarea`,
@@ -843,6 +922,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'closedTasks': `Tareas cerradas`,
     'collapseAll': `Contraer todo`,
     'confirm': `Confirmar`,
+    'confirmDeleteView': `Delete this saved view? This cannot be undone.`,
     'confirmSelection': `Confirmar selección`,
     'confirmShiftHandover': `Confirmar traspaso de turno`,
     'confirmShiftHandoverDescription': `¿Está seguro de que desea transferir todas las tareas abiertas al usuario seleccionado?`,
@@ -860,6 +940,8 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'connectionConnected': `Conectado`,
     'connectionConnecting': `Conectando…`,
     'connectionDisconnected': `Desconectado`,
+    'copyShareLink': `Copy link`,
+    'copyViewToMyViews': `Copy to my views`,
     'create': `Crear`,
     'createTask': `Crear tarea`,
     'currentTime': `Hora actual`,
@@ -894,6 +976,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'diverse': `Diverso`,
     'done': `Hecho`,
     'dueDate': `Fecha de vencimiento`,
+    'duplicate': `Duplicate`,
     'edit': `Editar`,
     'editPatient': `Editar paciente`,
     'editTask': `Editar tarea`,
@@ -945,12 +1028,19 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'myOpenTasks': `Mis tareas abiertas`,
     'myTasks': `Mis tareas`,
     'name': `Nombre`,
+    'nFilter': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} filtro`,
+        'other': `${count} filtros`,
+      })
+    },
     'no': `No`,
     'noClosedTasks': `No hay tareas cerradas`,
     'noLocationsFound': `No se encontraron ubicaciones`,
     'noNotifications': `Sin actualizaciones recientes`,
     'noOpenTasks': `No hay tareas abiertas`,
     'noPatient': `Sin paciente`,
+    'noPatientsInTaskView': `No patients found for this task view.`,
     'noResultsFound': `No se encontraron resultados`,
     'notAssigned': `No asignado`,
     'notifications': `Notificaciones`,
@@ -958,6 +1048,12 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
       return TranslationGen.resolvePlural(count, {
         '=1': `${count} Paciente`,
         'other': `${count} Pacientes`,
+      })
+    },
+    'nSorting': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} ordenación`,
+        'other': `${count} ordenaciones`,
       })
     },
     'nTask': ({ count }): string => {
@@ -977,6 +1073,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'ok': `OK`,
     'openSurvey': `Abrir encuesta`,
     'openTasks': `Tareas abiertas`,
+    'openView': `Open`,
     'option': `Opción`,
     'organizations': `Organizaciones`,
     'overview': `Resumen`,
@@ -1028,6 +1125,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'rAdd': ({ name }): string => {
       return `Añadir ${name}`
     },
+    'readOnlyView': `Read-only`,
     'recentPatients': `Tus pacientes recientes`,
     'recentTasks': `Tus tareas recientes`,
     'rEdit': ({ name }): string => {
@@ -1040,6 +1138,9 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'rShow': ({ name }): string => {
       return `Mostrar ${name}`
     },
+    'savedViews': `Saved views`,
+    'saveView': `Save view`,
+    'saveViewDescription': `Name this view. Filters, sorting, search, and location scope are stored.`,
     'search': `Buscar`,
     'searchLocations': `Buscar ubicaciones...`,
     'searchUserOrTeam': `Buscar usuario (o equipo)...`,
@@ -1115,6 +1216,11 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'user': `Usuario`,
     'userInformation': `Información del usuario`,
     'users': `Usuarios`,
+    'viewDerivedPatientsHint': `Patients that appear on tasks matching this view (distinct).`,
+    'viewsEntityPatient': `Patients`,
+    'viewsEntityTask': `Tasks`,
+    'viewSettings': `View settings`,
+    'viewSettingsDescription': `Manage saved task and patient views.`,
     'waitingForPatient': `En espera de paciente`,
     'waitPatient': `Poner paciente en espera`,
     'wards': `Plantas`,
@@ -1124,6 +1230,8 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'account': `Compte`,
     'active': `Actif`,
     'add': `Ajouter`,
+    'addFastAccess': `Ajouter un accès rapide`,
+    'addFastAccessDescription': `Ajoutez un nom pour le nouvel accès rapide.`,
     'addPatient': `Ajouter un patient`,
     'addProperty': `Ajouter une propriété`,
     'addTask': `Ajouter une tâche`,
@@ -1144,6 +1252,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'closedTasks': `Tâches terminées`,
     'collapseAll': `Tout réduire`,
     'confirm': `Confirmer`,
+    'confirmDeleteView': `Delete this saved view? This cannot be undone.`,
     'confirmSelection': `Confirmer la sélection`,
     'confirmShiftHandover': `Confirmer la passation`,
     'confirmShiftHandoverDescription': `Êtes-vous sûr de vouloir transférer toutes les tâches ouvertes à l'utilisateur sélectionné ?`,
@@ -1161,6 +1270,8 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'connectionConnected': `Connecté`,
     'connectionConnecting': `Connexion…`,
     'connectionDisconnected': `Déconnecté`,
+    'copyShareLink': `Copy link`,
+    'copyViewToMyViews': `Copy to my views`,
     'create': `Créer`,
     'createTask': `Créer une tâche`,
     'currentTime': `Heure actuelle`,
@@ -1195,6 +1306,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'diverse': `Divers`,
     'done': `Terminé`,
     'dueDate': `Date d'échéance`,
+    'duplicate': `Duplicate`,
     'edit': `Modifier`,
     'editPatient': `Modifier le patient`,
     'editTask': `Modifier la tâche`,
@@ -1246,12 +1358,19 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'myOpenTasks': `Mes tâches ouvertes`,
     'myTasks': `Mes tâches`,
     'name': `Nom`,
+    'nFilter': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} filtre`,
+        'other': `${count} filtres`,
+      })
+    },
     'no': `Non`,
     'noClosedTasks': `Aucune tâche terminée`,
     'noLocationsFound': `Aucun emplacement trouvé`,
     'noNotifications': `Aucune mise à jour récente`,
     'noOpenTasks': `Aucune tâche ouverte`,
     'noPatient': `Aucun patient`,
+    'noPatientsInTaskView': `No patients found for this task view.`,
     'noResultsFound': `Aucun résultat trouvé`,
     'notAssigned': `Non assigné`,
     'notifications': `Notifications`,
@@ -1259,6 +1378,12 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
       return TranslationGen.resolvePlural(count, {
         '=1': `${count} Patient`,
         'other': `${count} Patients`,
+      })
+    },
+    'nSorting': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} tri`,
+        'other': `${count} tris`,
       })
     },
     'nTask': ({ count }): string => {
@@ -1278,6 +1403,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'ok': `OK`,
     'openSurvey': `Ouvrir l'enquête`,
     'openTasks': `Tâches ouvertes`,
+    'openView': `Open`,
     'option': `Option`,
     'organizations': `Organisations`,
     'overview': `Aperçu`,
@@ -1329,6 +1455,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'rAdd': ({ name }): string => {
       return `Ajouter ${name}`
     },
+    'readOnlyView': `Read-only`,
     'recentPatients': `Vos patients récents`,
     'recentTasks': `Vos tâches récentes`,
     'rEdit': ({ name }): string => {
@@ -1341,6 +1468,9 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'rShow': ({ name }): string => {
       return `Afficher ${name}`
     },
+    'savedViews': `Saved views`,
+    'saveView': `Save view`,
+    'saveViewDescription': `Name this view. Filters, sorting, search, and location scope are stored.`,
     'search': `Rechercher`,
     'searchLocations': `Rechercher des emplacements...`,
     'searchUserOrTeam': `Rechercher un utilisateur (ou une équipe)...`,
@@ -1416,6 +1546,11 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'user': `Utilisateur`,
     'userInformation': `Informations utilisateur`,
     'users': `Utilisateurs`,
+    'viewDerivedPatientsHint': `Patients that appear on tasks matching this view (distinct).`,
+    'viewsEntityPatient': `Patients`,
+    'viewsEntityTask': `Tasks`,
+    'viewSettings': `View settings`,
+    'viewSettingsDescription': `Manage saved task and patient views.`,
     'waitingForPatient': `En attente du patient`,
     'waitPatient': `Mettre le patient en attente`,
     'wards': `Services`,
@@ -1425,6 +1560,8 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'account': `Account`,
     'active': `Actief`,
     'add': `Toevoegen`,
+    'addFastAccess': `Snelle toegang toevoegen`,
+    'addFastAccessDescription': `Voer een naam in voor de nieuwe snelle toegang.`,
     'addPatient': `Patiënt toevoegen`,
     'addProperty': `Eigenschap toevoegen`,
     'addTask': `Taak toevoegen`,
@@ -1445,6 +1582,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'closedTasks': `Afgeronde taken`,
     'collapseAll': `Alles invouwen`,
     'confirm': `Bevestigen`,
+    'confirmDeleteView': `Delete this saved view? This cannot be undone.`,
     'confirmSelection': `Selectie bevestigen`,
     'confirmShiftHandover': `Dienstwissel bevestigen`,
     'confirmShiftHandoverDescription': `Weet u zeker dat u alle open taken wilt overdragen aan de geselecteerde gebruiker?`,
@@ -1462,6 +1600,8 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'connectionConnected': `Verbonden`,
     'connectionConnecting': `Verbinden…`,
     'connectionDisconnected': `Verbinding verbroken`,
+    'copyShareLink': `Copy link`,
+    'copyViewToMyViews': `Copy to my views`,
     'create': `Aanmaken`,
     'createTask': `Taak aanmaken`,
     'currentTime': `Huidige tijd`,
@@ -1496,6 +1636,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'diverse': `Divers`,
     'done': `Klaar`,
     'dueDate': `Vervaldatum`,
+    'duplicate': `Duplicate`,
     'edit': `Bewerken`,
     'editPatient': `Patiënt bewerken`,
     'editTask': `Taak bewerken`,
@@ -1547,12 +1688,19 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'myOpenTasks': `Mijn open taken`,
     'myTasks': `Mijn taken`,
     'name': `Naam`,
+    'nFilter': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} filter`,
+        'other': `${count} filters`,
+      })
+    },
     'no': `Nee`,
     'noClosedTasks': `Geen afgeronde taken`,
     'noLocationsFound': `Geen locaties gevonden`,
     'noNotifications': `Geen recente updates`,
     'noOpenTasks': `Geen open taken`,
     'noPatient': `Geen patiënt`,
+    'noPatientsInTaskView': `No patients found for this task view.`,
     'noResultsFound': `Geen resultaten gevonden`,
     'notAssigned': `Niet toegewezen`,
     'notifications': `Meldingen`,
@@ -1560,6 +1708,12 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
       return TranslationGen.resolvePlural(count, {
         '=1': `${count} Patiënt`,
         'other': `${count} Patiënten`,
+      })
+    },
+    'nSorting': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} sortering`,
+        'other': `${count} sorteringen`,
       })
     },
     'nTask': ({ count }): string => {
@@ -1579,6 +1733,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'ok': `OK`,
     'openSurvey': `Enquête openen`,
     'openTasks': `Open taken`,
+    'openView': `Open`,
     'option': `Optie`,
     'organizations': `Organisaties`,
     'overview': `Overzicht`,
@@ -1633,6 +1788,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'rAdd': ({ name }): string => {
       return `${name} toevoegen`
     },
+    'readOnlyView': `Read-only`,
     'recentPatients': `Uw recente patiënten`,
     'recentTasks': `Uw recente taken`,
     'rEdit': ({ name }): string => {
@@ -1645,6 +1801,9 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'rShow': ({ name }): string => {
       return `${name} tonen`
     },
+    'savedViews': `Saved views`,
+    'saveView': `Save view`,
+    'saveViewDescription': `Name this view. Filters, sorting, search, and location scope are stored.`,
     'search': `Zoeken`,
     'searchLocations': `Locaties zoeken...`,
     'searchUserOrTeam': `Zoek gebruiker (of team)...`,
@@ -1720,6 +1879,11 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'user': `Gebruiker`,
     'userInformation': `Gebruikersinformatie`,
     'users': `Gebruikers`,
+    'viewDerivedPatientsHint': `Patients that appear on tasks matching this view (distinct).`,
+    'viewsEntityPatient': `Patients`,
+    'viewsEntityTask': `Tasks`,
+    'viewSettings': `View settings`,
+    'viewSettingsDescription': `Manage saved task and patient views.`,
     'waitingForPatient': `Wachten op patiënt`,
     'waitPatient': `Patiënt in wachtrij zetten`,
     'wards': `Afdelingen`,
@@ -1729,6 +1893,8 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'account': `Conta`,
     'active': `Ativo`,
     'add': `Adicionar`,
+    'addFastAccess': `Adicionar acesso rápido`,
+    'addFastAccessDescription': `Adicione um nome para o novo acesso rápido.`,
     'addPatient': `Adicionar paciente`,
     'addProperty': `Adicionar propriedade`,
     'addTask': `Adicionar tarefa`,
@@ -1749,6 +1915,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'closedTasks': `Tarefas concluídas`,
     'collapseAll': `Recolher tudo`,
     'confirm': `Confirmar`,
+    'confirmDeleteView': `Delete this saved view? This cannot be undone.`,
     'confirmSelection': `Confirmar seleção`,
     'confirmShiftHandover': `Confirmar passagem de turno`,
     'confirmShiftHandoverDescription': `Tem certeza de que deseja transferir todas as tarefas abertas para o usuário selecionado?`,
@@ -1766,6 +1933,8 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'connectionConnected': `Conectado`,
     'connectionConnecting': `Conectando…`,
     'connectionDisconnected': `Desconectado`,
+    'copyShareLink': `Copy link`,
+    'copyViewToMyViews': `Copy to my views`,
     'create': `Criar`,
     'createTask': `Criar tarefa`,
     'currentTime': `Hora atual`,
@@ -1800,6 +1969,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'diverse': `Diverso`,
     'done': `Concluído`,
     'dueDate': `Data de vencimento`,
+    'duplicate': `Duplicate`,
     'edit': `Editar`,
     'editPatient': `Editar paciente`,
     'editTask': `Editar tarefa`,
@@ -1851,12 +2021,19 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'myOpenTasks': `Minhas tarefas abertas`,
     'myTasks': `Minhas tarefas`,
     'name': `Nome`,
+    'nFilter': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} filtro`,
+        'other': `${count} filtros`,
+      })
+    },
     'no': `Não`,
     'noClosedTasks': `Nenhuma tarefa concluída`,
     'noLocationsFound': `Nenhuma localização encontrada`,
     'noNotifications': `Nenhuma atualização recente`,
     'noOpenTasks': `Nenhuma tarefa aberta`,
     'noPatient': `Sem paciente`,
+    'noPatientsInTaskView': `No patients found for this task view.`,
     'noResultsFound': `Nenhum resultado encontrado`,
     'notAssigned': `Não atribuído`,
     'notifications': `Notificações`,
@@ -1864,6 +2041,12 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
       return TranslationGen.resolvePlural(count, {
         '=1': `${count} Paciente`,
         'other': `${count} Pacientes`,
+      })
+    },
+    'nSorting': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} ordenação`,
+        'other': `${count} ordenações`,
       })
     },
     'nTask': ({ count }): string => {
@@ -1883,6 +2066,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'ok': `OK`,
     'openSurvey': `Abrir pesquisa`,
     'openTasks': `Tarefas abertas`,
+    'openView': `Open`,
     'option': `Opção`,
     'organizations': `Organizações`,
     'overview': `Visão geral`,
@@ -1934,6 +2118,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'rAdd': ({ name }): string => {
       return `Adicionar ${name}`
     },
+    'readOnlyView': `Read-only`,
     'recentPatients': `Seus pacientes recentes`,
     'recentTasks': `Suas tarefas recentes`,
     'rEdit': ({ name }): string => {
@@ -1946,6 +2131,9 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'rShow': ({ name }): string => {
       return `Mostrar ${name}`
     },
+    'savedViews': `Saved views`,
+    'saveView': `Save view`,
+    'saveViewDescription': `Name this view. Filters, sorting, search, and location scope are stored.`,
     'search': `Pesquisar`,
     'searchLocations': `Pesquisar localizações...`,
     'searchUserOrTeam': `Pesquisar usuário (ou equipe)...`,
@@ -2021,6 +2209,11 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'user': `Usuário`,
     'userInformation': `Informações do usuário`,
     'users': `Usuários`,
+    'viewDerivedPatientsHint': `Patients that appear on tasks matching this view (distinct).`,
+    'viewsEntityPatient': `Patients`,
+    'viewsEntityTask': `Tasks`,
+    'viewSettings': `View settings`,
+    'viewSettingsDescription': `Manage saved task and patient views.`,
     'waitingForPatient': `Aguardando paciente`,
     'waitPatient': `Colocar paciente em espera`,
     'wards': `Enfermarias`,

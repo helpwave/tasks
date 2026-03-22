@@ -71,6 +71,8 @@ export {
   useUpdatePropertyDefinition,
   useDeletePropertyDefinition,
   useUpdateProfilePicture,
+  useMySavedViews,
+  useSavedView,
 } from './hooks'
 export type {
   ClientMutationId,

@@ -58,6 +58,15 @@ export type CreatePropertyDefinitionInput = {
   options?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
+export type CreateSavedViewInput = {
+  baseEntityType: SavedViewEntityType;
+  filterDefinition: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+  parameters: Scalars['String']['input'];
+  sortDefinition: Scalars['String']['input'];
+  visibility?: SavedViewVisibility;
+};
+
 export type CreateTaskInput = {
   assigneeId?: InputMaybe<Scalars['ID']['input']>;
   assigneeTeamId?: InputMaybe<Scalars['ID']['input']>;
@@ -115,12 +124,15 @@ export type Mutation = {
   createLocationNode: LocationNodeType;
   createPatient: PatientType;
   createPropertyDefinition: PropertyDefinitionType;
+  createSavedView: SavedView;
   createTask: TaskType;
   deleteLocationNode: Scalars['Boolean']['output'];
   deletePatient: Scalars['Boolean']['output'];
   deletePropertyDefinition: Scalars['Boolean']['output'];
+  deleteSavedView: Scalars['Boolean']['output'];
   deleteTask: Scalars['Boolean']['output'];
   dischargePatient: PatientType;
+  duplicateSavedView: SavedView;
   markPatientDead: PatientType;
   reopenTask: TaskType;
   unassignTask: TaskType;
@@ -129,6 +141,7 @@ export type Mutation = {
   updatePatient: PatientType;
   updateProfilePicture: UserType;
   updatePropertyDefinition: PropertyDefinitionType;
+  updateSavedView: SavedView;
   updateTask: TaskType;
   waitPatient: PatientType;
 };
@@ -171,6 +184,11 @@ export type MutationCreatePropertyDefinitionArgs = {
 };
 
 
+export type MutationCreateSavedViewArgs = {
+  data: CreateSavedViewInput;
+};
+
+
 export type MutationCreateTaskArgs = {
   data: CreateTaskInput;
 };
@@ -191,6 +209,11 @@ export type MutationDeletePropertyDefinitionArgs = {
 };
 
 
+export type MutationDeleteSavedViewArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
 export type MutationDeleteTaskArgs = {
   id: Scalars['ID']['input'];
 };
@@ -198,6 +221,12 @@ export type MutationDeleteTaskArgs = {
 
 export type MutationDischargePatientArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type MutationDuplicateSavedViewArgs = {
+  id: Scalars['ID']['input'];
+  name: Scalars['String']['input'];
 };
 
 
@@ -240,6 +269,12 @@ export type MutationUpdateProfilePictureArgs = {
 
 export type MutationUpdatePropertyDefinitionArgs = {
   data: UpdatePropertyDefinitionInput;
+  id: Scalars['ID']['input'];
+};
+
+
+export type MutationUpdateSavedViewArgs = {
+  data: UpdateSavedViewInput;
   id: Scalars['ID']['input'];
 };
 
@@ -346,6 +381,7 @@ export type Query = {
   locationNodes: Array<LocationNodeType>;
   locationRoots: Array<LocationNodeType>;
   me?: Maybe<UserType>;
+  mySavedViews: Array<SavedView>;
   patient?: Maybe<PatientType>;
   patients: Array<PatientType>;
   patientsTotal: Scalars['Int']['output'];
@@ -355,6 +391,7 @@ export type Query = {
   recentPatientsTotal: Scalars['Int']['output'];
   recentTasks: Array<TaskType>;
   recentTasksTotal: Scalars['Int']['output'];
+  savedView?: Maybe<SavedView>;
   task?: Maybe<TaskType>;
   tasks: Array<TaskType>;
   tasksTotal: Scalars['Int']['output'];
@@ -448,6 +485,11 @@ export type QueryRecentTasksTotalArgs = {
   rootLocationIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   search?: InputMaybe<QuerySearchInput>;
   sorts?: InputMaybe<Array<QuerySortClauseInput>>;
+};
+
+
+export type QuerySavedViewArgs = {
+  id: Scalars['ID']['input'];
 };
 
 
@@ -599,6 +641,31 @@ export enum ReferenceFilterMode {
   Label = 'LABEL'
 }
 
+export type SavedView = {
+  __typename?: 'SavedView';
+  baseEntityType: SavedViewEntityType;
+  createdAt: Scalars['String']['output'];
+  filterDefinition: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  isOwner: Scalars['Boolean']['output'];
+  name: Scalars['String']['output'];
+  ownerUserId: Scalars['ID']['output'];
+  parameters: Scalars['String']['output'];
+  sortDefinition: Scalars['String']['output'];
+  updatedAt: Scalars['String']['output'];
+  visibility: SavedViewVisibility;
+};
+
+export enum SavedViewEntityType {
+  Patient = 'PATIENT',
+  Task = 'TASK'
+}
+
+export enum SavedViewVisibility {
+  LinkShared = 'LINK_SHARED',
+  Private = 'PRIVATE'
+}
+
 export enum Sex {
   Female = 'FEMALE',
   Male = 'MALE',
@@ -726,6 +793,14 @@ export type UpdatePropertyDefinitionInput = {
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   options?: InputMaybe<Array<Scalars['String']['input']>>;
+};
+
+export type UpdateSavedViewInput = {
+  filterDefinition?: InputMaybe<Scalars['String']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  parameters?: InputMaybe<Scalars['String']['input']>;
+  sortDefinition?: InputMaybe<Scalars['String']['input']>;
+  visibility?: InputMaybe<SavedViewVisibility>;
 };
 
 export type UpdateTaskInput = {
@@ -959,6 +1034,48 @@ export type QueryableFieldsQueryVariables = Exact<{
 
 export type QueryableFieldsQuery = { __typename?: 'Query', queryableFields: Array<{ __typename?: 'QueryableField', key: string, label: string, kind: QueryableFieldKind, valueType: QueryableValueType, allowedOperators: Array<QueryOperator>, sortable: boolean, searchable: boolean, propertyDefinitionId?: string | null, relation?: { __typename?: 'QueryableRelationMeta', targetEntity: string, idFieldKey: string, labelFieldKey: string, allowedFilterModes: Array<ReferenceFilterMode> } | null, choice?: { __typename?: 'QueryableChoiceMeta', optionKeys: Array<string>, optionLabels: Array<string> } | null }> };
 
+export type MySavedViewsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type MySavedViewsQuery = { __typename?: 'Query', mySavedViews: Array<{ __typename?: 'SavedView', id: string, name: string, baseEntityType: SavedViewEntityType, filterDefinition: string, sortDefinition: string, parameters: string, ownerUserId: string, visibility: SavedViewVisibility, createdAt: string, updatedAt: string, isOwner: boolean }> };
+
+export type SavedViewQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type SavedViewQuery = { __typename?: 'Query', savedView?: { __typename?: 'SavedView', id: string, name: string, baseEntityType: SavedViewEntityType, filterDefinition: string, sortDefinition: string, parameters: string, ownerUserId: string, visibility: SavedViewVisibility, createdAt: string, updatedAt: string, isOwner: boolean } | null };
+
+export type CreateSavedViewMutationVariables = Exact<{
+  data: CreateSavedViewInput;
+}>;
+
+
+export type CreateSavedViewMutation = { __typename?: 'Mutation', createSavedView: { __typename?: 'SavedView', id: string, name: string, baseEntityType: SavedViewEntityType, filterDefinition: string, sortDefinition: string, parameters: string, ownerUserId: string, visibility: SavedViewVisibility, createdAt: string, updatedAt: string, isOwner: boolean } };
+
+export type UpdateSavedViewMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  data: UpdateSavedViewInput;
+}>;
+
+
+export type UpdateSavedViewMutation = { __typename?: 'Mutation', updateSavedView: { __typename?: 'SavedView', id: string, name: string, baseEntityType: SavedViewEntityType, filterDefinition: string, sortDefinition: string, parameters: string, ownerUserId: string, visibility: SavedViewVisibility, createdAt: string, updatedAt: string, isOwner: boolean } };
+
+export type DeleteSavedViewMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteSavedViewMutation = { __typename?: 'Mutation', deleteSavedView: boolean };
+
+export type DuplicateSavedViewMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  name: Scalars['String']['input'];
+}>;
+
+
+export type DuplicateSavedViewMutation = { __typename?: 'Mutation', duplicateSavedView: { __typename?: 'SavedView', id: string, name: string, baseEntityType: SavedViewEntityType, filterDefinition: string, sortDefinition: string, parameters: string, ownerUserId: string, visibility: SavedViewVisibility, createdAt: string, updatedAt: string, isOwner: boolean } };
+
 export type PatientCreatedSubscriptionVariables = Exact<{
   rootLocationIds?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
 }>;
@@ -1120,6 +1237,12 @@ export const DeletePropertyDefinitionDocument = {"kind":"Document","definitions"
 export const GetPropertyDefinitionsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetPropertyDefinitions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"propertyDefinitions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"fieldType"}},{"kind":"Field","name":{"kind":"Name","value":"isActive"}},{"kind":"Field","name":{"kind":"Name","value":"allowedEntities"}},{"kind":"Field","name":{"kind":"Name","value":"options"}}]}}]}}]} as unknown as DocumentNode<GetPropertyDefinitionsQuery, GetPropertyDefinitionsQueryVariables>;
 export const GetPropertiesForSubjectDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetPropertiesForSubject"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"subjectId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"subjectType"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"PropertyEntity"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"propertyDefinitions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"fieldType"}},{"kind":"Field","name":{"kind":"Name","value":"isActive"}},{"kind":"Field","name":{"kind":"Name","value":"allowedEntities"}},{"kind":"Field","name":{"kind":"Name","value":"options"}}]}}]}}]} as unknown as DocumentNode<GetPropertiesForSubjectQuery, GetPropertiesForSubjectQueryVariables>;
 export const QueryableFieldsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"QueryableFields"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"entity"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"queryableFields"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"entity"},"value":{"kind":"Variable","name":{"kind":"Name","value":"entity"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"key"}},{"kind":"Field","name":{"kind":"Name","value":"label"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}},{"kind":"Field","name":{"kind":"Name","value":"valueType"}},{"kind":"Field","name":{"kind":"Name","value":"allowedOperators"}},{"kind":"Field","name":{"kind":"Name","value":"sortable"}},{"kind":"Field","name":{"kind":"Name","value":"searchable"}},{"kind":"Field","name":{"kind":"Name","value":"propertyDefinitionId"}},{"kind":"Field","name":{"kind":"Name","value":"relation"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"targetEntity"}},{"kind":"Field","name":{"kind":"Name","value":"idFieldKey"}},{"kind":"Field","name":{"kind":"Name","value":"labelFieldKey"}},{"kind":"Field","name":{"kind":"Name","value":"allowedFilterModes"}}]}},{"kind":"Field","name":{"kind":"Name","value":"choice"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"optionKeys"}},{"kind":"Field","name":{"kind":"Name","value":"optionLabels"}}]}}]}}]}}]} as unknown as DocumentNode<QueryableFieldsQuery, QueryableFieldsQueryVariables>;
+export const MySavedViewsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"MySavedViews"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"mySavedViews"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"baseEntityType"}},{"kind":"Field","name":{"kind":"Name","value":"filterDefinition"}},{"kind":"Field","name":{"kind":"Name","value":"sortDefinition"}},{"kind":"Field","name":{"kind":"Name","value":"parameters"}},{"kind":"Field","name":{"kind":"Name","value":"ownerUserId"}},{"kind":"Field","name":{"kind":"Name","value":"visibility"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"isOwner"}}]}}]}}]} as unknown as DocumentNode<MySavedViewsQuery, MySavedViewsQueryVariables>;
+export const SavedViewDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"SavedView"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"savedView"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"baseEntityType"}},{"kind":"Field","name":{"kind":"Name","value":"filterDefinition"}},{"kind":"Field","name":{"kind":"Name","value":"sortDefinition"}},{"kind":"Field","name":{"kind":"Name","value":"parameters"}},{"kind":"Field","name":{"kind":"Name","value":"ownerUserId"}},{"kind":"Field","name":{"kind":"Name","value":"visibility"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"isOwner"}}]}}]}}]} as unknown as DocumentNode<SavedViewQuery, SavedViewQueryVariables>;
+export const CreateSavedViewDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateSavedView"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"data"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"CreateSavedViewInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"createSavedView"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"Variable","name":{"kind":"Name","value":"data"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"baseEntityType"}},{"kind":"Field","name":{"kind":"Name","value":"filterDefinition"}},{"kind":"Field","name":{"kind":"Name","value":"sortDefinition"}},{"kind":"Field","name":{"kind":"Name","value":"parameters"}},{"kind":"Field","name":{"kind":"Name","value":"ownerUserId"}},{"kind":"Field","name":{"kind":"Name","value":"visibility"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"isOwner"}}]}}]}}]} as unknown as DocumentNode<CreateSavedViewMutation, CreateSavedViewMutationVariables>;
+export const UpdateSavedViewDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpdateSavedView"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"data"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"UpdateSavedViewInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"updateSavedView"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}},{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"Variable","name":{"kind":"Name","value":"data"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"baseEntityType"}},{"kind":"Field","name":{"kind":"Name","value":"filterDefinition"}},{"kind":"Field","name":{"kind":"Name","value":"sortDefinition"}},{"kind":"Field","name":{"kind":"Name","value":"parameters"}},{"kind":"Field","name":{"kind":"Name","value":"ownerUserId"}},{"kind":"Field","name":{"kind":"Name","value":"visibility"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"isOwner"}}]}}]}}]} as unknown as DocumentNode<UpdateSavedViewMutation, UpdateSavedViewMutationVariables>;
+export const DeleteSavedViewDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DeleteSavedView"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"deleteSavedView"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}]}]}}]} as unknown as DocumentNode<DeleteSavedViewMutation, DeleteSavedViewMutationVariables>;
+export const DuplicateSavedViewDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DuplicateSavedView"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"name"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"duplicateSavedView"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}},{"kind":"Argument","name":{"kind":"Name","value":"name"},"value":{"kind":"Variable","name":{"kind":"Name","value":"name"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"baseEntityType"}},{"kind":"Field","name":{"kind":"Name","value":"filterDefinition"}},{"kind":"Field","name":{"kind":"Name","value":"sortDefinition"}},{"kind":"Field","name":{"kind":"Name","value":"parameters"}},{"kind":"Field","name":{"kind":"Name","value":"ownerUserId"}},{"kind":"Field","name":{"kind":"Name","value":"visibility"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"isOwner"}}]}}]}}]} as unknown as DocumentNode<DuplicateSavedViewMutation, DuplicateSavedViewMutationVariables>;
 export const PatientCreatedDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"subscription","name":{"kind":"Name","value":"PatientCreated"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"rootLocationIds"}},"type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"patientCreated"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"rootLocationIds"},"value":{"kind":"Variable","name":{"kind":"Name","value":"rootLocationIds"}}}]}]}}]} as unknown as DocumentNode<PatientCreatedSubscription, PatientCreatedSubscriptionVariables>;
 export const PatientUpdatedDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"subscription","name":{"kind":"Name","value":"PatientUpdated"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"patientId"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"rootLocationIds"}},"type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"patientUpdated"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"patientId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"patientId"}}},{"kind":"Argument","name":{"kind":"Name","value":"rootLocationIds"},"value":{"kind":"Variable","name":{"kind":"Name","value":"rootLocationIds"}}}]}]}}]} as unknown as DocumentNode<PatientUpdatedSubscription, PatientUpdatedSubscriptionVariables>;
 export const PatientStateChangedDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"subscription","name":{"kind":"Name","value":"PatientStateChanged"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"patientId"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"rootLocationIds"}},"type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"patientStateChanged"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"patientId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"patientId"}}},{"kind":"Argument","name":{"kind":"Name","value":"rootLocationIds"},"value":{"kind":"Variable","name":{"kind":"Name","value":"rootLocationIds"}}}]}]}}]} as unknown as DocumentNode<PatientStateChangedSubscription, PatientStateChangedSubscriptionVariables>;
