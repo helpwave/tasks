@@ -1,11 +1,12 @@
 import { useCallback, useMemo } from 'react'
 import { useQueryWhenReady } from './queryHelpers'
-import type { FilterInput, SortInput } from '@/api/gql/generated'
+import type { QueryFilterClauseInput, QuerySearchInput, QuerySortClauseInput } from '@/api/gql/generated'
 
 export type UsePaginatedEntityQueryOptions<TQueryData> = {
   pagination: { pageIndex: number, pageSize: number },
-  sorting?: SortInput[],
-  filtering?: FilterInput[],
+  sorts?: QuerySortClauseInput[],
+  filters?: QueryFilterClauseInput[],
+  search?: QuerySearchInput,
   getPageDataKey?: (data: TQueryData | undefined) => string,
 }
 
@@ -19,8 +20,9 @@ export type UsePaginatedEntityQueryResult<TItem> = {
 
 type VariablesWithPagination = {
   pagination: { pageIndex: number, pageSize: number },
-  sorting?: SortInput[],
-  filtering?: FilterInput[],
+  sorts?: QuerySortClauseInput[],
+  filters?: QueryFilterClauseInput[],
+  search?: QuerySearchInput,
 }
 
 export function usePaginatedEntityQuery<
@@ -34,13 +36,14 @@ export function usePaginatedEntityQuery<
   extractItems: (data: TQueryData | undefined) => TItem[],
   extractTotal: (data: TQueryData | undefined) => number | undefined
 ): UsePaginatedEntityQueryResult<TItem> {
-  const { pagination, sorting, filtering } = options
+  const { pagination, sorts, filters, search } = options
   const variablesWithPagination = useMemo(() => ({
     ...(variables ?? {}),
     pagination: { pageIndex: pagination.pageIndex, pageSize: pagination.pageSize },
-    ...(sorting != null && sorting.length > 0 ? { sorting } : {}),
-    ...(filtering != null && filtering.length > 0 ? { filtering } : {}),
-  }), [variables, pagination.pageIndex, pagination.pageSize, sorting, filtering])
+    ...(sorts != null && sorts.length > 0 ? { sorts } : {}),
+    ...(filters != null && filters.length > 0 ? { filters } : {}),
+    ...(search != null && search.searchText ? { search } : {}),
+  }), [variables, pagination.pageIndex, pagination.pageSize, sorts, filters, search])
   const variablesTyped = variablesWithPagination as TVariables & VariablesWithPagination
   const result = useQueryWhenReady<TQueryData, TVariables & VariablesWithPagination>(
     document,

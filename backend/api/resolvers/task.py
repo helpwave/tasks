@@ -3,26 +3,15 @@ from collections.abc import AsyncGenerator
 import strawberry
 from api.audit import audit_log
 from api.context import Info
-from api.decorators.filter_sort import (
-    apply_filtering,
-    apply_sorting,
-    filtered_and_sorted_query,
-    get_property_field_types,
-)
-from api.decorators.full_text_search import (
-    apply_full_text_search,
-    full_text_search_query,
-)
 from api.errors import raise_forbidden
-from api.inputs import (
-    CreateTaskInput,
-    FilterInput,
-    FullTextSearchInput,
-    PaginationInput,
-    PatientState,
-    SortInput,
-    UpdateTaskInput,
+from api.inputs import CreateTaskInput, PaginationInput, PatientState, SortDirection, UpdateTaskInput
+from api.query.execute import count_unified_query, is_unset, unified_list_query
+from api.query.inputs import (
+    QueryFilterClauseInput,
+    QuerySearchInput,
+    QuerySortClauseInput,
 )
+from api.query.registry import TASK
 from api.resolvers.base import BaseMutationResolver, BaseSubscriptionResolver
 from api.services.authorization import AuthorizationService
 from api.services.checksum import validate_checksum
@@ -31,7 +20,7 @@ from api.services.property import PropertyService
 from api.types.task import TaskType
 from database import models
 from graphql import GraphQLError
-from sqlalchemy import desc, func, select
+from sqlalchemy import select
 from sqlalchemy.orm import aliased, selectinload
 
 
@@ -60,8 +49,7 @@ class TaskQuery:
         return task
 
     @strawberry.field
-    @filtered_and_sorted_query()
-    @full_text_search_query()
+    @unified_list_query(TASK)
     async def tasks(
         self,
         info: Info,
@@ -69,10 +57,10 @@ class TaskQuery:
         assignee_id: strawberry.ID | None = None,
         assignee_team_id: strawberry.ID | None = None,
         root_location_ids: list[strawberry.ID] | None = None,
-        filtering: list[FilterInput] | None = None,
-        sorting: list[SortInput] | None = None,
+        filters: list[QueryFilterClauseInput] | None = None,
+        sorts: list[QuerySortClauseInput] | None = None,
         pagination: PaginationInput | None = None,
-        search: FullTextSearchInput | None = None,
+        search: QuerySearchInput | None = None,
     ) -> list[TaskType]:
         auth_service = AuthorizationService(info.context.db)
 
@@ -222,9 +210,9 @@ class TaskQuery:
         assignee_id: strawberry.ID | None = None,
         assignee_team_id: strawberry.ID | None = None,
         root_location_ids: list[strawberry.ID] | None = None,
-        filtering: list[FilterInput] | None = None,
-        sorting: list[SortInput] | None = None,
-        search: FullTextSearchInput | None = None,
+        filters: list[QueryFilterClauseInput] | None = None,
+        sorts: list[QuerySortClauseInput] | None = None,
+        search: QuerySearchInput | None = None,
     ) -> int:
         auth_service = AuthorizationService(info.context.db)
 
@@ -358,45 +346,33 @@ class TaskQuery:
                     ),
                 )
 
-        if search and search is not strawberry.UNSET:
-            query = apply_full_text_search(query, search, models.Task)
-
-        property_field_types = await get_property_field_types(
-            info.context.db,
-            filtering,
-            sorting,
+        return await count_unified_query(
+            query,
+            entity=TASK,
+            db=info.context.db,
+            filters=filters if filters is not None and not is_unset(filters) else None,
+            sorts=sorts if sorts is not None and not is_unset(sorts) else None,
+            search=search if search is not None and not is_unset(search) else None,
         )
-        if filtering:
-            query = apply_filtering(
-                query,
-                filtering,
-                models.Task,
-                property_field_types,
-            )
-        if sorting:
-            query = apply_sorting(
-                query,
-                sorting,
-                models.Task,
-                property_field_types,
-            )
-
-        subquery = query.subquery()
-        count_query = select(func.count(func.distinct(subquery.c.id)))
-        result = await info.context.db.execute(count_query)
-        return result.scalar() or 0
 
     @strawberry.field
-    @filtered_and_sorted_query()
-    @full_text_search_query()
+    @unified_list_query(
+        TASK,
+        default_sorts_when_empty=[
+            QuerySortClauseInput(
+                field_key="updateDate",
+                direction=SortDirection.DESC,
+            )
+        ],
+    )
     async def recent_tasks(
         self,
         info: Info,
         root_location_ids: list[strawberry.ID] | None = None,
-        filtering: list[FilterInput] | None = None,
-        sorting: list[SortInput] | None = None,
+        filters: list[QueryFilterClauseInput] | None = None,
+        sorts: list[QuerySortClauseInput] | None = None,
         pagination: PaginationInput | None = None,
-        search: FullTextSearchInput | None = None,
+        search: QuerySearchInput | None = None,
     ) -> list[TaskType]:
         auth_service = AuthorizationService(info.context.db)
         accessible_location_ids = (
@@ -489,10 +465,6 @@ class TaskQuery:
             .distinct()
         )
 
-        default_sorting = sorting is None or len(sorting) == 0
-        if default_sorting:
-            query = query.order_by(desc(models.Task.update_date))
-
         return query
 
     @strawberry.field
@@ -500,9 +472,9 @@ class TaskQuery:
         self,
         info: Info,
         root_location_ids: list[strawberry.ID] | None = None,
-        filtering: list[FilterInput] | None = None,
-        sorting: list[SortInput] | None = None,
-        search: FullTextSearchInput | None = None,
+        filters: list[QueryFilterClauseInput] | None = None,
+        sorts: list[QuerySortClauseInput] | None = None,
+        search: QuerySearchInput | None = None,
     ) -> int:
         auth_service = AuthorizationService(info.context.db)
         accessible_location_ids = (
@@ -590,33 +562,14 @@ class TaskQuery:
             .distinct()
         )
 
-        if search and search is not strawberry.UNSET:
-            query = apply_full_text_search(query, search, models.Task)
-
-        property_field_types = await get_property_field_types(
-            info.context.db,
-            filtering,
-            sorting,
+        return await count_unified_query(
+            query,
+            entity=TASK,
+            db=info.context.db,
+            filters=filters if filters is not None and not is_unset(filters) else None,
+            sorts=sorts if sorts is not None and not is_unset(sorts) else None,
+            search=search if search is not None and not is_unset(search) else None,
         )
-        if filtering:
-            query = apply_filtering(
-                query,
-                filtering,
-                models.Task,
-                property_field_types,
-            )
-        if sorting:
-            query = apply_sorting(
-                query,
-                sorting,
-                models.Task,
-                property_field_types,
-            )
-
-        subquery = query.subquery()
-        count_query = select(func.count(func.distinct(subquery.c.id)))
-        result = await info.context.db.execute(count_query)
-        return result.scalar() or 0
 
 
 @strawberry.type

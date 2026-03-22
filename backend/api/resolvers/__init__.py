@@ -4,6 +4,7 @@ from .audit import AuditQuery
 from .location import LocationMutation, LocationQuery, LocationSubscription
 from .patient import PatientMutation, PatientQuery, PatientSubscription
 from .property import PropertyDefinitionMutation, PropertyDefinitionQuery
+from .query_metadata import QueryMetadataQuery
 from .task import TaskMutation, TaskQuery, TaskSubscription
 from .user import UserMutation, UserQuery
 
@@ -16,6 +17,7 @@ class Query(
     PropertyDefinitionQuery,
     UserQuery,
     AuditQuery,
+    QueryMetadataQuery,
 ):
     pass
 

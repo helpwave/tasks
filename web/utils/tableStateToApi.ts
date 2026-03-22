@@ -1,89 +1,110 @@
 import type { ColumnFiltersState, PaginationState, SortingState } from '@tanstack/react-table'
-import type { FilterInput, FilterOperator, FilterParameter, SortInput } from '@/api/gql/generated'
-import { ColumnType, SortDirection } from '@/api/gql/generated'
+import type { QueryFilterClauseInput, QueryFilterValueInput, QuerySortClauseInput } from '@/api/gql/generated'
+import { QueryOperator, SortDirection } from '@/api/gql/generated'
 import type { DataType, FilterValue, FilterOperator as HightideFilterOperator } from '@helpwave/hightide'
 
-const TABLE_OPERATOR_TO_API: Record<DataType, Partial<Record<HightideFilterOperator, FilterOperator>>> = {
+const TABLE_OPERATOR_TO_QUERY: Record<DataType, Partial<Record<HightideFilterOperator, QueryOperator>>> = {
   text: {
-    equals: 'TEXT_EQUALS' as FilterOperator,
-    notEquals: 'TEXT_NOT_EQUALS' as FilterOperator,
-    contains: 'TEXT_CONTAINS' as FilterOperator,
-    notContains: 'TEXT_NOT_CONTAINS' as FilterOperator,
-    startsWith: 'TEXT_STARTS_WITH' as FilterOperator,
-    endsWith: 'TEXT_ENDS_WITH' as FilterOperator,
-    // TODO consider what to do with TEXT_NOT_WHITESPACE
-    isNotUndefined: 'IS_NOT_NULL' as FilterOperator,
-    isUndefined: 'IS_NULL' as FilterOperator,
+    equals: QueryOperator.Eq,
+    notEquals: QueryOperator.Neq,
+    contains: QueryOperator.Contains,
+    notContains: QueryOperator.Neq,
+    startsWith: QueryOperator.StartsWith,
+    endsWith: QueryOperator.EndsWith,
+    isNotUndefined: QueryOperator.IsNotNull,
+    isUndefined: QueryOperator.IsNull,
   },
   number: {
-    equals: 'NUMBER_EQUALS' as FilterOperator,
-    notEquals: 'NUMBER_NOT_EQUALS' as FilterOperator,
-    greaterThan: 'NUMBER_GREATER_THAN' as FilterOperator,
-    greaterThanOrEqual: 'NUMBER_GREATER_THAN_OR_EQUAL' as FilterOperator,
-    lessThan: 'NUMBER_LESS_THAN' as FilterOperator,
-    lessThanOrEqual: 'NUMBER_LESS_THAN_OR_EQUAL' as FilterOperator,
-    between: 'NUMBER_BETWEEN' as FilterOperator,
-    notBetween: 'NUMBER_NOT_BETWEEN' as FilterOperator,
-    isNotUndefined: 'IS_NOT_NULL' as FilterOperator,
-    isUndefined: 'IS_NULL' as FilterOperator,
+    equals: QueryOperator.Eq,
+    notEquals: QueryOperator.Neq,
+    greaterThan: QueryOperator.Gt,
+    greaterThanOrEqual: QueryOperator.Gte,
+    lessThan: QueryOperator.Lt,
+    lessThanOrEqual: QueryOperator.Lte,
+    between: QueryOperator.Between,
+    notBetween: QueryOperator.Neq,
+    isNotUndefined: QueryOperator.IsNotNull,
+    isUndefined: QueryOperator.IsNull,
   },
   date: {
-    equals: 'DATE_EQUALS' as FilterOperator,
-    notEquals: 'DATE_NOT_EQUALS' as FilterOperator,
-    greaterThan: 'DATE_GREATER_THAN' as FilterOperator,
-    greaterThanOrEqual: 'DATE_GREATER_THAN_OR_EQUAL' as FilterOperator,
-    lessThan: 'DATE_LESS_THAN' as FilterOperator,
-    lessThanOrEqual: 'DATE_LESS_THAN_OR_EQUAL' as FilterOperator,
-    between: 'DATE_BETWEEN' as FilterOperator,
-    notBetween: 'DATE_NOT_BETWEEN' as FilterOperator,
-    isNotUndefined: 'IS_NOT_NULL' as FilterOperator,
-    isUndefined: 'IS_NULL' as FilterOperator,
+    equals: QueryOperator.Eq,
+    notEquals: QueryOperator.Neq,
+    greaterThan: QueryOperator.Gt,
+    greaterThanOrEqual: QueryOperator.Gte,
+    lessThan: QueryOperator.Lt,
+    lessThanOrEqual: QueryOperator.Lte,
+    between: QueryOperator.Between,
+    notBetween: QueryOperator.Neq,
+    isNotUndefined: QueryOperator.IsNotNull,
+    isUndefined: QueryOperator.IsNull,
   },
   dateTime: {
-    equals: 'DATETIME_EQUALS' as FilterOperator,
-    notEquals: 'DATETIME_NOT_EQUALS' as FilterOperator,
-    greaterThan: 'DATETIME_GREATER_THAN' as FilterOperator,
-    greaterThanOrEqual: 'DATETIME_GREATER_THAN_OR_EQUAL' as FilterOperator,
-    lessThan: 'DATETIME_LESS_THAN' as FilterOperator,
-    lessThanOrEqual: 'DATETIME_LESS_THAN_OR_EQUAL' as FilterOperator,
-    between: 'DATETIME_BETWEEN' as FilterOperator,
-    notBetween: 'DATETIME_NOT_BETWEEN' as FilterOperator,
-    isNotUndefined: 'IS_NOT_NULL' as FilterOperator,
-    isUndefined: 'IS_NULL' as FilterOperator,
+    equals: QueryOperator.Eq,
+    notEquals: QueryOperator.Neq,
+    greaterThan: QueryOperator.Gt,
+    greaterThanOrEqual: QueryOperator.Gte,
+    lessThan: QueryOperator.Lt,
+    lessThanOrEqual: QueryOperator.Lte,
+    between: QueryOperator.Between,
+    notBetween: QueryOperator.Neq,
+    isNotUndefined: QueryOperator.IsNotNull,
+    isUndefined: QueryOperator.IsNull,
   },
   boolean: {
-    isTrue: 'BOOLEAN_IS_TRUE' as FilterOperator,
-    isFalse: 'BOOLEAN_IS_FALSE' as FilterOperator,
-    isNotUndefined: 'IS_NOT_NULL' as FilterOperator,
-    isUndefined: 'IS_NULL' as FilterOperator,
+    isTrue: QueryOperator.Eq,
+    isFalse: QueryOperator.Eq,
+    isNotUndefined: QueryOperator.IsNotNull,
+    isUndefined: QueryOperator.IsNull,
   },
   singleTag: {
-    equals: 'TAGS_SINGLE_EQUALS' as FilterOperator,
-    notEquals: 'TAGS_SINGLE_NOT_EQUALS' as FilterOperator,
-    contains: 'TAGS_SINGLE_CONTAINS' as FilterOperator,
-    notContains: 'TAGS_SINGLE_NOT_CONTAINS' as FilterOperator,
-    isNotUndefined: 'IS_NOT_NULL' as FilterOperator,
-    isUndefined: 'IS_NULL' as FilterOperator,
+    equals: QueryOperator.Eq,
+    notEquals: QueryOperator.Neq,
+    contains: QueryOperator.In,
+    notContains: QueryOperator.Neq,
+    isNotUndefined: QueryOperator.IsNotNull,
+    isUndefined: QueryOperator.IsNull,
   },
   multiTags: {
-    equals: 'TAGS_EQUALS' as FilterOperator,
-    notEquals: 'TAGS_NOT_EQUALS' as FilterOperator,
-    contains: 'TAGS_CONTAINS' as FilterOperator,
-    notContains: 'TAGS_NOT_CONTAINS' as FilterOperator,
-    isNotUndefined: 'IS_NOT_NULL' as FilterOperator,
-    isUndefined: 'IS_NULL' as FilterOperator,
+    equals: QueryOperator.AllIn,
+    notEquals: QueryOperator.Neq,
+    contains: QueryOperator.AnyIn,
+    notContains: QueryOperator.NoneIn,
+    isNotUndefined: QueryOperator.IsNotNull,
+    isUndefined: QueryOperator.IsNull,
   },
   unknownType: {
-    isNotUndefined: 'IS_NOT_NULL' as FilterOperator,
-    isUndefined: 'IS_NULL' as FilterOperator,
+    isNotUndefined: QueryOperator.IsNotNull,
+    isUndefined: QueryOperator.IsNull,
   },
 }
 
-function tableOperatorToApi(dataType: DataType, operator: HightideFilterOperator): FilterOperator | null {
-  return TABLE_OPERATOR_TO_API[dataType][operator] ?? null
+function tableOperatorToQuery(dataType: DataType, operator: HightideFilterOperator): QueryOperator | null {
+  return TABLE_OPERATOR_TO_QUERY[dataType][operator] ?? null
 }
 
-function toFilterParameter(value: FilterValue, propertyDefinitionId?: string): FilterParameter {
+function formatLocalDateOnly(d: Date): string {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+function toGraphqlDateInput(value: unknown): string | undefined {
+  if (value == null) return undefined
+  if (typeof value === 'string') {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value
+    const parsed = new Date(value)
+    if (Number.isNaN(parsed.getTime())) return undefined
+    return formatLocalDateOnly(parsed)
+  }
+  if (value instanceof Date) {
+    if (Number.isNaN(value.getTime())) return undefined
+    return formatLocalDateOnly(value)
+  }
+  return undefined
+}
+
+function toQueryFilterValue(value: FilterValue): QueryFilterValueInput {
   const parameter = value.parameter
   const raw = parameter as Record<string, unknown>
   const multi = parameter.multiOptionSearch
@@ -102,81 +123,56 @@ function toFilterParameter(value: FilterValue, propertyDefinitionId?: string): F
     searchTagsUnknownType = [raw['searchTag']]
   }
   const searchTags: string[] = searchTagsUnknownType.map((t) => String(t))
-  const param: FilterParameter = {
-    searchText: parameter.searchText,
-    isCaseSensitive: parameter.isCaseSensitive,
-    compareValue: parameter.compareValue,
-    min: parameter.minNumber,
-    max: parameter.maxNumber,
-    compareDate: parameter.compareDate?.toISOString().split('T')[0],
-    minDate: parameter.minDate?.toISOString().split('T')[0],
-    maxDate: parameter.maxDate?.toISOString().split('T')[0],
-    compareDateTime: parameter.compareDate?.toISOString().split('Z')[0],
-    minDateTime: parameter.minDate?.toISOString().split('Z')[0],
-    maxDateTime: parameter.maxDate?.toISOString().split('Z')[0],
-    searchTags,
-    propertyDefinitionId: propertyDefinitionId,
+  const base: QueryFilterValueInput = {
+    stringValue: parameter.searchText,
+    floatValue: parameter.compareValue,
+    floatMin: parameter.minNumber,
+    floatMax: parameter.maxNumber,
+    dateValue: toGraphqlDateInput(parameter.compareDate),
+    dateMin: toGraphqlDateInput(parameter.minDate),
+    dateMax: toGraphqlDateInput(parameter.maxDate),
+    dateTimeValue: parameter.compareDate?.toISOString(),
+    stringValues: searchTags.length > 0 ? searchTags : undefined,
   }
-  return param
-}
-
-const TASK_COLUMN_TO_BACKEND: Record<string, string> = {
-  dueDate: 'due_date',
-  updateDate: 'update_date',
-  creationDate: 'creation_date',
-  estimatedTime: 'estimated_time',
-  assigneeTeam: 'assignee_team_id',
-}
-
-function isPropertyColumnId(id: string): boolean {
-  return id.startsWith('property_')
-}
-
-function getPropertyDefinitionId(id: string): string | undefined {
-  if (!isPropertyColumnId(id)) return undefined
-  return id.replace(/^property_/, '')
-}
-
-function columnIdToBackend(columnId: string, entity: 'task' | 'patient'): string {
-  if (entity === 'task' && TASK_COLUMN_TO_BACKEND[columnId]) {
-    return TASK_COLUMN_TO_BACKEND[columnId]
+  if (value.dataType === 'singleTag' && value.operator === 'equals' && searchTags.length === 1) {
+    base.stringValue = searchTags[0]
+    base.stringValues = undefined
   }
-  return columnId
+  if (value.dataType === 'boolean') {
+    if (value.operator === 'isTrue') {
+      base.boolValue = true
+    } else if (value.operator === 'isFalse') {
+      base.boolValue = false
+    }
+  }
+  return base
 }
 
-export function columnFiltersToFilterInput(
-  filters: ColumnFiltersState,
-  entity: 'task' | 'patient' = 'patient'
-): FilterInput[] {
-  const result: FilterInput[] = []
+export function columnFiltersToQueryFilterClauses(
+  filters: ColumnFiltersState
+): QueryFilterClauseInput[] {
+  const result: QueryFilterClauseInput[] = []
   for (const filter of filters) {
     const value = filter.value as FilterValue
     if (!value?.operator || !value?.parameter || !value?.dataType) continue
-    const apiOperator = tableOperatorToApi(value.dataType, value.operator)
+    const apiOperator = tableOperatorToQuery(value.dataType, value.operator)
     if (!apiOperator) continue
-    const isProperty = isPropertyColumnId(filter.id)
-    const propertyDefinitionId = getPropertyDefinitionId(filter.id)
-    const column = columnIdToBackend(filter.id, entity)
+    const fieldKey = filter.id
     result.push({
-      column,
+      fieldKey,
       operator: apiOperator,
-      parameter: toFilterParameter(value),
-      columnType: isProperty ? ColumnType.Property : ColumnType.DirectAttribute,
-      propertyDefinitionId: propertyDefinitionId ?? undefined,
+      value: toQueryFilterValue(value),
     })
   }
   return result
 }
 
-export function sortingStateToSortInput(
-  sorting: SortingState,
-  entity: 'task' | 'patient' = 'patient'
-): SortInput[] {
+export function sortingStateToQuerySortClauses(
+  sorting: SortingState
+): QuerySortClauseInput[] {
   return sorting.map((s) => ({
-    column: columnIdToBackend(s.id, entity),
-    direction: s.desc ? SortDirection.Desc : SortDirection.Asc,
-    columnType: isPropertyColumnId(s.id) ? ColumnType.Property : ColumnType.DirectAttribute,
-    propertyDefinitionId: getPropertyDefinitionId(s.id) ?? undefined,
+    fieldKey: s.id,
+    direction: s.desc ? SortDirection.Desc : SortDirection.Asc
   }))
 }
 
@@ -186,3 +182,6 @@ export function paginationStateToPaginationInput(pagination: PaginationState): {
     pageSize: pagination.pageSize ?? 10,
   }
 }
+
+export { columnFiltersToQueryFilterClauses as columnFiltersToFilterInput }
+export { sortingStateToQuerySortClauses as sortingStateToSortInput }

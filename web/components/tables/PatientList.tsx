@@ -3,8 +3,8 @@ import type { IdentifierFilterValue, FilterListItem, FilterListPopUpBuilderProps
 import { Chip, FillerCell, HelpwaveLogo, LoadingContainer, SearchBar, ProgressIndicator, Tooltip, Drawer, TableProvider, TableDisplay, TableColumnSwitcher, TablePagination, IconButton, useLocale, FilterList } from '@helpwave/hightide'
 import { PlusIcon } from 'lucide-react'
 import type { LocationType } from '@/api/gql/generated'
-import { Sex, PatientState, type GetPatientsQuery, type TaskType, PropertyEntity, type FullTextSearchInput, FieldType } from '@/api/gql/generated'
-import { usePropertyDefinitions, usePatientsPaginated, useRefreshingEntityIds } from '@/data'
+import { Sex, PatientState, type GetPatientsQuery, type TaskType, PropertyEntity, FieldType } from '@/api/gql/generated'
+import { usePropertyDefinitions, usePatientsPaginated, useQueryableFields, useRefreshingEntityIds } from '@/data'
 import { PatientDetailView } from '@/components/patients/PatientDetailView'
 import { LocationChips } from '@/components/locations/LocationChips'
 import { LocationChipsBySetting } from '@/components/patients/LocationChipsBySetting'
@@ -16,7 +16,8 @@ import type { ColumnDef, Row, TableState } from '@tanstack/table-core'
 import { getPropertyColumnsForEntity } from '@/utils/propertyColumn'
 import { useStorageSyncedTableState } from '@/hooks/useTableState'
 import { usePropertyColumnVisibility } from '@/hooks/usePropertyColumnVisibility'
-import { columnFiltersToFilterInput, paginationStateToPaginationInput, sortingStateToSortInput } from '@/utils/tableStateToApi'
+import { columnFiltersToQueryFilterClauses, paginationStateToPaginationInput, sortingStateToQuerySortClauses } from '@/utils/tableStateToApi'
+import { queryableFieldsToFilterListItems } from '@/utils/queryableFilterList'
 import { getPropertyFilterFn as getPropertyDatatype } from '@/utils/propertyFilterMapping'
 import { UserSelectFilterPopUp } from './UserSelectFilterPopUp'
 
@@ -63,6 +64,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
   const { selectedRootLocationIds } = useTasksContext()
   const { refreshingPatientIds } = useRefreshingEntityIds()
   const { data: propertyDefinitionsData } = usePropertyDefinitions()
+  const { data: queryableFieldsData } = useQueryableFields('Patient')
   const effectiveRootLocationIds = rootLocationIds ?? selectedRootLocationIds
   const [isPanelOpen, setIsPanelOpen] = useState(false)
   const [selectedPatient, setSelectedPatient] = useState<PatientViewModel | undefined>(undefined)
@@ -94,27 +96,28 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
     PatientState.Wait,
   ], [])
 
-  const apiFiltering = useMemo(() => columnFiltersToFilterInput(filters), [filters])
+  const apiFilters = useMemo(() => columnFiltersToQueryFilterClauses(filters), [filters])
   const patientStates = useMemo(() => {
-    const stateFilter = apiFiltering.find(
-      f => f.column === 'state' &&
-        (f.operator === 'TAGS_SINGLE_EQUALS' || f.operator === 'TAGS_SINGLE_CONTAINS') &&
-        f.parameter?.searchTags != null &&
-        f.parameter.searchTags.length > 0
-    )
-    if (!stateFilter?.parameter?.searchTags) return allPatientStates
+    const stateFilter = apiFilters.find(f => f.fieldKey === 'state')
+    if (!stateFilter?.value) return allPatientStates
+    const raw = stateFilter.value.stringValues?.length
+      ? stateFilter.value.stringValues
+      : stateFilter.value.stringValue
+        ? [stateFilter.value.stringValue]
+        : []
+    if (raw.length === 0) return allPatientStates
     const allowed = new Set(allPatientStates as unknown as string[])
-    const filtered = (stateFilter.parameter.searchTags as string[]).filter(s => allowed.has(s))
+    const filtered = raw.filter(s => allowed.has(s))
     return filtered.length > 0 ? (filtered as PatientState[]) : allPatientStates
-  }, [apiFiltering, allPatientStates])
+  }, [apiFilters, allPatientStates])
 
-  const searchInput: FullTextSearchInput | undefined = searchQuery
+  const searchInput = searchQuery
     ? {
       searchText: searchQuery,
       includeProperties: true,
     }
     : undefined
-  const apiSorting = useMemo(() => sortingStateToSortInput(sorting), [sorting])
+  const apiSorting = useMemo(() => sortingStateToQuerySortClauses(sorting), [sorting])
   const apiPagination = useMemo(() => paginationStateToPaginationInput(pagination), [pagination])
 
   const lastTotalCountRef = useRef<number | undefined>(undefined)
@@ -123,12 +126,12 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       locationId: locationId || undefined,
       rootLocationIds: !locationId && effectiveRootLocationIds && effectiveRootLocationIds.length > 0 ? effectiveRootLocationIds : undefined,
       states: patientStates,
-      search: searchInput,
     },
     {
       pagination: apiPagination,
-      sorting: apiSorting.length > 0 ? apiSorting : undefined,
-      filtering: apiFiltering.length > 0 ? apiFiltering : undefined,
+      sorts: apiSorting.length > 0 ? apiSorting : undefined,
+      filters: apiFilters.length > 0 ? apiFilters : undefined,
+      search: searchInput,
     }
   )
   if (totalCount != null) lastTotalCountRef.current = totalCount
@@ -393,61 +396,72 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
     })),
   ], [translation, allPatientStates, patientPropertyColumns, refreshingPatientIds, rowLoadingCell, dateFormat])
 
-  const availableFilters: FilterListItem[] = useMemo(() => [
-    {
-      id: 'name',
-      label: translation('name'),
-      dataType: 'text',
-      tags: [],
-    },
-    {
-      id: 'state',
-      label: translation('status'),
-      dataType: 'singleTag',
-      tags: allPatientStates.map(state => ({ label: translation('patientState', { state: state as string }), tag: state })),
-    },
-    {
-      id: 'sex',
-      label: translation('sex'),
-      dataType: 'singleTag',
-      tags: [
-        { label: translation('male'), tag: Sex.Male },
-        { label: translation('female'), tag: Sex.Female },
-        { label: translation('diverse'), tag: Sex.Unknown },
-      ],
-    },
-    ...(['CLINIC', 'WARD', 'ROOM', 'BED'] as const).map((kind): FilterListItem => ({
-      id: `location-${kind}`,
-      label: translation(LOCATION_KIND_HEADERS[kind] as 'locationClinic' | 'locationWard' | 'locationRoom' | 'locationBed'),
-      dataType: 'text',
-      tags: [],
-    })),
-    {
-      id: 'birthdate',
-      label: translation('birthdate'),
-      dataType: 'date',
-      tags: [],
-    },
-    {
-      id: 'tasks',
-      label: translation('tasks'),
-      dataType: 'number',
-      tags: [],
-    },
-    ...propertyDefinitionsData?.propertyDefinitions.map(def => {
-      const dataType = getPropertyDatatype(def.fieldType)
-      return {
-        id:  `property_${def.id}`,
-        label: def.name,
-        dataType,
-        tags: def.options.map((opt, idx) => ({
-          label: opt,
-          tag: `${def.id}-opt-${idx}`,
-        })),
-        popUpBuilder: def.fieldType === FieldType.FieldTypeUser ? (props: FilterListPopUpBuilderProps) => (<UserSelectFilterPopUp {...props}/>) : undefined,
-      }
-    }) ?? [],
-  ], [allPatientStates, propertyDefinitionsData?.propertyDefinitions, translation])
+  const propertyFieldTypeByDefId = useMemo(
+    () => new Map(propertyDefinitionsData?.propertyDefinitions.map(d => [d.id, d.fieldType]) ?? []),
+    [propertyDefinitionsData]
+  )
+
+  const availableFilters: FilterListItem[] = useMemo(() => {
+    const raw = queryableFieldsData?.queryableFields
+    if (raw?.length) {
+      return queryableFieldsToFilterListItems(raw, propertyFieldTypeByDefId)
+    }
+    return [
+      {
+        id: 'name',
+        label: translation('name'),
+        dataType: 'text',
+        tags: [],
+      },
+      {
+        id: 'state',
+        label: translation('status'),
+        dataType: 'singleTag',
+        tags: allPatientStates.map(state => ({ label: translation('patientState', { state: state as string }), tag: state })),
+      },
+      {
+        id: 'sex',
+        label: translation('sex'),
+        dataType: 'singleTag',
+        tags: [
+          { label: translation('male'), tag: Sex.Male },
+          { label: translation('female'), tag: Sex.Female },
+          { label: translation('diverse'), tag: Sex.Unknown },
+        ],
+      },
+      ...(['CLINIC', 'WARD', 'ROOM', 'BED'] as const).map((kind): FilterListItem => ({
+        id: `location-${kind}`,
+        label: translation(LOCATION_KIND_HEADERS[kind] as 'locationClinic' | 'locationWard' | 'locationRoom' | 'locationBed'),
+        dataType: 'text',
+        tags: [],
+      })),
+      {
+        id: 'birthdate',
+        label: translation('birthdate'),
+        dataType: 'date',
+        tags: [],
+      },
+      {
+        id: 'tasks',
+        label: translation('tasks'),
+        dataType: 'number',
+        tags: [],
+      },
+      ...propertyDefinitionsData?.propertyDefinitions.map(def => {
+        const dataType = getPropertyDatatype(def.fieldType)
+        return {
+          id: `property_${def.id}`,
+          label: def.name,
+          dataType,
+          tags: def.options.map((opt, idx) => ({
+            label: opt,
+            tag: `${def.id}-opt-${idx}`,
+          })),
+          popUpBuilder: def.fieldType === FieldType.FieldTypeUser ? (props: FilterListPopUpBuilderProps) => (<UserSelectFilterPopUp {...props} />) : undefined,
+        }
+      }) ?? [],
+    ]
+  }, [queryableFieldsData?.queryableFields, propertyFieldTypeByDefId, translation, allPatientStates, propertyDefinitionsData?.propertyDefinitions])
 
   const onRowClick = useCallback((row: Row<PatientViewModel>) => handleEdit(row.original), [handleEdit])
   const fillerRowCell = useCallback(() => (<FillerCell className="min-h-8" />), [])
@@ -474,6 +488,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       onSortingChange={setSorting}
       onColumnFiltersChange={setFilters}
       enableMultiSort={true}
+      enablePinning={false}
       pageCount={stableTotalCount != null ? Math.ceil(stableTotalCount / pagination.pageSize) : -1}
     >
       <div className="flex flex-col h-full gap-4">

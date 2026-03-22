@@ -3,23 +3,15 @@ from collections.abc import AsyncGenerator
 import strawberry
 from api.audit import audit_log
 from api.context import Info
-from api.decorators.filter_sort import (
-    apply_filtering,
-    apply_sorting,
-    filtered_and_sorted_query,
-    get_property_field_types,
-)
-from api.decorators.full_text_search import (
-    apply_full_text_search,
-    full_text_search_query,
-)
-from api.inputs import (
-    FilterInput,
-    FullTextSearchInput,
-    PaginationInput,
-    SortInput,
-)
 from api.inputs import CreatePatientInput, PatientState, UpdatePatientInput
+from api.inputs import PaginationInput
+from api.query.execute import count_unified_query, is_unset, unified_list_query
+from api.query.inputs import (
+    QueryFilterClauseInput,
+    QuerySearchInput,
+    QuerySortClauseInput,
+)
+from api.query.registry import PATIENT
 from api.resolvers.base import BaseMutationResolver, BaseSubscriptionResolver
 from api.services.authorization import AuthorizationService
 from api.services.checksum import validate_checksum
@@ -170,18 +162,17 @@ class PatientQuery:
         return patient
 
     @strawberry.field
-    @filtered_and_sorted_query()
-    @full_text_search_query()
+    @unified_list_query(PATIENT)
     async def patients(
         self,
         info: Info,
         location_node_id: strawberry.ID | None = None,
         root_location_ids: list[strawberry.ID] | None = None,
         states: list[PatientState] | None = None,
-        filtering: list[FilterInput] | None = None,
-        sorting: list[SortInput] | None = None,
+        filters: list[QueryFilterClauseInput] | None = None,
+        sorts: list[QuerySortClauseInput] | None = None,
         pagination: PaginationInput | None = None,
-        search: FullTextSearchInput | None = None,
+        search: QuerySearchInput | None = None,
     ) -> list[PatientType]:
         query, _ = await PatientQuery._build_patients_base_query(
             info, location_node_id, root_location_ids, states
@@ -195,45 +186,33 @@ class PatientQuery:
         location_node_id: strawberry.ID | None = None,
         root_location_ids: list[strawberry.ID] | None = None,
         states: list[PatientState] | None = None,
-        filtering: list[FilterInput] | None = None,
-        sorting: list[SortInput] | None = None,
-        search: FullTextSearchInput | None = None,
+        filters: list[QueryFilterClauseInput] | None = None,
+        sorts: list[QuerySortClauseInput] | None = None,
+        search: QuerySearchInput | None = None,
     ) -> int:
         query, _ = await PatientQuery._build_patients_base_query(
             info, location_node_id, root_location_ids, states
         )
 
-        if search and search is not strawberry.UNSET:
-            query = apply_full_text_search(query, search, models.Patient)
-
-        property_field_types = await get_property_field_types(
-            info.context.db, filtering, sorting
+        return await count_unified_query(
+            query,
+            entity=PATIENT,
+            db=info.context.db,
+            filters=filters if filters is not None and not is_unset(filters) else None,
+            sorts=sorts if sorts is not None and not is_unset(sorts) else None,
+            search=search if search is not None and not is_unset(search) else None,
         )
-        if filtering:
-            query = apply_filtering(
-                query, filtering, models.Patient, property_field_types
-            )
-        if sorting:
-            query = apply_sorting(
-                query, sorting, models.Patient, property_field_types
-            )
-
-        subquery = query.subquery()
-        count_query = select(func.count(func.distinct(subquery.c.id)))
-        result = await info.context.db.execute(count_query)
-        return result.scalar() or 0
 
     @strawberry.field
-    @filtered_and_sorted_query()
-    @full_text_search_query()
+    @unified_list_query(PATIENT)
     async def recent_patients(
         self,
         info: Info,
         root_location_ids: list[strawberry.ID] | None = None,
-        filtering: list[FilterInput] | None = None,
-        sorting: list[SortInput] | None = None,
+        filters: list[QueryFilterClauseInput] | None = None,
+        sorts: list[QuerySortClauseInput] | None = None,
         pagination: PaginationInput | None = None,
-        search: FullTextSearchInput | None = None,
+        search: QuerySearchInput | None = None,
     ) -> list[PatientType]:
         auth_service = AuthorizationService(info.context.db)
         accessible_location_ids = (
@@ -317,9 +296,9 @@ class PatientQuery:
         self,
         info: Info,
         root_location_ids: list[strawberry.ID] | None = None,
-        filtering: list[FilterInput] | None = None,
-        sorting: list[SortInput] | None = None,
-        search: FullTextSearchInput | None = None,
+        filters: list[QueryFilterClauseInput] | None = None,
+        sorts: list[QuerySortClauseInput] | None = None,
+        search: QuerySearchInput | None = None,
     ) -> int:
         auth_service = AuthorizationService(info.context.db)
         accessible_location_ids = (
@@ -391,25 +370,14 @@ class PatientQuery:
                     .distinct()
                 )
 
-        if search and search is not strawberry.UNSET:
-            query = apply_full_text_search(query, search, models.Patient)
-
-        property_field_types = await get_property_field_types(
-            info.context.db, filtering, sorting
+        return await count_unified_query(
+            query,
+            entity=PATIENT,
+            db=info.context.db,
+            filters=filters if filters is not None and not is_unset(filters) else None,
+            sorts=sorts if sorts is not None and not is_unset(sorts) else None,
+            search=search if search is not None and not is_unset(search) else None,
         )
-        if filtering:
-            query = apply_filtering(
-                query, filtering, models.Patient, property_field_types
-            )
-        if sorting:
-            query = apply_sorting(
-                query, sorting, models.Patient, property_field_types
-            )
-
-        subquery = query.subquery()
-        count_query = select(func.count(func.distinct(subquery.c.id)))
-        result = await info.context.db.execute(count_query)
-        return result.scalar() or 0
 
 
 @strawberry.type

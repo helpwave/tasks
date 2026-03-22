@@ -1,10 +1,12 @@
 import { useMemo, useState, forwardRef, useImperativeHandle, useEffect, useRef, useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { Button, Checkbox, ConfirmDialog, FillerCell, HelpwaveLogo, IconButton, LoadingContainer, SearchBar, Select, SelectOption, TableColumnSwitcher, TableDisplay, TablePagination, TableProvider } from '@helpwave/hightide'
+import type { FilterListItem } from '@helpwave/hightide'
+import { Button, Checkbox, ConfirmDialog, FilterList, FillerCell, HelpwaveLogo, IconButton, LoadingContainer, SearchBar, Select, SelectOption, TableColumnSwitcher, TableDisplay, TablePagination, TableProvider } from '@helpwave/hightide'
 import { PlusIcon, UserCheck, Users } from 'lucide-react'
+import type { IdentifierFilterValue } from '@helpwave/hightide'
 import type { TaskPriority, GetTasksQuery } from '@/api/gql/generated'
 import { PropertyEntity } from '@/api/gql/generated'
-import { useAssignTask, useAssignTaskToTeam, useCompleteTask, useReopenTask, useUsers, useLocations, usePropertyDefinitions, useRefreshingEntityIds } from '@/data'
+import { useAssignTask, useAssignTaskToTeam, useCompleteTask, useReopenTask, useUsers, useLocations, usePropertyDefinitions, useQueryableFields, useRefreshingEntityIds } from '@/data'
 import { AssigneeSelectDialog } from '@/components/tasks/AssigneeSelectDialog'
 import clsx from 'clsx'
 import { DateDisplay } from '@/components/Date/DateDisplay'
@@ -22,6 +24,7 @@ import { PriorityUtils } from '@/utils/priority'
 import { getPropertyColumnsForEntity } from '@/utils/propertyColumn'
 import { useStorageSyncedTableState } from '@/hooks/useTableState'
 import { usePropertyColumnVisibility } from '@/hooks/usePropertyColumnVisibility'
+import { queryableFieldsToFilterListItems } from '@/utils/queryableFilterList'
 
 export type TaskViewModel = {
   id: string,
@@ -78,11 +81,14 @@ type TaskListProps = {
   loading?: boolean,
   showAllTasksMode?: boolean,
   tableState?: TaskListTableState,
+  searchQuery?: string,
+  onSearchQueryChange?: (value: string) => void,
 }
 
-export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initialTasks, onRefetch, showAssignee = false, initialTaskId, onInitialTaskOpened, headerActions, totalCount, loading = false, showAllTasksMode = false, tableState: controlledTableState }, ref) => {
+export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initialTasks, onRefetch, showAssignee = false, initialTaskId, onInitialTaskOpened, headerActions, totalCount, loading = false, showAllTasksMode = false, tableState: controlledTableState, searchQuery: searchQueryProp, onSearchQueryChange }, ref) => {
   const translation = useTasksTranslation()
   const { data: propertyDefinitionsData } = usePropertyDefinitions()
+  const { data: queryableFieldsData } = useQueryableFields('Task')
 
   const internalState = useStorageSyncedTableState('task-list', {
     defaultSorting: useMemo(() => [
@@ -154,7 +160,9 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null)
   const [selectedUserPopupId, setSelectedUserPopupId] = useState<string | null>(null)
   const [taskDialogState, setTaskDialogState] = useState<TaskDialogState>({ isOpen: false })
-  const [searchQuery, setSearchQuery] = useState('')
+  const [internalSearchQuery, setInternalSearchQuery] = useState('')
+  const searchQuery = searchQueryProp !== undefined ? searchQueryProp : internalSearchQuery
+  const setSearchQuery = onSearchQueryChange ?? setInternalSearchQuery
   const [openedTaskId, setOpenedTaskId] = useState<string | null>(null)
   const [isHandoverDialogOpen, setIsHandoverDialogOpen] = useState(false)
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
@@ -201,6 +209,8 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
     })
   }, [initialTasks])
 
+  const isServerDriven = totalCount != null
+
   const tasks = useMemo(() => {
     let data = initialTasks.map(task => {
       const optimisticDone = optimisticUpdates.get(task.id)
@@ -210,25 +220,28 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
       return task
     })
 
-    if (searchQuery) {
+    if (!isServerDriven && searchQuery) {
       const lowerQuery = searchQuery.toLowerCase()
       data = data.filter(t =>
         t.name.toLowerCase().includes(lowerQuery) ||
-        t.patient?.name.toLowerCase().includes(lowerQuery))
+        (t.patient?.name.toLowerCase().includes(lowerQuery) ?? false))
     }
 
-    return [...data].sort((a, b) => {
-      if (a.done !== b.done) {
-        return a.done ? 1 : -1
-      }
+    if (!isServerDriven) {
+      return [...data].sort((a, b) => {
+        if (a.done !== b.done) {
+          return a.done ? 1 : -1
+        }
 
-      if (!a.dueDate && !b.dueDate) return 0
-      if (!a.dueDate) return 1
-      if (!b.dueDate) return -1
+        if (!a.dueDate && !b.dueDate) return 0
+        if (!a.dueDate) return 1
+        if (!b.dueDate) return -1
 
-      return a.dueDate.getTime() - b.dueDate.getTime()
-    })
-  }, [initialTasks, optimisticUpdates, searchQuery])
+        return a.dueDate.getTime() - b.dueDate.getTime()
+      })
+    }
+    return data
+  }, [initialTasks, optimisticUpdates, searchQuery, isServerDriven])
 
 
   const openTasks = useMemo(() => {
@@ -330,6 +343,32 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
     [propertyDefinitionsData]
   )
 
+  const propertyFieldTypeByDefId = useMemo(
+    () => new Map(propertyDefinitionsData?.propertyDefinitions.map(d => [d.id, d.fieldType]) ?? []),
+    [propertyDefinitionsData]
+  )
+
+  const availableFilters: FilterListItem[] = useMemo(() => {
+    const raw = queryableFieldsData?.queryableFields
+    if (raw?.length) {
+      return queryableFieldsToFilterListItems(raw, propertyFieldTypeByDefId)
+    }
+    return [
+      { id: 'title', label: translation('title'), dataType: 'text', tags: [] },
+      { id: 'description', label: translation('description'), dataType: 'text', tags: [] },
+      { id: 'done', label: translation('done'), dataType: 'boolean', tags: [] },
+      { id: 'dueDate', label: translation('dueDate'), dataType: 'date', tags: [] },
+      { id: 'priority', label: translation('priority'), dataType: 'singleTag', tags: ['P1', 'P2', 'P3', 'P4'].map(p => ({ label: p, tag: p })) },
+      { id: 'patient', label: translation('patient'), dataType: 'text', tags: [] },
+      { id: 'assignee', label: translation('assignedTo'), dataType: 'text', tags: [] },
+      ...propertyDefinitionsData?.propertyDefinitions.map(def => ({
+        id: `property_${def.id}`,
+        label: def.name,
+        dataType: 'text' as const,
+        tags: def.options.map((opt, idx) => ({ label: opt, tag: `${def.id}-opt-${idx}` })),
+      })) ?? [],
+    ]
+  }, [queryableFieldsData?.queryableFields, propertyFieldTypeByDefId, translation, propertyDefinitionsData?.propertyDefinitions])
 
   const rowLoadingCell = useMemo(() => <LoadingContainer className="w-full min-h-8" />, [])
 
@@ -576,6 +615,11 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
               onChange={(e) => setSearchQuery(e.target.value)}
               onSearch={() => null}
               containerProps={{ className: 'max-w-80' }}
+            />
+            <FilterList
+              value={filters as IdentifierFilterValue[]}
+              onValueChange={value => { setFiltersNormalized(value) }}
+              availableItems={availableFilters}
             />
             <TableColumnSwitcher />
           </div>

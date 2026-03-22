@@ -5,12 +5,12 @@ import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
 import type { TaskViewModel } from '@/components/tables/TaskList'
 import { TaskList } from '@/components/tables/TaskList'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useRouter } from 'next/router'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { useTasksPaginated } from '@/data'
 import { useStorageSyncedTableState } from '@/hooks/useTableState'
-import { columnFiltersToFilterInput, paginationStateToPaginationInput, sortingStateToSortInput } from '@/utils/tableStateToApi'
+import { columnFiltersToQueryFilterClauses, paginationStateToPaginationInput, sortingStateToQuerySortClauses } from '@/utils/tableStateToApi'
 
 const TasksPage: NextPage = () => {
   const translation = useTasksTranslation()
@@ -32,9 +32,13 @@ const TasksPage: NextPage = () => {
     ], []),
   })
 
-  const apiFiltering = useMemo(() => columnFiltersToFilterInput(filters, 'task'), [filters])
-  const apiSorting = useMemo(() => sortingStateToSortInput(sorting, 'task'), [sorting])
+  const [searchQuery, setSearchQuery] = useState('')
+  const apiFilters = useMemo(() => columnFiltersToQueryFilterClauses(filters), [filters])
+  const apiSorting = useMemo(() => sortingStateToQuerySortClauses(sorting), [sorting])
   const apiPagination = useMemo(() => paginationStateToPaginationInput(pagination), [pagination])
+  const searchInput = searchQuery
+    ? { searchText: searchQuery, includeProperties: true }
+    : undefined
 
   const { data: tasksData, refetch, totalCount, loading: tasksLoading } = useTasksPaginated(
     !!selectedRootLocationIds && !!user
@@ -42,8 +46,9 @@ const TasksPage: NextPage = () => {
       : undefined,
     {
       pagination: apiPagination,
-      sorting: apiSorting.length > 0 ? apiSorting : undefined,
-      filtering: apiFiltering.length > 0 ? apiFiltering : undefined,
+      sorts: apiSorting.length > 0 ? apiSorting : undefined,
+      filters: apiFilters.length > 0 ? apiFilters : undefined,
+      search: searchInput,
     }
   )
   const taskId = router.query['taskId'] as string | undefined
@@ -88,6 +93,8 @@ const TasksPage: NextPage = () => {
           onInitialTaskOpened={() => router.replace('/tasks', undefined, { shallow: true })}
           totalCount={totalCount}
           loading={tasksLoading}
+          searchQuery={searchQuery}
+          onSearchQueryChange={setSearchQuery}
           tableState={{
             pagination,
             setPagination,

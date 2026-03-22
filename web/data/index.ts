@@ -50,6 +50,7 @@ export {
   useMyTasks,
   useTasksPaginated,
   usePatientsPaginated,
+  useQueryableFields,
   useCreateTask,
   useUpdateTask,
   useDeleteTask,

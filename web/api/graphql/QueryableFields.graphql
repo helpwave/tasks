@@ -1,0 +1,22 @@
+query QueryableFields($entity: String!) {
+  queryableFields(entity: $entity) {
+    key
+    label
+    kind
+    valueType
+    allowedOperators
+    sortable
+    searchable
+    propertyDefinitionId
+    relation {
+      targetEntity
+      idFieldKey
+      labelFieldKey
+      allowedFilterModes
+    }
+    choice {
+      optionKeys
+      optionLabels
+    }
+  }
+}

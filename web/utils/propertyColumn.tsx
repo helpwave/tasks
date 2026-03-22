@@ -1,5 +1,5 @@
 import type { ColumnDef } from '@tanstack/table-core'
-import { ColumnType, FieldType, type LocationType, type PropertyDefinitionType, type PropertyValueType, type PropertyEntity } from '@/api/gql/generated'
+import { FieldType, type LocationType, type PropertyDefinitionType, type PropertyValueType, type PropertyEntity } from '@/api/gql/generated'
 import { getPropertyFilterFn } from './propertyFilterMapping'
 import { PropertyCell } from '@/components/properties/PropertyCell'
 
@@ -72,7 +72,7 @@ export function createPropertyColumn<T extends RowWithProperties>(
       return (<PropertyCell property={property as PropertyValueType} fieldType={prop.fieldType} />)
     },
     meta: {
-      columnType: ColumnType.Property,
+      columnType: 'PROPERTY',
       propertyDefinitionId: prop.id,
       fieldType: prop.fieldType,
       ...(filterData && { filterData }),
