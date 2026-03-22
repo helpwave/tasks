@@ -543,12 +543,10 @@ export type QueryFilterValueInput = {
   boolValue?: InputMaybe<Scalars['Boolean']['input']>;
   dateMax?: InputMaybe<Scalars['Date']['input']>;
   dateMin?: InputMaybe<Scalars['Date']['input']>;
-  dateTimeValue?: InputMaybe<Scalars['DateTime']['input']>;
-  dateValue?: InputMaybe<Scalars['Date']['input']>;
+  dateValue?: InputMaybe<Scalars['DateTime']['input']>;
   floatMax?: InputMaybe<Scalars['Float']['input']>;
   floatMin?: InputMaybe<Scalars['Float']['input']>;
   floatValue?: InputMaybe<Scalars['Float']['input']>;
-  intValue?: InputMaybe<Scalars['Int']['input']>;
   stringValue?: InputMaybe<Scalars['String']['input']>;
   stringValues?: InputMaybe<Array<Scalars['String']['input']>>;
   uuidValue?: InputMaybe<Scalars['String']['input']>;

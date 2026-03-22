@@ -210,7 +210,6 @@ const LocationPage: NextPage = () => {
                   onRefetch={handleRefetch}
                   showAssignee={true}
                   loading={isTeamLocation ? isLoadingTasks : isLoadingPatients}
-                  showAllTasksMode={isTeamLocation && showAllTasks}
                   headerActions={
                     isTeamLocation ? (
                       <Button

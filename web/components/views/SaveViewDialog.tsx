@@ -7,6 +7,7 @@ import type {
   SavedViewEntityType } from '@/api/gql/generated'
 import {
   CreateSavedViewDocument,
+  MySavedViewsDocument,
   type CreateSavedViewMutation,
   type CreateSavedViewMutationVariables,
   SavedViewVisibility
@@ -47,6 +48,7 @@ export function SaveViewDialog({
     CreateSavedViewMutation,
     CreateSavedViewMutationVariables
   >(getParsedDocument(CreateSavedViewDocument), {
+    refetchQueries: [{ query: getParsedDocument(MySavedViewsDocument) }],
     onCompleted(data) {
       onCreated?.(data?.createSavedView?.id)
       handleClose()

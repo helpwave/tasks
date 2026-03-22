@@ -17,6 +17,7 @@ import { TaskViewPatientsPanel } from '@/components/views/TaskViewPatientsPanel'
 import { useSavedView } from '@/data'
 import {
   DuplicateSavedViewDocument,
+  MySavedViewsDocument,
   type DuplicateSavedViewMutation,
   type DuplicateSavedViewMutationVariables,
   SavedViewEntityType
@@ -146,7 +147,9 @@ const ViewPage: NextPage = () => {
   const [duplicateSavedView] = useMutation<
     DuplicateSavedViewMutation,
     DuplicateSavedViewMutationVariables
-  >(getParsedDocument(DuplicateSavedViewDocument))
+  >(getParsedDocument(DuplicateSavedViewDocument), {
+    refetchQueries: [{ query: getParsedDocument(MySavedViewsDocument) }],
+  })
 
   const handleDuplicate = useCallback(async () => {
     if (!view?.id || duplicateName.trim().length < 2) return

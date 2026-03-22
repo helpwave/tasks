@@ -52,14 +52,10 @@ def apply_ops_to_column(
             return column == value.string_value
         if value.float_value is not None:
             return column == value.float_value
-        if value.int_value is not None:
-            return column == value.int_value
         if value.bool_value is not None:
             return column == value.bool_value
         if value.date_value is not None:
-            return func.date(column) == value.date_value
-        if value.date_time_value is not None:
-            return column == value.date_time_value
+            return column == value.date_value
         return None
 
     if operator == QueryOperator.NEQ:
@@ -139,12 +135,8 @@ def _cmp(column: Any, value: QueryFilterValueInput | None, pred) -> ColumnElemen
         return None
     if value.float_value is not None:
         return pred(column, value.float_value)
-    if value.int_value is not None:
-        return pred(column, value.int_value)
     if value.date_value is not None:
-        return pred(func.date(column), value.date_value)
-    if value.date_time_value is not None:
-        return pred(column, value.date_time_value)
+        return pred(column, value.date_value)
     return None
 
 
@@ -154,18 +146,6 @@ def _apply_date_ops(
     if value is None:
         return None
     dc = func.date(column)
-    if operator == QueryOperator.EQ and value.date_value is not None:
-        return dc == value.date_value
-    if operator == QueryOperator.NEQ and value.date_value is not None:
-        return dc != value.date_value
-    if operator == QueryOperator.GT and value.date_value is not None:
-        return dc > value.date_value
-    if operator == QueryOperator.GTE and value.date_value is not None:
-        return dc >= value.date_value
-    if operator == QueryOperator.LT and value.date_value is not None:
-        return dc < value.date_value
-    if operator == QueryOperator.LTE and value.date_value is not None:
-        return dc <= value.date_value
     if (
         operator == QueryOperator.BETWEEN
         and value.date_min is not None
@@ -174,6 +154,20 @@ def _apply_date_ops(
         return dc.between(value.date_min, value.date_max)
     if operator == QueryOperator.IN and value.string_values:
         return dc.in_(value.string_values)
+    if value.date_value is not None:
+        d = value.date_value.date()
+        if operator == QueryOperator.EQ:
+            return dc == d
+        if operator == QueryOperator.NEQ:
+            return dc != d
+        if operator == QueryOperator.GT:
+            return dc > d
+        if operator == QueryOperator.GTE:
+            return dc >= d
+        if operator == QueryOperator.LT:
+            return dc < d
+        if operator == QueryOperator.LTE:
+            return dc <= d
     return None
 
 
@@ -182,18 +176,18 @@ def _apply_datetime_ops(
 ) -> ColumnElement[bool] | None:
     if value is None:
         return None
-    if operator == QueryOperator.EQ and value.date_time_value is not None:
-        return column == value.date_time_value
-    if operator == QueryOperator.NEQ and value.date_time_value is not None:
-        return column != value.date_time_value
-    if operator == QueryOperator.GT and value.date_time_value is not None:
-        return column > value.date_time_value
-    if operator == QueryOperator.GTE and value.date_time_value is not None:
-        return column >= value.date_time_value
-    if operator == QueryOperator.LT and value.date_time_value is not None:
-        return column < value.date_time_value
-    if operator == QueryOperator.LTE and value.date_time_value is not None:
-        return column <= value.date_time_value
+    if operator == QueryOperator.EQ and value.date_value is not None:
+        return column == value.date_value
+    if operator == QueryOperator.NEQ and value.date_value is not None:
+        return column != value.date_value
+    if operator == QueryOperator.GT and value.date_value is not None:
+        return column > value.date_value
+    if operator == QueryOperator.GTE and value.date_value is not None:
+        return column >= value.date_value
+    if operator == QueryOperator.LT and value.date_value is not None:
+        return column < value.date_value
+    if operator == QueryOperator.LTE and value.date_value is not None:
+        return column <= value.date_value
     if (
         operator == QueryOperator.BETWEEN
         and value.date_min is not None

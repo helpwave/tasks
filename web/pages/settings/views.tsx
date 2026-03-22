@@ -17,6 +17,7 @@ import {
   type DeleteSavedViewMutationVariables,
   type DuplicateSavedViewMutation,
   type DuplicateSavedViewMutationVariables,
+  MySavedViewsDocument,
   SavedViewEntityType,
   UpdateSavedViewDocument,
   type UpdateSavedViewMutation,
@@ -40,7 +41,7 @@ type SavedViewRow = {
 const ViewsSettingsPage: NextPage = () => {
   const translation = useTasksTranslation()
   const router = useRouter()
-  const { data, loading, refetch } = useMySavedViews()
+  const { data, loading } = useMySavedViews()
   const rows: SavedViewRow[] = useMemo(() => {
     return (data?.mySavedViews ?? []).map((v: SavedViewRowGql) => ({
       id: v.id,
@@ -64,14 +65,18 @@ const ViewsSettingsPage: NextPage = () => {
   const [duplicateId, setDuplicateId] = useState<string | null>(null)
   const [duplicateName, setDuplicateName] = useState('')
 
+  const savedViewsRefetch = { query: getParsedDocument(MySavedViewsDocument) }
   const [updateSavedView] = useMutation<UpdateSavedViewMutation, UpdateSavedViewMutationVariables>(
-    getParsedDocument(UpdateSavedViewDocument)
+    getParsedDocument(UpdateSavedViewDocument),
+    { refetchQueries: [savedViewsRefetch] }
   )
   const [deleteSavedView] = useMutation<DeleteSavedViewMutation, DeleteSavedViewMutationVariables>(
-    getParsedDocument(DeleteSavedViewDocument)
+    getParsedDocument(DeleteSavedViewDocument),
+    { refetchQueries: [savedViewsRefetch] }
   )
   const [duplicateSavedView] = useMutation<DuplicateSavedViewMutation, DuplicateSavedViewMutationVariables>(
-    getParsedDocument(DuplicateSavedViewDocument)
+    getParsedDocument(DuplicateSavedViewDocument),
+    { refetchQueries: [savedViewsRefetch] }
   )
 
   const copyLink = useCallback((id: string) => {
@@ -84,16 +89,14 @@ const ViewsSettingsPage: NextPage = () => {
     await updateSavedView({ variables: { id: renameId, data: { name: renameValue.trim() } } })
     setRenameOpen(false)
     setRenameId(null)
-    void refetch()
-  }, [renameId, renameValue, updateSavedView, refetch])
+  }, [renameId, renameValue, updateSavedView])
 
   const handleDelete = useCallback(async () => {
     if (!deleteId) return
     await deleteSavedView({ variables: { id: deleteId } })
     setDeleteOpen(false)
     setDeleteId(null)
-    void refetch()
-  }, [deleteId, deleteSavedView, refetch])
+  }, [deleteId, deleteSavedView])
 
   const handleDuplicate = useCallback(async () => {
     if (!duplicateId || duplicateName.trim().length < 2) return
@@ -103,10 +106,9 @@ const ViewsSettingsPage: NextPage = () => {
     setDuplicateOpen(false)
     setDuplicateId(null)
     setDuplicateName('')
-    void refetch()
     const newId = d?.duplicateSavedView?.id
     if (newId) router.push(`/view/${newId}`)
-  }, [duplicateId, duplicateName, duplicateSavedView, refetch, router])
+  }, [duplicateId, duplicateName, duplicateSavedView, router])
 
   const columns = useMemo<ColumnDef<SavedViewRow>[]>(() => [
     {

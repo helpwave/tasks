@@ -104,6 +104,28 @@ function toGraphqlDateInput(value: unknown): string | undefined {
   return undefined
 }
 
+function localCalendarDateToIso(dateYmd: string): string | undefined {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateYmd)
+  if (!match?.[1] || !match[2] || !match[3]) return undefined
+  const y = Number(match[1])
+  const m = Number(match[2])
+  const d = Number(match[3])
+  const dt = new Date(y, m - 1, d)
+  if (Number.isNaN(dt.getTime())) return undefined
+  return dt.toISOString()
+}
+
+function filterDateValueForDataType(value: FilterValue): string | undefined {
+  const parameter = value.parameter
+  if (value.dataType === 'dateTime') {
+    if (parameter.compareDate == null) return undefined
+    return parameter.compareDate.toISOString()
+  }
+  const day = toGraphqlDateInput(parameter.compareDate)
+  if (!day) return undefined
+  return localCalendarDateToIso(day)
+}
+
 function toQueryFilterValue(value: FilterValue): QueryFilterValueInput {
   const parameter = value.parameter
   const raw = parameter as Record<string, unknown>
@@ -128,10 +150,9 @@ function toQueryFilterValue(value: FilterValue): QueryFilterValueInput {
     floatValue: parameter.compareValue,
     floatMin: parameter.minNumber,
     floatMax: parameter.maxNumber,
-    dateValue: toGraphqlDateInput(parameter.compareDate),
+    dateValue: filterDateValueForDataType(value),
     dateMin: toGraphqlDateInput(parameter.minDate),
     dateMax: toGraphqlDateInput(parameter.maxDate),
-    dateTimeValue: parameter.compareDate?.toISOString(),
     stringValues: searchTags.length > 0 ? searchTags : undefined,
   }
   if (value.dataType === 'singleTag' && value.operator === 'equals' && searchTags.length === 1) {

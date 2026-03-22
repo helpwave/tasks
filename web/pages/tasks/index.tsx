@@ -102,13 +102,6 @@ const TasksPage: NextPage = () => {
         titleElement={translation('myTasks')}
         description={myTasksCount !== undefined ? translation('nTask', { count: myTasksCount }) : undefined}
       >
-        <Visibility isVisible={filtersChanged || sortingChanged}>
-          <div className="flex justify-end mb-2">
-            <Button color="primary" onClick={() => setIsSaveViewOpen(true)}>
-              {translation('saveView')}
-            </Button>
-          </div>
-        </Visibility>
         <SaveViewDialog
           isOpen={isSaveViewOpen}
           onClose={() => setIsSaveViewOpen(false)}
@@ -131,6 +124,13 @@ const TasksPage: NextPage = () => {
           loading={tasksLoading}
           searchQuery={searchQuery}
           onSearchQueryChange={setSearchQuery}
+          saveViewSlot={(
+            <Visibility isVisible={filtersChanged || sortingChanged}>
+              <Button color="primary" onClick={() => setIsSaveViewOpen(true)}>
+                {translation('saveView')}
+              </Button>
+            </Visibility>
+          )}
           tableState={{
             pagination,
             setPagination,

@@ -1,7 +1,7 @@
 import { useMemo, useState, forwardRef, useImperativeHandle, useEffect, useRef, useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import type { FilterListItem } from '@helpwave/hightide'
-import { Button, Checkbox, ConfirmDialog, FilterList, FillerCell, HelpwaveLogo, IconButton, LoadingContainer, SearchBar, Select, SelectOption, TableColumnSwitcher, TableDisplay, TablePagination, TableProvider } from '@helpwave/hightide'
+import { Button, Checkbox, ConfirmDialog, FilterList, FillerCell, HelpwaveLogo, IconButton, LoadingContainer, SearchBar, TableColumnSwitcher, TableDisplay, TablePagination, TableProvider, SortingList, ExpansionIcon } from '@helpwave/hightide'
 import { PlusIcon, UserCheck, Users } from 'lucide-react'
 import type { IdentifierFilterValue } from '@helpwave/hightide'
 import type { TaskPriority, GetTasksQuery } from '@/api/gql/generated'
@@ -77,15 +77,15 @@ type TaskListProps = {
   initialTaskId?: string,
   onInitialTaskOpened?: () => void,
   headerActions?: React.ReactNode,
+  saveViewSlot?: React.ReactNode,
   totalCount?: number,
   loading?: boolean,
-  showAllTasksMode?: boolean,
   tableState?: TaskListTableState,
   searchQuery?: string,
   onSearchQueryChange?: (value: string) => void,
 }
 
-export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initialTasks, onRefetch, showAssignee = false, initialTaskId, onInitialTaskOpened, headerActions, totalCount, loading = false, showAllTasksMode = false, tableState: controlledTableState, searchQuery: searchQueryProp, onSearchQueryChange }, ref) => {
+export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initialTasks, onRefetch, showAssignee = false, initialTaskId, onInitialTaskOpened, headerActions, saveViewSlot, totalCount, loading = false, tableState: controlledTableState, searchQuery: searchQueryProp, onSearchQueryChange }, ref) => {
   const translation = useTasksTranslation()
   const { data: propertyDefinitionsData } = usePropertyDefinitions()
   const { data: queryableFieldsData } = useQueryableFields('Task')
@@ -117,37 +117,6 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
     setColumnVisibility
   )
 
-  const normalizeDoneFilterValue = useCallback((value: unknown): boolean | undefined => {
-    if (value === true || value === 'true' || value === 'done') return true
-    if (value === false || value === 'false' || value === 'undone') return false
-    return undefined
-  }, [])
-  const rawDoneFilterValue = filters.find(f => f.id === 'done')?.value
-  const storedDoneFilterValue = rawDoneFilterValue === true || rawDoneFilterValue === 'true' || rawDoneFilterValue === 'done'
-    ? 'done'
-    : rawDoneFilterValue === false || rawDoneFilterValue === 'false' || rawDoneFilterValue === 'undone'
-      ? 'undone'
-      : 'all'
-  const doneFilterValue = showAllTasksMode ? 'all' : storedDoneFilterValue
-  const setDoneFilter = useCallback((value: boolean | 'all') => {
-    setFilters(prev => {
-      const rest = prev.filter(f => f.id !== 'done')
-      if (value === 'all') return rest
-      return [...rest, { id: 'done', value }]
-    })
-  }, [setFilters])
-  const setFiltersNormalized = useCallback((updater: ColumnFiltersState | ((prev: ColumnFiltersState) => ColumnFiltersState)) => {
-    setFilters(prev => {
-      const next = typeof updater === 'function' ? updater(prev) : updater
-      return next.flatMap(f => {
-        if (f.id !== 'done') return [f]
-        const normalized = normalizeDoneFilterValue(f.value)
-        if (normalized === undefined) return []
-        return [{ ...f, value: normalized }]
-      })
-    })
-  }, [setFilters, normalizeDoneFilterValue])
-
   const queryClient = useQueryClient()
   const { totalPatientsCount, user } = useTasksContext()
   const { refreshingTaskIds } = useRefreshingEntityIds()
@@ -168,6 +137,8 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false)
   const isOpeningConfirmDialogRef = useRef(false)
+  const [isShowFilters, setIsShowFilters] = useState(false)
+  const [isShowSorting, setIsShowSorting] = useState(false)
 
   const hasPatients = (totalPatientsCount ?? 0) > 0
 
@@ -356,9 +327,13 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
     return [
       { id: 'title', label: translation('title'), dataType: 'text', tags: [] },
       { id: 'description', label: translation('description'), dataType: 'text', tags: [] },
-      { id: 'done', label: translation('done'), dataType: 'boolean', tags: [] },
       { id: 'dueDate', label: translation('dueDate'), dataType: 'date', tags: [] },
-      { id: 'priority', label: translation('priority'), dataType: 'singleTag', tags: ['P1', 'P2', 'P3', 'P4'].map(p => ({ label: p, tag: p })) },
+      {
+        id: 'priority',
+        label: translation('priorityLabel'),
+        dataType: 'singleTag',
+        tags: ['P1', 'P2', 'P3', 'P4'].map(p => ({ label: translation('priority', { priority: p }), tag: p })),
+      },
       { id: 'patient', label: translation('patient'), dataType: 'text', tags: [] },
       { id: 'assignee', label: translation('assignedTo'), dataType: 'text', tags: [] },
       ...propertyDefinitionsData?.propertyDefinitions.map(def => ({
@@ -378,14 +353,6 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
         id: 'done',
         header: () => null,
         accessorKey: 'done',
-        enableColumnFilter: true,
-        filterFn: (row, _columnId, filterValue: boolean | string | undefined) => {
-          if (filterValue === undefined || filterValue === 'all') return true
-          const wantDone = filterValue === true || filterValue === 'done' || filterValue === 'true'
-          const wantUndone = filterValue === false || filterValue === 'undone' || filterValue === 'false'
-          if (!wantDone && !wantUndone) return true
-          return wantDone ? row.getValue('done') === true : row.getValue('done') === false
-        },
         cell: ({ row }) => {
           if (refreshingTaskIds.has(row.original.id)) return rowLoadingCell
           const task = row.original
@@ -586,7 +553,6 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
       data={tasks}
       columns={columns}
       fillerRowCell={useCallback(() => (<FillerCell className="min-h-12" />), [])}
-      manualPagination={true}
       initialState={{
         pagination: {
           pageSize: 10,
@@ -595,64 +561,87 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
       state={{
         columnVisibility,
         pagination,
-        sorting,
-        columnFilters: showAllTasksMode ? filters.filter(f => f.id !== 'done') : filters,
       } as Partial<TableState> as TableState}
       onColumnVisibilityChange={setColumnVisibility}
       onPaginationChange={setPagination}
       onSortingChange={setSorting}
-      onColumnFiltersChange={setFiltersNormalized}
+      onColumnFiltersChange={setFilters}
       enableMultiSort={true}
+      enablePinning={false}
       onRowClick={row => setTaskDialogState({ isOpen: true, taskId: row.original.id })}
       pageCount={stableTotalCount != null ? Math.ceil(stableTotalCount / pagination.pageSize) : -1}
+      manualPagination={true}
+      manualSorting={true}
+      manualFiltering={true}
+      enableColumnFilters={false}
+      enableSorting={false}
+      enableColumnPinning={false}
     >
       <div className="flex flex-col h-full gap-4">
-        <div className="flex flex-col sm:flex-row justify-between w-full gap-4">
-          <div className="flex-row-2 items-center">
-            <SearchBar
-              placeholder={translation('search')}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onSearch={() => null}
-              containerProps={{ className: 'max-w-80' }}
-            />
+        <div className="flex-col-2 w-full">
+          <div className="flex-row-8 justify-between w-full">
+            <div className="flex flex-wrap gap-2 items-center">
+              <SearchBar
+                placeholder={translation('search')}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onSearch={() => null}
+                containerProps={{ className: 'max-w-80' }}
+              />
+              <TableColumnSwitcher />
+              <Button
+                onClick={() => setIsShowFilters(!isShowFilters)}
+                color="neutral"
+                className="font-semibold element"
+              >
+                {translation('filter') + ` (${filters.length})`}
+                <ExpansionIcon isExpanded={isShowFilters} className="size-5" />
+              </Button>
+              <Button
+                onClick={() => setIsShowSorting(!isShowSorting)}
+                color="neutral"
+                className="font-semibold"
+              >
+                {translation('sorting') + ` (${sorting.length})`}
+                <ExpansionIcon isExpanded={isShowSorting} className="size-5" />
+              </Button>
+              {saveViewSlot}
+            </div>
+            <div className="flex flex-wrap gap-2 items-center justify-end">
+              {headerActions}
+              {canHandover && (
+                <Button
+                  onClick={handleHandoverClick}
+                  className="w-fit"
+                >
+                  <UserCheck className="size-5" />
+                  {translation('shiftHandover') || 'Shift Handover'}
+                </Button>
+              )}
+              <IconButton
+                tooltip={translation('addTask')}
+                color="primary"
+                onClick={() => setTaskDialogState({ isOpen: true })}
+                disabled={!hasPatients}
+              >
+                <PlusIcon />
+              </IconButton>
+            </div>
+          </div>
+          {isShowFilters && (
             <FilterList
               value={filters as IdentifierFilterValue[]}
-              onValueChange={value => { setFiltersNormalized(value) }}
+              onValueChange={setFilters}
               availableItems={availableFilters}
             />
-            <TableColumnSwitcher />
-          </div>
-          <div className="flex flex-wrap items-center justify-end gap-4 w-full sm:w-auto sm:ml-auto">
-            <Select
-              value={doneFilterValue}
-              onValueChange={(v: string) => setDoneFilter(v === 'all' ? 'all' : v === 'done')}
-              buttonProps={{ className: 'min-w-32' }}
-              contentPanelProps={{ className: 'min-w-32' }}
-            >
-              <SelectOption value="all" label={translation('filterAll') || 'All'} />
-              <SelectOption value="undone" label={translation('filterUndone') || 'Undone'} />
-              <SelectOption value="done" label={translation('done')} />
-            </Select>
-            {headerActions}
-            {canHandover && (
-              <Button
-                onClick={handleHandoverClick}
-                className="w-fit"
-              >
-                <UserCheck className="size-5" />
-                {translation('shiftHandover') || 'Shift Handover'}
-              </Button>
-            )}
-            <IconButton
-              tooltip={translation('addTask')}
-              color="primary"
-              onClick={() => setTaskDialogState({ isOpen: true })}
-              disabled={!hasPatients}
-            >
-              <PlusIcon />
-            </IconButton>
-          </div>
+          )}
+          {isShowSorting && (
+            <SortingList
+              sorting={sorting}
+              onSortingChange={setSorting}
+              availableItems={availableFilters}
+            />
+          )}
         </div>
         <div className="flex-col-3 items-center relative print:static">
           {loading && (

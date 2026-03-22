@@ -241,12 +241,10 @@ input QueryFilterValueInput {
   floatValue: Float = null
   floatMin: Float = null
   floatMax: Float = null
-  intValue: Int = null
   boolValue: Boolean = null
-  dateValue: Date = null
+  dateValue: DateTime = null
   dateMin: Date = null
   dateMax: Date = null
-  dateTimeValue: DateTime = null
   uuidValue: String = null
   uuidValues: [String!] = null
 }
