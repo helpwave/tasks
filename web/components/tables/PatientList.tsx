@@ -246,10 +246,10 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
         if (refreshingPatientIds.has(row.original.id)) return rowLoadingCell
         const sex = row.original.sex
         const colorClass = sex === Sex.Male
-          ? '!gender-male'
+          ? 'gender-male'
           : sex === Sex.Female
-            ? '!gender-female'
-            : 'bg-gray-600 text-white'
+            ? 'gender-female'
+            : 'gender-neutral'
 
         const label = {
           [Sex.Male]: translation('male'),
@@ -261,10 +261,10 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
           <>
             <span className="print:block hidden">{label}</span>
             <Chip
-              color={sex === Sex.Unknown ? 'neutral' : undefined}
+              color={undefined}
               coloringStyle="tonal"
               size="sm"
-              className={`${colorClass} font-[var(--font-space-grotesk)] uppercase text-xs print:hidden`}
+              className={`${colorClass} uppercase font-semibold text-xs print:hidden`}
             >
               <span>{label}</span>
             </Chip>
@@ -468,7 +468,6 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
         columnVisibility,
         pagination,
         sorting,
-        columnFilters: filters,
       } as Partial<TableState> as TableState}
       onColumnVisibilityChange={setColumnVisibility}
       onPaginationChange={setPagination}
@@ -509,7 +508,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
             </IconButton>
           </div>
         </div>
-        <div className="relative">
+        <div className="relative print:static">
           {patientsLoading && (
             <div className="absolute inset-0 z-10 flex items-center justify-center bg-surface/80 rounded-lg min-h-48">
               <HelpwaveLogo animate="loading" color="currentColor" height={64} width={64} />

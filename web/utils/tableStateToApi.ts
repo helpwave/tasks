@@ -85,10 +85,22 @@ function tableOperatorToApi(dataType: DataType, operator: HightideFilterOperator
 
 function toFilterParameter(value: FilterValue, propertyDefinitionId?: string): FilterParameter {
   const parameter = value.parameter
-  const searchTagsUnknownType: unknown[] =
-    parameter.multiOptionSearch ? parameter.multiOptionSearch :
-      parameter.singleOptionSearch ? [parameter.singleOptionSearch] :
-        []
+  const raw = parameter as Record<string, unknown>
+  const multi = parameter.multiOptionSearch
+  const hasMulti = Array.isArray(multi) && multi.length > 0
+  const hasSingle = parameter.singleOptionSearch != null && parameter.singleOptionSearch !== ''
+  let searchTagsUnknownType: unknown[] = []
+  if (hasMulti) {
+    searchTagsUnknownType = multi as unknown[]
+  } else if (hasSingle) {
+    searchTagsUnknownType = [parameter.singleOptionSearch as unknown]
+  } else if (Array.isArray(raw['searchTags']) && raw['searchTags'].length > 0) {
+    searchTagsUnknownType = raw['searchTags'] as unknown[]
+  } else if (Array.isArray(raw['searchTagsContains']) && raw['searchTagsContains'].length > 0) {
+    searchTagsUnknownType = raw['searchTagsContains'] as unknown[]
+  } else if (raw['searchTag'] != null) {
+    searchTagsUnknownType = [raw['searchTag']]
+  }
   const searchTags: string[] = searchTagsUnknownType.map((t) => String(t))
   const param: FilterParameter = {
     searchText: parameter.searchText,

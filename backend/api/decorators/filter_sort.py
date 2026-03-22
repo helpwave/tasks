@@ -473,6 +473,14 @@ def apply_filtering(
                 condition = apply_boolean_filter(column, operator, parameter)
 
             elif operator in [
+                FilterOperator.TAGS_SINGLE_EQUALS,
+                FilterOperator.TAGS_SINGLE_NOT_EQUALS,
+                FilterOperator.TAGS_SINGLE_CONTAINS,
+                FilterOperator.TAGS_SINGLE_NOT_CONTAINS,
+            ]:
+                condition = apply_tags_single_filter(column, operator, parameter)
+
+            elif operator in [
                 FilterOperator.IS_NULL,
                 FilterOperator.IS_NOT_NULL,
             ]:
