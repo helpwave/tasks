@@ -610,7 +610,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
             </IconButton>
           </div>
         </div>
-        <div className="flex-col-3 items-center relative">
+        <div className="flex-col-3 items-center relative print:static">
           {loading && (
             <div className="absolute inset-0 z-10 flex items-center justify-center bg-surface/80 rounded-lg min-h-48">
               <HelpwaveLogo animate="loading" color="currentColor" height={64} width={64} />
