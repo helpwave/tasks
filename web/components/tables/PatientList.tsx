@@ -468,7 +468,6 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
         columnVisibility,
         pagination,
         sorting,
-        columnFilters: filters,
       } as Partial<TableState> as TableState}
       onColumnVisibilityChange={setColumnVisibility}
       onPaginationChange={setPagination}
