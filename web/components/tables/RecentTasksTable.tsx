@@ -1,7 +1,7 @@
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
-import type { ColumnDef, Row, TableState } from '@tanstack/react-table'
+import type { ColumnDef, ColumnFiltersState, PaginationState, Row, SortingState, TableState, VisibilityState } from '@tanstack/react-table'
 import type { GetOverviewDataQuery, TaskPriority } from '@/api/gql/generated'
-import { useCallback, useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import clsx from 'clsx'
 import type { TableProps } from '@helpwave/hightide'
 import { Button, Checkbox, FillerCell, TableDisplay, TableProvider, Tooltip } from '@helpwave/hightide'
@@ -11,8 +11,7 @@ import { PriorityUtils } from '@/utils/priority'
 import { PropertyEntity } from '@/api/gql/generated'
 import { usePropertyDefinitions } from '@/data'
 import { getPropertyColumnsForEntity } from '@/utils/propertyColumn'
-import { useStorageSyncedTableState } from '@/hooks/useTableState'
-import { usePropertyColumnVisibility } from '@/hooks/usePropertyColumnVisibility'
+import { useColumnVisibilityWithPropertyDefaults } from '@/hooks/usePropertyColumnVisibility'
 
 type TaskViewModel = GetOverviewDataQuery['recentTasks'][0]
 
@@ -36,22 +35,15 @@ export const RecentTasksTable = ({
   const translation = useTasksTranslation()
   const { data: propertyDefinitionsData } = usePropertyDefinitions()
 
-  const {
-    pagination,
-    setPagination,
-    sorting,
-    setSorting,
-    filters,
-    setFilters,
-    columnVisibility,
-    setColumnVisibility,
-  } = useStorageSyncedTableState('recent-tasks')
+  const [pagination, setPagination] = useState<PaginationState>({ pageSize: 10, pageIndex: 0 })
+  const [sorting, setSorting] = useState<SortingState>([])
+  const [filters, setFilters] = useState<ColumnFiltersState>([])
+  const [columnVisibility, setColumnVisibilityRaw] = useState<VisibilityState>({})
 
-  usePropertyColumnVisibility(
+  const setColumnVisibility = useColumnVisibilityWithPropertyDefaults(
     propertyDefinitionsData,
     PropertyEntity.Task,
-    columnVisibility,
-    setColumnVisibility
+    setColumnVisibilityRaw
   )
 
   const taskPropertyColumns = useMemo<ColumnDef<TaskViewModel>[]>(
@@ -212,6 +204,8 @@ export const RecentTasksTable = ({
         onColumnFiltersChange={setFilters}
         enableMultiSort={true}
         isUsingFillerRows={true}
+        enableSorting={false}
+        enableColumnFilters={false}
       >
         <div className="flex flex-col h-full gap-4 w-full min-w-0" {...props}>
           <div className="flex-col-0">

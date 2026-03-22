@@ -118,10 +118,10 @@ function localCalendarDateToIso(dateYmd: string): string | undefined {
 function filterDateValueForDataType(value: FilterValue): string | undefined {
   const parameter = value.parameter
   if (value.dataType === 'dateTime') {
-    if (parameter.compareDate == null) return undefined
-    return parameter.compareDate.toISOString()
+    if (parameter.dateValue == null) return undefined
+    return parameter.dateValue.toISOString()
   }
-  const day = toGraphqlDateInput(parameter.compareDate)
+  const day = toGraphqlDateInput(parameter.dateValue)
   if (!day) return undefined
   return localCalendarDateToIso(day)
 }
@@ -129,14 +129,14 @@ function filterDateValueForDataType(value: FilterValue): string | undefined {
 function toQueryFilterValue(value: FilterValue): QueryFilterValueInput {
   const parameter = value.parameter
   const raw = parameter as Record<string, unknown>
-  const multi = parameter.multiOptionSearch
+  const multi = parameter.uuidValues
   const hasMulti = Array.isArray(multi) && multi.length > 0
-  const hasSingle = parameter.singleOptionSearch != null && parameter.singleOptionSearch !== ''
+  const hasSingle = parameter.uuidValue != null && String(parameter.uuidValue) !== ''
   let searchTagsUnknownType: unknown[] = []
   if (hasMulti) {
     searchTagsUnknownType = multi as unknown[]
   } else if (hasSingle) {
-    searchTagsUnknownType = [parameter.singleOptionSearch as unknown]
+    searchTagsUnknownType = [parameter.uuidValue as unknown]
   } else if (Array.isArray(raw['searchTags']) && raw['searchTags'].length > 0) {
     searchTagsUnknownType = raw['searchTags'] as unknown[]
   } else if (Array.isArray(raw['searchTagsContains']) && raw['searchTagsContains'].length > 0) {
@@ -146,13 +146,13 @@ function toQueryFilterValue(value: FilterValue): QueryFilterValueInput {
   }
   const searchTags: string[] = searchTagsUnknownType.map((t) => String(t))
   const base: QueryFilterValueInput = {
-    stringValue: parameter.searchText,
-    floatValue: parameter.compareValue,
-    floatMin: parameter.minNumber,
-    floatMax: parameter.maxNumber,
+    stringValue: parameter.stringValue,
+    floatValue: parameter.numberValue,
+    floatMin: parameter.numberMin,
+    floatMax: parameter.numberMax,
     dateValue: filterDateValueForDataType(value),
-    dateMin: toGraphqlDateInput(parameter.minDate),
-    dateMax: toGraphqlDateInput(parameter.maxDate),
+    dateMin: toGraphqlDateInput(parameter.dateMin),
+    dateMax: toGraphqlDateInput(parameter.dateMax),
     stringValues: searchTags.length > 0 ? searchTags : undefined,
   }
   if (value.dataType === 'singleTag' && value.operator === 'equals' && searchTags.length === 1) {

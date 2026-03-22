@@ -17,7 +17,7 @@ import { useStorage } from '@/hooks/useStorage'
 import type { HightideTranslationLocales, ThemeType } from '@helpwave/hightide'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { useAuth } from '@/hooks/useAuth'
-import { LogOut, MonitorCog, MoonIcon, SunIcon, Trash2, ClipboardList, Shield, TableProperties, Building2, MessageSquareText, Upload, X, LayoutList } from 'lucide-react'
+import { LogOut, MonitorCog, MoonIcon, SunIcon, Trash2, ClipboardList, Shield, TableProperties, Building2, MessageSquareText, Upload, X, Rabbit } from 'lucide-react'
 import { useRouter } from 'next/router'
 import clsx from 'clsx'
 import { removeUser } from '@/api/auth/authService'
@@ -250,30 +250,30 @@ const SettingsPage: NextPage = () => {
 
           <div className="flex-col-6">
             <h2 className="typography-title-md border-b border-divider pb-2">{translation('system')}</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="flex flex-col gap-6 max-w-200">
               <Button
                 color="neutral"
                 coloringStyle="outline"
-                className="justify-start h-auto py-4"
+                className="justify-start h-auto py-4 w-full"
                 onClick={() => router.push('/properties')}
               >
-                <TableProperties className="mr-2" />
+                <TableProperties className="mr-2 shrink-0" />
                 <div className="flex-col-1 items-start">
                   <span className="typography-label-lg">{translation('properties')}</span>
                   <span className="typography-body-sm text-description font-normal">
-                    {translation('properties')}
+                    {translation('propertiesSettingsDescription')}
                   </span>
                 </div>
               </Button>
               <Button
                 color="neutral"
                 coloringStyle="outline"
-                className="justify-start h-auto py-4"
+                className="justify-start h-auto py-4 w-full"
                 onClick={() => router.push('/settings/views')}
               >
-                <LayoutList className="mr-2" />
+                <Rabbit className="mr-2 shrink-0 size-5" />
                 <div className="flex-col-1 items-start">
-                  <span className="typography-label-lg">{translation('viewSettings')}</span>
+                  <span className="typography-label-lg">{translation('views')}</span>
                   <span className="typography-body-sm text-description font-normal">
                     {translation('viewSettingsDescription')}
                   </span>

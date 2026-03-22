@@ -23,6 +23,7 @@ type SaveViewDialogProps = {
   filterDefinition: string,
   sortDefinition: string,
   parameters: string,
+  presentation?: 'default' | 'fromSystemList',
   /** Optional: navigate or toast after save */
   onCreated?: (id: string) => void,
 }
@@ -34,6 +35,7 @@ export function SaveViewDialog({
   filterDefinition,
   sortDefinition,
   parameters,
+  presentation = 'default',
   onCreated,
 }: SaveViewDialogProps) {
   const translation = useTasksTranslation()
@@ -59,8 +61,8 @@ export function SaveViewDialog({
     <Dialog
       isOpen={isOpen}
       onClose={handleClose}
-      titleElement={translation('saveView')}
-      description={translation('saveViewDescription')}
+      titleElement={presentation === 'fromSystemList' ? translation('saveViewAsNew') : translation('saveView')}
+      description={presentation === 'fromSystemList' ? translation('saveViewDescriptionFromSystemList') : translation('saveViewDescription')}
     >
       <div className="flex-col-4">
         <div className="flex flex-col gap-1">

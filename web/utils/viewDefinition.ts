@@ -1,17 +1,113 @@
-import type { ColumnFilter, ColumnFiltersState, SortingState } from '@tanstack/react-table'
+import type {
+  ColumnFilter,
+  ColumnFiltersState,
+  ColumnOrderState,
+  SortingState,
+  VisibilityState
+} from '@tanstack/react-table'
 import type { DataType, FilterOperator, FilterParameter, FilterValue } from '@helpwave/hightide'
 
-/**
- * Stored JSON alongside filterDefinition / sortDefinition in SavedView.parameters.
- * Location scope and other cross-cutting scope live here (not in separate routes).
- */
 export type ViewParameters = {
   rootLocationIds?: string[],
   locationId?: string,
-  /** Patient list search (full-text) */
   searchQuery?: string,
-  /** Task list: assignee scope (e.g. my tasks page) */
   assigneeId?: string,
+  columnVisibility?: VisibilityState,
+  columnOrder?: ColumnOrderState,
+}
+
+export function normalizedVisibilityForViewCompare(v: VisibilityState): string {
+  const keys = Object.keys(v).sort()
+  const sorted: Record<string, boolean> = {}
+  for (const k of keys) {
+    sorted[k] = v[k] as boolean
+  }
+  return JSON.stringify(sorted)
+}
+
+export function visibilityMatchesViewBaseline(
+  current: VisibilityState,
+  baseline: VisibilityState | undefined
+): boolean {
+  return normalizedVisibilityForViewCompare(current) === normalizedVisibilityForViewCompare(baseline ?? {})
+}
+
+export function expandVisibilityWithPropertyColumnDefaults(
+  v: VisibilityState,
+  propertyColumnIds: readonly string[]
+): VisibilityState {
+  if (propertyColumnIds.length === 0) {
+    return v
+  }
+  const out: VisibilityState = { ...v }
+  for (const id of propertyColumnIds) {
+    if (!(id in out)) {
+      out[id] = false
+    }
+  }
+  return out
+}
+
+export function visibilityMatchesViewBaselineForDirty(
+  current: VisibilityState,
+  baseline: VisibilityState | undefined,
+  propertyColumnIds: readonly string[]
+): boolean {
+  const base = baseline ?? {}
+  return normalizedVisibilityForViewCompare(
+    expandVisibilityWithPropertyColumnDefaults(current, propertyColumnIds)
+  ) === normalizedVisibilityForViewCompare(
+    expandVisibilityWithPropertyColumnDefaults(base, propertyColumnIds)
+  )
+}
+
+export function tableViewStateMatchesBaseline(params: {
+  filters: ColumnFiltersState,
+  baselineFilters: ColumnFiltersState,
+  sorting: SortingState,
+  baselineSorting: SortingState,
+  searchQuery: string,
+  baselineSearch: string,
+  columnVisibility: VisibilityState,
+  baselineColumnVisibility: VisibilityState | undefined,
+  columnOrder: ColumnOrderState,
+  baselineColumnOrder: ColumnOrderState | undefined,
+  propertyColumnIds: readonly string[],
+}): boolean {
+  const filtersMatch =
+    serializeColumnFiltersForView(params.filters) === serializeColumnFiltersForView(params.baselineFilters)
+  const sortMatch =
+    serializeSortingForView(params.sorting) === serializeSortingForView(params.baselineSorting)
+  const searchMatch = params.searchQuery === params.baselineSearch
+  const visMatch = visibilityMatchesViewBaselineForDirty(
+    params.columnVisibility,
+    params.baselineColumnVisibility,
+    params.propertyColumnIds
+  )
+  const orderMatch = columnOrderMatchesBaselineForDirty(params.columnOrder, params.baselineColumnOrder)
+  return filtersMatch && sortMatch && searchMatch && visMatch && orderMatch
+}
+
+export function normalizedColumnOrderForViewCompare(order: ColumnOrderState): string {
+  return JSON.stringify(order)
+}
+
+export function columnOrderMatchesViewBaseline(
+  current: ColumnOrderState,
+  baseline: ColumnOrderState | undefined
+): boolean {
+  return normalizedColumnOrderForViewCompare(current) === normalizedColumnOrderForViewCompare(baseline ?? [])
+}
+
+export function columnOrderMatchesBaselineForDirty(
+  current: ColumnOrderState,
+  baseline: ColumnOrderState | undefined
+): boolean {
+  const b = baseline ?? []
+  if (b.length === 0) {
+    return true
+  }
+  return normalizedColumnOrderForViewCompare(current) === normalizedColumnOrderForViewCompare(b)
 }
 
 export function parseViewParameters(json: string): ViewParameters {
@@ -28,16 +124,16 @@ export function stringifyViewParameters(p: ViewParameters): string {
   return JSON.stringify(p)
 }
 
-/** Same wire format as useStorageSyncedTableState filter serialization. */
+/** Wire format for `filterDefinition` on saved views (JSON string). */
 export function serializeColumnFiltersForView(filters: ColumnFiltersState): string {
   const mappedColumnFilter = filters.map((filter) => {
     const tableFilterValue = filter.value as FilterValue
     const filterParameter = tableFilterValue.parameter
     const parameter: Record<string, unknown> = {
       ...filterParameter,
-      compareDate: filterParameter.compareDate ? filterParameter.compareDate.toISOString() : undefined,
-      minDate: filterParameter.minDate ? filterParameter.minDate.toISOString() : undefined,
-      maxDate: filterParameter.maxDate ? filterParameter.maxDate.toISOString() : undefined,
+      dateValue: filterParameter.dateValue ? filterParameter.dateValue.toISOString() : undefined,
+      dateMin: filterParameter.dateMin ? filterParameter.dateMin.toISOString() : undefined,
+      dateMax: filterParameter.dateMax ? filterParameter.dateMax.toISOString() : undefined,
     }
     return {
       ...filter,
@@ -57,12 +153,26 @@ export function deserializeColumnFiltersFromView(json: string): ColumnFiltersSta
     return mappedColumnFilter.map((filter): ColumnFilter => {
       const value = filter['value'] as Record<string, unknown>
       const parameter = value['parameter'] as Record<string, unknown>
+      const dateValueRaw = parameter['dateValue'] ?? parameter['compareDate']
+      const dateMinRaw = parameter['dateMin'] ?? parameter['minDate']
+      const dateMaxRaw = parameter['dateMax'] ?? parameter['maxDate']
+      const parseStoredDate = (raw: unknown): Date | undefined => {
+        if (raw == null || raw === '') return undefined
+        const d = new Date(String(raw))
+        return Number.isNaN(d.getTime()) ? undefined : d
+      }
       const filterParameter: FilterParameter = {
-        ...parameter,
-        compareDate: parameter['compareDate'] ? new Date(parameter['compareDate'] as string) : undefined,
-        minDate: parameter['minDate'] ? new Date(parameter['minDate'] as string) : undefined,
-        maxDate: parameter['maxDate'] ? new Date(parameter['maxDate'] as string) : undefined,
-      } as FilterParameter
+        stringValue: (parameter['stringValue'] ?? parameter['searchText']) as string | undefined,
+        numberValue: (parameter['numberValue'] ?? parameter['compareValue']) as number | undefined,
+        numberMin: (parameter['numberMin'] ?? parameter['minNumber']) as number | undefined,
+        numberMax: (parameter['numberMax'] ?? parameter['maxNumber']) as number | undefined,
+        booleanValue: parameter['booleanValue'] as boolean | undefined,
+        dateValue: parseStoredDate(dateValueRaw),
+        dateMin: parseStoredDate(dateMinRaw),
+        dateMax: parseStoredDate(dateMaxRaw),
+        uuidValue: parameter['uuidValue'] ?? parameter['singleOptionSearch'],
+        uuidValues: (parameter['uuidValues'] ?? parameter['multiOptionSearch']) as unknown[] | undefined,
+      }
       const mappedValue: FilterValue = {
         operator: value['operator'] as FilterOperator,
         dataType: value['dataType'] as DataType,

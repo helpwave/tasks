@@ -17,13 +17,12 @@ import { PatientDetailView } from '@/components/patients/PatientDetailView'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { UserInfoPopup } from '@/components/UserInfoPopup'
-import type { ColumnDef, ColumnFiltersState, PaginationState, SortingState, TableState, VisibilityState } from '@tanstack/table-core'
+import type { ColumnDef, ColumnFiltersState, ColumnOrderState, PaginationState, SortingState, TableState, VisibilityState } from '@tanstack/table-core'
 import type { Dispatch, SetStateAction } from 'react'
 import { DueDateUtils } from '@/utils/dueDate'
 import { PriorityUtils } from '@/utils/priority'
 import { getPropertyColumnsForEntity } from '@/utils/propertyColumn'
-import { useStorageSyncedTableState } from '@/hooks/useTableState'
-import { usePropertyColumnVisibility } from '@/hooks/usePropertyColumnVisibility'
+import { useColumnVisibilityWithPropertyDefaults } from '@/hooks/usePropertyColumnVisibility'
 import { queryableFieldsToFilterListItems, queryableFieldsToSortingListItems } from '@/utils/queryableFilterList'
 
 export type TaskViewModel = {
@@ -68,6 +67,8 @@ type TaskListTableState = {
   setFilters: Dispatch<SetStateAction<ColumnFiltersState>>,
   columnVisibility: VisibilityState,
   setColumnVisibility: Dispatch<SetStateAction<VisibilityState>>,
+  columnOrder: ColumnOrderState,
+  setColumnOrder: Dispatch<SetStateAction<ColumnOrderState>>,
 }
 
 type TaskListProps = {
@@ -90,31 +91,34 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
   const { data: propertyDefinitionsData } = usePropertyDefinitions()
   const { data: queryableFieldsData } = useQueryableFields('Task')
 
-  const internalState = useStorageSyncedTableState('task-list', {
-    defaultSorting: useMemo(() => [
-      { id: 'done', desc: false },
-      { id: 'dueDate', desc: false },
-    ], []),
-  })
+  const [internalPagination, setInternalPagination] = useState<PaginationState>({ pageSize: 10, pageIndex: 0 })
+  const [internalSorting, setInternalSorting] = useState<SortingState>(() => [
+    { id: 'done', desc: false },
+    { id: 'dueDate', desc: false },
+  ])
+  const [internalFilters, setInternalFilters] = useState<ColumnFiltersState>([])
+  const [internalColumnVisibility, setInternalColumnVisibility] = useState<VisibilityState>({})
+  const [internalColumnOrder, setInternalColumnOrder] = useState<ColumnOrderState>([])
 
   const lastTotalCountRef = useRef<number | undefined>(undefined)
   if (totalCount != null) lastTotalCountRef.current = totalCount
   const stableTotalCount = totalCount ?? lastTotalCountRef.current
 
-  const pagination = controlledTableState?.pagination ?? internalState.pagination
-  const setPagination = controlledTableState?.setPagination ?? internalState.setPagination
-  const sorting = controlledTableState?.sorting ?? internalState.sorting
-  const setSorting = controlledTableState?.setSorting ?? internalState.setSorting
-  const filters = controlledTableState?.filters ?? internalState.filters
-  const setFilters = controlledTableState?.setFilters ?? internalState.setFilters
-  const columnVisibility = controlledTableState?.columnVisibility ?? internalState.columnVisibility
-  const setColumnVisibility = controlledTableState?.setColumnVisibility ?? internalState.setColumnVisibility
+  const pagination = controlledTableState?.pagination ?? internalPagination
+  const setPagination = controlledTableState?.setPagination ?? setInternalPagination
+  const sorting = controlledTableState?.sorting ?? internalSorting
+  const setSorting = controlledTableState?.setSorting ?? setInternalSorting
+  const filters = controlledTableState?.filters ?? internalFilters
+  const setFilters = controlledTableState?.setFilters ?? setInternalFilters
+  const columnVisibility = controlledTableState?.columnVisibility ?? internalColumnVisibility
+  const setColumnVisibilityRaw = controlledTableState?.setColumnVisibility ?? setInternalColumnVisibility
+  const columnOrder = controlledTableState?.columnOrder ?? internalColumnOrder
+  const setColumnOrder = controlledTableState?.setColumnOrder ?? setInternalColumnOrder
 
-  usePropertyColumnVisibility(
+  const setColumnVisibilityMerged = useColumnVisibilityWithPropertyDefaults(
     propertyDefinitionsData,
     PropertyEntity.Task,
-    columnVisibility,
-    setColumnVisibility
+    setColumnVisibilityRaw
   )
 
   const queryClient = useQueryClient()
@@ -568,9 +572,11 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
       }}
       state={{
         columnVisibility,
+        columnOrder,
         pagination,
       } as Partial<TableState> as TableState}
-      onColumnVisibilityChange={setColumnVisibility}
+      onColumnVisibilityChange={setColumnVisibilityMerged}
+      onColumnOrderChange={setColumnOrder}
       onPaginationChange={setPagination}
       onSortingChange={setSorting}
       onColumnFiltersChange={setFilters}

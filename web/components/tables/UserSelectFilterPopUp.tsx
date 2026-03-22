@@ -36,10 +36,10 @@ export const UserSelectFilterPopUp = ({ value, onValueChange, onRemove, name }: 
         <div className="flex-col-1">
           <label htmlFor={ids.select} className="typography-label-md">{translation('user')}</label>
           <AssigneeSelect
-            value={parameter.singleOptionSearch as string ?? ''}
-            onValueChanged={(newUserValue) => onValueChange({ ...value, parameter: { ...parameter, singleOptionSearch: newUserValue } })}
-            onDialogClose={(newUserValue) => onValueChange({ ...value, parameter: { ...parameter, singleOptionSearch: newUserValue } })}
-            onValueClear={() => onValueChange({ ...value, parameter: { ...parameter, singleOptionSearch: undefined } })}
+            value={parameter.uuidValue != null ? String(parameter.uuidValue) : ''}
+            onValueChanged={(newUserValue) => onValueChange({ ...value, parameter: { ...parameter, uuidValue: newUserValue } })}
+            onDialogClose={(newUserValue) => onValueChange({ ...value, parameter: { ...parameter, uuidValue: newUserValue } })}
+            onValueClear={() => onValueChange({ ...value, parameter: { ...parameter, uuidValue: undefined } })}
           />
         </div>
       </Visibility>

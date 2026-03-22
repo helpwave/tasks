@@ -8,7 +8,9 @@ import { Page } from '@/components/layout/Page'
 import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
-import { Button, Chip, ConfirmDialog, Dialog, FillerCell, IconButton, Input, LoadingContainer, Table } from '@helpwave/hightide'
+import { Button, ConfirmDialog, Dialog, FillerCell, IconButton, Input, LoadingContainer, Table } from '@helpwave/hightide'
+import { DateDisplay } from '@/components/Date/DateDisplay'
+import { SavedViewEntityTypeChip } from '@/components/views/SavedViewEntityTypeChip'
 import { useMySavedViews } from '@/data'
 import {
   DeleteSavedViewDocument,
@@ -18,7 +20,6 @@ import {
   type DuplicateSavedViewMutation,
   type DuplicateSavedViewMutationVariables,
   MySavedViewsDocument,
-  SavedViewEntityType,
   UpdateSavedViewDocument,
   type UpdateSavedViewMutation,
   type UpdateSavedViewMutationVariables
@@ -26,7 +27,7 @@ import {
 import { getParsedDocument } from '@/data/hooks/queryHelpers'
 import type { ColumnDef } from '@tanstack/table-core'
 import { EditIcon, ExternalLink, Trash2, Share2, CopyPlus } from 'lucide-react'
-import type { MySavedViewsQuery } from '@/api/gql/generated'
+import type { MySavedViewsQuery, SavedViewEntityType, SavedViewVisibility } from '@/api/gql/generated'
 
 type SavedViewRowGql = MySavedViewsQuery['mySavedViews'][number]
 
@@ -35,7 +36,7 @@ type SavedViewRow = {
   name: string,
   baseEntityType: SavedViewEntityType,
   updatedAt: string,
-  visibility: string,
+  visibility: SavedViewVisibility,
 }
 
 const ViewsSettingsPage: NextPage = () => {
@@ -115,38 +116,43 @@ const ViewsSettingsPage: NextPage = () => {
       id: 'name',
       header: translation('name'),
       accessorKey: 'name',
-      minSize: 160,
+      minSize: 280,
+      size: 320,
+      enableSorting: false,
     },
     {
       id: 'entity',
       header: translation('subjectType'),
       cell: ({ row }) => (
-        <Chip size="sm" color="primary" className="uppercase">
-          {row.original.baseEntityType === SavedViewEntityType.Patient
-            ? translation('viewsEntityPatient')
-            : translation('viewsEntityTask')}
-        </Chip>
+        <SavedViewEntityTypeChip entityType={row.original.baseEntityType} />
       ),
-      minSize: 100,
+      minSize: 128,
+      size: 140,
+      enableSorting: false,
     },
     {
       id: 'updated',
       header: translation('updated'),
       accessorKey: 'updatedAt',
-      minSize: 140,
+      cell: ({ row }) => (
+        <DateDisplay date={new Date(row.original.updatedAt)} mode="relative" />
+      ),
+      minSize: 168,
+      size: 180,
+      enableSorting: false,
     },
     {
       id: 'actions',
       header: '',
       cell: ({ row }) => (
-        <div className="flex flex-row items-center gap-1">
+        <div className="flex flex-row items-center gap-0.5 justify-end">
           <IconButton
             tooltip={translation('openView')}
             coloringStyle="text"
             color="neutral"
             onClick={() => router.push(`/view/${row.original.id}`)}
           >
-            <ExternalLink className="size-4" />
+            <ExternalLink />
           </IconButton>
           <IconButton
             tooltip={translation('copyShareLink')}
@@ -154,7 +160,7 @@ const ViewsSettingsPage: NextPage = () => {
             color="neutral"
             onClick={() => copyLink(row.original.id)}
           >
-            <Share2 className="size-4" />
+            <Share2 />
           </IconButton>
           <IconButton
             tooltip={translation('rEdit', { name: translation('name') })}
@@ -166,7 +172,7 @@ const ViewsSettingsPage: NextPage = () => {
               setRenameOpen(true)
             }}
           >
-            <EditIcon className="size-4" />
+            <EditIcon />
           </IconButton>
           <IconButton
             tooltip={translation('copyViewToMyViews')}
@@ -178,7 +184,7 @@ const ViewsSettingsPage: NextPage = () => {
               setDuplicateOpen(true)
             }}
           >
-            <CopyPlus className="size-4" />
+            <CopyPlus />
           </IconButton>
           <IconButton
             tooltip={translation('delete')}
@@ -189,19 +195,21 @@ const ViewsSettingsPage: NextPage = () => {
               setDeleteOpen(true)
             }}
           >
-            <Trash2 className="size-4" />
+            <Trash2 />
           </IconButton>
         </div>
       ),
-      size: 220,
-      minSize: 220,
+      size: 228,
+      minSize: 228,
+      maxSize: 228,
+      enableSorting: false,
     },
   ], [copyLink, router, translation])
 
   return (
-    <Page pageTitle={titleWrapper(translation('viewSettings'))}>
+    <Page pageTitle={titleWrapper(translation('views'))}>
       <ContentPanel
-        titleElement={translation('viewSettings')}
+        titleElement={translation('views')}
         description={translation('viewSettingsDescription')}
       >
         {loading ? (

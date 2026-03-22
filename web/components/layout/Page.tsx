@@ -32,7 +32,7 @@ import {
   Menu as MenuIcon,
   X,
   MessageSquare,
-  LayoutList
+  Rabbit
 } from 'lucide-react'
 import { TasksLogo } from '@/components/TasksLogo'
 import { useRouter } from 'next/router'
@@ -561,7 +561,7 @@ export const Sidebar = ({ isOpen, onClose, ...props }: SidebarProps) => {
           >
             <ExpandableHeader className="px-2.5 py-1.5">
               <div className="flex-row-2">
-                <LayoutList className="size-5" />
+                <Rabbit className="size-5" />
                 {translation('savedViews')}
               </div>
             </ExpandableHeader>
@@ -571,9 +571,6 @@ export const Sidebar = ({ isOpen, onClose, ...props }: SidebarProps) => {
                   {v.name}
                 </SidebarLink>
               ))}
-              <SidebarLink href="/settings/views" onClick={onClose} className="typography-body-sm text-description">
-                {translation('viewSettings')}
-              </SidebarLink>
             </ExpandableContent>
           </ExpandableRoot>
           {(context?.teams?.length ?? 0) > 0 && (

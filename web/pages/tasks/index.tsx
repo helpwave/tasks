@@ -5,51 +5,87 @@ import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
 import type { TaskViewModel } from '@/components/tables/TaskList'
 import { TaskList } from '@/components/tables/TaskList'
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useRouter } from 'next/router'
 import { useTasksContext } from '@/hooks/useTasksContext'
-import { useTasksPaginated } from '@/data'
-import { useStorageSyncedTableState } from '@/hooks/useTableState'
+import { usePropertyDefinitions, useTasksPaginated } from '@/data'
+import { getPropertyColumnIds } from '@/hooks/usePropertyColumnVisibility'
+import { PropertyEntity } from '@/api/gql/generated'
 import { columnFiltersToQueryFilterClauses, paginationStateToPaginationInput, sortingStateToQuerySortClauses } from '@/utils/tableStateToApi'
-import { Button, Visibility } from '@helpwave/hightide'
+import { Visibility } from '@helpwave/hightide'
 import { SaveViewDialog } from '@/components/views/SaveViewDialog'
+import { SaveViewActionsMenu } from '@/components/views/SaveViewActionsMenu'
 import { SavedViewEntityType } from '@/api/gql/generated'
-import { serializeColumnFiltersForView, serializeSortingForView, stringifyViewParameters } from '@/utils/viewDefinition'
-import type { ColumnFiltersState } from '@tanstack/react-table'
+import {
+  serializeColumnFiltersForView,
+  serializeSortingForView,
+  stringifyViewParameters,
+  tableViewStateMatchesBaseline
+} from '@/utils/viewDefinition'
+import type { ColumnFiltersState, ColumnOrderState, PaginationState, SortingState, VisibilityState } from '@tanstack/react-table'
 
 const TasksPage: NextPage = () => {
   const translation = useTasksTranslation()
   const router = useRouter()
   const { selectedRootLocationIds, user, myTasksCount } = useTasksContext()
+  const { data: propertyDefinitionsData } = usePropertyDefinitions()
+  const propertyColumnIds = useMemo(
+    () => getPropertyColumnIds(propertyDefinitionsData, PropertyEntity.Task),
+    [propertyDefinitionsData]
+  )
   const defaultSorting = useMemo(() => [
     { id: 'done', desc: false },
     { id: 'dueDate', desc: false },
   ], [])
-  const {
-    pagination,
-    setPagination,
-    sorting,
-    setSorting,
-    filters,
-    setFilters,
-    columnVisibility,
-    setColumnVisibility,
-  } = useStorageSyncedTableState('task-list', {
-    defaultSorting,
-  })
+  const [pagination, setPagination] = useState<PaginationState>({ pageSize: 10, pageIndex: 0 })
+  const [sorting, setSorting] = useState<SortingState>(defaultSorting)
+  const [filters, setFilters] = useState<ColumnFiltersState>([])
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
+  const [columnOrder, setColumnOrder] = useState<ColumnOrderState>([])
 
   const baselineFilters = useMemo((): ColumnFiltersState => [], [])
-  const filtersChanged = useMemo(
-    () => serializeColumnFiltersForView(filters as ColumnFiltersState) !== serializeColumnFiltersForView(baselineFilters),
-    [filters, baselineFilters]
-  )
-  const sortingChanged = useMemo(
-    () => serializeSortingForView(sorting) !== serializeSortingForView(defaultSorting),
-    [sorting, defaultSorting]
-  )
 
   const [isSaveViewOpen, setIsSaveViewOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+
+  const viewMatchesBaseline = useMemo(
+    () => tableViewStateMatchesBaseline({
+      filters: filters as ColumnFiltersState,
+      baselineFilters,
+      sorting,
+      baselineSorting: defaultSorting,
+      searchQuery,
+      baselineSearch: '',
+      columnVisibility,
+      baselineColumnVisibility: undefined,
+      columnOrder,
+      baselineColumnOrder: undefined,
+      propertyColumnIds,
+    }),
+    [
+      filters,
+      baselineFilters,
+      sorting,
+      defaultSorting,
+      searchQuery,
+      columnVisibility,
+      columnOrder,
+      propertyColumnIds,
+    ]
+  )
+  const hasUnsavedViewChanges = !viewMatchesBaseline
+
+  const handleDiscardTasksView = useCallback(() => {
+    setFilters(baselineFilters)
+    setSorting(defaultSorting)
+    setSearchQuery('')
+    setColumnVisibility({})
+    setColumnOrder([])
+  }, [baselineFilters, defaultSorting])
+
+  const onInitialTaskOpened = useCallback(() => {
+    void router.replace('/tasks', undefined, { shallow: true })
+  }, [router])
   const apiFilters = useMemo(() => columnFiltersToQueryFilterClauses(filters), [filters])
   const apiSorting = useMemo(() => sortingStateToQuerySortClauses(sorting), [sorting])
   const apiPagination = useMemo(() => paginationStateToPaginationInput(pagination), [pagination])
@@ -111,7 +147,10 @@ const TasksPage: NextPage = () => {
           parameters={stringifyViewParameters({
             rootLocationIds: selectedRootLocationIds ?? undefined,
             assigneeId: user?.id,
+            columnVisibility,
+            columnOrder,
           })}
+          presentation="fromSystemList"
           onCreated={(id) => router.push(`/view/${id}`)}
         />
         <TaskList
@@ -125,10 +164,13 @@ const TasksPage: NextPage = () => {
           searchQuery={searchQuery}
           onSearchQueryChange={setSearchQuery}
           saveViewSlot={(
-            <Visibility isVisible={filtersChanged || sortingChanged}>
-              <Button color="primary" onClick={() => setIsSaveViewOpen(true)}>
-                {translation('saveView')}
-              </Button>
+            <Visibility isVisible={hasUnsavedViewChanges}>
+              <SaveViewActionsMenu
+                canOverwrite={false}
+                onOverwrite={() => undefined}
+                onOpenSaveAsNew={() => setIsSaveViewOpen(true)}
+                onDiscard={handleDiscardTasksView}
+              />
             </Visibility>
           )}
           tableState={{
@@ -140,6 +182,8 @@ const TasksPage: NextPage = () => {
             setFilters,
             columnVisibility,
             setColumnVisibility,
+            columnOrder,
+            setColumnOrder,
           }}
         />
       </ContentPanel>

@@ -1,13 +1,11 @@
 import type {
-  ColumnFilter,
   ColumnFiltersState,
+  ColumnOrderState,
   PaginationState,
   SortingState,
   VisibilityState
 } from '@tanstack/react-table'
-import type { Dispatch, SetStateAction } from 'react'
-import type { DataType, FilterOperator, FilterParameter, FilterValue } from '@helpwave/hightide'
-import { useStorage } from '@/hooks/useStorage'
+import { useCallback, useMemo, useState, type Dispatch, type SetStateAction } from 'react'
 
 const defaultPagination: PaginationState = {
   pageSize: 10,
@@ -17,12 +15,14 @@ const defaultPagination: PaginationState = {
 const defaultSorting: SortingState = []
 const defaultFilters: ColumnFiltersState = []
 const defaultColumnVisibility: VisibilityState = {}
+const defaultColumnOrder: ColumnOrderState = []
 
 export type UseTableStateOptions = {
   defaultSorting?: SortingState,
   defaultPagination?: PaginationState,
   defaultFilters?: ColumnFiltersState,
   defaultColumnVisibility?: VisibilityState,
+  defaultColumnOrder?: ColumnOrderState,
 }
 
 export type UseTableStateResult = {
@@ -34,78 +34,24 @@ export type UseTableStateResult = {
   setFilters: Dispatch<SetStateAction<ColumnFiltersState>>,
   columnVisibility: VisibilityState,
   setColumnVisibility: Dispatch<SetStateAction<VisibilityState>>,
+  columnOrder: ColumnOrderState,
+  setColumnOrder: Dispatch<SetStateAction<ColumnOrderState>>,
 }
 
-export function useStorageSyncedTableState(
-  storageKeyPrefix: string,
-  options: UseTableStateOptions = {}
-): UseTableStateResult {
+export function useTableState(options: UseTableStateOptions = {}): UseTableStateResult {
   const {
     defaultSorting: initialSorting = defaultSorting,
     defaultPagination: initialPagination = defaultPagination,
     defaultFilters: initialFilters = defaultFilters,
     defaultColumnVisibility: initialColumnVisibility = defaultColumnVisibility,
+    defaultColumnOrder: initialColumnOrder = defaultColumnOrder,
   } = options
 
-  const { value: pagination, setValue: setPagination } = useStorage<PaginationState>({
-    key: `${storageKeyPrefix}-column-pagination`,
-    defaultValue: initialPagination,
-  })
-  const { value: sorting, setValue: setSorting } = useStorage<SortingState>({
-    key: `${storageKeyPrefix}-column-sorting`,
-    defaultValue: initialSorting,
-  })
-  const { value: filters, setValue: setFilters } = useStorage<ColumnFiltersState>({
-    key: `${storageKeyPrefix}-column-filters`,
-    defaultValue: initialFilters,
-    serialize: (value) => {
-      const mappedColumnFilter = value.map((filter) => {
-        const tableFilterValue = filter.value as FilterValue
-        const filterParameter = tableFilterValue.parameter
-        const parameter: Record<string, unknown> = {
-          ...filterParameter,
-          compareDate: filterParameter.compareDate ? filterParameter.compareDate.toISOString() : undefined,
-          minDate: filterParameter.minDate ? filterParameter.minDate.toISOString() : undefined,
-          maxDate: filterParameter.maxDate ? filterParameter.maxDate.toISOString() : undefined,
-        }
-        return {
-          ...filter,
-          id: filter.id,
-          value: {
-            ...tableFilterValue,
-            parameter,
-          },
-        }
-      })
-      return JSON.stringify(mappedColumnFilter)
-    },
-    deserialize: (value) => {
-      const mappedColumnFilter = JSON.parse(value) as Record<string, unknown>[]
-      return mappedColumnFilter.map((filter): ColumnFilter => {
-        const value = filter['value'] as Record<string, unknown>
-        const parameter: Record<string, unknown> = value['parameter'] as Record<string, unknown>
-        const filterParameter: FilterParameter = {
-          ...parameter,
-          compareDate: parameter['compareDate'] ? new Date(parameter['compareDate'] as string) : undefined,
-          minDate: parameter['minDate'] ? new Date(parameter['minDate'] as string) : undefined,
-          maxDate: parameter['maxDate'] ? new Date(parameter['maxDate'] as string) : undefined,
-        }
-        const mappedValue: FilterValue = {
-          operator: value['operator'] as FilterOperator,
-          dataType: value['dataType'] as DataType,
-          parameter: filterParameter,
-        }
-        return {
-          ...filter,
-          value: mappedValue,
-        } as ColumnFilter
-      })
-    },
-  })
-  const { value: columnVisibility, setValue: setColumnVisibility } = useStorage<VisibilityState>({
-    key: `${storageKeyPrefix}-column-visibility`,
-    defaultValue: initialColumnVisibility,
-  })
+  const [pagination, setPagination] = useState<PaginationState>(initialPagination)
+  const [sorting, setSorting] = useState<SortingState>(initialSorting)
+  const [filters, setFilters] = useState<ColumnFiltersState>(initialFilters)
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(initialColumnVisibility)
+  const [columnOrder, setColumnOrder] = useState<ColumnOrderState>(initialColumnOrder)
 
   return {
     pagination,
@@ -116,5 +62,39 @@ export function useStorageSyncedTableState(
     setFilters,
     columnVisibility,
     setColumnVisibility,
+    columnOrder,
+    setColumnOrder,
+  }
+}
+
+export function useRecentOverviewTableState(
+  options: Pick<UseTableStateOptions, 'defaultPagination' | 'defaultColumnVisibility' | 'defaultColumnOrder'> = {}
+): UseTableStateResult {
+  const {
+    defaultPagination: initialPagination = defaultPagination,
+    defaultColumnVisibility: initialColumnVisibility = defaultColumnVisibility,
+    defaultColumnOrder: initialColumnOrder = defaultColumnOrder,
+  } = options
+
+  const [pagination, setPagination] = useState<PaginationState>(initialPagination)
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(initialColumnVisibility)
+  const [columnOrder, setColumnOrder] = useState<ColumnOrderState>(initialColumnOrder)
+
+  const sorting = useMemo(() => [] as SortingState, [])
+  const filters = useMemo(() => [] as ColumnFiltersState, [])
+  const setSorting = useCallback((_u: SetStateAction<SortingState>) => undefined, [])
+  const setFilters = useCallback((_u: SetStateAction<ColumnFiltersState>) => undefined, [])
+
+  return {
+    pagination,
+    setPagination,
+    sorting,
+    setSorting,
+    filters,
+    setFilters,
+    columnVisibility,
+    setColumnVisibility,
+    columnOrder,
+    setColumnOrder,
   }
 }

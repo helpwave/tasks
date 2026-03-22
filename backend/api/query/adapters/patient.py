@@ -1,6 +1,6 @@
 from typing import Any
 
-from sqlalchemy import Select, and_, case, func, or_, select
+from sqlalchemy import Select, and_, case, or_
 from sqlalchemy.orm import aliased
 
 from api.inputs import PatientState, Sex, SortDirection

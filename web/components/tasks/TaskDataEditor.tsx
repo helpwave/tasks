@@ -7,7 +7,6 @@ import type { FormFieldDataHandling } from '@helpwave/hightide'
 import {
   Button,
   Checkbox,
-  DateTimeInput,
   FormProvider,
   FormField,
   Input,
