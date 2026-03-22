@@ -1,6 +1,6 @@
 import { useMemo, useState, forwardRef, useImperativeHandle, useEffect, useCallback, useRef } from 'react'
 import { Chip, FillerCell, HelpwaveLogo, LoadingContainer, SearchBar, ProgressIndicator, Tooltip, Drawer, TableProvider, TableDisplay, TableColumnSwitcher, TablePagination, IconButton, useLocale } from '@helpwave/hightide'
-import { PlusIcon } from 'lucide-react'
+import { PlusIcon, Sparkles } from 'lucide-react'
 import { Sex, PatientState, type GetPatientsQuery, type TaskType, PropertyEntity, type FullTextSearchInput, type LocationType } from '@/api/gql/generated'
 import { usePropertyDefinitions, usePatientsPaginated, useRefreshingEntityIds } from '@/data'
 import { PatientDetailView } from '@/components/patients/PatientDetailView'
@@ -15,6 +15,10 @@ import { getPropertyColumnsForEntity } from '@/utils/propertyColumn'
 import { useStorageSyncedTableState } from '@/hooks/useTableState'
 import { usePropertyColumnVisibility } from '@/hooks/usePropertyColumnVisibility'
 import { columnFiltersToFilterInput, paginationStateToPaginationInput, sortingStateToSortInput } from '@/utils/tableStateToApi'
+import { getAdherenceByPatientId, getSuggestionByPatientId, DUMMY_SUGGESTION } from '@/data/mockSystemSuggestions'
+import { MOCK_PATIENTS } from '@/data/mockPatients'
+import { SystemSuggestionModal } from '@/components/patients/SystemSuggestionModal'
+import type { SystemSuggestion } from '@/types/systemSuggestion'
 
 export type PatientViewModel = {
   id: string,
@@ -64,6 +68,9 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
   const [selectedPatient, setSelectedPatient] = useState<PatientViewModel | undefined>(undefined)
   const [searchQuery, setSearchQuery] = useState('')
   const [openedPatientId, setOpenedPatientId] = useState<string | null>(null)
+  const [suggestionModalOpen, setSuggestionModalOpen] = useState(false)
+  const [suggestionModalSuggestion, setSuggestionModalSuggestion] = useState<SystemSuggestion | null>(null)
+  const [suggestionModalPatientName, setSuggestionModalPatientName] = useState<string>('')
 
   const {
     pagination,
@@ -152,23 +159,28 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
     })
   }, [patientsData])
 
+  const displayPatients: PatientViewModel[] = useMemo(
+    () => [...MOCK_PATIENTS, ...patients],
+    [patients]
+  )
+
   useImperativeHandle(ref, () => ({
     openCreate: () => {
       setSelectedPatient(undefined)
       setIsPanelOpen(true)
     },
     openPatient: (patientId: string) => {
-      const patient = patients.find(p => p.id === patientId)
+      const patient = displayPatients.find(p => p.id === patientId)
       if (patient) {
         setSelectedPatient(patient)
         setIsPanelOpen(true)
       }
     }
-  }), [patients])
+  }), [displayPatients])
 
   useEffect(() => {
     if (initialPatientId && openedPatientId !== initialPatientId) {
-      const patient = patients.find(p => p.id === initialPatientId)
+      const patient = displayPatients.find(p => p.id === initialPatientId)
       if (patient) {
         setSelectedPatient(patient)
       }
@@ -176,7 +188,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       setOpenedPatientId(initialPatientId)
       onInitialPatientOpened?.()
     }
-  }, [initialPatientId, patients, openedPatientId, onInitialPatientOpened])
+  }, [initialPatientId, displayPatients, openedPatientId, onInitialPatientOpened])
 
   const handleEdit = useCallback((patient: PatientViewModel) => {
     setSelectedPatient(patient)
@@ -202,12 +214,55 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
 
   const rowLoadingCell = useMemo(() => <LoadingContainer className="w-full min-h-8" />, [])
 
+  const openSuggestionModal = useCallback((suggestion: SystemSuggestion, patientName: string) => {
+    setSuggestionModalSuggestion(suggestion)
+    setSuggestionModalPatientName(patientName)
+    setSuggestionModalOpen(true)
+  }, [])
+
+  const closeSuggestionModal = useCallback(() => {
+    setSuggestionModalOpen(false)
+  }, [])
+
   const columns = useMemo<ColumnDef<PatientViewModel>[]>(() => [
     {
       id: 'name',
       header: translation('name'),
       accessorKey: 'name',
-      cell: ({ row }) => (refreshingPatientIds.has(row.original.id) ? rowLoadingCell : row.original.name),
+      cell: ({ row }) => {
+        if (refreshingPatientIds.has(row.original.id)) return rowLoadingCell
+        const adherence = getAdherenceByPatientId(row.original.id)
+        const suggestion = getSuggestionByPatientId(row.original.id)
+        const dotClass = adherence === 'adherent' ? 'bg-positive' : adherence === 'non_adherent' ? 'bg-negative' : 'bg-warning'
+        const adherenceTooltip = adherence === 'adherent' ? 'Adherent' : adherence === 'non_adherent' ? 'Not adherent' : 'In Progress'
+        return (
+          <>
+            <span className="print:block hidden">{row.original.name}</span>
+            <div className="flex items-center gap-2 print:hidden min-w-0">
+              <Tooltip tooltip={adherenceTooltip} alignment="top">
+                <span className={`w-2 h-2 rounded-full shrink-0 inline-block ${dotClass}`} aria-hidden />
+              </Tooltip>
+              <span className="min-w-0 truncate">{row.original.name}</span>
+              {suggestion && (
+                <Tooltip tooltip="System suggestion available" alignment="top">
+                  <IconButton
+                    size="sm"
+                    color="neutral"
+                    coloringStyle="text"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      openSuggestionModal(suggestion, row.original.name)
+                    }}
+                    className="shrink-0 text-[var(--color-blue-200)] hover:text-[var(--color-blue-500)]"
+                  >
+                    <Sparkles className="size-4" />
+                  </IconButton>
+                </Tooltip>
+              )}
+            </div>
+          </>
+        )
+      },
       minSize: 200,
       size: 250,
       maxSize: 300,
@@ -393,14 +448,14 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
           refreshingPatientIds.has(params.row.original.id) ? rowLoadingCell : (col.cell as (p: unknown) => React.ReactNode)(params)
         : undefined,
     })),
-  ], [translation, allPatientStates, patientPropertyColumns, refreshingPatientIds, rowLoadingCell, dateFormat])
+  ], [translation, allPatientStates, patientPropertyColumns, refreshingPatientIds, rowLoadingCell, dateFormat, openSuggestionModal])
 
   const onRowClick = useCallback((row: Row<PatientViewModel>) => handleEdit(row.original), [handleEdit])
   const fillerRowCell = useCallback(() => (<FillerCell className="min-h-8" />), [])
 
   return (
     <TableProvider
-      data={patients}
+      data={displayPatients}
       columns={columns}
       fillerRowCell={fillerRowCell}
       onRowClick={onRowClick}
@@ -421,7 +476,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       onSortingChange={setSorting}
       onColumnFiltersChange={setFilters}
       enableMultiSort={true}
-      pageCount={stableTotalCount != null ? Math.ceil(stableTotalCount / pagination.pageSize) : -1}
+      pageCount={stableTotalCount != null ? Math.ceil((stableTotalCount + MOCK_PATIENTS.length) / pagination.pageSize) : -1}
     >
       <div className="flex flex-col h-full gap-4">
         <div className="flex flex-col sm:flex-row justify-between w-full gap-4">
@@ -473,8 +528,19 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
             patientId={selectedPatient?.id ?? openedPatientId ?? undefined}
             onClose={handleClose}
             onSuccess={refetch}
+            onOpenSystemSuggestion={(suggestion, patientName) => {
+              setSuggestionModalSuggestion(suggestion)
+              setSuggestionModalPatientName(patientName)
+              setSuggestionModalOpen(true)
+            }}
           />
         </Drawer>
+        <SystemSuggestionModal
+          isOpen={suggestionModalOpen}
+          onClose={closeSuggestionModal}
+          suggestion={suggestionModalSuggestion ?? DUMMY_SUGGESTION}
+          patientName={suggestionModalPatientName}
+        />
       </div>
     </TableProvider>
   )

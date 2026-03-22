@@ -14,6 +14,8 @@ import { TasksContextProvider } from '@/hooks/useTasksContext'
 import { ApolloProviderWithData } from '@/providers/ApolloProviderWithData'
 import { ConflictProvider } from '@/providers/ConflictProvider'
 import { SubscriptionProvider } from '@/providers/SubscriptionProvider'
+import { SystemSuggestionTasksProvider } from '@/context/SystemSuggestionTasksContext'
+import { FeedbackToast } from '@/components/FeedbackToast'
 import { InstallPrompt } from '@/components/pwa/InstallPrompt'
 import { registerServiceWorker, requestNotificationPermission } from '@/utils/pushNotifications'
 import { useEffect } from 'react'
@@ -77,10 +79,13 @@ function MyApp({
           <ApolloProviderWithData>
             <SubscriptionProvider>
               <TasksContextProvider>
-                <ConflictProvider>
-                  <Component {...pageProps} />
-                  <InstallPrompt />
-                </ConflictProvider>
+                <SystemSuggestionTasksProvider>
+                  <ConflictProvider>
+                    <Component {...pageProps} />
+                    <InstallPrompt />
+                    <FeedbackToast />
+                  </ConflictProvider>
+                </SystemSuggestionTasksProvider>
               </TasksContextProvider>
             </SubscriptionProvider>
           </ApolloProviderWithData>

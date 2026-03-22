@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import { Button, Drawer, ExpandableContent, ExpandableHeader, ExpandableRoot } from '@helpwave/hightide'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { CheckCircle2, ChevronDown, Circle, PlusIcon } from 'lucide-react'
@@ -7,6 +7,7 @@ import clsx from 'clsx'
 import type { GetPatientQuery } from '@/api/gql/generated'
 import { TaskDetailView } from '@/components/tasks/TaskDetailView'
 import { useCompleteTask, useReopenTask } from '@/data'
+import { useCreatedTasksForPatient, useSystemSuggestionTasksOptional } from '@/context/SystemSuggestionTasksContext'
 
 interface PatientTasksViewProps {
   patientId: string,
@@ -14,12 +15,14 @@ interface PatientTasksViewProps {
   onSuccess?: () => void,
 }
 
-const sortByDueDate = <T extends { dueDate?: string | null }>(tasks: T[]): T[] => {
+const sortByDueDate = <T extends { dueDate?: string | Date | null }>(tasks: T[]): T[] => {
   return [...tasks].sort((a, b) => {
+    const aTime = a.dueDate ? new Date(a.dueDate).getTime() : 0
+    const bTime = b.dueDate ? new Date(b.dueDate).getTime() : 0
     if (!a.dueDate && !b.dueDate) return 0
     if (!a.dueDate) return 1
     if (!b.dueDate) return -1
-    return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
+    return aTime - bTime
   })
 }
 
@@ -35,8 +38,10 @@ export const PatientTasksView = ({
 
   const [completeTask] = useCompleteTask()
   const [reopenTask] = useReopenTask()
+  const createdTasks = useCreatedTasksForPatient(patientId)
+  const suggestionTasksContext = useSystemSuggestionTasksOptional()
 
-  const tasks = useMemo(() => {
+  const apiTasksWithOptimistic = useMemo(() => {
     const baseTasks = patientData?.patient?.tasks || []
     return baseTasks.map(task => {
       const optimisticDone = optimisticTaskUpdates.get(task.id)
@@ -47,14 +52,35 @@ export const PatientTasksView = ({
     })
   }, [patientData?.patient?.tasks, optimisticTaskUpdates])
 
-  const openTasks = useMemo(() => sortByDueDate(tasks.filter(t => !t.done)), [tasks])
-  const closedTasks = useMemo(() => sortByDueDate(tasks.filter(t => t.done)), [tasks])
+  const mergedCreatedTasks = useMemo(() => {
+    return createdTasks.map(t => ({
+      id: t.id,
+      title: t.title,
+      name: t.title,
+      description: t.description ?? undefined,
+      done: t.done,
+      dueDate: t.dueDate ?? undefined,
+      updateDate: t.updateDate,
+      priority: t.priority ?? undefined,
+      estimatedTime: t.estimatedTime ?? undefined,
+      assignee: t.assignedTo === 'me' ? { id: 'me', name: 'Me', avatarUrl: null, lastOnline: null, isOnline: false } : undefined,
+      assigneeTeam: undefined,
+      machineGenerated: true as const,
+      source: 'systemSuggestion' as const,
+    }))
+  }, [createdTasks])
 
-  useEffect(() => {
-    setOptimisticTaskUpdates(new Map())
-  }, [patientData?.patient?.tasks])
+  const tasks = useMemo(
+    () => [...apiTasksWithOptimistic, ...mergedCreatedTasks],
+    [apiTasksWithOptimistic, mergedCreatedTasks]
+  )
 
-  const handleToggleDone = (taskId: string, done: boolean) => {
+  const handleToggleDone = useCallback((taskId: string, done: boolean) => {
+    const isCreated = mergedCreatedTasks.some(t => t.id === taskId)
+    if (isCreated && suggestionTasksContext) {
+      suggestionTasksContext.setCreatedTaskDone(patientId, taskId, done)
+      return
+    }
     setOptimisticTaskUpdates(prev => {
       const next = new Map(prev)
       next.set(taskId, done)
@@ -85,7 +111,14 @@ export const PatientTasksView = ({
         },
       })
     }
-  }
+  }, [mergedCreatedTasks, suggestionTasksContext, patientId, completeTask, reopenTask, onSuccess])
+
+  const openTasks = useMemo(() => sortByDueDate(tasks.filter(t => !t.done)), [tasks])
+  const closedTasks = useMemo(() => sortByDueDate(tasks.filter(t => t.done)), [tasks])
+
+  useEffect(() => {
+    setOptimisticTaskUpdates(new Map())
+  }, [patientData?.patient?.tasks])
 
   return (
     <>

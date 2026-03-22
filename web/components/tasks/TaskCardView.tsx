@@ -1,4 +1,4 @@
-import { Button, Checkbox } from '@helpwave/hightide'
+import { Button, Checkbox, Chip } from '@helpwave/hightide'
 import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
 import { Clock, User, Users, Flag } from 'lucide-react'
 import clsx from 'clsx'
@@ -42,6 +42,8 @@ type FlexibleTask = {
     id: string,
     title: string,
   } | null,
+  machineGenerated?: boolean,
+  source?: 'manual' | 'systemSuggestion',
 }
 
 type TaskCardViewProps = {
@@ -206,6 +208,11 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
               >
                 {taskName}
               </div>
+              {((task as FlexibleTask).machineGenerated || (task as FlexibleTask).source === 'systemSuggestion') && (
+                <Chip color="secondary" coloringStyle="tonal" size="xs" className="shrink-0">
+                  System
+                </Chip>
+              )}
             </div>
             {task.assigneeTeam && (
               <div className="flex items-center gap-1.5 text-base text-description shrink-0 min-w-0">

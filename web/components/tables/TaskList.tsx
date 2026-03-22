@@ -1,6 +1,6 @@
 import { useMemo, useState, forwardRef, useImperativeHandle, useEffect, useRef, useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { Button, Checkbox, ConfirmDialog, FillerCell, HelpwaveLogo, IconButton, LoadingContainer, SearchBar, Select, SelectOption, TableColumnSwitcher, TableDisplay, TablePagination, TableProvider } from '@helpwave/hightide'
+import { Button, Checkbox, Chip, ConfirmDialog, FillerCell, HelpwaveLogo, IconButton, LoadingContainer, SearchBar, Select, SelectOption, TableColumnSwitcher, TableDisplay, TablePagination, TableProvider } from '@helpwave/hightide'
 import { PlusIcon, UserCheck, Users } from 'lucide-react'
 import type { TaskPriority, GetTasksQuery } from '@/api/gql/generated'
 import { PropertyEntity } from '@/api/gql/generated'
@@ -44,6 +44,9 @@ export type TaskViewModel = {
   assigneeTeam?: { id: string, title: string },
   done: boolean,
   properties?: GetTasksQuery['tasks'][0]['properties'],
+  machineGenerated?: boolean,
+  source?: 'manual' | 'systemSuggestion',
+  assignedTo?: 'me' | null,
 }
 
 export type TaskListRef = {
@@ -389,12 +392,18 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
         accessorKey: 'name',
         cell: ({ row }) => {
           if (refreshingTaskIds.has(row.original.id)) return rowLoadingCell
+          const showSystemBadge = row.original.machineGenerated || row.original.source === 'systemSuggestion'
           return (
-            <div className="flex-row-2 items-center">
+            <div className="flex-row-2 items-center gap-2 flex-wrap">
               {row.original.priority && (
                 <div className={clsx('w-2 h-2 rounded-full shrink-0', PriorityUtils.toBackgroundColor(row.original.priority as TaskPriority | null | undefined))} />
               )}
               <span>{row.original.name}</span>
+              {showSystemBadge && (
+                <Chip color="secondary" coloringStyle="tonal" size="xs">
+                  System
+                </Chip>
+              )}
             </div>
           )
         },

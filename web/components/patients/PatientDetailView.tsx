@@ -3,12 +3,14 @@ import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import type { CreatePatientInput, PropertyValueInput } from '@/api/gql/generated'
 import { usePatient } from '@/data'
 import {
+  Button,
   ProgressIndicator,
   TabList,
   TabPanel,
   TabSwitcher,
-  Tooltip
+  Tooltip,
 } from '@helpwave/hightide'
+import { Sparkles } from 'lucide-react'
 import { PatientStateChip } from '@/components/patients/PatientStateChip'
 import { LocationChips } from '@/components/locations/LocationChips'
 import { PatientTasksView } from './PatientTasksView'
@@ -16,6 +18,8 @@ import { PatientDataEditor } from './PatientDataEditor'
 import { AuditLogTimeline } from '@/components/AuditLogTimeline'
 import { PropertyList, type PropertyValue } from '../tables/PropertyList'
 import { useUpdatePatient } from '@/data'
+import { getAdherenceByPatientId, getSuggestionByPatientId } from '@/data/mockSystemSuggestions'
+import type { SystemSuggestion } from '@/types/systemSuggestion'
 
 export const toISODate = (d: Date | string | null | undefined): string | null => {
   if (!d) return null
@@ -48,13 +52,15 @@ interface PatientDetailViewProps {
   onClose: () => void,
   onSuccess: () => void,
   initialCreateData?: Partial<CreatePatientInput>,
+  onOpenSystemSuggestion?: (suggestion: SystemSuggestion, patientName: string) => void,
 }
 
 export const PatientDetailView = ({
   patientId,
   onClose,
   onSuccess,
-  initialCreateData = {}
+  initialCreateData = {},
+  onOpenSystemSuggestion,
 }: PatientDetailViewProps) => {
   const translation = useTasksTranslation()
 
@@ -142,6 +148,11 @@ export const PatientDetailView = ({
     return []
   }, [patientData?.position, patientData?.assignedLocations])
 
+  const adherence = patientId ? getAdherenceByPatientId(patientId) : 'unknown'
+  const systemSuggestion = patientId ? getSuggestionByPatientId(patientId) : null
+  const adherenceDotClass = adherence === 'adherent' ? 'bg-positive' : adherence === 'non_adherent' ? 'bg-negative' : 'bg-warning'
+  const adherenceLabel = adherence === 'adherent' ? 'Treatment standard adherent' : adherence === 'non_adherent' ? 'Treatment is not adherent with standards.' : 'In Progress'
+  const adherenceTooltip = adherenceLabel
 
   return (
     <div className="flex-col-0 overflow-hidden">
@@ -175,6 +186,27 @@ export const PatientDetailView = ({
               <LocationChips locations={displayLocation} disableLink={false} />
             </div>
           )}
+        </div>
+      )}
+      {isEditMode && patientId && (
+        <div className="flex items-center justify-between gap-3 mb-4 py-2 px-3 rounded-lg bg-surface-variant border border-border">
+          <div className="flex items-center gap-3 min-w-0">
+            <span className="font-bold pr-2">Analysis</span>
+            <span className="text-sm font-medium text-label">{adherenceLabel}</span>
+            <Tooltip tooltip={adherenceTooltip} alignment="top">
+              <span className={`w-3 h-3 rounded-full shrink-0 inline-block ${adherenceDotClass}`} aria-hidden />
+            </Tooltip>
+          </div>
+          <Button
+            size="sm"
+            color="primary"
+            onClick={() => systemSuggestion && onOpenSystemSuggestion?.(systemSuggestion, patientName)}
+            disabled={!systemSuggestion || !onOpenSystemSuggestion}
+            className="shrink-0 flex items-center gap-2"
+          >
+            <Sparkles className="size-4" />
+            Fix with AI
+          </Button>
         </div>
       )}
       <TabSwitcher>
