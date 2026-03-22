@@ -142,7 +142,16 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
     setColumnVisibility(baselineColumnVisibility)
     setColumnOrder(baselineColumnOrder)
     setPagination({ pageSize: 10, pageIndex: 0 })
-  }, [savedViewId, persistedSavedViewContentKey])
+  }, [
+    savedViewId,
+    persistedSavedViewContentKey,
+    baselineFilters,
+    baselineSorting,
+    baselineSearch,
+    baselineColumnVisibility,
+    baselineColumnOrder,
+    setColumnVisibility,
+  ])
 
   const viewMatchesBaseline = useMemo(
     () => tableViewStateMatchesBaseline({

@@ -83,9 +83,6 @@ const TasksPage: NextPage = () => {
     setColumnOrder([])
   }, [baselineFilters, defaultSorting])
 
-  const onInitialTaskOpened = useCallback(() => {
-    void router.replace('/tasks', undefined, { shallow: true })
-  }, [router])
   const apiFilters = useMemo(() => columnFiltersToQueryFilterClauses(filters), [filters])
   const apiSorting = useMemo(() => sortingStateToQuerySortClauses(sorting), [sorting])
   const apiPagination = useMemo(() => paginationStateToPaginationInput(pagination), [pagination])

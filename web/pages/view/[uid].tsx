@@ -142,7 +142,20 @@ function SavedTaskViewTab({
     setColumnVisibility(parameters.columnVisibility ?? {})
     setColumnOrder(parameters.columnOrder ?? [])
     setPagination({ pageSize: 10, pageIndex: 0 })
-  }, [persistedViewContentKey])
+  }, [
+    persistedViewContentKey,
+    filterDefinition,
+    sortDefinition,
+    parameters.searchQuery,
+    parameters.columnVisibility,
+    parameters.columnOrder,
+    setFilters,
+    setSorting,
+    setSearchQuery,
+    setColumnVisibility,
+    setColumnOrder,
+    setPagination,
+  ])
 
   const viewMatchesBaseline = useMemo(
     () => tableViewStateMatchesBaseline({

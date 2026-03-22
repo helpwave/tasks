@@ -61,33 +61,6 @@ export function visibilityMatchesViewBaselineForDirty(
   )
 }
 
-export function tableViewStateMatchesBaseline(params: {
-  filters: ColumnFiltersState,
-  baselineFilters: ColumnFiltersState,
-  sorting: SortingState,
-  baselineSorting: SortingState,
-  searchQuery: string,
-  baselineSearch: string,
-  columnVisibility: VisibilityState,
-  baselineColumnVisibility: VisibilityState | undefined,
-  columnOrder: ColumnOrderState,
-  baselineColumnOrder: ColumnOrderState | undefined,
-  propertyColumnIds: readonly string[],
-}): boolean {
-  const filtersMatch =
-    serializeColumnFiltersForView(params.filters) === serializeColumnFiltersForView(params.baselineFilters)
-  const sortMatch =
-    serializeSortingForView(params.sorting) === serializeSortingForView(params.baselineSorting)
-  const searchMatch = params.searchQuery === params.baselineSearch
-  const visMatch = visibilityMatchesViewBaselineForDirty(
-    params.columnVisibility,
-    params.baselineColumnVisibility,
-    params.propertyColumnIds
-  )
-  const orderMatch = columnOrderMatchesBaselineForDirty(params.columnOrder, params.baselineColumnOrder)
-  return filtersMatch && sortMatch && searchMatch && visMatch && orderMatch
-}
-
 export function normalizedColumnOrderForViewCompare(order: ColumnOrderState): string {
   return JSON.stringify(order)
 }
@@ -200,4 +173,31 @@ export function deserializeSortingFromView(json: string): SortingState {
   } catch {
     return []
   }
+}
+
+export function tableViewStateMatchesBaseline(params: {
+  filters: ColumnFiltersState,
+  baselineFilters: ColumnFiltersState,
+  sorting: SortingState,
+  baselineSorting: SortingState,
+  searchQuery: string,
+  baselineSearch: string,
+  columnVisibility: VisibilityState,
+  baselineColumnVisibility: VisibilityState | undefined,
+  columnOrder: ColumnOrderState,
+  baselineColumnOrder: ColumnOrderState | undefined,
+  propertyColumnIds: readonly string[],
+}): boolean {
+  const filtersMatch =
+    serializeColumnFiltersForView(params.filters) === serializeColumnFiltersForView(params.baselineFilters)
+  const sortMatch =
+    serializeSortingForView(params.sorting) === serializeSortingForView(params.baselineSorting)
+  const searchMatch = params.searchQuery === params.baselineSearch
+  const visMatch = visibilityMatchesViewBaselineForDirty(
+    params.columnVisibility,
+    params.baselineColumnVisibility,
+    params.propertyColumnIds
+  )
+  const orderMatch = columnOrderMatchesBaselineForDirty(params.columnOrder, params.baselineColumnOrder)
+  return filtersMatch && sortMatch && searchMatch && visMatch && orderMatch
 }
