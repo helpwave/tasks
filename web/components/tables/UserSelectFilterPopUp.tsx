@@ -30,7 +30,6 @@ export const UserSelectFilterPopUp = ({ value, onValueChange, onRemove, name }: 
       onOperatorChange={(newOperator) => onValueChange({ dataType: 'singleTag', parameter, operator: newOperator })}
       onRemove={onRemove}
       allowedOperators={FilterOperatorUtils.operatorsByCategory.singleTag}
-      hasValue={!!value}
       noParameterRequired={!needsParameterInput}
     >
       <Visibility isVisible={needsParameterInput}>
