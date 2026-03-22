@@ -1,6 +1,6 @@
 import { useMemo, useState, forwardRef, useImperativeHandle, useEffect, useCallback, useRef } from 'react'
 import type { IdentifierFilterValue, FilterListItem, FilterListPopUpBuilderProps } from '@helpwave/hightide'
-import { Chip, FillerCell, HelpwaveLogo, LoadingContainer, SearchBar, ProgressIndicator, Tooltip, Drawer, TableProvider, TableDisplay, TableColumnSwitcher, TablePagination, IconButton, useLocale, FilterList } from '@helpwave/hightide'
+import { Chip, FillerCell, HelpwaveLogo, LoadingContainer, SearchBar, ProgressIndicator, Tooltip, Drawer, TableProvider, TableDisplay, TableColumnSwitcher, TablePagination, IconButton, useLocale, FilterList, SortingList, Button, ExpansionIcon } from '@helpwave/hightide'
 import { PlusIcon } from 'lucide-react'
 import type { LocationType } from '@/api/gql/generated'
 import { Sex, PatientState, type GetPatientsQuery, type TaskType, PropertyEntity, type FullTextSearchInput, FieldType } from '@/api/gql/generated'
@@ -55,6 +55,7 @@ type PatientListProps = {
   acceptedStates?: PatientState[],
   rootLocationIds?: string[],
   locationId?: string,
+
 }
 
 export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initialPatientId, onInitialPatientOpened, acceptedStates: _acceptedStates, rootLocationIds, locationId }, ref) => {
@@ -68,6 +69,8 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
   const [selectedPatient, setSelectedPatient] = useState<PatientViewModel | undefined>(undefined)
   const [searchQuery, setSearchQuery] = useState('')
   const [openedPatientId, setOpenedPatientId] = useState<string | null>(null)
+  const [isShowFilters, setIsShowFilters] = useState(false)
+  const [isShowSorting, setIsShowSorting] = useState(false)
 
   const {
     pagination,
@@ -232,11 +235,6 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       minSize: 120,
       size: 144,
       maxSize: 180,
-      meta: {
-        filterData: {
-          tags: allPatientStates.map(state => ({ label: translation('patientState', { state: state as string }), tag: state })),
-        }
-      }
     },
     {
       id: 'sex',
@@ -274,15 +272,6 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       minSize: 160,
       size: 160,
       maxSize: 200,
-      meta: {
-        filterData: {
-          tags: [
-            { label: translation('male'), tag: Sex.Male },
-            { label: translation('female'), tag: Sex.Female },
-            { label: translation('diverse'), tag: Sex.Unknown },
-          ],
-        }
-      }
     },
     {
       id: 'position',
@@ -391,7 +380,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
           refreshingPatientIds.has(params.row.original.id) ? rowLoadingCell : (col.cell as (p: unknown) => React.ReactNode)(params)
         : undefined,
     })),
-  ], [translation, allPatientStates, patientPropertyColumns, refreshingPatientIds, rowLoadingCell, dateFormat])
+  ], [translation, patientPropertyColumns, refreshingPatientIds, rowLoadingCell, dateFormat])
 
   const availableFilters: FilterListItem[] = useMemo(() => [
     {
@@ -458,7 +447,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       columns={columns}
       fillerRowCell={fillerRowCell}
       onRowClick={onRowClick}
-      manualPagination={true}
+
       initialState={{
         pagination: {
           pageSize: 10,
@@ -467,35 +456,48 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       state={{
         columnVisibility,
         pagination,
-        sorting,
       } as Partial<TableState> as TableState}
       onColumnVisibilityChange={setColumnVisibility}
       onPaginationChange={setPagination}
-      onSortingChange={setSorting}
-      onColumnFiltersChange={setFilters}
-      enableMultiSort={true}
       pageCount={stableTotalCount != null ? Math.ceil(stableTotalCount / pagination.pageSize) : -1}
+
+      manualPagination={true}
+      manualSorting={true}
+      manualFiltering={true}
+
+      enableColumnFilters={false}
+      enableSorting={false}
+      enableColumnPinning={false}
     >
       <div className="flex flex-col h-full gap-4">
-        <div className="flex flex-col sm:flex-row justify-between w-full gap-4">
-          <div className="flex-row-2 items-center">
-            <SearchBar
-              placeholder={translation('search')}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onSearch={() => null}
-              containerProps={{ className: 'max-w-80' }}
-            />
-            <FilterList
-              value={filters as IdentifierFilterValue[]}
-              onValueChange={value => {
-                setFilters(value)
-              }}
-              availableItems={availableFilters}
-            />
-            <TableColumnSwitcher />
-          </div>
-          <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto sm:ml-auto">
+        <div className="flex-col-2 w-full">
+          <div className="flex-row-8 justify-between w-full">
+            <div className="flex flex-wrap gap-2 items-center">
+              <SearchBar
+                placeholder={translation('search')}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onSearch={() => null}
+                containerProps={{ className: 'max-w-80' }}
+              />
+              <TableColumnSwitcher />
+              <Button
+                onClick={() => setIsShowFilters(!isShowFilters)}
+                color="neutral"
+                className="font-semibold element"
+              >
+                {translation('filter') + ` (${filters.length})`}
+                <ExpansionIcon isExpanded={isShowFilters} className="size-5"/>
+              </Button>
+              <Button
+                onClick={() => setIsShowSorting(!isShowSorting)}
+                color="neutral"
+                className="font-semibold"
+              >
+                {translation('sorting') + ` (${sorting.length})`}
+                <ExpansionIcon isExpanded={isShowSorting} className="size-5"/>
+              </Button>
+            </div>
             <IconButton
               tooltip={translation('addPatient')}
               onClick={() => {
@@ -507,6 +509,20 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
               <PlusIcon />
             </IconButton>
           </div>
+          {isShowFilters && (
+            <FilterList
+              value={filters as IdentifierFilterValue[]}
+              onValueChange={setFilters}
+              availableItems={availableFilters}
+            />
+          )}
+          {isShowSorting && (
+            <SortingList
+              sorting={sorting}
+              onSortingChange={setSorting}
+              availableItems={availableFilters}
+            />
+          )}
         </div>
         <div className="relative print:static">
           {patientsLoading && (

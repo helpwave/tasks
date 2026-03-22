@@ -107,6 +107,7 @@ export type TasksTranslationEntries = {
   'myOpenTasks': string,
   'myTasks': string,
   'name': string,
+  'nFilter': (values: { count: number }) => string,
   'no': string,
   'noClosedTasks': string,
   'noLocationsFound': string,
@@ -117,6 +118,7 @@ export type TasksTranslationEntries = {
   'notAssigned': string,
   'notifications': string,
   'nPatient': (values: { count: number }) => string,
+  'nSorting': (values: { count: number }) => string,
   'nTask': (values: { count: number }) => string,
   'nYears': (values: { years: number }) => string,
   'occupancy': string,
@@ -341,6 +343,12 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'myOpenTasks': `Meine offenen Aufgaben`,
     'myTasks': `Meine Aufgaben`,
     'name': `Name`,
+    'nFilter': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} Filter`,
+        'other': `${count} Filter`,
+      })
+    },
     'no': `Nein`,
     'noClosedTasks': `Keine erledigten Aufgaben`,
     'noLocationsFound': `Keine Standorte gefunden`,
@@ -354,6 +362,12 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
       return TranslationGen.resolvePlural(count, {
         '=1': `${count} Patient`,
         'other': `${count} Patienten`,
+      })
+    },
+    'nSorting': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} Sortierung`,
+        'other': `${count} Sortierungen`,
       })
     },
     'nTask': ({ count }): string => {
@@ -643,6 +657,12 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'myOpenTasks': `My Open Tasks`,
     'myTasks': `My tasks`,
     'name': `Name`,
+    'nFilter': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} filter`,
+        'other': `${count} filters`,
+      })
+    },
     'no': `No`,
     'noClosedTasks': `No closed tasks`,
     'noLocationsFound': `No locations found`,
@@ -656,6 +676,12 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
       return TranslationGen.resolvePlural(count, {
         '=1': `${count} Patient`,
         'other': `${count} Patients`,
+      })
+    },
+    'nSorting': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} sort`,
+        'other': `${count} sorts`,
       })
     },
     'nTask': ({ count }): string => {
@@ -945,6 +971,12 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'myOpenTasks': `Mis tareas abiertas`,
     'myTasks': `Mis tareas`,
     'name': `Nombre`,
+    'nFilter': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} filtro`,
+        'other': `${count} filtros`,
+      })
+    },
     'no': `No`,
     'noClosedTasks': `No hay tareas cerradas`,
     'noLocationsFound': `No se encontraron ubicaciones`,
@@ -958,6 +990,12 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
       return TranslationGen.resolvePlural(count, {
         '=1': `${count} Paciente`,
         'other': `${count} Pacientes`,
+      })
+    },
+    'nSorting': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} ordenación`,
+        'other': `${count} ordenaciones`,
       })
     },
     'nTask': ({ count }): string => {
@@ -1246,6 +1284,12 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'myOpenTasks': `Mes tâches ouvertes`,
     'myTasks': `Mes tâches`,
     'name': `Nom`,
+    'nFilter': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} filtre`,
+        'other': `${count} filtres`,
+      })
+    },
     'no': `Non`,
     'noClosedTasks': `Aucune tâche terminée`,
     'noLocationsFound': `Aucun emplacement trouvé`,
@@ -1259,6 +1303,12 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
       return TranslationGen.resolvePlural(count, {
         '=1': `${count} Patient`,
         'other': `${count} Patients`,
+      })
+    },
+    'nSorting': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} tri`,
+        'other': `${count} tris`,
       })
     },
     'nTask': ({ count }): string => {
@@ -1547,6 +1597,12 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'myOpenTasks': `Mijn open taken`,
     'myTasks': `Mijn taken`,
     'name': `Naam`,
+    'nFilter': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} filter`,
+        'other': `${count} filters`,
+      })
+    },
     'no': `Nee`,
     'noClosedTasks': `Geen afgeronde taken`,
     'noLocationsFound': `Geen locaties gevonden`,
@@ -1560,6 +1616,12 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
       return TranslationGen.resolvePlural(count, {
         '=1': `${count} Patiënt`,
         'other': `${count} Patiënten`,
+      })
+    },
+    'nSorting': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} sortering`,
+        'other': `${count} sorteringen`,
       })
     },
     'nTask': ({ count }): string => {
@@ -1851,6 +1913,12 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'myOpenTasks': `Minhas tarefas abertas`,
     'myTasks': `Minhas tarefas`,
     'name': `Nome`,
+    'nFilter': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} filtro`,
+        'other': `${count} filtros`,
+      })
+    },
     'no': `Não`,
     'noClosedTasks': `Nenhuma tarefa concluída`,
     'noLocationsFound': `Nenhuma localização encontrada`,
@@ -1864,6 +1932,12 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
       return TranslationGen.resolvePlural(count, {
         '=1': `${count} Paciente`,
         'other': `${count} Pacientes`,
+      })
+    },
+    'nSorting': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} ordenação`,
+        'other': `${count} ordenações`,
       })
     },
     'nTask': ({ count }): string => {

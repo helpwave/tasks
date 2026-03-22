@@ -128,6 +128,22 @@
   "noPatient": "No Patient",
   "noResultsFound": "No results found",
   "notAssigned": "Not assigned",
+  "nFilter": "{count, plural, =1{# filter} other{# filters}}",
+  "@nFilter": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "nSorting": "{count, plural, =1{# sort} other{# sorts}}",
+  "@nSorting": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
   "nPatient": "{count, plural, =1{# Patient} other{# Patients}}",
   "@nPatient": {
     "placeholders": {
