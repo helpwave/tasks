@@ -31,12 +31,14 @@ import {
   Users,
   Menu as MenuIcon,
   X,
-  MessageSquare
+  MessageSquare,
+  LayoutList
 } from 'lucide-react'
 import { TasksLogo } from '@/components/TasksLogo'
 import { useRouter } from 'next/router'
 import { useTasksContext } from '@/hooks/useTasksContext'
-import { useLocations } from '@/data'
+import { useLocations, useMySavedViews } from '@/data'
+import type { MySavedViewsQuery } from '@/api/gql/generated'
 import { hashString } from '@/utils/hash'
 import { useSwipeGesture } from '@/hooks/useSwipeGesture'
 import { LocationSelectionDialog } from '@/components/locations/LocationSelectionDialog'
@@ -495,6 +497,9 @@ export const Sidebar = ({ isOpen, onClose, ...props }: SidebarProps) => {
   const translation = useTasksTranslation()
   const locationRoute = '/location'
   const context = useTasksContext()
+  const { data: savedViewsData } = useMySavedViews()
+  const savedViews = savedViewsData?.mySavedViews ?? []
+  const [isSavedViewsOpen, setIsSavedViewsOpen] = useState(true)
 
   return (
     <>
@@ -549,6 +554,30 @@ export const Sidebar = ({ isOpen, onClose, ...props }: SidebarProps) => {
             <span className="flex grow">{translation('patients')}</span>
             {context?.totalPatientsCount !== undefined && (<span className="text-description">{context.totalPatientsCount}</span>)}
           </SidebarLink>
+          {savedViews.length > 0 && (
+            <ExpandableRoot
+              className="shadow-none"
+              isExpanded={isSavedViewsOpen}
+              onExpandedChange={setIsSavedViewsOpen}
+            >
+              <ExpandableHeader className="px-2.5 py-1.5">
+                <div className="flex-row-2">
+                  <LayoutList className="size-5" />
+                  {translation('savedViews')}
+                </div>
+              </ExpandableHeader>
+              <ExpandableContent className="!max-h-none !h-auto !overflow-visible gap-y-0 pl-4 p-0">
+                {savedViews.map((v: MySavedViewsQuery['mySavedViews'][number]) => (
+                  <SidebarLink key={v.id} href={`/view/${v.id}`} onClick={onClose}>
+                    {v.name}
+                  </SidebarLink>
+                ))}
+                <SidebarLink href="/settings/views" onClick={onClose} className="typography-body-sm text-description">
+                  {translation('viewSettings')}
+                </SidebarLink>
+              </ExpandableContent>
+            </ExpandableRoot>
+          )}
           {(context?.teams?.length ?? 0) > 0 && (
             <ExpandableRoot
               className="shadow-none"

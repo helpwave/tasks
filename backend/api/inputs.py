@@ -286,3 +286,34 @@ class FullTextSearchInput:
     search_columns: list[str] | None = None
     include_properties: bool = False
     property_definition_ids: list[str] | None = None
+
+
+@strawberry.enum
+class SavedViewEntityType(Enum):
+    TASK = "task"
+    PATIENT = "patient"
+
+
+@strawberry.enum
+class SavedViewVisibility(Enum):
+    PRIVATE = "private"
+    LINK_SHARED = "link_shared"
+
+
+@strawberry.input
+class CreateSavedViewInput:
+    name: str
+    base_entity_type: SavedViewEntityType
+    filter_definition: str
+    sort_definition: str
+    parameters: str
+    visibility: SavedViewVisibility = SavedViewVisibility.PRIVATE
+
+
+@strawberry.input
+class UpdateSavedViewInput:
+    name: str | None = None
+    filter_definition: str | None = None
+    sort_definition: str | None = None
+    parameters: str | None = None
+    visibility: SavedViewVisibility | None = None

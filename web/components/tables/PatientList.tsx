@@ -1,6 +1,6 @@
 import { useMemo, useState, forwardRef, useImperativeHandle, useEffect, useCallback, useRef } from 'react'
 import type { IdentifierFilterValue, FilterListItem, FilterListPopUpBuilderProps } from '@helpwave/hightide'
-import { Chip, FillerCell, HelpwaveLogo, LoadingContainer, SearchBar, ProgressIndicator, Tooltip, Drawer, TableProvider, TableDisplay, TableColumnSwitcher, TablePagination, IconButton, useLocale, FilterList, SortingList, Button, ExpansionIcon, Visibility, Dialog, Input } from '@helpwave/hightide'
+import { Chip, FillerCell, HelpwaveLogo, LoadingContainer, SearchBar, ProgressIndicator, Tooltip, Drawer, TableProvider, TableDisplay, TableColumnSwitcher, TablePagination, IconButton, useLocale, FilterList, SortingList, Button, ExpansionIcon, Visibility } from '@helpwave/hightide'
 import { PlusIcon } from 'lucide-react'
 import type { LocationType } from '@/api/gql/generated'
 import { Sex, PatientState, type GetPatientsQuery, type TaskType, PropertyEntity, type FullTextSearchInput, FieldType } from '@/api/gql/generated'
@@ -12,13 +12,17 @@ import { PatientStateChip } from '@/components/patients/PatientStateChip'
 import { getLocationNodesByKind, type LocationKindColumn } from '@/utils/location'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { useTasksContext } from '@/hooks/useTasksContext'
-import type { ColumnDef, Row, SortingState, TableState } from '@tanstack/table-core'
+import type { ColumnDef, ColumnFiltersState, Row, SortingState, TableState } from '@tanstack/table-core'
 import { getPropertyColumnsForEntity } from '@/utils/propertyColumn'
 import { useStorageSyncedTableState } from '@/hooks/useTableState'
 import { usePropertyColumnVisibility } from '@/hooks/usePropertyColumnVisibility'
 import { columnFiltersToFilterInput, paginationStateToPaginationInput, sortingStateToSortInput } from '@/utils/tableStateToApi'
 import { getPropertyFilterFn as getPropertyDatatype } from '@/utils/propertyFilterMapping'
 import { UserSelectFilterPopUp } from './UserSelectFilterPopUp'
+import { SaveViewDialog } from '@/components/views/SaveViewDialog'
+import { SavedViewEntityType } from '@/api/gql/generated'
+import { serializeColumnFiltersForView, serializeSortingForView, stringifyViewParameters } from '@/utils/viewDefinition'
+import type { ViewParameters } from '@/utils/viewDefinition'
 
 export type PatientViewModel = {
   id: string,
@@ -55,10 +59,17 @@ type PatientListProps = {
   acceptedStates?: PatientState[],
   rootLocationIds?: string[],
   locationId?: string,
-
+  /** Isolated storage namespace (e.g. per saved view). */
+  storageKeyPrefix?: string,
+  viewDefaultFilters?: ColumnFiltersState,
+  viewDefaultSorting?: SortingState,
+  viewDefaultSearchQuery?: string,
+  readOnly?: boolean,
+  hideSaveView?: boolean,
+  onSavedViewCreated?: (id: string) => void,
 }
 
-export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initialPatientId, onInitialPatientOpened, acceptedStates: _acceptedStates, rootLocationIds, locationId }, ref) => {
+export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initialPatientId, onInitialPatientOpened, acceptedStates: _acceptedStates, rootLocationIds, locationId, storageKeyPrefix, viewDefaultFilters, viewDefaultSorting, viewDefaultSearchQuery, readOnly: _readOnly, hideSaveView, onSavedViewCreated }, ref) => {
   const translation = useTasksTranslation()
   const { locale } = useLocale()
   const { selectedRootLocationIds } = useTasksContext()
@@ -67,7 +78,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
   const effectiveRootLocationIds = rootLocationIds ?? selectedRootLocationIds
   const [isPanelOpen, setIsPanelOpen] = useState(false)
   const [selectedPatient, setSelectedPatient] = useState<PatientViewModel | undefined>(undefined)
-  const [searchQuery, setSearchQuery] = useState('')
+  const [searchQuery, setSearchQuery] = useState(viewDefaultSearchQuery ?? '')
   const [openedPatientId, setOpenedPatientId] = useState<string | null>(null)
   const [isShowFilters, setIsShowFilters] = useState(false)
   const [isShowSorting, setIsShowSorting] = useState(false)
@@ -81,18 +92,26 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
     setFilters,
     columnVisibility,
     setColumnVisibility,
-  } = useStorageSyncedTableState('patient-list')
+  } = useStorageSyncedTableState(storageKeyPrefix ?? 'patient-list', {
+    defaultFilters: viewDefaultFilters,
+    defaultSorting: viewDefaultSorting,
+  })
 
-  // TODO get from the fast access id
-  const initialFilters: IdentifierFilterValue[] = []
-  const initialSorting: SortingState = []
+  const baselineFilters = useMemo(() => viewDefaultFilters ?? [], [viewDefaultFilters])
+  const baselineSorting = useMemo(() => viewDefaultSorting ?? [], [viewDefaultSorting])
+  const baselineSearch = useMemo(() => viewDefaultSearchQuery ?? '', [viewDefaultSearchQuery])
 
-  // TODO make the comparison more robust
-  const filtersChanged = useMemo(() => filters !== initialFilters, [filters, initialFilters])
-  const sortingChanged = useMemo(() => sorting !== initialSorting, [sorting, initialSorting])
+  const filtersChanged = useMemo(
+    () => serializeColumnFiltersForView(filters as ColumnFiltersState) !== serializeColumnFiltersForView(baselineFilters),
+    [filters, baselineFilters]
+  )
+  const sortingChanged = useMemo(
+    () => serializeSortingForView(sorting) !== serializeSortingForView(baselineSorting),
+    [sorting, baselineSorting]
+  )
+  const searchChanged = useMemo(() => searchQuery !== baselineSearch, [searchQuery, baselineSearch])
 
-  const [isShowingFastAccessDialog, setIsShowingFastAccessDialog] = useState(false)
-  const [fastAccessName, setFastAccessName] = useState('')
+  const [isSaveViewDialogOpen, setIsSaveViewDialogOpen] = useState(false)
 
   usePropertyColumnVisibility(
     propertyDefinitionsData,
@@ -508,9 +527,9 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
                 {translation('sorting') + ` (${sorting.length})`}
                 <ExpansionIcon isExpanded={isShowSorting} className="size-5"/>
               </Button>
-              <Visibility isVisible={filtersChanged || sortingChanged}>
-                <Button color="primary" onClick={() =>setIsShowingFastAccessDialog(true)}>
-                  {translation('addFastAccess')}
+              <Visibility isVisible={!hideSaveView && (filtersChanged || sortingChanged || searchChanged)}>
+                <Button color="primary" onClick={() => setIsSaveViewDialogOpen(true)}>
+                  {translation('saveView')}
                 </Button>
               </Visibility>
               {/* TODO Offer undo in case this is already a fast access and add a update button */}
@@ -569,46 +588,19 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
             onSuccess={refetch}
           />
         </Drawer>
-        <Dialog
-          isOpen={isShowingFastAccessDialog}
-          onClose={() => setIsShowingFastAccessDialog(false)}
-          titleElement={translation('addFastAccess')}
-          description={translation('addFastAccessDescription')}
-        >
-          <div className="flex-col-4">
-            <div className="flex flex-col gap-1">
-              <label>{translation('name')}</label>
-              <Input
-                value={fastAccessName}
-                onChange={(e) => setFastAccessName(e.target.value)}
-              />
-            </div>
-            <div className="flex-row-2 justify-end">
-              <Button
-                color="neutral"
-                onClick={() => {
-                  setIsShowingFastAccessDialog(false)
-                  setFastAccessName('')
-                }}
-              >
-                {translation('cancel')}
-              </Button>
-              <Button
-                disabled={fastAccessName.length < 4}
-                color="primary"
-                onClick={() => {
-                  // TODO Call function for adding fast access here
-                  // Use name, sorting, filters and object type here
-
-                  // Set a value that the request is in progress
-                  // show a loading indicator
-                }}
-              >
-                {translation('add')}
-              </Button>
-            </div>
-          </div>
-        </Dialog>
+        <SaveViewDialog
+          isOpen={isSaveViewDialogOpen}
+          onClose={() => setIsSaveViewDialogOpen(false)}
+          baseEntityType={SavedViewEntityType.Patient}
+          filterDefinition={serializeColumnFiltersForView(filters as ColumnFiltersState)}
+          sortDefinition={serializeSortingForView(sorting)}
+          parameters={stringifyViewParameters({
+            rootLocationIds: effectiveRootLocationIds ?? undefined,
+            locationId: locationId ?? undefined,
+            searchQuery: searchQuery || undefined,
+          } satisfies ViewParameters)}
+          onCreated={onSavedViewCreated}
+        />
       </div>
     </TableProvider>
   )

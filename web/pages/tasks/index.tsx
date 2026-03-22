@@ -5,12 +5,17 @@ import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
 import type { TaskViewModel } from '@/components/tables/TaskList'
 import { TaskList } from '@/components/tables/TaskList'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useRouter } from 'next/router'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { useTasksPaginated } from '@/data'
 import { useStorageSyncedTableState } from '@/hooks/useTableState'
 import { columnFiltersToFilterInput, paginationStateToPaginationInput, sortingStateToSortInput } from '@/utils/tableStateToApi'
+import { Button, Visibility } from '@helpwave/hightide'
+import { SaveViewDialog } from '@/components/views/SaveViewDialog'
+import { SavedViewEntityType } from '@/api/gql/generated'
+import { serializeColumnFiltersForView, stringifyViewParameters } from '@/utils/viewDefinition'
+import type { ColumnFiltersState } from '@tanstack/react-table'
 
 const TasksPage: NextPage = () => {
   const translation = useTasksTranslation()
@@ -31,6 +36,22 @@ const TasksPage: NextPage = () => {
       { id: 'dueDate', desc: false },
     ], []),
   })
+
+  const baselineSort = useMemo(() => [
+    { id: 'done', desc: false },
+    { id: 'dueDate', desc: false },
+  ], [])
+  const baselineFilters = useMemo((): ColumnFiltersState => [], [])
+  const filtersChanged = useMemo(
+    () => serializeColumnFiltersForView(filters as ColumnFiltersState) !== serializeColumnFiltersForView(baselineFilters),
+    [filters, baselineFilters]
+  )
+  const sortingChanged = useMemo(
+    () => JSON.stringify(sorting) !== JSON.stringify(baselineSort),
+    [sorting, baselineSort]
+  )
+
+  const [isSaveViewOpen, setIsSaveViewOpen] = useState(false)
 
   const apiFiltering = useMemo(() => columnFiltersToFilterInput(filters, 'task'), [filters])
   const apiSorting = useMemo(() => sortingStateToSortInput(sorting, 'task'), [sorting])
@@ -80,6 +101,25 @@ const TasksPage: NextPage = () => {
         titleElement={translation('myTasks')}
         description={myTasksCount !== undefined ? translation('nTask', { count: myTasksCount }) : undefined}
       >
+        <Visibility isVisible={filtersChanged || sortingChanged}>
+          <div className="flex justify-end mb-2">
+            <Button color="primary" onClick={() => setIsSaveViewOpen(true)}>
+              {translation('saveView')}
+            </Button>
+          </div>
+        </Visibility>
+        <SaveViewDialog
+          isOpen={isSaveViewOpen}
+          onClose={() => setIsSaveViewOpen(false)}
+          baseEntityType={SavedViewEntityType.Task}
+          filterDefinition={serializeColumnFiltersForView(filters as ColumnFiltersState)}
+          sortDefinition={JSON.stringify(sorting)}
+          parameters={stringifyViewParameters({
+            rootLocationIds: selectedRootLocationIds ?? undefined,
+            assigneeId: user?.id,
+          })}
+          onCreated={(id) => router.push(`/view/${id}`)}
+        />
         <TaskList
           tasks={tasks}
           onRefetch={refetch}
