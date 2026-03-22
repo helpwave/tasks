@@ -3,6 +3,8 @@
   "account": "Cuenta",
   "active": "Activo",
   "add": "Añadir",
+  "addFastAccess": "Añadir acceso rápido",
+  "addFastAccessDescription": "Añada un nombre para el nuevo acceso rápido.",
   "addPatient": "Añadir paciente",
   "addProperty": "Añadir propiedad",
   "addTask": "Añadir tarea",

@@ -3,6 +3,8 @@
   "account": "Account",
   "active": "Active",
   "add": "Add",
+  "addFastAccess": "Add Fast Access",
+  "addFastAccessDescription": "Add a name for the new fast access.",
   "addPatient": "Add Patient",
   "addProperty": "Add Property",
   "addTask": "Add Task",

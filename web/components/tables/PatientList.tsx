@@ -1,6 +1,6 @@
 import { useMemo, useState, forwardRef, useImperativeHandle, useEffect, useCallback, useRef } from 'react'
 import type { IdentifierFilterValue, FilterListItem, FilterListPopUpBuilderProps } from '@helpwave/hightide'
-import { Chip, FillerCell, HelpwaveLogo, LoadingContainer, SearchBar, ProgressIndicator, Tooltip, Drawer, TableProvider, TableDisplay, TableColumnSwitcher, TablePagination, IconButton, useLocale, FilterList, SortingList, Button, ExpansionIcon } from '@helpwave/hightide'
+import { Chip, FillerCell, HelpwaveLogo, LoadingContainer, SearchBar, ProgressIndicator, Tooltip, Drawer, TableProvider, TableDisplay, TableColumnSwitcher, TablePagination, IconButton, useLocale, FilterList, SortingList, Button, ExpansionIcon, Visibility, Dialog, Input } from '@helpwave/hightide'
 import { PlusIcon } from 'lucide-react'
 import type { LocationType } from '@/api/gql/generated'
 import { Sex, PatientState, type GetPatientsQuery, type TaskType, PropertyEntity, type FullTextSearchInput, FieldType } from '@/api/gql/generated'
@@ -12,7 +12,7 @@ import { PatientStateChip } from '@/components/patients/PatientStateChip'
 import { getLocationNodesByKind, type LocationKindColumn } from '@/utils/location'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { useTasksContext } from '@/hooks/useTasksContext'
-import type { ColumnDef, Row, TableState } from '@tanstack/table-core'
+import type { ColumnDef, Row, SortingState, TableState } from '@tanstack/table-core'
 import { getPropertyColumnsForEntity } from '@/utils/propertyColumn'
 import { useStorageSyncedTableState } from '@/hooks/useTableState'
 import { usePropertyColumnVisibility } from '@/hooks/usePropertyColumnVisibility'
@@ -82,6 +82,17 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
     columnVisibility,
     setColumnVisibility,
   } = useStorageSyncedTableState('patient-list')
+
+  // TODO get from the fast access id
+  const initialFilters: IdentifierFilterValue[] = []
+  const initialSorting: SortingState = []
+
+  // TODO make the comparison more robust
+  const filtersChanged = useMemo(() => filters !== initialFilters, [filters, initialFilters])
+  const sortingChanged = useMemo(() => sorting !== initialSorting, [sorting, initialSorting])
+
+  const [isShowingFastAccessDialog, setIsShowingFastAccessDialog] = useState(false)
+  const [fastAccessName, setFastAccessName] = useState('')
 
   usePropertyColumnVisibility(
     propertyDefinitionsData,
@@ -497,6 +508,12 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
                 {translation('sorting') + ` (${sorting.length})`}
                 <ExpansionIcon isExpanded={isShowSorting} className="size-5"/>
               </Button>
+              <Visibility isVisible={filtersChanged || sortingChanged}>
+                <Button color="primary" onClick={() =>setIsShowingFastAccessDialog(true)}>
+                  {translation('addFastAccess')}
+                </Button>
+              </Visibility>
+              {/* TODO Offer undo in case this is already a fast access and add a update button */}
             </div>
             <IconButton
               tooltip={translation('addPatient')}
@@ -552,6 +569,46 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
             onSuccess={refetch}
           />
         </Drawer>
+        <Dialog
+          isOpen={isShowingFastAccessDialog}
+          onClose={() => setIsShowingFastAccessDialog(false)}
+          titleElement={translation('addFastAccess')}
+          description={translation('addFastAccessDescription')}
+        >
+          <div className="flex-col-4">
+            <div className="flex flex-col gap-1">
+              <label>{translation('name')}</label>
+              <Input
+                value={fastAccessName}
+                onChange={(e) => setFastAccessName(e.target.value)}
+              />
+            </div>
+            <div className="flex-row-2 justify-end">
+              <Button
+                color="neutral"
+                onClick={() => {
+                  setIsShowingFastAccessDialog(false)
+                  setFastAccessName('')
+                }}
+              >
+                {translation('cancel')}
+              </Button>
+              <Button
+                disabled={fastAccessName.length < 4}
+                color="primary"
+                onClick={() => {
+                  // TODO Call function for adding fast access here
+                  // Use name, sorting, filters and object type here
+
+                  // Set a value that the request is in progress
+                  // show a loading indicator
+                }}
+              >
+                {translation('add')}
+              </Button>
+            </div>
+          </div>
+        </Dialog>
       </div>
     </TableProvider>
   )

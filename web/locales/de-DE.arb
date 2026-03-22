@@ -3,6 +3,8 @@
   "account": "Konto",
   "active": "Aktiv",
   "add": "Hinzufügen",
+  "addFastAccess": "Schnellzugriff erstellen",
+  "addFastAccessDescription": "Geben Sie dem neuen Schnellzugriff einen Namen.",
   "addPatient": "Patient hinzufügen",
   "addProperty": "Eigenschaften hinzufügen",
   "addTask": "Aufgabe hinzufügen",

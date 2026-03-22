@@ -3,6 +3,8 @@
   "account": "Account",
   "active": "Actief",
   "add": "Toevoegen",
+  "addFastAccess": "Snelle toegang toevoegen",
+  "addFastAccessDescription": "Voer een naam in voor de nieuwe snelle toegang.",
   "addPatient": "Patiënt toevoegen",
   "addProperty": "Eigenschap toevoegen",
   "addTask": "Taak toevoegen",
