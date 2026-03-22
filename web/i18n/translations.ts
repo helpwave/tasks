@@ -82,6 +82,7 @@ export type TasksTranslationEntries = {
   'feedback': string,
   'feedbackDescription': string,
   'female': string,
+  'filter': string,
   'filterAll': string,
   'filterUndone': string,
   'firstName': string,
@@ -195,6 +196,7 @@ export type TasksTranslationEntries = {
   'shiftHandover': string,
   'showAllTasks': string,
   'showTeamTasks': string,
+  'sorting': string,
   'sPropertySubjectType': (values: { subject: string }) => string,
   'sPropertyType': (values: { type: string }) => string,
   'stagingModalDisclaimerMarkdown': string,
@@ -326,6 +328,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'feedback': `Feedback`,
     'feedbackDescription': `Teilen Sie Ihr Feedback, melden Sie Fehler oder schlagen Sie Verbesserungen vor.`,
     'female': `Weiblich`,
+    'filter': `Filter`,
     'filterAll': `Alle`,
     'filterUndone': `Offen`,
     'firstName': `Vorname`,
@@ -501,6 +504,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'shiftHandover': `Schichtübergabe`,
     'showAllTasks': `Alle Aufgaben anzeigen`,
     'showTeamTasks': `Team-Aufgaben anzeigen`,
+    'sorting': `Sortierung`,
     'sPropertySubjectType': ({ subject }): string => {
       return TranslationGen.resolveSelect(subject, {
         'patient': `Patient`,
@@ -657,6 +661,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'feedback': `Feedback`,
     'feedbackDescription': `Share your feedback, report bugs, or suggest improvements.`,
     'female': `Female`,
+    'filter': `Filter`,
     'filterAll': `All`,
     'filterUndone': `Undone`,
     'firstName': `First Name`,
@@ -832,6 +837,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'shiftHandover': `Shift Handover`,
     'showAllTasks': `Show All Tasks`,
     'showTeamTasks': `Show Team Tasks`,
+    'sorting': `Sorting`,
     'sPropertySubjectType': ({ subject }): string => {
       return TranslationGen.resolveSelect(subject, {
         'patient': `Patient`,
@@ -988,6 +994,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'feedback': `Comentarios`,
     'feedbackDescription': `Comparta sus comentarios, reporte errores o sugiera mejoras.`,
     'female': `Femenino`,
+    'filter': `Filtro`,
     'filterAll': `Todos`,
     'filterUndone': `Pendientes`,
     'firstName': `Nombre`,
@@ -1162,6 +1169,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'shiftHandover': `Traspaso de turno`,
     'showAllTasks': `Mostrar todas las tareas`,
     'showTeamTasks': `Mostrar tareas del equipo`,
+    'sorting': `Ordenación`,
     'sPropertySubjectType': ({ subject }): string => {
       return TranslationGen.resolveSelect(subject, {
         'patient': `Paciente`,
@@ -1318,6 +1326,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'feedback': `Commentaires`,
     'feedbackDescription': `Partagez vos commentaires, signalez des bugs ou suggérez des améliorations.`,
     'female': `Féminin`,
+    'filter': `Filtre`,
     'filterAll': `Tous`,
     'filterUndone': `En attente`,
     'firstName': `Prénom`,
@@ -1492,6 +1501,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'shiftHandover': `Passation`,
     'showAllTasks': `Afficher toutes les tâches`,
     'showTeamTasks': `Afficher les tâches d'équipe`,
+    'sorting': `Tri`,
     'sPropertySubjectType': ({ subject }): string => {
       return TranslationGen.resolveSelect(subject, {
         'patient': `Patient`,
@@ -1648,6 +1658,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'feedback': `Feedback`,
     'feedbackDescription': `Deel uw feedback, meld bugs of stel verbeteringen voor.`,
     'female': `Vrouw`,
+    'filter': `Filter`,
     'filterAll': `Alle`,
     'filterUndone': `Open`,
     'firstName': `Voornaam`,
@@ -1825,6 +1836,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'shiftHandover': `Dienstwissel`,
     'showAllTasks': `Alle taken tonen`,
     'showTeamTasks': `Teamtaken tonen`,
+    'sorting': `Sorteren`,
     'sPropertySubjectType': ({ subject }): string => {
       return TranslationGen.resolveSelect(subject, {
         'patient': `Patiënt`,
@@ -1981,6 +1993,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'feedback': `Feedback`,
     'feedbackDescription': `Compartilhe seu feedback, reporte bugs ou sugira melhorias.`,
     'female': `Feminino`,
+    'filter': `Filtro`,
     'filterAll': `Todos`,
     'filterUndone': `Pendentes`,
     'firstName': `Nome`,
@@ -2155,6 +2168,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'shiftHandover': `Passagem de turno`,
     'showAllTasks': `Mostrar todas as tarefas`,
     'showTeamTasks': `Mostrar tarefas da equipe`,
+    'sorting': `Ordenação`,
     'sPropertySubjectType': ({ subject }): string => {
       return TranslationGen.resolveSelect(subject, {
         'patient': `Paciente`,

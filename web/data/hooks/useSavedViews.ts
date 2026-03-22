@@ -8,11 +8,19 @@ import {
 } from '@/api/gql/generated'
 import { useQueryWhenReady } from './queryHelpers'
 
-export function useMySavedViews(options?: { skip?: boolean }) {
+type MySavedViewsHookOptions = {
+  skip?: boolean,
+  fetchPolicy?: 'cache-first' | 'cache-and-network' | 'network-only',
+}
+
+export function useMySavedViews(options?: MySavedViewsHookOptions) {
   return useQueryWhenReady<MySavedViewsQuery, MySavedViewsQueryVariables>(
     MySavedViewsDocument,
     {},
-    options
+    {
+      skip: options?.skip,
+      fetchPolicy: options?.fetchPolicy ?? 'cache-and-network',
+    }
   )
 }
 

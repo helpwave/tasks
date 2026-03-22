@@ -554,30 +554,28 @@ export const Sidebar = ({ isOpen, onClose, ...props }: SidebarProps) => {
             <span className="flex grow">{translation('patients')}</span>
             {context?.totalPatientsCount !== undefined && (<span className="text-description">{context.totalPatientsCount}</span>)}
           </SidebarLink>
-          {savedViews.length > 0 && (
-            <ExpandableRoot
-              className="shadow-none"
-              isExpanded={isSavedViewsOpen}
-              onExpandedChange={setIsSavedViewsOpen}
-            >
-              <ExpandableHeader className="px-2.5 py-1.5">
-                <div className="flex-row-2">
-                  <LayoutList className="size-5" />
-                  {translation('savedViews')}
-                </div>
-              </ExpandableHeader>
-              <ExpandableContent className="!max-h-none !h-auto !overflow-visible gap-y-0 pl-4 p-0">
-                {savedViews.map((v: MySavedViewsQuery['mySavedViews'][number]) => (
-                  <SidebarLink key={v.id} href={`/view/${v.id}`} onClick={onClose}>
-                    {v.name}
-                  </SidebarLink>
-                ))}
-                <SidebarLink href="/settings/views" onClick={onClose} className="typography-body-sm text-description">
-                  {translation('viewSettings')}
+          <ExpandableRoot
+            className="shadow-none"
+            isExpanded={isSavedViewsOpen}
+            onExpandedChange={setIsSavedViewsOpen}
+          >
+            <ExpandableHeader className="px-2.5 py-1.5">
+              <div className="flex-row-2">
+                <LayoutList className="size-5" />
+                {translation('savedViews')}
+              </div>
+            </ExpandableHeader>
+            <ExpandableContent className="!max-h-none !h-auto !overflow-visible gap-y-0 pl-4 p-0">
+              {savedViews.map((v: MySavedViewsQuery['mySavedViews'][number]) => (
+                <SidebarLink key={v.id} href={`/view/${v.id}`} onClick={onClose}>
+                  {v.name}
                 </SidebarLink>
-              </ExpandableContent>
-            </ExpandableRoot>
-          )}
+              ))}
+              <SidebarLink href="/settings/views" onClick={onClose} className="typography-body-sm text-description">
+                {translation('viewSettings')}
+              </SidebarLink>
+            </ExpandableContent>
+          </ExpandableRoot>
           {(context?.teams?.length ?? 0) > 0 && (
             <ExpandableRoot
               className="shadow-none"

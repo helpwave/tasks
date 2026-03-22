@@ -2,7 +2,6 @@ import { useMemo } from 'react'
 import { useQuery } from '@apollo/client/react'
 import type { DocumentNode } from 'graphql'
 import { parse } from 'graphql'
-import { useApolloClientOptional } from '@/providers/ApolloProviderWithData'
 
 const parsedCache = new Map<string, DocumentNode>()
 
@@ -30,9 +29,8 @@ export function useQueryWhenReady<TData, TVariables extends Record<string, unkno
   variables: TVariables,
   options?: { skip?: boolean, fetchPolicy?: 'cache-first' | 'cache-and-network' | 'network-only' }
 ): QueryResult<TData> {
-  const client = useApolloClientOptional()
   const doc = useMemo(() => getParsedDocument(document), [document])
-  const skip = options?.skip ?? !client
+  const skip = options?.skip ?? false
   const result = useQuery<TData, TVariables>(doc, {
     variables,
     skip,

@@ -3,7 +3,6 @@
 import type { NextPage } from 'next'
 import { useCallback, useMemo, useState } from 'react'
 import { useMutation } from '@apollo/client/react'
-import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { Page } from '@/components/layout/Page'
 import titleWrapper from '@/utils/titleWrapper'
@@ -203,11 +202,6 @@ const ViewsSettingsPage: NextPage = () => {
         titleElement={translation('viewSettings')}
         description={translation('viewSettingsDescription')}
       >
-        <div className="mb-4">
-          <Link href="/settings" className="text-primary typography-body-sm hover:underline">
-            ← {translation('settings')}
-          </Link>
-        </div>
         {loading ? (
           <LoadingContainer className="w-full min-h-48" />
         ) : (
