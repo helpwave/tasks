@@ -294,7 +294,9 @@ type QueryableField {
   valueType: QueryableValueType!
   allowedOperators: [QueryOperator!]!
   sortable: Boolean!
+  sortDirections: [SortDirection!]!
   searchable: Boolean!
+  filterable: Boolean!
   relation: QueryableRelationMeta
   choice: QueryableChoiceMeta
   propertyDefinitionId: String

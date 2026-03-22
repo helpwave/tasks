@@ -6,7 +6,9 @@ query QueryableFields($entity: String!) {
     valueType
     allowedOperators
     sortable
+    sortDirections
     searchable
+    filterable
     propertyDefinitionId
     relation {
       targetEntity

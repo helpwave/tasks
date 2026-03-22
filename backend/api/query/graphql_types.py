@@ -1,11 +1,16 @@
 import strawberry
 
+from api.inputs import SortDirection
 from api.query.enums import (
     QueryOperator,
     QueryableFieldKind,
     QueryableValueType,
     ReferenceFilterMode,
 )
+
+
+def sort_directions_for(sortable: bool) -> list[SortDirection]:
+    return [SortDirection.ASC, SortDirection.DESC] if sortable else []
 
 
 @strawberry.type
@@ -30,7 +35,12 @@ class QueryableField:
     value_type: QueryableValueType
     allowed_operators: list[QueryOperator]
     sortable: bool
+    sort_directions: list[SortDirection]
     searchable: bool
     relation: QueryableRelationMeta | None = None
     choice: QueryableChoiceMeta | None = None
     property_definition_id: str | None = None
+
+    @strawberry.field
+    def filterable(self) -> bool:
+        return len(self.allowed_operators) > 0

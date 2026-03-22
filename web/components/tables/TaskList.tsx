@@ -24,7 +24,7 @@ import { PriorityUtils } from '@/utils/priority'
 import { getPropertyColumnsForEntity } from '@/utils/propertyColumn'
 import { useStorageSyncedTableState } from '@/hooks/useTableState'
 import { usePropertyColumnVisibility } from '@/hooks/usePropertyColumnVisibility'
-import { queryableFieldsToFilterListItems } from '@/utils/queryableFilterList'
+import { queryableFieldsToFilterListItems, queryableFieldsToSortingListItems } from '@/utils/queryableFilterList'
 
 export type TaskViewModel = {
   id: string,
@@ -345,6 +345,14 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
     ]
   }, [queryableFieldsData?.queryableFields, propertyFieldTypeByDefId, translation, propertyDefinitionsData?.propertyDefinitions])
 
+  const availableSortItems = useMemo(() => {
+    const raw = queryableFieldsData?.queryableFields
+    if (raw?.length) {
+      return queryableFieldsToSortingListItems(raw)
+    }
+    return availableFilters.map(({ id, label, dataType }) => ({ id, label, dataType }))
+  }, [queryableFieldsData?.queryableFields, availableFilters])
+
   const rowLoadingCell = useMemo(() => <LoadingContainer className="w-full min-h-8" />, [])
 
   const columns = useMemo<ColumnDef<TaskViewModel>[]>(() => {
@@ -639,7 +647,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
             <SortingList
               sorting={sorting}
               onSortingChange={setSorting}
-              availableItems={availableFilters}
+              availableItems={availableSortItems}
             />
           )}
         </div>

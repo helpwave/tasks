@@ -18,11 +18,13 @@ function valueKindToDataType(field: QueryableField): DataType {
   return 'text'
 }
 
+export type QueryableSortListItem = Pick<FilterListItem, 'id' | 'label' | 'dataType'>
+
 export function queryableFieldsToFilterListItems(
   fields: QueryableField[],
   propertyFieldTypeByDefId: Map<string, FieldType>
 ): FilterListItem[] {
-  return fields.map((field): FilterListItem => {
+  return fields.filter(field => field.filterable).map((field): FilterListItem => {
     const dataType = valueKindToDataType(field)
     const tags = field.choice
       ? field.choice.optionLabels.map((label, idx) => ({
@@ -45,4 +47,16 @@ export function queryableFieldsToFilterListItems(
         : undefined,
     }
   })
+}
+
+export function queryableFieldsToSortingListItems(
+  fields: QueryableField[]
+): QueryableSortListItem[] {
+  return fields
+    .filter(field => field.sortable && field.sortDirections.length > 0)
+    .map((field): QueryableSortListItem => ({
+      id: field.key,
+      label: field.label,
+      dataType: valueKindToDataType(field),
+    }))
 }

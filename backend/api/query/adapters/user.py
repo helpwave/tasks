@@ -5,7 +5,7 @@ from sqlalchemy import Select, or_
 from api.inputs import SortDirection
 from api.query.enums import QueryOperator, QueryableFieldKind, QueryableValueType
 from api.query.field_ops import apply_ops_to_column
-from api.query.graphql_types import QueryableField
+from api.query.graphql_types import QueryableField, sort_directions_for
 from api.query.inputs import QueryFilterClauseInput, QuerySearchInput, QuerySortClauseInput
 from api.query.sql_expr import user_display_label_expr
 from database import models
@@ -121,6 +121,7 @@ def build_user_queryable_fields_static() -> list[QueryableField]:
             value_type=QueryableValueType.STRING,
             allowed_operators=str_ops,
             sortable=True,
+            sort_directions=sort_directions_for(True),
             searchable=True,
         ),
         QueryableField(
@@ -130,6 +131,7 @@ def build_user_queryable_fields_static() -> list[QueryableField]:
             value_type=QueryableValueType.STRING,
             allowed_operators=str_ops,
             sortable=True,
+            sort_directions=sort_directions_for(True),
             searchable=True,
         ),
         QueryableField(
@@ -139,6 +141,7 @@ def build_user_queryable_fields_static() -> list[QueryableField]:
             value_type=QueryableValueType.STRING,
             allowed_operators=str_ops,
             sortable=True,
+            sort_directions=sort_directions_for(True),
             searchable=True,
         ),
     ]

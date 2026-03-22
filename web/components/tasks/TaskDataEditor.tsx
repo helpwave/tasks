@@ -19,7 +19,8 @@ import {
   Drawer,
   useFormObserverKey,
   Visibility,
-  FormObserver
+  FormObserver,
+  FlexibleDateTimeInput
 } from '@helpwave/hightide'
 import { CenteredLoadingLogo } from '@/components/CenteredLoadingLogo'
 import { useTasksContext } from '@/hooks/useTasksContext'
@@ -86,7 +87,7 @@ export const TaskDataEditor = ({
           message: err instanceof Error ? err.message : 'Update failed',
         })
       },
-    }).catch(() => {})
+    }).catch(() => { })
   }
 
   const [deleteTask, { loading: isDeleting }] = useDeleteTask()
@@ -284,8 +285,8 @@ export const TaskDataEditor = ({
                       onClick={() => setIsShowingPatientDialog(true)}
                       className="w-fit"
                     >
-                      <User className="size-4"/>
-                      { taskData?.patient?.name}
+                      <User className="size-4" />
+                      {taskData?.patient?.name}
                     </Button>
                   </div>
                 )
@@ -311,17 +312,17 @@ export const TaskDataEditor = ({
                         unassignTask({
                           variables: { id: taskId },
                           onCompleted: () => onSuccess?.(),
-                        }).catch(() => {})
+                        }).catch(() => { })
                       } else if (value.startsWith('team:')) {
                         assignTaskToTeam({
                           variables: { id: taskId, teamId: value.replace('team:', '') },
                           onCompleted: () => onSuccess?.(),
-                        }).catch(() => {})
+                        }).catch(() => { })
                       } else {
                         assignTask({
                           variables: { id: taskId, userId: value },
                           onCompleted: () => onSuccess?.(),
-                        }).catch(() => {})
+                        }).catch(() => { })
                       }
                     }
                   }}
@@ -336,10 +337,10 @@ export const TaskDataEditor = ({
               label={translation('dueDate')}
             >
               {({ dataProps, focusableElementProps, interactionStates }) => (
-                <DateTimeInput
+                <FlexibleDateTimeInput
                   {...dataProps} {...focusableElementProps} {...interactionStates}
                   value={dataProps.value ?? null}
-                  mode="dateTime"
+                  defaultMode="date"
                 />
               )}
             </FormField>
@@ -469,7 +470,7 @@ export const TaskDataEditor = ({
           <PatientDetailView
             patientId={taskData?.patient?.id}
             onClose={() => setIsShowingPatientDialog(false)}
-            onSuccess={() => {}}
+            onSuccess={() => { }}
           />
         </Drawer>
       </FormProvider>

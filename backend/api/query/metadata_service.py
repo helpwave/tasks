@@ -11,7 +11,12 @@ from api.query.enums import (
     QueryableValueType,
     ReferenceFilterMode,
 )
-from api.query.graphql_types import QueryableChoiceMeta, QueryableField, QueryableRelationMeta
+from api.query.graphql_types import (
+    QueryableChoiceMeta,
+    QueryableField,
+    QueryableRelationMeta,
+    sort_directions_for,
+)
 from api.query.registry import PATIENT, TASK, USER
 from database import models
 
@@ -118,6 +123,7 @@ def _property_definition_to_field(p: models.PropertyDefinition) -> QueryableFiel
             value_type=QueryableValueType.STRING,
             allowed_operators=_str_ops(),
             sortable=True,
+            sort_directions=sort_directions_for(True),
             searchable=True,
             property_definition_id=str(p.id),
         )
@@ -129,6 +135,7 @@ def _property_definition_to_field(p: models.PropertyDefinition) -> QueryableFiel
             value_type=QueryableValueType.NUMBER,
             allowed_operators=_num_ops(),
             sortable=True,
+            sort_directions=sort_directions_for(True),
             searchable=False,
             property_definition_id=str(p.id),
         )
@@ -140,6 +147,7 @@ def _property_definition_to_field(p: models.PropertyDefinition) -> QueryableFiel
             value_type=QueryableValueType.BOOLEAN,
             allowed_operators=_bool_ops(),
             sortable=True,
+            sort_directions=sort_directions_for(True),
             searchable=False,
             property_definition_id=str(p.id),
         )
@@ -151,6 +159,7 @@ def _property_definition_to_field(p: models.PropertyDefinition) -> QueryableFiel
             value_type=QueryableValueType.DATE,
             allowed_operators=_date_ops(),
             sortable=True,
+            sort_directions=sort_directions_for(True),
             searchable=False,
             property_definition_id=str(p.id),
         )
@@ -162,6 +171,7 @@ def _property_definition_to_field(p: models.PropertyDefinition) -> QueryableFiel
             value_type=QueryableValueType.DATETIME,
             allowed_operators=_dt_ops(),
             sortable=True,
+            sort_directions=sort_directions_for(True),
             searchable=False,
             property_definition_id=str(p.id),
         )
@@ -173,6 +183,7 @@ def _property_definition_to_field(p: models.PropertyDefinition) -> QueryableFiel
             value_type=QueryableValueType.STRING,
             allowed_operators=_choice_ops(),
             sortable=True,
+            sort_directions=sort_directions_for(True),
             searchable=False,
             property_definition_id=str(p.id),
             choice=QueryableChoiceMeta(
@@ -188,6 +199,7 @@ def _property_definition_to_field(p: models.PropertyDefinition) -> QueryableFiel
             value_type=QueryableValueType.STRING_LIST,
             allowed_operators=_multi_choice_ops(),
             sortable=False,
+            sort_directions=sort_directions_for(False),
             searchable=False,
             property_definition_id=str(p.id),
             choice=QueryableChoiceMeta(
@@ -203,6 +215,7 @@ def _property_definition_to_field(p: models.PropertyDefinition) -> QueryableFiel
             value_type=QueryableValueType.UUID,
             allowed_operators=_user_ref_ops(),
             sortable=True,
+            sort_directions=sort_directions_for(True),
             searchable=False,
             property_definition_id=str(p.id),
             relation=QueryableRelationMeta(
@@ -219,6 +232,7 @@ def _property_definition_to_field(p: models.PropertyDefinition) -> QueryableFiel
         value_type=QueryableValueType.STRING,
         allowed_operators=_str_ops(),
         sortable=True,
+        sort_directions=sort_directions_for(True),
         searchable=True,
         property_definition_id=str(p.id),
     )

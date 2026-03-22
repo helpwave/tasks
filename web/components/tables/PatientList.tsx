@@ -17,7 +17,7 @@ import { getPropertyColumnsForEntity } from '@/utils/propertyColumn'
 import { useStorageSyncedTableState } from '@/hooks/useTableState'
 import { usePropertyColumnVisibility } from '@/hooks/usePropertyColumnVisibility'
 import { columnFiltersToQueryFilterClauses, paginationStateToPaginationInput, sortingStateToQuerySortClauses } from '@/utils/tableStateToApi'
-import { queryableFieldsToFilterListItems } from '@/utils/queryableFilterList'
+import { queryableFieldsToFilterListItems, queryableFieldsToSortingListItems } from '@/utils/queryableFilterList'
 import { getPropertyFilterFn as getPropertyDatatype } from '@/utils/propertyFilterMapping'
 import { UserSelectFilterPopUp } from './UserSelectFilterPopUp'
 import { SaveViewDialog } from '@/components/views/SaveViewDialog'
@@ -482,6 +482,14 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
     ]
   }, [queryableFieldsData?.queryableFields, propertyFieldTypeByDefId, translation, allPatientStates, propertyDefinitionsData?.propertyDefinitions])
 
+  const availableSortItems = useMemo(() => {
+    const raw = queryableFieldsData?.queryableFields
+    if (raw?.length) {
+      return queryableFieldsToSortingListItems(raw)
+    }
+    return availableFilters.map(({ id, label, dataType }) => ({ id, label, dataType }))
+  }, [queryableFieldsData?.queryableFields, availableFilters])
+
   const onRowClick = useCallback((row: Row<PatientViewModel>) => handleEdit(row.original), [handleEdit])
   const fillerRowCell = useCallback(() => (<FillerCell className="min-h-8" />), [])
 
@@ -574,7 +582,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
             <SortingList
               sorting={sorting}
               onSortingChange={setSorting}
-              availableItems={availableFilters}
+              availableItems={availableSortItems}
             />
           )}
         </div>

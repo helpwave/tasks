@@ -11,7 +11,12 @@ from api.query.enums import (
     ReferenceFilterMode,
 )
 from api.query.field_ops import apply_ops_to_column
-from api.query.graphql_types import QueryableChoiceMeta, QueryableField, QueryableRelationMeta
+from api.query.graphql_types import (
+    QueryableChoiceMeta,
+    QueryableField,
+    QueryableRelationMeta,
+    sort_directions_for,
+)
 from api.query.inputs import (
     QueryFilterClauseInput,
     QuerySearchInput,
@@ -400,6 +405,7 @@ def build_task_queryable_fields_static() -> list[QueryableField]:
             value_type=QueryableValueType.STRING,
             allowed_operators=str_ops,
             sortable=True,
+            sort_directions=sort_directions_for(True),
             searchable=True,
         ),
         QueryableField(
@@ -409,6 +415,7 @@ def build_task_queryable_fields_static() -> list[QueryableField]:
             value_type=QueryableValueType.STRING,
             allowed_operators=str_ops,
             sortable=True,
+            sort_directions=sort_directions_for(True),
             searchable=True,
         ),
         QueryableField(
@@ -418,6 +425,7 @@ def build_task_queryable_fields_static() -> list[QueryableField]:
             value_type=QueryableValueType.BOOLEAN,
             allowed_operators=bool_ops,
             sortable=True,
+            sort_directions=sort_directions_for(True),
             searchable=False,
         ),
         QueryableField(
@@ -427,6 +435,7 @@ def build_task_queryable_fields_static() -> list[QueryableField]:
             value_type=QueryableValueType.DATETIME,
             allowed_operators=dt_ops,
             sortable=True,
+            sort_directions=sort_directions_for(True),
             searchable=False,
         ),
         QueryableField(
@@ -436,6 +445,7 @@ def build_task_queryable_fields_static() -> list[QueryableField]:
             value_type=QueryableValueType.STRING,
             allowed_operators=prio_ops,
             sortable=True,
+            sort_directions=sort_directions_for(True),
             searchable=False,
             choice=QueryableChoiceMeta(
                 option_keys=["P1", "P2", "P3", "P4"],
@@ -449,6 +459,7 @@ def build_task_queryable_fields_static() -> list[QueryableField]:
             value_type=QueryableValueType.NUMBER,
             allowed_operators=num_ops,
             sortable=True,
+            sort_directions=sort_directions_for(True),
             searchable=False,
         ),
         QueryableField(
@@ -458,6 +469,7 @@ def build_task_queryable_fields_static() -> list[QueryableField]:
             value_type=QueryableValueType.DATETIME,
             allowed_operators=dt_ops,
             sortable=True,
+            sort_directions=sort_directions_for(True),
             searchable=False,
         ),
         QueryableField(
@@ -467,6 +479,7 @@ def build_task_queryable_fields_static() -> list[QueryableField]:
             value_type=QueryableValueType.DATETIME,
             allowed_operators=dt_ops,
             sortable=True,
+            sort_directions=sort_directions_for(True),
             searchable=False,
         ),
         QueryableField(
@@ -476,6 +489,7 @@ def build_task_queryable_fields_static() -> list[QueryableField]:
             value_type=QueryableValueType.UUID,
             allowed_operators=ref_ops,
             sortable=True,
+            sort_directions=sort_directions_for(True),
             searchable=True,
             relation=QueryableRelationMeta(
                 target_entity="Patient",
@@ -494,6 +508,7 @@ def build_task_queryable_fields_static() -> list[QueryableField]:
             value_type=QueryableValueType.UUID,
             allowed_operators=ref_ops,
             sortable=True,
+            sort_directions=sort_directions_for(True),
             searchable=True,
             relation=QueryableRelationMeta(
                 target_entity="User",
@@ -512,6 +527,7 @@ def build_task_queryable_fields_static() -> list[QueryableField]:
             value_type=QueryableValueType.UUID,
             allowed_operators=ref_ops,
             sortable=True,
+            sort_directions=sort_directions_for(True),
             searchable=False,
             relation=QueryableRelationMeta(
                 target_entity="LocationNode",

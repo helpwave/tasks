@@ -11,7 +11,12 @@ from api.query.enums import (
     ReferenceFilterMode,
 )
 from api.query.field_ops import apply_ops_to_column
-from api.query.graphql_types import QueryableChoiceMeta, QueryableField, QueryableRelationMeta
+from api.query.graphql_types import (
+    QueryableChoiceMeta,
+    QueryableField,
+    QueryableRelationMeta,
+    sort_directions_for,
+)
 from api.query.inputs import QueryFilterClauseInput, QuerySearchInput, QuerySortClauseInput
 from api.query.property_sql import join_property_value
 from api.query.sql_expr import location_title_expr, patient_display_name_expr
@@ -298,6 +303,7 @@ def build_patient_queryable_fields_static() -> list[QueryableField]:
             value_type=QueryableValueType.STRING,
             allowed_operators=str_ops,
             sortable=True,
+            sort_directions=sort_directions_for(True),
             searchable=True,
         ),
         QueryableField(
@@ -307,6 +313,7 @@ def build_patient_queryable_fields_static() -> list[QueryableField]:
             value_type=QueryableValueType.STRING,
             allowed_operators=str_ops,
             sortable=True,
+            sort_directions=sort_directions_for(True),
             searchable=True,
         ),
         QueryableField(
@@ -316,6 +323,7 @@ def build_patient_queryable_fields_static() -> list[QueryableField]:
             value_type=QueryableValueType.STRING,
             allowed_operators=str_ops,
             sortable=True,
+            sort_directions=sort_directions_for(True),
             searchable=True,
         ),
         QueryableField(
@@ -325,6 +333,7 @@ def build_patient_queryable_fields_static() -> list[QueryableField]:
             value_type=QueryableValueType.STRING,
             allowed_operators=choice_ops,
             sortable=True,
+            sort_directions=sort_directions_for(True),
             searchable=False,
             choice=QueryableChoiceMeta(
                 option_keys=state_keys,
@@ -338,6 +347,7 @@ def build_patient_queryable_fields_static() -> list[QueryableField]:
             value_type=QueryableValueType.STRING,
             allowed_operators=choice_ops,
             sortable=True,
+            sort_directions=sort_directions_for(True),
             searchable=False,
             choice=QueryableChoiceMeta(
                 option_keys=sex_keys,
@@ -351,6 +361,7 @@ def build_patient_queryable_fields_static() -> list[QueryableField]:
             value_type=QueryableValueType.DATE,
             allowed_operators=date_ops,
             sortable=True,
+            sort_directions=sort_directions_for(True),
             searchable=False,
         ),
         QueryableField(
@@ -360,6 +371,7 @@ def build_patient_queryable_fields_static() -> list[QueryableField]:
             value_type=QueryableValueType.STRING,
             allowed_operators=str_ops,
             sortable=True,
+            sort_directions=sort_directions_for(True),
             searchable=True,
         ),
         QueryableField(
@@ -377,6 +389,7 @@ def build_patient_queryable_fields_static() -> list[QueryableField]:
                 QueryOperator.IS_NOT_NULL,
             ],
             sortable=True,
+            sort_directions=sort_directions_for(True),
             searchable=False,
             relation=QueryableRelationMeta(
                 target_entity="LocationNode",
