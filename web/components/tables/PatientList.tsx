@@ -31,6 +31,8 @@ import {
   type UpdateSavedViewMutationVariables
 } from '@/api/gql/generated'
 import { getParsedDocument } from '@/data/hooks/queryHelpers'
+import { useDeferredColumnOrderChange } from '@/hooks/useDeferredColumnOrderChange'
+import { columnIdsFromColumnDefs, sanitizeColumnOrderForKnownColumns } from '@/utils/columnOrder'
 import {
   normalizedColumnOrderForViewCompare,
   normalizedVisibilityForViewCompare,
@@ -152,36 +154,6 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
     baselineColumnOrder,
     setColumnVisibility,
   ])
-
-  const viewMatchesBaseline = useMemo(
-    () => tableViewStateMatchesBaseline({
-      filters: filters as ColumnFiltersState,
-      baselineFilters,
-      sorting,
-      baselineSorting,
-      searchQuery,
-      baselineSearch,
-      columnVisibility,
-      baselineColumnVisibility,
-      columnOrder,
-      baselineColumnOrder,
-      propertyColumnIds,
-    }),
-    [
-      filters,
-      baselineFilters,
-      sorting,
-      baselineSorting,
-      searchQuery,
-      baselineSearch,
-      columnVisibility,
-      baselineColumnVisibility,
-      columnOrder,
-      baselineColumnOrder,
-      propertyColumnIds,
-    ]
-  )
-  const hasUnsavedViewChanges = !viewMatchesBaseline
 
   const [isSaveViewDialogOpen, setIsSaveViewDialogOpen] = useState(false)
 
@@ -614,6 +586,53 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
     return availableFilters.map(({ id, label, dataType }) => ({ id, label, dataType }))
   }, [queryableFieldsData?.queryableFields, availableFilters])
 
+  const knownColumnIdsOrdered = useMemo(
+    () => columnIdsFromColumnDefs(columns),
+    [columns]
+  )
+
+  const sanitizedColumnOrder = useMemo(
+    () => sanitizeColumnOrderForKnownColumns(columnOrder, knownColumnIdsOrdered),
+    [columnOrder, knownColumnIdsOrdered]
+  )
+
+  const sanitizedBaselineColumnOrder = useMemo(
+    () => sanitizeColumnOrderForKnownColumns(baselineColumnOrder, knownColumnIdsOrdered),
+    [baselineColumnOrder, knownColumnIdsOrdered]
+  )
+
+  const viewMatchesBaseline = useMemo(
+    () => tableViewStateMatchesBaseline({
+      filters: filters as ColumnFiltersState,
+      baselineFilters,
+      sorting,
+      baselineSorting,
+      searchQuery,
+      baselineSearch,
+      columnVisibility,
+      baselineColumnVisibility,
+      columnOrder: sanitizedColumnOrder,
+      baselineColumnOrder: sanitizedBaselineColumnOrder,
+      propertyColumnIds,
+    }),
+    [
+      filters,
+      baselineFilters,
+      sorting,
+      baselineSorting,
+      searchQuery,
+      baselineSearch,
+      columnVisibility,
+      baselineColumnVisibility,
+      sanitizedColumnOrder,
+      sanitizedBaselineColumnOrder,
+      propertyColumnIds,
+    ]
+  )
+  const hasUnsavedViewChanges = !viewMatchesBaseline
+
+  const deferSetColumnOrder = useDeferredColumnOrderChange(setColumnOrder)
+
   const onRowClick = useCallback((row: Row<PatientViewModel>) => handleEdit(row.original), [handleEdit])
   const fillerRowCell = useCallback(() => (<FillerCell className="min-h-8" />), [])
 
@@ -631,11 +650,11 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       }}
       state={{
         columnVisibility,
-        columnOrder,
+        columnOrder: sanitizedColumnOrder,
         pagination,
       } as Partial<TableState> as TableState}
       onColumnVisibilityChange={setColumnVisibility}
-      onColumnOrderChange={setColumnOrder}
+      onColumnOrderChange={deferSetColumnOrder}
       onPaginationChange={setPagination}
       onSortingChange={setSorting}
       onColumnFiltersChange={setFilters}

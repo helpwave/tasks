@@ -19,6 +19,8 @@ import { useTasksContext } from '@/hooks/useTasksContext'
 import { UserInfoPopup } from '@/components/UserInfoPopup'
 import type { ColumnDef, ColumnFiltersState, ColumnOrderState, PaginationState, SortingState, TableState, VisibilityState } from '@tanstack/table-core'
 import type { Dispatch, SetStateAction } from 'react'
+import { useDeferredColumnOrderChange } from '@/hooks/useDeferredColumnOrderChange'
+import { columnIdsFromColumnDefs, sanitizeColumnOrderForKnownColumns } from '@/utils/columnOrder'
 import { DueDateUtils } from '@/utils/dueDate'
 import { PriorityUtils } from '@/utils/priority'
 import { getPropertyColumnsForEntity } from '@/utils/propertyColumn'
@@ -560,6 +562,18 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
   },
   [translation, completeTask, reopenTask, showAssignee, optimisticUpdates, taskPropertyColumns, refreshingTaskIds, rowLoadingCell, onRefetch])
 
+  const knownColumnIdsOrdered = useMemo(
+    () => columnIdsFromColumnDefs(columns),
+    [columns]
+  )
+
+  const sanitizedColumnOrder = useMemo(
+    () => sanitizeColumnOrderForKnownColumns(columnOrder, knownColumnIdsOrdered),
+    [columnOrder, knownColumnIdsOrdered]
+  )
+
+  const deferSetColumnOrder = useDeferredColumnOrderChange(setColumnOrder)
+
   return (
     <TableProvider
       data={tasks}
@@ -572,11 +586,11 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
       }}
       state={{
         columnVisibility,
-        columnOrder,
+        columnOrder: sanitizedColumnOrder,
         pagination,
       } as Partial<TableState> as TableState}
       onColumnVisibilityChange={setColumnVisibilityMerged}
-      onColumnOrderChange={setColumnOrder}
+      onColumnOrderChange={deferSetColumnOrder}
       onPaginationChange={setPagination}
       onSortingChange={setSorting}
       onColumnFiltersChange={setFilters}

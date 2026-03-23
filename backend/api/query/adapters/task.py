@@ -310,8 +310,11 @@ def apply_task_sorts(
                 expr.desc().nulls_last() if desc_order else expr.asc().nulls_first()
             )
 
-    order_parts.append(models.Task.id.asc())
-    return query.order_by(*order_parts)
+    if not order_parts:
+        return query.order_by(models.Task.id.asc())
+    if ctx.get("needs_distinct"):
+        return query.order_by(models.Task.id.asc(), *order_parts)
+    return query.order_by(*order_parts, models.Task.id.asc())
 
 
 def apply_task_search(

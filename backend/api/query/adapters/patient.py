@@ -218,8 +218,11 @@ def apply_patient_sorts(
                 t.desc().nulls_last() if desc_order else t.asc().nulls_first()
             )
 
-    order_parts.append(models.Patient.id.asc())
-    return query.order_by(*order_parts)
+    if not order_parts:
+        return query.order_by(models.Patient.id.asc())
+    if ctx.get("needs_distinct"):
+        return query.order_by(models.Patient.id.asc(), *order_parts)
+    return query.order_by(*order_parts, models.Patient.id.asc())
 
 
 def apply_patient_search(

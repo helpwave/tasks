@@ -65,7 +65,7 @@ async def apply_unified_query(
         stmt = handler["apply_sorts"](stmt, sorts, ctx, property_field_types)
 
     if ctx.get("needs_distinct"):
-        stmt = stmt.distinct()
+        stmt = stmt.distinct(handler["root_model"].id)
 
     if (
         not for_count
