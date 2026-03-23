@@ -16,6 +16,8 @@ interface AssigneeSelectProps {
   allowTeams?: boolean,
   allowUnassigned?: boolean,
   excludeUserIds?: string[],
+  multiUserSelect?: boolean,
+  onMultiUserIdsSelected?: (userIds: string[]) => void,
   id?: string,
   className?: string,
   [key: string]: unknown,
@@ -29,6 +31,8 @@ export const  AssigneeSelect = ({
   allowTeams = true,
   allowUnassigned: _allowUnassigned = false,
   excludeUserIds = [],
+  multiUserSelect = false,
+  onMultiUserIdsSelected,
   id,
   className,
 }: AssigneeSelectProps) => {
@@ -162,6 +166,8 @@ export const  AssigneeSelect = ({
         isOpen={isOpen}
         onClose={handleClose}
         onUserInfoClick={(userId) => setSelectedUserPopupState({ isOpen: true, userId })}
+        multiUserSelect={multiUserSelect}
+        onMultiUserIdsSelected={onMultiUserIdsSelected}
       />
       <UserInfoPopup
         userId={selectedUserPopupState.userId}

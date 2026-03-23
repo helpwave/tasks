@@ -110,10 +110,10 @@ class UpdatePatientInput:
 @strawberry.input
 class CreateTaskInput:
     title: str
-    patient_id: strawberry.ID
+    patient_id: strawberry.ID | None = None
     description: str | None = None
     due_date: datetime | None = None
-    assignee_id: strawberry.ID | None = None
+    assignee_ids: list[strawberry.ID] | None = None
     assignee_team_id: strawberry.ID | None = None
     previous_task_ids: list[strawberry.ID] | None = None
     properties: list[PropertyValueInput] | None = None
@@ -124,10 +124,11 @@ class CreateTaskInput:
 @strawberry.input
 class UpdateTaskInput:
     title: str | None = None
+    patient_id: strawberry.ID | None = strawberry.UNSET
     description: str | None = None
     done: bool | None = None
     due_date: datetime | None = strawberry.UNSET
-    assignee_id: strawberry.ID | None = None
+    assignee_ids: list[strawberry.ID] | None = strawberry.UNSET
     assignee_team_id: strawberry.ID | None = strawberry.UNSET
     previous_task_ids: list[strawberry.ID] | None = None
     properties: list[PropertyValueInput] | None = None

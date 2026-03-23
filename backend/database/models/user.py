@@ -44,7 +44,11 @@ class User(Base):
         nullable=True,
     )
 
-    tasks: Mapped[list[Task]] = relationship("Task", back_populates="assignee")
+    tasks: Mapped[list[Task]] = relationship(
+        "Task",
+        secondary="task_assignees",
+        back_populates="assignees",
+    )
     saved_views: Mapped[list["SavedView"]] = relationship(
         "SavedView", back_populates="owner"
     )

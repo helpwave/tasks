@@ -21,6 +21,13 @@ task_dependencies = Table(
     Column("next_task_id", ForeignKey("tasks.id"), primary_key=True),
 )
 
+task_assignees = Table(
+    "task_assignees",
+    Base.metadata,
+    Column("task_id", ForeignKey("tasks.id", ondelete="CASCADE"), primary_key=True),
+    Column("user_id", ForeignKey("users.id"), primary_key=True),
+)
+
 
 class Task(Base):
     __tablename__ = "tasks"
@@ -40,27 +47,24 @@ class Task(Base):
         default=datetime.now,
         onupdate=datetime.now,
     )
-    assignee_id: Mapped[str | None] = mapped_column(
-        ForeignKey("users.id"),
-        nullable=True,
-    )
     assignee_team_id: Mapped[str | None] = mapped_column(
         ForeignKey("location_nodes.id"),
         nullable=True,
     )
-    patient_id: Mapped[str] = mapped_column(ForeignKey("patients.id"))
+    patient_id: Mapped[str | None] = mapped_column(ForeignKey("patients.id"), nullable=True)
     priority: Mapped[str | None] = mapped_column(String, nullable=True)
     estimated_time: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
-    assignee: Mapped[User | None] = relationship(
+    assignees: Mapped[list[User]] = relationship(
         "User",
+        secondary=task_assignees,
         back_populates="tasks",
     )
     assignee_team: Mapped["LocationNode | None"] = relationship(
         "LocationNode",
         foreign_keys=[assignee_team_id],
     )
-    patient: Mapped[Patient] = relationship("Patient", back_populates="tasks")
+    patient: Mapped[Patient | None] = relationship("Patient", back_populates="tasks")
     properties: Mapped[list[PropertyValue]] = relationship(
         "PropertyValue",
         back_populates="task",

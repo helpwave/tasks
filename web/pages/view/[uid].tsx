@@ -275,8 +275,8 @@ function SavedTaskViewTab({
           locations: task.patient.assignedLocations || []
         }
         : undefined,
-      assignee: task.assignee
-        ? { id: task.assignee.id, name: task.assignee.name, avatarURL: task.assignee.avatarUrl, isOnline: task.assignee.isOnline ?? null }
+      assignee: task.assignees[0]
+        ? { id: task.assignees[0].id, name: task.assignees[0].name, avatarURL: task.assignees[0].avatarUrl, isOnline: task.assignees[0].isOnline ?? null }
         : undefined,
       properties: task.properties ?? [],
     }))

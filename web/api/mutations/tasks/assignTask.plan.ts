@@ -28,7 +28,13 @@ export const assignTaskOptimisticPlan: OptimisticPlan<AssignTaskVariables> = {
           cache.modify({
             id,
             fields: {
-              assignee: () => ({ __ref: `UserType:${userId}` }),
+              assignees: (existing: ReadonlyArray<{ __ref: string }> | undefined = []) => {
+                const ref = `UserType:${userId}`
+                if (existing.some((entry) => entry.__ref === ref)) {
+                  return existing
+                }
+                return [...existing, { __ref: ref }]
+              },
               assigneeTeam: () => null,
             },
           })

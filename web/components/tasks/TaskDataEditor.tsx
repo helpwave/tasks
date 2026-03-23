@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import type { CreateTaskInput, UpdateTaskInput, TaskPriority } from '@/api/gql/generated'
 import { PatientState } from '@/api/gql/generated'
-import { useCreateTask, useDeleteTask, usePatients, useTask, useUpdateTask, useAssignTask, useAssignTaskToTeam, useUnassignTask, useRefreshingEntityIds } from '@/data'
+import { useCreateTask, useDeleteTask, usePatients, useTask, useUpdateTask, useUsers, useRefreshingEntityIds } from '@/data'
 import type { FormFieldDataHandling } from '@helpwave/hightide'
 import {
   Button,
@@ -33,6 +33,7 @@ import { PriorityUtils } from '@/utils/priority'
 
 type TaskFormValues = CreateTaskInput & {
   done: boolean,
+  assigneeIds?: string[] | null,
   assigneeTeamId?: string | null,
 }
 
@@ -73,9 +74,7 @@ export const TaskDataEditor = ({
 
   const [createTask, { loading: isCreating }] = useCreateTask()
   const [updateTaskMutate] = useUpdateTask()
-  const [assignTask] = useAssignTask()
-  const [assignTaskToTeam] = useAssignTaskToTeam()
-  const [unassignTask] = useUnassignTask()
+  const { data: usersData } = useUsers()
   const updateTask = (vars: { id: string, data: UpdateTaskInput }) => {
     updateTaskMutate({
       variables: vars,
@@ -96,7 +95,7 @@ export const TaskDataEditor = ({
       title: '',
       description: '',
       patientId: initialPatientId || '',
-      assigneeId: null,
+      assigneeIds: [],
       assigneeTeamId: null,
       dueDate: null,
       priority: null,
@@ -108,9 +107,9 @@ export const TaskDataEditor = ({
         variables: {
           data: {
             title: values.title,
-            patientId: values.patientId,
+            patientId: values.patientId || null,
             description: values.description,
-            assigneeId: values.assigneeId,
+            assigneeIds: values.assigneeIds ?? [],
             assigneeTeamId: values.assigneeTeamId,
             dueDate: values.dueDate ? localToUTCWithSameTime(values.dueDate)?.toISOString() : null,
             priority: (values.priority as TaskPriority | null) || undefined,
@@ -134,23 +133,18 @@ export const TaskDataEditor = ({
         }
         return null
       },
-      patientId: (value) => {
-        if (!value || !value.trim()) {
-          return translation('patient') + ' is required'
-        }
-        return null
-      },
     },
     onValidUpdate: (_, updates) => {
       if (!isEditMode || !taskId || !taskData) return
       const data: UpdateTaskInput = {
         title: updates?.title,
+        patientId: updates?.patientId === undefined ? undefined : (updates.patientId || null),
         description: updates?.description,
         dueDate: updates?.dueDate ? localToUTCWithSameTime(updates.dueDate)?.toISOString() : undefined,
         priority: updates?.priority as TaskPriority | null | undefined,
         estimatedTime: updates?.estimatedTime,
         done: updates?.done,
-        assigneeId: updates?.assigneeId,
+        assigneeIds: updates?.assigneeIds,
         assigneeTeamId: updates?.assigneeTeamId,
       }
       const current = taskData
@@ -160,9 +154,13 @@ export const TaskDataEditor = ({
       const samePriority = (data.priority ?? current.priority ?? null) === (current.priority ?? null)
       const sameEstimatedTime = (data.estimatedTime ?? current.estimatedTime ?? null) === (current.estimatedTime ?? null)
       const sameDone = (data.done ?? current.done) === current.done
-      const sameAssigneeId = (data.assigneeId ?? current.assignee?.id ?? null) === (current.assignee?.id ?? null)
+      const currentAssigneeIds = [...(current.assignees?.map((assignee) => assignee.id) ?? [])].sort()
+      const nextAssigneeIds = [...(data.assigneeIds ?? currentAssigneeIds)].sort()
+      const sameAssigneeIds = currentAssigneeIds.length === nextAssigneeIds.length
+        && currentAssigneeIds.every((assigneeId, index) => assigneeId === nextAssigneeIds[index])
       const sameAssigneeTeamId = (data.assigneeTeamId ?? current.assigneeTeam?.id ?? null) === (current.assigneeTeam?.id ?? null)
-      if (sameTitle && sameDescription && sameDueDate && samePriority && sameEstimatedTime && sameDone && sameAssigneeId && sameAssigneeTeamId) return
+      const samePatientId = (data.patientId ?? current.patient?.id ?? null) === (current.patient?.id ?? null)
+      if (sameTitle && sameDescription && sameDueDate && samePriority && sameEstimatedTime && sameDone && samePatientId && sameAssigneeIds && sameAssigneeTeamId) return
       updateTask({ id: taskId, data })
     }
   })
@@ -177,7 +175,7 @@ export const TaskDataEditor = ({
         title: task.title,
         description: task.description || '',
         patientId: task.patient?.id || '',
-        assigneeId: task.assignee?.id || null,
+        assigneeIds: task.assignees?.map((assignee) => assignee.id) ?? [],
         assigneeTeamId: task.assigneeTeam?.id || null,
         dueDate: task.dueDate ? new Date(task.dueDate) : null,
         priority: (task.priority as TaskPriority | null) || null,
@@ -193,7 +191,12 @@ export const TaskDataEditor = ({
 
   const dueDate = useFormObserverKey({ formStore: form.store, formKey: 'dueDate' })?.value ?? null
   const estimatedTime = useFormObserverKey({ formStore: form.store, formKey: 'estimatedTime' })?.value ?? null
+  const assigneeIds = useFormObserverKey({ formStore: form.store, formKey: 'assigneeIds' })?.value as string[] | null | undefined
   const assigneeTeamId = useFormObserverKey({ formStore: form.store, formKey: 'assigneeTeamId' })?.value as string | null | undefined
+  const selectedAssignees = useMemo(
+    () => usersData?.users?.filter((user) => (assigneeIds ?? []).includes(user.id)) ?? [],
+    [usersData, assigneeIds]
+  )
   const expectedFinishDate = useMemo(() => {
     if (!dueDate || !estimatedTime) return null
     const finishDate = new Date(dueDate)
@@ -233,7 +236,6 @@ export const TaskDataEditor = ({
                       id="task-done"
                       value={done || false}
                       onValueChange={(checked) => {
-                        // TODO replace with form.update when it allows setting the update trigger
                         form.store.setValue('done', checked, true)
                       }}
                       className={clsx('rounded-full scale-125',
@@ -263,14 +265,13 @@ export const TaskDataEditor = ({
             <FormField<TaskFormValues, 'patientId'>
               name="patientId"
               label={translation('patient')}
-              required
-              showRequiredIndicator={!isEditMode}
             >
               {({ dataProps, focusableElementProps, interactionStates }) => {
                 return (!isEditMode) ? (
                   <Select
                     {...dataProps as FormFieldDataHandling<string>} {...focusableElementProps} {...interactionStates}
                   >
+                    <SelectOption value="" label={translation('none') || 'None'} />
                     {patients.map(patient => {
                       return (
                         <SelectOption key={patient.id} value={patient.id} label={patient.name} />
@@ -285,49 +286,80 @@ export const TaskDataEditor = ({
                       className="w-fit"
                     >
                       <User className="size-4" />
-                      {taskData?.patient?.name}
+                      {taskData?.patient?.name || translation('none') || 'None'}
                     </Button>
                   </div>
                 )
               }}
             </FormField>
 
-            <FormField<TaskFormValues, 'assigneeId'>
-              name="assigneeId"
+            <FormField<TaskFormValues, 'assigneeIds'>
+              name="assigneeIds"
               label={translation('assignedTo')}
             >
-              {({ dataProps }) => (
-                <AssigneeSelect
-                  value={assigneeTeamId ? `team:${assigneeTeamId}` : (dataProps.value ?? '')}
-                  onValueChanged={(value) => {
-                    updateForm(prev => {
-                      if (value.startsWith('team:')) {
-                        return { ...prev, assigneeId: null, assigneeTeamId: value.replace('team:', '') }
-                      }
-                      return { ...prev, assigneeId: value || null, assigneeTeamId: null }
-                    })
-                    if (isEditMode && taskId) {
-                      if (!value || value === '') {
-                        unassignTask({
-                          variables: { id: taskId },
-                          onCompleted: () => onSuccess?.(),
-                        }).catch(() => { })
-                      } else if (value.startsWith('team:')) {
-                        assignTaskToTeam({
-                          variables: { id: taskId, teamId: value.replace('team:', '') },
-                          onCompleted: () => onSuccess?.(),
-                        }).catch(() => { })
-                      } else {
-                        assignTask({
-                          variables: { id: taskId, userId: value },
-                          onCompleted: () => onSuccess?.(),
-                        }).catch(() => { })
-                      }
-                    }
-                  }}
-                  allowTeams={true}
-                  allowUnassigned={true}
-                />
+              {() => (
+                <div className="flex flex-col gap-2">
+                  <AssigneeSelect
+                    value={assigneeTeamId ? `team:${assigneeTeamId}` : ''}
+                    onValueChanged={(value) => {
+                      updateForm(prev => {
+                        if (!value) {
+                          return { ...prev, assigneeIds: [], assigneeTeamId: null }
+                        }
+                        if (value.startsWith('team:')) {
+                          return { ...prev, assigneeIds: [], assigneeTeamId: value.replace('team:', '') }
+                        }
+                        const currentAssigneeIds = prev.assigneeIds ?? []
+                        if (currentAssigneeIds.includes(value)) {
+                          return prev
+                        }
+                        return { ...prev, assigneeIds: [...currentAssigneeIds, value], assigneeTeamId: null }
+                      })
+                    }}
+                    multiUserSelect={true}
+                    onMultiUserIdsSelected={(ids) => {
+                      if (ids.length === 0) return
+                      updateForm(prev => ({
+                        ...prev,
+                        assigneeIds: [...new Set([...(prev.assigneeIds ?? []), ...ids])],
+                        assigneeTeamId: null,
+                      }))
+                    }}
+                    allowTeams={true}
+                    allowUnassigned={true}
+                    excludeUserIds={assigneeIds ?? []}
+                  />
+                  {(selectedAssignees.length > 0 || assigneeTeamId) && (
+                    <div className="flex flex-wrap gap-2">
+                      {selectedAssignees.map((assignee) => (
+                        <Button
+                          key={assignee.id}
+                          color="neutral"
+                          coloringStyle="outline"
+                          onClick={() => {
+                            updateForm(prev => ({
+                              ...prev,
+                              assigneeIds: (prev.assigneeIds ?? []).filter((assigneeId) => assigneeId !== assignee.id),
+                            }))
+                          }}
+                        >
+                          {assignee.name}
+                        </Button>
+                      ))}
+                      {assigneeTeamId && (
+                        <Button
+                          color="neutral"
+                          coloringStyle="outline"
+                          onClick={() => {
+                            updateForm(prev => ({ ...prev, assigneeTeamId: null }))
+                          }}
+                        >
+                          Team
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </div>
               )}
             </FormField>
 

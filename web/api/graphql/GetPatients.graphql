@@ -109,7 +109,7 @@ query GetPatients($locationId: ID, $rootLocationIds: [ID!], $states: [PatientSta
       estimatedTime
       creationDate
       updateDate
-      assignee {
+      assignees {
         id
         name
         avatarUrl

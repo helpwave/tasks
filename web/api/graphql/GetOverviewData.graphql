@@ -58,7 +58,7 @@ query GetOverviewData($rootLocationIds: [ID!], $recentPatientsFilters: [QueryFil
     dueDate
     updateDate
     priority
-    assignee {
+    assignees {
       id
       name
       avatarUrl

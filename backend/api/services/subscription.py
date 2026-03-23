@@ -136,12 +136,29 @@ async def task_belongs_to_root_locations(
     )
     task = result.scalars().first()
 
-    if not task or not task.patient:
+    if not task:
         return False
 
-    return await patient_belongs_to_root_locations(
-        db, task.patient.id, root_location_ids
+    if task.patient:
+        return await patient_belongs_to_root_locations(
+            db, task.patient.id, root_location_ids
+        )
+
+    if not task.assignee_team_id:
+        return False
+
+    root_cte = (
+        select(models.LocationNode.id)
+        .where(models.LocationNode.id.in_(root_location_ids))
+        .cte(name="root_location_descendants", recursive=True)
     )
+    root_children = select(models.LocationNode.id).join(
+        root_cte, models.LocationNode.parent_id == root_cte.c.id
+    )
+    root_cte = root_cte.union(root_children)
+    result = await db.execute(select(root_cte.c.id))
+    root_location_descendants = {row[0] for row in result.all()}
+    return task.assignee_team_id in root_location_descendants
 
 
 async def subscribe_with_location_filter(

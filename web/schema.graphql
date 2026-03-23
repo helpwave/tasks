@@ -47,10 +47,10 @@ input CreateSavedViewInput {
 
 input CreateTaskInput {
   title: String!
-  patientId: ID!
+  patientId: ID = null
   description: String = null
   dueDate: DateTime = null
-  assigneeId: ID = null
+  assigneeIds: [ID!] = null
   assigneeTeamId: ID = null
   previousTaskIds: [ID!] = null
   properties: [PropertyValueInput!] = null
@@ -108,8 +108,8 @@ type Mutation {
   waitPatient(id: ID!): PatientType!
   createTask(data: CreateTaskInput!): TaskType!
   updateTask(id: ID!, data: UpdateTaskInput!): TaskType!
-  assignTask(id: ID!, userId: ID!): TaskType!
-  unassignTask(id: ID!): TaskType!
+  addTaskAssignee(id: ID!, userId: ID!): TaskType!
+  removeTaskAssignee(id: ID!, userId: ID!): TaskType!
   assignTaskToTeam(id: ID!, teamId: ID!): TaskType!
   unassignTaskFromTeam(id: ID!): TaskType!
   completeTask(id: ID!): TaskType!
@@ -397,14 +397,13 @@ type TaskType {
   dueDate: DateTime
   creationDate: DateTime!
   updateDate: DateTime
-  assigneeId: ID
   assigneeTeamId: ID
-  patientId: ID!
+  patientId: ID
   priority: String
   estimatedTime: Int
-  assignee: UserType
+  assignees: [UserType!]!
   assigneeTeam: LocationNodeType
-  patient: PatientType!
+  patient: PatientType
   properties: [PropertyValueType!]!
   checksum: String!
 }
@@ -452,10 +451,11 @@ input UpdateSavedViewInput {
 
 input UpdateTaskInput {
   title: String = null
+  patientId: ID
   description: String = null
   done: Boolean = null
   dueDate: DateTime
-  assigneeId: ID = null
+  assigneeIds: [ID!]
   assigneeTeamId: ID
   previousTaskIds: [ID!] = null
   properties: [PropertyValueInput!] = null

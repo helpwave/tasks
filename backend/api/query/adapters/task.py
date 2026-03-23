@@ -1,6 +1,6 @@
 from typing import Any
 
-from sqlalchemy import Select, and_, case, or_
+from sqlalchemy import Select, and_, case, exists, func, or_, select
 from sqlalchemy.orm import aliased
 
 from api.inputs import SortDirection
@@ -37,14 +37,75 @@ def _prio_order_case() -> Any:
     )
 
 
-def _ensure_assignee_join(query: Select[Any], ctx: dict[str, Any]) -> tuple[Select[Any], Any]:
-    if "assignee_user" in ctx:
-        return query, ctx["assignee_user"]
+def _assignee_label_exists(op: QueryOperator, val: Any) -> Any:
     u = aliased(models.User)
-    ctx["assignee_user"] = u
-    query = query.outerjoin(u, models.Task.assignee_id == u.id)
-    ctx["needs_distinct"] = True
-    return query, u
+    label_expr = user_display_label_expr(u)
+    label_condition = apply_ops_to_column(label_expr, op, val)
+    if label_condition is None:
+        return None
+    return exists(
+        select(1)
+        .select_from(models.task_assignees.join(u, models.task_assignees.c.user_id == u.id))
+        .where(
+            models.task_assignees.c.task_id == models.Task.id,
+            label_condition,
+        )
+    )
+
+
+def _assignee_label_sort_expr() -> Any:
+    u = aliased(models.User)
+    return (
+        select(func.min(user_display_label_expr(u)))
+        .select_from(models.task_assignees.join(u, models.task_assignees.c.user_id == u.id))
+        .where(models.task_assignees.c.task_id == models.Task.id)
+        .scalar_subquery()
+    )
+
+
+def _patient_label_expr() -> Any:
+    p = aliased(models.Patient)
+    return (
+        select(patient_display_name_expr(p))
+        .where(p.id == models.Task.patient_id)
+        .scalar_subquery()
+    )
+
+
+def _patient_label_exists(op: QueryOperator, val: Any) -> Any:
+    p = aliased(models.Patient)
+    expr = patient_display_name_expr(p)
+    condition = apply_ops_to_column(expr, op, val)
+    if condition is None:
+        return None
+    return exists(
+        select(1).where(
+            p.id == models.Task.patient_id,
+            condition,
+        )
+    )
+
+
+def _patient_label_ilike_exists(pattern: str) -> Any:
+    p = aliased(models.Patient)
+    return exists(
+        select(1).where(
+            p.id == models.Task.patient_id,
+            patient_display_name_expr(p).ilike(pattern),
+        )
+    )
+
+
+def _assignee_label_ilike_exists(pattern: str) -> Any:
+    u = aliased(models.User)
+    return exists(
+        select(1)
+        .select_from(models.task_assignees.join(u, models.task_assignees.c.user_id == u.id))
+        .where(
+            models.task_assignees.c.task_id == models.Task.id,
+            user_display_label_expr(u).ilike(pattern),
+        )
+    )
 
 
 def _ensure_team_join(query: Select[Any], ctx: dict[str, Any]) -> tuple[Select[Any], Any]:
@@ -156,27 +217,43 @@ def apply_task_filter_clause(
         return query
 
     if key == "assignee":
-        query, u = _ensure_assignee_join(query, ctx)
-        label = user_display_label_expr(u)
         if op in (QueryOperator.EQ, QueryOperator.IN) and val and (
             val.uuid_value or val.uuid_values
         ):
             if val.uuid_value:
-                query = query.where(models.Task.assignee_id == val.uuid_value)
+                query = query.where(
+                    exists(
+                        select(1).where(
+                            models.task_assignees.c.task_id == models.Task.id,
+                            models.task_assignees.c.user_id == val.uuid_value,
+                        )
+                    )
+                )
             elif val.uuid_values:
-                query = query.where(models.Task.assignee_id.in_(val.uuid_values))
+                query = query.where(
+                    exists(
+                        select(1).where(
+                            models.task_assignees.c.task_id == models.Task.id,
+                            models.task_assignees.c.user_id.in_(val.uuid_values),
+                        )
+                    )
+                )
         elif op in (
             QueryOperator.CONTAINS,
             QueryOperator.STARTS_WITH,
             QueryOperator.ENDS_WITH,
         ):
-            c = apply_ops_to_column(label, op, val)
+            c = _assignee_label_exists(op, val)
             if c is not None:
                 query = query.where(c)
         elif op in (QueryOperator.IS_NULL, QueryOperator.IS_NOT_NULL):
-            c = apply_ops_to_column(models.Task.assignee_id, op, None)
-            if c is not None:
-                query = query.where(c)
+            has_assignees = exists(
+                select(1).where(models.task_assignees.c.task_id == models.Task.id)
+            )
+            if op == QueryOperator.IS_NULL:
+                query = query.where(~has_assignees)
+            else:
+                query = query.where(has_assignees)
         return query
 
     if key == "assigneeTeam":
@@ -199,8 +276,6 @@ def apply_task_filter_clause(
         return query
 
     if key == "patient":
-        p = models.Patient
-        expr = patient_display_name_expr(p)
         if op in (QueryOperator.EQ, QueryOperator.IN) and val and (
             val.uuid_value or val.uuid_values
         ):
@@ -208,12 +283,16 @@ def apply_task_filter_clause(
                 query = query.where(models.Task.patient_id == val.uuid_value)
             elif val.uuid_values:
                 query = query.where(models.Task.patient_id.in_(val.uuid_values))
+        elif op in (QueryOperator.IS_NULL, QueryOperator.IS_NOT_NULL):
+            c = apply_ops_to_column(models.Task.patient_id, op, None)
+            if c is not None:
+                query = query.where(c)
         elif op in (
             QueryOperator.CONTAINS,
             QueryOperator.STARTS_WITH,
             QueryOperator.ENDS_WITH,
         ):
-            c = apply_ops_to_column(expr, op, val)
+            c = _patient_label_exists(op, val)
             if c is not None:
                 query = query.where(c)
         return query
@@ -293,8 +372,7 @@ def apply_task_sorts(
                 else models.Task.update_date.asc().nulls_first()
             )
         elif key == "assignee":
-            query, u = _ensure_assignee_join(query, ctx)
-            label = user_display_label_expr(u)
+            label = _assignee_label_sort_expr()
             order_parts.append(
                 label.desc().nulls_last() if desc_order else label.asc().nulls_first()
             )
@@ -305,7 +383,7 @@ def apply_task_sorts(
                 t.desc().nulls_last() if desc_order else t.asc().nulls_first()
             )
         elif key == "patient":
-            expr = patient_display_name_expr(models.Patient)
+            expr = _patient_label_expr()
             order_parts.append(
                 expr.desc().nulls_last() if desc_order else expr.asc().nulls_first()
             )
@@ -325,12 +403,11 @@ def apply_task_search(
     if not search or not search.search_text or not search.search_text.strip():
         return query
     pattern = f"%{search.search_text.strip()}%"
-    query, u = _ensure_assignee_join(query, ctx)
     parts: list[Any] = [
         models.Task.title.ilike(pattern),
         models.Task.description.ilike(pattern),
-        patient_display_name_expr(models.Patient).ilike(pattern),
-        user_display_label_expr(u).ilike(pattern),
+        _patient_label_ilike_exists(pattern),
+        _assignee_label_ilike_exists(pattern),
     ]
     if search.include_properties:
         pv = aliased(models.PropertyValue)

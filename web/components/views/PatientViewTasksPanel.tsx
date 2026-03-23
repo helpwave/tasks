@@ -89,8 +89,8 @@ export function PatientViewTasksPanel({
           name: patient.name,
           locations: mergedLocations
         },
-        assignee: task.assignee
-          ? { id: task.assignee.id, name: task.assignee.name, avatarURL: task.assignee.avatarUrl, isOnline: task.assignee.isOnline ?? null }
+        assignee: task.assignees[0]
+          ? { id: task.assignees[0].id, name: task.assignees[0].name, avatarURL: task.assignees[0].avatarUrl, isOnline: task.assignees[0].isOnline ?? null }
           : undefined,
         assigneeTeam: task.assigneeTeam
           ? { id: task.assigneeTeam.id, title: task.assigneeTeam.title }
