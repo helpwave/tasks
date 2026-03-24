@@ -4,6 +4,12 @@ import { MapPin } from 'lucide-react'
 import { useMemo } from 'react'
 import { useLocations } from '@/data'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
+import { FilterPreviewLocationChips } from '@/components/tables/FilterPreviewMedia'
+import type { LocationType } from '@/api/gql/generated'
+
+function nodeToPreviewLocation(node: { id: string, title: string, kind: LocationType }) {
+  return { id: node.id, title: node.title, kind: node.kind }
+}
 
 export function LocationFilterActiveLabel({ value }: { value: FilterValue }) {
   const translation = useTasksTranslation()
@@ -24,11 +30,17 @@ export function LocationFilterActiveLabel({ value }: { value: FilterValue }) {
             {ids.map(id => {
               const node = nodes?.find(n => n.id === id)
               const title = node?.title ?? id
-              return (
+              return node ? (
+                <FilterPreviewLocationChips
+                  key={id}
+                  className="max-w-[min(100%,11rem)]"
+                  locations={[nodeToPreviewLocation(node)]}
+                />
+              ) : (
                 <Chip key={id} size="sm" color="neutral" className="max-w-[10rem]">
                   <span className="flex items-center gap-1 min-w-0">
-                    <MapPin className="size-3 shrink-0" />
-                    <span className="truncate">{title}</span>
+                    <MapPin className="size-3 shrink-0 scale-90" />
+                    <span className="truncate text-sm">{title}</span>
                   </span>
                 </Chip>
               )
@@ -51,11 +63,16 @@ export function LocationFilterActiveLabel({ value }: { value: FilterValue }) {
     }
     const node = nodes?.find(n => n.id === uid)
     const title = node?.title ?? uid
-    return (
+    return node ? (
+      <FilterPreviewLocationChips
+        className="max-w-[min(100%,16rem)]"
+        locations={[nodeToPreviewLocation(node)]}
+      />
+    ) : (
       <Chip size="sm" color="neutral" className="max-w-[14rem]">
         <span className="flex items-center gap-1 min-w-0">
           <MapPin className="size-3 shrink-0" />
-          <span className="truncate">{title}</span>
+          <span className="truncate text-sm">{title}</span>
         </span>
       </Chip>
     )

@@ -8,7 +8,7 @@ import { Page } from '@/components/layout/Page'
 import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
-import { Button, Checkbox, ConfirmDialog, Dialog, FillerCell, IconButton, Input, LoadingContainer, Table } from '@helpwave/hightide'
+import { Button, ConfirmDialog, Dialog, FillerCell, IconButton, Input, LoadingContainer, Table } from '@helpwave/hightide'
 import { DateDisplay } from '@/components/Date/DateDisplay'
 import { SavedViewEntityTypeChip } from '@/components/views/SavedViewEntityTypeChip'
 import { useMySavedViews } from '@/data'
@@ -20,7 +20,6 @@ import {
   type DuplicateSavedViewMutation,
   type DuplicateSavedViewMutationVariables,
   MySavedViewsDocument,
-  SavedViewVisibility,
   UpdateSavedViewDocument,
   type UpdateSavedViewMutation,
   type UpdateSavedViewMutationVariables
@@ -42,7 +41,6 @@ type SavedViewRow = {
   name: string,
   baseEntityType: SavedViewEntityType,
   updatedAt: string,
-  visibility: SavedViewVisibility,
 }
 
 const ViewsSettingsPage: NextPage = () => {
@@ -55,7 +53,6 @@ const ViewsSettingsPage: NextPage = () => {
       name: v.name,
       baseEntityType: v.baseEntityType,
       updatedAt: v.updatedAt,
-      visibility: v.visibility,
     }))
   }, [data])
 
@@ -112,28 +109,10 @@ const ViewsSettingsPage: NextPage = () => {
     }
   )
 
-  const copyLink = useCallback((id: string, visibility: SavedViewVisibility) => {
+  const copyLink = useCallback((id: string) => {
     if (typeof window === 'undefined') return
-    if (visibility === SavedViewVisibility.Private) return
     void navigator.clipboard.writeText(`${window.location.origin}/view/${id}`)
   }, [])
-
-  const handleToggleVisibility = useCallback(
-    async (id: string, visibility: SavedViewVisibility) => {
-      await updateSavedView({
-        variables: {
-          id,
-          data: {
-            visibility:
-              visibility === SavedViewVisibility.Private
-                ? SavedViewVisibility.LinkShared
-                : SavedViewVisibility.Private,
-          },
-        },
-      })
-    },
-    [updateSavedView]
-  )
 
   const handleRename = useCallback(async () => {
     if (!renameId || renameValue.trim().length < 1) return
@@ -192,26 +171,6 @@ const ViewsSettingsPage: NextPage = () => {
       enableSorting: false,
     },
     {
-      id: 'visibility',
-      header: translation('viewVisibility'),
-      cell: ({ row }) => (
-        <label className="flex items-center gap-2 cursor-pointer">
-          <Checkbox
-            value={row.original.visibility === SavedViewVisibility.LinkShared}
-            onValueChange={() => void handleToggleVisibility(row.original.id, row.original.visibility)}
-          />
-          <span className="text-sm text-description">
-            {row.original.visibility === SavedViewVisibility.LinkShared
-              ? translation('viewVisibilityLinkShared')
-              : translation('viewVisibilityPrivate')}
-          </span>
-        </label>
-      ),
-      minSize: 200,
-      size: 220,
-      enableSorting: false,
-    },
-    {
       id: 'actions',
       header: '',
       cell: ({ row }) => (
@@ -225,15 +184,10 @@ const ViewsSettingsPage: NextPage = () => {
             <ExternalLink />
           </IconButton>
           <IconButton
-            tooltip={
-              row.original.visibility === SavedViewVisibility.Private
-                ? translation('copyShareLinkEnableSharingFirst')
-                : translation('copyShareLink')
-            }
+            tooltip={translation('copyShareLink')}
             coloringStyle="text"
             color="neutral"
-            disabled={row.original.visibility === SavedViewVisibility.Private}
-            onClick={() => copyLink(row.original.id, row.original.visibility)}
+            onClick={() => copyLink(row.original.id)}
           >
             <Share2 />
           </IconButton>
@@ -279,7 +233,7 @@ const ViewsSettingsPage: NextPage = () => {
       maxSize: 228,
       enableSorting: false,
     },
-  ], [copyLink, handleToggleVisibility, router, translation])
+  ], [copyLink, router, translation])
 
   return (
     <Page pageTitle={titleWrapper(translation('views'))}>

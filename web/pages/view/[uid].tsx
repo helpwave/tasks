@@ -8,7 +8,7 @@ import { Page } from '@/components/layout/Page'
 import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
-import { Button, Checkbox, Chip, IconButton, LoadingContainer, TabList, TabPanel, TabSwitcher, Visibility } from '@helpwave/hightide'
+import { Button, Chip, IconButton, LoadingContainer, TabList, TabPanel, TabSwitcher, Visibility } from '@helpwave/hightide'
 import { CenteredLoadingLogo } from '@/components/CenteredLoadingLogo'
 import { PatientList } from '@/components/tables/PatientList'
 import { TaskList, type TaskViewModel } from '@/components/tables/TaskList'
@@ -26,8 +26,7 @@ import {
   type UpdateSavedViewMutation,
   type UpdateSavedViewMutationVariables,
   PropertyEntity,
-  SavedViewEntityType,
-  SavedViewVisibility,
+  SavedViewEntityType
 } from '@/api/gql/generated'
 import { getParsedDocument } from '@/data/hooks/queryHelpers'
 import { appendSavedViewToMySavedViewsCache, replaceSavedViewInMySavedViewsCache } from '@/utils/savedViewsCache'
@@ -47,7 +46,7 @@ import type { ColumnFiltersState } from '@tanstack/react-table'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { useTableState } from '@/hooks/useTableState'
 import { columnFiltersToQueryFilterClauses, paginationStateToPaginationInput, sortingStateToQuerySortClauses } from '@/utils/tableStateToApi'
-import { Share2 } from 'lucide-react'
+import { CopyPlus, Eye, Share2 } from 'lucide-react'
 
 type SavedTaskViewTabProps = {
   viewId: string,
@@ -374,27 +373,6 @@ const ViewPage: NextPage = () => {
     },
   })
 
-  const [updateSavedViewVisibility] = useMutation<
-    UpdateSavedViewMutation,
-    UpdateSavedViewMutationVariables
-  >(getParsedDocument(UpdateSavedViewDocument), {
-    awaitRefetchQueries: true,
-    refetchQueries: [
-      { query: getParsedDocument(MySavedViewsDocument) },
-    ],
-    update(cache, { data }) {
-      const updated = data?.updateSavedView
-      if (updated) {
-        replaceSavedViewInMySavedViewsCache(cache, updated)
-        cache.writeQuery({
-          query: getParsedDocument(SavedViewDocument),
-          variables: { id: updated.id },
-          data: { savedView: updated },
-        })
-      }
-    },
-  })
-
   const handleDuplicate = useCallback(async () => {
     if (!view?.id || duplicateName.trim().length < 2) return
     const { data: d } = await duplicateSavedView({
@@ -407,12 +385,9 @@ const ViewPage: NextPage = () => {
   }, [duplicateSavedView, duplicateName, router, view?.id])
 
   const copyShareLink = useCallback(() => {
-    if (typeof window === 'undefined' || !uid || !view) return
-    const isOwnerPrivate =
-      view.isOwner && view.visibility === SavedViewVisibility.Private
-    if (isOwnerPrivate) return
+    if (typeof window === 'undefined' || !uid) return
     void navigator.clipboard.writeText(`${window.location.origin}/view/${uid}`)
-  }, [uid, view])
+  }, [uid])
 
   if (!router.isReady || !uid) {
     return (
@@ -454,47 +429,37 @@ const ViewPage: NextPage = () => {
               <span className="typography-title-lg font-bold">{view.name}</span>
               <SavedViewEntityTypeChip entityType={view.baseEntityType} />
               {!view.isOwner && (
-                <Chip size="sm" coloringStyle="outline">{translation('readOnlyView')}</Chip>
+                <Chip
+                  size="sm"
+                  color="neutral"
+                  coloringStyle="outline"
+                  className="inline-flex items-center gap-1.5 border-dashed border-description/40 bg-description/[0.07] text-description shadow-none py-0.5 pl-1.5 pr-2.5"
+                >
+                  <Eye className="size-3.5 shrink-0 text-description/90" strokeWidth={2.25} aria-hidden />
+                  <span className="text-xs font-medium leading-none text-description">
+                    {translation('readOnlyView')}
+                  </span>
+                </Chip>
               )}
             </div>
-            <div className="flex flex-wrap gap-2 items-center">
-              {view.isOwner && (
-                <label className="flex items-center gap-2 cursor-pointer max-sm:w-full">
-                  <Checkbox
-                    value={view.visibility === SavedViewVisibility.LinkShared}
-                    onValueChange={(checked) => {
-                      void updateSavedViewVisibility({
-                        variables: {
-                          id: view.id,
-                          data: {
-                            visibility: checked
-                              ? SavedViewVisibility.LinkShared
-                              : SavedViewVisibility.Private,
-                          },
-                        },
-                      })
-                    }}
-                  />
-                  <span className="text-sm whitespace-nowrap">{translation('viewAnyoneWithLinkCanView')}</span>
-                </label>
-              )}
+            <div className="flex flex-wrap gap-1 items-center justify-end">
               <IconButton
-                tooltip={
-                  view.isOwner && view.visibility === SavedViewVisibility.Private
-                    ? translation('copyShareLinkEnableSharingFirst')
-                    : translation('copyShareLink')
-                }
+                tooltip={translation('copyShareLink')}
                 coloringStyle="text"
                 color="neutral"
-                disabled={view.isOwner && view.visibility === SavedViewVisibility.Private}
                 onClick={copyShareLink}
               >
                 <Share2 className="size-5" />
               </IconButton>
               {!view.isOwner && (
-                <Button color="primary" size="sm" onClick={() => setDuplicateOpen(true)}>
-                  {translation('copyViewToMyViews')}
-                </Button>
+                <IconButton
+                  tooltip={translation('copyViewToMyViews')}
+                  coloringStyle="text"
+                  color="neutral"
+                  onClick={() => setDuplicateOpen(true)}
+                >
+                  <CopyPlus className="size-5" />
+                </IconButton>
               )}
             </div>
           </div>

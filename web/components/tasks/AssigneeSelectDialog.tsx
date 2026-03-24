@@ -18,6 +18,7 @@ interface AssigneeSelectDialogProps {
   onUserInfoClick?: (userId: string) => void,
   multiUserSelect?: boolean,
   onMultiUserIdsSelected?: (userIds: string[]) => void,
+  initialMultiUserIds?: string[],
 }
 
 export const AssigneeSelectDialog = ({
@@ -32,6 +33,7 @@ export const AssigneeSelectDialog = ({
   onUserInfoClick,
   multiUserSelect = false,
   onMultiUserIdsSelected,
+  initialMultiUserIds = [],
 }: AssigneeSelectDialogProps) => {
   const translation = useTasksTranslation()
   const [searchQuery, setSearchQuery] = useState('')
@@ -94,9 +96,9 @@ export const AssigneeSelectDialog = ({
       setSearchQuery('')
     }
     if (isOpen && multiUserSelect) {
-      setPendingUserIds(new Set())
+      setPendingUserIds(new Set(initialMultiUserIds))
     }
-  }, [isOpen, multiUserSelect])
+  }, [isOpen, multiUserSelect, initialMultiUserIds])
 
   const handleSelect = (selectedValue: string) => {
     onValueChanged(selectedValue)
