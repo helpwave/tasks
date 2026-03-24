@@ -8,7 +8,7 @@ import { Page } from '@/components/layout/Page'
 import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
-import { Button, Chip, IconButton, LoadingContainer, TabList, TabPanel, TabSwitcher, Visibility } from '@helpwave/hightide'
+import { Button, Checkbox, Chip, IconButton, LoadingContainer, TabList, TabPanel, TabSwitcher, Visibility } from '@helpwave/hightide'
 import { CenteredLoadingLogo } from '@/components/CenteredLoadingLogo'
 import { PatientList } from '@/components/tables/PatientList'
 import { TaskList, type TaskViewModel } from '@/components/tables/TaskList'
@@ -26,7 +26,8 @@ import {
   type UpdateSavedViewMutation,
   type UpdateSavedViewMutationVariables,
   PropertyEntity,
-  SavedViewEntityType
+  SavedViewEntityType,
+  SavedViewVisibility,
 } from '@/api/gql/generated'
 import { getParsedDocument } from '@/data/hooks/queryHelpers'
 import { appendSavedViewToMySavedViewsCache, replaceSavedViewInMySavedViewsCache } from '@/utils/savedViewsCache'
@@ -368,6 +369,27 @@ const ViewPage: NextPage = () => {
     },
   })
 
+  const [updateSavedViewVisibility] = useMutation<
+    UpdateSavedViewMutation,
+    UpdateSavedViewMutationVariables
+  >(getParsedDocument(UpdateSavedViewDocument), {
+    awaitRefetchQueries: true,
+    refetchQueries: [
+      { query: getParsedDocument(MySavedViewsDocument) },
+    ],
+    update(cache, { data }) {
+      const updated = data?.updateSavedView
+      if (updated) {
+        replaceSavedViewInMySavedViewsCache(cache, updated)
+        cache.writeQuery({
+          query: getParsedDocument(SavedViewDocument),
+          variables: { id: updated.id },
+          data: { savedView: updated },
+        })
+      }
+    },
+  })
+
   const handleDuplicate = useCallback(async () => {
     if (!view?.id || duplicateName.trim().length < 2) return
     const { data: d } = await duplicateSavedView({
@@ -380,10 +402,12 @@ const ViewPage: NextPage = () => {
   }, [duplicateSavedView, duplicateName, router, view?.id])
 
   const copyShareLink = useCallback(() => {
-    if (typeof window !== 'undefined' && uid) {
-      void navigator.clipboard.writeText(`${window.location.origin}/view/${uid}`)
-    }
-  }, [uid])
+    if (typeof window === 'undefined' || !uid || !view) return
+    const isOwnerPrivate =
+      view.isOwner && view.visibility === SavedViewVisibility.Private
+    if (isOwnerPrivate) return
+    void navigator.clipboard.writeText(`${window.location.origin}/view/${uid}`)
+  }, [uid, view])
 
   if (!router.isReady || !uid) {
     return (
@@ -429,10 +453,35 @@ const ViewPage: NextPage = () => {
               )}
             </div>
             <div className="flex flex-wrap gap-2 items-center">
+              {view.isOwner && (
+                <label className="flex items-center gap-2 cursor-pointer max-sm:w-full">
+                  <Checkbox
+                    value={view.visibility === SavedViewVisibility.LinkShared}
+                    onValueChange={(checked) => {
+                      void updateSavedViewVisibility({
+                        variables: {
+                          id: view.id,
+                          data: {
+                            visibility: checked
+                              ? SavedViewVisibility.LinkShared
+                              : SavedViewVisibility.Private,
+                          },
+                        },
+                      })
+                    }}
+                  />
+                  <span className="text-sm whitespace-nowrap">{translation('viewAnyoneWithLinkCanView')}</span>
+                </label>
+              )}
               <IconButton
-                tooltip={translation('copyShareLink')}
+                tooltip={
+                  view.isOwner && view.visibility === SavedViewVisibility.Private
+                    ? translation('copyShareLinkEnableSharingFirst')
+                    : translation('copyShareLink')
+                }
                 coloringStyle="text"
                 color="neutral"
+                disabled={view.isOwner && view.visibility === SavedViewVisibility.Private}
                 onClick={copyShareLink}
               >
                 <Share2 className="size-5" />

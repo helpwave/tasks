@@ -259,6 +259,8 @@
   "viewVisibility": "Sichtbarkeit",
   "viewVisibilityPrivate": "Privat",
   "viewVisibilityLinkShared": "Link geteilt",
+  "viewAnyoneWithLinkCanView": "Jeder mit dem Link kann ansehen",
+  "copyShareLinkEnableSharingFirst": "Aktivieren Sie die Link-Freigabe, damit andere Personen mit dem Link diesen Schnellzugriff öffnen können.",
   "rShow": "{name} anzeigen",
   "@rShow": {
     "placeholders": {

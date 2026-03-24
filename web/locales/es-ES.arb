@@ -161,6 +161,8 @@
   "viewVisibility": "Visibility",
   "viewVisibilityPrivate": "Private",
   "viewVisibilityLinkShared": "Link shared",
+  "viewAnyoneWithLinkCanView": "Anyone with the link can view",
+  "copyShareLinkEnableSharingFirst": "Turn on link sharing so others with the link can open this quick access.",
   "rShow": "Mostrar {name}",
   "@rShow": { "placeholders": { "name": { "type": "string" } } },
   "search": "Buscar",

@@ -314,7 +314,7 @@ export const TaskDataEditor = ({
                           return prev
                         }
                         return { ...prev, assigneeIds: [...currentAssigneeIds, value], assigneeTeamId: null }
-                      })
+                      }, isEditMode)
                     }}
                     multiUserSelect={true}
                     onMultiUserIdsSelected={(ids) => {
@@ -323,7 +323,7 @@ export const TaskDataEditor = ({
                         ...prev,
                         assigneeIds: [...new Set([...(prev.assigneeIds ?? []), ...ids])],
                         assigneeTeamId: null,
-                      }))
+                      }), isEditMode)
                     }}
                     allowTeams={true}
                     allowUnassigned={true}
@@ -340,7 +340,7 @@ export const TaskDataEditor = ({
                             updateForm(prev => ({
                               ...prev,
                               assigneeIds: (prev.assigneeIds ?? []).filter((assigneeId) => assigneeId !== assignee.id),
-                            }))
+                            }), isEditMode)
                           }}
                         >
                           {assignee.name}
@@ -351,7 +351,7 @@ export const TaskDataEditor = ({
                           color="neutral"
                           coloringStyle="outline"
                           onClick={() => {
-                            updateForm(prev => ({ ...prev, assigneeTeamId: null }))
+                            updateForm(prev => ({ ...prev, assigneeTeamId: null }), isEditMode)
                           }}
                         >
                           Team

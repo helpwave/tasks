@@ -161,6 +161,8 @@
   "viewVisibility": "Visibility",
   "viewVisibilityPrivate": "Private",
   "viewVisibilityLinkShared": "Link shared",
+  "viewAnyoneWithLinkCanView": "Anyone with the link can view",
+  "copyShareLinkEnableSharingFirst": "Turn on link sharing so others with the link can open this quick access.",
   "rShow": "{name} tonen",
   "@rShow": { "placeholders": { "name": { "type": "string" } } },
   "search": "Zoeken",

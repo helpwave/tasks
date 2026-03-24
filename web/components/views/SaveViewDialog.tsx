@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from 'react'
 import { useMutation } from '@apollo/client/react'
-import { Button, Dialog, Input } from '@helpwave/hightide'
+import { Button, Checkbox, Dialog, Input } from '@helpwave/hightide'
 import type {
   SavedViewEntityType } from '@/api/gql/generated'
 import {
@@ -41,10 +41,12 @@ export function SaveViewDialog({
 }: SaveViewDialogProps) {
   const translation = useTasksTranslation()
   const [name, setName] = useState('')
+  const [linkShared, setLinkShared] = useState(false)
 
   const handleClose = useCallback(() => {
     onClose()
     setName('')
+    setLinkShared(false)
   }, [onClose])
 
   const [createSavedView, { loading }] = useMutation<
@@ -80,6 +82,13 @@ export function SaveViewDialog({
             onChange={(e) => setName(e.target.value)}
           />
         </div>
+        <label className="flex items-center gap-2 cursor-pointer">
+          <Checkbox
+            value={linkShared}
+            onValueChange={setLinkShared}
+          />
+          <span className="text-sm">{translation('viewAnyoneWithLinkCanView')}</span>
+        </label>
         <div className="flex-row-2 justify-end">
           <Button
             color="neutral"
@@ -99,7 +108,9 @@ export function SaveViewDialog({
                     filterDefinition,
                     sortDefinition,
                     parameters,
-                    visibility: SavedViewVisibility.Private,
+                    visibility: linkShared
+                      ? SavedViewVisibility.LinkShared
+                      : SavedViewVisibility.Private,
                   },
                 },
               })
