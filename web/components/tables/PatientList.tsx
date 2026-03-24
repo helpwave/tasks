@@ -1,8 +1,9 @@
-import { useMemo, useState, forwardRef, useImperativeHandle, useEffect, useCallback, useRef } from 'react'
+import { useMemo, useState, forwardRef, useImperativeHandle, useEffect, useCallback, useRef, type ReactNode } from 'react'
 import { useMutation } from '@apollo/client/react'
 import type { IdentifierFilterValue, FilterListItem, FilterListPopUpBuilderProps } from '@helpwave/hightide'
-import { Chip, FillerCell, HelpwaveLogo, LoadingContainer, SearchBar, ProgressIndicator, Tooltip, Drawer, TableProvider, TableDisplay, TableColumnSwitcher, TablePagination, IconButton, useLocale, FilterList, SortingList, Button, ExpansionIcon, Visibility } from '@helpwave/hightide'
-import { PlusIcon } from 'lucide-react'
+import { Chip, FillerCell, HelpwaveLogo, LoadingContainer, SearchBar, ProgressIndicator, Tooltip, Drawer, TableProvider, TableDisplay, TableColumnSwitcher, IconButton, useLocale, FilterList, SortingList, Button, ExpansionIcon, Visibility } from '@helpwave/hightide'
+import clsx from 'clsx'
+import { LayoutGrid, PlusIcon, Table2 } from 'lucide-react'
 import type { LocationType } from '@/api/gql/generated'
 import { Sex, PatientState, type GetPatientsQuery, type TaskType, PropertyEntity, FieldType } from '@/api/gql/generated'
 import { usePropertyDefinitions, usePatientsPaginated, useQueryableFields, useRefreshingEntityIds } from '@/data'
@@ -16,7 +17,10 @@ import { useTasksContext } from '@/hooks/useTasksContext'
 import type { ColumnDef, ColumnFiltersState, ColumnOrderState, PaginationState, Row, SortingState, TableState, VisibilityState } from '@tanstack/table-core'
 import { getPropertyColumnsForEntity } from '@/utils/propertyColumn'
 import { getPropertyColumnIds, useColumnVisibilityWithPropertyDefaults } from '@/hooks/usePropertyColumnVisibility'
-import { columnFiltersToQueryFilterClauses, paginationStateToPaginationInput, sortingStateToQuerySortClauses } from '@/utils/tableStateToApi'
+import { columnFiltersToQueryFilterClauses, sortingStateToQuerySortClauses } from '@/utils/tableStateToApi'
+import { LIST_PAGE_SIZE } from '@/utils/listPaging'
+import { useAccumulatedPagination } from '@/hooks/useAccumulatedPagination'
+import { PatientCardView } from '@/components/patients/PatientCardView'
 import { queryableFieldsToFilterListItems, queryableFieldsToSortingListItems } from '@/utils/queryableFilterList'
 import { getPropertyFilterFn as getPropertyDatatype } from '@/utils/propertyFilterMapping'
 import { UserSelectFilterPopUp } from './UserSelectFilterPopUp'
@@ -69,6 +73,15 @@ const LOCATION_KIND_HEADERS: Record<LocationKindColumn, string> = {
 
 const ADMITTED_OR_WAITING_STATES: PatientState[] = [PatientState.Admitted, PatientState.Wait]
 
+const PATIENT_CARD_PRIMARY_COLUMN_IDS = new Set([
+  'name',
+  'state',
+  'sex',
+  'position',
+  'birthdate',
+  'tasks',
+])
+
 export type PatientListRef = {
   openCreate: () => void,
   openPatient: (patientId: string) => void,
@@ -107,7 +120,10 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
   const [isShowFilters, setIsShowFilters] = useState(false)
   const [isShowSorting, setIsShowSorting] = useState(false)
 
-  const [pagination, setPagination] = useState<PaginationState>({ pageSize: 10, pageIndex: 0 })
+  const [fetchPageIndex, setFetchPageIndex] = useState(0)
+  const [listLayout, setListLayout] = useState<'table' | 'card'>(() => (
+    typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches ? 'card' : 'table'
+  ))
   const [sorting, setSorting] = useState<SortingState>(() => viewDefaultSorting ?? [])
   const [filters, setFilters] = useState<ColumnFiltersState>(() => viewDefaultFilters ?? [])
   const [columnVisibility, setColumnVisibilityRaw] = useState<VisibilityState>(() => viewDefaultColumnVisibility ?? {})
@@ -150,7 +166,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
     setSearchQuery(baselineSearch)
     setColumnVisibility(baselineColumnVisibility)
     setColumnOrder(baselineColumnOrder)
-    setPagination({ pageSize: 10, pageIndex: 0 })
+    setFetchPageIndex(0)
   }, [
     savedViewId,
     persistedSavedViewContentKey,
@@ -255,14 +271,29 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
     return filtered.length > 0 ? (filtered as PatientState[]) : allPatientStates
   }, [apiFilters, allPatientStates])
 
-  const searchInput = searchQuery
-    ? {
-      searchText: searchQuery,
-      includeProperties: true,
-    }
-    : undefined
+  const searchInput = useMemo(
+    () => (searchQuery
+      ? { searchText: searchQuery, includeProperties: true }
+      : undefined),
+    [searchQuery]
+  )
   const apiSorting = useMemo(() => sortingStateToQuerySortClauses(sorting), [sorting])
-  const apiPagination = useMemo(() => paginationStateToPaginationInput(pagination), [pagination])
+  const apiPagination = useMemo(
+    () => ({ pageIndex: fetchPageIndex, pageSize: LIST_PAGE_SIZE }),
+    [fetchPageIndex]
+  )
+
+  const accumulationResetKey = useMemo(
+    () => JSON.stringify({
+      filters: apiFilters,
+      sorts: apiSorting,
+      search: searchInput,
+      locationId: hasLocationFilter ? undefined : (locationId || undefined),
+      root: effectiveRootLocationIds,
+      states: patientStates,
+    }),
+    [apiFilters, apiSorting, searchInput, hasLocationFilter, locationId, effectiveRootLocationIds, patientStates]
+  )
 
   const lastTotalCountRef = useRef<number | undefined>(undefined)
   const { data: patientsData, refetch, totalCount, loading: patientsLoading } = usePatientsPaginated(
@@ -283,27 +314,47 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
   if (totalCount != null) lastTotalCountRef.current = totalCount
   const stableTotalCount = totalCount ?? lastTotalCountRef.current
 
-  const patients: PatientViewModel[] = useMemo(() => {
-    if (!patientsData || patientsData.length === 0) return []
+  const { accumulated: accumulatedPatientsRaw, loadMore, hasMore } = useAccumulatedPagination({
+    resetKey: accumulationResetKey,
+    pageData: patientsData,
+    pageIndex: fetchPageIndex,
+    setPageIndex: setFetchPageIndex,
+    totalCount: stableTotalCount,
+    loading: patientsLoading,
+  })
 
-    return patientsData.map(p => {
-      const countForAggregate = ADMITTED_OR_WAITING_STATES.includes(p.state)
-      return {
-        id: p.id,
-        name: p.name,
-        firstname: p.firstname,
-        lastname: p.lastname,
-        birthdate: new Date(p.birthdate),
-        sex: p.sex,
-        state: p.state,
-        position: p.position,
-        openTasksCount: countForAggregate ? (p.tasks?.filter(t => !t.done).length ?? 0) : 0,
-        closedTasksCount: countForAggregate ? (p.tasks?.filter(t => t.done).length ?? 0) : 0,
-        tasks: [],
-        properties: p.properties ?? [],
-      }
-    })
-  }, [patientsData])
+  const mapPatientRow = useCallback((p: GetPatientsQuery['patients'][0]): PatientViewModel => {
+    const countForAggregate = ADMITTED_OR_WAITING_STATES.includes(p.state)
+    return {
+      id: p.id,
+      name: p.name,
+      firstname: p.firstname,
+      lastname: p.lastname,
+      birthdate: new Date(p.birthdate),
+      sex: p.sex,
+      state: p.state,
+      position: p.position,
+      openTasksCount: countForAggregate ? (p.tasks?.filter(t => !t.done).length ?? 0) : 0,
+      closedTasksCount: countForAggregate ? (p.tasks?.filter(t => t.done).length ?? 0) : 0,
+      tasks: [],
+      properties: p.properties ?? [],
+    }
+  }, [])
+
+  const patients: PatientViewModel[] = useMemo(() => {
+    if (!accumulatedPatientsRaw || accumulatedPatientsRaw.length === 0) return []
+    return accumulatedPatientsRaw.map(mapPatientRow)
+  }, [accumulatedPatientsRaw, mapPatientRow])
+
+  const showBlockingLoadingOverlay = patientsLoading && patients.length === 0
+
+  const tablePagination = useMemo(
+    (): PaginationState => ({
+      pageIndex: 0,
+      pageSize: Math.max(patients.length, 1),
+    }),
+    [patients.length]
+  )
 
   useImperativeHandle(ref, () => ({
     openCreate: () => {
@@ -528,6 +579,26 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
     })),
   ], [translation, patientPropertyColumns, refreshingPatientIds, rowLoadingCell, dateFormat])
 
+  const renderPatientCardExtras = useCallback((patient: PatientViewModel): ReactNode => {
+    const rows: ReactNode[] = []
+    for (const col of columns) {
+      const id = col.id as string | undefined
+      if (!id || PATIENT_CARD_PRIMARY_COLUMN_IDS.has(id)) continue
+      if (columnVisibility[id] === false) continue
+      if (!col.cell) continue
+      const headerLabel = typeof col.header === 'string' ? col.header : id
+      const cell = (col.cell as (p: { row: { original: PatientViewModel } }) => ReactNode)({ row: { original: patient } })
+      rows.push(
+        <div key={id} className="flex flex-col gap-0.5 sm:flex-row sm:gap-3 sm:items-start text-left">
+          <span className="text-description shrink-0 min-w-[7rem]">{headerLabel}</span>
+          <div className="min-w-0 break-words">{cell}</div>
+        </div>
+      )
+    }
+    if (rows.length === 0) return null
+    return <div className="mt-3 pt-3 border-t border-border space-y-2 w-full">{rows}</div>
+  }, [columns, columnVisibility])
+
   const propertyFieldTypeByDefId = useMemo(
     () => new Map(propertyDefinitionsData?.propertyDefinitions.map(d => [d.id, d.fieldType]) ?? []),
     [propertyDefinitionsData]
@@ -662,22 +733,22 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
 
       initialState={{
         pagination: {
-          pageSize: 10,
+          pageSize: LIST_PAGE_SIZE,
         }
       }}
       state={{
         columnVisibility,
         columnOrder: sanitizedColumnOrder,
-        pagination,
+        pagination: tablePagination,
       } as Partial<TableState> as TableState}
       onColumnVisibilityChange={setColumnVisibility}
       onColumnOrderChange={deferSetColumnOrder}
-      onPaginationChange={setPagination}
+      onPaginationChange={() => {}}
       onSortingChange={setSorting}
       onColumnFiltersChange={setFilters}
       enableMultiSort={true}
       enablePinning={false}
-      pageCount={stableTotalCount != null ? Math.ceil(stableTotalCount / pagination.pageSize) : -1}
+      pageCount={1}
 
       manualPagination={true}
       manualSorting={true}
@@ -702,22 +773,24 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
                 buttonProps={{ className: 'min-h-11 min-w-11 shrink-0' }}
                 style={{ zIndex: 120 }}
               />
-              <Button
-                onClick={() => setIsShowFilters(!isShowFilters)}
-                color="neutral"
-                className="font-semibold element"
-              >
-                {translation('filter') + ` (${filters.length})`}
-                <ExpansionIcon isExpanded={isShowFilters} className="size-5"/>
-              </Button>
-              <Button
-                onClick={() => setIsShowSorting(!isShowSorting)}
-                color="neutral"
-                className="font-semibold"
-              >
-                {translation('sorting') + ` (${sorting.length})`}
-                <ExpansionIcon isExpanded={isShowSorting} className="size-5"/>
-              </Button>
+              <div className="inline-flex flex-wrap gap-2 items-center shrink-0">
+                <Button
+                  onClick={() => setIsShowFilters(!isShowFilters)}
+                  color="neutral"
+                  className="font-semibold element"
+                >
+                  {translation('filter') + ` (${filters.length})`}
+                  <ExpansionIcon isExpanded={isShowFilters} className="size-5"/>
+                </Button>
+                <Button
+                  onClick={() => setIsShowSorting(!isShowSorting)}
+                  color="neutral"
+                  className="font-semibold"
+                >
+                  {translation('sorting') + ` (${sorting.length})`}
+                  <ExpansionIcon isExpanded={isShowSorting} className="size-5"/>
+                </Button>
+              </div>
               <Visibility isVisible={!hideSaveView && hasUnsavedViewChanges}>
                 <SaveViewActionsMenu
                   canOverwrite={!!savedViewId}
@@ -729,6 +802,22 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
               </Visibility>
             </div>
             <div className="flex flex-wrap gap-2 items-center justify-end shrink-0">
+              <IconButton
+                tooltip={translation('listViewTable')}
+                className="min-h-11 min-w-11"
+                onClick={() => setListLayout('table')}
+                color={listLayout === 'table' ? 'primary' : 'neutral'}
+              >
+                <Table2 className="size-5" />
+              </IconButton>
+              <IconButton
+                tooltip={translation('listViewCard')}
+                className="min-h-11 min-w-11"
+                onClick={() => setListLayout('card')}
+                color={listLayout === 'card' ? 'primary' : 'neutral'}
+              >
+                <LayoutGrid className="size-5" />
+              </IconButton>
               <IconButton
                 tooltip={translation('addPatient')}
                 className="min-h-11 min-w-11"
@@ -758,18 +847,30 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
           )}
         </div>
         <div className="relative print:static">
-          {patientsLoading && (
+          {showBlockingLoadingOverlay && (
             <div className="absolute inset-0 z-10 flex items-center justify-center bg-surface/80 rounded-lg min-h-48">
               <HelpwaveLogo animate="loading" color="currentColor" height={64} width={64} />
             </div>
           )}
-          <TableDisplay className="print-content overflow-x-auto touch-pan-x"/>
-          {totalCount != null && (
-            <TablePagination
-              allowChangingPageSize={true}
-              pageSizeOptions={[10, 25, 50]}
-              className="mt-2"
-            />
+          <div className={clsx(listLayout === 'table' ? 'block' : 'hidden print:block')}>
+            <TableDisplay className="print-content overflow-x-auto touch-pan-x"/>
+          </div>
+          {listLayout === 'card' && (
+            <div className="flex flex-col gap-3 w-full print:hidden">
+              {patients.map((patient) => (
+                <PatientCardView
+                  key={patient.id}
+                  patient={patient}
+                  onClick={handleEdit}
+                  extraContent={renderPatientCardExtras(patient)}
+                />
+              ))}
+            </div>
+          )}
+          {stableTotalCount != null && hasMore && (
+            <Button color="neutral" className="mt-2 w-full sm:w-auto self-center" onClick={loadMore}>
+              {translation('loadMore')}
+            </Button>
           )}
         </div>
         <Drawer

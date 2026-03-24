@@ -45,7 +45,9 @@ import { SavedViewEntityTypeChip } from '@/components/views/SavedViewEntityTypeC
 import type { ColumnFiltersState } from '@tanstack/react-table'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { useTableState } from '@/hooks/useTableState'
-import { columnFiltersToQueryFilterClauses, paginationStateToPaginationInput, sortingStateToQuerySortClauses } from '@/utils/tableStateToApi'
+import { columnFiltersToQueryFilterClauses, sortingStateToQuerySortClauses } from '@/utils/tableStateToApi'
+import { LIST_PAGE_SIZE } from '@/utils/listPaging'
+import { useAccumulatedPagination } from '@/hooks/useAccumulatedPagination'
 import { CopyPlus, Eye, Share2 } from 'lucide-react'
 
 type SavedTaskViewTabProps = {
@@ -108,8 +110,6 @@ function SavedTaskViewTab({
   )
 
   const {
-    pagination,
-    setPagination,
     sorting,
     setSorting,
     filters,
@@ -125,6 +125,7 @@ function SavedTaskViewTab({
     defaultColumnOrder: baselineColumnOrder,
   })
 
+  const [fetchPageIndex, setFetchPageIndex] = useState(0)
   const [searchQuery, setSearchQuery] = useState(baselineSearch)
   const [isSaveViewOpen, setIsSaveViewOpen] = useState(false)
 
@@ -142,7 +143,7 @@ function SavedTaskViewTab({
     setSearchQuery(parameters.searchQuery ?? '')
     setColumnVisibility(parameters.columnVisibility ?? {})
     setColumnOrder(parameters.columnOrder ?? [])
-    setPagination({ pageSize: 10, pageIndex: 0 })
+    setFetchPageIndex(0)
   }, [
     persistedViewContentKey,
     filterDefinition,
@@ -155,7 +156,6 @@ function SavedTaskViewTab({
     setSearchQuery,
     setColumnVisibility,
     setColumnOrder,
-    setPagination,
   ])
 
   const viewMatchesBaseline = useMemo(
@@ -248,10 +248,25 @@ function SavedTaskViewTab({
 
   const apiFilters = useMemo(() => columnFiltersToQueryFilterClauses(filters), [filters])
   const apiSorting = useMemo(() => sortingStateToQuerySortClauses(sorting), [sorting])
-  const apiPagination = useMemo(() => paginationStateToPaginationInput(pagination), [pagination])
-  const searchInput = searchQuery
-    ? { searchText: searchQuery, includeProperties: true }
-    : undefined
+  const apiPagination = useMemo(
+    () => ({ pageIndex: fetchPageIndex, pageSize: LIST_PAGE_SIZE }),
+    [fetchPageIndex]
+  )
+  const searchInput = useMemo(
+    () => (searchQuery ? { searchText: searchQuery, includeProperties: true } : undefined),
+    [searchQuery]
+  )
+
+  const accumulationResetKey = useMemo(
+    () => JSON.stringify({
+      filters: apiFilters,
+      sorts: apiSorting,
+      search: searchInput,
+      root: rootIds,
+      assignee: assigneeId,
+    }),
+    [apiFilters, apiSorting, searchInput, rootIds, assigneeId]
+  )
 
   const { data: tasksData, refetch, totalCount, loading: tasksLoading } = useTasksPaginated(
     rootIds && assigneeId
@@ -265,9 +280,18 @@ function SavedTaskViewTab({
     }
   )
 
+  const { accumulated: accumulatedTasksRaw, loadMore, hasMore } = useAccumulatedPagination({
+    resetKey: accumulationResetKey,
+    pageData: tasksData,
+    pageIndex: fetchPageIndex,
+    setPageIndex: setFetchPageIndex,
+    totalCount,
+    loading: tasksLoading,
+  })
+
   const tasks: TaskViewModel[] = useMemo(() => {
-    if (!tasksData || tasksData.length === 0) return []
-    return tasksData.map((task) => ({
+    if (!accumulatedTasksRaw || accumulatedTasksRaw.length === 0) return []
+    return accumulatedTasksRaw.map((task) => ({
       id: task.id,
       name: task.title,
       description: task.description || undefined,
@@ -293,7 +317,7 @@ function SavedTaskViewTab({
         !task.assigneeTeam && task.assignees.length > 1 ? task.assignees.length - 1 : 0,
       properties: task.properties ?? [],
     }))
-  }, [tasksData])
+  }, [accumulatedTasksRaw])
 
   const viewParametersForSave = useMemo(() => stringifyViewParameters({
     rootLocationIds: rootIds ?? undefined,
@@ -331,9 +355,9 @@ function SavedTaskViewTab({
             />
           </Visibility>
         ) : undefined}
+        loadMore={loadMore}
+        hasMore={hasMore}
         tableState={{
-          pagination,
-          setPagination,
           sorting,
           setSorting,
           filters,
