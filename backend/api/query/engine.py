@@ -3,6 +3,7 @@ from typing import Any
 import strawberry
 from sqlalchemy import Select
 
+from api.context import Info
 from api.inputs import PaginationInput
 from api.query.inputs import QueryFilterClauseInput, QuerySearchInput, QuerySortClauseInput
 from api.query.property_sql import load_property_field_types
@@ -43,6 +44,7 @@ async def apply_unified_query(
     search: QuerySearchInput | None,
     pagination: PaginationInput | None,
     for_count: bool = False,
+    info: Info | None = None,
 ) -> Select[Any]:
     handler = get_entity_handler(entity)
     if not handler:
@@ -54,7 +56,9 @@ async def apply_unified_query(
     ctx: dict[str, Any] = {"needs_distinct": False}
 
     for clause in filters or []:
-        stmt = handler["apply_filter"](stmt, clause, ctx, property_field_types)
+        stmt = handler["apply_filter"](
+            stmt, clause, ctx, property_field_types, info=info
+        )
 
     if search is not None and search is not strawberry.UNSET:
         text = (search.search_text or "").strip()

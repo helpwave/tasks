@@ -133,16 +133,14 @@ function toQueryFilterValue(value: FilterValue): QueryFilterValueInput {
   const hasMulti = Array.isArray(multi) && multi.length > 0
   const hasSingle = parameter.uuidValue != null && String(parameter.uuidValue) !== ''
   let searchTagsUnknownType: unknown[] = []
-  if (hasMulti) {
-    searchTagsUnknownType = multi as unknown[]
-  } else if (hasSingle) {
-    searchTagsUnknownType = [parameter.uuidValue as unknown]
-  } else if (Array.isArray(raw['searchTags']) && raw['searchTags'].length > 0) {
-    searchTagsUnknownType = raw['searchTags'] as unknown[]
-  } else if (Array.isArray(raw['searchTagsContains']) && raw['searchTagsContains'].length > 0) {
-    searchTagsUnknownType = raw['searchTagsContains'] as unknown[]
-  } else if (raw['searchTag'] != null) {
-    searchTagsUnknownType = [raw['searchTag']]
+  if (!hasMulti && !hasSingle) {
+    if (Array.isArray(raw['searchTags']) && raw['searchTags'].length > 0) {
+      searchTagsUnknownType = raw['searchTags'] as unknown[]
+    } else if (Array.isArray(raw['searchTagsContains']) && raw['searchTagsContains'].length > 0) {
+      searchTagsUnknownType = raw['searchTagsContains'] as unknown[]
+    } else if (raw['searchTag'] != null) {
+      searchTagsUnknownType = [raw['searchTag']]
+    }
   }
   const searchTags: string[] = searchTagsUnknownType.map((t) => String(t))
   const base: QueryFilterValueInput = {
@@ -154,8 +152,10 @@ function toQueryFilterValue(value: FilterValue): QueryFilterValueInput {
     dateMin: toGraphqlDateInput(parameter.dateMin),
     dateMax: toGraphqlDateInput(parameter.dateMax),
     stringValues: searchTags.length > 0 ? searchTags : undefined,
+    uuidValue: hasSingle ? String(parameter.uuidValue) : undefined,
+    uuidValues: hasMulti ? (multi as string[]) : undefined,
   }
-  if (value.dataType === 'singleTag' && value.operator === 'equals' && searchTags.length === 1) {
+  if (value.dataType === 'singleTag' && value.operator === 'equals' && searchTags.length === 1 && !hasSingle) {
     base.stringValue = searchTags[0]
     base.stringValues = undefined
   }

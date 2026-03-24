@@ -243,7 +243,7 @@
   "readOnlyView": "Read-only",
   "retakeSurvey": "Retake Survey",
   "saveView": "Save quick access",
-  "saveViewDescription": "Name this quick access. Filters, sorting, search, and location scope are stored.",
+  "saveViewDescription": "Name this quick access. Filters, sorting, search, and location are stored.",
   "saveViewOverwriteCurrent": "Overwrite current quick access",
   "saveViewAsNew": "Save as new quick access",
   "saveViewDescriptionFromSystemList": "Creates a new quick access entry from this layout. This page is fixed by the app and is not saved in place — open it from the sidebar when you need it.",

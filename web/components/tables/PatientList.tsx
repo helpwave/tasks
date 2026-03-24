@@ -35,6 +35,7 @@ import { replaceSavedViewInMySavedViewsCache } from '@/utils/savedViewsCache'
 import { useDeferredColumnOrderChange } from '@/hooks/useDeferredColumnOrderChange'
 import { columnIdsFromColumnDefs, sanitizeColumnOrderForKnownColumns } from '@/utils/columnOrder'
 import {
+  hasActiveLocationFilter,
   normalizedColumnOrderForViewCompare,
   normalizedVisibilityForViewCompare,
   serializeColumnFiltersForView,
@@ -124,6 +125,11 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
   const baselineColumnVisibility = useMemo(() => viewDefaultColumnVisibility ?? {}, [viewDefaultColumnVisibility])
   const baselineColumnOrder = useMemo(() => viewDefaultColumnOrder ?? [], [viewDefaultColumnOrder])
 
+  const hasLocationFilter = useMemo(
+    () => hasActiveLocationFilter(filters),
+    [filters]
+  )
+
   const propertyColumnIds = useMemo(
     () => getPropertyColumnIds(propertyDefinitionsData, PropertyEntity.Patient),
     [propertyDefinitionsData]
@@ -206,7 +212,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
           sortDefinition: serializeSortingForView(sorting),
           parameters: stringifyViewParameters({
             rootLocationIds: effectiveRootLocationIds ?? undefined,
-            locationId: locationId ?? undefined,
+            locationId: hasLocationFilter ? undefined : (locationId ?? undefined),
             searchQuery: searchQuery || undefined,
             columnVisibility,
             columnOrder,
@@ -220,6 +226,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
     filters,
     sorting,
     effectiveRootLocationIds,
+    hasLocationFilter,
     locationId,
     searchQuery,
     columnVisibility,
@@ -260,8 +267,10 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
   const lastTotalCountRef = useRef<number | undefined>(undefined)
   const { data: patientsData, refetch, totalCount, loading: patientsLoading } = usePatientsPaginated(
     {
-      locationId: locationId || undefined,
-      rootLocationIds: !locationId && effectiveRootLocationIds && effectiveRootLocationIds.length > 0 ? effectiveRootLocationIds : undefined,
+      locationId: hasLocationFilter ? undefined : (locationId || undefined),
+      rootLocationIds: hasLocationFilter || locationId
+        ? undefined
+        : (effectiveRootLocationIds && effectiveRootLocationIds.length > 0 ? effectiveRootLocationIds : undefined),
       states: patientStates,
     },
     {
@@ -778,7 +787,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
           sortDefinition={serializeSortingForView(sorting)}
           parameters={stringifyViewParameters({
             rootLocationIds: effectiveRootLocationIds ?? undefined,
-            locationId: locationId ?? undefined,
+            locationId: hasLocationFilter ? undefined : (locationId ?? undefined),
             searchQuery: searchQuery || undefined,
             columnVisibility,
             columnOrder,

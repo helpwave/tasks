@@ -423,6 +423,7 @@ class TaskQuery:
             filters=filters if filters is not None and not is_unset(filters) else None,
             sorts=sorts if sorts is not None and not is_unset(sorts) else None,
             search=search if search is not None and not is_unset(search) else None,
+            info=info,
         )
 
     @strawberry.field
@@ -650,6 +651,7 @@ class TaskQuery:
             filters=filters if filters is not None and not is_unset(filters) else None,
             sorts=sorts if sorts is not None and not is_unset(sorts) else None,
             search=search if search is not None and not is_unset(search) else None,
+            info=info,
         )
 
 

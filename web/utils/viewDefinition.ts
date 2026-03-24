@@ -16,6 +16,18 @@ export type ViewParameters = {
   columnOrder?: ColumnOrderState,
 }
 
+export function hasActiveLocationFilter(filters: ColumnFiltersState): boolean {
+  return filters.some(f => {
+    if (f.id !== 'position' && f.id !== 'locationSubtree') return false
+    const v = f.value as FilterValue | undefined
+    if (!v?.parameter) return false
+    const p = v.parameter
+    if (p.uuidValue != null && String(p.uuidValue) !== '') return true
+    if (Array.isArray(p.uuidValues) && p.uuidValues.length > 0) return true
+    return false
+  })
+}
+
 export function normalizedVisibilityForViewCompare(v: VisibilityState): string {
   const keys = Object.keys(v).sort()
   const sorted: Record<string, boolean> = {}
@@ -124,6 +136,8 @@ export function deserializeColumnFiltersFromView(json: string): ColumnFiltersSta
   try {
     const mappedColumnFilter = JSON.parse(json) as Record<string, unknown>[]
     return mappedColumnFilter.map((filter): ColumnFilter => {
+      const filterId = filter['id']
+      const resolvedId = filterId === 'locationSubtree' ? 'position' : filterId
       const value = filter['value'] as Record<string, unknown>
       const parameter = value['parameter'] as Record<string, unknown>
       const dateValueRaw = parameter['dateValue'] ?? parameter['compareDate']
@@ -153,6 +167,7 @@ export function deserializeColumnFiltersFromView(json: string): ColumnFiltersSta
       }
       return {
         ...filter,
+        id: resolvedId as string,
         value: mappedValue,
       } as ColumnFilter
     })

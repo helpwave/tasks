@@ -5,7 +5,11 @@ import { usePatients } from '@/data'
 import { PatientState } from '@/api/gql/generated'
 import type { QuerySearchInput } from '@/api/gql/generated'
 import { columnFiltersToQueryFilterClauses, sortingStateToQuerySortClauses } from '@/utils/tableStateToApi'
-import { deserializeColumnFiltersFromView, deserializeSortingFromView } from '@/utils/viewDefinition'
+import {
+  deserializeColumnFiltersFromView,
+  deserializeSortingFromView,
+  hasActiveLocationFilter
+} from '@/utils/viewDefinition'
 import type { ViewParameters } from '@/utils/viewDefinition'
 import { TaskList } from '@/components/tables/TaskList'
 import type { TaskViewModel } from '@/components/tables/TaskList'
@@ -18,10 +22,6 @@ type PatientViewTasksPanelProps = {
   parameters: ViewParameters,
 }
 
-/**
- * Task universe derived from the same patient query as the patient tab (patients matching the
- * saved filters + scope), flattened to tasks — not a separate client hack.
- */
 export function PatientViewTasksPanel({
   filterDefinitionJson,
   sortDefinitionJson,
@@ -31,6 +31,10 @@ export function PatientViewTasksPanel({
   const sorting = deserializeSortingFromView(sortDefinitionJson)
   const apiFilters = useMemo(() => columnFiltersToQueryFilterClauses(filters), [filters])
   const apiSorting = useMemo(() => sortingStateToQuerySortClauses(sorting), [sorting])
+  const hasLocationFilter = useMemo(
+    () => hasActiveLocationFilter(filters),
+    [filters]
+  )
 
   const allPatientStates: PatientState[] = useMemo(() => [
     PatientState.Admitted,
@@ -58,8 +62,10 @@ export function PatientViewTasksPanel({
     : undefined
 
   const { data: patientsData, loading, refetch } = usePatients({
-    locationId: parameters.locationId,
-    rootLocationIds: parameters.rootLocationIds && parameters.rootLocationIds.length > 0 ? parameters.rootLocationIds : undefined,
+    locationId: hasLocationFilter ? undefined : parameters.locationId,
+    rootLocationIds: hasLocationFilter || parameters.locationId
+      ? undefined
+      : (parameters.rootLocationIds && parameters.rootLocationIds.length > 0 ? parameters.rootLocationIds : undefined),
     states: patientStates,
     filters: apiFilters.length > 0 ? apiFilters : undefined,
     sorts: apiSorting.length > 0 ? apiSorting : undefined,

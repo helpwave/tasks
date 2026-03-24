@@ -48,6 +48,7 @@ def unified_list_query(
                 search=search,
                 pagination=pagination,
                 for_count=False,
+                info=info,
             )
 
             db = info.context.db
@@ -67,6 +68,7 @@ async def count_unified_query(
     filters: list[QueryFilterClauseInput] | None,
     sorts: list[QuerySortClauseInput] | None,
     search: QuerySearchInput | None,
+    info: Info | None = None,
 ) -> int:
     stmt = await apply_unified_query(
         stmt,
@@ -77,6 +79,7 @@ async def count_unified_query(
         search=search,
         pagination=None,
         for_count=True,
+        info=info,
     )
     subquery = stmt.subquery()
     count_query = select(func.count(func.distinct(subquery.c.id)))

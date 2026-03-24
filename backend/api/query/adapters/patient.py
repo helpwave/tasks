@@ -3,6 +3,8 @@ from typing import Any
 from sqlalchemy import Select, and_, case, or_
 from sqlalchemy.orm import aliased
 
+from api.context import Info
+from api.errors import raise_forbidden
 from api.inputs import PatientState, Sex, SortDirection
 from api.query.enums import (
     QueryOperator,
@@ -19,6 +21,10 @@ from api.query.graphql_types import (
 )
 from api.query.inputs import QueryFilterClauseInput, QuerySearchInput, QuerySortClauseInput
 from api.query.property_sql import join_property_value
+from api.query.patient_location_scope import (
+    apply_patient_subtree_filter_from_cte,
+    build_location_descendants_cte,
+)
 from api.query.sql_expr import location_title_expr, patient_display_name_expr
 from database import models
 
@@ -54,6 +60,7 @@ def apply_patient_filter_clause(
     clause: QueryFilterClauseInput,
     ctx: dict[str, Any],
     property_field_types: dict[str, str],
+    info: Info | None = None,
 ) -> Select[Any]:
     key = clause.field_key
     op = clause.operator
@@ -124,11 +131,43 @@ def apply_patient_filter_clause(
             query = query.where(c)
         return query
     if key == "position":
+        if op in (QueryOperator.EQ, QueryOperator.IN) and val:
+            has_uuid = (val.uuid_value is not None and val.uuid_value != "") or (
+                val.uuid_values is not None and len(val.uuid_values) > 0
+            )
+            if has_uuid:
+                if not info or not hasattr(info, "context"):
+                    return query.where(False)
+                accessible = getattr(info.context, "_accessible_location_ids", None)
+                if accessible is None:
+                    return query.where(False)
+                if op == QueryOperator.EQ:
+                    if not val.uuid_value:
+                        return query
+                    lid = val.uuid_value
+                    if lid not in accessible:
+                        raise_forbidden()
+                    filter_cte = build_location_descendants_cte(
+                        [lid], cte_name="filter_loc_subtree"
+                    )
+                    ctx["needs_distinct"] = True
+                    return apply_patient_subtree_filter_from_cte(query, filter_cte)
+                if op == QueryOperator.IN:
+                    ids: list[str] = []
+                    if val.uuid_values:
+                        ids = [x for x in val.uuid_values if x in accessible]
+                    elif val.uuid_value and val.uuid_value in accessible:
+                        ids = [val.uuid_value]
+                    if not ids:
+                        return query.where(False)
+                    filter_cte = build_location_descendants_cte(
+                        ids, cte_name="filter_loc_subtree_m"
+                    )
+                    ctx["needs_distinct"] = True
+                    return apply_patient_subtree_filter_from_cte(query, filter_cte)
         query, ln = _ensure_position_join(query, ctx)
         expr = location_title_expr(ln)
-        if op in (QueryOperator.EQ, QueryOperator.IN) and val and val.uuid_value:
-            query = query.where(models.Patient.position_id == val.uuid_value)
-        elif op in (
+        if op in (
             QueryOperator.CONTAINS,
             QueryOperator.STARTS_WITH,
             QueryOperator.ENDS_WITH,
@@ -136,10 +175,12 @@ def apply_patient_filter_clause(
             c = apply_ops_to_column(expr, op, val)
             if c is not None:
                 query = query.where(c)
-        elif op in (QueryOperator.IS_NULL, QueryOperator.IS_NOT_NULL):
+            return query
+        if op in (QueryOperator.IS_NULL, QueryOperator.IS_NOT_NULL):
             c = apply_ops_to_column(models.Patient.position_id, op, None)
             if c is not None:
                 query = query.where(c)
+            return query
         return query
 
     return query

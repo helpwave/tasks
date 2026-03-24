@@ -2,6 +2,7 @@ from typing import Any
 
 from sqlalchemy import Select, or_
 
+from api.context import Info
 from api.inputs import SortDirection
 from api.query.enums import QueryOperator, QueryableFieldKind, QueryableValueType
 from api.query.field_ops import apply_ops_to_column
@@ -16,6 +17,7 @@ def apply_user_filter_clause(
     clause: QueryFilterClauseInput,
     ctx: dict[str, Any],
     property_field_types: dict[str, str],
+    info: Info | None = None,
 ) -> Select[Any]:
     key = clause.field_key
     op = clause.operator

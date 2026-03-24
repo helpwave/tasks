@@ -12,6 +12,8 @@ import { type LocationType, PatientState } from '@/api/gql/generated'
 import { useLocationNode, usePatients, useTasks } from '@/data'
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/router'
+import type { ColumnFiltersState } from '@tanstack/react-table'
+import type { FilterValue } from '@helpwave/hightide'
 import { LocationChips } from '@/components/locations/LocationChips'
 import { LOCATION_PATH_SEPARATOR } from '@/utils/location'
 
@@ -44,6 +46,16 @@ const LocationPage: NextPage = () => {
   const isLocationError = !!locationError
 
   const isTeamLocation = locationData?.locationNode?.kind === 'TEAM'
+
+  const viewDefaultLocationFilters = useMemo((): ColumnFiltersState => {
+    if (!id) return []
+    const value: FilterValue = {
+      dataType: 'singleTag',
+      operator: 'equals',
+      parameter: { uuidValue: id },
+    }
+    return [{ id: 'position', value }]
+  }, [id])
 
   const { data: patientsData, refetch: refetchPatients, loading: isLoadingPatients } = usePatients(
     { rootLocationIds: id ? [id] : undefined },
@@ -196,7 +208,7 @@ const LocationPage: NextPage = () => {
                   {translation('errorOccurred')}
                 </div>
               ) : (
-                <PatientList locationId={id || undefined} />
+                <PatientList key={id} viewDefaultFilters={viewDefaultLocationFilters} />
               )}
             </TabPanel>
             <TabPanel label={translation('tasks')} className="flex-col-0 min-h-48 overflow-auto">

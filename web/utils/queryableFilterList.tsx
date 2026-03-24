@@ -3,6 +3,7 @@ import type { FilterListItem, FilterListPopUpBuilderProps } from '@helpwave/high
 import type { DataType } from '@helpwave/hightide'
 import type { QueryableField } from '@/api/gql/generated'
 import { FieldType, QueryableFieldKind, QueryableValueType } from '@/api/gql/generated'
+import { LocationSubtreeFilterPopUp } from '@/components/tables/LocationSubtreeFilterPopUp'
 import { UserSelectFilterPopUp } from '@/components/tables/UserSelectFilterPopUp'
 
 function valueKindToDataType(field: QueryableField): DataType {
@@ -18,6 +19,11 @@ function valueKindToDataType(field: QueryableField): DataType {
   return 'text'
 }
 
+function filterFieldDataType(field: QueryableField): DataType {
+  if (field.key === 'position') return 'singleTag'
+  return valueKindToDataType(field)
+}
+
 export type QueryableSortListItem = Pick<FilterListItem, 'id' | 'label' | 'dataType'>
 
 export function queryableFieldsToFilterListItems(
@@ -25,7 +31,7 @@ export function queryableFieldsToFilterListItems(
   propertyFieldTypeByDefId: Map<string, FieldType>
 ): FilterListItem[] {
   return fields.filter(field => field.filterable).map((field): FilterListItem => {
-    const dataType = valueKindToDataType(field)
+    const dataType = filterFieldDataType(field)
     const tags = field.choice
       ? field.choice.optionLabels.map((label, idx) => ({
         label,
@@ -44,7 +50,9 @@ export function queryableFieldsToFilterListItems(
       tags,
       popUpBuilder: ft === FieldType.FieldTypeUser
         ? (props: FilterListPopUpBuilderProps): ReactNode => (<UserSelectFilterPopUp {...props} />)
-        : undefined,
+        : field.key === 'position'
+          ? (props: FilterListPopUpBuilderProps): ReactNode => (<LocationSubtreeFilterPopUp {...props} />)
+          : undefined,
     }
   })
 }

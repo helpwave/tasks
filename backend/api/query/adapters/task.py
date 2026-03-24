@@ -3,6 +3,7 @@ from typing import Any
 from sqlalchemy import Select, and_, case, exists, func, or_, select
 from sqlalchemy.orm import aliased
 
+from api.context import Info
 from api.inputs import SortDirection
 from api.query.enums import (
     QueryOperator,
@@ -129,6 +130,7 @@ def apply_task_filter_clause(
     clause: QueryFilterClauseInput,
     ctx: dict[str, Any],
     property_field_types: dict[str, str],
+    info: Info | None = None,
 ) -> Select[Any]:
     key = clause.field_key
     op = clause.operator

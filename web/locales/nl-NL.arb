@@ -145,7 +145,7 @@
   "readOnlyView": "Read-only",
   "retakeSurvey": "Enquête opnieuw doen",
   "saveView": "Save view",
-  "saveViewDescription": "Name this view. Filters, sorting, search, and location scope are stored.",
+  "saveViewDescription": "Name this view. Filters, sorting, search, and location are stored.",
   "saveViewOverwriteCurrent": "Overwrite current view",
   "saveViewAsNew": "Save as new view",
   "saveViewDescriptionFromSystemList": "Creates a new quick access entry from this layout. This page is fixed by the app and is not saved in place — open it from the sidebar when you need it.",
