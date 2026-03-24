@@ -25,6 +25,11 @@ import {
   type UpdateSavedViewMutationVariables
 } from '@/api/gql/generated'
 import { getParsedDocument } from '@/data/hooks/queryHelpers'
+import {
+  appendSavedViewToMySavedViewsCache,
+  removeSavedViewFromMySavedViewsCache,
+  replaceSavedViewInMySavedViewsCache
+} from '@/utils/savedViewsCache'
 import type { ColumnDef } from '@tanstack/table-core'
 import { EditIcon, ExternalLink, Trash2, Share2, CopyPlus } from 'lucide-react'
 import type { MySavedViewsQuery, SavedViewEntityType, SavedViewVisibility } from '@/api/gql/generated'
@@ -69,15 +74,41 @@ const ViewsSettingsPage: NextPage = () => {
   const savedViewsRefetch = { query: getParsedDocument(MySavedViewsDocument) }
   const [updateSavedView] = useMutation<UpdateSavedViewMutation, UpdateSavedViewMutationVariables>(
     getParsedDocument(UpdateSavedViewDocument),
-    { refetchQueries: [savedViewsRefetch] }
+    {
+      refetchQueries: [savedViewsRefetch],
+      awaitRefetchQueries: true,
+      update(cache, { data }) {
+        const view = data?.updateSavedView
+        if (view) {
+          replaceSavedViewInMySavedViewsCache(cache, view)
+        }
+      },
+    }
   )
   const [deleteSavedView] = useMutation<DeleteSavedViewMutation, DeleteSavedViewMutationVariables>(
     getParsedDocument(DeleteSavedViewDocument),
-    { refetchQueries: [savedViewsRefetch] }
+    {
+      refetchQueries: [savedViewsRefetch],
+      awaitRefetchQueries: true,
+      update(cache, { data }, options) {
+        if (data?.deleteSavedView && options.variables?.id) {
+          removeSavedViewFromMySavedViewsCache(cache, options.variables.id)
+        }
+      },
+    }
   )
   const [duplicateSavedView] = useMutation<DuplicateSavedViewMutation, DuplicateSavedViewMutationVariables>(
     getParsedDocument(DuplicateSavedViewDocument),
-    { refetchQueries: [savedViewsRefetch] }
+    {
+      refetchQueries: [savedViewsRefetch],
+      awaitRefetchQueries: true,
+      update(cache, { data }) {
+        const view = data?.duplicateSavedView
+        if (view) {
+          appendSavedViewToMySavedViewsCache(cache, view)
+        }
+      },
+    }
   )
 
   const copyLink = useCallback((id: string) => {

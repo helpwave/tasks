@@ -31,6 +31,7 @@ import {
   type UpdateSavedViewMutationVariables
 } from '@/api/gql/generated'
 import { getParsedDocument } from '@/data/hooks/queryHelpers'
+import { replaceSavedViewInMySavedViewsCache } from '@/utils/savedViewsCache'
 import { useDeferredColumnOrderChange } from '@/hooks/useDeferredColumnOrderChange'
 import { columnIdsFromColumnDefs, sanitizeColumnOrderForKnownColumns } from '@/utils/columnOrder'
 import {
@@ -161,12 +162,19 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
     UpdateSavedViewMutation,
     UpdateSavedViewMutationVariables
   >(getParsedDocument(UpdateSavedViewDocument), {
+    awaitRefetchQueries: true,
     refetchQueries: savedViewId
       ? [
         { query: getParsedDocument(SavedViewDocument), variables: { id: savedViewId } },
         { query: getParsedDocument(MySavedViewsDocument) },
       ]
       : [{ query: getParsedDocument(MySavedViewsDocument) }],
+    update(cache, { data }) {
+      const view = data?.updateSavedView
+      if (view) {
+        replaceSavedViewInMySavedViewsCache(cache, view)
+      }
+    },
   })
 
   const handleDiscardViewChanges = useCallback(() => {

@@ -14,6 +14,7 @@ import {
 } from '@/api/gql/generated'
 import { getParsedDocument } from '@/data/hooks/queryHelpers'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
+import { appendSavedViewToMySavedViewsCache } from '@/utils/savedViewsCache'
 
 type SaveViewDialogProps = {
   isOpen: boolean,
@@ -51,6 +52,13 @@ export function SaveViewDialog({
     CreateSavedViewMutationVariables
   >(getParsedDocument(CreateSavedViewDocument), {
     refetchQueries: [{ query: getParsedDocument(MySavedViewsDocument) }],
+    awaitRefetchQueries: true,
+    update(cache, { data }) {
+      const view = data?.createSavedView
+      if (view) {
+        appendSavedViewToMySavedViewsCache(cache, view)
+      }
+    },
     onCompleted(data) {
       onCreated?.(data?.createSavedView?.id)
       handleClose()

@@ -554,25 +554,27 @@ export const Sidebar = ({ isOpen, onClose, ...props }: SidebarProps) => {
             <span className="flex grow">{translation('patients')}</span>
             {context?.totalPatientsCount !== undefined && (<span className="text-description">{context.totalPatientsCount}</span>)}
           </SidebarLink>
-          <ExpandableRoot
-            className="shadow-none"
-            isExpanded={isSavedViewsOpen}
-            onExpandedChange={setIsSavedViewsOpen}
-          >
-            <ExpandableHeader className="px-2.5 py-1.5">
-              <div className="flex-row-2">
-                <Rabbit className="size-5" />
-                {translation('savedViews')}
-              </div>
-            </ExpandableHeader>
-            <ExpandableContent className="!max-h-none !h-auto !overflow-visible gap-y-0 pl-4 p-0">
-              {savedViews.map((v: MySavedViewsQuery['mySavedViews'][number]) => (
-                <SidebarLink key={v.id} href={`/view/${v.id}`} onClick={onClose}>
-                  {v.name}
-                </SidebarLink>
-              ))}
-            </ExpandableContent>
-          </ExpandableRoot>
+          {savedViews.length > 0 && (
+            <ExpandableRoot
+              className="shadow-none"
+              isExpanded={isSavedViewsOpen}
+              onExpandedChange={setIsSavedViewsOpen}
+            >
+              <ExpandableHeader className="px-2.5 py-1.5">
+                <div className="flex-row-2">
+                  <Rabbit className="size-5" />
+                  {translation('savedViews')}
+                </div>
+              </ExpandableHeader>
+              <ExpandableContent className="!max-h-none !h-auto !overflow-visible gap-y-0 pl-4 p-0">
+                {savedViews.map((v: MySavedViewsQuery['mySavedViews'][number]) => (
+                  <SidebarLink key={v.id} href={`/view/${v.id}`} onClick={onClose}>
+                    {v.name}
+                  </SidebarLink>
+                ))}
+              </ExpandableContent>
+            </ExpandableRoot>
+          )}
           {(context?.teams?.length ?? 0) > 0 && (
             <ExpandableRoot
               className="shadow-none"

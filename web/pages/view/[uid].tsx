@@ -29,6 +29,7 @@ import {
   SavedViewEntityType
 } from '@/api/gql/generated'
 import { getParsedDocument } from '@/data/hooks/queryHelpers'
+import { appendSavedViewToMySavedViewsCache, replaceSavedViewInMySavedViewsCache } from '@/utils/savedViewsCache'
 import {
   deserializeColumnFiltersFromView,
   deserializeSortingFromView,
@@ -191,10 +192,17 @@ function SavedTaskViewTab({
     UpdateSavedViewMutation,
     UpdateSavedViewMutationVariables
   >(getParsedDocument(UpdateSavedViewDocument), {
+    awaitRefetchQueries: true,
     refetchQueries: [
       { query: getParsedDocument(SavedViewDocument), variables: { id: viewId } },
       { query: getParsedDocument(MySavedViewsDocument) },
     ],
+    update(cache, { data }) {
+      const view = data?.updateSavedView
+      if (view) {
+        replaceSavedViewInMySavedViewsCache(cache, view)
+      }
+    },
   })
 
   const handleDiscardTaskView = useCallback(() => {
@@ -351,6 +359,13 @@ const ViewPage: NextPage = () => {
     DuplicateSavedViewMutationVariables
   >(getParsedDocument(DuplicateSavedViewDocument), {
     refetchQueries: [{ query: getParsedDocument(MySavedViewsDocument) }],
+    awaitRefetchQueries: true,
+    update(cache, { data }) {
+      const view = data?.duplicateSavedView
+      if (view) {
+        appendSavedViewToMySavedViewsCache(cache, view)
+      }
+    },
   })
 
   const handleDuplicate = useCallback(async () => {
