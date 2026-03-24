@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { usePatients } from '@/data'
 import { PatientState } from '@/api/gql/generated'
 import type { QuerySearchInput } from '@/api/gql/generated'
@@ -20,12 +20,14 @@ type PatientViewTasksPanelProps = {
   filterDefinitionJson: string,
   sortDefinitionJson: string,
   parameters: ViewParameters,
+  refreshVersion?: number,
 }
 
 export function PatientViewTasksPanel({
   filterDefinitionJson,
   sortDefinitionJson,
   parameters,
+  refreshVersion,
 }: PatientViewTasksPanelProps) {
   const filters = deserializeColumnFiltersFromView(filterDefinitionJson)
   const sorting = deserializeSortingFromView(sortDefinitionJson)
@@ -106,6 +108,11 @@ export function PatientViewTasksPanel({
       }))
     })
   }, [patientsData])
+
+  useEffect(() => {
+    if (refreshVersion === undefined || refreshVersion <= 0) return
+    refetch()
+  }, [refreshVersion, refetch])
 
   return (
     <TaskList

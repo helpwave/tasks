@@ -27,13 +27,16 @@ function filterFieldDataType(field: QueryableField): DataType {
 }
 
 export type QueryableSortListItem = Pick<FilterListItem, 'id' | 'label' | 'dataType'>
+export type QueryableFieldLabelResolver = (field: QueryableField) => string
 
 export function queryableFieldsToFilterListItems(
   fields: QueryableField[],
-  propertyFieldTypeByDefId: Map<string, FieldType>
+  propertyFieldTypeByDefId: Map<string, FieldType>,
+  resolveLabel?: QueryableFieldLabelResolver
 ): FilterListItem[] {
   return fields.filter(field => field.filterable).map((field): FilterListItem => {
     const dataType = filterFieldDataType(field)
+    const label = resolveLabel ? resolveLabel(field) : field.label
     const tags = field.choice
       ? field.choice.optionLabels.map((label, idx) => ({
         label,
@@ -49,20 +52,20 @@ export function queryableFieldsToFilterListItems(
 
     return {
       id: field.key,
-      label: field.label,
+      label,
       dataType,
       tags,
       activeLabelBuilder: field.key === 'position'
         ? (v: FilterValue): ReactNode => (
           <>
-            <span className="font-bold">{field.label}</span>
+            <span className="font-bold">{label}</span>
             <LocationFilterActiveLabel value={v} />
           </>
         )
         : isUserFilterUi
           ? (v: FilterValue): ReactNode => (
             <>
-              <span className="font-bold">{field.label}</span>
+              <span className="font-bold">{label}</span>
               <AssigneeFilterActiveLabel value={v} />
             </>
           )
@@ -77,13 +80,14 @@ export function queryableFieldsToFilterListItems(
 }
 
 export function queryableFieldsToSortingListItems(
-  fields: QueryableField[]
+  fields: QueryableField[],
+  resolveLabel?: QueryableFieldLabelResolver
 ): QueryableSortListItem[] {
   return fields
     .filter(field => field.sortable && field.sortDirections.length > 0)
     .map((field): QueryableSortListItem => ({
       id: field.key,
-      label: field.label,
+      label: resolveLabel ? resolveLabel(field) : field.label,
       dataType: valueKindToDataType(field),
     }))
 }

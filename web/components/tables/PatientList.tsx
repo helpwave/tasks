@@ -5,7 +5,7 @@ import { Chip, FillerCell, HelpwaveLogo, LoadingContainer, SearchBar, ProgressIn
 import clsx from 'clsx'
 import { LayoutGrid, PlusIcon, Table2 } from 'lucide-react'
 import type { LocationType } from '@/api/gql/generated'
-import { Sex, PatientState, type GetPatientsQuery, type TaskType, PropertyEntity, FieldType } from '@/api/gql/generated'
+import { Sex, PatientState, type GetPatientsQuery, type TaskType, PropertyEntity, FieldType, type QueryableField } from '@/api/gql/generated'
 import { usePropertyDefinitions, usePatientsPaginated, useQueryableFields, useRefreshingEntityIds } from '@/data'
 import { PatientDetailView } from '@/components/patients/PatientDetailView'
 import { LocationChips } from '@/components/locations/LocationChips'
@@ -24,6 +24,7 @@ import { PatientCardView } from '@/components/patients/PatientCardView'
 import { queryableFieldsToFilterListItems, queryableFieldsToSortingListItems } from '@/utils/queryableFilterList'
 import { getPropertyFilterFn as getPropertyDatatype } from '@/utils/propertyFilterMapping'
 import { UserSelectFilterPopUp } from './UserSelectFilterPopUp'
+import { ExpandableTextBlock } from '@/components/common/ExpandableTextBlock'
 import { SaveViewDialog } from '@/components/views/SaveViewDialog'
 import { SaveViewActionsMenu } from '@/components/views/SaveViewActionsMenu'
 import {
@@ -103,9 +104,10 @@ type PatientListProps = {
   /** When set (e.g. on `/view/:id`), overwrite updates this saved view. */
   savedViewId?: string,
   onSavedViewCreated?: (id: string) => void,
+  onPatientUpdated?: () => void,
 }
 
-export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initialPatientId, onInitialPatientOpened, acceptedStates: _acceptedStates, rootLocationIds, locationId, viewDefaultFilters, viewDefaultSorting, viewDefaultSearchQuery, viewDefaultColumnVisibility, viewDefaultColumnOrder, readOnly: _readOnly, hideSaveView, savedViewId, onSavedViewCreated }, ref) => {
+export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initialPatientId, onInitialPatientOpened, acceptedStates: _acceptedStates, rootLocationIds, locationId, viewDefaultFilters, viewDefaultSorting, viewDefaultSearchQuery, viewDefaultColumnVisibility, viewDefaultColumnOrder, readOnly: _readOnly, hideSaveView, savedViewId, onSavedViewCreated, onPatientUpdated }, ref) => {
   const translation = useTasksTranslation()
   const { locale } = useLocale()
   const { selectedRootLocationIds } = useTasksContext()
@@ -579,6 +581,11 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
     })),
   ], [translation, patientPropertyColumns, refreshingPatientIds, rowLoadingCell, dateFormat])
 
+  const propertyFieldTypeByDefId = useMemo(
+    () => new Map(propertyDefinitionsData?.propertyDefinitions.map(d => [d.id, d.fieldType]) ?? []),
+    [propertyDefinitionsData]
+  )
+
   const renderPatientCardExtras = useCallback((patient: PatientViewModel): ReactNode => {
     const rows: ReactNode[] = []
     for (const col of columns) {
@@ -586,28 +593,55 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       if (!id || PATIENT_CARD_PRIMARY_COLUMN_IDS.has(id)) continue
       if (columnVisibility[id] === false) continue
       if (!col.cell) continue
+      const isExpandableTextProperty = id.startsWith('property_') &&
+        propertyFieldTypeByDefId.get(id.replace('property_', '')) === FieldType.FieldTypeText
       const headerLabel = typeof col.header === 'string' ? col.header : id
       const cell = (col.cell as (p: { row: { original: PatientViewModel } }) => ReactNode)({ row: { original: patient } })
+      const propertyId = id.startsWith('property_') ? id.replace('property_', '') : null
+      const propertyTextValue = propertyId
+        ? patient.properties?.find(property => property.definition.id === propertyId)?.textValue
+        : null
       rows.push(
         <div key={id} className="flex flex-col gap-0.5 sm:flex-row sm:gap-3 sm:items-start text-left">
           <span className="text-description shrink-0 min-w-[7rem]">{headerLabel}</span>
-          <div className="min-w-0 break-words">{cell}</div>
+          <div className="min-w-0 break-words">
+            {isExpandableTextProperty ? (
+              <ExpandableTextBlock>{propertyTextValue ?? ''}</ExpandableTextBlock>
+            ) : cell}
+          </div>
         </div>
       )
     }
     if (rows.length === 0) return null
     return <div className="mt-3 pt-3 border-t border-border space-y-2 w-full">{rows}</div>
-  }, [columns, columnVisibility])
+  }, [columns, columnVisibility, propertyFieldTypeByDefId])
 
-  const propertyFieldTypeByDefId = useMemo(
-    () => new Map(propertyDefinitionsData?.propertyDefinitions.map(d => [d.id, d.fieldType]) ?? []),
-    [propertyDefinitionsData]
-  )
+  const resolvePatientQueryableLabel = useCallback((field: QueryableField): string => {
+    if (field.propertyDefinitionId) return field.label
+    const key = field.key === 'locationSubtree' ? 'position' : field.key
+    const translatedByKey: Partial<Record<string, string>> = {
+      'name': translation('name'),
+      'firstname': translation('firstName'),
+      'lastname': translation('lastName'),
+      'birthdate': translation('birthdate'),
+      'sex': translation('sex'),
+      'state': translation('status'),
+      'position': translation('location'),
+      'location-CLINIC': translation('locationClinic'),
+      'location-WARD': translation('locationWard'),
+      'location-ROOM': translation('locationRoom'),
+      'location-BED': translation('locationBed'),
+      'tasks': translation('tasks'),
+      'updated': translation('updated'),
+      'updateDate': translation('updated'),
+    }
+    return translatedByKey[key] ?? field.label
+  }, [translation])
 
   const availableFilters: FilterListItem[] = useMemo(() => {
     const raw = queryableFieldsData?.queryableFields
     if (raw?.length) {
-      return queryableFieldsToFilterListItems(raw, propertyFieldTypeByDefId)
+      return queryableFieldsToFilterListItems(raw, propertyFieldTypeByDefId, resolvePatientQueryableLabel)
     }
     return [
       {
@@ -664,15 +698,15 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
         }
       }) ?? [],
     ]
-  }, [queryableFieldsData?.queryableFields, propertyFieldTypeByDefId, translation, allPatientStates, propertyDefinitionsData?.propertyDefinitions])
+  }, [queryableFieldsData?.queryableFields, propertyFieldTypeByDefId, resolvePatientQueryableLabel, translation, allPatientStates, propertyDefinitionsData?.propertyDefinitions])
 
   const availableSortItems = useMemo(() => {
     const raw = queryableFieldsData?.queryableFields
     if (raw?.length) {
-      return queryableFieldsToSortingListItems(raw)
+      return queryableFieldsToSortingListItems(raw, resolvePatientQueryableLabel)
     }
     return availableFilters.map(({ id, label, dataType }) => ({ id, label, dataType }))
-  }, [queryableFieldsData?.queryableFields, availableFilters])
+  }, [queryableFieldsData?.queryableFields, availableFilters, resolvePatientQueryableLabel])
 
   const knownColumnIdsOrdered = useMemo(
     () => columnIdsFromColumnDefs(columns),
@@ -883,7 +917,10 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
           <PatientDetailView
             patientId={selectedPatient?.id ?? openedPatientId ?? undefined}
             onClose={handleClose}
-            onSuccess={refetch}
+            onSuccess={() => {
+              refetch()
+              onPatientUpdated?.()
+            }}
           />
         </Drawer>
         <SaveViewDialog

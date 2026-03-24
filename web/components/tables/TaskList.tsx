@@ -5,8 +5,8 @@ import { Button, Checkbox, ConfirmDialog, FilterList, FillerCell, HelpwaveLogo, 
 import clsx from 'clsx'
 import { LayoutGrid, PlusIcon, Table2, UserCheck, Users } from 'lucide-react'
 import type { IdentifierFilterValue } from '@helpwave/hightide'
-import type { TaskPriority, GetTasksQuery } from '@/api/gql/generated'
-import { PropertyEntity } from '@/api/gql/generated'
+import type { TaskPriority, GetTasksQuery, QueryableField } from '@/api/gql/generated'
+import { FieldType, PropertyEntity } from '@/api/gql/generated'
 import { useAssignTask, useAssignTaskToTeam, useCompleteTask, useReopenTask, useUsers, useLocations, usePropertyDefinitions, useQueryableFields, useRefreshingEntityIds } from '@/data'
 import { AssigneeSelectDialog } from '@/components/tasks/AssigneeSelectDialog'
 import { DateDisplay } from '@/components/Date/DateDisplay'
@@ -29,6 +29,7 @@ import { queryableFieldsToFilterListItems, queryableFieldsToSortingListItems } f
 import { LIST_PAGE_SIZE } from '@/utils/listPaging'
 import { TaskCardView } from '@/components/tasks/TaskCardView'
 import { RefreshingTaskIdsContext, TaskRowRefreshingGate } from '@/components/tables/TaskRowRefreshingGate'
+import { ExpandableTextBlock } from '@/components/common/ExpandableTextBlock'
 
 type TaskAssigneeTableCellProps = {
   assigneeId: string,
@@ -202,6 +203,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
   const isOpeningConfirmDialogRef = useRef(false)
   const [isShowFilters, setIsShowFilters] = useState(false)
   const [isShowSorting, setIsShowSorting] = useState(false)
+  const [isMobileIOS, setIsMobileIOS] = useState(false)
 
   const hasPatients = (totalPatientsCount ?? 0) > 0
 
@@ -232,6 +234,21 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
       setOpenedTaskId(null)
     }
   }, [initialTaskId, initialTaskPresent, openedTaskId, onInitialTaskOpened])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const mediaQuery = window.matchMedia('(max-width: 768px)')
+    const ua = window.navigator.userAgent
+    const isIOSDevice = /iPad|iPhone|iPod/.test(ua) || (/Macintosh/.test(ua) && 'ontouchend' in document)
+    const update = () => {
+      setIsMobileIOS(isIOSDevice && mediaQuery.matches)
+    }
+    update()
+    mediaQuery.addEventListener('change', update)
+    return () => {
+      mediaQuery.removeEventListener('change', update)
+    }
+  }, [])
 
   useEffect(() => {
     setOptimisticUpdates(prev => {
@@ -415,10 +432,32 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
     [propertyDefinitionsData]
   )
 
+  const resolveTaskQueryableLabel = useCallback((field: QueryableField): string => {
+    if (field.propertyDefinitionId) return field.label
+    const translatedByKey: Partial<Record<string, string>> = {
+      done: translation('done'),
+      title: translation('title'),
+      name: translation('title'),
+      description: translation('description'),
+      dueDate: translation('dueDate'),
+      priority: translation('priorityLabel'),
+      patient: translation('patient'),
+      assignee: translation('assignedTo'),
+      updated: translation('updated'),
+      updateDate: translation('updated'),
+      position: translation('location'),
+      state: translation('status'),
+      firstname: translation('firstName'),
+      lastname: translation('lastName'),
+      birthdate: translation('birthdate'),
+    }
+    return translatedByKey[field.key] ?? field.label
+  }, [translation])
+
   const availableFilters: FilterListItem[] = useMemo(() => {
     const raw = queryableFieldsData?.queryableFields
     if (raw?.length) {
-      return queryableFieldsToFilterListItems(raw, propertyFieldTypeByDefId)
+      return queryableFieldsToFilterListItems(raw, propertyFieldTypeByDefId, resolveTaskQueryableLabel)
     }
     return [
       { id: 'title', label: translation('title'), dataType: 'text', tags: [] },
@@ -439,15 +478,15 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
         tags: def.options.map((opt, idx) => ({ label: opt, tag: `${def.id}-opt-${idx}` })),
       })) ?? [],
     ]
-  }, [queryableFieldsData?.queryableFields, propertyFieldTypeByDefId, translation, propertyDefinitionsData?.propertyDefinitions])
+  }, [queryableFieldsData?.queryableFields, propertyFieldTypeByDefId, resolveTaskQueryableLabel, translation, propertyDefinitionsData?.propertyDefinitions])
 
   const availableSortItems = useMemo(() => {
     const raw = queryableFieldsData?.queryableFields
     if (raw?.length) {
-      return queryableFieldsToSortingListItems(raw)
+      return queryableFieldsToSortingListItems(raw, resolveTaskQueryableLabel)
     }
     return availableFilters.map(({ id, label, dataType }) => ({ id, label, dataType }))
-  }, [queryableFieldsData?.queryableFields, availableFilters])
+  }, [queryableFieldsData?.queryableFields, availableFilters, resolveTaskQueryableLabel])
 
   const columns = useMemo<ColumnDef<TaskViewModel>[]>(() => {
     const cols: ColumnDef<TaskViewModel>[] = [
@@ -682,18 +721,28 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
       if (!id || taskCardPrimaryColumnIds.has(id)) continue
       if (columnVisibility[id] === false) continue
       if (!col.cell) continue
+      const isExpandableTextProperty = id.startsWith('property_') &&
+        propertyFieldTypeByDefId.get(id.replace('property_', '')) === FieldType.FieldTypeText
       const headerLabel = typeof col.header === 'string' ? col.header : id
       const cell = (col.cell as (p: { row: { original: TaskViewModel } }) => ReactNode)({ row: { original: task } })
+      const propertyId = id.startsWith('property_') ? id.replace('property_', '') : null
+      const propertyTextValue = propertyId
+        ? task.properties?.find(property => property.definition.id === propertyId)?.textValue
+        : null
       rows.push(
         <div key={id} className="flex flex-col gap-0.5 sm:flex-row sm:gap-3 sm:items-start text-left">
           <span className="text-description shrink-0 min-w-[7rem]">{headerLabel}</span>
-          <div className="min-w-0 break-words">{cell}</div>
+          <div className="min-w-0 break-words">
+            {isExpandableTextProperty ? (
+              <ExpandableTextBlock>{propertyTextValue ?? ''}</ExpandableTextBlock>
+            ) : cell}
+          </div>
         </div>
       )
     }
     if (rows.length === 0) return null
     return <>{rows}</>
-  }, [columns, columnVisibility, taskCardPrimaryColumnIds])
+  }, [columns, columnVisibility, taskCardPrimaryColumnIds, propertyFieldTypeByDefId])
 
   const knownColumnIdsOrdered = useMemo(
     () => columnIdsFromColumnDefs(columns),
@@ -706,6 +755,21 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
   )
 
   const deferSetColumnOrder = useDeferredColumnOrderChange(setColumnOrder)
+  const hasOpenDrawer = taskDialogState.isOpen || selectedPatientId != null
+  const hasFilterPanelOpen = isShowFilters || isShowSorting
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return
+    if (isMobileIOS && hasOpenDrawer) {
+      document.body.dataset['taskDrawerFullscreen'] = 'true'
+    } else {
+      delete document.body.dataset['taskDrawerFullscreen']
+    }
+
+    return () => {
+      delete document.body.dataset['taskDrawerFullscreen']
+    }
+  }, [isMobileIOS, hasOpenDrawer])
 
   return (
     <RefreshingTaskIdsContext.Provider value={refreshingTaskIds}>
@@ -813,21 +877,25 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
               </div>
             </div>
             {isShowFilters && (
-              <FilterList
-                value={filters as IdentifierFilterValue[]}
-                onValueChange={setFilters}
-                availableItems={availableFilters}
-              />
+              <div className="relative z-[140] touch-auto">
+                <FilterList
+                  value={filters as IdentifierFilterValue[]}
+                  onValueChange={setFilters}
+                  availableItems={availableFilters}
+                />
+              </div>
             )}
             {isShowSorting && (
-              <SortingList
-                sorting={sorting}
-                onSortingChange={setSorting}
-                availableItems={availableSortItems}
-              />
+              <div className="relative z-[140] touch-auto">
+                <SortingList
+                  sorting={sorting}
+                  onSortingChange={setSorting}
+                  availableItems={availableSortItems}
+                />
+              </div>
             )}
           </div>
-          <div className="flex-col-3 w-full relative print:static">
+          <div className={clsx('flex-col-3 w-full relative print:static', isMobileIOS && hasFilterPanelOpen && 'pointer-events-none')}>
             {showBlockingLoadingOverlay && (
               <div className="absolute inset-0 z-10 flex items-center justify-center bg-surface/80 rounded-lg min-h-48">
                 <HelpwaveLogo animate="loading" color="currentColor" height={64} width={64} />
@@ -888,7 +956,9 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
               <PatientDetailView
                 patientId={selectedPatientId}
                 onClose={() => setSelectedPatientId(null)}
-                onSuccess={() => {}}
+                onSuccess={() => {
+                  onRefetch?.()
+                }}
               />
             )}
           </Drawer>
@@ -933,6 +1003,17 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
             isOpen={!!selectedUserPopupId}
             onClose={() => setSelectedUserPopupId(null)}
           />
+          <style>{`
+            body[data-task-drawer-fullscreen="true"] [role="dialog"] {
+              width: 100dvw !important;
+              min-width: 100dvw !important;
+              max-width: 100dvw !important;
+              left: 0 !important;
+              right: 0 !important;
+              margin: 0 !important;
+              border-radius: 0 !important;
+            }
+          `}</style>
         </div>
       </TableProvider>
     </RefreshingTaskIdsContext.Provider>

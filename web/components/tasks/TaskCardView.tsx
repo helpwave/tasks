@@ -11,6 +11,7 @@ import { useCompleteTask, useReopenTask } from '@/data'
 import { useState, useEffect, useRef, useMemo, type ReactNode } from 'react'
 import { UserInfoPopup } from '@/components/UserInfoPopup'
 import { PriorityUtils } from '@/utils/priority'
+import { ExpandableTextBlock } from '@/components/common/ExpandableTextBlock'
 
 type FlexibleTask = {
   id: string,
@@ -47,7 +48,7 @@ type FlexibleTask = {
 type TaskCardViewProps = {
   task: FlexibleTask | TaskViewModel,
   onToggleDone?: (taskId: string, done: boolean) => void,
-  onClick: (task: FlexibleTask | TaskViewModel) => void,
+  onClick?: (task: FlexibleTask | TaskViewModel) => void,
   showAssignee?: boolean,
   showPatient?: boolean,
   className?: string,
@@ -92,6 +93,7 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
   const closeToDue = dueDate ? isCloseToDueDate(dueDate, task.done) : false
   const dueDateColorClass = overdue ? '!text-red-500' : closeToDue ? '!text-orange-500' : ''
   const assigneeAvatarUrl = task.assignee?.avatarURL || (flexibleTask.assignee?.avatarUrl)
+  const isClickable = Boolean(onClick)
 
   const expectedFinishDate = useMemo(() => {
     if (!dueDate || !flexibleTask.estimatedTime) return null
@@ -168,17 +170,19 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
 
   return (
     <div
-      onClick={() => onClick(task)}
+      onClick={onClick ? () => onClick(task) : undefined}
       className={clsx(
-        'border-2 p-4 rounded-lg text-left transition-colors hover:border-primary ',
-        'relative bg-surface-variant bg-on-surface-variant overflow-hidden cursor-pointer w-full',
+        'border-2 p-4 rounded-lg text-left transition-colors',
+        'relative bg-surface-variant bg-on-surface-variant w-full',
+        isClickable ? 'cursor-pointer hover:border-primary' : 'cursor-default',
         borderColorClass,
         priorityBorderClass,
         className
       )}
-      role="button"
-      tabIndex={0}
+      role={isClickable ? 'button' : undefined}
+      tabIndex={isClickable ? 0 : undefined}
       onKeyDown={(e) => {
+        if (!isClickable || !onClick) return
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault()
           onClick(task)
@@ -194,7 +198,7 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
               className={clsx('rounded-full mt-0.5 shrink-0', PriorityUtils.toCheckboxColor(task?.priority as TaskPriority | null | undefined))}
             />
           </div>
-          <div className="flex-1 min-w-0 overflow-hidden">
+          <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between gap-2 flex-wrap min-w-0 mb-2">
               <div className="flex items-center gap-2 min-w-0 flex-1">
                 {(task as FlexibleTask).priority && (
@@ -207,7 +211,7 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
                 )}
                 <div
                   className={clsx(
-                    'font-semibold text-lg min-w-0 flex-1 truncate',
+                    'font-semibold text-lg min-w-0 flex-1 whitespace-normal break-words',
                     { 'line-through text-description': task.done }
                   )}
                 >
@@ -238,7 +242,9 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
               )}
             </div>
             {descriptionPreview && (
-              <div className="text-base text-description line-clamp-2">{descriptionPreview}</div>
+              <ExpandableTextBlock className="text-base text-description">
+                {descriptionPreview}
+              </ExpandableTextBlock>
             )}
           </div>
           <div className="shrink-0 flex flex-col items-end gap-2 text-sm text-description pt-0.5 max-w-[min(100%,11rem)]">
@@ -274,10 +280,10 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
               color="neutral"
               size="sm"
               onClick={handlePatientClick}
-              className="flex-row-0 justify-start w-fit"
+              className="flex-row-0 justify-start w-full min-w-0"
             >
               <User className="size-4 scale-[1.2] mr-2" />
-              {task.patient.name}
+              <span className="min-w-0 whitespace-normal break-words text-left">{task.patient.name}</span>
             </Button>
             {task.patient.locations && task.patient.locations.length > 0 && (
               <div className="mt-1">
