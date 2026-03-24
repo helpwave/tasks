@@ -1,5 +1,11 @@
-import { Tooltip, useUpdatingDateString } from '@helpwave/hightide'
+import { Tooltip, useLocale } from '@helpwave/hightide'
 import clsx from 'clsx'
+import { useMemo } from 'react'
+import {
+  formatAbsoluteHightide,
+  formatRelativeHightide,
+  type DateTimeFormat
+} from '@/utils/hightideDateFormat'
 
 type DateDisplayProps = {
   date: Date,
@@ -8,11 +14,22 @@ type DateDisplayProps = {
   mode?: 'relative' | 'absolute',
 }
 
+function toAbsoluteFormat(showTime: boolean): DateTimeFormat {
+  return showTime ? 'dateTime' : 'date'
+}
+
 export const DateDisplay = ({ date, className, showTime = true, mode = 'relative' }: DateDisplayProps) => {
-  const { absolute, relative } = useUpdatingDateString({
-    date: date ?? new Date(),
-    absoluteFormat: showTime ? 'dateTime' : 'date',
-  })
+  const { locale } = useLocale()
+  const absoluteFormat = toAbsoluteFormat(showTime)
+  const absolute = useMemo(
+    () => (date ? formatAbsoluteHightide(date, locale, absoluteFormat) : ''),
+    [date, locale, absoluteFormat]
+  )
+  const relative = useMemo(
+    () => (date ? formatRelativeHightide(date, locale) : ''),
+    [date, locale]
+  )
+
   if (!date) return null
 
   const displayString = mode === 'relative' ? relative : absolute

@@ -50,7 +50,6 @@ type TaskCardViewProps = {
   onClick: (task: FlexibleTask | TaskViewModel) => void,
   showAssignee?: boolean,
   showPatient?: boolean,
-  onRefetch?: () => void,
   className?: string,
   fullWidth?: boolean,
   extraContent?: ReactNode,
@@ -75,7 +74,7 @@ const toDate = (date: Date | string | null | undefined): Date | undefined => {
   return new Date(date)
 }
 
-export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showAssignee: _showAssignee = false, showPatient = true, onRefetch, className, fullWidth: _fullWidth = false, extraContent }: TaskCardViewProps) => {
+export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showAssignee: _showAssignee = false, showPatient = true, className, fullWidth: _fullWidth = false, extraContent }: TaskCardViewProps) => {
   const router = useRouter()
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
   const [optimisticDone, setOptimisticDone] = useState<boolean | null>(null)
@@ -125,7 +124,6 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
         onCompleted: () => {
           pendingCheckedRef.current = null
           setOptimisticDone(null)
-          onRefetch?.()
         },
         onError: () => {
           pendingCheckedRef.current = null
@@ -138,7 +136,6 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
         onCompleted: () => {
           pendingCheckedRef.current = null
           setOptimisticDone(null)
-          onRefetch?.()
         },
         onError: () => {
           pendingCheckedRef.current = null
@@ -259,14 +256,14 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
               {dueDate && (
                 <div className={clsx('flex items-center gap-2', dueDateColorClass)}>
                   <Clock className="size-4 shrink-0" />
-                  <DateDisplay date={dueDate} mode="relative" showTime={true} />
+                  <DateDisplay date={dueDate} mode="absolute" showTime={true} />
                 </div>
               )}
             </div>
             {expectedFinishDate && (
               <div className="flex items-center gap-2 text-xs">
                 <Flag className="size-4 shrink-0" />
-                <DateDisplay date={expectedFinishDate} mode="relative" showTime={true} />
+                <DateDisplay date={expectedFinishDate} mode="absolute" showTime={true} />
               </div>
             )}
           </div>

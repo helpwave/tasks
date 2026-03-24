@@ -6,6 +6,8 @@ import { Users, Info } from 'lucide-react'
 import { useUsers, useLocations } from '@/data'
 import clsx from 'clsx'
 
+const EMPTY_MULTI_USER_IDS: string[] = []
+
 interface AssigneeSelectDialogProps {
   value: string,
   onValueChanged: (value: string) => void,
@@ -33,12 +35,13 @@ export const AssigneeSelectDialog = ({
   onUserInfoClick,
   multiUserSelect = false,
   onMultiUserIdsSelected,
-  initialMultiUserIds = [],
+  initialMultiUserIds,
 }: AssigneeSelectDialogProps) => {
   const translation = useTasksTranslation()
   const [searchQuery, setSearchQuery] = useState('')
   const [pendingUserIds, setPendingUserIds] = useState<Set<string>>(new Set())
   const searchInputRef = useRef<HTMLDivElement>(null)
+  const initialMultiIds = initialMultiUserIds ?? EMPTY_MULTI_USER_IDS
 
   const { data: usersData } = useUsers()
   const { data: locationsData } = useLocations()
@@ -96,9 +99,15 @@ export const AssigneeSelectDialog = ({
       setSearchQuery('')
     }
     if (isOpen && multiUserSelect) {
-      setPendingUserIds(new Set(initialMultiUserIds))
+      setPendingUserIds(prev => {
+        const next = new Set(initialMultiIds)
+        if (prev.size === next.size && [...next].every((id) => prev.has(id))) {
+          return prev
+        }
+        return next
+      })
     }
-  }, [isOpen, multiUserSelect, initialMultiUserIds])
+  }, [isOpen, multiUserSelect, initialMultiIds])
 
   const handleSelect = (selectedValue: string) => {
     onValueChanged(selectedValue)

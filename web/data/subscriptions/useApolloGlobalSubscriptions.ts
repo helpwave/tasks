@@ -1,6 +1,8 @@
 import { useEffect, useRef } from 'react'
 import { parse } from 'graphql'
 import type { ApolloClient } from '@apollo/client/core'
+import { GetPatientsDocument, GetTasksDocument } from '@/api/gql/generated'
+import { getParsedDocument } from '@/data/hooks/queryHelpers'
 import {
   mergeTaskUpdatedIntoCache,
   mergePatientUpdatedIntoCache,
@@ -101,7 +103,9 @@ export function useApolloGlobalSubscriptions(
             await mergeTaskUpdatedIntoCache(client, taskId, payloadObj, optionsRef.current).catch(
               () => {}
             )
-            client.refetchQueries({ include: 'active' })
+            await client.refetchQueries({
+              include: [getParsedDocument(GetPatientsDocument)],
+            })
           } finally {
             removeRefreshingTask(taskId)
           }
@@ -132,7 +136,9 @@ export function useApolloGlobalSubscriptions(
             await mergePatientUpdatedIntoCache(client, patientId, payloadObj, optionsRef.current).catch(
               () => {}
             )
-            client.refetchQueries({ include: 'active' })
+            await client.refetchQueries({
+              include: [getParsedDocument(GetTasksDocument)],
+            })
           } finally {
             removeRefreshingPatient(patientId)
           }
@@ -163,7 +169,9 @@ export function useApolloGlobalSubscriptions(
             await mergePatientUpdatedIntoCache(client, patientId, payloadObj, optionsRef.current).catch(
               () => {}
             )
-            client.refetchQueries({ include: 'active' })
+            await client.refetchQueries({
+              include: [getParsedDocument(GetTasksDocument)],
+            })
           } finally {
             removeRefreshingPatient(patientId)
           }

@@ -167,7 +167,6 @@ const Dashboard: NextPage = () => {
             <TaskDetailView
               taskId={selectedTaskId}
               onClose={() => setSelectedTaskId(null)}
-              onSuccess={() => {}}
             />
           )}
         </Drawer>

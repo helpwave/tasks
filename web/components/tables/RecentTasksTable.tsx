@@ -129,7 +129,7 @@ export const RecentTasksTable = ({
         return (
           <DateDisplay
             date={new Date(row.original.dueDate)}
-            mode="relative"
+            mode="absolute"
             className={clsx(colorClass)}
           />
         )
@@ -211,7 +211,7 @@ export const RecentTasksTable = ({
         const date = getValue() as Date | undefined
         if (!date) return <FillerCell />
         return (
-          <DateDisplay date={date} />
+          <DateDisplay date={date} mode="absolute" />
         )
       },
       minSize: 220,
