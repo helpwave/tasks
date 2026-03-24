@@ -81,6 +81,10 @@ const TaskAssigneeTableCell = memo(function TaskAssigneeTableCell({
   )
 })
 
+function taskListDataSyncKey(tasks: TaskViewModel[]): string {
+  return tasks.map(t => `${t.id}:${t.done}:${t.updateDate.getTime()}`).join('\0')
+}
+
 export type TaskViewModel = {
   id: string,
   name: string,
@@ -212,15 +216,22 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
     }
   }))
 
+  const initialTaskPresent = Boolean(initialTaskId && initialTasks.some(t => t.id === initialTaskId))
+
+  const initialTasksSyncKey = useMemo(
+    () => taskListDataSyncKey(initialTasks),
+    [initialTasks]
+  )
+
   useEffect(() => {
-    if (initialTaskId && initialTasks.length > 0 && openedTaskId !== initialTaskId) {
+    if (initialTaskId && initialTaskPresent && openedTaskId !== initialTaskId) {
       setTaskDialogState({ isOpen: true, taskId: initialTaskId })
       setOpenedTaskId(initialTaskId)
       onInitialTaskOpened?.()
     } else if (!initialTaskId) {
       setOpenedTaskId(null)
     }
-  }, [initialTaskId, initialTasks, openedTaskId, onInitialTaskOpened])
+  }, [initialTaskId, initialTaskPresent, openedTaskId, onInitialTaskOpened])
 
   useEffect(() => {
     setOptimisticUpdates(prev => {
@@ -237,7 +248,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
 
       return hasChanges ? next : prev
     })
-  }, [initialTasks])
+  }, [initialTasksSyncKey, initialTasks])
 
   const isServerDriven = totalCount != null
 
@@ -276,7 +287,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
   useEffect(() => {
     if (isServerDriven) return
     setClientVisibleCount(LIST_PAGE_SIZE)
-  }, [initialTasks, searchQuery, isServerDriven])
+  }, [initialTasksSyncKey, searchQuery, isServerDriven])
 
   const displayedTasks = useMemo(() => {
     if (isServerDriven) return tasks
@@ -466,12 +477,10 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
                     if (checked) {
                       completeTask({
                         variables: { id: task.id },
-                        onCompleted: () => onRefetch?.(),
                       })
                     } else {
                       reopenTask({
                         variables: { id: task.id },
-                        onCompleted: () => onRefetch?.(),
                       })
                     }
                   }}
@@ -528,7 +537,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
             <TaskRowRefreshingGate taskId={row.original.id}>
               <DateDisplay
                 date={row.original.dueDate}
-                mode="relative"
+                mode="absolute"
                 className={clsx(colorClass)}
               />
             </TaskRowRefreshingGate>
@@ -658,7 +667,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
     ]
     return colsWithRefreshing
   },
-  [translation, completeTask, reopenTask, showAssignee, taskPropertyColumns, onRefetch])
+  [translation, completeTask, reopenTask, showAssignee, taskPropertyColumns])
 
   const taskCardPrimaryColumnIds = useMemo(() => {
     const s = new Set<string>(['done', 'title', 'dueDate', 'patient'])
@@ -843,7 +852,6 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
                     task={task}
                     showAssignee={showAssignee}
                     showPatient={true}
-                    onRefetch={onRefetch}
                     onClick={() => setTaskDialogState({ isOpen: true, taskId: task.id })}
                     extraContent={renderTaskCardExtras(task)}
                   />
@@ -866,8 +874,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
             <TaskDetailView
               taskId={taskDialogState.taskId ?? null}
               onClose={() => setTaskDialogState({ isOpen: false })}
-              onSuccess={onRefetch || (() => {
-              })}
+              onListSync={onRefetch}
             />
           </Drawer>
           <Drawer
@@ -881,8 +888,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
               <PatientDetailView
                 patientId={selectedPatientId}
                 onClose={() => setSelectedPatientId(null)}
-                onSuccess={onRefetch || (() => {
-                })}
+                onSuccess={() => {}}
               />
             )}
           </Drawer>

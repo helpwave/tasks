@@ -43,14 +43,14 @@ type TaskFormValues = CreateTaskInput & {
 interface TaskDataEditorProps {
   id: null | string,
   initialPatientId?: string,
-  onSuccess?: () => void,
+  onListSync?: () => void,
   onClose?: () => void,
 }
 
 export const TaskDataEditor = ({
   id,
   initialPatientId,
-  onSuccess,
+  onListSync,
   onClose,
 }: TaskDataEditorProps) => {
   const translation = useTasksTranslation()
@@ -83,7 +83,6 @@ export const TaskDataEditor = ({
   const updateTask = (vars: { id: string, data: UpdateTaskInput }) => {
     updateTaskMutate({
       variables: vars,
-      onCompleted: () => onSuccess?.(),
       onError: (err) => {
         setErrorDialog({
           isOpen: true,
@@ -123,7 +122,7 @@ export const TaskDataEditor = ({
           } as CreateTaskInput & { priority?: TaskPriority | null, estimatedTime?: number | null }
         },
         onCompleted: () => {
-          onSuccess?.()
+          onListSync?.()
           onClose?.()
         },
         onError: (error) => {
@@ -501,7 +500,7 @@ export const TaskDataEditor = ({
                       deleteTask({
                         variables: { id: taskId },
                         onCompleted: () => {
-                          onSuccess?.()
+                          onListSync?.()
                           onClose?.()
                         },
                       })

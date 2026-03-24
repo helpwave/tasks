@@ -166,9 +166,8 @@ export const PatientTasksView = ({
         <TaskDetailView
           taskId={taskId}
           initialPatientId={isCreatingTask ? patientId : undefined}
-          onSuccess={() => {
+          onListSync={() => {
             onSuccess?.()
-            setIsCreatingTask(false)
           }}
           onClose={() => {
             setTaskId(null)

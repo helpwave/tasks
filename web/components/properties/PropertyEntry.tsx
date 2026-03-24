@@ -1,6 +1,7 @@
 import {
   CheckboxProperty,
   DateProperty,
+  MultiSelectOption,
   MultiSelectProperty,
   NumberProperty,
   PropertyBase,
@@ -121,7 +122,7 @@ export const PropertyEntry = ({
         onEditComplete={multiSelectValue => onEditComplete({ ...value, multiSelectValue })}
       >
         {selectData?.options.map(option => (
-          <SelectOption key={option.id} value={option.id} label={option.name} />
+          <MultiSelectOption key={option.id} value={option.id} label={option.name} />
         ))}
       </MultiSelectProperty>
     )

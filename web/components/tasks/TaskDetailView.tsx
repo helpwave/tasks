@@ -14,11 +14,11 @@ import { useUpdateTask } from '@/data'
 interface TaskDetailViewProps {
   taskId: string | null,
   onClose: () => void,
-  onSuccess: () => void,
+  onListSync?: () => void,
   initialPatientId?: string,
 }
 
-export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }: TaskDetailViewProps) => {
+export const TaskDetailView = ({ taskId, onClose, onListSync, initialPatientId }: TaskDetailViewProps) => {
   const translation = useTasksTranslation()
 
   const isEditMode = !!taskId
@@ -83,9 +83,8 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
           properties: propertyInputs,
         },
       },
-      onCompleted: () => onSuccess(),
     })
-  }, [isEditMode, taskId, taskData, convertPropertyValueToInput, updateTask, onSuccess])
+  }, [isEditMode, taskId, taskData, convertPropertyValueToInput, updateTask])
 
 
   return (
@@ -96,7 +95,7 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
           <TaskDataEditor
             id={taskId}
             initialPatientId={initialPatientId}
-            onSuccess={onSuccess}
+            onListSync={onListSync}
             onClose={onClose}
           />
         </TabPanel>
