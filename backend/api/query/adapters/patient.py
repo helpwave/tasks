@@ -1,6 +1,6 @@
 from typing import Any
 
-from sqlalchemy import Select, and_, case, or_
+from sqlalchemy import Select, and_, case, func, or_
 from sqlalchemy.orm import aliased
 
 from api.context import Info
@@ -53,6 +53,48 @@ def _parse_property_key(field_key: str) -> str | None:
     if not field_key.startswith("property_"):
         return None
     return field_key.removeprefix("property_")
+
+
+LOCATION_SORT_KEY_KINDS: dict[str, tuple[str, ...]] = {
+    "location-CLINIC": ("CLINIC", "PRACTICE"),
+    "location-WARD": ("WARD",),
+    "location-ROOM": ("ROOM",),
+    "location-BED": ("BED",),
+}
+
+
+LOCATION_SORT_KEY_LABELS: dict[str, str] = {
+    "location-CLINIC": "Clinic",
+    "location-WARD": "Ward",
+    "location-ROOM": "Room",
+    "location-BED": "Bed",
+}
+
+
+def _ensure_position_lineage_joins(
+    query: Select[Any], ctx: dict[str, Any]
+) -> tuple[Select[Any], list[Any]]:
+    if "position_lineage_nodes" in ctx:
+        return query, ctx["position_lineage_nodes"]
+    query, position_node = _ensure_position_join(query, ctx)
+    lineage_nodes: list[Any] = [position_node]
+    for depth in range(1, 8):
+        parent_node = aliased(models.LocationNode, name=f"position_parent_{depth}")
+        query = query.outerjoin(parent_node, lineage_nodes[-1].parent_id == parent_node.id)
+        lineage_nodes.append(parent_node)
+    ctx["position_lineage_nodes"] = lineage_nodes
+    return query, lineage_nodes
+
+
+def _location_title_for_kind(lineage_nodes: list[Any], target_kinds: tuple[str, ...]) -> Any:
+    candidates = [
+        case(
+            (node.kind.in_(target_kinds), location_title_expr(node)),
+            else_=None,
+        )
+        for node in lineage_nodes
+    ]
+    return func.coalesce(*candidates)
 
 
 def apply_patient_filter_clause(
@@ -258,6 +300,10 @@ def apply_patient_sorts(
             order_parts.append(
                 t.desc().nulls_last() if desc_order else t.asc().nulls_first()
             )
+        elif key in LOCATION_SORT_KEY_KINDS:
+            query, lineage_nodes = _ensure_position_lineage_joins(query, ctx)
+            t = _location_title_for_kind(lineage_nodes, LOCATION_SORT_KEY_KINDS[key])
+            order_parts.append(t.desc() if desc_order else t.asc())
 
     if not order_parts:
         return query.order_by(models.Patient.id.asc())
@@ -445,4 +491,17 @@ def build_patient_queryable_fields_static() -> list[QueryableField]:
                 ],
             ),
         ),
+        *[
+            QueryableField(
+                key=key,
+                label=label,
+                kind=QueryableFieldKind.SCALAR,
+                value_type=QueryableValueType.STRING,
+                allowed_operators=[],
+                sortable=True,
+                sort_directions=sort_directions_for(True),
+                searchable=False,
+            )
+            for key, label in LOCATION_SORT_KEY_LABELS.items()
+        ],
     ]

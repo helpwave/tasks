@@ -111,6 +111,7 @@
   "firstName": "First Name",
   "freeBeds": "Free Beds",
   "homePage": "Home Page",
+  "hide": "Hide",
   "imprint": "Imprint",
   "inactive": "Inactive",
   "language": "Language",
@@ -118,6 +119,7 @@
   "listViewCard": "Card view",
   "listViewTable": "Table view",
   "loadMore": "Load more",
+  "more": "More",
   "location": "Location",
   "locationBed": "Bed",
   "locationClinic": "Clinic",
@@ -239,7 +241,7 @@
       }
     }
   },
-  "rEdit": "Update {name}!",
+  "rEdit": "Update {name}",
   "@rEdit": {
     "placeholders": {
       "name": {

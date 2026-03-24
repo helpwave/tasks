@@ -382,6 +382,7 @@ const ViewPage: NextPage = () => {
 
   const [duplicateOpen, setDuplicateOpen] = useState(false)
   const [duplicateName, setDuplicateName] = useState('')
+  const [patientViewRefreshVersion, setPatientViewRefreshVersion] = useState(0)
 
   const [duplicateSavedView] = useMutation<
     DuplicateSavedViewMutation,
@@ -527,6 +528,7 @@ const ViewPage: NextPage = () => {
                 hideSaveView={!view.isOwner}
                 savedViewId={view.isOwner ? view.id : undefined}
                 onSavedViewCreated={(id) => router.push(`/view/${id}`)}
+                onPatientUpdated={() => setPatientViewRefreshVersion(v => v + 1)}
               />
             </TabPanel>
             <TabPanel label={translation('tasks')} className="flex-col-0 min-h-48 overflow-auto">
@@ -534,6 +536,7 @@ const ViewPage: NextPage = () => {
                 filterDefinitionJson={view.filterDefinition}
                 sortDefinitionJson={view.sortDefinition}
                 parameters={params}
+                refreshVersion={patientViewRefreshVersion}
               />
             </TabPanel>
           </TabSwitcher>
