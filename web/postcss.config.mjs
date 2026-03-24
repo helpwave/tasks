@@ -1,8 +1,11 @@
 const config = {
   plugins: {
     '@tailwindcss/postcss': {},
-    'autoprefixer': {},
-  }
+    'postcss-flexbugs-fixes': {},
+    'autoprefixer': {
+      flexbox: 'no-2009',
+    },
+  },
 }
 
 export default config

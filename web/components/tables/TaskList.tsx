@@ -621,16 +621,19 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
     >
       <div className="flex flex-col h-full gap-4">
         <div className="flex-col-2 w-full">
-          <div className="flex-row-8 justify-between w-full">
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:flex-row-8 sm:justify-between sm:gap-0 w-full">
             <div className="flex flex-wrap gap-2 items-center">
               <SearchBar
                 placeholder={translation('search')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onSearch={() => null}
-                containerProps={{ className: 'max-w-80' }}
+                containerProps={{ className: 'w-full max-w-full min-w-0 sm:max-w-80' }}
               />
-              <TableColumnSwitcher />
+              <TableColumnSwitcher
+                buttonProps={{ className: 'min-h-11 min-w-11 shrink-0' }}
+                style={{ zIndex: 120 }}
+              />
               <Button
                 onClick={() => setIsShowFilters(!isShowFilters)}
                 color="neutral"
@@ -649,7 +652,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
               </Button>
               {saveViewSlot}
             </div>
-            <div className="flex flex-wrap gap-2 items-center justify-end">
+            <div className="flex flex-wrap gap-2 items-center justify-end shrink-0">
               {headerActions}
               {canHandover && (
                 <Button
@@ -663,6 +666,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
               <IconButton
                 tooltip={translation('addTask')}
                 color="primary"
+                className="min-h-11 min-w-11"
                 onClick={() => setTaskDialogState({ isOpen: true })}
                 disabled={!hasPatients}
               >
@@ -699,7 +703,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
               display: none !important;
             }
           `}</style>
-          <TableDisplay className="print-content"/>
+          <TableDisplay className="print-content overflow-x-auto touch-pan-x"/>
           {totalCount != null && (
             <TablePagination
               allowChangingPageSize={true}

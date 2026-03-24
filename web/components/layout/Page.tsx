@@ -416,7 +416,7 @@ export const Header = ({ onMenuClick, isMenuOpen, ...props }: HeaderProps) => {
             color="neutral"
             coloringStyle="text"
             onClick={onMenuClick}
-            className="lg:hidden"
+            className="min-h-11 min-w-11 lg:hidden"
           >
             {isMenuOpen ? <X className="size-6" /> : <MenuIcon className="size-6" />}
           </IconButton>
@@ -505,8 +505,9 @@ export const Sidebar = ({ isOpen, onClose, ...props }: SidebarProps) => {
     <>
       {isOpen && (
         <div
-          className="fixed inset-0 bg-overlay-shadow z-40 lg:hidden"
+          className="fixed inset-0 z-40 touch-manipulation bg-overlay-shadow lg:hidden"
           onClick={onClose}
+          role="presentation"
         />
       )}
       <aside
@@ -514,6 +515,7 @@ export const Sidebar = ({ isOpen, onClose, ...props }: SidebarProps) => {
         className={clsx(
           'flex-col-4 w-50 min-w-56 rounded-lg bg-surface text-on-surface overflow-hidden shadow-md',
           'fixed lg:relative inset-y-0 z-50 lg:z-auto',
+          'pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]',
           'w-screen max-w-sm lg:w-50 lg:min-w-56',
           'transform transition-transform duration-300 ease-out',
           isOpen
@@ -535,7 +537,7 @@ export const Sidebar = ({ isOpen, onClose, ...props }: SidebarProps) => {
               color="neutral"
               coloringStyle="text"
               onClick={onClose}
-              className="lg:hidden"
+              className="min-h-11 min-w-11 lg:hidden"
             >
               <X className="size-6" />
             </IconButton>
@@ -683,7 +685,7 @@ export const Page = ({
   })
 
   return (
-    <div className="flex-row-0 h-screen w-screen overflow-hidden overflow-x-hidden">
+    <div className="flex-row-0 h-dvh min-h-dvh max-h-dvh w-screen overflow-hidden overflow-x-hidden">
       <Head>
         <title>{titleWrapper(pageTitle)}</title>
       </Head>
@@ -696,10 +698,10 @@ export const Page = ({
       />
       <div
         ref={mainContentRef as React.RefObject<HTMLDivElement>}
-        className="flex-col-4 lg:pl-8 grow overflow-y-scroll"
+        className="flex-col-4 lg:pl-8 grow overflow-y-auto overscroll-y-contain"
       >
         <Header
-          className="sticky top-0 right-0 p-4 bg-background text-on-background"
+          className="sticky top-0 right-0 z-20 p-4 bg-background text-on-background"
           onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)}
           isMenuOpen={isSidebarOpen}
         />

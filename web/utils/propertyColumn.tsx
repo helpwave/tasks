@@ -73,6 +73,7 @@ export function createPropertyColumn<T extends RowWithProperties>(
     },
     meta: {
       columnType: 'PROPERTY',
+      columnLabel: prop.name,
       propertyDefinitionId: prop.id,
       fieldType: prop.fieldType,
       ...(filterData && { filterData }),
