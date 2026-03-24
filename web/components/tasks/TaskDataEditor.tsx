@@ -411,6 +411,7 @@ export const TaskDataEditor = ({
             >
               {({ dataProps, focusableElementProps, interactionStates }) => (
                 <FlexibleDateTimeInput
+                  key={isEditMode ? `${taskId}-${dueDate?.getTime() ?? 'pending'}` : 'create'}
                   {...dataProps} {...focusableElementProps} {...interactionStates}
                   value={dataProps.value ?? null}
                   defaultMode="date"
