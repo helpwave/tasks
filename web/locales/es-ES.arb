@@ -90,6 +90,7 @@
   "myTasks": "Mis tareas",
   "name": "Nombre",
   "no": "No",
+  "none": "Ninguno",
   "noClosedTasks": "No hay tareas cerradas",
   "noOpenTasks": "No hay tareas abiertas",
   "noPatient": "Sin paciente",

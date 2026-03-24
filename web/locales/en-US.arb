@@ -130,6 +130,7 @@
   "myTasks": "My tasks",
   "name": "Name",
   "no": "No",
+  "none": "None",
   "noClosedTasks": "No closed tasks",
   "noOpenTasks": "No open tasks",
   "noPatient": "No Patient",
