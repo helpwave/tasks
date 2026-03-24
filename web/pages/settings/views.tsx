@@ -32,7 +32,7 @@ import {
 } from '@/utils/savedViewsCache'
 import type { ColumnDef } from '@tanstack/table-core'
 import { EditIcon, ExternalLink, Trash2, Share2, CopyPlus } from 'lucide-react'
-import type { MySavedViewsQuery, SavedViewEntityType, SavedViewVisibility } from '@/api/gql/generated'
+import type { MySavedViewsQuery, SavedViewEntityType } from '@/api/gql/generated'
 
 type SavedViewRowGql = MySavedViewsQuery['mySavedViews'][number]
 
@@ -41,7 +41,6 @@ type SavedViewRow = {
   name: string,
   baseEntityType: SavedViewEntityType,
   updatedAt: string,
-  visibility: SavedViewVisibility,
 }
 
 const ViewsSettingsPage: NextPage = () => {
@@ -54,7 +53,6 @@ const ViewsSettingsPage: NextPage = () => {
       name: v.name,
       baseEntityType: v.baseEntityType,
       updatedAt: v.updatedAt,
-      visibility: v.visibility,
     }))
   }, [data])
 

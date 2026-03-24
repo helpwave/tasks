@@ -689,16 +689,19 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
     >
       <div className="flex flex-col h-full gap-4">
         <div className="flex-col-2 w-full">
-          <div className="flex-row-8 justify-between w-full">
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:flex-row-8 sm:justify-between sm:gap-0 w-full">
             <div className="flex flex-wrap gap-2 items-center">
               <SearchBar
                 placeholder={translation('search')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onSearch={() => null}
-                containerProps={{ className: 'max-w-80' }}
+                containerProps={{ className: 'w-full max-w-full min-w-0 sm:max-w-80' }}
               />
-              <TableColumnSwitcher />
+              <TableColumnSwitcher
+                buttonProps={{ className: 'min-h-11 min-w-11 shrink-0' }}
+                style={{ zIndex: 120 }}
+              />
               <Button
                 onClick={() => setIsShowFilters(!isShowFilters)}
                 color="neutral"
@@ -725,16 +728,19 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
                 />
               </Visibility>
             </div>
-            <IconButton
-              tooltip={translation('addPatient')}
-              onClick={() => {
-                setSelectedPatient(undefined)
-                setIsPanelOpen(true)
-              }}
-              color="primary"
-            >
-              <PlusIcon />
-            </IconButton>
+            <div className="flex flex-wrap gap-2 items-center justify-end shrink-0">
+              <IconButton
+                tooltip={translation('addPatient')}
+                className="min-h-11 min-w-11"
+                onClick={() => {
+                  setSelectedPatient(undefined)
+                  setIsPanelOpen(true)
+                }}
+                color="primary"
+              >
+                <PlusIcon />
+              </IconButton>
+            </div>
           </div>
           {isShowFilters && (
             <FilterList
@@ -757,7 +763,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
               <HelpwaveLogo animate="loading" color="currentColor" height={64} width={64} />
             </div>
           )}
-          <TableDisplay className="print-content"/>
+          <TableDisplay className="print-content overflow-x-auto touch-pan-x"/>
           {totalCount != null && (
             <TablePagination
               allowChangingPageSize={true}

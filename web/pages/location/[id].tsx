@@ -94,6 +94,8 @@ const LocationPage: NextPage = () => {
         assigneeTeam: task.assigneeTeam
           ? { id: task.assigneeTeam.id, title: task.assigneeTeam.title }
           : undefined,
+        additionalAssigneeCount:
+          !task.assigneeTeam && task.assignees.length > 1 ? task.assignees.length - 1 : 0,
       }))
     }
 
@@ -129,6 +131,8 @@ const LocationPage: NextPage = () => {
         assigneeTeam: task.assigneeTeam
           ? { id: task.assigneeTeam.id, title: task.assigneeTeam.title }
           : undefined,
+        additionalAssigneeCount:
+          !task.assigneeTeam && task.assignees.length > 1 ? task.assignees.length - 1 : 0,
       }))
     })
   }, [patientsData, tasksData, isTeamLocation])

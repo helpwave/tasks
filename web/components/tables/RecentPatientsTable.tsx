@@ -6,10 +6,6 @@ import type { TableProps } from '@helpwave/hightide'
 import { FillerCell, TableDisplay, TableProvider, Tooltip } from '@helpwave/hightide'
 import { DateDisplay } from '@/components/Date/DateDisplay'
 import { LocationChipsBySetting } from '@/components/patients/LocationChipsBySetting'
-import { PropertyEntity } from '@/api/gql/generated'
-import { usePropertyDefinitions } from '@/data'
-import { getPropertyColumnsForEntity } from '@/utils/propertyColumn'
-import { useColumnVisibilityWithPropertyDefaults } from '@/hooks/usePropertyColumnVisibility'
 
 type PatientViewModel = GetOverviewDataQuery['recentPatients'][0]
 
@@ -24,23 +20,11 @@ export const RecentPatientsTable = ({
   ...props
 }: RecentPatientsTableProps) => {
   const translation = useTasksTranslation()
-  const { data: propertyDefinitionsData } = usePropertyDefinitions()
 
   const [pagination, setPagination] = useState<PaginationState>({ pageSize: 10, pageIndex: 0 })
   const [sorting, setSorting] = useState<SortingState>([])
   const [filters, setFilters] = useState<ColumnFiltersState>([])
-  const [columnVisibility, setColumnVisibilityRaw] = useState<VisibilityState>({})
-
-  const setColumnVisibility = useColumnVisibilityWithPropertyDefaults(
-    propertyDefinitionsData,
-    PropertyEntity.Patient,
-    setColumnVisibilityRaw
-  )
-
-  const patientPropertyColumns = useMemo<ColumnDef<PatientViewModel>[]>(
-    () => getPropertyColumnsForEntity<PatientViewModel>(propertyDefinitionsData, PropertyEntity.Patient),
-    [propertyDefinitionsData]
-  )
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
 
   const patientColumns = useMemo<ColumnDef<PatientViewModel>[]>(() => [
     {
@@ -97,8 +81,7 @@ export const RecentPatientsTable = ({
       maxSize: 200,
       filterFn: 'date',
     },
-    ...patientPropertyColumns,
-  ], [translation, patientPropertyColumns])
+  ], [translation])
 
   const fillerRowCell = useCallback(() => <FillerCell className="min-h-8" />, [])
   const onRowClick = useCallback((row: Row<PatientViewModel>) => onSelectPatient(row.original.id), [onSelectPatient])

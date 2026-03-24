@@ -1,8 +1,10 @@
 import type { ReactNode } from 'react'
-import type { FilterListItem, FilterListPopUpBuilderProps } from '@helpwave/hightide'
+import type { FilterListItem, FilterListPopUpBuilderProps, FilterValue } from '@helpwave/hightide'
 import type { DataType } from '@helpwave/hightide'
 import type { QueryableField } from '@/api/gql/generated'
 import { FieldType, QueryableFieldKind, QueryableValueType } from '@/api/gql/generated'
+import { AssigneeFilterActiveLabel } from '@/components/tables/AssigneeFilterActiveLabel'
+import { LocationFilterActiveLabel } from '@/components/tables/LocationFilterActiveLabel'
 import { LocationSubtreeFilterPopUp } from '@/components/tables/LocationSubtreeFilterPopUp'
 import { UserSelectFilterPopUp } from '@/components/tables/UserSelectFilterPopUp'
 
@@ -20,7 +22,7 @@ function valueKindToDataType(field: QueryableField): DataType {
 }
 
 function filterFieldDataType(field: QueryableField): DataType {
-  if (field.key === 'position') return 'singleTag'
+  if (field.key === 'position' || field.key === 'assignee') return 'singleTag'
   return valueKindToDataType(field)
 }
 
@@ -43,12 +45,29 @@ export function queryableFieldsToFilterListItems(
       ? propertyFieldTypeByDefId.get(field.propertyDefinitionId)
       : undefined
 
+    const isUserFilterUi = ft === FieldType.FieldTypeUser || field.key === 'assignee'
+
     return {
       id: field.key,
       label: field.label,
       dataType,
       tags,
-      popUpBuilder: ft === FieldType.FieldTypeUser
+      activeLabelBuilder: field.key === 'position'
+        ? (v: FilterValue): ReactNode => (
+          <>
+            <span className="font-bold">{field.label}</span>
+            <LocationFilterActiveLabel value={v} />
+          </>
+        )
+        : isUserFilterUi
+          ? (v: FilterValue): ReactNode => (
+            <>
+              <span className="font-bold">{field.label}</span>
+              <AssigneeFilterActiveLabel value={v} />
+            </>
+          )
+          : undefined,
+      popUpBuilder: isUserFilterUi
         ? (props: FilterListPopUpBuilderProps): ReactNode => (<UserSelectFilterPopUp {...props} />)
         : field.key === 'position'
           ? (props: FilterListPopUpBuilderProps): ReactNode => (<LocationSubtreeFilterPopUp {...props} />)

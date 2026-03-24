@@ -46,7 +46,7 @@ import type { ColumnFiltersState } from '@tanstack/react-table'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { useTableState } from '@/hooks/useTableState'
 import { columnFiltersToQueryFilterClauses, paginationStateToPaginationInput, sortingStateToQuerySortClauses } from '@/utils/tableStateToApi'
-import { Share2 } from 'lucide-react'
+import { CopyPlus, Eye, Share2 } from 'lucide-react'
 
 type SavedTaskViewTabProps = {
   viewId: string,
@@ -286,6 +286,11 @@ function SavedTaskViewTab({
       assignee: task.assignees[0]
         ? { id: task.assignees[0].id, name: task.assignees[0].name, avatarURL: task.assignees[0].avatarUrl, isOnline: task.assignees[0].isOnline ?? null }
         : undefined,
+      assigneeTeam: task.assigneeTeam
+        ? { id: task.assigneeTeam.id, title: task.assigneeTeam.title }
+        : undefined,
+      additionalAssigneeCount:
+        !task.assigneeTeam && task.assignees.length > 1 ? task.assignees.length - 1 : 0,
       properties: task.properties ?? [],
     }))
   }, [tasksData])
@@ -310,7 +315,7 @@ function SavedTaskViewTab({
       <TaskList
         tasks={tasks}
         onRefetch={() => void refetch()}
-        showAssignee={false}
+        showAssignee={true}
         totalCount={totalCount}
         loading={tasksLoading}
         searchQuery={searchQuery}
@@ -380,9 +385,8 @@ const ViewPage: NextPage = () => {
   }, [duplicateSavedView, duplicateName, router, view?.id])
 
   const copyShareLink = useCallback(() => {
-    if (typeof window !== 'undefined' && uid) {
-      void navigator.clipboard.writeText(`${window.location.origin}/view/${uid}`)
-    }
+    if (typeof window === 'undefined' || !uid) return
+    void navigator.clipboard.writeText(`${window.location.origin}/view/${uid}`)
   }, [uid])
 
   if (!router.isReady || !uid) {
@@ -425,10 +429,20 @@ const ViewPage: NextPage = () => {
               <span className="typography-title-lg font-bold">{view.name}</span>
               <SavedViewEntityTypeChip entityType={view.baseEntityType} />
               {!view.isOwner && (
-                <Chip size="sm" coloringStyle="outline">{translation('readOnlyView')}</Chip>
+                <Chip
+                  size="sm"
+                  color="neutral"
+                  coloringStyle="outline"
+                  className="inline-flex items-center gap-1.5 border-dashed border-description/40 bg-description/[0.07] text-description shadow-none py-0.5 pl-1.5 pr-2.5"
+                >
+                  <Eye className="size-3.5 shrink-0 text-description/90" strokeWidth={2.25} aria-hidden />
+                  <span className="text-xs font-medium leading-none text-description">
+                    {translation('readOnlyView')}
+                  </span>
+                </Chip>
               )}
             </div>
-            <div className="flex flex-wrap gap-2 items-center">
+            <div className="flex flex-wrap gap-1 items-center justify-end">
               <IconButton
                 tooltip={translation('copyShareLink')}
                 coloringStyle="text"
@@ -438,9 +452,14 @@ const ViewPage: NextPage = () => {
                 <Share2 className="size-5" />
               </IconButton>
               {!view.isOwner && (
-                <Button color="primary" size="sm" onClick={() => setDuplicateOpen(true)}>
-                  {translation('copyViewToMyViews')}
-                </Button>
+                <IconButton
+                  tooltip={translation('copyViewToMyViews')}
+                  coloringStyle="text"
+                  color="neutral"
+                  onClick={() => setDuplicateOpen(true)}
+                >
+                  <CopyPlus className="size-5" />
+                </IconButton>
               )}
             </div>
           </div>

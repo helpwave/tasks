@@ -46,6 +46,8 @@ export type TaskViewModel = {
   },
   assignee?: { id: string, name: string, avatarURL?: string | null, isOnline?: boolean | null },
   assigneeTeam?: { id: string, title: string },
+  /** Additional user assignees beyond the first (omit when team assignment). */
+  additionalAssigneeCount?: number,
   done: boolean,
   properties?: GetTasksQuery['tasks'][0]['properties'],
 }
@@ -516,22 +518,34 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
           }
 
           if (assignee) {
+            const extra = row.original.additionalAssigneeCount ?? 0
             return (
               <>
-                <span className="print:block hidden">{assignee.name}</span>
-                <button
-                  onClick={() => setSelectedUserPopupId(assignee.id)}
-                  className="flex-row-2 items-center hover:opacity-75 transition-opacity print:hidden"
-                >
-                  <AvatarStatusComponent
-                    isOnline={assignee?.isOnline ?? null}
-                    image={{
-                      avatarUrl: assignee.avatarURL || 'https://cdn.helpwave.de/boringavatar.svg',
-                      alt: assignee.name
-                    }}
-                  />
-                  <span>{assignee.name}</span>
-                </button>
+                <span className="print:block hidden">
+                  {assignee.name}
+                  {extra > 0 ? ` ${translation('additionalAssigneesCount', { count: extra })}` : ''}
+                </span>
+                <div className="flex-row-2 items-center gap-1.5 flex-wrap min-w-0 print:hidden">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedUserPopupId(assignee.id)}
+                    className="flex-row-2 items-center min-w-0 hover:opacity-75 transition-opacity"
+                  >
+                    <AvatarStatusComponent
+                      isOnline={assignee?.isOnline ?? null}
+                      image={{
+                        avatarUrl: assignee.avatarURL || 'https://cdn.helpwave.de/boringavatar.svg',
+                        alt: assignee.name
+                      }}
+                    />
+                    <span className="truncate">{assignee.name}</span>
+                  </button>
+                  {extra > 0 && (
+                    <span className="text-description text-sm font-medium tabular-nums shrink-0">
+                      {translation('additionalAssigneesCount', { count: extra })}
+                    </span>
+                  )}
+                </div>
               </>
             )
           }
@@ -607,16 +621,19 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
     >
       <div className="flex flex-col h-full gap-4">
         <div className="flex-col-2 w-full">
-          <div className="flex-row-8 justify-between w-full">
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:flex-row-8 sm:justify-between sm:gap-0 w-full">
             <div className="flex flex-wrap gap-2 items-center">
               <SearchBar
                 placeholder={translation('search')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onSearch={() => null}
-                containerProps={{ className: 'max-w-80' }}
+                containerProps={{ className: 'w-full max-w-full min-w-0 sm:max-w-80' }}
               />
-              <TableColumnSwitcher />
+              <TableColumnSwitcher
+                buttonProps={{ className: 'min-h-11 min-w-11 shrink-0' }}
+                style={{ zIndex: 120 }}
+              />
               <Button
                 onClick={() => setIsShowFilters(!isShowFilters)}
                 color="neutral"
@@ -635,7 +652,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
               </Button>
               {saveViewSlot}
             </div>
-            <div className="flex flex-wrap gap-2 items-center justify-end">
+            <div className="flex flex-wrap gap-2 items-center justify-end shrink-0">
               {headerActions}
               {canHandover && (
                 <Button
@@ -649,6 +666,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
               <IconButton
                 tooltip={translation('addTask')}
                 color="primary"
+                className="min-h-11 min-w-11"
                 onClick={() => setTaskDialogState({ isOpen: true })}
                 disabled={!hasPatients}
               >
@@ -685,7 +703,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
               display: none !important;
             }
           `}</style>
-          <TableDisplay className="print-content"/>
+          <TableDisplay className="print-content overflow-x-auto touch-pan-x"/>
           {totalCount != null && (
             <TablePagination
               allowChangingPageSize={true}

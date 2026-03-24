@@ -56,7 +56,7 @@ export default function AuthCallback() {
   }, [hasProcessed, hasError, router])
 
   return (
-    <div className="flex flex-col items-center justify-center w-screen h-screen bg-surface">
+    <div className="flex flex-col items-center justify-center w-screen min-h-dvh h-dvh bg-surface">
       <HelpwaveLogo animate="loading" color="currentColor" height={128} width={128} />
       {hasError && (
         <span className="mt-4 text-negative typography-body">

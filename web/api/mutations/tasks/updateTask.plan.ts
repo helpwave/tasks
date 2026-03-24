@@ -2,6 +2,7 @@ import type { ApolloCache } from '@apollo/client/cache'
 import type { Reference } from '@apollo/client/utilities'
 import {
   GetTaskDocument,
+  LocationType,
   type GetTaskQuery,
   type UpdateTaskInput
 } from '@/api/gql/generated'
@@ -13,6 +14,44 @@ type UpdateTaskVariables = {
   id: string,
   data: UpdateTaskInput,
   clientMutationId?: string,
+}
+
+type TaskEntity = NonNullable<GetTaskQuery['task']>
+
+function optimisticAssignees(
+  assigneeIds: string[] | null | undefined,
+  previous: TaskEntity['assignees'] | undefined
+): TaskEntity['assignees'] | undefined {
+  if (assigneeIds === undefined) return undefined
+  const prev = previous ?? []
+  const ids = assigneeIds ?? []
+  return ids.map((userId) => {
+    const found = prev.find((u) => u.id === userId)
+    if (found) return found
+    return {
+      __typename: 'UserType' as const,
+      id: userId,
+      name: '',
+      avatarUrl: null,
+      lastOnline: null,
+      isOnline: false,
+    }
+  })
+}
+
+function optimisticAssigneeTeam(
+  assigneeTeamId: string | null | undefined,
+  previous: TaskEntity['assigneeTeam'] | undefined
+): TaskEntity['assigneeTeam'] | null | undefined {
+  if (assigneeTeamId === undefined) return undefined
+  if (assigneeTeamId === null) return null
+  if (previous?.id === assigneeTeamId) return previous
+  return {
+    __typename: 'LocationNodeType' as const,
+    id: assigneeTeamId,
+    title: '',
+    kind: LocationType.Team,
+  }
 }
 
 export const updateTaskOptimisticPlanKey = 'UpdateTask'
@@ -35,7 +74,8 @@ export const updateTaskOptimisticPlan: OptimisticPlan<UpdateTaskVariables> = {
           snapshotRef.current = existing ?? null
 
           const id = cache.identify({ __typename: 'TaskType', id: taskId })
-          const existingProps = existing?.task?.properties ?? []
+          const existingTask = existing?.task
+          const existingProps = existingTask?.properties ?? []
           const mergeProperties = (_prev: Reference | readonly unknown[]) => {
             if (!data.properties) return existingProps
             return data.properties.map((inp) => {
@@ -87,6 +127,17 @@ export const updateTaskOptimisticPlan: OptimisticPlan<UpdateTaskVariables> = {
               estimatedTime: (prev: number | null) =>
                 data.estimatedTime !== undefined ? data.estimatedTime : prev,
               properties: mergeProperties,
+              assignees: (prev) => {
+                const next = optimisticAssignees(data.assigneeIds, existingTask?.assignees)
+                return next !== undefined ? next : prev
+              },
+              assigneeTeam: (prev) => {
+                const next = optimisticAssigneeTeam(
+                  data.assigneeTeamId,
+                  existingTask?.assigneeTeam
+                )
+                return next !== undefined ? next : prev
+              },
             },
           })
           cache.modify({

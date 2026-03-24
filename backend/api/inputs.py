@@ -206,7 +206,7 @@ class CreateSavedViewInput:
     filter_definition: str
     sort_definition: str
     parameters: str
-    visibility: SavedViewVisibility = SavedViewVisibility.PRIVATE
+    visibility: SavedViewVisibility = SavedViewVisibility.LINK_SHARED
 
 
 @strawberry.input

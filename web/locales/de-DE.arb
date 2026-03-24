@@ -11,6 +11,14 @@
   "archivedPropertyDescription": "Archivierte Eigenschaften können nicht mehr neu Objekten hinzugeügt werden.",
   "archiveProperty": "Eigenschaft Archivieren",
   "assignedTo": "Zugewiesen an",
+  "additionalAssigneesCount": "+{count}",
+  "@additionalAssigneesCount": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
   "authenticationFailed": "Authentifizierung fehlgeschlagen",
   "birthdate": "Geburtsdatum",
   "cancel": "Abbrechen",
@@ -259,6 +267,8 @@
   "viewVisibility": "Sichtbarkeit",
   "viewVisibilityPrivate": "Privat",
   "viewVisibilityLinkShared": "Link geteilt",
+  "viewAnyoneWithLinkCanView": "Jeder mit dem Link kann ansehen",
+  "copyShareLinkEnableSharingFirst": "Aktivieren Sie die Link-Freigabe, damit andere Personen mit dem Link diesen Schnellzugriff öffnen können.",
   "rShow": "{name} anzeigen",
   "@rShow": {
     "placeholders": {

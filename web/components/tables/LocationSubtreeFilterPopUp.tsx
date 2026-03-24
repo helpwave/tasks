@@ -1,10 +1,15 @@
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { Button, FilterBasePopUp, type FilterListPopUpBuilderProps } from '@helpwave/hightide'
-import { useId, useMemo, useState } from 'react'
+import { useId, useMemo, useState, type ReactNode } from 'react'
 import { MapPin } from 'lucide-react'
-import type { LocationNodeType } from '@/api/gql/generated'
+import type { LocationNodeType, LocationType } from '@/api/gql/generated'
 import { LocationSelectionDialog } from '@/components/locations/LocationSelectionDialog'
 import { useLocations } from '@/data'
+import { FilterPreviewLocationChips } from '@/components/tables/FilterPreviewMedia'
+
+function nodeToPreviewLocation(node: { id: string, title: string, kind: LocationType }) {
+  return { id: node.id, title: node.title, kind: node.kind }
+}
 
 export const LocationSubtreeFilterPopUp = ({ value, onValueChange, onRemove, name }: FilterListPopUpBuilderProps) => {
   const translation = useTasksTranslation()
@@ -51,20 +56,72 @@ export const LocationSubtreeFilterPopUp = ({ value, onValueChange, onRemove, nam
     setDialogOpen(false)
   }
 
-  const summary = useMemo(() => {
-    const nodes = locationsData?.locationNodes
+  const summaryContent = useMemo((): ReactNode => {
+    const locationNodes = locationsData?.locationNodes
     if (isMulti) {
-      const n = (uuidValues as string[] | undefined)?.length ?? 0
-      return n === 0 ? translation('selectLocation') : `${n} ${translation('location')}`
+      const ids = (uuidValues as string[] | undefined) ?? []
+      const n = ids.length
+      if (n === 0) {
+        return (
+          <>
+            <MapPin className="size-4 shrink-0 opacity-60" />
+            <span className="truncate">{translation('selectLocation')}</span>
+          </>
+        )
+      }
+      if (n > 2) {
+        return (
+          <>
+            <MapPin className="size-4 shrink-0 opacity-60" />
+            <span className="truncate text-sm">
+              {n} {translation('location')}
+            </span>
+          </>
+        )
+      }
+      return (
+        <span className="flex flex-wrap items-center gap-1 min-w-0">
+          {ids.map(locId => {
+            const node = locationNodes?.find(x => x.id === locId)
+            return node ? (
+              <FilterPreviewLocationChips
+                key={locId}
+                className="max-w-[min(100%,9.5rem)]"
+                locations={[nodeToPreviewLocation(node)]}
+              />
+            ) : (
+              <span key={locId} className="text-sm truncate">
+                {locId}
+              </span>
+            )
+          })}
+        </span>
+      )
     }
     const uid = uuidValue != null && String(uuidValue) !== ''
       ? String(uuidValue)
       : undefined
     if (!uid) {
-      return translation('selectLocation')
+      return (
+        <>
+          <MapPin className="size-4 shrink-0 opacity-60" />
+          <span className="truncate">{translation('selectLocation')}</span>
+        </>
+      )
     }
-    const node = nodes?.find(n => n.id === uid)
-    return node?.title ?? translation('selectLocation')
+    const node = locationNodes?.find(n => n.id === uid)
+    const label = node?.title ?? translation('selectLocation')
+    return node ? (
+      <FilterPreviewLocationChips
+        className="max-w-[min(100%,14rem)]"
+        locations={[nodeToPreviewLocation(node)]}
+      />
+    ) : (
+      <>
+        <MapPin className="size-4 shrink-0 opacity-60" />
+        <span className="truncate text-sm">{label}</span>
+      </>
+    )
   }, [isMulti, locationsData?.locationNodes, uuidValue, uuidValues, translation])
 
   return (
@@ -72,6 +129,7 @@ export const LocationSubtreeFilterPopUp = ({ value, onValueChange, onRemove, nam
       <FilterBasePopUp
         name={name}
         operator={operator}
+        outsideClickOptions={{ active: !dialogOpen }}
         onOperatorChange={(newOperator) => {
           const baseParam = value?.parameter ?? {}
           const next = newOperator === 'contains' ? 'contains' : 'equals'
@@ -108,11 +166,10 @@ export const LocationSubtreeFilterPopUp = ({ value, onValueChange, onRemove, nam
               type="button"
               color="neutral"
               coloringStyle="outline"
-              className="inline-flex items-center gap-2"
+              className="inline-flex items-center gap-2 min-w-0 max-w-full h-auto py-1.5"
               onClick={() => setDialogOpen(true)}
             >
-              <MapPin className="size-4" />
-              {summary}
+              {summaryContent}
             </Button>
           </div>
         </div>

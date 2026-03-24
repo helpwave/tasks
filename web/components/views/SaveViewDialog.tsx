@@ -99,7 +99,7 @@ export function SaveViewDialog({
                     filterDefinition,
                     sortDefinition,
                     parameters,
-                    visibility: SavedViewVisibility.Private,
+                    visibility: SavedViewVisibility.LinkShared,
                   },
                 },
               })
