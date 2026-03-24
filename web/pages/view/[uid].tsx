@@ -287,6 +287,11 @@ function SavedTaskViewTab({
       assignee: task.assignees[0]
         ? { id: task.assignees[0].id, name: task.assignees[0].name, avatarURL: task.assignees[0].avatarUrl, isOnline: task.assignees[0].isOnline ?? null }
         : undefined,
+      assigneeTeam: task.assigneeTeam
+        ? { id: task.assigneeTeam.id, title: task.assigneeTeam.title }
+        : undefined,
+      additionalAssigneeCount:
+        !task.assigneeTeam && task.assignees.length > 1 ? task.assignees.length - 1 : 0,
       properties: task.properties ?? [],
     }))
   }, [tasksData])
@@ -311,7 +316,7 @@ function SavedTaskViewTab({
       <TaskList
         tasks={tasks}
         onRefetch={() => void refetch()}
-        showAssignee={false}
+        showAssignee={true}
         totalCount={totalCount}
         loading={tasksLoading}
         searchQuery={searchQuery}

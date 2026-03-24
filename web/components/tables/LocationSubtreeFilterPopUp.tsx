@@ -72,6 +72,7 @@ export const LocationSubtreeFilterPopUp = ({ value, onValueChange, onRemove, nam
       <FilterBasePopUp
         name={name}
         operator={operator}
+        outsideClickOptions={{ active: !dialogOpen }}
         onOperatorChange={(newOperator) => {
           const baseParam = value?.parameter ?? {}
           const next = newOperator === 'contains' ? 'contains' : 'equals'

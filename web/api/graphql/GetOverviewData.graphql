@@ -65,6 +65,11 @@ query GetOverviewData($rootLocationIds: [ID!], $recentPatientsFilters: [QueryFil
       lastOnline
       isOnline
     }
+    assigneeTeam {
+      id
+      title
+      kind
+    }
     patient {
       id
       name

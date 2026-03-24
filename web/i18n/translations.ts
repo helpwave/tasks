@@ -15,6 +15,7 @@ export type TasksTranslationEntries = {
   'add': string,
   'addFastAccess': string,
   'addFastAccessDescription': string,
+  'additionalAssigneesCount': (values: { count: number }) => string,
   'addPatient': string,
   'addProperty': string,
   'addTask': string,
@@ -254,6 +255,9 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'add': `Hinzufügen`,
     'addFastAccess': `Schnellzugriff erstellen`,
     'addFastAccessDescription': `Geben Sie dem neuen Schnellzugriff einen Namen.`,
+    'additionalAssigneesCount': ({ count }): string => {
+      return `+${count}`
+    },
     'addPatient': `Patient hinzufügen`,
     'addProperty': `Eigenschaften hinzufügen`,
     'addTask': `Aufgabe hinzufügen`,
@@ -599,6 +603,9 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'add': `Add`,
     'addFastAccess': `Add Fast Access`,
     'addFastAccessDescription': `Add a name for the new fast access.`,
+    'additionalAssigneesCount': ({ count }): string => {
+      return `+${count}`
+    },
     'addPatient': `Add Patient`,
     'addProperty': `Add Property`,
     'addTask': `Add Task`,
@@ -944,6 +951,9 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'add': `Añadir`,
     'addFastAccess': `Añadir acceso rápido`,
     'addFastAccessDescription': `Añada un nombre para el nuevo acceso rápido.`,
+    'additionalAssigneesCount': ({ count }): string => {
+      return `+${count}`
+    },
     'addPatient': `Añadir paciente`,
     'addProperty': `Añadir propiedad`,
     'addTask': `Añadir tarea`,
@@ -1288,6 +1298,9 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'add': `Ajouter`,
     'addFastAccess': `Ajouter un accès rapide`,
     'addFastAccessDescription': `Ajoutez un nom pour le nouvel accès rapide.`,
+    'additionalAssigneesCount': ({ count }): string => {
+      return `+${count}`
+    },
     'addPatient': `Ajouter un patient`,
     'addProperty': `Ajouter une propriété`,
     'addTask': `Ajouter une tâche`,
@@ -1632,6 +1645,9 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'add': `Toevoegen`,
     'addFastAccess': `Snelle toegang toevoegen`,
     'addFastAccessDescription': `Voer een naam in voor de nieuwe snelle toegang.`,
+    'additionalAssigneesCount': ({ count }): string => {
+      return `+${count}`
+    },
     'addPatient': `Patiënt toevoegen`,
     'addProperty': `Eigenschap toevoegen`,
     'addTask': `Taak toevoegen`,
@@ -1979,6 +1995,9 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'add': `Adicionar`,
     'addFastAccess': `Adicionar acesso rápido`,
     'addFastAccessDescription': `Adicione um nome para o novo acesso rápido.`,
+    'additionalAssigneesCount': ({ count }): string => {
+      return `+${count}`
+    },
     'addPatient': `Adicionar paciente`,
     'addProperty': `Adicionar propriedade`,
     'addTask': `Adicionar tarefa`,

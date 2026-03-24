@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react'
-import type { FilterListItem, FilterListPopUpBuilderProps } from '@helpwave/hightide'
+import type { FilterListItem, FilterListPopUpBuilderProps, FilterValue } from '@helpwave/hightide'
 import type { DataType } from '@helpwave/hightide'
 import type { QueryableField } from '@/api/gql/generated'
 import { FieldType, QueryableFieldKind, QueryableValueType } from '@/api/gql/generated'
+import { LocationFilterActiveLabel } from '@/components/tables/LocationFilterActiveLabel'
 import { LocationSubtreeFilterPopUp } from '@/components/tables/LocationSubtreeFilterPopUp'
 import { UserSelectFilterPopUp } from '@/components/tables/UserSelectFilterPopUp'
 
@@ -48,6 +49,14 @@ export function queryableFieldsToFilterListItems(
       label: field.label,
       dataType,
       tags,
+      activeLabelBuilder: field.key === 'position'
+        ? (v: FilterValue): ReactNode => (
+          <>
+            <span className="font-bold">{field.label}</span>
+            <LocationFilterActiveLabel value={v} />
+          </>
+        )
+        : undefined,
       popUpBuilder: ft === FieldType.FieldTypeUser
         ? (props: FilterListPopUpBuilderProps): ReactNode => (<UserSelectFilterPopUp {...props} />)
         : field.key === 'position'

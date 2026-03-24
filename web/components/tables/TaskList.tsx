@@ -46,6 +46,8 @@ export type TaskViewModel = {
   },
   assignee?: { id: string, name: string, avatarURL?: string | null, isOnline?: boolean | null },
   assigneeTeam?: { id: string, title: string },
+  /** Additional user assignees beyond the first (omit when team assignment). */
+  additionalAssigneeCount?: number,
   done: boolean,
   properties?: GetTasksQuery['tasks'][0]['properties'],
 }
@@ -516,22 +518,34 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
           }
 
           if (assignee) {
+            const extra = row.original.additionalAssigneeCount ?? 0
             return (
               <>
-                <span className="print:block hidden">{assignee.name}</span>
-                <button
-                  onClick={() => setSelectedUserPopupId(assignee.id)}
-                  className="flex-row-2 items-center hover:opacity-75 transition-opacity print:hidden"
-                >
-                  <AvatarStatusComponent
-                    isOnline={assignee?.isOnline ?? null}
-                    image={{
-                      avatarUrl: assignee.avatarURL || 'https://cdn.helpwave.de/boringavatar.svg',
-                      alt: assignee.name
-                    }}
-                  />
-                  <span>{assignee.name}</span>
-                </button>
+                <span className="print:block hidden">
+                  {assignee.name}
+                  {extra > 0 ? ` ${translation('additionalAssigneesCount', { count: extra })}` : ''}
+                </span>
+                <div className="flex-row-2 items-center gap-1.5 flex-wrap min-w-0 print:hidden">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedUserPopupId(assignee.id)}
+                    className="flex-row-2 items-center min-w-0 hover:opacity-75 transition-opacity"
+                  >
+                    <AvatarStatusComponent
+                      isOnline={assignee?.isOnline ?? null}
+                      image={{
+                        avatarUrl: assignee.avatarURL || 'https://cdn.helpwave.de/boringavatar.svg',
+                        alt: assignee.name
+                      }}
+                    />
+                    <span className="truncate">{assignee.name}</span>
+                  </button>
+                  {extra > 0 && (
+                    <span className="text-description text-sm font-medium tabular-nums shrink-0">
+                      {translation('additionalAssigneesCount', { count: extra })}
+                    </span>
+                  )}
+                </div>
               </>
             )
           }

@@ -125,6 +125,11 @@ const TasksPage: NextPage = () => {
       assignee: task.assignees[0]
         ? { id: task.assignees[0].id, name: task.assignees[0].name, avatarURL: task.assignees[0].avatarUrl, isOnline: task.assignees[0].isOnline ?? null }
         : undefined,
+      assigneeTeam: task.assigneeTeam
+        ? { id: task.assigneeTeam.id, title: task.assigneeTeam.title }
+        : undefined,
+      additionalAssigneeCount:
+        !task.assigneeTeam && task.assignees.length > 1 ? task.assignees.length - 1 : 0,
       properties: task.properties ?? [],
     }))
   }, [tasksData])
@@ -153,7 +158,7 @@ const TasksPage: NextPage = () => {
         <TaskList
           tasks={tasks}
           onRefetch={refetch}
-          showAssignee={false}
+          showAssignee={true}
           initialTaskId={taskId}
           onInitialTaskOpened={() => router.replace('/tasks', undefined, { shallow: true })}
           totalCount={totalCount}

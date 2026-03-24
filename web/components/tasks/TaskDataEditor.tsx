@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import type { CreateTaskInput, UpdateTaskInput, TaskPriority } from '@/api/gql/generated'
 import { PatientState } from '@/api/gql/generated'
-import { useCreateTask, useDeleteTask, usePatients, useTask, useUpdateTask, useUsers, useRefreshingEntityIds } from '@/data'
+import { useCreateTask, useDeleteTask, useLocations, usePatients, useTask, useUpdateTask, useUsers, useRefreshingEntityIds } from '@/data'
 import type { FormFieldDataHandling } from '@helpwave/hightide'
 import {
   Button,
@@ -19,13 +19,16 @@ import {
   useFormObserverKey,
   Visibility,
   FormObserver,
-  FlexibleDateTimeInput
+  FlexibleDateTimeInput,
+  IconButton
 } from '@helpwave/hightide'
 import { CenteredLoadingLogo } from '@/components/CenteredLoadingLogo'
 import { useTasksContext } from '@/hooks/useTasksContext'
-import { User, Flag } from 'lucide-react'
+import { User, Flag, Info, Users, XIcon } from 'lucide-react'
 import { DateDisplay } from '@/components/Date/DateDisplay'
 import { AssigneeSelect } from './AssigneeSelect'
+import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
+import { UserInfoPopup } from '@/components/UserInfoPopup'
 import { localToUTCWithSameTime, PatientDetailView } from '@/components/patients/PatientDetailView'
 import { ErrorDialog } from '@/components/ErrorDialog'
 import clsx from 'clsx'
@@ -54,6 +57,7 @@ export const TaskDataEditor = ({
   const { selectedRootLocationIds } = useTasksContext()
   const [errorDialog, setErrorDialog] = useState<{ isOpen: boolean, message?: string }>({ isOpen: false })
   const [isShowingPatientDialog, setIsShowingPatientDialog] = useState<boolean>(false)
+  const [assigneeUserPopupId, setAssigneeUserPopupId] = useState<string | null>(null)
 
   const isEditMode = id !== null
   const taskId = id
@@ -75,6 +79,7 @@ export const TaskDataEditor = ({
   const [createTask, { loading: isCreating }] = useCreateTask()
   const [updateTaskMutate] = useUpdateTask()
   const { data: usersData } = useUsers()
+  const { data: locationsData } = useLocations()
   const updateTask = (vars: { id: string, data: UpdateTaskInput }) => {
     updateTaskMutate({
       variables: vars,
@@ -196,6 +201,14 @@ export const TaskDataEditor = ({
   const selectedAssignees = useMemo(
     () => usersData?.users?.filter((user) => (assigneeIds ?? []).includes(user.id)) ?? [],
     [usersData, assigneeIds]
+  )
+  const teams = useMemo(
+    () => locationsData?.locationNodes?.filter((loc) => loc.kind === 'TEAM') ?? [],
+    [locationsData]
+  )
+  const selectedTeamTitle = useMemo(
+    () => (assigneeTeamId ? teams.find((t) => t.id === assigneeTeamId)?.title : undefined),
+    [assigneeTeamId, teams]
   )
   const expectedFinishDate = useMemo(() => {
     if (!dueDate || !estimatedTime) return null
@@ -332,30 +345,60 @@ export const TaskDataEditor = ({
                   {(selectedAssignees.length > 0 || assigneeTeamId) && (
                     <div className="flex flex-wrap gap-2">
                       {selectedAssignees.map((assignee) => (
-                        <Button
+                        <div
                           key={assignee.id}
-                          color="neutral"
-                          coloringStyle="outline"
-                          onClick={() => {
-                            updateForm(prev => ({
-                              ...prev,
-                              assigneeIds: (prev.assigneeIds ?? []).filter((assigneeId) => assigneeId !== assignee.id),
-                            }), isEditMode)
-                          }}
+                          className="inline-flex items-center gap-1.5 rounded-md border border-divider bg-surface px-2.5 py-2 max-w-full"
                         >
-                          {assignee.name}
-                        </Button>
+                          <div className="flex-row-2 items-center min-w-0 gap-2 flex-1">
+                            <AvatarStatusComponent
+                              isOnline={assignee.isOnline ?? null}
+                              image={{
+                                avatarUrl: assignee.avatarUrl ?? 'https://cdn.helpwave.de/boringavatar.svg',
+                                alt: assignee.name
+                              }}
+                            />
+                            <span className="truncate text-sm">{assignee.name}</span>
+                          </div>
+                          <IconButton
+                            tooltip={translation('userInformation')}
+                            coloringStyle="text"
+                            color="neutral"
+                            onClick={() => setAssigneeUserPopupId(assignee.id)}
+                          >
+                            <Info className="size-4" />
+                          </IconButton>
+                          <IconButton
+                            tooltip={translation('clear')}
+                            coloringStyle="text"
+                            color="neutral"
+                            onClick={() => {
+                              updateForm(prev => ({
+                                ...prev,
+                                assigneeIds: (prev.assigneeIds ?? []).filter((id) => id !== assignee.id),
+                              }), isEditMode)
+                            }}
+                          >
+                            <XIcon className="size-4" />
+                          </IconButton>
+                        </div>
                       ))}
                       {assigneeTeamId && (
-                        <Button
-                          color="neutral"
-                          coloringStyle="outline"
-                          onClick={() => {
-                            updateForm(prev => ({ ...prev, assigneeTeamId: null }), isEditMode)
-                          }}
-                        >
-                          Team
-                        </Button>
+                        <div className="inline-flex items-center gap-1.5 rounded-md border border-divider bg-surface px-2.5 py-2 max-w-full">
+                          <div className="flex-row-2 items-center min-w-0 gap-2 flex-1 px-0.5">
+                            <Users className="size-5 text-description shrink-0" />
+                            <span className="truncate text-sm">{selectedTeamTitle ?? translation('locationType', { type: 'TEAM' })}</span>
+                          </div>
+                          <IconButton
+                            tooltip={translation('clear')}
+                            coloringStyle="text"
+                            color="neutral"
+                            onClick={() => {
+                              updateForm(prev => ({ ...prev, assigneeTeamId: null }), isEditMode)
+                            }}
+                          >
+                            <XIcon className="size-4" />
+                          </IconButton>
+                        </div>
                       )}
                     </div>
                   )}
@@ -504,6 +547,11 @@ export const TaskDataEditor = ({
             onSuccess={() => { }}
           />
         </Drawer>
+        <UserInfoPopup
+          userId={assigneeUserPopupId}
+          isOpen={!!assigneeUserPopupId}
+          onClose={() => setAssigneeUserPopupId(null)}
+        />
       </FormProvider>
     </>
   )

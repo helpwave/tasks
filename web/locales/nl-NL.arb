@@ -11,6 +11,8 @@
   "archivedPropertyDescription": "Gearchiveerde eigenschappen kunnen niet meer aan objecten worden toegewezen.",
   "archiveProperty": "Eigenschap archiveren",
   "assignedTo": "Toegewezen aan",
+  "additionalAssigneesCount": "+{count}",
+  "@additionalAssigneesCount": { "placeholders": { "count": { "type": "number" } } },
   "authenticationFailed": "Authenticatie mislukt",
   "birthdate": "Geboortedatum",
   "cancel": "Annuleren",

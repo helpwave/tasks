@@ -6,12 +6,11 @@ import clsx from 'clsx'
 import type { TableProps } from '@helpwave/hightide'
 import { Button, Checkbox, FillerCell, TableDisplay, TableProvider, Tooltip } from '@helpwave/hightide'
 import { DateDisplay } from '@/components/Date/DateDisplay'
+import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
+import { UserInfoPopup } from '@/components/UserInfoPopup'
 import { DueDateUtils } from '@/utils/dueDate'
 import { PriorityUtils } from '@/utils/priority'
-import { PropertyEntity } from '@/api/gql/generated'
-import { usePropertyDefinitions } from '@/data'
-import { getPropertyColumnsForEntity } from '@/utils/propertyColumn'
-import { useColumnVisibilityWithPropertyDefaults } from '@/hooks/usePropertyColumnVisibility'
+import { Users } from 'lucide-react'
 
 type TaskViewModel = GetOverviewDataQuery['recentTasks'][0]
 
@@ -33,23 +32,12 @@ export const RecentTasksTable = ({
   ...props
 }: RecentTasksTableProps) => {
   const translation = useTasksTranslation()
-  const { data: propertyDefinitionsData } = usePropertyDefinitions()
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
 
   const [pagination, setPagination] = useState<PaginationState>({ pageSize: 10, pageIndex: 0 })
   const [sorting, setSorting] = useState<SortingState>([])
   const [filters, setFilters] = useState<ColumnFiltersState>([])
-  const [columnVisibility, setColumnVisibilityRaw] = useState<VisibilityState>({})
-
-  const setColumnVisibility = useColumnVisibilityWithPropertyDefaults(
-    propertyDefinitionsData,
-    PropertyEntity.Task,
-    setColumnVisibilityRaw
-  )
-
-  const taskPropertyColumns = useMemo<ColumnDef<TaskViewModel>[]>(
-    () => getPropertyColumnsForEntity<TaskViewModel>(propertyDefinitionsData, PropertyEntity.Task),
-    [propertyDefinitionsData]
-  )
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
 
   const taskColumns = useMemo<ColumnDef<TaskViewModel>[]>(() => [
     {
@@ -153,6 +141,69 @@ export const RecentTasksTable = ({
       filterFn: 'date',
     },
     {
+      id: 'assignee',
+      header: translation('assignedTo'),
+      accessorFn: (row) => {
+        if (row.assigneeTeam) return row.assigneeTeam.title
+        return row.assignees[0]?.name ?? ''
+      },
+      cell: ({ row }) => {
+        const team = row.original.assigneeTeam
+        if (team) {
+          return (
+            <div
+              className="flex-row-2 items-center min-w-0"
+              onClick={(e) => e.stopPropagation()}
+              role="presentation"
+            >
+              <Users className="size-5 text-description shrink-0" />
+              <span className="truncate">{team.title}</span>
+            </div>
+          )
+        }
+        const assignees = row.original.assignees ?? []
+        const first = assignees[0]
+        if (!first) {
+          return <span className="text-description">{translation('notAssigned')}</span>
+        }
+        const extra = assignees.length > 1 ? assignees.length - 1 : 0
+        return (
+          <div
+            className="flex-row-2 items-center gap-1.5 flex-wrap min-w-0"
+            onClick={(e) => e.stopPropagation()}
+            role="presentation"
+          >
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                setSelectedUserId(first.id)
+              }}
+              className="flex-row-2 items-center min-w-0 hover:opacity-75 transition-opacity text-left"
+            >
+              <AvatarStatusComponent
+                isOnline={first.isOnline ?? null}
+                image={{
+                  avatarUrl: first.avatarUrl ?? 'https://cdn.helpwave.de/boringavatar.svg',
+                  alt: first.name
+                }}
+              />
+              <span className="truncate">{first.name}</span>
+            </button>
+            {extra > 0 && (
+              <span className="text-description text-sm font-medium tabular-nums shrink-0">
+                {translation('additionalAssigneesCount', { count: extra })}
+              </span>
+            )}
+          </div>
+        )
+      },
+      minSize: 180,
+      size: 220,
+      maxSize: 320,
+      filterFn: 'text',
+    },
+    {
       id: 'date',
       header: translation('updated'),
       accessorFn: (value) => value.updateDate ? new Date(value.updateDate) : undefined,
@@ -169,8 +220,7 @@ export const RecentTasksTable = ({
       enableResizing: false,
       filterFn: 'date',
     },
-    ...taskPropertyColumns,
-  ], [translation, completeTask, reopenTask, onSelectPatient, taskPropertyColumns])
+  ], [translation, completeTask, reopenTask, onSelectPatient])
 
   const fillerRowCell = useCallback(() => <FillerCell className="min-h-8" />, [])
   const onRowClick = useCallback((row: Row<TaskViewModel>) => onSelectTask(row.original.id), [onSelectTask])
@@ -217,6 +267,11 @@ export const RecentTasksTable = ({
           </div>
         </div>
       </TableProvider>
+      <UserInfoPopup
+        userId={selectedUserId}
+        isOpen={!!selectedUserId}
+        onClose={() => setSelectedUserId(null)}
+      />
     </div>
   )
 }

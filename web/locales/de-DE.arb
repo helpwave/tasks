@@ -11,6 +11,14 @@
   "archivedPropertyDescription": "Archivierte Eigenschaften können nicht mehr neu Objekten hinzugeügt werden.",
   "archiveProperty": "Eigenschaft Archivieren",
   "assignedTo": "Zugewiesen an",
+  "additionalAssigneesCount": "+{count}",
+  "@additionalAssigneesCount": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
   "authenticationFailed": "Authentifizierung fehlgeschlagen",
   "birthdate": "Geburtsdatum",
   "cancel": "Abbrechen",

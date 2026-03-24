@@ -11,6 +11,8 @@
   "archivedPropertyDescription": "Les propriétés archivées ne peuvent plus être assignées aux objets.",
   "archiveProperty": "Archiver la propriété",
   "assignedTo": "Assigné à",
+  "additionalAssigneesCount": "+{count}",
+  "@additionalAssigneesCount": { "placeholders": { "count": { "type": "number" } } },
   "authenticationFailed": "Échec de l''authentification",
   "birthdate": "Date de naissance",
   "cancel": "Annuler",
