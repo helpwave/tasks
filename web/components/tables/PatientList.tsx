@@ -1,8 +1,11 @@
 import { useMemo, useState, forwardRef, useImperativeHandle, useEffect, useCallback, useRef } from 'react'
-import { Chip, FillerCell, HelpwaveLogo, LoadingContainer, SearchBar, ProgressIndicator, Tooltip, Drawer, TableProvider, TableDisplay, TableColumnSwitcher, TablePagination, IconButton, useLocale } from '@helpwave/hightide'
+import { useMutation } from '@apollo/client/react'
+import type { IdentifierFilterValue, FilterListItem, FilterListPopUpBuilderProps } from '@helpwave/hightide'
+import { Chip, FillerCell, HelpwaveLogo, LoadingContainer, SearchBar, ProgressIndicator, Tooltip, Drawer, TableProvider, TableDisplay, TableColumnSwitcher, TablePagination, IconButton, useLocale, FilterList, SortingList, Button, ExpansionIcon, Visibility } from '@helpwave/hightide'
 import { PlusIcon } from 'lucide-react'
-import { Sex, PatientState, type GetPatientsQuery, type TaskType, PropertyEntity, type FullTextSearchInput, type LocationType } from '@/api/gql/generated'
-import { usePropertyDefinitions, usePatientsPaginated, useRefreshingEntityIds } from '@/data'
+import type { LocationType } from '@/api/gql/generated'
+import { Sex, PatientState, type GetPatientsQuery, type TaskType, PropertyEntity, FieldType } from '@/api/gql/generated'
+import { usePropertyDefinitions, usePatientsPaginated, useQueryableFields, useRefreshingEntityIds } from '@/data'
 import { PatientDetailView } from '@/components/patients/PatientDetailView'
 import { LocationChips } from '@/components/locations/LocationChips'
 import { LocationChipsBySetting } from '@/components/patients/LocationChipsBySetting'
@@ -10,11 +13,37 @@ import { PatientStateChip } from '@/components/patients/PatientStateChip'
 import { getLocationNodesByKind, type LocationKindColumn } from '@/utils/location'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { useTasksContext } from '@/hooks/useTasksContext'
-import type { ColumnDef, Row, TableState } from '@tanstack/table-core'
+import type { ColumnDef, ColumnFiltersState, ColumnOrderState, PaginationState, Row, SortingState, TableState, VisibilityState } from '@tanstack/table-core'
 import { getPropertyColumnsForEntity } from '@/utils/propertyColumn'
-import { useStorageSyncedTableState } from '@/hooks/useTableState'
-import { usePropertyColumnVisibility } from '@/hooks/usePropertyColumnVisibility'
-import { columnFiltersToFilterInput, paginationStateToPaginationInput, sortingStateToSortInput } from '@/utils/tableStateToApi'
+import { getPropertyColumnIds, useColumnVisibilityWithPropertyDefaults } from '@/hooks/usePropertyColumnVisibility'
+import { columnFiltersToQueryFilterClauses, paginationStateToPaginationInput, sortingStateToQuerySortClauses } from '@/utils/tableStateToApi'
+import { queryableFieldsToFilterListItems, queryableFieldsToSortingListItems } from '@/utils/queryableFilterList'
+import { getPropertyFilterFn as getPropertyDatatype } from '@/utils/propertyFilterMapping'
+import { UserSelectFilterPopUp } from './UserSelectFilterPopUp'
+import { SaveViewDialog } from '@/components/views/SaveViewDialog'
+import { SaveViewActionsMenu } from '@/components/views/SaveViewActionsMenu'
+import {
+  MySavedViewsDocument,
+  SavedViewDocument,
+  SavedViewEntityType,
+  UpdateSavedViewDocument,
+  type UpdateSavedViewMutation,
+  type UpdateSavedViewMutationVariables
+} from '@/api/gql/generated'
+import { getParsedDocument } from '@/data/hooks/queryHelpers'
+import { replaceSavedViewInMySavedViewsCache } from '@/utils/savedViewsCache'
+import { useDeferredColumnOrderChange } from '@/hooks/useDeferredColumnOrderChange'
+import { columnIdsFromColumnDefs, sanitizeColumnOrderForKnownColumns } from '@/utils/columnOrder'
+import {
+  hasActiveLocationFilter,
+  normalizedColumnOrderForViewCompare,
+  normalizedVisibilityForViewCompare,
+  serializeColumnFiltersForView,
+  serializeSortingForView,
+  stringifyViewParameters,
+  tableViewStateMatchesBaseline
+} from '@/utils/viewDefinition'
+import type { ViewParameters } from '@/utils/viewDefinition'
 
 export type PatientViewModel = {
   id: string,
@@ -51,37 +80,158 @@ type PatientListProps = {
   acceptedStates?: PatientState[],
   rootLocationIds?: string[],
   locationId?: string,
+  viewDefaultFilters?: ColumnFiltersState,
+  viewDefaultSorting?: SortingState,
+  viewDefaultSearchQuery?: string,
+  viewDefaultColumnVisibility?: VisibilityState,
+  viewDefaultColumnOrder?: ColumnOrderState,
+  readOnly?: boolean,
+  hideSaveView?: boolean,
+  /** When set (e.g. on `/view/:id`), overwrite updates this saved view. */
+  savedViewId?: string,
+  onSavedViewCreated?: (id: string) => void,
 }
 
-export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initialPatientId, onInitialPatientOpened, acceptedStates: _acceptedStates, rootLocationIds, locationId }, ref) => {
+export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initialPatientId, onInitialPatientOpened, acceptedStates: _acceptedStates, rootLocationIds, locationId, viewDefaultFilters, viewDefaultSorting, viewDefaultSearchQuery, viewDefaultColumnVisibility, viewDefaultColumnOrder, readOnly: _readOnly, hideSaveView, savedViewId, onSavedViewCreated }, ref) => {
   const translation = useTasksTranslation()
   const { locale } = useLocale()
   const { selectedRootLocationIds } = useTasksContext()
   const { refreshingPatientIds } = useRefreshingEntityIds()
   const { data: propertyDefinitionsData } = usePropertyDefinitions()
+  const { data: queryableFieldsData } = useQueryableFields('Patient')
   const effectiveRootLocationIds = rootLocationIds ?? selectedRootLocationIds
   const [isPanelOpen, setIsPanelOpen] = useState(false)
   const [selectedPatient, setSelectedPatient] = useState<PatientViewModel | undefined>(undefined)
-  const [searchQuery, setSearchQuery] = useState('')
+  const [searchQuery, setSearchQuery] = useState(viewDefaultSearchQuery ?? '')
   const [openedPatientId, setOpenedPatientId] = useState<string | null>(null)
+  const [isShowFilters, setIsShowFilters] = useState(false)
+  const [isShowSorting, setIsShowSorting] = useState(false)
 
-  const {
-    pagination,
-    setPagination,
-    sorting,
-    setSorting,
-    filters,
-    setFilters,
-    columnVisibility,
-    setColumnVisibility,
-  } = useStorageSyncedTableState('patient-list')
+  const [pagination, setPagination] = useState<PaginationState>({ pageSize: 10, pageIndex: 0 })
+  const [sorting, setSorting] = useState<SortingState>(() => viewDefaultSorting ?? [])
+  const [filters, setFilters] = useState<ColumnFiltersState>(() => viewDefaultFilters ?? [])
+  const [columnVisibility, setColumnVisibilityRaw] = useState<VisibilityState>(() => viewDefaultColumnVisibility ?? {})
+  const [columnOrder, setColumnOrder] = useState<ColumnOrderState>(() => viewDefaultColumnOrder ?? [])
 
-  usePropertyColumnVisibility(
+  const setColumnVisibility = useColumnVisibilityWithPropertyDefaults(
     propertyDefinitionsData,
     PropertyEntity.Patient,
-    columnVisibility,
-    setColumnVisibility
+    setColumnVisibilityRaw
   )
+
+  const baselineFilters = useMemo(() => viewDefaultFilters ?? [], [viewDefaultFilters])
+  const baselineSorting = useMemo(() => viewDefaultSorting ?? [], [viewDefaultSorting])
+  const baselineSearch = useMemo(() => viewDefaultSearchQuery ?? '', [viewDefaultSearchQuery])
+  const baselineColumnVisibility = useMemo(() => viewDefaultColumnVisibility ?? {}, [viewDefaultColumnVisibility])
+  const baselineColumnOrder = useMemo(() => viewDefaultColumnOrder ?? [], [viewDefaultColumnOrder])
+
+  const hasLocationFilter = useMemo(
+    () => hasActiveLocationFilter(filters),
+    [filters]
+  )
+
+  const propertyColumnIds = useMemo(
+    () => getPropertyColumnIds(propertyDefinitionsData, PropertyEntity.Patient),
+    [propertyDefinitionsData]
+  )
+
+  const persistedSavedViewContentKey = useMemo(
+    () =>
+      `${serializeColumnFiltersForView(baselineFilters)}|${serializeSortingForView(baselineSorting)}|${baselineSearch}|${normalizedVisibilityForViewCompare(baselineColumnVisibility)}|${normalizedColumnOrderForViewCompare(baselineColumnOrder)}`,
+    [baselineFilters, baselineSorting, baselineSearch, baselineColumnVisibility, baselineColumnOrder]
+  )
+
+  useEffect(() => {
+    if (!savedViewId) {
+      return
+    }
+    setFilters(baselineFilters)
+    setSorting(baselineSorting)
+    setSearchQuery(baselineSearch)
+    setColumnVisibility(baselineColumnVisibility)
+    setColumnOrder(baselineColumnOrder)
+    setPagination({ pageSize: 10, pageIndex: 0 })
+  }, [
+    savedViewId,
+    persistedSavedViewContentKey,
+    baselineFilters,
+    baselineSorting,
+    baselineSearch,
+    baselineColumnVisibility,
+    baselineColumnOrder,
+    setColumnVisibility,
+  ])
+
+  const [isSaveViewDialogOpen, setIsSaveViewDialogOpen] = useState(false)
+
+  const [updateSavedView, { loading: overwriteLoading }] = useMutation<
+    UpdateSavedViewMutation,
+    UpdateSavedViewMutationVariables
+  >(getParsedDocument(UpdateSavedViewDocument), {
+    awaitRefetchQueries: true,
+    refetchQueries: savedViewId
+      ? [
+        { query: getParsedDocument(SavedViewDocument), variables: { id: savedViewId } },
+        { query: getParsedDocument(MySavedViewsDocument) },
+      ]
+      : [{ query: getParsedDocument(MySavedViewsDocument) }],
+    update(cache, { data }) {
+      const view = data?.updateSavedView
+      if (view) {
+        replaceSavedViewInMySavedViewsCache(cache, view)
+      }
+    },
+  })
+
+  const handleDiscardViewChanges = useCallback(() => {
+    setFilters(baselineFilters)
+    setSorting(baselineSorting)
+    setSearchQuery(baselineSearch)
+    setColumnVisibility(baselineColumnVisibility)
+    setColumnOrder(baselineColumnOrder)
+  }, [
+    baselineFilters,
+    baselineSorting,
+    baselineSearch,
+    baselineColumnVisibility,
+    baselineColumnOrder,
+    setFilters,
+    setSorting,
+    setSearchQuery,
+    setColumnVisibility,
+    setColumnOrder,
+  ])
+
+  const handleOverwriteSavedView = useCallback(async () => {
+    if (!savedViewId) return
+    await updateSavedView({
+      variables: {
+        id: savedViewId,
+        data: {
+          filterDefinition: serializeColumnFiltersForView(filters as ColumnFiltersState),
+          sortDefinition: serializeSortingForView(sorting),
+          parameters: stringifyViewParameters({
+            rootLocationIds: effectiveRootLocationIds ?? undefined,
+            locationId: hasLocationFilter ? undefined : (locationId ?? undefined),
+            searchQuery: searchQuery || undefined,
+            columnVisibility,
+            columnOrder,
+          } satisfies ViewParameters),
+        },
+      },
+    })
+  }, [
+    savedViewId,
+    updateSavedView,
+    filters,
+    sorting,
+    effectiveRootLocationIds,
+    hasLocationFilter,
+    locationId,
+    searchQuery,
+    columnVisibility,
+    columnOrder,
+  ])
 
   const allPatientStates: PatientState[] = useMemo(() => [
     PatientState.Admitted,
@@ -90,41 +240,44 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
     PatientState.Wait,
   ], [])
 
-  const apiFiltering = useMemo(() => columnFiltersToFilterInput(filters), [filters])
+  const apiFilters = useMemo(() => columnFiltersToQueryFilterClauses(filters), [filters])
   const patientStates = useMemo(() => {
-    const stateFilter = apiFiltering.find(
-      f => f.column === 'state' &&
-        (f.operator === 'TAGS_SINGLE_EQUALS' || f.operator === 'TAGS_SINGLE_CONTAINS') &&
-        f.parameter?.searchTags != null &&
-        f.parameter.searchTags.length > 0
-    )
-    if (!stateFilter?.parameter?.searchTags) return allPatientStates
+    const stateFilter = apiFilters.find(f => f.fieldKey === 'state')
+    if (!stateFilter?.value) return allPatientStates
+    const raw = stateFilter.value.stringValues?.length
+      ? stateFilter.value.stringValues
+      : stateFilter.value.stringValue
+        ? [stateFilter.value.stringValue]
+        : []
+    if (raw.length === 0) return allPatientStates
     const allowed = new Set(allPatientStates as unknown as string[])
-    const filtered = (stateFilter.parameter.searchTags as string[]).filter(s => allowed.has(s))
+    const filtered = raw.filter(s => allowed.has(s))
     return filtered.length > 0 ? (filtered as PatientState[]) : allPatientStates
-  }, [apiFiltering, allPatientStates])
+  }, [apiFilters, allPatientStates])
 
-  const searchInput: FullTextSearchInput | undefined = searchQuery
+  const searchInput = searchQuery
     ? {
       searchText: searchQuery,
       includeProperties: true,
     }
     : undefined
-  const apiSorting = useMemo(() => sortingStateToSortInput(sorting), [sorting])
+  const apiSorting = useMemo(() => sortingStateToQuerySortClauses(sorting), [sorting])
   const apiPagination = useMemo(() => paginationStateToPaginationInput(pagination), [pagination])
 
   const lastTotalCountRef = useRef<number | undefined>(undefined)
   const { data: patientsData, refetch, totalCount, loading: patientsLoading } = usePatientsPaginated(
     {
-      locationId: locationId || undefined,
-      rootLocationIds: !locationId && effectiveRootLocationIds && effectiveRootLocationIds.length > 0 ? effectiveRootLocationIds : undefined,
+      locationId: hasLocationFilter ? undefined : (locationId || undefined),
+      rootLocationIds: hasLocationFilter || locationId
+        ? undefined
+        : (effectiveRootLocationIds && effectiveRootLocationIds.length > 0 ? effectiveRootLocationIds : undefined),
       states: patientStates,
-      search: searchInput,
     },
     {
       pagination: apiPagination,
-      sorting: apiSorting.length > 0 ? apiSorting : undefined,
-      filtering: apiFiltering.length > 0 ? apiFiltering : undefined,
+      sorts: apiSorting.length > 0 ? apiSorting : undefined,
+      filters: apiFilters.length > 0 ? apiFilters : undefined,
+      search: searchInput,
     }
   )
   if (totalCount != null) lastTotalCountRef.current = totalCount
@@ -190,7 +343,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
   }
 
   const patientPropertyColumns = useMemo<ColumnDef<PatientViewModel>[]>(
-    () => getPropertyColumnsForEntity<PatientViewModel>(propertyDefinitionsData, PropertyEntity.Patient),
+    () => getPropertyColumnsForEntity<PatientViewModel>(propertyDefinitionsData, PropertyEntity.Patient, false),
     [propertyDefinitionsData]
   )
 
@@ -211,7 +364,6 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       minSize: 200,
       size: 250,
       maxSize: 300,
-      filterFn: 'text',
     },
     {
       id: 'state',
@@ -229,12 +381,6 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       minSize: 120,
       size: 144,
       maxSize: 180,
-      filterFn: 'singleTag',
-      meta: {
-        filterData: {
-          tags: allPatientStates.map(state => ({ label: translation('patientState', { state: state as string }), tag: state })),
-        }
-      }
     },
     {
       id: 'sex',
@@ -272,16 +418,6 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       minSize: 160,
       size: 160,
       maxSize: 200,
-      filterFn: 'singleTag',
-      meta: {
-        filterData: {
-          tags: [
-            { label: translation('male'), tag: Sex.Male },
-            { label: translation('female'), tag: Sex.Female },
-            { label: translation('diverse'), tag: Sex.Unknown },
-          ],
-        }
-      }
     },
     {
       id: 'position',
@@ -299,7 +435,6 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       minSize: 200,
       size: 260,
       maxSize: 320,
-      filterFn: 'text' as const,
     },
     ...(['CLINIC', 'WARD', 'ROOM', 'BED'] as const).map((kind): ColumnDef<PatientViewModel> => ({
       id: `location-${kind}`,
@@ -322,7 +457,6 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       minSize: 160,
       size: 220,
       maxSize: 300,
-      filterFn: 'text' as const,
     })),
     {
       id: 'birthdate',
@@ -351,7 +485,6 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       minSize: 200,
       size: 200,
       maxSize: 200,
-      filterFn: 'date' as const,
     },
     {
       id: 'tasks',
@@ -393,7 +526,129 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
           refreshingPatientIds.has(params.row.original.id) ? rowLoadingCell : (col.cell as (p: unknown) => React.ReactNode)(params)
         : undefined,
     })),
-  ], [translation, allPatientStates, patientPropertyColumns, refreshingPatientIds, rowLoadingCell, dateFormat])
+  ], [translation, patientPropertyColumns, refreshingPatientIds, rowLoadingCell, dateFormat])
+
+  const propertyFieldTypeByDefId = useMemo(
+    () => new Map(propertyDefinitionsData?.propertyDefinitions.map(d => [d.id, d.fieldType]) ?? []),
+    [propertyDefinitionsData]
+  )
+
+  const availableFilters: FilterListItem[] = useMemo(() => {
+    const raw = queryableFieldsData?.queryableFields
+    if (raw?.length) {
+      return queryableFieldsToFilterListItems(raw, propertyFieldTypeByDefId)
+    }
+    return [
+      {
+        id: 'name',
+        label: translation('name'),
+        dataType: 'text',
+        tags: [],
+      },
+      {
+        id: 'state',
+        label: translation('status'),
+        dataType: 'singleTag',
+        tags: allPatientStates.map(state => ({ label: translation('patientState', { state: state as string }), tag: state })),
+      },
+      {
+        id: 'sex',
+        label: translation('sex'),
+        dataType: 'singleTag',
+        tags: [
+          { label: translation('male'), tag: Sex.Male },
+          { label: translation('female'), tag: Sex.Female },
+          { label: translation('diverse'), tag: Sex.Unknown },
+        ],
+      },
+      ...(['CLINIC', 'WARD', 'ROOM', 'BED'] as const).map((kind): FilterListItem => ({
+        id: `location-${kind}`,
+        label: translation(LOCATION_KIND_HEADERS[kind] as 'locationClinic' | 'locationWard' | 'locationRoom' | 'locationBed'),
+        dataType: 'text',
+        tags: [],
+      })),
+      {
+        id: 'birthdate',
+        label: translation('birthdate'),
+        dataType: 'date',
+        tags: [],
+      },
+      {
+        id: 'tasks',
+        label: translation('tasks'),
+        dataType: 'number',
+        tags: [],
+      },
+      ...propertyDefinitionsData?.propertyDefinitions.map(def => {
+        const dataType = getPropertyDatatype(def.fieldType)
+        return {
+          id: `property_${def.id}`,
+          label: def.name,
+          dataType,
+          tags: def.options.map((opt, idx) => ({
+            label: opt,
+            tag: `${def.id}-opt-${idx}`,
+          })),
+          popUpBuilder: def.fieldType === FieldType.FieldTypeUser ? (props: FilterListPopUpBuilderProps) => (<UserSelectFilterPopUp {...props} />) : undefined,
+        }
+      }) ?? [],
+    ]
+  }, [queryableFieldsData?.queryableFields, propertyFieldTypeByDefId, translation, allPatientStates, propertyDefinitionsData?.propertyDefinitions])
+
+  const availableSortItems = useMemo(() => {
+    const raw = queryableFieldsData?.queryableFields
+    if (raw?.length) {
+      return queryableFieldsToSortingListItems(raw)
+    }
+    return availableFilters.map(({ id, label, dataType }) => ({ id, label, dataType }))
+  }, [queryableFieldsData?.queryableFields, availableFilters])
+
+  const knownColumnIdsOrdered = useMemo(
+    () => columnIdsFromColumnDefs(columns),
+    [columns]
+  )
+
+  const sanitizedColumnOrder = useMemo(
+    () => sanitizeColumnOrderForKnownColumns(columnOrder, knownColumnIdsOrdered),
+    [columnOrder, knownColumnIdsOrdered]
+  )
+
+  const sanitizedBaselineColumnOrder = useMemo(
+    () => sanitizeColumnOrderForKnownColumns(baselineColumnOrder, knownColumnIdsOrdered),
+    [baselineColumnOrder, knownColumnIdsOrdered]
+  )
+
+  const viewMatchesBaseline = useMemo(
+    () => tableViewStateMatchesBaseline({
+      filters: filters as ColumnFiltersState,
+      baselineFilters,
+      sorting,
+      baselineSorting,
+      searchQuery,
+      baselineSearch,
+      columnVisibility,
+      baselineColumnVisibility,
+      columnOrder: sanitizedColumnOrder,
+      baselineColumnOrder: sanitizedBaselineColumnOrder,
+      propertyColumnIds,
+    }),
+    [
+      filters,
+      baselineFilters,
+      sorting,
+      baselineSorting,
+      searchQuery,
+      baselineSearch,
+      columnVisibility,
+      baselineColumnVisibility,
+      sanitizedColumnOrder,
+      sanitizedBaselineColumnOrder,
+      propertyColumnIds,
+    ]
+  )
+  const hasUnsavedViewChanges = !viewMatchesBaseline
+
+  const deferSetColumnOrder = useDeferredColumnOrderChange(setColumnOrder)
 
   const onRowClick = useCallback((row: Row<PatientViewModel>) => handleEdit(row.original), [handleEdit])
   const fillerRowCell = useCallback(() => (<FillerCell className="min-h-8" />), [])
@@ -404,7 +659,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       columns={columns}
       fillerRowCell={fillerRowCell}
       onRowClick={onRowClick}
-      manualPagination={true}
+
       initialState={{
         pagination: {
           pageSize: 10,
@@ -412,29 +667,64 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       }}
       state={{
         columnVisibility,
+        columnOrder: sanitizedColumnOrder,
         pagination,
-        sorting,
-        columnFilters: filters,
       } as Partial<TableState> as TableState}
       onColumnVisibilityChange={setColumnVisibility}
+      onColumnOrderChange={deferSetColumnOrder}
       onPaginationChange={setPagination}
       onSortingChange={setSorting}
       onColumnFiltersChange={setFilters}
       enableMultiSort={true}
+      enablePinning={false}
       pageCount={stableTotalCount != null ? Math.ceil(stableTotalCount / pagination.pageSize) : -1}
+
+      manualPagination={true}
+      manualSorting={true}
+      manualFiltering={true}
+
+      enableColumnFilters={false}
+      enableSorting={false}
+      enableColumnPinning={false}
     >
       <div className="flex flex-col h-full gap-4">
-        <div className="flex flex-col sm:flex-row justify-between w-full gap-4">
-          <div className="flex-row-2 items-center">
-            <SearchBar
-              placeholder={translation('search')}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onSearch={() => null}
-            />
-            <TableColumnSwitcher />
-          </div>
-          <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto sm:ml-auto">
+        <div className="flex-col-2 w-full">
+          <div className="flex-row-8 justify-between w-full">
+            <div className="flex flex-wrap gap-2 items-center">
+              <SearchBar
+                placeholder={translation('search')}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onSearch={() => null}
+                containerProps={{ className: 'max-w-80' }}
+              />
+              <TableColumnSwitcher />
+              <Button
+                onClick={() => setIsShowFilters(!isShowFilters)}
+                color="neutral"
+                className="font-semibold element"
+              >
+                {translation('filter') + ` (${filters.length})`}
+                <ExpansionIcon isExpanded={isShowFilters} className="size-5"/>
+              </Button>
+              <Button
+                onClick={() => setIsShowSorting(!isShowSorting)}
+                color="neutral"
+                className="font-semibold"
+              >
+                {translation('sorting') + ` (${sorting.length})`}
+                <ExpansionIcon isExpanded={isShowSorting} className="size-5"/>
+              </Button>
+              <Visibility isVisible={!hideSaveView && hasUnsavedViewChanges}>
+                <SaveViewActionsMenu
+                  canOverwrite={!!savedViewId}
+                  overwriteLoading={overwriteLoading}
+                  onOverwrite={handleOverwriteSavedView}
+                  onOpenSaveAsNew={() => setIsSaveViewDialogOpen(true)}
+                  onDiscard={handleDiscardViewChanges}
+                />
+              </Visibility>
+            </div>
             <IconButton
               tooltip={translation('addPatient')}
               onClick={() => {
@@ -446,6 +736,20 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
               <PlusIcon />
             </IconButton>
           </div>
+          {isShowFilters && (
+            <FilterList
+              value={filters as IdentifierFilterValue[]}
+              onValueChange={setFilters}
+              availableItems={availableFilters}
+            />
+          )}
+          {isShowSorting && (
+            <SortingList
+              sorting={sorting}
+              onSortingChange={setSorting}
+              availableItems={availableSortItems}
+            />
+          )}
         </div>
         <div className="relative print:static">
           {patientsLoading && (
@@ -475,6 +779,22 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
             onSuccess={refetch}
           />
         </Drawer>
+        <SaveViewDialog
+          isOpen={isSaveViewDialogOpen}
+          onClose={() => setIsSaveViewDialogOpen(false)}
+          baseEntityType={SavedViewEntityType.Patient}
+          filterDefinition={serializeColumnFiltersForView(filters as ColumnFiltersState)}
+          sortDefinition={serializeSortingForView(sorting)}
+          parameters={stringifyViewParameters({
+            rootLocationIds: effectiveRootLocationIds ?? undefined,
+            locationId: hasLocationFilter ? undefined : (locationId ?? undefined),
+            searchQuery: searchQuery || undefined,
+            columnVisibility,
+            columnOrder,
+          } satisfies ViewParameters)}
+          presentation={savedViewId ? 'default' : 'fromSystemList'}
+          onCreated={onSavedViewCreated}
+        />
       </div>
     </TableProvider>
   )

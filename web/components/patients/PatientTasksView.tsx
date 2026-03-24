@@ -110,7 +110,7 @@ export const PatientTasksView = ({
                   onClick={(t) => setTaskId(t.id)}
                   onToggleDone={handleToggleDone}
                   showPatient={false}
-                  showAssignee={!!(task.assignee || task.assigneeTeam)}
+                  showAssignee={!!((task.assignees?.length ?? 0) > 0 || task.assigneeTeam)}
                   fullWidth={true}
                 />
               ))}
@@ -136,7 +136,7 @@ export const PatientTasksView = ({
                   onClick={(t) => setTaskId(t.id)}
                   onToggleDone={handleToggleDone}
                   showPatient={false}
-                  showAssignee={!!(task.assignee || task.assigneeTeam)}
+                  showAssignee={!!((task.assignees?.length ?? 0) > 0 || task.assigneeTeam)}
                   fullWidth={true}
                 />
               ))}

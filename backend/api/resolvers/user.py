@@ -1,14 +1,13 @@
 import strawberry
 from api.context import Info
-from api.decorators.filter_sort import filtered_and_sorted_query
-from api.decorators.full_text_search import full_text_search_query
-from api.inputs import (
-    FilterInput,
-    FullTextSearchInput,
-    PaginationInput,
-    SortInput,
-    UpdateProfilePictureInput,
+from api.inputs import PaginationInput, UpdateProfilePictureInput
+from api.query.execute import unified_list_query
+from api.query.inputs import (
+    QueryFilterClauseInput,
+    QuerySearchInput,
+    QuerySortClauseInput,
 )
+from api.query.registry import USER
 from api.resolvers.base import BaseMutationResolver
 from api.types.user import UserType
 from database import models
@@ -26,15 +25,14 @@ class UserQuery:
         return result.scalars().first()
 
     @strawberry.field
-    @filtered_and_sorted_query()
-    @full_text_search_query()
+    @unified_list_query(USER)
     async def users(
         self,
         info: Info,
-        filtering: list[FilterInput] | None = None,
-        sorting: list[SortInput] | None = None,
+        filters: list[QueryFilterClauseInput] | None = None,
+        sorts: list[QuerySortClauseInput] | None = None,
         pagination: PaginationInput | None = None,
-        search: FullTextSearchInput | None = None,
+        search: QuerySearchInput | None = None,
     ) -> list[UserType]:
         query = select(models.User)
         return query

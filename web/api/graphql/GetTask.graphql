@@ -13,7 +13,7 @@ query GetTask($id: ID!) {
       id
       name
     }
-    assignee {
+    assignees {
       id
       name
       avatarUrl

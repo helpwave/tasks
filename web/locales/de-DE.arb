@@ -3,6 +3,8 @@
   "account": "Konto",
   "active": "Aktiv",
   "add": "Hinzufügen",
+  "addFastAccess": "Schnellzugriff erstellen",
+  "addFastAccessDescription": "Geben Sie dem neuen Schnellzugriff einen Namen.",
   "addPatient": "Patient hinzufügen",
   "addProperty": "Eigenschaften hinzufügen",
   "addTask": "Aufgabe hinzufügen",
@@ -31,6 +33,9 @@
       }
     }
   },
+  "copyShareLink": "Link kopieren",
+  "copyViewToMyViews": "In meinen Schnellzugriff kopieren",
+  "confirmDeleteView": "Diesen gespeicherten Schnellzugriff löschen? Dies kann nicht rückgängig gemacht werden.",
   "create": "Erstellen",
   "createTask": "Aufgabe erstellen",
   "currentTime": "Aktuelle Zeit",
@@ -81,6 +86,7 @@
   "descriptionPlaceholder": "Weitere Details hinzufügen...",
   "developmentAndPreviewInstance": "Entwicklungs- und Vorschauinstanz",
   "dismiss": "Schließen",
+  "duplicate": "Duplizieren",
   "diverse": "Divers",
   "done": "Fertig",
   "dueDate": "Fälligkeitsdatum",
@@ -91,6 +97,7 @@
   "estimatedTime": "Geschätzte Zeit (Minuten)",
   "feedback": "Feedback",
   "female": "Weiblich",
+  "filter": "Filter",
   "filterAll": "Alle",
   "filterUndone": "Offen",
   "firstName": "Vorname",
@@ -123,11 +130,29 @@
   "myTasks": "Meine Aufgaben",
   "name": "Name",
   "no": "Nein",
+  "none": "Keine",
   "noClosedTasks": "Keine erledigten Aufgaben",
   "noOpenTasks": "Keine offenen Aufgaben",
   "noPatient": "Kein Patient",
+  "noPatientsInTaskView": "Keine Patienten für diesen Aufgaben-Schnellzugriff.",
   "noResultsFound": "Keine Ergebnisse gefunden",
   "notAssigned": "Nicht zugewiesen",
+  "nFilter": "{count, plural, =1{# Filter} other{# Filter}}",
+  "@nFilter": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "nSorting": "{count, plural, =1{# Sortierung} other{# Sortierungen}}",
+  "@nSorting": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
   "nPatient": "{count, plural, =1{# Patient} other{# Patienten}}",
   "@nPatient": {
     "placeholders": {
@@ -155,6 +180,7 @@
   "occupancy": "Belegung",
   "openSurvey": "Umfrage öffnen",
   "openTasks": "Offene Aufgaben",
+  "openView": "Öffnen",
   "option": "Option",
   "organizations": "Organisationen",
   "overview": "Übersicht",
@@ -192,6 +218,7 @@
   "priorityNone": "Keine",
   "privacy": "Datenschutz",
   "properties": "Eigenschaften",
+  "propertiesSettingsDescription": "Eigene Felder für Aufgaben und Patienten: Typen festlegen und in Filtern nutzen.",
   "property": "Eigenschaft",
   "rAdd": "{name} hinzufügen",
   "@rAdd": {
@@ -214,7 +241,24 @@
   "refreshing": "Aktualisiere…",
   "removeProperty": "Eigenschaft entfernen",
   "removePropertyConfirmation": "Sind Sie sicher, dass Sie diese Eigenschaft entfernen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
+  "readOnlyView": "Nur lesen",
   "retakeSurvey": "Umfrage erneut durchführen",
+  "saveView": "Schnellzugriff speichern",
+  "saveViewDescription": "Benennen Sie diesen Schnellzugriff. Filter, Sortierung, Suche und Standort werden gespeichert.",
+  "saveViewOverwriteCurrent": "Aktuellen Schnellzugriff überschreiben",
+  "saveViewAsNew": "Als neuen Schnellzugriff speichern",
+  "saveViewDescriptionFromSystemList": "Legt einen neuen Schnellzugriff aus diesem Layout an. Diese Seite selbst wird nicht überschrieben und bleibt für alle gleich — den Schnellzugriff öffnen Sie bei Bedarf in der Seitenleiste.",
+  "discardViewChanges": "Änderungen verwerfen",
+  "savedViews": "Schnellzugriff",
+  "viewDerivedPatientsHint": "Patienten, die in den Aufgaben dieses Schnellzugriffs vorkommen (eindeutig).",
+  "viewSettings": "Schnellzugriff",
+  "viewSettingsDescription": "Gespeicherte Aufgaben- und Patienten-Schnellzugriffe verwalten.",
+  "views": "Schnellzugriff",
+  "viewsEntityPatient": "Patienten",
+  "viewsEntityTask": "Aufgaben",
+  "viewVisibility": "Sichtbarkeit",
+  "viewVisibilityPrivate": "Privat",
+  "viewVisibilityLinkShared": "Link geteilt",
   "rShow": "{name} anzeigen",
   "@rShow": {
     "placeholders": {
@@ -236,6 +280,7 @@
   "shiftHandover": "Schichtübergabe",
   "showAllTasks": "Alle Aufgaben anzeigen",
   "showTeamTasks": "Team-Aufgaben anzeigen",
+  "sorting": "Sortierung",
   "stagingModalDisclaimerMarkdown": "Diese öffentliche Instanz von helpwave tasks ist für '\\b{Entwicklungs- und Vorschauzwecke}' gedacht. Bitte stellen Sie sicher, dass Sie '\\b{ausschließlich nicht-vertrauliche Testdaten}' eingeben. Diese Instanz kann '\\negative{\\b{jederzeit gelöscht}}' werden.",
   "status": "Status",
   "subjectType": "Subjekt Type",
@@ -275,6 +320,7 @@
   "totalPatients": "Gesamtpatienten",
   "type": "Typ",
   "updated": "Aktualisiert",
+  "user": "Benutzer",
   "users": "Benutzer",
   "wards": "Stationen",
   "yes": "Ja",

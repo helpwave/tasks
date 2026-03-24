@@ -28,7 +28,7 @@ export const assignTaskToTeamOptimisticPlan: OptimisticPlan<AssignTaskToTeamVari
           cache.modify({
             id,
             fields: {
-              assignee: () => null,
+              assignees: () => [],
               assigneeTeam: (_existing, { toReference }) =>
                 toReference({ __typename: 'LocationNodeType', id: teamId }, true),
             },

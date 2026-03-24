@@ -1,15 +1,15 @@
 import { useMutation } from '@apollo/client/react'
 import {
-  UnassignTaskDocument,
-  type UnassignTaskMutation,
-  type UnassignTaskMutationVariables
+  RemoveTaskAssigneeDocument,
+  type RemoveTaskAssigneeMutation,
+  type RemoveTaskAssigneeMutationVariables
 } from '@/api/gql/generated'
 import { getParsedDocument } from './queryHelpers'
 
 export function useUnassignTask() {
   const [mutate, result] = useMutation<
-    UnassignTaskMutation,
-    UnassignTaskMutationVariables
-  >(getParsedDocument(UnassignTaskDocument))
+    RemoveTaskAssigneeMutation,
+    RemoveTaskAssigneeMutationVariables
+  >(getParsedDocument(RemoveTaskAssigneeDocument))
   return [mutate, result] as const
 }

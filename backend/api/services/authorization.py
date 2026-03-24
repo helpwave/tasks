@@ -122,6 +122,35 @@ class AuthorizationService:
 
         return await self.can_access_patient(user, patient, context)
 
+    async def can_access_task(
+        self,
+        user: models.User | None,
+        task: models.Task,
+        context=None,
+    ) -> bool:
+        if not user:
+            return False
+
+        if task.patient_id:
+            if task.patient is not None:
+                return await self.can_access_patient(user, task.patient, context)
+            return await self.can_access_patient_id(user, task.patient_id, context)
+
+        result = await self.db.execute(
+            select(models.task_assignees.c.user_id).where(
+                models.task_assignees.c.task_id == task.id,
+                models.task_assignees.c.user_id == user.id,
+            )
+        )
+        if result.first() is not None:
+            return True
+
+        if task.assignee_team_id:
+            accessible_location_ids = await self.get_user_accessible_location_ids(user, context)
+            return task.assignee_team_id in accessible_location_ids
+
+        return False
+
     def filter_patients_by_access(
         self, user: models.User | None, query, accessible_location_ids: set[str] | None = None
     ):

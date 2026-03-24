@@ -3,6 +3,8 @@
   "account": "Account",
   "active": "Active",
   "add": "Add",
+  "addFastAccess": "Add Fast Access",
+  "addFastAccessDescription": "Add a name for the new fast access.",
   "addPatient": "Add Patient",
   "addProperty": "Add Property",
   "addTask": "Add Task",
@@ -31,6 +33,9 @@
       }
     }
   },
+  "copyShareLink": "Copy link",
+  "copyViewToMyViews": "Copy to my quick access",
+  "confirmDeleteView": "Delete this saved quick access? This cannot be undone.",
   "create": "Create",
   "createTask": "Create Task",
   "currentTime": "Current Time",
@@ -82,6 +87,7 @@
   "descriptionPlaceholder": "Add more details...",
   "developmentAndPreviewInstance": "Development and preview instance",
   "dismiss": "Dismiss",
+  "duplicate": "Duplicate",
   "done": "Done",
   "dueDate": "Due Date",
   "edit": "Edit",
@@ -91,6 +97,7 @@
   "estimatedTime": "Estimated Time (minutes)",
   "feedback": "Feedback",
   "female": "Female",
+  "filter": "Filter",
   "filterAll": "All",
   "filterUndone": "Undone",
   "firstName": "First Name",
@@ -123,11 +130,29 @@
   "myTasks": "My tasks",
   "name": "Name",
   "no": "No",
+  "none": "None",
   "noClosedTasks": "No closed tasks",
   "noOpenTasks": "No open tasks",
   "noPatient": "No Patient",
+  "noPatientsInTaskView": "No patients found for this task quick access.",
   "noResultsFound": "No results found",
   "notAssigned": "Not assigned",
+  "nFilter": "{count, plural, =1{# filter} other{# filters}}",
+  "@nFilter": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "nSorting": "{count, plural, =1{# sort} other{# sorts}}",
+  "@nSorting": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
   "nPatient": "{count, plural, =1{# Patient} other{# Patients}}",
   "@nPatient": {
     "placeholders": {
@@ -155,6 +180,7 @@
   "occupancy": "Occupancy",
   "openSurvey": "Open Survey",
   "openTasks": "Open Tasks",
+  "openView": "Open",
   "option": "Option",
   "organizations": "Organizations",
   "overview": "Overview",
@@ -192,6 +218,7 @@
   "priorityNone": "None",
   "privacy": "Privacy",
   "properties": "Properties",
+  "propertiesSettingsDescription": "Custom fields for tasks and patients: define types and use them in filters.",
   "property": "Property",
   "rAdd": "Add {name}",
   "@rAdd": {
@@ -214,7 +241,24 @@
   "refreshing": "Refreshing…",
   "removeProperty": "Remove Property",
   "removePropertyConfirmation": "Are you sure you want to remove this property? This action cannot be undone.",
+  "readOnlyView": "Read-only",
   "retakeSurvey": "Retake Survey",
+  "saveView": "Save quick access",
+  "saveViewDescription": "Name this quick access. Filters, sorting, search, and location are stored.",
+  "saveViewOverwriteCurrent": "Overwrite current quick access",
+  "saveViewAsNew": "Save as new quick access",
+  "saveViewDescriptionFromSystemList": "Creates a new quick access entry from this layout. This page is fixed by the app and is not saved in place — open it from the sidebar when you need it.",
+  "discardViewChanges": "Discard changes",
+  "savedViews": "Quick access",
+  "viewDerivedPatientsHint": "Patients that appear on tasks matching this quick access (distinct).",
+  "viewSettings": "Quick access",
+  "viewSettingsDescription": "Manage saved task and patient quick access.",
+  "views": "Quick Access",
+  "viewsEntityPatient": "Patients",
+  "viewsEntityTask": "Tasks",
+  "viewVisibility": "Visibility",
+  "viewVisibilityPrivate": "Private",
+  "viewVisibilityLinkShared": "Link shared",
   "rShow": "Show {name}",
   "@rShow": {
     "placeholders": {
@@ -236,6 +280,7 @@
   "shiftHandover": "Shift Handover",
   "showAllTasks": "Show All Tasks",
   "showTeamTasks": "Show Team Tasks",
+  "sorting": "Sorting",
   "stagingModalDisclaimerMarkdown": "This public instance of helpwave tasks is for '\\b{development and preview purposes}'. Please make sure to '\\b{only}' enter '\\b{non-confidential testing data}'. This instance can be '\\negative{\\b{deleted at any time}}'",
   "status": "Status",
   "subjectType": "Subject Type",
@@ -275,6 +320,7 @@
   "totalPatients": "Total Patients",
   "type": "Type",
   "updated": "Updated",
+  "user": "User",
   "users": "Users",
   "wards": "Wards",
   "yes": "Yes",

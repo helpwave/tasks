@@ -97,7 +97,11 @@ class UserType:
 
         query = (
             select(models.Task)
-            .join(models.Patient, models.Task.patient_id == models.Patient.id)
+            .join(
+                models.task_assignees,
+                models.task_assignees.c.task_id == models.Task.id,
+            )
+            .outerjoin(models.Patient, models.Task.patient_id == models.Patient.id)
             .outerjoin(
                 patient_locations,
                 models.Patient.id == patient_locations.c.patient_id,
@@ -107,32 +111,35 @@ class UserType:
                 models.Patient.id == patient_teams.c.patient_id,
             )
             .where(
-                models.Task.assignee_id == self.id,
+                models.task_assignees.c.user_id == self.id,
                 (
-                    (models.Patient.clinic_id.in_(select(root_cte.c.id)))
+                    models.Task.patient_id.is_(None)
                     | (
-                        models.Patient.position_id.isnot(None)
-                        & models.Patient.position_id.in_(
-                            select(root_cte.c.id)
+                        (
+                            (models.Patient.clinic_id.in_(select(root_cte.c.id)))
+                            | (
+                                models.Patient.position_id.isnot(None)
+                                & models.Patient.position_id.in_(
+                                    select(root_cte.c.id)
+                                )
+                            )
+                            | (
+                                models.Patient.assigned_location_id.isnot(None)
+                                & models.Patient.assigned_location_id.in_(
+                                    select(root_cte.c.id)
+                                )
+                            )
+                            | (
+                                patient_locations.c.location_id.in_(
+                                    select(root_cte.c.id)
+                                )
+                            )
+                            | (patient_teams.c.location_id.in_(select(root_cte.c.id)))
+                        )
+                        & models.Patient.state.notin_(
+                            [PatientState.DISCHARGED.value, PatientState.DEAD.value]
                         )
                     )
-                    | (
-                        models.Patient.assigned_location_id.isnot(None)
-                        & models.Patient.assigned_location_id.in_(
-                            select(root_cte.c.id)
-                        )
-                    )
-                    | (
-                        patient_locations.c.location_id.in_(
-                            select(root_cte.c.id)
-                        )
-                    )
-                    | (patient_teams.c.location_id.in_(select(root_cte.c.id)))
-                )
-            )
-            .where(
-                models.Patient.state.notin_(
-                    [PatientState.DISCHARGED.value, PatientState.DEAD.value]
                 )
             )
             .distinct()

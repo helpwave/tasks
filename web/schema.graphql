@@ -1,0 +1,481 @@
+type AuditLogType {
+  caseId: String!
+  activity: String!
+  userId: String
+  timestamp: DateTime!
+  context: String
+}
+
+input CreateLocationNodeInput {
+  title: String!
+  kind: LocationType!
+  parentId: ID = null
+}
+
+input CreatePatientInput {
+  firstname: String!
+  lastname: String!
+  birthdate: Date!
+  sex: Sex!
+  assignedLocationId: ID = null
+  assignedLocationIds: [ID!] = null
+  clinicId: ID!
+  positionId: ID = null
+  teamIds: [ID!] = null
+  properties: [PropertyValueInput!] = null
+  state: PatientState = null
+  description: String = null
+}
+
+input CreatePropertyDefinitionInput {
+  name: String!
+  fieldType: FieldType!
+  allowedEntities: [PropertyEntity!]!
+  description: String = null
+  options: [String!] = null
+  isActive: Boolean! = true
+}
+
+input CreateSavedViewInput {
+  name: String!
+  baseEntityType: SavedViewEntityType!
+  filterDefinition: String!
+  sortDefinition: String!
+  parameters: String!
+  visibility: SavedViewVisibility! = PRIVATE
+}
+
+input CreateTaskInput {
+  title: String!
+  patientId: ID = null
+  description: String = null
+  dueDate: DateTime = null
+  assigneeIds: [ID!] = null
+  assigneeTeamId: ID = null
+  previousTaskIds: [ID!] = null
+  properties: [PropertyValueInput!] = null
+  priority: TaskPriority = null
+  estimatedTime: Int = null
+}
+
+"""Date (isoformat)"""
+scalar Date
+
+"""Date with time (isoformat)"""
+scalar DateTime
+
+enum FieldType {
+  FIELD_TYPE_UNSPECIFIED
+  FIELD_TYPE_TEXT
+  FIELD_TYPE_NUMBER
+  FIELD_TYPE_CHECKBOX
+  FIELD_TYPE_DATE
+  FIELD_TYPE_DATE_TIME
+  FIELD_TYPE_SELECT
+  FIELD_TYPE_MULTI_SELECT
+  FIELD_TYPE_USER
+}
+
+type LocationNodeType {
+  id: ID!
+  title: String!
+  kind: LocationType!
+  parentId: ID
+  parent: LocationNodeType
+  children: [LocationNodeType!]!
+  patients: [PatientType!]!
+  organizationIds: [String!]!
+}
+
+enum LocationType {
+  HOSPITAL
+  PRACTICE
+  CLINIC
+  TEAM
+  WARD
+  ROOM
+  BED
+  OTHER
+}
+
+type Mutation {
+  createPatient(data: CreatePatientInput!): PatientType!
+  updatePatient(id: ID!, data: UpdatePatientInput!): PatientType!
+  deletePatient(id: ID!): Boolean!
+  admitPatient(id: ID!): PatientType!
+  dischargePatient(id: ID!): PatientType!
+  markPatientDead(id: ID!): PatientType!
+  waitPatient(id: ID!): PatientType!
+  createTask(data: CreateTaskInput!): TaskType!
+  updateTask(id: ID!, data: UpdateTaskInput!): TaskType!
+  addTaskAssignee(id: ID!, userId: ID!): TaskType!
+  removeTaskAssignee(id: ID!, userId: ID!): TaskType!
+  assignTaskToTeam(id: ID!, teamId: ID!): TaskType!
+  unassignTaskFromTeam(id: ID!): TaskType!
+  completeTask(id: ID!): TaskType!
+  reopenTask(id: ID!): TaskType!
+  deleteTask(id: ID!): Boolean!
+  createPropertyDefinition(data: CreatePropertyDefinitionInput!): PropertyDefinitionType!
+  updatePropertyDefinition(id: ID!, data: UpdatePropertyDefinitionInput!): PropertyDefinitionType!
+  deletePropertyDefinition(id: ID!): Boolean!
+  createLocationNode(data: CreateLocationNodeInput!): LocationNodeType!
+  updateLocationNode(id: ID!, data: UpdateLocationNodeInput!): LocationNodeType!
+  deleteLocationNode(id: ID!): Boolean!
+  updateProfilePicture(data: UpdateProfilePictureInput!): UserType!
+  createSavedView(data: CreateSavedViewInput!): SavedView!
+  updateSavedView(id: ID!, data: UpdateSavedViewInput!): SavedView!
+  deleteSavedView(id: ID!): Boolean!
+  duplicateSavedView(id: ID!, name: String!): SavedView!
+}
+
+input PaginationInput {
+  pageIndex: Int! = 0
+  pageSize: Int = null
+}
+
+enum PatientState {
+  WAIT
+  ADMITTED
+  DISCHARGED
+  DEAD
+}
+
+type PatientType {
+  id: ID!
+  firstname: String!
+  lastname: String!
+  birthdate: Date!
+  sex: Sex!
+  state: PatientState!
+  assignedLocationId: ID
+  clinicId: ID!
+  positionId: ID
+  description: String
+  name: String!
+  age: Int!
+  assignedLocation: LocationNodeType
+  assignedLocations: [LocationNodeType!]!
+  clinic: LocationNodeType!
+  position: LocationNodeType
+  teams: [LocationNodeType!]!
+  tasks(done: Boolean = null): [TaskType!]!
+  properties: [PropertyValueType!]!
+  checksum: String!
+}
+
+type PropertyDefinitionType {
+  id: ID!
+  name: String!
+  description: String
+  fieldType: FieldType!
+  isActive: Boolean!
+  options: [String!]!
+  allowedEntities: [PropertyEntity!]!
+}
+
+enum PropertyEntity {
+  PATIENT
+  TASK
+}
+
+input PropertyValueInput {
+  definitionId: ID!
+  textValue: String = null
+  numberValue: Float = null
+  booleanValue: Boolean = null
+  dateValue: Date = null
+  dateTimeValue: DateTime = null
+  selectValue: String = null
+  multiSelectValues: [String!] = null
+  userValue: String = null
+}
+
+type PropertyValueType {
+  id: ID!
+  definition: PropertyDefinitionType!
+  textValue: String
+  numberValue: Float
+  booleanValue: Boolean
+  dateValue: Date
+  dateTimeValue: DateTime
+  selectValue: String
+  userValue: String
+  multiSelectValues: [String!]
+  user: UserType
+  team: LocationNodeType
+}
+
+type Query {
+  patient(id: ID!): PatientType
+  patients(locationNodeId: ID = null, rootLocationIds: [ID!] = null, states: [PatientState!] = null, filters: [QueryFilterClauseInput!] = null, sorts: [QuerySortClauseInput!] = null, pagination: PaginationInput = null, search: QuerySearchInput = null): [PatientType!]!
+  patientsTotal(locationNodeId: ID = null, rootLocationIds: [ID!] = null, states: [PatientState!] = null, filters: [QueryFilterClauseInput!] = null, sorts: [QuerySortClauseInput!] = null, search: QuerySearchInput = null): Int!
+  recentPatients(rootLocationIds: [ID!] = null, filters: [QueryFilterClauseInput!] = null, sorts: [QuerySortClauseInput!] = null, pagination: PaginationInput = null, search: QuerySearchInput = null): [PatientType!]!
+  recentPatientsTotal(rootLocationIds: [ID!] = null, filters: [QueryFilterClauseInput!] = null, sorts: [QuerySortClauseInput!] = null, search: QuerySearchInput = null): Int!
+  task(id: ID!): TaskType
+  tasks(patientId: ID = null, assigneeId: ID = null, assigneeTeamId: ID = null, rootLocationIds: [ID!] = null, filters: [QueryFilterClauseInput!] = null, sorts: [QuerySortClauseInput!] = null, pagination: PaginationInput = null, search: QuerySearchInput = null): [TaskType!]!
+  tasksTotal(patientId: ID = null, assigneeId: ID = null, assigneeTeamId: ID = null, rootLocationIds: [ID!] = null, filters: [QueryFilterClauseInput!] = null, sorts: [QuerySortClauseInput!] = null, search: QuerySearchInput = null): Int!
+  recentTasks(rootLocationIds: [ID!] = null, filters: [QueryFilterClauseInput!] = null, sorts: [QuerySortClauseInput!] = null, pagination: PaginationInput = null, search: QuerySearchInput = null): [TaskType!]!
+  recentTasksTotal(rootLocationIds: [ID!] = null, filters: [QueryFilterClauseInput!] = null, sorts: [QuerySortClauseInput!] = null, search: QuerySearchInput = null): Int!
+  locationRoots: [LocationNodeType!]!
+  locationNode(id: ID!): LocationNodeType
+  locationNodes(kind: LocationType = null, search: String = null, parentId: ID = null, recursive: Boolean! = false, orderByName: Boolean! = false, limit: Int = null, offset: Int = null): [LocationNodeType!]!
+  propertyDefinitions: [PropertyDefinitionType!]!
+  user(id: ID!): UserType
+  users(filters: [QueryFilterClauseInput!] = null, sorts: [QuerySortClauseInput!] = null, pagination: PaginationInput = null, search: QuerySearchInput = null): [UserType!]!
+  me: UserType
+  auditLogs(caseId: ID!, limit: Int = null, offset: Int = null): [AuditLogType!]!
+  queryableFields(entity: String!): [QueryableField!]!
+  savedView(id: ID!): SavedView
+  mySavedViews: [SavedView!]!
+}
+
+input QueryFilterClauseInput {
+  fieldKey: String!
+  operator: QueryOperator!
+  value: QueryFilterValueInput = null
+}
+
+input QueryFilterValueInput {
+  stringValue: String = null
+  stringValues: [String!] = null
+  floatValue: Float = null
+  floatMin: Float = null
+  floatMax: Float = null
+  boolValue: Boolean = null
+  dateValue: DateTime = null
+  dateMin: Date = null
+  dateMax: Date = null
+  uuidValue: String = null
+  uuidValues: [String!] = null
+}
+
+enum QueryOperator {
+  EQ
+  NEQ
+  GT
+  GTE
+  LT
+  LTE
+  BETWEEN
+  IN
+  NOT_IN
+  CONTAINS
+  STARTS_WITH
+  ENDS_WITH
+  IS_NULL
+  IS_NOT_NULL
+  ANY_EQ
+  ANY_IN
+  ALL_IN
+  NONE_IN
+  IS_EMPTY
+  IS_NOT_EMPTY
+}
+
+input QuerySearchInput {
+  searchText: String = null
+  includeProperties: Boolean! = false
+}
+
+input QuerySortClauseInput {
+  fieldKey: String!
+  direction: SortDirection!
+}
+
+type QueryableChoiceMeta {
+  optionKeys: [String!]!
+  optionLabels: [String!]!
+}
+
+type QueryableField {
+  key: String!
+  label: String!
+  kind: QueryableFieldKind!
+  valueType: QueryableValueType!
+  allowedOperators: [QueryOperator!]!
+  sortable: Boolean!
+  sortDirections: [SortDirection!]!
+  searchable: Boolean!
+  filterable: Boolean!
+  relation: QueryableRelationMeta
+  choice: QueryableChoiceMeta
+  propertyDefinitionId: String
+}
+
+enum QueryableFieldKind {
+  SCALAR
+  PROPERTY
+  REFERENCE
+  REFERENCE_LIST
+  CHOICE
+  CHOICE_LIST
+}
+
+type QueryableRelationMeta {
+  targetEntity: String!
+  idFieldKey: String!
+  labelFieldKey: String!
+  allowedFilterModes: [ReferenceFilterMode!]!
+}
+
+enum QueryableValueType {
+  STRING
+  NUMBER
+  BOOLEAN
+  DATE
+  DATETIME
+  UUID
+  STRING_LIST
+  UUID_LIST
+}
+
+enum ReferenceFilterMode {
+  ID
+  LABEL
+}
+
+type SavedView {
+  id: ID!
+  name: String!
+  baseEntityType: SavedViewEntityType!
+  filterDefinition: String!
+  sortDefinition: String!
+  parameters: String!
+  ownerUserId: ID!
+  visibility: SavedViewVisibility!
+  createdAt: String!
+  updatedAt: String!
+  isOwner: Boolean!
+}
+
+enum SavedViewEntityType {
+  TASK
+  PATIENT
+}
+
+enum SavedViewVisibility {
+  PRIVATE
+  LINK_SHARED
+}
+
+enum Sex {
+  MALE
+  FEMALE
+  UNKNOWN
+}
+
+enum SortDirection {
+  ASC
+  DESC
+}
+
+type Subscription {
+  patientCreated(rootLocationIds: [ID!] = null): ID!
+  patientUpdated(patientId: ID = null, rootLocationIds: [ID!] = null): ID!
+  patientStateChanged(patientId: ID = null, rootLocationIds: [ID!] = null): ID!
+  patientDeleted(rootLocationIds: [ID!] = null): ID!
+  taskCreated(rootLocationIds: [ID!] = null): ID!
+  taskUpdated(taskId: ID = null, rootLocationIds: [ID!] = null): ID!
+  taskDeleted(rootLocationIds: [ID!] = null): ID!
+  locationNodeCreated: ID!
+  locationNodeUpdated(locationId: ID = null): ID!
+  locationNodeDeleted: ID!
+}
+
+enum TaskPriority {
+  P1
+  P2
+  P3
+  P4
+}
+
+type TaskType {
+  id: ID!
+  title: String!
+  description: String
+  done: Boolean!
+  dueDate: DateTime
+  creationDate: DateTime!
+  updateDate: DateTime
+  assigneeTeamId: ID
+  patientId: ID
+  priority: String
+  estimatedTime: Int
+  assignees: [UserType!]!
+  assigneeTeam: LocationNodeType
+  patient: PatientType
+  properties: [PropertyValueType!]!
+  checksum: String!
+}
+
+input UpdateLocationNodeInput {
+  title: String = null
+  kind: LocationType = null
+  parentId: ID = null
+}
+
+input UpdatePatientInput {
+  firstname: String = null
+  lastname: String = null
+  birthdate: Date = null
+  sex: Sex = null
+  assignedLocationId: ID = null
+  assignedLocationIds: [ID!] = null
+  clinicId: ID = null
+  positionId: ID
+  teamIds: [ID!]
+  properties: [PropertyValueInput!] = null
+  checksum: String = null
+  description: String = null
+}
+
+input UpdateProfilePictureInput {
+  avatarUrl: String!
+}
+
+input UpdatePropertyDefinitionInput {
+  name: String = null
+  description: String = null
+  options: [String!] = null
+  isActive: Boolean = null
+  allowedEntities: [PropertyEntity!] = null
+}
+
+input UpdateSavedViewInput {
+  name: String = null
+  filterDefinition: String = null
+  sortDefinition: String = null
+  parameters: String = null
+  visibility: SavedViewVisibility = null
+}
+
+input UpdateTaskInput {
+  title: String = null
+  patientId: ID
+  description: String = null
+  done: Boolean = null
+  dueDate: DateTime
+  assigneeIds: [ID!]
+  assigneeTeamId: ID
+  previousTaskIds: [ID!] = null
+  properties: [PropertyValueInput!] = null
+  checksum: String = null
+  priority: TaskPriority
+  estimatedTime: Int
+}
+
+type UserType {
+  id: ID!
+  username: String!
+  email: String
+  firstname: String
+  lastname: String
+  title: String
+  avatarUrl: String
+  lastOnline: DateTime
+  name: String!
+  isOnline: Boolean!
+  organizations: String
+  tasks(rootLocationIds: [ID!] = null): [TaskType!]!
+  rootLocations: [LocationNodeType!]!
+}

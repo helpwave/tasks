@@ -1,7 +1,8 @@
-import { useEffect } from 'react'
+import { useCallback, useMemo } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
 import type { VisibilityState } from '@tanstack/react-table'
 import type { PropertyEntity } from '@/api/gql/generated'
+import { normalizedVisibilityForViewCompare } from '@/utils/viewDefinition'
 
 type PropertyDefinitionsData = {
   propertyDefinitions?: Array<{
@@ -11,30 +12,49 @@ type PropertyDefinitionsData = {
   }>,
 } | null | undefined
 
-export function usePropertyColumnVisibility(
+export function getPropertyColumnIds(
+  propertyDefinitionsData: PropertyDefinitionsData,
+  entity: PropertyEntity
+): string[] {
+  if (!propertyDefinitionsData?.propertyDefinitions) return []
+  const entityValue = entity as string
+  return propertyDefinitionsData.propertyDefinitions
+    .filter(def => def.isActive && def.allowedEntities.includes(entityValue))
+    .map(prop => `property_${prop.id}`)
+}
+
+export function useColumnVisibilityWithPropertyDefaults(
   propertyDefinitionsData: PropertyDefinitionsData,
   entity: PropertyEntity,
-  columnVisibility: VisibilityState,
   setColumnVisibility: Dispatch<SetStateAction<VisibilityState>>
-): void {
-  useEffect(() => {
-    if (!propertyDefinitionsData?.propertyDefinitions) return
+): Dispatch<SetStateAction<VisibilityState>> {
+  const propertyColumnIds = useMemo(
+    () => getPropertyColumnIds(propertyDefinitionsData, entity),
+    [propertyDefinitionsData, entity]
+  )
 
-    const entityValue = entity as string
-    const properties = propertyDefinitionsData.propertyDefinitions.filter(
-      def => def.isActive && def.allowedEntities.includes(entityValue)
-    )
-    const propertyColumnIds = properties.map(prop => `property_${prop.id}`)
-    const hasPropertyColumnsInVisibility = propertyColumnIds.some(
-      id => id in columnVisibility
-    )
-
-    if (!hasPropertyColumnsInVisibility && propertyColumnIds.length > 0) {
-      const initialVisibility: VisibilityState = { ...columnVisibility }
-      propertyColumnIds.forEach(id => {
-        initialVisibility[id] = false
+  return useCallback(
+    (updater: SetStateAction<VisibilityState>) => {
+      setColumnVisibility(prev => {
+        const next = typeof updater === 'function'
+          ? (updater as (p: VisibilityState) => VisibilityState)(prev)
+          : updater
+        if (propertyColumnIds.length === 0) {
+          return normalizedVisibilityForViewCompare(next) === normalizedVisibilityForViewCompare(prev)
+            ? prev
+            : next
+        }
+        const merged: VisibilityState = { ...next }
+        for (const id of propertyColumnIds) {
+          if (!(id in merged)) {
+            merged[id] = false
+          }
+        }
+        return normalizedVisibilityForViewCompare(merged) === normalizedVisibilityForViewCompare(prev)
+          ? prev
+          : merged
       })
-      setColumnVisibility(initialVisibility)
-    }
-  }, [propertyDefinitionsData, entity, columnVisibility, setColumnVisibility])
+    },
+    [propertyColumnIds, setColumnVisibility]
+  )
 }

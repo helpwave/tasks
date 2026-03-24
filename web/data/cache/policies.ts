@@ -12,11 +12,11 @@ export function buildCacheConfig(): InMemoryCacheConfig {
         fields: {
           task: { keyArgs: ['id'] },
           tasks: {
-            keyArgs: ['rootLocationIds', 'assigneeId', 'assigneeTeamId', 'filtering', 'sorting', 'search', 'pagination'],
+            keyArgs: ['rootLocationIds', 'assigneeId', 'assigneeTeamId', 'filters', 'sorts', 'search', 'pagination'],
           },
           patient: { keyArgs: ['id'] },
           patients: {
-            keyArgs: ['locationId', 'rootLocationIds', 'states', 'filtering', 'sorting', 'search', 'pagination'],
+            keyArgs: ['locationId', 'rootLocationIds', 'states', 'filters', 'sorts', 'search', 'pagination'],
             merge: (_existing, incoming) => incoming,
           },
           locationNode: { keyArgs: ['id'] },

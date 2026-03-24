@@ -1,7 +1,7 @@
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
-import type { ColumnDef, Row, TableState } from '@tanstack/react-table'
+import type { ColumnDef, ColumnFiltersState, PaginationState, Row, SortingState, TableState, VisibilityState } from '@tanstack/react-table'
 import type { GetOverviewDataQuery } from '@/api/gql/generated'
-import { useCallback, useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import type { TableProps } from '@helpwave/hightide'
 import { FillerCell, TableDisplay, TableProvider, Tooltip } from '@helpwave/hightide'
 import { DateDisplay } from '@/components/Date/DateDisplay'
@@ -9,8 +9,7 @@ import { LocationChipsBySetting } from '@/components/patients/LocationChipsBySet
 import { PropertyEntity } from '@/api/gql/generated'
 import { usePropertyDefinitions } from '@/data'
 import { getPropertyColumnsForEntity } from '@/utils/propertyColumn'
-import { useStorageSyncedTableState } from '@/hooks/useTableState'
-import { usePropertyColumnVisibility } from '@/hooks/usePropertyColumnVisibility'
+import { useColumnVisibilityWithPropertyDefaults } from '@/hooks/usePropertyColumnVisibility'
 
 type PatientViewModel = GetOverviewDataQuery['recentPatients'][0]
 
@@ -27,22 +26,15 @@ export const RecentPatientsTable = ({
   const translation = useTasksTranslation()
   const { data: propertyDefinitionsData } = usePropertyDefinitions()
 
-  const {
-    pagination,
-    setPagination,
-    sorting,
-    setSorting,
-    filters,
-    setFilters,
-    columnVisibility,
-    setColumnVisibility,
-  } = useStorageSyncedTableState('recent-patients')
+  const [pagination, setPagination] = useState<PaginationState>({ pageSize: 10, pageIndex: 0 })
+  const [sorting, setSorting] = useState<SortingState>([])
+  const [filters, setFilters] = useState<ColumnFiltersState>([])
+  const [columnVisibility, setColumnVisibilityRaw] = useState<VisibilityState>({})
 
-  usePropertyColumnVisibility(
+  const setColumnVisibility = useColumnVisibilityWithPropertyDefaults(
     propertyDefinitionsData,
     PropertyEntity.Patient,
-    columnVisibility,
-    setColumnVisibility
+    setColumnVisibilityRaw
   )
 
   const patientPropertyColumns = useMemo<ColumnDef<PatientViewModel>[]>(
@@ -139,6 +131,8 @@ export const RecentPatientsTable = ({
         onSortingChange={setSorting}
         onColumnFiltersChange={setFilters}
         enableMultiSort={true}
+        enableSorting={false}
+        enableColumnFilters={false}
       >
         <div className="flex flex-col h-full gap-4 w-full min-w-0" {...props}>
           <div className="flex-col-0">

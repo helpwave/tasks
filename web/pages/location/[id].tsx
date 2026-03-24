@@ -12,6 +12,8 @@ import { type LocationType, PatientState } from '@/api/gql/generated'
 import { useLocationNode, usePatients, useTasks } from '@/data'
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/router'
+import type { ColumnFiltersState } from '@tanstack/react-table'
+import type { FilterValue } from '@helpwave/hightide'
 import { LocationChips } from '@/components/locations/LocationChips'
 import { LOCATION_PATH_SEPARATOR } from '@/utils/location'
 
@@ -45,6 +47,16 @@ const LocationPage: NextPage = () => {
 
   const isTeamLocation = locationData?.locationNode?.kind === 'TEAM'
 
+  const viewDefaultLocationFilters = useMemo((): ColumnFiltersState => {
+    if (!id) return []
+    const value: FilterValue = {
+      dataType: 'singleTag',
+      operator: 'equals',
+      parameter: { uuidValue: id },
+    }
+    return [{ id: 'position', value }]
+  }, [id])
+
   const { data: patientsData, refetch: refetchPatients, loading: isLoadingPatients } = usePatients(
     { rootLocationIds: id ? [id] : undefined },
     { skip: !id || isTeamLocation }
@@ -76,8 +88,8 @@ const LocationPage: NextPage = () => {
             locations: task.patient.assignedLocations || []
           }
           : undefined,
-        assignee: task.assignee
-          ? { id: task.assignee.id, name: task.assignee.name, avatarURL: task.assignee.avatarUrl, isOnline: task.assignee.isOnline ?? null }
+        assignee: task.assignees[0]
+          ? { id: task.assignees[0].id, name: task.assignees[0].name, avatarURL: task.assignees[0].avatarUrl, isOnline: task.assignees[0].isOnline ?? null }
           : undefined,
         assigneeTeam: task.assigneeTeam
           ? { id: task.assigneeTeam.id, title: task.assigneeTeam.title }
@@ -111,8 +123,8 @@ const LocationPage: NextPage = () => {
           name: patient.name,
           locations: mergedLocations
         },
-        assignee: task.assignee
-          ? { id: task.assignee.id, name: task.assignee.name, avatarURL: task.assignee.avatarUrl, isOnline: task.assignee.isOnline ?? null }
+        assignee: task.assignees[0]
+          ? { id: task.assignees[0].id, name: task.assignees[0].name, avatarURL: task.assignees[0].avatarUrl, isOnline: task.assignees[0].isOnline ?? null }
           : undefined,
         assigneeTeam: task.assigneeTeam
           ? { id: task.assigneeTeam.id, title: task.assigneeTeam.title }
@@ -196,7 +208,7 @@ const LocationPage: NextPage = () => {
                   {translation('errorOccurred')}
                 </div>
               ) : (
-                <PatientList locationId={id || undefined} />
+                <PatientList key={id} viewDefaultFilters={viewDefaultLocationFilters} />
               )}
             </TabPanel>
             <TabPanel label={translation('tasks')} className="flex-col-0 min-h-48 overflow-auto">
@@ -210,7 +222,6 @@ const LocationPage: NextPage = () => {
                   onRefetch={handleRefetch}
                   showAssignee={true}
                   loading={isTeamLocation ? isLoadingTasks : isLoadingPatients}
-                  showAllTasksMode={isTeamLocation && showAllTasks}
                   headerActions={
                     isTeamLocation ? (
                       <Button
