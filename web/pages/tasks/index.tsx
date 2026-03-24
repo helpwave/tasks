@@ -11,7 +11,9 @@ import { useTasksContext } from '@/hooks/useTasksContext'
 import { usePropertyDefinitions, useTasksPaginated } from '@/data'
 import { getPropertyColumnIds } from '@/hooks/usePropertyColumnVisibility'
 import { PropertyEntity } from '@/api/gql/generated'
-import { columnFiltersToQueryFilterClauses, paginationStateToPaginationInput, sortingStateToQuerySortClauses } from '@/utils/tableStateToApi'
+import { columnFiltersToQueryFilterClauses, sortingStateToQuerySortClauses } from '@/utils/tableStateToApi'
+import { LIST_PAGE_SIZE } from '@/utils/listPaging'
+import { useAccumulatedPagination } from '@/hooks/useAccumulatedPagination'
 import { Visibility } from '@helpwave/hightide'
 import { SaveViewDialog } from '@/components/views/SaveViewDialog'
 import { SaveViewActionsMenu } from '@/components/views/SaveViewActionsMenu'
@@ -22,7 +24,7 @@ import {
   stringifyViewParameters,
   tableViewStateMatchesBaseline
 } from '@/utils/viewDefinition'
-import type { ColumnFiltersState, ColumnOrderState, PaginationState, SortingState, VisibilityState } from '@tanstack/react-table'
+import type { ColumnFiltersState, ColumnOrderState, SortingState, VisibilityState } from '@tanstack/react-table'
 
 const TasksPage: NextPage = () => {
   const translation = useTasksTranslation()
@@ -37,7 +39,7 @@ const TasksPage: NextPage = () => {
     { id: 'done', desc: false },
     { id: 'dueDate', desc: false },
   ], [])
-  const [pagination, setPagination] = useState<PaginationState>({ pageSize: 10, pageIndex: 0 })
+  const [fetchPageIndex, setFetchPageIndex] = useState(0)
   const [sorting, setSorting] = useState<SortingState>(defaultSorting)
   const [filters, setFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
@@ -85,10 +87,25 @@ const TasksPage: NextPage = () => {
 
   const apiFilters = useMemo(() => columnFiltersToQueryFilterClauses(filters), [filters])
   const apiSorting = useMemo(() => sortingStateToQuerySortClauses(sorting), [sorting])
-  const apiPagination = useMemo(() => paginationStateToPaginationInput(pagination), [pagination])
-  const searchInput = searchQuery
-    ? { searchText: searchQuery, includeProperties: true }
-    : undefined
+  const apiPagination = useMemo(
+    () => ({ pageIndex: fetchPageIndex, pageSize: LIST_PAGE_SIZE }),
+    [fetchPageIndex]
+  )
+  const searchInput = useMemo(
+    () => (searchQuery ? { searchText: searchQuery, includeProperties: true } : undefined),
+    [searchQuery]
+  )
+
+  const accumulationResetKey = useMemo(
+    () => JSON.stringify({
+      filters: apiFilters,
+      sorts: apiSorting,
+      search: searchInput,
+      root: selectedRootLocationIds,
+      assignee: user?.id,
+    }),
+    [apiFilters, apiSorting, searchInput, selectedRootLocationIds, user?.id]
+  )
 
   const { data: tasksData, refetch, totalCount, loading: tasksLoading } = useTasksPaginated(
     !!selectedRootLocationIds && !!user
@@ -101,12 +118,22 @@ const TasksPage: NextPage = () => {
       search: searchInput,
     }
   )
+
+  const { accumulated: accumulatedTasksRaw, loadMore, hasMore } = useAccumulatedPagination({
+    resetKey: accumulationResetKey,
+    pageData: tasksData,
+    pageIndex: fetchPageIndex,
+    setPageIndex: setFetchPageIndex,
+    totalCount,
+    loading: tasksLoading,
+  })
+
   const taskId = router.query['taskId'] as string | undefined
 
   const tasks: TaskViewModel[] = useMemo(() => {
-    if (!tasksData || tasksData.length === 0) return []
+    if (!accumulatedTasksRaw || accumulatedTasksRaw.length === 0) return []
 
-    return tasksData.map((task) => ({
+    return accumulatedTasksRaw.map((task) => ({
       id: task.id,
       name: task.title,
       description: task.description || undefined,
@@ -132,7 +159,7 @@ const TasksPage: NextPage = () => {
         !task.assigneeTeam && task.assignees.length > 1 ? task.assignees.length - 1 : 0,
       properties: task.properties ?? [],
     }))
-  }, [tasksData])
+  }, [accumulatedTasksRaw])
 
   return (
     <Page pageTitle={titleWrapper(translation('myTasks'))}>
@@ -165,6 +192,8 @@ const TasksPage: NextPage = () => {
           loading={tasksLoading}
           searchQuery={searchQuery}
           onSearchQueryChange={setSearchQuery}
+          loadMore={loadMore}
+          hasMore={hasMore}
           saveViewSlot={(
             <Visibility isVisible={hasUnsavedViewChanges}>
               <SaveViewActionsMenu
@@ -176,8 +205,6 @@ const TasksPage: NextPage = () => {
             </Visibility>
           )}
           tableState={{
-            pagination,
-            setPagination,
             sorting,
             setSorting,
             filters,

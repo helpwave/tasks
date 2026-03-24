@@ -8,7 +8,7 @@ import type { TaskViewModel } from '@/components/tables/TaskList'
 import { useRouter } from 'next/router'
 import type { TaskPriority } from '@/api/gql/generated'
 import { useCompleteTask, useReopenTask } from '@/data'
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useRef, useMemo, type ReactNode } from 'react'
 import { UserInfoPopup } from '@/components/UserInfoPopup'
 import { PriorityUtils } from '@/utils/priority'
 
@@ -53,6 +53,7 @@ type TaskCardViewProps = {
   onRefetch?: () => void,
   className?: string,
   fullWidth?: boolean,
+  extraContent?: ReactNode,
 }
 
 const isOverdue = (dueDate: Date | undefined, done: boolean): boolean => {
@@ -74,7 +75,7 @@ const toDate = (date: Date | string | null | undefined): Date | undefined => {
   return new Date(date)
 }
 
-export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showAssignee: _showAssignee = false, showPatient = true, onRefetch, className, fullWidth: _fullWidth = false }: TaskCardViewProps) => {
+export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showAssignee: _showAssignee = false, showPatient = true, onRefetch, className, fullWidth: _fullWidth = false, extraContent }: TaskCardViewProps) => {
   const router = useRouter()
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
   const [optimisticDone, setOptimisticDone] = useState<boolean | null>(null)
@@ -160,12 +161,20 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
     P4: 'border-l-4 border-l-priority-p4',
   }[(task as FlexibleTask).priority as TaskPriority] ?? ''
 
+  const assigneeImage = useMemo(
+    () => ({
+      avatarUrl: assigneeAvatarUrl || 'https://cdn.helpwave.de/boringavatar.svg',
+      alt: task.assignee?.name ?? '',
+    }),
+    [assigneeAvatarUrl, task.assignee?.name]
+  )
+
   return (
     <div
       onClick={() => onClick(task)}
       className={clsx(
         'border-2 p-4 rounded-lg text-left transition-colors hover:border-primary ',
-        'relative bg-surface-variant bg-on-surface-variant overflow-hidden cursor-pointer w-full min-h-35',
+        'relative bg-surface-variant bg-on-surface-variant overflow-hidden cursor-pointer w-full',
         borderColorClass,
         priorityBorderClass,
         className
@@ -179,106 +188,110 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
         }
       }}
     >
-      <div className="flex items-start gap-4 w-full min-w-0">
-        <div onClick={(e) => e.stopPropagation()}>
-          <Checkbox
-            value={displayDone}
-            onValueChange={handleToggleDone}
-            className={clsx('rounded-full mt-0.5 shrink-0', PriorityUtils.toCheckboxColor(task?.priority as TaskPriority | null | undefined))}
-          />
-        </div>
-        <div className={clsx('flex-1 min-w-0 overflow-hidden', { 'pb-16': showPatient, 'pb-12': !showPatient })}>
-          <div className={clsx('flex items-center justify-between gap-2 flex-wrap min-w-0', { 'mb-2': showPatient, 'mb-4': !showPatient })}>
-            <div className="flex items-center gap-2 min-w-0 flex-1">
-              {(task as FlexibleTask).priority && (
+      <div className="flex flex-col gap-3 w-full min-w-0">
+        <div className="flex items-start gap-4 w-full min-w-0">
+          <div onClick={(e) => e.stopPropagation()}>
+            <Checkbox
+              value={displayDone}
+              onValueChange={handleToggleDone}
+              className={clsx('rounded-full mt-0.5 shrink-0', PriorityUtils.toCheckboxColor(task?.priority as TaskPriority | null | undefined))}
+            />
+          </div>
+          <div className="flex-1 min-w-0 overflow-hidden">
+            <div className="flex items-center justify-between gap-2 flex-wrap min-w-0 mb-2">
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                {(task as FlexibleTask).priority && (
+                  <div
+                    className={clsx(
+                      'w-2 h-2 rounded-full shrink-0',
+                      PriorityUtils.toBackgroundColor(task?.priority as TaskPriority | null | undefined)
+                    )}
+                  />
+                )}
                 <div
                   className={clsx(
-                    'w-2 h-2 rounded-full shrink-0',
-                    PriorityUtils.toBackgroundColor(task?.priority as TaskPriority | null | undefined)
+                    'font-semibold text-lg min-w-0 flex-1 truncate',
+                    { 'line-through text-description': task.done }
                   )}
-                />
+                >
+                  {taskName}
+                </div>
+              </div>
+              {task.assigneeTeam && (
+                <div className="flex items-center gap-1.5 text-base text-description shrink-0 min-w-0">
+                  <Users className="size-5 text-description" />
+                  <span className="truncate max-w-40">{task.assigneeTeam.title}</span>
+                </div>
               )}
-              <div
-                className={clsx(
-                  'font-semibold text-lg min-w-0 flex-1 truncate',
-                  { 'line-through text-description': task.done }
-                )}
-              >
-                {taskName}
-              </div>
-            </div>
-            {task.assigneeTeam && (
-              <div className="flex items-center gap-1.5 text-base text-description shrink-0 min-w-0">
-                <Users className="size-5 text-description" />
-                <span className="truncate max-w-40">{task.assigneeTeam.title}</span>
-              </div>
-            )}
-            {!task.assigneeTeam && task.assignee && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setSelectedUserId(task.assignee!.id)
-                }}
-                className="flex items-center gap-1.5 text-base text-description shrink-0 min-w-0 hover:opacity-75 transition-opacity"
-              >
-                <AvatarStatusComponent
-                  size="sm"
-                  isOnline={task.assignee?.isOnline ?? null}
-                  image={{
-                    avatarUrl: assigneeAvatarUrl || 'https://cdn.helpwave.de/boringavatar.svg',
-                    alt: task.assignee.name
+              {!task.assigneeTeam && task.assignee && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setSelectedUserId(task.assignee!.id)
                   }}
-                />
-                <span className="truncate max-w-[150px]">{task.assignee.name}</span>
-              </button>
+                  className="flex items-center gap-1.5 text-base text-description shrink-0 min-w-0 hover:opacity-75 transition-opacity"
+                >
+                  <AvatarStatusComponent
+                    size="sm"
+                    isOnline={task.assignee?.isOnline ?? null}
+                    image={assigneeImage}
+                  />
+                  <span className="truncate max-w-[150px]">{task.assignee.name}</span>
+                </button>
+              )}
+            </div>
+            {descriptionPreview && (
+              <div className="text-base text-description line-clamp-2">{descriptionPreview}</div>
             )}
           </div>
-          {descriptionPreview && (
-            <div className={clsx('text-base text-description line-clamp-2', { 'mb-2': showPatient, 'mb-4': !showPatient })}>{descriptionPreview}</div>
-          )}
-        </div>
-      </div>
-      {showPatient && task.patient && (
-        <div className="absolute bottom-5" style={{ left: 'calc(1.25rem + 1.5rem + 1rem)' }}>
-          <Button
-            color="neutral"
-            size="sm"
-            onClick={handlePatientClick}
-            className="flex-row-0 justify-start w-fit"
-          >
-            <User className="size-4 scale-[1.2] mr-2" />
-            {task.patient.name}
-          </Button>
-          {task.patient.locations && task.patient.locations.length > 0 && (
-            <div className="mt-1">
-              <LocationChipsBySetting locations={task.patient.locations} small />
+          <div className="shrink-0 flex flex-col items-end gap-2 text-sm text-description pt-0.5 max-w-[min(100%,11rem)]">
+            <div className="flex flex-wrap items-center justify-end gap-3">
+              {(task as FlexibleTask).estimatedTime && (
+                <div className="flex items-center gap-1">
+                  <Clock className="size-4 shrink-0" />
+                  <span>
+                    {(task as FlexibleTask).estimatedTime! < 60
+                      ? `${(task as FlexibleTask).estimatedTime}m`
+                      : `${Math.floor((task as FlexibleTask).estimatedTime! / 60)}h ${(task as FlexibleTask).estimatedTime! % 60}m`}
+                  </span>
+                </div>
+              )}
+              {dueDate && (
+                <div className={clsx('flex items-center gap-2', dueDateColorClass)}>
+                  <Clock className="size-4 shrink-0" />
+                  <DateDisplay date={dueDate} mode="relative" showTime={true} />
+                </div>
+              )}
             </div>
-          )}
+            {expectedFinishDate && (
+              <div className="flex items-center gap-2 text-xs">
+                <Flag className="size-4 shrink-0" />
+                <DateDisplay date={expectedFinishDate} mode="relative" showTime={true} />
+              </div>
+            )}
+          </div>
         </div>
-      )}
-      <div className={clsx('absolute right-5 flex flex-col items-end gap-2 text-sm text-description', { 'bottom-5': showPatient, 'bottom-6': !showPatient })}>
-        <div className="flex items-center gap-3">
-          {(task as FlexibleTask).estimatedTime && (
-            <div className="flex items-center gap-1">
-              <Clock className="size-4" />
-              <span>
-                {(task as FlexibleTask).estimatedTime! < 60
-                  ? `${(task as FlexibleTask).estimatedTime}m`
-                  : `${Math.floor((task as FlexibleTask).estimatedTime! / 60)}h ${(task as FlexibleTask).estimatedTime! % 60}m`}
-              </span>
-            </div>
-          )}
-          {dueDate && (
-            <div className={clsx('flex items-center gap-2', dueDateColorClass)}>
-              <Clock className="size-4" />
-              <DateDisplay date={dueDate} mode="relative" showTime={true} />
-            </div>
-          )}
-        </div>
-        {expectedFinishDate && (
-          <div className="flex items-center gap-2 text-xs">
-            <Flag className="size-4" />
-            <DateDisplay date={expectedFinishDate} mode="relative" showTime={true} />
+        {showPatient && task.patient && (
+          <div className="min-w-0 pl-14">
+            <Button
+              color="neutral"
+              size="sm"
+              onClick={handlePatientClick}
+              className="flex-row-0 justify-start w-fit"
+            >
+              <User className="size-4 scale-[1.2] mr-2" />
+              {task.patient.name}
+            </Button>
+            {task.patient.locations && task.patient.locations.length > 0 && (
+              <div className="mt-1">
+                <LocationChipsBySetting locations={task.patient.locations} small />
+              </div>
+            )}
+          </div>
+        )}
+        {extraContent && (
+          <div className="border-t border-border pt-3 space-y-2 text-sm px-0">
+            {extraContent}
           </div>
         )}
       </div>

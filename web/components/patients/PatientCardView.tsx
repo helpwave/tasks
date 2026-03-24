@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { Chip, ProgressIndicator, Tooltip } from '@helpwave/hightide'
 import { DateDisplay } from '@/components/Date/DateDisplay'
 import { LocationChipsBySetting } from '@/components/patients/LocationChipsBySetting'
@@ -9,9 +10,10 @@ import type { PatientViewModel } from '../tables/PatientList'
 type PatientCardViewProps = {
   patient: PatientViewModel,
   onClick: (patient: PatientViewModel) => void,
+  extraContent?: ReactNode,
 }
 
-export const PatientCardView = ({ patient, onClick }: PatientCardViewProps) => {
+export const PatientCardView = ({ patient, onClick, extraContent }: PatientCardViewProps) => {
   const translation = useTasksTranslation()
 
   const sex = patient.sex
@@ -74,6 +76,7 @@ export const PatientCardView = ({ patient, onClick }: PatientCardViewProps) => {
           )}
           <PatientStateChip state={patient.state} />
         </div>
+        {extraContent}
       </div>
     </button>
   )
