@@ -21,7 +21,7 @@ import { columnFiltersToQueryFilterClauses, sortingStateToQuerySortClauses } fro
 import { LIST_PAGE_SIZE } from '@/utils/listPaging'
 import { useAccumulatedPagination } from '@/hooks/useAccumulatedPagination'
 import { PatientCardView } from '@/components/patients/PatientCardView'
-import { queryableFieldsToFilterListItems, queryableFieldsToSortingListItems } from '@/utils/queryableFilterList'
+import { queryableFieldsToFilterListItems, queryableFieldsToSortingListItems, type QueryableChoiceTagLabelResolver } from '@/utils/queryableFilterList'
 import { getPropertyFilterFn as getPropertyDatatype } from '@/utils/propertyFilterMapping'
 import { UserSelectFilterPopUp } from './UserSelectFilterPopUp'
 import { ExpandableTextBlock } from '@/components/common/ExpandableTextBlock'
@@ -38,6 +38,7 @@ import {
 import { getParsedDocument } from '@/data/hooks/queryHelpers'
 import { replaceSavedViewInMySavedViewsCache } from '@/utils/savedViewsCache'
 import { useDeferredColumnOrderChange } from '@/hooks/useDeferredColumnOrderChange'
+import { useStableSerializedList } from '@/hooks/useStableSerializedList'
 import { columnIdsFromColumnDefs, sanitizeColumnOrderForKnownColumns } from '@/utils/columnOrder'
 import {
   hasActiveLocationFilter,
@@ -114,6 +115,22 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
   const { refreshingPatientIds } = useRefreshingEntityIds()
   const { data: propertyDefinitionsData } = usePropertyDefinitions()
   const { data: queryableFieldsData } = useQueryableFields('Patient')
+  const queryableFieldsStable = useStableSerializedList(
+    queryableFieldsData?.queryableFields,
+    (f) => ({
+      key: f.key,
+      label: f.label,
+      filterable: f.filterable,
+      sortable: f.sortable,
+      sortDirections: f.sortDirections,
+      propertyDefinitionId: f.propertyDefinitionId,
+      kind: f.kind,
+      valueType: f.valueType,
+      choice: f.choice
+        ? { keys: f.choice.optionKeys, labels: f.choice.optionLabels }
+        : null,
+    })
+  )
   const effectiveRootLocationIds = rootLocationIds ?? selectedRootLocationIds
   const [isPanelOpen, setIsPanelOpen] = useState(false)
   const [selectedPatient, setSelectedPatient] = useState<PatientViewModel | undefined>(undefined)
@@ -634,14 +651,31 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       'tasks': translation('tasks'),
       'updated': translation('updated'),
       'updateDate': translation('updated'),
+      'description': translation('description'),
     }
     return translatedByKey[key] ?? field.label
   }, [translation])
 
+  const resolvePatientChoiceTagLabel = useCallback<QueryableChoiceTagLabelResolver>((field, optionKey, backendLabel) => {
+    if (field.propertyDefinitionId) return backendLabel
+    if (field.key === 'state') return translation('patientState', { state: optionKey })
+    if (field.key === 'sex') {
+      if (optionKey === Sex.Male) return translation('male')
+      if (optionKey === Sex.Female) return translation('female')
+      return translation('diverse')
+    }
+    return backendLabel
+  }, [translation])
+
   const availableFilters: FilterListItem[] = useMemo(() => {
-    const raw = queryableFieldsData?.queryableFields
+    const raw = queryableFieldsStable
     if (raw?.length) {
-      return queryableFieldsToFilterListItems(raw, propertyFieldTypeByDefId, resolvePatientQueryableLabel)
+      return queryableFieldsToFilterListItems(
+        raw,
+        propertyFieldTypeByDefId,
+        resolvePatientQueryableLabel,
+        resolvePatientChoiceTagLabel
+      )
     }
     return [
       {
@@ -698,15 +732,15 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
         }
       }) ?? [],
     ]
-  }, [queryableFieldsData?.queryableFields, propertyFieldTypeByDefId, resolvePatientQueryableLabel, translation, allPatientStates, propertyDefinitionsData?.propertyDefinitions])
+  }, [queryableFieldsStable, propertyFieldTypeByDefId, resolvePatientQueryableLabel, resolvePatientChoiceTagLabel, translation, allPatientStates, propertyDefinitionsData?.propertyDefinitions])
 
   const availableSortItems = useMemo(() => {
-    const raw = queryableFieldsData?.queryableFields
+    const raw = queryableFieldsStable
     if (raw?.length) {
       return queryableFieldsToSortingListItems(raw, resolvePatientQueryableLabel)
     }
     return availableFilters.map(({ id, label, dataType }) => ({ id, label, dataType }))
-  }, [queryableFieldsData?.queryableFields, availableFilters, resolvePatientQueryableLabel])
+  }, [queryableFieldsStable, availableFilters, resolvePatientQueryableLabel])
 
   const knownColumnIdsOrdered = useMemo(
     () => columnIdsFromColumnDefs(columns),

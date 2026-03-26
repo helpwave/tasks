@@ -6,6 +6,7 @@ from sqlalchemy import Select
 from api.context import Info
 from api.inputs import PaginationInput
 from api.query.inputs import QueryFilterClauseInput, QuerySearchInput, QuerySortClauseInput
+from api.query.dedupe_select import dedupe_orm_select_by_root_id
 from api.query.property_sql import load_property_field_types
 from api.query.registry import get_entity_handler
 
@@ -65,11 +66,12 @@ async def apply_unified_query(
         if text:
             stmt = handler["apply_search"](stmt, search, ctx)
 
+    if ctx.get("needs_distinct"):
+        stmt = dedupe_orm_select_by_root_id(stmt, handler["root_model"])
+        ctx["needs_distinct"] = False
+
     if not for_count:
         stmt = handler["apply_sorts"](stmt, sorts, ctx, property_field_types)
-
-    if ctx.get("needs_distinct"):
-        stmt = stmt.distinct(handler["root_model"].id)
 
     if (
         not for_count

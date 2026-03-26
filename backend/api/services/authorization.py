@@ -177,7 +177,7 @@ class AuthorizationService:
         patient_locations = aliased(models.patient_locations)
         patient_teams = aliased(models.patient_teams)
 
-        return (
+        expanded = (
             query.outerjoin(
                 patient_locations,
                 models.Patient.id == patient_locations.c.patient_id,
@@ -199,5 +199,10 @@ class AuthorizationService:
                 | (patient_locations.c.location_id.in_(select(cte.c.id)))
                 | (patient_teams.c.location_id.in_(select(cte.c.id)))
             )
-            .distinct()
         )
+        opts = getattr(expanded, "_with_options", None) or ()
+        ids_sq = expanded.with_only_columns(models.Patient.id).distinct().scalar_subquery()
+        out = select(models.Patient).where(models.Patient.id.in_(ids_sq))
+        for opt in opts:
+            out = out.options(opt)
+        return out

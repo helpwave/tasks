@@ -11,6 +11,7 @@
   "archivedPropertyDescription": "Archived Properties can no longer be assigned to objects.",
   "archiveProperty": "Archive Property",
   "assignedTo": "Assigned to",
+  "assigneeTeam": "Assignee team",
   "additionalAssigneesCount": "+{count}",
   "@additionalAssigneesCount": {
     "placeholders": {
@@ -46,6 +47,7 @@
   "confirmDeleteView": "Delete this saved quick access? This cannot be undone.",
   "create": "Create",
   "createTask": "Create Task",
+  "creationDate": "Creation date",
   "currentTime": "Current Time",
   "dashboard": "Dashboard",
   "dashboardWelcomeDescription": "Here is what is happening today.",
