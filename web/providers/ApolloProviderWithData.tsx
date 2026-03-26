@@ -7,8 +7,11 @@ import { getUser } from '@/api/auth/authService'
 import {
   createApolloClient,
   rehydrateCache,
-  replayPendingMutations
+  replayPendingMutations,
+  schedulePersistCache
 } from '@/data'
+import { MySavedViewsDocument } from '@/api/gql/generated'
+import { getParsedDocument } from '@/data/hooks/queryHelpers'
 
 const ApolloClientContext = createContext<ApolloClient | null>(null)
 
@@ -26,19 +29,24 @@ export function ApolloProviderWithData({ children }: { children: React.ReactNode
   const [isReady, setIsReady] = useState(false)
 
   useEffect(() => {
-    const navEntry = typeof performance !== 'undefined' && performance.getEntriesByType?.('navigation')?.[0]
-    const isPageReload = navEntry && 'type' in navEntry && (navEntry as { type: string }).type === 'reload'
-
-    if (isPageReload) {
-      client.clearStore().then(() => setIsReady(true))
-      return
-    }
-
     rehydrateCache(client.cache)
       .then(() => replayPendingMutations(client.cache))
       .then(() => setIsReady(true))
       .catch(() => setIsReady(true))
   }, [client])
+
+  useEffect(() => {
+    if (!isReady) return
+    void client
+      .query({
+        query: getParsedDocument(MySavedViewsDocument),
+        fetchPolicy: 'cache-first',
+      })
+      .then(() => {
+        schedulePersistCache(client.cache)
+      })
+      .catch(() => {})
+  }, [client, isReady])
 
   return (
     <ApolloClientContext.Provider value={isReady ? client : null}>

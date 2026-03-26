@@ -1,7 +1,7 @@
 'use client'
 
 import type { AnchorHTMLAttributes, ComponentProps, HTMLAttributes, PropsWithChildren } from 'react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Head from 'next/head'
 import titleWrapper from '@/utils/titleWrapper'
 import Link from 'next/link'
@@ -35,6 +35,7 @@ import {
   Rabbit
 } from 'lucide-react'
 import { TasksLogo } from '@/components/TasksLogo'
+import { usePathname } from 'next/navigation'
 import { useRouter } from 'next/router'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { useLocations, useMySavedViews } from '@/data'
@@ -497,9 +498,14 @@ export const Sidebar = ({ isOpen, onClose, ...props }: SidebarProps) => {
   const translation = useTasksTranslation()
   const locationRoute = '/location'
   const context = useTasksContext()
-  const { data: savedViewsData } = useMySavedViews()
-  const savedViews = savedViewsData?.mySavedViews ?? []
-  const [isSavedViewsOpen, setIsSavedViewsOpen] = useState(true)
+  const { data: savedViewsData, loading: savedViewsLoading } = useMySavedViews()
+  const savedViews = (savedViewsData?.mySavedViews ?? []) as MySavedViewsQuery['mySavedViews']
+  const pathname = usePathname() ?? ''
+  const quickAccessNavRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    quickAccessNavRef.current?.scrollIntoView({ block: 'nearest' })
+  }, [pathname])
 
   return (
     <>
@@ -556,11 +562,17 @@ export const Sidebar = ({ isOpen, onClose, ...props }: SidebarProps) => {
             <span className="flex grow">{translation('patients')}</span>
             {context?.totalPatientsCount !== undefined && (<span className="text-description">{context.totalPatientsCount}</span>)}
           </SidebarLink>
-          {savedViews.length > 0 && (
+          <div ref={quickAccessNavRef} className="min-h-0 scroll-mt-2">
             <ExpandableRoot
               className="shadow-none"
-              isExpanded={isSavedViewsOpen}
-              onExpandedChange={setIsSavedViewsOpen}
+              isExpanded={context.sidebar.isShowingSavedViews}
+              onExpandedChange={isExpanded => context.update(prevState => ({
+                ...prevState,
+                sidebar: {
+                  ...prevState.sidebar,
+                  isShowingSavedViews: isExpanded,
+                },
+              }))}
             >
               <ExpandableHeader className="px-2.5 py-1.5">
                 <div className="flex-row-2">
@@ -569,14 +581,30 @@ export const Sidebar = ({ isOpen, onClose, ...props }: SidebarProps) => {
                 </div>
               </ExpandableHeader>
               <ExpandableContent className="!max-h-none !h-auto !overflow-visible gap-y-0 pl-4 p-0">
-                {savedViews.map((v: MySavedViewsQuery['mySavedViews'][number]) => (
-                  <SidebarLink key={v.id} href={`/view/${v.id}`} onClick={onClose}>
-                    {v.name}
-                  </SidebarLink>
-                ))}
+                {savedViews.length > 0
+                  ? savedViews.map((v: MySavedViewsQuery['mySavedViews'][number]) => (
+                    <SidebarLink key={v.id} href={`/view/${v.id}`} onClick={onClose}>
+                      {v.name}
+                    </SidebarLink>
+                  ))
+                  : savedViewsLoading
+                    ? (
+                      <div className="px-2.5 py-1.5 typography-body-sm text-description">
+                        {translation('loading')}
+                      </div>
+                    )
+                    : (
+                      <Link
+                        href="/settings/views"
+                        className="flex-row-1.5 w-full px-2.5 py-1.5 items-center rounded-md typography-body-sm text-description hover:bg-surface-hover"
+                        onClick={onClose}
+                      >
+                        {translation('viewSettings')}
+                      </Link>
+                    )}
               </ExpandableContent>
             </ExpandableRoot>
-          )}
+          </div>
           {(context?.teams?.length ?? 0) > 0 && (
             <ExpandableRoot
               className="shadow-none"

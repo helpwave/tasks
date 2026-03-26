@@ -46,9 +46,9 @@ type SavedViewRow = {
 const ViewsSettingsPage: NextPage = () => {
   const translation = useTasksTranslation()
   const router = useRouter()
-  const { data, loading } = useMySavedViews()
+  const { data, loading } = useMySavedViews({ fetchPolicy: 'cache-and-network' })
   const rows: SavedViewRow[] = useMemo(() => {
-    return (data?.mySavedViews ?? []).map((v: SavedViewRowGql) => ({
+    return ((data?.mySavedViews ?? []) as SavedViewRowGql[]).map((v: SavedViewRowGql) => ({
       id: v.id,
       name: v.name,
       baseEntityType: v.baseEntityType,

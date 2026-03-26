@@ -78,6 +78,7 @@ type SidebarContextType = {
   isShowingTeams: boolean,
   isShowingWards: boolean,
   isShowingClinics: boolean,
+  isShowingSavedViews: boolean,
 }
 
 export type TasksContextState = {
@@ -132,6 +133,7 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
       isShowingTeams: false,
       isShowingWards: false,
       isShowingClinics: false,
+      isShowingSavedViews: false,
     },
     selectedRootLocationIds: storedSelectedRootLocationIds.length > 0 ? storedSelectedRootLocationIds : undefined,
     isRootLocationReinitializing: false,

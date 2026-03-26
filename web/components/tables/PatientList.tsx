@@ -20,6 +20,7 @@ import { getPropertyColumnIds, useColumnVisibilityWithPropertyDefaults } from '@
 import { columnFiltersToQueryFilterClauses, sortingStateToQuerySortClauses } from '@/utils/tableStateToApi'
 import { LIST_PAGE_SIZE } from '@/utils/listPaging'
 import { useAccumulatedPagination } from '@/hooks/useAccumulatedPagination'
+import { DateDisplay } from '@/components/Date/DateDisplay'
 import { PatientCardView } from '@/components/patients/PatientCardView'
 import { queryableFieldsToFilterListItems, queryableFieldsToSortingListItems, type QueryableChoiceTagLabelResolver } from '@/utils/queryableFilterList'
 import { getPropertyFilterFn as getPropertyDatatype } from '@/utils/propertyFilterMapping'
@@ -106,9 +107,12 @@ type PatientListProps = {
   savedViewId?: string,
   onSavedViewCreated?: (id: string) => void,
   onPatientUpdated?: () => void,
+  embedded?: boolean,
+  embeddedPatients?: PatientViewModel[],
+  embeddedOnRefetch?: () => void,
 }
 
-export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initialPatientId, onInitialPatientOpened, acceptedStates: _acceptedStates, rootLocationIds, locationId, viewDefaultFilters, viewDefaultSorting, viewDefaultSearchQuery, viewDefaultColumnVisibility, viewDefaultColumnOrder, readOnly: _readOnly, hideSaveView, savedViewId, onSavedViewCreated, onPatientUpdated }, ref) => {
+export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initialPatientId, onInitialPatientOpened, acceptedStates: _acceptedStates, rootLocationIds, locationId, viewDefaultFilters, viewDefaultSorting, viewDefaultSearchQuery, viewDefaultColumnVisibility, viewDefaultColumnOrder, readOnly: _readOnly, hideSaveView, savedViewId, onSavedViewCreated, onPatientUpdated, embedded = false, embeddedPatients, embeddedOnRefetch }, ref) => {
   const translation = useTasksTranslation()
   const { locale } = useLocale()
   const { selectedRootLocationIds } = useTasksContext()
@@ -143,6 +147,12 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
   const [listLayout, setListLayout] = useState<'table' | 'card'>(() => (
     typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches ? 'card' : 'table'
   ))
+
+  useEffect(() => {
+    if (embedded) {
+      setListLayout('table')
+    }
+  }, [embedded])
   const [sorting, setSorting] = useState<SortingState>(() => viewDefaultSorting ?? [])
   const [filters, setFilters] = useState<ColumnFiltersState>(() => viewDefaultFilters ?? [])
   const [columnVisibility, setColumnVisibilityRaw] = useState<VisibilityState>(() => viewDefaultColumnVisibility ?? {})
@@ -328,6 +338,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       sorts: apiSorting.length > 0 ? apiSorting : undefined,
       filters: apiFilters.length > 0 ? apiFilters : undefined,
       search: searchInput,
+      skip: embedded && embeddedPatients !== undefined,
     }
   )
   if (totalCount != null) lastTotalCountRef.current = totalCount
@@ -361,9 +372,10 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
   }, [])
 
   const patients: PatientViewModel[] = useMemo(() => {
+    if (embedded && embeddedPatients !== undefined) return embeddedPatients
     if (!accumulatedPatientsRaw || accumulatedPatientsRaw.length === 0) return []
     return accumulatedPatientsRaw.map(mapPatientRow)
-  }, [accumulatedPatientsRaw, mapPatientRow])
+  }, [embedded, embeddedPatients, accumulatedPatientsRaw, mapPatientRow])
 
   const showBlockingLoadingOverlay = patientsLoading && patients.length === 0
 
@@ -589,6 +601,33 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       size: 150,
       maxSize: 200,
     },
+    {
+      id: 'updateDate',
+      header: translation('updated'),
+      accessorFn: (row) => {
+        const taskList = row.tasks || []
+        const updateDates = taskList
+          .map(t => t.updateDate ? new Date(t.updateDate) : null)
+          .filter((d): d is Date => d !== null)
+          .sort((a, b) => b.getTime() - a.getTime())
+        return updateDates[0]
+      },
+      cell: ({ row }) => {
+        if (refreshingPatientIds.has(row.original.id)) return rowLoadingCell
+        const taskList = row.original.tasks || []
+        const updateDates = taskList
+          .map(t => t.updateDate ? new Date(t.updateDate) : null)
+          .filter((d): d is Date => d !== null)
+          .sort((a, b) => b.getTime() - a.getTime())
+        const d = updateDates[0]
+        if (!d) return <FillerCell />
+        return <DateDisplay date={d} mode="absolute" />
+      },
+      minSize: 220,
+      size: 220,
+      maxSize: 220,
+      filterFn: 'date',
+    },
     ...patientPropertyColumns.map((col) => ({
       ...col,
       cell: col.cell
@@ -747,6 +786,20 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
     [columns]
   )
 
+  const embeddedDashboardColumnVisibility = useMemo((): VisibilityState | null => {
+    if (!embedded) return null
+    const visible = new Set<string>(['name', 'position', 'updateDate'])
+    const vis: VisibilityState = {}
+    for (const id of knownColumnIdsOrdered) {
+      vis[id] = visible.has(id)
+    }
+    return vis
+  }, [embedded, knownColumnIdsOrdered])
+
+  const tableColumnVisibility = embedded && embeddedDashboardColumnVisibility != null
+    ? embeddedDashboardColumnVisibility
+    : columnVisibility
+
   const sanitizedColumnOrder = useMemo(
     () => sanitizeColumnOrderForKnownColumns(columnOrder, knownColumnIdsOrdered),
     [columnOrder, knownColumnIdsOrdered]
@@ -789,6 +842,8 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
 
   const deferSetColumnOrder = useDeferredColumnOrderChange(setColumnOrder)
 
+  const embeddedTableStateNoop = useCallback(() => {}, [])
+
   const onRowClick = useCallback((row: Row<PatientViewModel>) => handleEdit(row.original), [handleEdit])
   const fillerRowCell = useCallback(() => (<FillerCell className="min-h-8" />), [])
 
@@ -805,15 +860,15 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
         }
       }}
       state={{
-        columnVisibility,
+        columnVisibility: tableColumnVisibility,
         columnOrder: sanitizedColumnOrder,
         pagination: tablePagination,
       } as Partial<TableState> as TableState}
-      onColumnVisibilityChange={setColumnVisibility}
-      onColumnOrderChange={deferSetColumnOrder}
+      onColumnVisibilityChange={embedded ? embeddedTableStateNoop : setColumnVisibility}
+      onColumnOrderChange={embedded ? embeddedTableStateNoop : deferSetColumnOrder}
       onPaginationChange={() => {}}
-      onSortingChange={setSorting}
-      onColumnFiltersChange={setFilters}
+      onSortingChange={embedded ? embeddedTableStateNoop : setSorting}
+      onColumnFiltersChange={embedded ? embeddedTableStateNoop : setFilters}
       enableMultiSort={true}
       enablePinning={false}
       pageCount={1}
@@ -827,93 +882,95 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       enableColumnPinning={false}
     >
       <div className="flex flex-col h-full gap-4">
-        <div className="flex-col-2 w-full">
-          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:flex-row-8 sm:justify-between sm:gap-0 w-full">
-            <div className="flex flex-wrap gap-2 items-center">
-              <SearchBar
-                placeholder={translation('search')}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onSearch={() => null}
-                containerProps={{ className: 'w-full max-w-full min-w-0 sm:max-w-80' }}
-              />
-              <TableColumnSwitcher
-                buttonProps={{ className: 'min-h-11 min-w-11 shrink-0' }}
-                style={{ zIndex: 120 }}
-              />
-              <div className="inline-flex flex-wrap gap-2 items-center shrink-0">
-                <Button
-                  onClick={() => setIsShowFilters(!isShowFilters)}
-                  color="neutral"
-                  className="font-semibold element"
-                >
-                  {translation('filter') + ` (${filters.length})`}
-                  <ExpansionIcon isExpanded={isShowFilters} className="size-5"/>
-                </Button>
-                <Button
-                  onClick={() => setIsShowSorting(!isShowSorting)}
-                  color="neutral"
-                  className="font-semibold"
-                >
-                  {translation('sorting') + ` (${sorting.length})`}
-                  <ExpansionIcon isExpanded={isShowSorting} className="size-5"/>
-                </Button>
-              </div>
-              <Visibility isVisible={!hideSaveView && hasUnsavedViewChanges}>
-                <SaveViewActionsMenu
-                  canOverwrite={!!savedViewId}
-                  overwriteLoading={overwriteLoading}
-                  onOverwrite={handleOverwriteSavedView}
-                  onOpenSaveAsNew={() => setIsSaveViewDialogOpen(true)}
-                  onDiscard={handleDiscardViewChanges}
+        {!embedded && (
+          <div className="flex-col-2 w-full">
+            <div className="flex flex-col-reverse gap-3 sm:flex-row sm:flex-row-8 sm:justify-between sm:gap-0 w-full">
+              <div className="flex flex-wrap gap-2 items-center">
+                <SearchBar
+                  placeholder={translation('search')}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onSearch={() => null}
+                  containerProps={{ className: 'w-full max-w-full min-w-0 sm:max-w-80' }}
                 />
-              </Visibility>
+                <TableColumnSwitcher
+                  buttonProps={{ className: 'min-h-11 min-w-11 shrink-0' }}
+                  style={{ zIndex: 120 }}
+                />
+                <div className="inline-flex flex-wrap gap-2 items-center shrink-0">
+                  <Button
+                    onClick={() => setIsShowFilters(!isShowFilters)}
+                    color="neutral"
+                    className="font-semibold element"
+                  >
+                    {translation('filter') + ` (${filters.length})`}
+                    <ExpansionIcon isExpanded={isShowFilters} className="size-5"/>
+                  </Button>
+                  <Button
+                    onClick={() => setIsShowSorting(!isShowSorting)}
+                    color="neutral"
+                    className="font-semibold"
+                  >
+                    {translation('sorting') + ` (${sorting.length})`}
+                    <ExpansionIcon isExpanded={isShowSorting} className="size-5"/>
+                  </Button>
+                </div>
+                <Visibility isVisible={!hideSaveView && hasUnsavedViewChanges}>
+                  <SaveViewActionsMenu
+                    canOverwrite={!!savedViewId}
+                    overwriteLoading={overwriteLoading}
+                    onOverwrite={handleOverwriteSavedView}
+                    onOpenSaveAsNew={() => setIsSaveViewDialogOpen(true)}
+                    onDiscard={handleDiscardViewChanges}
+                  />
+                </Visibility>
+              </div>
+              <div className="flex flex-wrap gap-2 items-center justify-end shrink-0">
+                <IconButton
+                  tooltip={translation('listViewTable')}
+                  className="min-h-11 min-w-11"
+                  onClick={() => setListLayout('table')}
+                  color={listLayout === 'table' ? 'primary' : 'neutral'}
+                >
+                  <Table2 className="size-5" />
+                </IconButton>
+                <IconButton
+                  tooltip={translation('listViewCard')}
+                  className="min-h-11 min-w-11"
+                  onClick={() => setListLayout('card')}
+                  color={listLayout === 'card' ? 'primary' : 'neutral'}
+                >
+                  <LayoutGrid className="size-5" />
+                </IconButton>
+                <IconButton
+                  tooltip={translation('addPatient')}
+                  className="min-h-11 min-w-11"
+                  onClick={() => {
+                    setSelectedPatient(undefined)
+                    setIsPanelOpen(true)
+                  }}
+                  color="primary"
+                >
+                  <PlusIcon />
+                </IconButton>
+              </div>
             </div>
-            <div className="flex flex-wrap gap-2 items-center justify-end shrink-0">
-              <IconButton
-                tooltip={translation('listViewTable')}
-                className="min-h-11 min-w-11"
-                onClick={() => setListLayout('table')}
-                color={listLayout === 'table' ? 'primary' : 'neutral'}
-              >
-                <Table2 className="size-5" />
-              </IconButton>
-              <IconButton
-                tooltip={translation('listViewCard')}
-                className="min-h-11 min-w-11"
-                onClick={() => setListLayout('card')}
-                color={listLayout === 'card' ? 'primary' : 'neutral'}
-              >
-                <LayoutGrid className="size-5" />
-              </IconButton>
-              <IconButton
-                tooltip={translation('addPatient')}
-                className="min-h-11 min-w-11"
-                onClick={() => {
-                  setSelectedPatient(undefined)
-                  setIsPanelOpen(true)
-                }}
-                color="primary"
-              >
-                <PlusIcon />
-              </IconButton>
-            </div>
+            {isShowFilters && (
+              <FilterList
+                value={filters as IdentifierFilterValue[]}
+                onValueChange={setFilters}
+                availableItems={availableFilters}
+              />
+            )}
+            {isShowSorting && (
+              <SortingList
+                sorting={sorting}
+                onSortingChange={setSorting}
+                availableItems={availableSortItems}
+              />
+            )}
           </div>
-          {isShowFilters && (
-            <FilterList
-              value={filters as IdentifierFilterValue[]}
-              onValueChange={setFilters}
-              availableItems={availableFilters}
-            />
-          )}
-          {isShowSorting && (
-            <SortingList
-              sorting={sorting}
-              onSortingChange={setSorting}
-              availableItems={availableSortItems}
-            />
-          )}
-        </div>
+        )}
         <div className="relative print:static">
           {showBlockingLoadingOverlay && (
             <div className="absolute inset-0 z-10 flex items-center justify-center bg-surface/80 rounded-lg min-h-48">
@@ -935,7 +992,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
               ))}
             </div>
           )}
-          {stableTotalCount != null && hasMore && (
+          {stableTotalCount != null && hasMore && !embedded && (
             <Button color="neutral" className="mt-2 w-full sm:w-auto self-center" onClick={loadMore}>
               {translation('loadMore')}
             </Button>
@@ -952,7 +1009,8 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
             patientId={selectedPatient?.id ?? openedPatientId ?? undefined}
             onClose={handleClose}
             onSuccess={() => {
-              refetch()
+              embeddedOnRefetch?.()
+              void refetch()
               onPatientUpdated?.()
             }}
           />

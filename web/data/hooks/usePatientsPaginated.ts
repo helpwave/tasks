@@ -11,6 +11,7 @@ export type UsePatientsPaginatedOptions = {
   sorts?: QuerySortClauseInput[],
   filters?: QueryFilterClauseInput[],
   search?: QuerySearchInput,
+  skip?: boolean,
 }
 
 export type UsePatientsPaginatedResult = {
@@ -50,6 +51,7 @@ export function usePatientsPaginated(
       filters: options.filters,
       search: options.search,
       getPageDataKey,
+      skip: options.skip,
     },
     (data) => data?.patients ?? [],
     (data) => data?.patientsTotal
