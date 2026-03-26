@@ -148,9 +148,10 @@ type TaskListProps = {
   onSearchQueryChange?: (value: string) => void,
   loadMore?: () => void,
   hasMore?: boolean,
+  embedded?: boolean,
 }
 
-export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initialTasks, onRefetch, showAssignee = false, initialTaskId, onInitialTaskOpened, headerActions, saveViewSlot, totalCount, loading = false, tableState: controlledTableState, searchQuery: searchQueryProp, onSearchQueryChange, loadMore: loadMoreProp, hasMore: hasMoreProp }, ref) => {
+export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initialTasks, onRefetch, showAssignee = false, initialTaskId, onInitialTaskOpened, headerActions, saveViewSlot, totalCount, loading = false, tableState: controlledTableState, searchQuery: searchQueryProp, onSearchQueryChange, loadMore: loadMoreProp, hasMore: hasMoreProp, embedded = false }, ref) => {
   const translation = useTasksTranslation()
   const { data: propertyDefinitionsData } = usePropertyDefinitions()
   const { data: queryableFieldsData } = useQueryableFields('Task')
@@ -251,6 +252,12 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
       setOpenedTaskId(null)
     }
   }, [initialTaskId, initialTaskPresent, openedTaskId, onInitialTaskOpened])
+
+  useEffect(() => {
+    if (embedded) {
+      setListLayout('table')
+    }
+  }, [embedded])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -567,7 +574,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
       },
       {
         id: 'title',
-        header: translation('title'),
+        header: embedded ? translation('task') : translation('title'),
         accessorKey: 'name',
         cell: ({ row }) => (
           <TaskRowRefreshingGate taskId={row.original.id}>
@@ -722,6 +729,22 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
       })
     }
 
+    cols.push({
+      id: 'updateDate',
+      header: translation('updated'),
+      accessorFn: (row) => row.updateDate,
+      cell: ({ row }) => (
+        <TaskRowRefreshingGate taskId={row.original.id}>
+          <DateDisplay date={row.original.updateDate} mode="absolute" />
+        </TaskRowRefreshingGate>
+      ),
+      minSize: 220,
+      size: 220,
+      maxSize: 220,
+      enableResizing: false,
+      filterFn: 'date',
+    })
+
     const colsWithRefreshing = [
       ...cols,
       ...taskPropertyColumns.map((col) => ({
@@ -737,7 +760,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
     ]
     return colsWithRefreshing
   },
-  [translation, completeTask, reopenTask, showAssignee, taskPropertyColumns])
+  [translation, completeTask, reopenTask, showAssignee, taskPropertyColumns, embedded])
 
   const taskCardPrimaryColumnIds = useMemo(() => {
     const s = new Set<string>(['done', 'title', 'dueDate', 'patient'])
@@ -780,12 +803,27 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
     [columns]
   )
 
+  const embeddedDashboardColumnVisibility = useMemo((): VisibilityState | null => {
+    if (!embedded) return null
+    const visible = new Set<string>(['done', 'title', 'patient', 'dueDate', 'assignee', 'updateDate'])
+    const vis: VisibilityState = {}
+    for (const id of knownColumnIdsOrdered) {
+      vis[id] = visible.has(id)
+    }
+    return vis
+  }, [embedded, knownColumnIdsOrdered])
+
+  const tableColumnVisibility = embedded && embeddedDashboardColumnVisibility != null
+    ? embeddedDashboardColumnVisibility
+    : columnVisibility
+
   const sanitizedColumnOrder = useMemo(
     () => sanitizeColumnOrderForKnownColumns(columnOrder, knownColumnIdsOrdered),
     [columnOrder, knownColumnIdsOrdered]
   )
 
   const deferSetColumnOrder = useDeferredColumnOrderChange(setColumnOrder)
+  const embeddedTableStateNoop = useCallback(() => {}, [])
   const hasOpenDrawer = taskDialogState.isOpen || selectedPatientId != null
   const hasFilterPanelOpen = isShowFilters || isShowSorting
 
@@ -814,15 +852,15 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
           }
         }}
         state={{
-          columnVisibility,
+          columnVisibility: tableColumnVisibility,
           columnOrder: sanitizedColumnOrder,
           pagination: tablePagination,
         } as Partial<TableState> as TableState}
-        onColumnVisibilityChange={setColumnVisibilityMerged}
-        onColumnOrderChange={deferSetColumnOrder}
+        onColumnVisibilityChange={embedded ? embeddedTableStateNoop : setColumnVisibilityMerged}
+        onColumnOrderChange={embedded ? embeddedTableStateNoop : deferSetColumnOrder}
         onPaginationChange={() => {}}
-        onSortingChange={setSorting}
-        onColumnFiltersChange={setFilters}
+        onSortingChange={embedded ? embeddedTableStateNoop : setSorting}
+        onColumnFiltersChange={embedded ? embeddedTableStateNoop : setFilters}
         enableMultiSort={true}
         enablePinning={false}
         onRowClick={row => setTaskDialogState({ isOpen: true, taskId: row.original.id })}
@@ -835,104 +873,107 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
         enableColumnPinning={false}
       >
         <div className="flex flex-col h-full gap-4">
-          <div className="flex-col-2 w-full">
-            <div className="flex flex-col-reverse gap-3 sm:flex-row sm:flex-row-8 sm:justify-between sm:gap-0 w-full">
-              <div className="flex flex-wrap gap-2 items-center">
-                <SearchBar
-                  placeholder={translation('search')}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onSearch={() => null}
-                  containerProps={{ className: 'w-full max-w-full min-w-0 sm:max-w-80' }}
-                />
-                <TableColumnSwitcher
-                  buttonProps={{ className: 'min-h-11 min-w-11 shrink-0' }}
-                  style={{ zIndex: 120 }}
-                />
-                <div className="inline-flex flex-wrap gap-2 items-center shrink-0">
-                  <Button
-                    onClick={() => setIsShowFilters(!isShowFilters)}
-                    color="neutral"
-                    className="font-semibold element"
-                  >
-                    {translation('filter') + ` (${filters.length})`}
-                    <ExpansionIcon isExpanded={isShowFilters} className="size-5" />
-                  </Button>
-                  <Button
-                    onClick={() => setIsShowSorting(!isShowSorting)}
-                    color="neutral"
-                    className="font-semibold"
-                  >
-                    {translation('sorting') + ` (${sorting.length})`}
-                    <ExpansionIcon isExpanded={isShowSorting} className="size-5" />
-                  </Button>
+          {!embedded && (
+            <div className="flex-col-2 w-full">
+              <div className="flex flex-col-reverse gap-3 sm:flex-row sm:flex-row-8 sm:justify-between sm:gap-0 w-full">
+                <div className="flex flex-wrap gap-2 items-center">
+                  <SearchBar
+                    placeholder={translation('search')}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onSearch={() => null}
+                    containerProps={{ className: 'w-full max-w-full min-w-0 sm:max-w-80' }}
+                  />
+                  <TableColumnSwitcher
+                    buttonProps={{ className: 'min-h-11 min-w-11 shrink-0' }}
+                    style={{ zIndex: 120 }}
+                  />
+                  <div className="inline-flex flex-wrap gap-2 items-center shrink-0">
+                    <Button
+                      onClick={() => setIsShowFilters(!isShowFilters)}
+                      color="neutral"
+                      className="font-semibold element"
+                    >
+                      {translation('filter') + ` (${filters.length})`}
+                      <ExpansionIcon isExpanded={isShowFilters} className="size-5" />
+                    </Button>
+                    <Button
+                      onClick={() => setIsShowSorting(!isShowSorting)}
+                      color="neutral"
+                      className="font-semibold"
+                    >
+                      {translation('sorting') + ` (${sorting.length})`}
+                      <ExpansionIcon isExpanded={isShowSorting} className="size-5" />
+                    </Button>
+                  </div>
+                  {saveViewSlot}
                 </div>
-                {saveViewSlot}
-              </div>
-              <div className="flex flex-wrap gap-2 items-center justify-end shrink-0">
-                {headerActions}
-                {canHandover && (
-                  <Button
-                    onClick={handleHandoverClick}
-                    className="w-fit"
+                <div className="flex flex-wrap gap-2 items-center justify-end shrink-0">
+                  {headerActions}
+                  {canHandover && (
+                    <Button
+                      onClick={handleHandoverClick}
+                      className="w-fit"
+                    >
+                      <UserCheck className="size-5" />
+                      {translation('shiftHandover') || 'Shift Handover'}
+                    </Button>
+                  )}
+                  <IconButton
+                    tooltip={translation('listViewTable')}
+                    className="min-h-11 min-w-11"
+                    onClick={() => setListLayout('table')}
+                    color={listLayout === 'table' ? 'primary' : 'neutral'}
                   >
-                    <UserCheck className="size-5" />
-                    {translation('shiftHandover') || 'Shift Handover'}
-                  </Button>
-                )}
-                <IconButton
-                  tooltip={translation('listViewTable')}
-                  className="min-h-11 min-w-11"
-                  onClick={() => setListLayout('table')}
-                  color={listLayout === 'table' ? 'primary' : 'neutral'}
-                >
-                  <Table2 className="size-5" />
-                </IconButton>
-                <IconButton
-                  tooltip={translation('listViewCard')}
-                  className="min-h-11 min-w-11"
-                  onClick={() => setListLayout('card')}
-                  color={listLayout === 'card' ? 'primary' : 'neutral'}
-                >
-                  <LayoutGrid className="size-5" />
-                </IconButton>
-                <IconButton
-                  tooltip={translation('addTask')}
-                  color="primary"
-                  className="min-h-11 min-w-11"
-                  onClick={() => setTaskDialogState({ isOpen: true })}
-                  disabled={!hasPatients}
-                >
-                  <PlusIcon />
-                </IconButton>
+                    <Table2 className="size-5" />
+                  </IconButton>
+                  <IconButton
+                    tooltip={translation('listViewCard')}
+                    className="min-h-11 min-w-11"
+                    onClick={() => setListLayout('card')}
+                    color={listLayout === 'card' ? 'primary' : 'neutral'}
+                  >
+                    <LayoutGrid className="size-5" />
+                  </IconButton>
+                  <IconButton
+                    tooltip={translation('addTask')}
+                    color="primary"
+                    className="min-h-11 min-w-11"
+                    onClick={() => setTaskDialogState({ isOpen: true })}
+                    disabled={!hasPatients}
+                  >
+                    <PlusIcon />
+                  </IconButton>
+                </div>
               </div>
+              {isShowFilters && (
+                <div className="relative z-[140] touch-auto">
+                  <FilterList
+                    value={filters as IdentifierFilterValue[]}
+                    onValueChange={setFilters}
+                    availableItems={availableFilters}
+                  />
+                </div>
+              )}
+              {isShowSorting && (
+                <div className="relative z-[140] touch-auto">
+                  <SortingList
+                    sorting={sorting}
+                    onSortingChange={setSorting}
+                    availableItems={availableSortItems}
+                  />
+                </div>
+              )}
             </div>
-            {isShowFilters && (
-              <div className="relative z-[140] touch-auto">
-                <FilterList
-                  value={filters as IdentifierFilterValue[]}
-                  onValueChange={setFilters}
-                  availableItems={availableFilters}
-                />
-              </div>
-            )}
-            {isShowSorting && (
-              <div className="relative z-[140] touch-auto">
-                <SortingList
-                  sorting={sorting}
-                  onSortingChange={setSorting}
-                  availableItems={availableSortItems}
-                />
-              </div>
-            )}
-          </div>
+          )}
           <div className={clsx('flex-col-3 w-full relative print:static', isMobileIOS && hasFilterPanelOpen && 'pointer-events-none')}>
             {showBlockingLoadingOverlay && (
               <div className="absolute inset-0 z-10 flex items-center justify-center bg-surface/80 rounded-lg min-h-48">
                 <HelpwaveLogo animate="loading" color="currentColor" height={64} width={64} />
               </div>
             )}
-            <style>{`
+            {!embedded && (
+              <style>{`
             table th[data-column-id="done"],
             table th[data-id="done"],
             table thead th:has([data-column-id="done"]),
@@ -940,6 +981,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
               display: none !important;
             }
           `}</style>
+            )}
             <div className={clsx('w-full', listLayout === 'table' ? 'block' : 'hidden print:block')}>
               <TableDisplay className="print-content w-full overflow-x-auto touch-pan-x"/>
             </div>
@@ -957,7 +999,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
                 ))}
               </div>
             )}
-            {effectiveHasMore && (
+            {effectiveHasMore && !embedded && (
               <Button color="neutral" className="mt-2 w-full sm:w-auto self-center" onClick={handleLoadMore}>
                 {translation('loadMore')}
               </Button>

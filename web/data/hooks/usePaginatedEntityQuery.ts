@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback, useMemo, useRef } from 'react'
 import { useQueryWhenReady } from './queryHelpers'
 import type { QueryFilterClauseInput, QuerySearchInput, QuerySortClauseInput } from '@/api/gql/generated'
 
@@ -8,6 +8,7 @@ export type UsePaginatedEntityQueryOptions<TQueryData> = {
   filters?: QueryFilterClauseInput[],
   search?: QuerySearchInput,
   getPageDataKey?: (data: TQueryData | undefined) => string,
+  skip?: boolean,
 }
 
 export type UsePaginatedEntityQueryResult<TItem> = {
@@ -36,7 +37,7 @@ export function usePaginatedEntityQuery<
   extractItems: (data: TQueryData | undefined) => TItem[],
   extractTotal: (data: TQueryData | undefined) => number | undefined
 ): UsePaginatedEntityQueryResult<TItem> {
-  const { pagination, sorts, filters, search } = options
+  const { pagination, sorts, filters, search, skip: skipQuery } = options
   const variablesWithPagination = useMemo(() => ({
     ...(variables ?? {}),
     pagination: { pageIndex: pagination.pageIndex, pageSize: pagination.pageSize },
@@ -48,12 +49,16 @@ export function usePaginatedEntityQuery<
   const result = useQueryWhenReady<TQueryData, TVariables & VariablesWithPagination>(
     document,
     variablesTyped,
-    { fetchPolicy: 'cache-and-network' }
+    { fetchPolicy: 'cache-and-network', skip: skipQuery === true }
   )
-  const totalCount = extractTotal(result.data)
+  const extractItemsRef = useRef(extractItems)
+  extractItemsRef.current = extractItems
+  const extractTotalRef = useRef(extractTotal)
+  extractTotalRef.current = extractTotal
+  const totalCount = extractTotalRef.current(result.data)
   const data = useMemo(
-    () => extractItems(result.data),
-    [result.data, extractItems]
+    () => extractItemsRef.current(result.data),
+    [result.data]
   )
   const refetch = useCallback(() => {
     result.refetch()

@@ -2,8 +2,11 @@ query GetOverviewData($rootLocationIds: [ID!], $recentPatientsFilters: [QueryFil
   recentPatients(rootLocationIds: $rootLocationIds, filters: $recentPatientsFilters, sorts: $recentPatientsSorts, pagination: $recentPatientsPagination, search: $recentPatientsSearch) {
     id
     name
+    firstname
+    lastname
     sex
     birthdate
+    state
     position {
       id
       title
@@ -14,6 +17,8 @@ query GetOverviewData($rootLocationIds: [ID!], $recentPatientsFilters: [QueryFil
       }
     }
     tasks {
+      id
+      done
       updateDate
     }
     properties {
@@ -56,8 +61,10 @@ query GetOverviewData($rootLocationIds: [ID!], $recentPatientsFilters: [QueryFil
     description
     done
     dueDate
+    creationDate
     updateDate
     priority
+    estimatedTime
     assignees {
       id
       name
