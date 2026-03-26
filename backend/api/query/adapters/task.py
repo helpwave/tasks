@@ -115,7 +115,6 @@ def _ensure_team_join(query: Select[Any], ctx: dict[str, Any]) -> tuple[Select[A
     ln = aliased(models.LocationNode)
     ctx["assignee_team"] = ln
     query = query.outerjoin(ln, models.Task.assignee_team_id == ln.id)
-    ctx["needs_distinct"] = True
     return query, ln
 
 
@@ -322,7 +321,6 @@ def apply_task_sorts(
             query, _pa, col = join_property_value(
                 query, models.Task, prop_id, ft, "task"
             )
-            ctx["needs_distinct"] = True
             if desc_order:
                 order_parts.append(col.desc().nulls_last())
             else:
@@ -392,8 +390,6 @@ def apply_task_sorts(
 
     if not order_parts:
         return query.order_by(models.Task.id.asc())
-    if ctx.get("needs_distinct"):
-        return query.order_by(models.Task.id.asc(), *order_parts)
     return query.order_by(*order_parts, models.Task.id.asc())
 
 

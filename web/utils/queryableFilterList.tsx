@@ -28,20 +28,29 @@ function filterFieldDataType(field: QueryableField): DataType {
 
 export type QueryableSortListItem = Pick<FilterListItem, 'id' | 'label' | 'dataType'>
 export type QueryableFieldLabelResolver = (field: QueryableField) => string
+export type QueryableChoiceTagLabelResolver = (
+  field: QueryableField,
+  optionKey: string,
+  backendLabel: string,
+) => string
 
 export function queryableFieldsToFilterListItems(
   fields: QueryableField[],
   propertyFieldTypeByDefId: Map<string, FieldType>,
-  resolveLabel?: QueryableFieldLabelResolver
+  resolveLabel?: QueryableFieldLabelResolver,
+  resolveChoiceTagLabel?: QueryableChoiceTagLabelResolver
 ): FilterListItem[] {
   return fields.filter(field => field.filterable).map((field): FilterListItem => {
     const dataType = filterFieldDataType(field)
     const label = resolveLabel ? resolveLabel(field) : field.label
     const tags = field.choice
-      ? field.choice.optionLabels.map((label, idx) => ({
-        label,
-        tag: field.choice!.optionKeys[idx] ?? label,
-      }))
+      ? field.choice.optionLabels.map((backendLabel, idx) => {
+        const optionKey = field.choice!.optionKeys[idx] ?? backendLabel
+        const displayLabel = resolveChoiceTagLabel
+          ? resolveChoiceTagLabel(field, optionKey, backendLabel)
+          : backendLabel
+        return { label: displayLabel, tag: optionKey }
+      })
       : []
 
     const ft = field.propertyDefinitionId

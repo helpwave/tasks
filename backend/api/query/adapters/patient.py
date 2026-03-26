@@ -45,7 +45,6 @@ def _ensure_position_join(query: Select[Any], ctx: dict[str, Any]) -> tuple[Sele
     ln = aliased(models.LocationNode)
     ctx["position_node"] = ln
     query = query.outerjoin(ln, models.Patient.position_id == ln.id)
-    ctx["needs_distinct"] = True
     return query, ln
 
 
@@ -172,6 +171,15 @@ def apply_patient_filter_clause(
         if c is not None:
             query = query.where(c)
         return query
+    if key in LOCATION_SORT_KEY_KINDS:
+        query, lineage_nodes = _ensure_position_lineage_joins(query, ctx)
+        expr = _location_title_for_kind(
+            lineage_nodes, LOCATION_SORT_KEY_KINDS[key]
+        )
+        c = apply_ops_to_column(expr, op, val)
+        if c is not None:
+            query = query.where(c)
+        return query
     if key == "position":
         if op in (QueryOperator.EQ, QueryOperator.IN) and val:
             has_uuid = (val.uuid_value is not None and val.uuid_value != "") or (
@@ -248,7 +256,6 @@ def apply_patient_sorts(
             query, _pa, col = join_property_value(
                 query, models.Patient, prop_id, ft, "patient"
             )
-            ctx["needs_distinct"] = True
             if desc_order:
                 order_parts.append(col.desc().nulls_last())
             else:
@@ -303,12 +310,12 @@ def apply_patient_sorts(
         elif key in LOCATION_SORT_KEY_KINDS:
             query, lineage_nodes = _ensure_position_lineage_joins(query, ctx)
             t = _location_title_for_kind(lineage_nodes, LOCATION_SORT_KEY_KINDS[key])
-            order_parts.append(t.desc() if desc_order else t.asc())
+            order_parts.append(
+                t.desc().nulls_last() if desc_order else t.asc().nulls_first()
+            )
 
     if not order_parts:
         return query.order_by(models.Patient.id.asc())
-    if ctx.get("needs_distinct"):
-        return query.order_by(models.Patient.id.asc(), *order_parts)
     return query.order_by(*order_parts, models.Patient.id.asc())
 
 
@@ -497,7 +504,7 @@ def build_patient_queryable_fields_static() -> list[QueryableField]:
                 label=label,
                 kind=QueryableFieldKind.SCALAR,
                 value_type=QueryableValueType.STRING,
-                allowed_operators=[],
+                allowed_operators=str_ops,
                 sortable=True,
                 sort_directions=sort_directions_for(True),
                 searchable=False,

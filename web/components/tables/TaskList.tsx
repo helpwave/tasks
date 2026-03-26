@@ -20,12 +20,13 @@ import { UserInfoPopup } from '@/components/UserInfoPopup'
 import type { ColumnDef, ColumnFiltersState, ColumnOrderState, PaginationState, SortingState, TableState, VisibilityState } from '@tanstack/table-core'
 import type { Dispatch, SetStateAction } from 'react'
 import { useDeferredColumnOrderChange } from '@/hooks/useDeferredColumnOrderChange'
+import { useStableSerializedList } from '@/hooks/useStableSerializedList'
 import { columnIdsFromColumnDefs, sanitizeColumnOrderForKnownColumns } from '@/utils/columnOrder'
 import { DueDateUtils } from '@/utils/dueDate'
 import { PriorityUtils } from '@/utils/priority'
 import { getPropertyColumnsForEntity } from '@/utils/propertyColumn'
 import { useColumnVisibilityWithPropertyDefaults } from '@/hooks/usePropertyColumnVisibility'
-import { queryableFieldsToFilterListItems, queryableFieldsToSortingListItems } from '@/utils/queryableFilterList'
+import { queryableFieldsToFilterListItems, queryableFieldsToSortingListItems, type QueryableChoiceTagLabelResolver } from '@/utils/queryableFilterList'
 import { LIST_PAGE_SIZE } from '@/utils/listPaging'
 import { TaskCardView } from '@/components/tasks/TaskCardView'
 import { RefreshingTaskIdsContext, TaskRowRefreshingGate } from '@/components/tables/TaskRowRefreshingGate'
@@ -153,6 +154,22 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
   const translation = useTasksTranslation()
   const { data: propertyDefinitionsData } = usePropertyDefinitions()
   const { data: queryableFieldsData } = useQueryableFields('Task')
+  const queryableFieldsStable = useStableSerializedList(
+    queryableFieldsData?.queryableFields,
+    (f) => ({
+      key: f.key,
+      label: f.label,
+      filterable: f.filterable,
+      sortable: f.sortable,
+      sortDirections: f.sortDirections,
+      propertyDefinitionId: f.propertyDefinitionId,
+      kind: f.kind,
+      valueType: f.valueType,
+      choice: f.choice
+        ? { keys: f.choice.optionKeys, labels: f.choice.optionLabels }
+        : null,
+    })
+  )
 
   const [clientVisibleCount, setClientVisibleCount] = useState(LIST_PAGE_SIZE)
   const [listLayout, setListLayout] = useState<'table' | 'card'>(() => (
@@ -443,6 +460,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
       priority: translation('priorityLabel'),
       patient: translation('patient'),
       assignee: translation('assignedTo'),
+      assigneeTeam: translation('assigneeTeam'),
       updated: translation('updated'),
       updateDate: translation('updated'),
       position: translation('location'),
@@ -450,14 +468,27 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
       firstname: translation('firstName'),
       lastname: translation('lastName'),
       birthdate: translation('birthdate'),
+      estimatedTime: translation('estimatedTime'),
+      creationDate: translation('creationDate'),
     }
     return translatedByKey[field.key] ?? field.label
   }, [translation])
 
+  const resolveTaskChoiceTagLabel = useCallback<QueryableChoiceTagLabelResolver>((field, optionKey, backendLabel) => {
+    if (field.propertyDefinitionId) return backendLabel
+    if (field.key === 'priority') return translation('priority', { priority: optionKey })
+    return backendLabel
+  }, [translation])
+
   const availableFilters: FilterListItem[] = useMemo(() => {
-    const raw = queryableFieldsData?.queryableFields
+    const raw = queryableFieldsStable
     if (raw?.length) {
-      return queryableFieldsToFilterListItems(raw, propertyFieldTypeByDefId, resolveTaskQueryableLabel)
+      return queryableFieldsToFilterListItems(
+        raw,
+        propertyFieldTypeByDefId,
+        resolveTaskQueryableLabel,
+        resolveTaskChoiceTagLabel
+      )
     }
     return [
       { id: 'title', label: translation('title'), dataType: 'text', tags: [] },
@@ -478,15 +509,15 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
         tags: def.options.map((opt, idx) => ({ label: opt, tag: `${def.id}-opt-${idx}` })),
       })) ?? [],
     ]
-  }, [queryableFieldsData?.queryableFields, propertyFieldTypeByDefId, resolveTaskQueryableLabel, translation, propertyDefinitionsData?.propertyDefinitions])
+  }, [queryableFieldsStable, propertyFieldTypeByDefId, resolveTaskQueryableLabel, resolveTaskChoiceTagLabel, translation, propertyDefinitionsData?.propertyDefinitions])
 
   const availableSortItems = useMemo(() => {
-    const raw = queryableFieldsData?.queryableFields
+    const raw = queryableFieldsStable
     if (raw?.length) {
       return queryableFieldsToSortingListItems(raw, resolveTaskQueryableLabel)
     }
     return availableFilters.map(({ id, label, dataType }) => ({ id, label, dataType }))
-  }, [queryableFieldsData?.queryableFields, availableFilters, resolveTaskQueryableLabel])
+  }, [queryableFieldsStable, availableFilters, resolveTaskQueryableLabel])
 
   const columns = useMemo<ColumnDef<TaskViewModel>[]>(() => {
     const cols: ColumnDef<TaskViewModel>[] = [

@@ -8,8 +8,6 @@ Create Date: 2026-03-23
 
 from typing import Sequence, Union
 
-from alembic import op
-
 revision: str = "merge_saved_views_task_assignees"
 down_revision: Union[str, Sequence[str], None] = (
     "add_saved_views_table",

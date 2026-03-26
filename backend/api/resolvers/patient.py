@@ -20,6 +20,7 @@ from api.services.notifications import notify_entity_deleted
 from api.services.property import PropertyService
 from api.types.patient import PatientType
 from api.errors import raise_forbidden
+from api.query.dedupe_select import dedupe_orm_select_by_root_id
 from api.query.patient_location_scope import (
     apply_patient_subtree_filter_from_cte,
     build_location_descendants_cte,
@@ -87,7 +88,10 @@ class PatientQuery:
             )
 
         if filter_cte is not None:
-            query = apply_patient_subtree_filter_from_cte(query, filter_cte).distinct()
+            query = dedupe_orm_select_by_root_id(
+                apply_patient_subtree_filter_from_cte(query, filter_cte),
+                models.Patient,
+            )
 
         return query, accessible_location_ids
 
@@ -220,7 +224,7 @@ class PatientQuery:
                 root_cte = root_cte.union_all(root_children)
                 patient_locations_root = aliased(models.patient_locations)
                 patient_teams_root = aliased(models.patient_teams)
-                query = (
+                query = dedupe_orm_select_by_root_id(
                     query.outerjoin(
                         patient_locations_root,
                         models.Patient.id == patient_locations_root.c.patient_id,
@@ -241,8 +245,8 @@ class PatientQuery:
                         )
                         | (patient_locations_root.c.location_id.in_(select(root_cte.c.id)))
                         | (patient_teams_root.c.location_id.in_(select(root_cte.c.id)))
-                    )
-                    .distinct()
+                    ),
+                    models.Patient,
                 )
 
         return query
@@ -301,7 +305,7 @@ class PatientQuery:
                 root_cte = root_cte.union_all(root_children)
                 patient_locations_root = aliased(models.patient_locations)
                 patient_teams_root = aliased(models.patient_teams)
-                query = (
+                query = dedupe_orm_select_by_root_id(
                     query.outerjoin(
                         patient_locations_root,
                         models.Patient.id == patient_locations_root.c.patient_id,
@@ -322,8 +326,8 @@ class PatientQuery:
                         )
                         | (patient_locations_root.c.location_id.in_(select(root_cte.c.id)))
                         | (patient_teams_root.c.location_id.in_(select(root_cte.c.id)))
-                    )
-                    .distinct()
+                    ),
+                    models.Patient,
                 )
 
         return await count_unified_query(

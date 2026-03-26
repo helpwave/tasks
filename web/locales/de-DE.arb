@@ -11,6 +11,7 @@
   "archivedPropertyDescription": "Archivierte Eigenschaften können nicht mehr neu Objekten hinzugeügt werden.",
   "archiveProperty": "Eigenschaft Archivieren",
   "assignedTo": "Zugewiesen an",
+  "assigneeTeam": "Zugewiesenes Team",
   "additionalAssigneesCount": "+{count}",
   "@additionalAssigneesCount": {
     "placeholders": {
@@ -46,6 +47,7 @@
   "confirmDeleteView": "Diesen gespeicherten Schnellzugriff löschen? Dies kann nicht rückgängig gemacht werden.",
   "create": "Erstellen",
   "createTask": "Aufgabe erstellen",
+  "creationDate": "Erstellungsdatum",
   "currentTime": "Aktuelle Zeit",
   "dashboard": "Dashboard",
   "dashboardWelcomeDescription": "Hier ist, was heute passiert.",
