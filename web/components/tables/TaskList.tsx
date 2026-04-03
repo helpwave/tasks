@@ -947,7 +947,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
                 </div>
               </div>
               {isShowFilters && (
-                <div className="relative z-[140] touch-auto">
+                <div className="relative touch-auto">
                   <FilterList
                     value={filters as IdentifierFilterValue[]}
                     onValueChange={setFilters}
@@ -956,7 +956,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
                 </div>
               )}
               {isShowSorting && (
-                <div className="relative z-[140] touch-auto">
+                <div className="relative touch-auto">
                   <SortingList
                     sorting={sorting}
                     onSortingChange={setSorting}
