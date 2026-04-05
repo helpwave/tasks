@@ -190,69 +190,71 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
       }}
     >
       <div className="flex flex-col gap-3 w-full min-w-0">
-        <div className="flex items-start gap-4 w-full min-w-0">
-          <div onClick={(e) => e.stopPropagation()}>
-            <Checkbox
-              value={displayDone}
-              onValueChange={handleToggleDone}
-              className={clsx('rounded-full mt-0.5 shrink-0', PriorityUtils.toCheckboxColor(task?.priority as TaskPriority | null | undefined))}
-            />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between gap-2 flex-wrap min-w-0 mb-2">
-              <div className="flex items-center gap-2 min-w-0 flex-1">
-                {(task as FlexibleTask).priority && (
+        <div className="flex flex-col sm:flex-row sm:items-start gap-4 w-full min-w-0">
+          <div className="flex items-start gap-4 w-full min-w-0 sm:flex-1 sm:min-w-0">
+            <div onClick={(e) => e.stopPropagation()}>
+              <Checkbox
+                value={displayDone}
+                onValueChange={handleToggleDone}
+                className={clsx('rounded-full mt-0.5 shrink-0', PriorityUtils.toCheckboxColor(task?.priority as TaskPriority | null | undefined))}
+              />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-2 sm:flex-wrap min-w-0 mb-2">
+                <div className="flex items-center gap-2 min-w-0 w-full sm:flex-1 sm:w-auto">
+                  {(task as FlexibleTask).priority && (
+                    <div
+                      className={clsx(
+                        'w-2 h-2 rounded-full shrink-0',
+                        PriorityUtils.toBackgroundColor(task?.priority as TaskPriority | null | undefined)
+                      )}
+                    />
+                  )}
                   <div
                     className={clsx(
-                      'w-2 h-2 rounded-full shrink-0',
-                      PriorityUtils.toBackgroundColor(task?.priority as TaskPriority | null | undefined)
+                      'font-semibold text-lg min-w-0 flex-1 whitespace-normal break-words',
+                      { 'line-through text-description': task.done }
                     )}
-                  />
+                  >
+                    {taskName}
+                  </div>
+                </div>
+                {task.assigneeTeam && (
+                  <div className="flex items-center gap-1.5 text-base text-description min-w-0 w-full sm:w-auto sm:shrink-0 sm:justify-end">
+                    <Users className="size-5 text-description shrink-0" />
+                    <span className="min-w-0 break-words sm:truncate sm:max-w-40">{task.assigneeTeam.title}</span>
+                  </div>
                 )}
-                <div
-                  className={clsx(
-                    'font-semibold text-lg min-w-0 flex-1 whitespace-normal break-words',
-                    { 'line-through text-description': task.done }
-                  )}
-                >
-                  {taskName}
-                </div>
+                {!task.assigneeTeam && task.assignee && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setSelectedUserId(task.assignee!.id)
+                    }}
+                    className="flex items-center gap-1.5 text-base text-description min-w-0 w-full sm:w-auto sm:shrink-0 sm:justify-end hover:opacity-75 transition-opacity text-left"
+                  >
+                    <AvatarStatusComponent
+                      size="sm"
+                      isOnline={task.assignee?.isOnline ?? null}
+                      image={assigneeImage}
+                    />
+                    <span className="min-w-0 break-words sm:truncate sm:max-w-[150px]">{task.assignee.name}</span>
+                  </button>
+                )}
               </div>
-              {task.assigneeTeam && (
-                <div className="flex items-center gap-1.5 text-base text-description shrink-0 min-w-0">
-                  <Users className="size-5 text-description" />
-                  <span className="truncate max-w-40">{task.assigneeTeam.title}</span>
-                </div>
-              )}
-              {!task.assigneeTeam && task.assignee && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setSelectedUserId(task.assignee!.id)
-                  }}
-                  className="flex items-center gap-1.5 text-base text-description shrink-0 min-w-0 hover:opacity-75 transition-opacity"
-                >
-                  <AvatarStatusComponent
-                    size="sm"
-                    isOnline={task.assignee?.isOnline ?? null}
-                    image={assigneeImage}
-                  />
-                  <span className="truncate max-w-[150px]">{task.assignee.name}</span>
-                </button>
+              {descriptionPreview && (
+                <ExpandableTextBlock className="text-base text-description">
+                  {descriptionPreview}
+                </ExpandableTextBlock>
               )}
             </div>
-            {descriptionPreview && (
-              <ExpandableTextBlock className="text-base text-description">
-                {descriptionPreview}
-              </ExpandableTextBlock>
-            )}
           </div>
-          <div className="shrink-0 flex flex-col items-end gap-2 text-sm text-description pt-0.5 max-w-[min(100%,11rem)]">
-            <div className="flex flex-wrap items-center justify-end gap-3">
+          <div className="shrink-0 flex flex-col gap-2 text-sm text-description pt-0.5 w-full pl-14 sm:pl-0 sm:items-end sm:w-auto sm:max-w-[min(100%,11rem)]">
+            <div className="flex flex-col gap-2 items-stretch sm:flex-row sm:flex-wrap sm:items-center sm:justify-end gap-x-3 gap-y-2">
               {(task as FlexibleTask).estimatedTime && (
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 min-w-0">
                   <Clock className="size-4 shrink-0" />
-                  <span>
+                  <span className="min-w-0 break-words">
                     {(task as FlexibleTask).estimatedTime! < 60
                       ? `${(task as FlexibleTask).estimatedTime}m`
                       : `${Math.floor((task as FlexibleTask).estimatedTime! / 60)}h ${(task as FlexibleTask).estimatedTime! % 60}m`}
@@ -260,14 +262,14 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
                 </div>
               )}
               {dueDate && (
-                <div className={clsx('flex items-center gap-2', dueDateColorClass)}>
+                <div className={clsx('flex items-center gap-2 min-w-0', dueDateColorClass)}>
                   <Clock className="size-4 shrink-0" />
                   <DateDisplay date={dueDate} mode="absolute" showTime={true} />
                 </div>
               )}
             </div>
             {expectedFinishDate && (
-              <div className="flex items-center gap-2 text-xs">
+              <div className="flex items-center gap-2 text-xs min-w-0">
                 <Flag className="size-4 shrink-0" />
                 <DateDisplay date={expectedFinishDate} mode="absolute" showTime={true} />
               </div>
