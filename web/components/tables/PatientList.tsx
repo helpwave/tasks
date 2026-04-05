@@ -50,6 +50,7 @@ import {
   stringifyViewParameters,
   tableViewStateMatchesBaseline
 } from '@/utils/viewDefinition'
+import { applyVirtualDerivedPatients } from '@/utils/virtualDerivedTableState'
 import type { ViewParameters } from '@/utils/viewDefinition'
 
 export type PatientViewModel = {
@@ -110,9 +111,13 @@ type PatientListProps = {
   embedded?: boolean,
   embeddedPatients?: PatientViewModel[],
   embeddedOnRefetch?: () => void,
+  /** When set with embeddedPatients: client-side filter/sort/search on derived rows; show full toolbar. */
+  derivedVirtualMode?: boolean,
+  /** Persist overwrite targets base view triple or related triple (opposite tab). */
+  savedViewScope?: 'base' | 'related',
 }
 
-export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initialPatientId, onInitialPatientOpened, acceptedStates: _acceptedStates, rootLocationIds, locationId, viewDefaultFilters, viewDefaultSorting, viewDefaultSearchQuery, viewDefaultColumnVisibility, viewDefaultColumnOrder, readOnly: _readOnly, hideSaveView, savedViewId, onSavedViewCreated, onPatientUpdated, embedded = false, embeddedPatients, embeddedOnRefetch }, ref) => {
+export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initialPatientId, onInitialPatientOpened, acceptedStates: _acceptedStates, rootLocationIds, locationId, viewDefaultFilters, viewDefaultSorting, viewDefaultSearchQuery, viewDefaultColumnVisibility, viewDefaultColumnOrder, readOnly: _readOnly, hideSaveView, savedViewId, onSavedViewCreated, onPatientUpdated, embedded = false, embeddedPatients, embeddedOnRefetch, derivedVirtualMode = false, savedViewScope = 'base' }, ref) => {
   const translation = useTasksTranslation()
   const { locale } = useLocale()
   const { selectedRootLocationIds } = useTasksContext()
@@ -149,10 +154,13 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
   ))
 
   useEffect(() => {
-    if (embedded) {
+    if (embedded && !derivedVirtualMode) {
       setListLayout('table')
     }
-  }, [embedded])
+  }, [embedded, derivedVirtualMode])
+
+  const showFullToolbar = !embedded || derivedVirtualMode
+  const useEmbeddedNoop = embedded && !derivedVirtualMode
   const [sorting, setSorting] = useState<SortingState>(() => viewDefaultSorting ?? [])
   const [filters, setFilters] = useState<ColumnFiltersState>(() => viewDefaultFilters ?? [])
   const [columnVisibility, setColumnVisibilityRaw] = useState<VisibilityState>(() => viewDefaultColumnVisibility ?? {})
@@ -249,6 +257,23 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
 
   const handleOverwriteSavedView = useCallback(async () => {
     if (!savedViewId) return
+    if (savedViewScope === 'related') {
+      await updateSavedView({
+        variables: {
+          id: savedViewId,
+          data: {
+            relatedFilterDefinition: serializeColumnFiltersForView(filters as ColumnFiltersState),
+            relatedSortDefinition: serializeSortingForView(sorting),
+            relatedParameters: stringifyViewParameters({
+              searchQuery: searchQuery || undefined,
+              columnVisibility,
+              columnOrder,
+            } satisfies ViewParameters),
+          },
+        },
+      })
+      return
+    }
     await updateSavedView({
       variables: {
         id: savedViewId,
@@ -267,6 +292,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
     })
   }, [
     savedViewId,
+    savedViewScope,
     updateSavedView,
     filters,
     sorting,
@@ -338,7 +364,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       sorts: apiSorting.length > 0 ? apiSorting : undefined,
       filters: apiFilters.length > 0 ? apiFilters : undefined,
       search: searchInput,
-      skip: embedded && embeddedPatients !== undefined,
+      skip: derivedVirtualMode || (embedded && embeddedPatients !== undefined),
     }
   )
   if (totalCount != null) lastTotalCountRef.current = totalCount
@@ -371,13 +397,32 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
     }
   }, [])
 
-  const patients: PatientViewModel[] = useMemo(() => {
+  const patientsFromSource = useMemo((): PatientViewModel[] => {
     if (embedded && embeddedPatients !== undefined) return embeddedPatients
     if (!accumulatedPatientsRaw || accumulatedPatientsRaw.length === 0) return []
     return accumulatedPatientsRaw.map(mapPatientRow)
   }, [embedded, embeddedPatients, accumulatedPatientsRaw, mapPatientRow])
 
-  const showBlockingLoadingOverlay = patientsLoading && patients.length === 0
+  const patients: PatientViewModel[] = useMemo(() => {
+    if (derivedVirtualMode && embeddedPatients !== undefined) {
+      return applyVirtualDerivedPatients(
+        embeddedPatients,
+        filters as ColumnFiltersState,
+        sorting,
+        searchQuery
+      )
+    }
+    return patientsFromSource
+  }, [
+    derivedVirtualMode,
+    embeddedPatients,
+    patientsFromSource,
+    filters,
+    sorting,
+    searchQuery,
+  ])
+
+  const showBlockingLoadingOverlay = patientsLoading && patients.length === 0 && !derivedVirtualMode
 
   const tablePagination = useMemo(
     (): PaginationState => ({
@@ -787,16 +832,16 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
   )
 
   const embeddedDashboardColumnVisibility = useMemo((): VisibilityState | null => {
-    if (!embedded) return null
+    if (!embedded || derivedVirtualMode) return null
     const visible = new Set<string>(['name', 'position', 'updateDate'])
     const vis: VisibilityState = {}
     for (const id of knownColumnIdsOrdered) {
       vis[id] = visible.has(id)
     }
     return vis
-  }, [embedded, knownColumnIdsOrdered])
+  }, [embedded, derivedVirtualMode, knownColumnIdsOrdered])
 
-  const tableColumnVisibility = embedded && embeddedDashboardColumnVisibility != null
+  const tableColumnVisibility = embedded && !derivedVirtualMode && embeddedDashboardColumnVisibility != null
     ? embeddedDashboardColumnVisibility
     : columnVisibility
 
@@ -864,11 +909,11 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
         columnOrder: sanitizedColumnOrder,
         pagination: tablePagination,
       } as Partial<TableState> as TableState}
-      onColumnVisibilityChange={embedded ? embeddedTableStateNoop : setColumnVisibility}
-      onColumnOrderChange={embedded ? embeddedTableStateNoop : deferSetColumnOrder}
+      onColumnVisibilityChange={useEmbeddedNoop ? embeddedTableStateNoop : setColumnVisibility}
+      onColumnOrderChange={useEmbeddedNoop ? embeddedTableStateNoop : deferSetColumnOrder}
       onPaginationChange={() => {}}
-      onSortingChange={embedded ? embeddedTableStateNoop : setSorting}
-      onColumnFiltersChange={embedded ? embeddedTableStateNoop : setFilters}
+      onSortingChange={useEmbeddedNoop ? embeddedTableStateNoop : setSorting}
+      onColumnFiltersChange={useEmbeddedNoop ? embeddedTableStateNoop : setFilters}
       enableMultiSort={true}
       enablePinning={false}
       pageCount={1}
@@ -882,7 +927,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       enableColumnPinning={false}
     >
       <div className="flex flex-col h-full gap-4">
-        {!embedded && (
+        {showFullToolbar && (
           <div className="flex-col-2 w-full">
             <div className="flex flex-col-reverse gap-3 sm:flex-row sm:flex-row-8 sm:justify-between sm:gap-0 w-full">
               <div className="flex flex-wrap gap-2 items-center">
@@ -922,6 +967,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
                     onOverwrite={handleOverwriteSavedView}
                     onOpenSaveAsNew={() => setIsSaveViewDialogOpen(true)}
                     onDiscard={handleDiscardViewChanges}
+                    hideSaveAsNew={savedViewScope === 'related' && derivedVirtualMode}
                   />
                 </Visibility>
               </div>
@@ -942,17 +988,19 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
                 >
                   <LayoutGrid className="size-5" />
                 </IconButton>
-                <IconButton
-                  tooltip={translation('addPatient')}
-                  className="min-h-11 min-w-11"
-                  onClick={() => {
-                    setSelectedPatient(undefined)
-                    setIsPanelOpen(true)
-                  }}
-                  color="primary"
-                >
-                  <PlusIcon />
-                </IconButton>
+                {!derivedVirtualMode && (
+                  <IconButton
+                    tooltip={translation('addPatient')}
+                    className="min-h-11 min-w-11"
+                    onClick={() => {
+                      setSelectedPatient(undefined)
+                      setIsPanelOpen(true)
+                    }}
+                    color="primary"
+                  >
+                    <PlusIcon />
+                  </IconButton>
+                )}
               </div>
             </div>
             {isShowFilters && (
@@ -992,7 +1040,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
               ))}
             </div>
           )}
-          {stableTotalCount != null && hasMore && !embedded && (
+          {stableTotalCount != null && hasMore && !embedded && !derivedVirtualMode && (
             <Button color="neutral" className="mt-2 w-full sm:w-auto self-center" onClick={loadMore}>
               {translation('loadMore')}
             </Button>
@@ -1015,22 +1063,24 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
             }}
           />
         </Drawer>
-        <SaveViewDialog
-          isOpen={isSaveViewDialogOpen}
-          onClose={() => setIsSaveViewDialogOpen(false)}
-          baseEntityType={SavedViewEntityType.Patient}
-          filterDefinition={serializeColumnFiltersForView(filters as ColumnFiltersState)}
-          sortDefinition={serializeSortingForView(sorting)}
-          parameters={stringifyViewParameters({
-            rootLocationIds: effectiveRootLocationIds ?? undefined,
-            locationId: hasLocationFilter ? undefined : (locationId ?? undefined),
-            searchQuery: searchQuery || undefined,
-            columnVisibility,
-            columnOrder,
-          } satisfies ViewParameters)}
-          presentation={savedViewId ? 'default' : 'fromSystemList'}
-          onCreated={onSavedViewCreated}
-        />
+        {savedViewScope === 'base' && (
+          <SaveViewDialog
+            isOpen={isSaveViewDialogOpen}
+            onClose={() => setIsSaveViewDialogOpen(false)}
+            baseEntityType={SavedViewEntityType.Patient}
+            filterDefinition={serializeColumnFiltersForView(filters as ColumnFiltersState)}
+            sortDefinition={serializeSortingForView(sorting)}
+            parameters={stringifyViewParameters({
+              rootLocationIds: effectiveRootLocationIds ?? undefined,
+              locationId: hasLocationFilter ? undefined : (locationId ?? undefined),
+              searchQuery: searchQuery || undefined,
+              columnVisibility,
+              columnOrder,
+            } satisfies ViewParameters)}
+            presentation={savedViewId ? 'default' : 'fromSystemList'}
+            onCreated={onSavedViewCreated}
+          />
+        )}
       </div>
     </TableProvider>
   )

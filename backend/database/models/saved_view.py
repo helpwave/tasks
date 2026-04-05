@@ -32,6 +32,9 @@ class SavedView(Base):
     filter_definition: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
     sort_definition: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
     parameters: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    related_filter_definition: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    related_sort_definition: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    related_parameters: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
     owner_user_id: Mapped[str] = mapped_column(
         String, ForeignKey("users.id"), nullable=False
     )

@@ -1,36 +1,76 @@
 'use client'
 
 import { useMemo } from 'react'
-import Link from 'next/link'
 import { useTasks } from '@/data'
+import { PatientState, type GetTasksQuery } from '@/api/gql/generated'
 import { columnFiltersToQueryFilterClauses, sortingStateToQuerySortClauses } from '@/utils/tableStateToApi'
-import { deserializeColumnFiltersFromView, deserializeSortingFromView } from '@/utils/viewDefinition'
+import {
+  deserializeColumnFiltersFromView,
+  deserializeSortingFromView,
+  parseViewParameters
+} from '@/utils/viewDefinition'
 import type { ViewParameters } from '@/utils/viewDefinition'
-import { LocationChips } from '@/components/locations/LocationChips'
 import { LoadingContainer } from '@helpwave/hightide'
-import { useTasksTranslation } from '@/i18n/useTasksTranslation'
+import { PatientList } from '@/components/tables/PatientList'
+import type { PatientViewModel } from '@/components/tables/PatientList'
+
+const ADMITTED_OR_WAITING: PatientState[] = [PatientState.Admitted, PatientState.Wait]
+
+type TaskPatient = NonNullable<GetTasksQuery['tasks'][0]['patient']>
+
+function buildEmbeddedPatientsFromTasks(tasks: GetTasksQuery['tasks']): PatientViewModel[] {
+  const agg = new Map<string, { patient: TaskPatient, open: number, closed: number }>()
+  for (const t of tasks) {
+    if (!t.patient) continue
+    const id = t.patient.id
+    let row = agg.get(id)
+    if (!row) {
+      row = { patient: t.patient, open: 0, closed: 0 }
+      agg.set(id, row)
+    }
+    if (t.done) row.closed += 1
+    else row.open += 1
+  }
+  return [...agg.values()].map(({ patient, open, closed }) => {
+    const countForAggregate = ADMITTED_OR_WAITING.includes(patient.state)
+    return {
+      id: patient.id,
+      name: patient.name,
+      firstname: patient.firstname,
+      lastname: patient.lastname,
+      birthdate: new Date(patient.birthdate),
+      sex: patient.sex,
+      state: patient.state,
+      position: patient.position,
+      openTasksCount: countForAggregate ? open : 0,
+      closedTasksCount: countForAggregate ? closed : 0,
+      tasks: [],
+      properties: patient.properties ?? [],
+    }
+  })
+}
 
 type TaskViewPatientsPanelProps = {
   filterDefinitionJson: string,
   sortDefinitionJson: string,
   parameters: ViewParameters,
+  relatedFilterDefinitionJson: string,
+  relatedSortDefinitionJson: string,
+  relatedParametersJson: string,
+  savedViewId?: string,
+  isOwner: boolean,
 }
 
-type DistinctPatientRow = {
-  id: string,
-  name: string,
-  locations: Array<{ id: string, title: string }>,
-}
-
-/**
- * Distinct patients from the same task query as the task tab (no duplicate task-fetch hack).
- */
 export function TaskViewPatientsPanel({
   filterDefinitionJson,
   sortDefinitionJson,
   parameters,
+  relatedFilterDefinitionJson,
+  relatedSortDefinitionJson,
+  relatedParametersJson,
+  savedViewId,
+  isOwner,
 }: TaskViewPatientsPanelProps) {
-  const translation = useTasksTranslation()
   const filters = deserializeColumnFiltersFromView(filterDefinitionJson)
   const sorting = deserializeSortingFromView(sortDefinitionJson)
   const apiFilters = useMemo(() => columnFiltersToQueryFilterClauses(filters), [filters])
@@ -48,44 +88,47 @@ export function TaskViewPatientsPanel({
     }
   )
 
-  const rows = useMemo((): DistinctPatientRow[] => {
-    const map = new Map<string, DistinctPatientRow>()
-    for (const t of data?.tasks ?? []) {
-      if (!t.patient) continue
-      if (!map.has(t.patient.id)) {
-        map.set(t.patient.id, {
-          id: t.patient.id,
-          name: t.patient.name,
-          locations: (t.patient.assignedLocations ?? []).map(l => ({ id: l.id, title: l.title })),
-        })
-      }
-    }
-    return [...map.values()].sort((a, b) => a.name.localeCompare(b.name))
-  }, [data])
+  const embeddedPatients = useMemo(
+    () => buildEmbeddedPatientsFromTasks(data?.tasks ?? []),
+    [data?.tasks]
+  )
 
-  if (loading) {
-    return <LoadingContainer className="w-full min-h-48" />
+  const defaultRelatedFilters = useMemo(
+    () => deserializeColumnFiltersFromView(relatedFilterDefinitionJson),
+    [relatedFilterDefinitionJson]
+  )
+  const defaultRelatedSorting = useMemo(
+    () => deserializeSortingFromView(relatedSortDefinitionJson),
+    [relatedSortDefinitionJson]
+  )
+  const relatedParams = useMemo(
+    () => parseViewParameters(relatedParametersJson),
+    [relatedParametersJson]
+  )
+
+  if (loading && embeddedPatients.length === 0) {
+    return (
+      <div className="min-h-48 flex items-center justify-center w-full">
+        <LoadingContainer className="w-full min-h-48" />
+      </div>
+    )
   }
 
   return (
-    <div className="flex flex-col gap-3 min-h-48">
-      <p className="typography-body-sm text-description">{translation('viewDerivedPatientsHint')}</p>
-      <ul className="flex flex-col gap-2">
-        {rows.map((p) => (
-          <li
-            key={p.id}
-            className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-divider px-3 py-2"
-          >
-            <Link className="text-primary font-semibold hover:underline" href={`/patients?patientId=${p.id}`}>
-              {p.name}
-            </Link>
-            <LocationChips locations={p.locations} small />
-          </li>
-        ))}
-      </ul>
-      {rows.length === 0 && (
-        <span className="typography-body-sm text-description">{translation('noPatientsInTaskView')}</span>
-      )}
-    </div>
+    <PatientList
+      embedded
+      derivedVirtualMode
+      savedViewScope="related"
+      embeddedPatients={embeddedPatients}
+      rootLocationIds={parameters.rootLocationIds}
+      locationId={parameters.locationId}
+      viewDefaultFilters={defaultRelatedFilters}
+      viewDefaultSorting={defaultRelatedSorting}
+      viewDefaultSearchQuery={relatedParams.searchQuery}
+      viewDefaultColumnVisibility={relatedParams.columnVisibility}
+      viewDefaultColumnOrder={relatedParams.columnOrder}
+      hideSaveView={!isOwner}
+      savedViewId={isOwner ? savedViewId : undefined}
+    />
   )
 }

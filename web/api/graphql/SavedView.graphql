@@ -6,6 +6,9 @@ query MySavedViews {
     filterDefinition
     sortDefinition
     parameters
+    relatedFilterDefinition
+    relatedSortDefinition
+    relatedParameters
     ownerUserId
     visibility
     createdAt
@@ -22,6 +25,9 @@ query SavedView($id: ID!) {
     filterDefinition
     sortDefinition
     parameters
+    relatedFilterDefinition
+    relatedSortDefinition
+    relatedParameters
     ownerUserId
     visibility
     createdAt
@@ -38,6 +44,9 @@ mutation CreateSavedView($data: CreateSavedViewInput!) {
     filterDefinition
     sortDefinition
     parameters
+    relatedFilterDefinition
+    relatedSortDefinition
+    relatedParameters
     ownerUserId
     visibility
     createdAt
@@ -54,6 +63,9 @@ mutation UpdateSavedView($id: ID!, $data: UpdateSavedViewInput!) {
     filterDefinition
     sortDefinition
     parameters
+    relatedFilterDefinition
+    relatedSortDefinition
+    relatedParameters
     ownerUserId
     visibility
     createdAt
@@ -74,6 +86,9 @@ mutation DuplicateSavedView($id: ID!, $name: String!) {
     filterDefinition
     sortDefinition
     parameters
+    relatedFilterDefinition
+    relatedSortDefinition
+    relatedParameters
     ownerUserId
     visibility
     createdAt

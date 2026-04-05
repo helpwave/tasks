@@ -149,9 +149,11 @@ type TaskListProps = {
   loadMore?: () => void,
   hasMore?: boolean,
   embedded?: boolean,
+  /** Row order and search already applied in parent (e.g. saved view derived task list). */
+  virtualDerivedOrder?: boolean,
 }
 
-export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initialTasks, onRefetch, showAssignee = false, initialTaskId, onInitialTaskOpened, headerActions, saveViewSlot, totalCount, loading = false, tableState: controlledTableState, searchQuery: searchQueryProp, onSearchQueryChange, loadMore: loadMoreProp, hasMore: hasMoreProp, embedded = false }, ref) => {
+export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initialTasks, onRefetch, showAssignee = false, initialTaskId, onInitialTaskOpened, headerActions, saveViewSlot, totalCount, loading = false, tableState: controlledTableState, searchQuery: searchQueryProp, onSearchQueryChange, loadMore: loadMoreProp, hasMore: hasMoreProp, embedded = false, virtualDerivedOrder = false }, ref) => {
   const translation = useTasksTranslation()
   const { data: propertyDefinitionsData } = usePropertyDefinitions()
   const { data: queryableFieldsData } = useQueryableFields('Task')
@@ -302,6 +304,10 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
       return task
     })
 
+    if (virtualDerivedOrder) {
+      return data
+    }
+
     if (!isServerDriven && searchQuery) {
       const lowerQuery = searchQuery.toLowerCase()
       data = data.filter(t =>
@@ -323,12 +329,12 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
       })
     }
     return data
-  }, [initialTasks, optimisticUpdates, searchQuery, isServerDriven])
+  }, [initialTasks, optimisticUpdates, searchQuery, isServerDriven, virtualDerivedOrder])
 
   useEffect(() => {
     if (isServerDriven) return
     setClientVisibleCount(LIST_PAGE_SIZE)
-  }, [initialTasksSyncKey, searchQuery, isServerDriven])
+  }, [initialTasksSyncKey, searchQuery, isServerDriven, virtualDerivedOrder])
 
   const displayedTasks = useMemo(() => {
     if (isServerDriven) return tasks

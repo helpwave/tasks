@@ -14,6 +14,9 @@ class SavedViewType:
     filter_definition: str
     sort_definition: str
     parameters: str
+    related_filter_definition: str
+    related_sort_definition: str
+    related_parameters: str
     owner_user_id: strawberry.ID
     visibility: SavedViewVisibility
     created_at: str
@@ -33,6 +36,9 @@ class SavedViewType:
             filter_definition=row.filter_definition,
             sort_definition=row.sort_definition,
             parameters=row.parameters,
+            related_filter_definition=row.related_filter_definition,
+            related_sort_definition=row.related_sort_definition,
+            related_parameters=row.related_parameters,
             owner_user_id=strawberry.ID(row.owner_user_id),
             visibility=SavedViewVisibility(row.visibility),
             created_at=row.created_at.isoformat() if row.created_at else "",

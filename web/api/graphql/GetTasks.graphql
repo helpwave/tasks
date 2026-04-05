@@ -12,6 +12,11 @@ query GetTasks($rootLocationIds: [ID!], $assigneeId: ID, $assigneeTeamId: ID, $f
     patient {
       id
       name
+      firstname
+      lastname
+      birthdate
+      sex
+      state
       assignedLocation {
         id
         title
@@ -21,6 +26,44 @@ query GetTasks($rootLocationIds: [ID!], $assigneeId: ID, $assigneeTeamId: ID, $f
         }
       }
       assignedLocations {
+        id
+        title
+        kind
+        parent {
+          id
+          title
+          parent {
+            id
+            title
+            parent {
+              id
+              title
+            }
+          }
+        }
+      }
+      clinic {
+        id
+        title
+        kind
+        parent {
+          id
+          title
+          parent {
+            id
+            title
+            parent {
+              id
+              title
+              parent {
+                id
+                title
+              }
+            }
+          }
+        }
+      }
+      position {
         id
         title
         kind
@@ -38,6 +81,59 @@ query GetTasks($rootLocationIds: [ID!], $assigneeId: ID, $assigneeTeamId: ID, $f
               kind
             }
           }
+        }
+      }
+      teams {
+        id
+        title
+        kind
+        parent {
+          id
+          title
+          parent {
+            id
+            title
+            parent {
+              id
+              title
+              parent {
+                id
+                title
+              }
+            }
+          }
+        }
+      }
+      properties {
+        id
+        definition {
+          id
+          name
+          description
+          fieldType
+          isActive
+          allowedEntities
+          options
+        }
+        textValue
+        numberValue
+        booleanValue
+        dateValue
+        dateTimeValue
+        selectValue
+        multiSelectValues
+        userValue
+        user {
+          id
+          name
+          avatarUrl
+          lastOnline
+          isOnline
+        }
+        team {
+          id
+          title
+          kind
         }
       }
     }

@@ -64,6 +64,9 @@ class SavedViewMutation:
             (data.filter_definition, "filter_definition"),
             (data.sort_definition, "sort_definition"),
             (data.parameters, "parameters"),
+            (data.related_filter_definition, "related_filter_definition"),
+            (data.related_sort_definition, "related_sort_definition"),
+            (data.related_parameters, "related_parameters"),
         ):
             try:
                 json.loads(blob)
@@ -76,6 +79,9 @@ class SavedViewMutation:
             filter_definition=data.filter_definition,
             sort_definition=data.sort_definition,
             parameters=data.parameters,
+            related_filter_definition=data.related_filter_definition,
+            related_sort_definition=data.related_sort_definition,
+            related_parameters=data.related_parameters,
             owner_user_id=user.id,
             visibility=data.visibility.value,
         )
@@ -122,6 +128,24 @@ class SavedViewMutation:
             except json.JSONDecodeError as e:
                 raise GraphQLError("Invalid JSON in parameters") from e
             row.parameters = data.parameters
+        if data.related_filter_definition is not None:
+            try:
+                json.loads(data.related_filter_definition)
+            except json.JSONDecodeError as e:
+                raise GraphQLError("Invalid JSON in related_filter_definition") from e
+            row.related_filter_definition = data.related_filter_definition
+        if data.related_sort_definition is not None:
+            try:
+                json.loads(data.related_sort_definition)
+            except json.JSONDecodeError as e:
+                raise GraphQLError("Invalid JSON in related_sort_definition") from e
+            row.related_sort_definition = data.related_sort_definition
+        if data.related_parameters is not None:
+            try:
+                json.loads(data.related_parameters)
+            except json.JSONDecodeError as e:
+                raise GraphQLError("Invalid JSON in related_parameters") from e
+            row.related_parameters = data.related_parameters
         if data.visibility is not None:
             row.visibility = data.visibility.value
 
@@ -169,6 +193,9 @@ class SavedViewMutation:
             filter_definition=src.filter_definition,
             sort_definition=src.sort_definition,
             parameters=src.parameters,
+            related_filter_definition=src.related_filter_definition,
+            related_sort_definition=src.related_sort_definition,
+            related_parameters=src.related_parameters,
             owner_user_id=user.id,
             visibility=SavedViewVisibility.PRIVATE.value,
         )

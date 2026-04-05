@@ -206,6 +206,9 @@ class CreateSavedViewInput:
     filter_definition: str
     sort_definition: str
     parameters: str
+    related_filter_definition: str = "{}"
+    related_sort_definition: str = "{}"
+    related_parameters: str = "{}"
     visibility: SavedViewVisibility = SavedViewVisibility.LINK_SHARED
 
 
@@ -215,4 +218,7 @@ class UpdateSavedViewInput:
     filter_definition: str | None = None
     sort_definition: str | None = None
     parameters: str | None = None
+    related_filter_definition: str | None = None
+    related_sort_definition: str | None = None
+    related_parameters: str | None = None
     visibility: SavedViewVisibility | None = None
