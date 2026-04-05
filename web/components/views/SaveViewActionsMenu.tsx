@@ -10,6 +10,7 @@ export type SaveViewActionsMenuProps = {
   onOverwrite: () => void | Promise<void>,
   onOpenSaveAsNew: () => void,
   onDiscard: () => void,
+  hideSaveAsNew?: boolean,
 }
 
 export function SaveViewActionsMenu({
@@ -18,6 +19,7 @@ export function SaveViewActionsMenu({
   onOverwrite,
   onOpenSaveAsNew,
   onDiscard,
+  hideSaveAsNew = false,
 }: SaveViewActionsMenuProps) {
   const translation = useTasksTranslation()
 
@@ -51,15 +53,17 @@ export function SaveViewActionsMenu({
               >
                 {translation('saveViewOverwriteCurrent')}
               </MenuItem>
-              <MenuItem
-                onClick={() => {
-                  onOpenSaveAsNew()
-                  close()
-                }}
-                className="rounded-md cursor-pointer"
-              >
-                {translation('saveViewAsNew')}
-              </MenuItem>
+              {!hideSaveAsNew && (
+                <MenuItem
+                  onClick={() => {
+                    onOpenSaveAsNew()
+                    close()
+                  }}
+                  className="rounded-md cursor-pointer"
+                >
+                  {translation('saveViewAsNew')}
+                </MenuItem>
+              )}
             </>
           )}
         </Menu>

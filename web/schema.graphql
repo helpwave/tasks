@@ -42,6 +42,9 @@ input CreateSavedViewInput {
   filterDefinition: String!
   sortDefinition: String!
   parameters: String!
+  relatedFilterDefinition: String = "{}"
+  relatedSortDefinition: String = "{}"
+  relatedParameters: String = "{}"
   visibility: SavedViewVisibility! = PRIVATE
 }
 
@@ -341,6 +344,9 @@ type SavedView {
   filterDefinition: String!
   sortDefinition: String!
   parameters: String!
+  relatedFilterDefinition: String!
+  relatedSortDefinition: String!
+  relatedParameters: String!
   ownerUserId: ID!
   visibility: SavedViewVisibility!
   createdAt: String!
@@ -446,6 +452,9 @@ input UpdateSavedViewInput {
   filterDefinition: String = null
   sortDefinition: String = null
   parameters: String = null
+  relatedFilterDefinition: String = null
+  relatedSortDefinition: String = null
+  relatedParameters: String = null
   visibility: SavedViewVisibility = null
 }
 

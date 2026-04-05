@@ -536,6 +536,11 @@ const ViewPage: NextPage = () => {
                 filterDefinitionJson={view.filterDefinition}
                 sortDefinitionJson={view.sortDefinition}
                 parameters={params}
+                relatedFilterDefinitionJson={view.relatedFilterDefinition}
+                relatedSortDefinitionJson={view.relatedSortDefinition}
+                relatedParametersJson={view.relatedParameters}
+                savedViewId={view.isOwner ? view.id : undefined}
+                isOwner={view.isOwner}
                 refreshVersion={patientViewRefreshVersion}
               />
             </TabPanel>
@@ -560,6 +565,11 @@ const ViewPage: NextPage = () => {
                 filterDefinitionJson={view.filterDefinition}
                 sortDefinitionJson={view.sortDefinition}
                 parameters={params}
+                relatedFilterDefinitionJson={view.relatedFilterDefinition}
+                relatedSortDefinitionJson={view.relatedSortDefinition}
+                relatedParametersJson={view.relatedParameters}
+                savedViewId={view.isOwner ? view.id : undefined}
+                isOwner={view.isOwner}
               />
             </TabPanel>
           </TabSwitcher>

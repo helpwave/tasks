@@ -147,7 +147,6 @@ export const PropertyEntry = ({
             onDialogClose={userValue => {
               onEditComplete({ ...value, userValue: userValue || undefined })
             }}
-            onValueClear={onValueClear}
             allowTeams={true}
           />
         )}
