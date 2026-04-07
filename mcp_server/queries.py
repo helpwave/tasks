@@ -44,7 +44,7 @@ query GetPatient($id: ID!) {
       priority
       estimatedTime
       updateDate
-      assignee {
+      assignees {
         id
         name
       }
@@ -103,6 +103,41 @@ query GetPatients($locationNodeId: ID, $rootLocationIds: [ID!], $states: [Patien
 }
 """
 
+FIND_CLINICS_BY_NAME_QUERY = """
+query FindClinicsByName($search: String!, $limit: Int, $offset: Int) {
+  locationNodes(
+    kind: CLINIC
+    search: $search
+    orderByName: true
+    limit: $limit
+    offset: $offset
+    recursive: false
+  ) {
+    id
+    title
+    kind
+    parentId
+  }
+}
+"""
+
+LIST_CLINICS_QUERY = """
+query ListClinics($limit: Int, $offset: Int) {
+  locationNodes(
+    kind: CLINIC
+    orderByName: true
+    limit: $limit
+    offset: $offset
+    recursive: false
+  ) {
+    id
+    title
+    kind
+    parentId
+  }
+}
+"""
+
 GET_TASK_QUERY = """
 query GetTask($id: ID!) {
   task(id: $id) {
@@ -119,7 +154,7 @@ query GetTask($id: ID!) {
       id
       name
     }
-    assignee {
+    assignees {
       id
       name
       avatarUrl
@@ -190,7 +225,7 @@ query GetTasks($patientId: ID, $assigneeId: ID, $assigneeTeamId: ID, $rootLocati
         }
       }
     }
-    assignee {
+    assignees {
       id
       name
       avatarUrl
@@ -278,9 +313,12 @@ mutation CreateTask($data: CreateTaskInput!) {
       id
       name
     }
-    assignee {
+    assignees {
       id
       name
+      avatarUrl
+      lastOnline
+      isOnline
     }
     assigneeTeam {
       id
@@ -306,9 +344,12 @@ mutation UpdateTask($id: ID!, $data: UpdateTaskInput!) {
       id
       name
     }
-    assignee {
+    assignees {
       id
       name
+      avatarUrl
+      lastOnline
+      isOnline
     }
     assigneeTeam {
       id
@@ -325,16 +366,20 @@ mutation DeleteTask($id: ID!) {
 """
 
 ASSIGN_TASK_MUTATION = """
-mutation AssignTask($id: ID!, $userId: ID!) {
-  assignTask(id: $id, userId: $userId) {
+mutation AddTaskAssignee($id: ID!, $userId: ID!) {
+  addTaskAssignee(id: $id, userId: $userId) {
     id
-    assignee {
+    assignees {
       id
       name
+      avatarUrl
+      lastOnline
+      isOnline
     }
     assigneeTeam {
       id
       title
+      kind
     }
   }
 }
@@ -347,10 +392,7 @@ mutation AssignTaskToTeam($id: ID!, $teamId: ID!) {
     assigneeTeam {
       id
       title
-    }
-    assignee {
-      id
-      name
+      kind
     }
   }
 }

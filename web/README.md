@@ -23,19 +23,23 @@ The web frontend is a Next.js application providing the user interface for the h
 
 ## In-app assistant (demo, bring your own key)
 
-The sparkles button in the header opens a drawer where users store an **API key and model in the browser** (localStorage). Each message is proxied through the Next.js route `/api/assistant/chat`, which calls the provider’s **streaming** `chat/completions` API and forwards tokens to the UI as they arrive.
+The sparkles button opens a drawer where users store an **API key and model** in the browser (localStorage). Requests go to `/api/assistant/chat`.
+
+- **Info** mode: streams tokens from the model (usage / how-to only; no tools).
+- **Working** mode: the server loads tools from the **helpwave MCP server** over Streamable HTTP, runs an OpenAI-style tool loop, and returns the final reply as JSON (no token streaming). Default MCP URL is `http://127.0.0.1:8765/mcp`; set **`ASSISTANT_MCP_URL`** in `.env.local` if yours differs.
 
 ### Local testing
 
-1. Run the stack you normally use for development (backend GraphQL, Keycloak, and this app).
-2. Open `http://localhost:3000`, sign in (for example user `test` / `test` on the dev realm).
-3. Click the **sparkles** icon in the top bar (left of Feedback).
-4. In **Model & API key**:
-   - **OpenAI:** leave **API base URL** empty, set **Model** to something you have access to (for example `gpt-4o-mini`), paste your **API key**, and click **Save**.
-   - **Ollama (local):** run `ollama serve`, pull a model (`ollama pull llama3.1`), set **API base URL** to `http://localhost:11434/v1`, **Model** to that tag (for example `llama3.1`), and set **API key** to any non-empty placeholder if your setup requires a Bearer token (many local setups accept a dummy value).
-5. Choose a **conversation focus** (required), optionally tap a **suggested prompt**, then **Send**. The assistant reply should grow word-by-word as tokens stream in.
+1. Run the stack you normally use (backend GraphQL, Keycloak, this app). For **Working** mode, also start MCP over HTTP from the **repo root** (see `mcp_server/README.md`):
 
-Optional on the **Next.js process** (not in `.env.local` for the browser): `ASSISTANT_MAX_OUTPUT_TOKENS` caps the model’s completion length (default `2048`, clamped between 256 and 8192 in the API route).
+   `MCP_TRANSPORT=http MCP_GRAPHQL_URL=http://localhost:8000/graphql python -m mcp_server.server`
+
+2. Open the app, sign in (for example `test` / `test`).
+3. Click **sparkles** (left of Feedback).
+4. In **Model & API key**, configure your provider (OpenAI or OpenAI-compatible such as Ollama) and **Save**.
+5. Choose **Info** or **Working**, then **Send**. Info streams; Working waits for the full response after MCP tool rounds.
+
+Optional on the **Next.js process**: `ASSISTANT_MCP_URL`, `ASSISTANT_MAX_OUTPUT_TOKENS` (default `2048`, clamped 256–8192).
 
 **Note:** Some reverse proxies buffer streaming responses. If streaming appears only after the full reply finishes, disable buffering for `/api/assistant/chat` (for example `X-Accel-Buffering: no` is already set on the response; nginx may need `proxy_buffering off` for that location).
 

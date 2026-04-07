@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { z } from 'zod'
+import { runWorkingModeWithMcp } from '@/lib/assistant/workingModeMcp'
 
 export const config = {
   api: {
@@ -7,7 +8,7 @@ export const config = {
   },
 }
 
-const focusSchema = z.enum(['general', 'tasks', 'patients'])
+const modeSchema = z.enum(['info', 'working'])
 
 const bodySchema = z.object({
   messages: z
@@ -21,22 +22,18 @@ const bodySchema = z.object({
   model: z.string().min(1).max(128),
   apiKey: z.string().min(1).max(512),
   baseUrl: z.string().max(512).optional(),
-  focus: focusSchema,
+  mode: modeSchema,
 })
 
-const FOCUS_SYSTEM: Record<z.infer<typeof focusSchema>, string> = {
-  general:
-    'The user chose the focus "Using the app". Explain UI navigation, settings, saved views, locations, and how the app is structured. Do not invent features that are not typical for a task and ward management app.',
-  tasks:
-    'The user chose the focus "Tasks & workflows". Explain how tasks work in helpwave tasks: creating, assigning, completing, priorities, due dates, teams, and related views. Stay generic; do not claim to see live data unless the user pasted it.',
-  patients:
-    'The user chose the focus "Patients". Explain patient list behavior, states, and workflows only at a high level. Do not ask for or repeat real patient identifiers or clinical details. If the user pastes sensitive-looking data, refuse and remind them this is a demo.',
-}
+const INFO_SYSTEM = `You are the in-app assistant for helpwave tasks, a demo hospital task and ward-management product.
+This mode is INFO only: explain how to use the app (navigation, tasks, patients, locations, settings, saved views).
+You do not have tools or live data—describe the product clearly. If unsure, say so.
+Never ask users for API keys or passwords.`
 
-const BASE_SYSTEM = `You are the in-app assistant for helpwave tasks, a demo hospital task and ward-management product.
-Be concise, actionable, and accurate. If you are unsure, say so.
-Never request API keys or passwords. Never instruct users to bypass security.
-This chat does not have live access to their database; describe how to use the product, not their private data.`
+const WORKING_SYSTEM = `You are the in-app assistant for helpwave tasks in WORKING mode.
+You have MCP tools wired to the real GraphQL API (patients, tasks, assignments, health checks, etc.).
+Use tools whenever the user needs current data or wants to create, update, or complete something.
+Keep answers concise; briefly summarize what tools returned when helpful.`
 
 function normalizeBaseUrl(raw: string | undefined): string {
   const t = (raw ?? '').trim()
@@ -46,11 +43,20 @@ function normalizeBaseUrl(raw: string | undefined): string {
   return t.replace(/\/$/, '')
 }
 
+function defaultMcpUrl(): string {
+  const fromEnv = process.env['ASSISTANT_MCP_URL']?.trim()
+  if (fromEnv) {
+    return fromEnv.replace(/\/$/, '')
+  }
+  return 'http://127.0.0.1:8765/mcp'
+}
+
 type ErrorPayload = { error: string }
+type JsonOkPayload = { content: string }
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse<ErrorPayload | void>
+  res: NextApiResponse<ErrorPayload | JsonOkPayload | void>
 ) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
@@ -61,17 +67,35 @@ export default async function handler(
     return res.status(400).json({ error: 'Invalid request body' })
   }
 
-  const { messages, model, apiKey, baseUrl, focus } = parsed.data
+  const { messages, model, apiKey, baseUrl, mode } = parsed.data
   const maxTokensRaw = process.env['ASSISTANT_MAX_OUTPUT_TOKENS'] ?? '2048'
   const maxTokens = Math.min(8192, Math.max(256, Number.parseInt(maxTokensRaw, 10) || 2048))
+  const openAiBase = normalizeBaseUrl(baseUrl)
 
-  const systemContent = `${BASE_SYSTEM}\n\n${FOCUS_SYSTEM[focus]}`
+  if (mode === 'working') {
+    const mcpUrl = defaultMcpUrl()
+    const result = await runWorkingModeWithMcp({
+      mcpUrl,
+      openAiBase,
+      apiKey,
+      model,
+      maxTokens,
+      systemContent: WORKING_SYSTEM,
+      userMessages: messages,
+    })
+    if ('error' in result) {
+      return res.status(502).json({ error: result.error })
+    }
+    return res.status(200).json({ content: result.content })
+  }
+
+  const systemContent = INFO_SYSTEM
   const upstreamMessages = [
     { role: 'system' as const, content: systemContent },
     ...messages.map((m) => ({ role: m.role, content: m.content })),
   ]
 
-  const endpoint = `${normalizeBaseUrl(baseUrl)}/chat/completions`
+  const endpoint = `${openAiBase}/chat/completions`
   let upstreamResponse: Response
   try {
     upstreamResponse = await fetch(endpoint, {

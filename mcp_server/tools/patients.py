@@ -17,6 +17,29 @@ from mcp_server.tooling import tool_error
 
 def register_patient_tools(app, client) -> None:
     """Register all patient-related MCP tools on the given app, using the provided GraphQL client."""
+
+    async def fetch_patients(
+        location_id: str | None = None,
+        root_location_ids: list[str] | None = None,
+        states: list[str] | None = None,
+        limit: int | None = None,
+        offset: int | None = None,
+    ) -> list[dict[str, Any]]:
+        variables: dict[str, Any] = {
+            "locationNodeId": location_id,
+            "rootLocationIds": root_location_ids,
+            "states": states,
+        }
+        if limit is not None or offset is not None:
+            page_size = limit if limit is not None else 50
+            page_index = (offset or 0) // page_size
+            variables["pagination"] = {
+                "pageIndex": page_index,
+                "pageSize": page_size,
+            }
+        data = await client.execute(LIST_PATIENTS_QUERY, variables)
+        return data.get("patients") or []
+
     @app.tool()
     @tool_error("get_patient")
     async def get_patient(patient_id: str) -> dict[str, Any] | None:
@@ -34,20 +57,13 @@ def register_patient_tools(app, client) -> None:
         offset: int | None = None,
     ) -> list[dict[str, Any]]:
         """List patients from the GraphQL API. Optional filters: location_id (locationNodeId), root_location_ids, states. Use limit/offset for pagination (mapped to pageIndex/pageSize). Returns a list of patient objects."""
-        variables: dict[str, Any] = {
-            "locationNodeId": location_id,
-            "rootLocationIds": root_location_ids,
-            "states": states,
-        }
-        if limit is not None or offset is not None:
-            page_size = limit if limit is not None else 50
-            page_index = (offset or 0) // page_size
-            variables["pagination"] = {
-                "pageIndex": page_index,
-                "pageSize": page_size,
-            }
-        data = await client.execute(LIST_PATIENTS_QUERY, variables)
-        return data.get("patients") or []
+        return await fetch_patients(
+            location_id=location_id,
+            root_location_ids=root_location_ids,
+            states=states,
+            limit=limit,
+            offset=offset,
+        )
 
     @app.tool()
     @tool_error("search_patients")
@@ -62,7 +78,7 @@ def register_patient_tools(app, client) -> None:
         offset: int | None = None,
     ) -> list[dict[str, Any]]:
         """Search patients by fetching a page from the API then filtering in-memory by name, birthdate, sex, state, description, and optional property_filters. Use when you need client-side filtering not supported by the API."""
-        patients = await list_patients(limit=limit, offset=offset)
+        patients = await fetch_patients(limit=limit, offset=offset)
         return filter_patients(
             patients,
             name=name,

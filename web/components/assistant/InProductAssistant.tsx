@@ -15,7 +15,7 @@ import { consumeOpenAiCompatibleSseStream } from '@/utils/assistantChatStream'
 import clsx from 'clsx'
 import { Sparkles, Trash2 } from 'lucide-react'
 
-export type AssistantFocus = 'general' | 'tasks' | 'patients'
+export type AssistantMode = 'info' | 'working'
 
 type ChatMessage = { role: 'user' | 'assistant', content: string }
 
@@ -27,7 +27,7 @@ type InProductAssistantProps = {
 const STORAGE_KEY_API_KEY = 'helpwave-assistant-api-key'
 const STORAGE_KEY_MODEL = 'helpwave-assistant-model'
 const STORAGE_KEY_BASE_URL = 'helpwave-assistant-base-url'
-const STORAGE_KEY_FOCUS = 'helpwave-assistant-focus'
+const STORAGE_KEY_MODE = 'helpwave-assistant-mode'
 
 const stringStorage = {
   serialize: (v: string) => v,
@@ -54,8 +54,8 @@ export const InProductAssistant = ({ isOpen, onClose }: InProductAssistantProps)
     serialize: stringStorage.serialize,
     deserialize: stringStorage.deserialize,
   })
-  const { value: focusStored, setValue: setFocusStored } = useStorage<string>({
-    key: STORAGE_KEY_FOCUS,
+  const { value: modeStored, setValue: setModeStored } = useStorage<string>({
+    key: STORAGE_KEY_MODE,
     defaultValue: '',
     serialize: stringStorage.serialize,
     deserialize: stringStorage.deserialize,
@@ -83,16 +83,14 @@ export const InProductAssistant = ({ isOpen, onClose }: InProductAssistantProps)
     endRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, loading])
 
-  const focus: AssistantFocus | '' =
-    focusStored === 'general' || focusStored === 'tasks' || focusStored === 'patients'
-      ? focusStored
-      : ''
+  const mode: AssistantMode | '' =
+    modeStored === 'info' || modeStored === 'working' ? modeStored : ''
 
-  const setFocus = useCallback(
-    (next: AssistantFocus | '') => {
-      setFocusStored(next)
+  const setMode = useCallback(
+    (next: AssistantMode | '') => {
+      setModeStored(next)
     },
-    [setFocusStored]
+    [setModeStored]
   )
 
   const saveSettings = useCallback(() => {
@@ -112,8 +110,8 @@ export const InProductAssistant = ({ isOpen, onClose }: InProductAssistantProps)
       setError(translation('assistantNoApiKey'))
       return
     }
-    if (!focus) {
-      setError(translation('assistantSelectFocus'))
+    if (!mode) {
+      setError(translation('assistantSelectMode'))
       return
     }
 
@@ -132,9 +130,27 @@ export const InProductAssistant = ({ isOpen, onClose }: InProductAssistantProps)
           model: model.trim() || 'gpt-4o-mini',
           apiKey: apiKey.trim(),
           baseUrl: baseUrl.trim() || undefined,
-          focus,
+          mode,
         }),
       })
+
+      const contentType = res.headers.get('content-type') ?? ''
+
+      if (mode === 'working') {
+        const data = (await res.json().catch(() => ({}))) as { content?: string, error?: string }
+        if (!res.ok) {
+          setError(data.error ?? translation('assistantErrorGeneric'))
+          setMessages((prev) => prev.slice(0, -1))
+          return
+        }
+        if (typeof data.content !== 'string') {
+          setError(translation('assistantErrorGeneric'))
+          setMessages((prev) => prev.slice(0, -1))
+          return
+        }
+        setMessages((prev) => [...prev, { role: 'assistant', content: data.content.trim() || '—' }])
+        return
+      }
 
       if (!res.ok) {
         const data = (await res.json().catch(() => ({}))) as { error?: string }
@@ -143,7 +159,6 @@ export const InProductAssistant = ({ isOpen, onClose }: InProductAssistantProps)
         return
       }
 
-      const contentType = res.headers.get('content-type') ?? ''
       if (!contentType.includes('text/event-stream')) {
         setError(translation('assistantErrorGeneric'))
         setMessages((prev) => prev.slice(0, -1))
@@ -191,12 +206,7 @@ export const InProductAssistant = ({ isOpen, onClose }: InProductAssistantProps)
     } finally {
       setLoading(false)
     }
-  }, [apiKey, baseUrl, focus, input, messages, model, translation])
-
-  const applyStarter = useCallback((body: string) => {
-    setInput(body)
-    setError(null)
-  }, [])
+  }, [apiKey, baseUrl, mode, input, messages, model, translation])
 
   return (
     <Drawer
@@ -208,6 +218,7 @@ export const InProductAssistant = ({ isOpen, onClose }: InProductAssistantProps)
     >
       <div className="flex flex-col gap-4 min-h-0 h-[calc(100dvh-8rem)] max-w-lg">
         <p className="typography-body-sm text-description shrink-0">{translation('assistantDemoNotice')}</p>
+        <p className="typography-body-sm text-description shrink-0">{translation('assistantWorkingMcpNotice')}</p>
 
         <ExpandableRoot
           className="shadow-none border border-divider rounded-lg shrink-0"
@@ -258,54 +269,20 @@ export const InProductAssistant = ({ isOpen, onClose }: InProductAssistantProps)
         </ExpandableRoot>
 
         <div className="flex-col-2 shrink-0">
-          <label className="flex-col-1" htmlFor="assistant-focus">
-            <span className="typography-label-lg">{translation('assistantFocusLabel')}</span>
+          <label className="flex-col-1" htmlFor="assistant-mode">
+            <span className="typography-label-lg">{translation('assistantModeLabel')}</span>
             <select
-              id="assistant-focus"
-              value={focus}
-              onChange={(e) => setFocus(e.target.value as AssistantFocus | '')}
+              id="assistant-mode"
+              value={mode}
+              onChange={(e) => setMode(e.target.value as AssistantMode | '')}
               className="w-full rounded-md border border-divider bg-surface px-3 py-2 typography-body-sm"
             >
-              <option value="">{translation('assistantFocusPlaceholder')}</option>
-              <option value="general">{translation('assistantFocusGeneral')}</option>
-              <option value="tasks">{translation('assistantFocusTasks')}</option>
-              <option value="patients">{translation('assistantFocusPatients')}</option>
+              <option value="">{translation('assistantModePlaceholder')}</option>
+              <option value="info">{translation('assistantModeInfo')}</option>
+              <option value="working">{translation('assistantModeWorking')}</option>
             </select>
           </label>
-          <p className="typography-body-xs text-description">{translation('assistantFocusHint')}</p>
-        </div>
-
-        <div className="flex-col-2 shrink-0">
-          <span className="typography-label-sm text-description">{translation('assistantSuggestedPrompts')}</span>
-          <div className="flex flex-wrap gap-2">
-            <Button
-              type="button"
-              color="neutral"
-              coloringStyle="outline"
-              className="text-left h-auto min-h-0 py-1.5 px-2 whitespace-normal max-w-full"
-              onClick={() => applyStarter(translation('assistantStarterTaskHowTo'))}
-            >
-              {translation('assistantStarterTaskHowTo')}
-            </Button>
-            <Button
-              type="button"
-              color="neutral"
-              coloringStyle="outline"
-              className="text-left h-auto min-h-0 py-1.5 px-2 whitespace-normal max-w-full"
-              onClick={() => applyStarter(translation('assistantStarterPatientOverview'))}
-            >
-              {translation('assistantStarterPatientOverview')}
-            </Button>
-            <Button
-              type="button"
-              color="neutral"
-              coloringStyle="outline"
-              className="text-left h-auto min-h-0 py-1.5 px-2 whitespace-normal max-w-full"
-              onClick={() => applyStarter(translation('assistantStarterLocationScope'))}
-            >
-              {translation('assistantStarterLocationScope')}
-            </Button>
-          </div>
+          <p className="typography-body-xs text-description">{translation('assistantModeHint')}</p>
         </div>
 
         <div className="flex-row-2 justify-end shrink-0">
@@ -339,8 +316,9 @@ export const InProductAssistant = ({ isOpen, onClose }: InProductAssistantProps)
             </div>
           ))}
           {loading &&
-            messages[messages.length - 1]?.role === 'assistant' &&
-            messages[messages.length - 1]?.content === '' && (
+            (mode === 'working' ||
+              (messages[messages.length - 1]?.role === 'assistant' &&
+                messages[messages.length - 1]?.content === '')) && (
             <p className="typography-body-sm text-description">{translation('assistantSending')}</p>
           )}
           <div ref={endRef} />

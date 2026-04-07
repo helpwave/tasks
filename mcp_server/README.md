@@ -16,8 +16,12 @@ The MCP server implementation lives in `mcp_server/`. It exposes helpwave tasks 
 | `MCP_ACCESS_TOKEN` | Bearer token for GraphQL requests | — |
 | `MCP_ACCESS_TOKEN_FILE` | Path to file containing the token | — |
 | `MCP_TIMEOUT_SECONDS` | Timeout for GraphQL requests | `15` |
+| `MCP_TRANSPORT` | `stdio` (default) or `http` for Streamable HTTP | `stdio` |
+| `MCP_HTTP_HOST` / `MCP_HTTP_PORT` | Bind address when `MCP_TRANSPORT=http` | `127.0.0.1` / `8765` |
 
 ## Start the MCP server
+
+### stdio (default): Inspector, test client, `llm_runner`
 
 From the **repository root**:
 
@@ -26,7 +30,21 @@ export MCP_GRAPHQL_URL=http://localhost:8000/graphql
 python -m mcp_server.server
 ```
 
-The server runs over stdio; it is intended to be spawned by an MCP client (e.g. Cursor, Inspector, or the test client). If you run it directly in a terminal it will stay idle with no output—that is expected: it is waiting for a client to connect via stdin/stdout. Use the test client or MCP Inspector to talk to it.
+With the default transport, the server speaks MCP over **stdio**. If you run it directly in a terminal it waits on stdin—use the test client or MCP Inspector (they spawn this process).
+
+### HTTP: in-app assistant (Next.js)
+
+The web app’s **Working** assistant mode connects with the TypeScript MCP client to **Streamable HTTP** at `http://127.0.0.1:8765/mcp` by default (`ASSISTANT_MCP_URL` overrides this on the Next.js side).
+
+From the **repository root**:
+
+```bash
+export MCP_GRAPHQL_URL=http://localhost:8000/graphql
+export MCP_TRANSPORT=http
+python -m mcp_server.server
+```
+
+Optional: `MCP_ACCESS_TOKEN` or `MCP_ACCESS_TOKEN_FILE` if your GraphQL API requires a Bearer token.
 
 ## Test with the test client
 

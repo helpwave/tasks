@@ -22,16 +22,8 @@ from mcp_server.tooling import tool_error
 
 def register_task_tools(app, client) -> None:
     """Register all task-related MCP tools on the given app, using the provided GraphQL client."""
-    @app.tool()
-    @tool_error("get_task")
-    async def get_task(task_id: str) -> dict[str, Any] | None:
-        """Fetch a single task by ID. Returns the task object (id, title, description, done, dueDate, priority, patient, assignee, etc.) or None if not found or forbidden."""
-        data = await client.execute(GET_TASK_QUERY, {"id": task_id})
-        return data.get("task")
 
-    @app.tool()
-    @tool_error("list_tasks")
-    async def list_tasks(
+    async def fetch_tasks(
         patient_id: str | None = None,
         assignee_id: str | None = None,
         assignee_team_id: str | None = None,
@@ -39,7 +31,6 @@ def register_task_tools(app, client) -> None:
         limit: int | None = None,
         offset: int | None = None,
     ) -> list[dict[str, Any]]:
-        """List tasks from the GraphQL API. Optional filters: patient_id, assignee_id, assignee_team_id, root_location_ids. Use limit/offset for pagination (mapped to pageIndex/pageSize). Returns a list of task objects."""
         variables: dict[str, Any] = {
             "patientId": patient_id,
             "assigneeId": assignee_id,
@@ -56,6 +47,56 @@ def register_task_tools(app, client) -> None:
         data = await client.execute(LIST_TASKS_QUERY, variables)
         return data.get("tasks") or []
 
+    async def filter_tasks_page(
+        patient_name: str | None = None,
+        patient_id: str | None = None,
+        title_contains: str | None = None,
+        description_contains: str | None = None,
+        done: bool | None = None,
+        priority: str | None = None,
+        property_filters: list[dict[str, Any]] | None = None,
+        limit: int | None = None,
+        offset: int | None = None,
+    ) -> list[dict[str, Any]]:
+        tasks = await fetch_tasks(limit=limit, offset=offset)
+        return filter_tasks(
+            tasks,
+            patient_name=patient_name,
+            patient_id=patient_id,
+            title_contains=title_contains,
+            description_contains=description_contains,
+            done=done,
+            priority=priority,
+            property_filters=property_filters,
+        )
+
+    @app.tool()
+    @tool_error("get_task")
+    async def get_task(task_id: str) -> dict[str, Any] | None:
+        """Fetch a single task by ID. Returns the task object (id, title, description, done, dueDate, priority, patient, assignees, assigneeTeam, etc.) or None if not found or forbidden."""
+        data = await client.execute(GET_TASK_QUERY, {"id": task_id})
+        return data.get("task")
+
+    @app.tool()
+    @tool_error("list_tasks")
+    async def list_tasks(
+        patient_id: str | None = None,
+        assignee_id: str | None = None,
+        assignee_team_id: str | None = None,
+        root_location_ids: list[str] | None = None,
+        limit: int | None = None,
+        offset: int | None = None,
+    ) -> list[dict[str, Any]]:
+        """List tasks from the GraphQL API. Optional filters: patient_id, assignee_id, assignee_team_id, root_location_ids. Use limit/offset for pagination (mapped to pageIndex/pageSize). Returns a list of task objects."""
+        return await fetch_tasks(
+            patient_id=patient_id,
+            assignee_id=assignee_id,
+            assignee_team_id=assignee_team_id,
+            root_location_ids=root_location_ids,
+            limit=limit,
+            offset=offset,
+        )
+
     @app.tool()
     @tool_error("search_tasks")
     async def search_tasks(
@@ -70,9 +111,7 @@ def register_task_tools(app, client) -> None:
         offset: int | None = None,
     ) -> list[dict[str, Any]]:
         """Search tasks by fetching a page from the API then filtering in-memory by patient_name, patient_id, title_contains, description_contains, done, priority, and optional property_filters. Use when you need client-side filtering not supported by the API."""
-        tasks = await list_tasks(limit=limit, offset=offset)
-        return filter_tasks(
-            tasks,
+        return await filter_tasks_page(
             patient_name=patient_name,
             patient_id=patient_id,
             title_contains=title_contains,
@@ -80,12 +119,14 @@ def register_task_tools(app, client) -> None:
             done=done,
             priority=priority,
             property_filters=property_filters,
+            limit=limit,
+            offset=offset,
         )
 
     @app.tool()
     @tool_error("create_task")
     async def create_task(data: dict[str, Any]) -> dict[str, Any]:
-        """Create a new task. Data must include at least title and typically patientId; may include description, dueDate, priority, estimatedTime, assigneeId, assigneeTeamId, properties. Returns the created task object."""
+        """Create a new task. Data must include at least title and typically patientId; may include description, dueDate, priority, estimatedTime, assigneeIds, assigneeTeamId, properties. Returns the created task object."""
         result = await client.execute(CREATE_TASK_MUTATION, {"data": data})
         return result.get("createTask")
 
@@ -108,11 +149,11 @@ def register_task_tools(app, client) -> None:
     @app.tool()
     @tool_error("assign_task")
     async def assign_task(task_id: str, user_id: str) -> dict[str, Any]:
-        """Assign a task to a user by task ID and user ID. Returns the task with updated assignee."""
+        """Assign a task to a user by task ID and user ID (adds to assignees). Returns the task with updated assignees."""
         result = await client.execute(
             ASSIGN_TASK_MUTATION, {"id": task_id, "userId": user_id}
         )
-        return result.get("assignTask")
+        return result.get("addTaskAssignee")
 
     @app.tool()
     @tool_error("assign_task_to_team")
@@ -165,7 +206,7 @@ def register_task_tools(app, client) -> None:
         include_done: bool = True,
     ) -> dict[str, Any]:
         """Fetch all tasks for a patient and return a summary (total_tasks, open_tasks, done_tasks, next_due_date, open_task_priorities) plus the task list. Set include_done=false to exclude completed tasks from the summary and list."""
-        tasks = await list_tasks(patient_id=patient_id)
+        tasks = await fetch_tasks(patient_id=patient_id)
         if not include_done:
             tasks = [task for task in tasks if task.get("done") is False]
         summary = format_summary(tasks)
@@ -186,7 +227,7 @@ def register_task_tools(app, client) -> None:
         offset: int | None = None,
     ) -> dict[str, Any]:
         """Search tasks (same filters as search_tasks) and return either a summary (format 'summary': total/open/done counts, next_due_date, priorities) or a simple list of titles with status (output_format 'list'). Use limit/offset for pagination."""
-        tasks = await search_tasks(
+        tasks = await filter_tasks_page(
             patient_name=patient_name,
             patient_id=patient_id,
             title_contains=title_contains,

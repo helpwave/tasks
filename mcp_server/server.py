@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
@@ -17,6 +18,7 @@ from fastmcp import FastMCP
 from mcp_server.config import load_settings
 from mcp_server.graphql_client import GraphQLClient
 from mcp_server.tools.health import register_health_tool
+from mcp_server.tools.locations import register_location_tools
 from mcp_server.tools.patients import register_patient_tools
 from mcp_server.tools.tasks import register_task_tools
 
@@ -30,13 +32,19 @@ client = GraphQLClient(
 app = FastMCP("helpwave-tasks")
 
 register_patient_tools(app, client)
+register_location_tools(app, client)
 register_task_tools(app, client)
 register_health_tool(app, client)
 
 
 def main() -> None:
-    """Run the MCP server on port 8001 with HTTP transport. Requires MCP_GRAPHQL_URL (and optionally MCP_ACCESS_TOKEN or MCP_ACCESS_TOKEN_FILE, MCP_TIMEOUT_SECONDS) to be set or defaults will be used."""
-    app.run(port=800, transport="http")
+    """Run MCP over stdio by default (Inspector, test_client, llm_runner). Set MCP_TRANSPORT=http for Streamable HTTP (in-app assistant), default URL http://127.0.0.1:8765/mcp."""
+    if os.getenv("MCP_TRANSPORT", "stdio").lower() in ("http", "streamable", "streamable-http"):
+        host = os.getenv("MCP_HTTP_HOST", "127.0.0.1")
+        port = int(os.getenv("MCP_HTTP_PORT", "8765"))
+        app.run(transport="http", host=host, port=port)
+    else:
+        app.run()
 
 
 if __name__ == "__main__":
