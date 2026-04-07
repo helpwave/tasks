@@ -35,6 +35,7 @@ export const PatientTasksView = ({
 
   const [completeTask] = useCompleteTask()
   const [reopenTask] = useReopenTask()
+  const initialPatientName = `${patientData?.patient?.firstname ?? ''} ${patientData?.patient?.lastname ?? ''}`.trim()
 
   const tasks = useMemo(() => {
     const baseTasks = patientData?.patient?.tasks || []
@@ -166,6 +167,7 @@ export const PatientTasksView = ({
         <TaskDetailView
           taskId={taskId}
           initialPatientId={isCreatingTask ? patientId : undefined}
+          initialPatientName={isCreatingTask ? initialPatientName : undefined}
           onListSync={() => {
             onSuccess?.()
           }}
