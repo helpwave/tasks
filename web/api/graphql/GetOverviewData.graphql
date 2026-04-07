@@ -65,6 +65,7 @@ query GetOverviewData($rootLocationIds: [ID!], $recentPatientsFilters: [QueryFil
     updateDate
     priority
     estimatedTime
+    sourceTaskPresetId
     assignees {
       id
       name

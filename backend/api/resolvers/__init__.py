@@ -7,6 +7,7 @@ from .property import PropertyDefinitionMutation, PropertyDefinitionQuery
 from .query_metadata import QueryMetadataQuery
 from .saved_view import SavedViewMutation, SavedViewQuery
 from .task import TaskMutation, TaskQuery, TaskSubscription
+from .task_preset import TaskPresetMutation, TaskPresetQuery
 from .user import UserMutation, UserQuery
 
 
@@ -14,6 +15,7 @@ from .user import UserMutation, UserQuery
 class Query(
     PatientQuery,
     TaskQuery,
+    TaskPresetQuery,
     LocationQuery,
     PropertyDefinitionQuery,
     UserQuery,
@@ -28,6 +30,7 @@ class Query(
 class Mutation(
     PatientMutation,
     TaskMutation,
+    TaskPresetMutation,
     PropertyDefinitionMutation,
     LocationMutation,
     UserMutation,

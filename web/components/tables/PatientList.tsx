@@ -52,6 +52,9 @@ import {
 } from '@/utils/viewDefinition'
 import { applyVirtualDerivedPatients } from '@/utils/virtualDerivedTableState'
 import type { ViewParameters } from '@/utils/viewDefinition'
+import { DUMMY_SUGGESTION } from '@/data/mockSystemSuggestions'
+import { SystemSuggestionModal } from '@/components/patients/SystemSuggestionModal'
+import type { SystemSuggestion } from '@/types/systemSuggestion'
 
 export type PatientViewModel = {
   id: string,
@@ -216,6 +219,22 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
   ])
 
   const [isSaveViewDialogOpen, setIsSaveViewDialogOpen] = useState(false)
+
+  const [suggestionModalOpen, setSuggestionModalOpen] = useState(false)
+  const [suggestionModalSuggestion, setSuggestionModalSuggestion] = useState<SystemSuggestion | null>(null)
+  const [suggestionModalPatientName, setSuggestionModalPatientName] = useState('')
+
+  const closeSuggestionModal = useCallback(() => {
+    setSuggestionModalOpen(false)
+    setSuggestionModalSuggestion(null)
+    setSuggestionModalPatientName('')
+  }, [])
+
+  const openSuggestionModal = useCallback((suggestion: SystemSuggestion, patientName: string) => {
+    setSuggestionModalSuggestion(suggestion)
+    setSuggestionModalPatientName(patientName)
+    setSuggestionModalOpen(true)
+  }, [])
 
   const [updateSavedView, { loading: overwriteLoading }] = useMutation<
     UpdateSavedViewMutation,
@@ -1061,8 +1080,16 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
               void refetch()
               onPatientUpdated?.()
             }}
+            onOpenSystemSuggestion={openSuggestionModal}
           />
         </Drawer>
+        <SystemSuggestionModal
+          isOpen={suggestionModalOpen}
+          onClose={closeSuggestionModal}
+          suggestion={suggestionModalSuggestion ?? DUMMY_SUGGESTION}
+          patientName={suggestionModalPatientName}
+          onApplied={() => void refetch()}
+        />
         {savedViewScope === 'base' && (
           <SaveViewDialog
             isOpen={isSaveViewDialogOpen}

@@ -403,5 +403,42 @@
   "selectPosition": "Select Location",
   "selectTeams": "Select Teams",
   "waitPatient": "Set Patient to Waiting",
-  "waitingForPatient": "Waiting for patient"
+  "waitingForPatient": "Waiting for patient",
+  "taskPresets": "Presets",
+  "taskPresetsDescription": "Reusable task lists with optional dependencies.",
+  "taskPresetName": "Name",
+  "taskPresetKey": "Key",
+  "taskPresetKeyHint": "Optional unique key for lookups. Leave empty to generate automatically.",
+  "taskPresetScope": "Scope",
+  "taskPresetScopePersonal": "Personal",
+  "taskPresetScopeGlobal": "Global",
+  "taskPresetAddRow": "Add task",
+  "taskPresetRemoveRow": "Remove",
+  "taskPresetSave": "Save preset",
+  "taskPresetCreate": "Create preset",
+  "taskPresetEdit": "Edit preset",
+  "taskPresetDelete": "Delete",
+  "taskPresetDeleteConfirm": "Delete this task preset?",
+  "taskPresetEmptyList": "No task presets yet.",
+  "loadTaskPreset": "Load preset",
+  "loadTaskPresetTitle": "Load task preset",
+  "loadTaskPresetConfirm": "Create {count, plural, =1{# task} other{# tasks}} for this patient?",
+  "@loadTaskPresetConfirm": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "taskPresetNoTasks": "This preset has no tasks.",
+  "taskPresetSelectPlaceholder": "Select a preset",
+  "taskPresetEditDetails": "Edit details",
+  "taskPresetApplyToRow": "Apply to preset row",
+  "taskPresetNoEstimate": "No estimate",
+  "tasksCreatedFromPreset": "Tasks created",
+  "taskFromPresetTooltip": "Created from a task preset",
+  "taskPresetSourceTitle": "Source preset",
+  "taskPresetSourceNotFound": "Preset could not be loaded.",
+  "taskPresetSourceTasksInGraph": "Tasks in template",
+  "taskPresetSourceOpenSettings": "Open in settings"
 }

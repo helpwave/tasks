@@ -17,7 +17,7 @@ import { useStorage } from '@/hooks/useStorage'
 import type { HightideTranslationLocales, ThemeType } from '@helpwave/hightide'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { useAuth } from '@/hooks/useAuth'
-import { LogOut, MonitorCog, MoonIcon, SunIcon, Trash2, ClipboardList, Shield, TableProperties, Building2, MessageSquareText, Upload, X, Rabbit } from 'lucide-react'
+import { LogOut, MonitorCog, MoonIcon, SunIcon, Trash2, ClipboardList, Shield, TableProperties, Building2, MessageSquareText, Upload, X, Rabbit, Combine } from 'lucide-react'
 import { useRouter } from 'next/router'
 import clsx from 'clsx'
 import { removeUser } from '@/api/auth/authService'
@@ -276,6 +276,20 @@ const SettingsPage: NextPage = () => {
                   <span className="typography-label-lg">{translation('views')}</span>
                   <span className="typography-body-sm text-description font-normal">
                     {translation('viewSettingsDescription')}
+                  </span>
+                </div>
+              </Button>
+              <Button
+                color="neutral"
+                coloringStyle="outline"
+                className="justify-start h-auto py-4 w-full"
+                onClick={() => router.push('/settings/task-presets')}
+              >
+                <Combine className="mr-2 shrink-0" />
+                <div className="flex-col-1 items-start">
+                  <span className="typography-label-lg">{translation('taskPresets')}</span>
+                  <span className="typography-body-sm text-description font-normal">
+                    {translation('taskPresetsDescription')}
                   </span>
                 </div>
               </Button>

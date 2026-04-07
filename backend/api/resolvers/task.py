@@ -1,10 +1,18 @@
 from collections.abc import AsyncGenerator
+from typing import Any
 
 import strawberry
 from api.audit import audit_log
 from api.context import Info
 from api.errors import raise_forbidden
-from api.inputs import CreateTaskInput, PaginationInput, PatientState, SortDirection, UpdateTaskInput
+from api.inputs import (
+    ApplyTaskGraphInput,
+    CreateTaskInput,
+    PaginationInput,
+    PatientState,
+    SortDirection,
+    UpdateTaskInput,
+)
 from api.query.execute import count_unified_query, is_unset, unified_list_query
 from api.query.inputs import (
     QueryFilterClauseInput,
@@ -17,8 +25,16 @@ from api.services.authorization import AuthorizationService
 from api.services.checksum import validate_checksum
 from api.services.datetime import normalize_datetime_to_utc
 from api.services.property import PropertyService
+from api.services.task_graph import (
+    apply_task_graph_to_patient,
+    graph_dict_from_preset_inputs,
+    insert_task_dependencies,
+    replace_incoming_task_dependencies,
+    validate_task_graph_dict,
+)
 from api.types.task import TaskType
 from database import models
+from database.models.task_preset import TaskPresetScope as DbTaskPresetScope
 from graphql import GraphQLError
 from sqlalchemy import and_, exists, or_, select
 from sqlalchemy.orm import aliased, selectinload
@@ -751,6 +767,14 @@ class TaskMutation(BaseMutationResolver[models.Task]):
                     "payload": {"task_id": task.id, "task_title": task.title},
                 },
             )
+        if data.previous_task_ids:
+            await insert_task_dependencies(
+                info.context.db,
+                task.id,
+                [str(x) for x in data.previous_task_ids],
+                str(task.patient_id),
+            )
+            await info.context.db.commit()
         return task
 
     @strawberry.mutation
@@ -845,7 +869,7 @@ class TaskMutation(BaseMutationResolver[models.Task]):
                 "task",
             )
 
-        return await BaseMutationResolver.update_and_notify(
+        result = await BaseMutationResolver.update_and_notify(
             info,
             task,
             models.Task,
@@ -853,6 +877,15 @@ class TaskMutation(BaseMutationResolver[models.Task]):
             "patient",
             task.patient_id,
         )
+        if data.previous_task_ids is not None:
+            await replace_incoming_task_dependencies(
+                info.context.db,
+                str(id),
+                [str(x) for x in data.previous_task_ids],
+                str(task.patient_id),
+            )
+            await info.context.db.commit()
+        return result
 
     @staticmethod
     async def _update_task_field(
@@ -1003,6 +1036,68 @@ class TaskMutation(BaseMutationResolver[models.Task]):
             info,
             id,
             lambda task: setattr(task, "done", False),
+        )
+
+    @strawberry.mutation
+    @audit_log("apply_task_graph")
+    async def apply_task_graph(
+        self,
+        info: Info,
+        data: ApplyTaskGraphInput,
+    ) -> list[TaskType]:
+        user = info.context.user
+        if not user:
+            raise GraphQLError(
+                "Not authenticated",
+                extensions={"code": "UNAUTHENTICATED"},
+            )
+        auth_service = AuthorizationService(info.context.db)
+        if not await auth_service.can_access_patient_id(
+            user,
+            data.patient_id,
+            info.context,
+        ):
+            raise_forbidden()
+        has_preset = data.preset_id is not None
+        has_graph = data.graph is not None
+        if has_preset == has_graph:
+            raise GraphQLError(
+                "Provide exactly one of presetId or graph",
+                extensions={"code": "BAD_REQUEST"},
+            )
+        graph_dict: dict[str, Any]
+        if data.preset_id:
+            pr = await info.context.db.execute(
+                select(models.TaskPreset).where(
+                    models.TaskPreset.id == data.preset_id,
+                ),
+            )
+            preset = pr.scalars().first()
+            if not preset:
+                raise GraphQLError(
+                    "Preset not found",
+                    extensions={"code": "NOT_FOUND"},
+                )
+            if (
+                preset.scope == DbTaskPresetScope.PERSONAL.value
+                and preset.owner_user_id != user.id
+            ):
+                raise_forbidden()
+            graph_dict = preset.graph_json
+        else:
+            graph_dict = graph_dict_from_preset_inputs(
+                data.graph.nodes,
+                data.graph.edges,
+            )
+            validate_task_graph_dict(graph_dict)
+        assignee_id = user.id if data.assign_to_current_user else None
+        source_preset_id = str(data.preset_id) if data.preset_id else None
+        return await apply_task_graph_to_patient(
+            info.context.db,
+            str(data.patient_id),
+            graph_dict,
+            assignee_id,
+            source_preset_id,
         )
 
     @strawberry.mutation

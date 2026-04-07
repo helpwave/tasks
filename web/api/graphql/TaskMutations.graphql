@@ -144,3 +144,26 @@ mutation UnassignTaskFromTeam($id: ID!) {
     }
   }
 }
+
+mutation ApplyTaskGraph($data: ApplyTaskGraphInput!) {
+  applyTaskGraph(data: $data) {
+    id
+    title
+    description
+    done
+    dueDate
+    updateDate
+    sourceTaskPresetId
+    assignees {
+      id
+      name
+      avatarUrl
+      lastOnline
+      isOnline
+    }
+    patient {
+      id
+      name
+    }
+  }
+}

@@ -28,6 +28,7 @@ class TaskType:
     update_date: datetime | None
     assignee_team_id: strawberry.ID | None
     patient_id: strawberry.ID | None
+    source_task_preset_id: strawberry.ID | None
     priority: str | None
     estimated_time: int | None
 

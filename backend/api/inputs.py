@@ -222,3 +222,53 @@ class UpdateSavedViewInput:
     related_sort_definition: str | None = None
     related_parameters: str | None = None
     visibility: SavedViewVisibility | None = None
+
+
+@strawberry.enum
+class TaskPresetScope(Enum):
+    PERSONAL = "PERSONAL"
+    GLOBAL = "GLOBAL"
+
+
+@strawberry.input
+class TaskGraphNodeInput:
+    node_id: str
+    title: str
+    description: str | None = None
+    priority: TaskPriority | None = None
+    estimated_time: int | None = None
+
+
+@strawberry.input
+class TaskGraphEdgeInput:
+    from_node_id: str
+    to_node_id: str
+
+
+@strawberry.input
+class TaskGraphInput:
+    nodes: list[TaskGraphNodeInput]
+    edges: list[TaskGraphEdgeInput]
+
+
+@strawberry.input
+class CreateTaskPresetInput:
+    name: str
+    key: str | None = None
+    scope: TaskPresetScope
+    graph: TaskGraphInput
+
+
+@strawberry.input
+class UpdateTaskPresetInput:
+    name: str | None = None
+    key: str | None = None
+    graph: TaskGraphInput | None = None
+
+
+@strawberry.input
+class ApplyTaskGraphInput:
+    patient_id: strawberry.ID
+    preset_id: strawberry.ID | None = None
+    graph: TaskGraphInput | None = None
+    assign_to_current_user: bool = False

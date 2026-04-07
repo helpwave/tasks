@@ -84,6 +84,9 @@ export function buildCacheConfig(): InMemoryCacheConfig {
       PropertyValue: { keyFields: propertyValueKeyFields },
       PropertyValueType: { keyFields: propertyValueKeyFields },
       PropertyDefinitionType: { keyFields: ['id'] },
+      TaskGraphType: { keyFields: false },
+      TaskGraphNodeType: { keyFields: false },
+      TaskGraphEdgeType: { keyFields: false },
     },
   }
 }

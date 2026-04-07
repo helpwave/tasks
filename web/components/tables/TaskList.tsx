@@ -109,6 +109,7 @@ export type TaskViewModel = {
   /** Additional user assignees beyond the first (omit when team assignment). */
   additionalAssigneeCount?: number,
   done: boolean,
+  sourceTaskPresetId?: string | null,
   properties?: GetTasksQuery['tasks'][0]['properties'],
 }
 

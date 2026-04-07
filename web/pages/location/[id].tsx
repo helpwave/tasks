@@ -96,6 +96,7 @@ const LocationPage: NextPage = () => {
           : undefined,
         additionalAssigneeCount:
           !task.assigneeTeam && task.assignees.length > 1 ? task.assignees.length - 1 : 0,
+        sourceTaskPresetId: task.sourceTaskPresetId ?? null,
       }))
     }
 
@@ -133,6 +134,7 @@ const LocationPage: NextPage = () => {
           : undefined,
         additionalAssigneeCount:
           !task.assigneeTeam && task.assignees.length > 1 ? task.assignees.length - 1 : 0,
+        sourceTaskPresetId: task.sourceTaskPresetId ?? null,
       }))
     })
   }, [patientsData, tasksData, isTeamLocation])

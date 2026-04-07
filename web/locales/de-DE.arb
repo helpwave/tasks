@@ -403,5 +403,42 @@
   "selectPosition": "Standort auswählen",
   "selectTeams": "Teams auswählen",
   "waitPatient": "Patient auf Warteliste setzen",
-  "waitingForPatient": "Warten auf Patient"
+  "waitingForPatient": "Warten auf Patient",
+  "taskPresets": "Vorlagen",
+  "taskPresetsDescription": "Wiederverwendbare Listen mit Abhängigkeiten.",
+  "taskPresetName": "Name",
+  "taskPresetKey": "Schlüssel",
+  "taskPresetKeyHint": "Optionaler eindeutiger Schlüssel. Leer lassen für automatische Vergabe.",
+  "taskPresetScope": "Geltungsbereich",
+  "taskPresetScopePersonal": "Persönlich",
+  "taskPresetScopeGlobal": "Global",
+  "taskPresetAddRow": "Aufgabe hinzufügen",
+  "taskPresetRemoveRow": "Entfernen",
+  "taskPresetSave": "Vorlage speichern",
+  "taskPresetCreate": "Vorlage anlegen",
+  "taskPresetEdit": "Vorlage bearbeiten",
+  "taskPresetDelete": "Löschen",
+  "taskPresetDeleteConfirm": "Diese Aufgaben-Vorlage löschen?",
+  "taskPresetEmptyList": "Noch keine Aufgaben-Vorlagen.",
+  "loadTaskPreset": "Vorlage laden",
+  "loadTaskPresetTitle": "Aufgaben-Vorlage laden",
+  "loadTaskPresetConfirm": "{count, plural, =1{# Aufgabe} other{# Aufgaben}} für diesen Patienten anlegen?",
+  "@loadTaskPresetConfirm": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "taskPresetNoTasks": "Diese Vorlage enthält keine Aufgaben.",
+  "taskPresetSelectPlaceholder": "Vorlage wählen",
+  "taskPresetEditDetails": "Details bearbeiten",
+  "taskPresetApplyToRow": "In Vorlagenzeile übernehmen",
+  "taskPresetNoEstimate": "Keine Schätzung",
+  "tasksCreatedFromPreset": "Aufgaben erstellt",
+  "taskFromPresetTooltip": "Aus einer Aufgaben-Vorlage",
+  "taskPresetSourceTitle": "Quell-Vorlage",
+  "taskPresetSourceNotFound": "Vorlage konnte nicht geladen werden.",
+  "taskPresetSourceTasksInGraph": "Aufgaben in der Vorlage",
+  "taskPresetSourceOpenSettings": "In den Einstellungen öffnen"
 }

@@ -109,6 +109,7 @@ query GetPatients($locationId: ID, $rootLocationIds: [ID!], $states: [PatientSta
       estimatedTime
       creationDate
       updateDate
+      sourceTaskPresetId
       assignees {
         id
         name

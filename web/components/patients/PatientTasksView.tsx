@@ -1,12 +1,13 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import { Button, Drawer, ExpandableContent, ExpandableHeader, ExpandableRoot } from '@helpwave/hightide'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
-import { CheckCircle2, ChevronDown, Circle, PlusIcon } from 'lucide-react'
+import { CheckCircle2, ChevronDown, Circle, Combine, PlusIcon } from 'lucide-react'
 import { TaskCardView } from '@/components/tasks/TaskCardView'
 import clsx from 'clsx'
 import type { GetPatientQuery } from '@/api/gql/generated'
 import { TaskDetailView } from '@/components/tasks/TaskDetailView'
 import { useCompleteTask, useReopenTask } from '@/data'
+import { LoadTaskPresetDialog } from '@/components/patients/LoadTaskPresetDialog'
 
 interface PatientTasksViewProps {
   patientId: string,
@@ -14,12 +15,14 @@ interface PatientTasksViewProps {
   onSuccess?: () => void,
 }
 
-const sortByDueDate = <T extends { dueDate?: string | null }>(tasks: T[]): T[] => {
+const sortByDueDate = <T extends { dueDate?: string | Date | null }>(tasks: T[]): T[] => {
   return [...tasks].sort((a, b) => {
+    const aTime = a.dueDate ? new Date(a.dueDate).getTime() : 0
+    const bTime = b.dueDate ? new Date(b.dueDate).getTime() : 0
     if (!a.dueDate && !b.dueDate) return 0
     if (!a.dueDate) return 1
     if (!b.dueDate) return -1
-    return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
+    return aTime - bTime
   })
 }
 
@@ -31,13 +34,14 @@ export const PatientTasksView = ({
   const translation = useTasksTranslation()
   const [taskId, setTaskId] = useState<string | null>(null)
   const [isCreatingTask, setIsCreatingTask] = useState(false)
+  const [loadPresetOpen, setLoadPresetOpen] = useState(false)
   const [optimisticTaskUpdates, setOptimisticTaskUpdates] = useState<Map<string, boolean>>(new Map())
 
   const [completeTask] = useCompleteTask()
   const [reopenTask] = useReopenTask()
   const initialPatientName = `${patientData?.patient?.firstname ?? ''} ${patientData?.patient?.lastname ?? ''}`.trim()
 
-  const tasks = useMemo(() => {
+  const apiTasksWithOptimistic = useMemo(() => {
     const baseTasks = patientData?.patient?.tasks || []
     return baseTasks.map(task => {
       const optimisticDone = optimisticTaskUpdates.get(task.id)
@@ -48,14 +52,9 @@ export const PatientTasksView = ({
     })
   }, [patientData?.patient?.tasks, optimisticTaskUpdates])
 
-  const openTasks = useMemo(() => sortByDueDate(tasks.filter(t => !t.done)), [tasks])
-  const closedTasks = useMemo(() => sortByDueDate(tasks.filter(t => t.done)), [tasks])
+  const tasks = useMemo(() => apiTasksWithOptimistic, [apiTasksWithOptimistic])
 
-  useEffect(() => {
-    setOptimisticTaskUpdates(new Map())
-  }, [patientData?.patient?.tasks])
-
-  const handleToggleDone = (taskId: string, done: boolean) => {
+  const handleToggleDone = useCallback((taskId: string, done: boolean) => {
     setOptimisticTaskUpdates(prev => {
       const next = new Map(prev)
       next.set(taskId, done)
@@ -86,7 +85,14 @@ export const PatientTasksView = ({
         },
       })
     }
-  }
+  }, [completeTask, reopenTask, onSuccess])
+
+  const openTasks = useMemo(() => sortByDueDate(tasks.filter(t => !t.done)), [tasks])
+  const closedTasks = useMemo(() => sortByDueDate(tasks.filter(t => t.done)), [tasks])
+
+  useEffect(() => {
+    setOptimisticTaskUpdates(new Map())
+  }, [patientData?.patient?.tasks])
 
   return (
     <>
@@ -144,7 +150,16 @@ export const PatientTasksView = ({
             </ExpandableContent>
           </ExpandableRoot>
         </div>
-        <div className="flex-row-4 justify-end mt-2">
+        <div className="flex-row-4 justify-end mt-2 flex-wrap gap-2">
+          <Button
+            onClick={() => setLoadPresetOpen(true)}
+            className="w-fit"
+            color="neutral"
+            coloringStyle="outline"
+          >
+            <Combine />
+            {translation('loadTaskPreset')}
+          </Button>
           <Button
             onClick={() => setIsCreatingTask(true)}
             className="w-fit"
@@ -154,6 +169,12 @@ export const PatientTasksView = ({
           </Button>
         </div>
       </div>
+      <LoadTaskPresetDialog
+        isOpen={loadPresetOpen}
+        onClose={() => setLoadPresetOpen(false)}
+        patientId={patientId}
+        onSuccess={onSuccess}
+      />
       <Drawer
         isOpen={!!taskId || isCreatingTask}
         onClose={() => {

@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from .location import LocationNode
     from .patient import Patient
     from .property import PropertyValue
+    from .task_preset import TaskPreset
     from .user import User
 
 task_dependencies = Table(
@@ -52,6 +53,10 @@ class Task(Base):
         nullable=True,
     )
     patient_id: Mapped[str | None] = mapped_column(ForeignKey("patients.id"), nullable=True)
+    source_task_preset_id: Mapped[str | None] = mapped_column(
+        ForeignKey("task_presets.id", ondelete="SET NULL"),
+        nullable=True,
+    )
     priority: Mapped[str | None] = mapped_column(String, nullable=True)
     estimated_time: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
@@ -65,6 +70,11 @@ class Task(Base):
         foreign_keys=[assignee_team_id],
     )
     patient: Mapped[Patient | None] = relationship("Patient", back_populates="tasks")
+    source_task_preset: Mapped["TaskPreset | None"] = relationship(
+        "TaskPreset",
+        foreign_keys=[source_task_preset_id],
+        back_populates="tasks",
+    )
     properties: Mapped[list[PropertyValue]] = relationship(
         "PropertyValue",
         back_populates="task",

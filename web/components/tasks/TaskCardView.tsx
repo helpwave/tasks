@@ -1,6 +1,6 @@
-import { Button, Checkbox } from '@helpwave/hightide'
+import { Button, Checkbox, Tooltip } from '@helpwave/hightide'
 import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
-import { Clock, User, Users, Flag } from 'lucide-react'
+import { Clock, Combine, User, Users, Flag } from 'lucide-react'
 import clsx from 'clsx'
 import { DateDisplay } from '@/components/Date/DateDisplay'
 import { LocationChipsBySetting } from '@/components/patients/LocationChipsBySetting'
@@ -12,6 +12,8 @@ import { useState, useEffect, useRef, useMemo, type ReactNode } from 'react'
 import { UserInfoPopup } from '@/components/UserInfoPopup'
 import { PriorityUtils } from '@/utils/priority'
 import { ExpandableTextBlock } from '@/components/common/ExpandableTextBlock'
+import { TaskPresetSourceDialog } from '@/components/tasks/TaskPresetSourceDialog'
+import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 
 type FlexibleTask = {
   id: string,
@@ -43,6 +45,7 @@ type FlexibleTask = {
     id: string,
     title: string,
   } | null,
+  sourceTaskPresetId?: string | null,
 }
 
 type TaskCardViewProps = {
@@ -76,7 +79,9 @@ const toDate = (date: Date | string | null | undefined): Date | undefined => {
 }
 
 export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showAssignee: _showAssignee = false, showPatient = true, className, fullWidth: _fullWidth = false, extraContent }: TaskCardViewProps) => {
+  const translation = useTasksTranslation()
   const router = useRouter()
+  const [presetDialogId, setPresetDialogId] = useState<string | null>(null)
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
   const [optimisticDone, setOptimisticDone] = useState<boolean | null>(null)
   const pendingCheckedRef = useRef<boolean | null>(null)
@@ -227,6 +232,7 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
                 )}
                 {!task.assigneeTeam && task.assignee && (
                   <button
+                    type="button"
                     onClick={(e) => {
                       e.stopPropagation()
                       setSelectedUserId(task.assignee!.id)
@@ -251,6 +257,21 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
           </div>
           <div className="shrink-0 flex flex-col gap-2 text-sm text-description pt-0.5 w-full pl-14 sm:pl-0 sm:items-end sm:w-auto sm:max-w-[min(100%,11rem)]">
             <div className="flex flex-col gap-2 items-stretch sm:flex-row sm:flex-wrap sm:items-center sm:justify-end gap-x-3 gap-y-2">
+              {(task as FlexibleTask).sourceTaskPresetId && (
+                <Tooltip tooltip={translation('taskFromPresetTooltip')} alignment="top">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setPresetDialogId((task as FlexibleTask).sourceTaskPresetId ?? null)
+                    }}
+                    className="shrink-0 rounded-lg p-1.5 cursor-pointer border border-primary/45 bg-primary/15 text-primary shadow-sm hover:bg-primary/25 hover:border-primary/70 active:bg-primary/30 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary"
+                    aria-label={translation('taskFromPresetTooltip')}
+                  >
+                    <Combine className="size-4" strokeWidth={2} />
+                  </button>
+                </Tooltip>
+              )}
               {(task as FlexibleTask).estimatedTime && (
                 <div className="flex items-center gap-1 min-w-0">
                   <Clock className="size-4 shrink-0" />
@@ -304,6 +325,11 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
         userId={selectedUserId}
         isOpen={!!selectedUserId}
         onClose={() => setSelectedUserId(null)}
+      />
+      <TaskPresetSourceDialog
+        isOpen={presetDialogId != null}
+        presetId={presetDialogId}
+        onClose={() => setPresetDialogId(null)}
       />
     </div>
   )

@@ -315,6 +315,7 @@ function SavedTaskViewTab({
         : undefined,
       additionalAssigneeCount:
         !task.assigneeTeam && task.assignees.length > 1 ? task.assignees.length - 1 : 0,
+      sourceTaskPresetId: task.sourceTaskPresetId ?? null,
       properties: task.properties ?? [],
     }))
   }, [accumulatedTasksRaw])

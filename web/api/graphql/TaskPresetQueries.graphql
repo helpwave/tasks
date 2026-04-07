@@ -1,0 +1,45 @@
+query TaskPresets {
+  taskPresets {
+    id
+    name
+    key
+    scope
+    ownerUserId
+    graph {
+      nodes {
+        id
+        title
+        description
+        priority
+        estimatedTime
+      }
+      edges {
+        fromId
+        toId
+      }
+    }
+  }
+}
+
+query TaskPreset($id: ID!) {
+  taskPreset(id: $id) {
+    id
+    name
+    key
+    scope
+    ownerUserId
+    graph {
+      nodes {
+        id
+        title
+        description
+        priority
+        estimatedTime
+      }
+      edges {
+        fromId
+        toId
+      }
+    }
+  }
+}
