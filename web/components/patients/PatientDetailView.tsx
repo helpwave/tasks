@@ -8,7 +8,7 @@ import {
   TabList,
   TabPanel,
   TabSwitcher,
-  Tooltip,
+  Tooltip
 } from '@helpwave/hightide'
 import { Sparkles } from 'lucide-react'
 import { PatientStateChip } from '@/components/patients/PatientStateChip'
@@ -197,16 +197,17 @@ export const PatientDetailView = ({
               <span className={`w-3 h-3 rounded-full shrink-0 inline-block ${adherenceDotClass}`} aria-hidden />
             </Tooltip>
           </div>
-          <Button
-            size="sm"
-            color="primary"
-            onClick={() => systemSuggestion && onOpenSystemSuggestion?.(systemSuggestion, patientName)}
-            disabled={!systemSuggestion || !onOpenSystemSuggestion}
-            className="shrink-0 flex items-center gap-2"
-          >
-            <Sparkles className="size-4" />
-            Fix with AI
-          </Button>
+          {systemSuggestion && onOpenSystemSuggestion && (
+            <Button
+              size="sm"
+              color="primary"
+              onClick={() => onOpenSystemSuggestion(systemSuggestion, patientName)}
+              className="shrink-0 flex items-center gap-2"
+            >
+              <Sparkles className="size-4" />
+              Fix with AI
+            </Button>
+          )}
         </div>
       )}
       <TabSwitcher>

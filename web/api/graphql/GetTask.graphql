@@ -9,11 +9,12 @@ query GetTask($id: ID!) {
     estimatedTime
     checksum
     updateDate
+    sourceTaskPresetId
     patient {
       id
       name
     }
-    assignee {
+    assignees {
       id
       name
       avatarUrl

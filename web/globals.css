@@ -1,11 +1,21 @@
 @import 'tailwindcss';
 
-@import "@helpwave/hightide/style/uncompiled/globals.css";
+@import "./node_modules/@helpwave/hightide/dist/style/uncompiled/globals.css";
 @import "./style/index.css";
 @source "./node_modules/@helpwave/hightide";
 
 @layer components {
   body {
-    @apply w-screen max-w-screen h-screen max-h-screen overflow-hidden;
+    @apply w-screen max-w-screen min-h-dvh h-dvh max-h-dvh overflow-hidden;
+    padding-top: max(0px, env(safe-area-inset-top));
+    padding-bottom: max(0px, env(safe-area-inset-bottom));
+    padding-left: max(0px, env(safe-area-inset-left));
+    padding-right: max(0px, env(safe-area-inset-right));
+  }
+}
+
+@layer utilities {
+  .touch-pan-x {
+    -webkit-overflow-scrolling: touch;
   }
 }

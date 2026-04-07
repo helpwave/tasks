@@ -1,5 +1,5 @@
-query GetPatients($locationId: ID, $rootLocationIds: [ID!], $states: [PatientState!], $filtering: [FilterInput!], $sorting: [SortInput!], $pagination: PaginationInput, $search: FullTextSearchInput) {
-  patients(locationNodeId: $locationId, rootLocationIds: $rootLocationIds, states: $states, filtering: $filtering, sorting: $sorting, pagination: $pagination, search: $search) {
+query GetPatients($locationId: ID, $rootLocationIds: [ID!], $states: [PatientState!], $filters: [QueryFilterClauseInput!], $sorts: [QuerySortClauseInput!], $pagination: PaginationInput, $search: QuerySearchInput) {
+  patients(locationNodeId: $locationId, rootLocationIds: $rootLocationIds, states: $states, filters: $filters, sorts: $sorts, pagination: $pagination, search: $search) {
     id
     name
     firstname
@@ -109,7 +109,8 @@ query GetPatients($locationId: ID, $rootLocationIds: [ID!], $states: [PatientSta
       estimatedTime
       creationDate
       updateDate
-      assignee {
+      sourceTaskPresetId
+      assignees {
         id
         name
         avatarUrl
@@ -155,5 +156,5 @@ query GetPatients($locationId: ID, $rootLocationIds: [ID!], $states: [PatientSta
       }
     }
   }
-  patientsTotal(locationNodeId: $locationId, rootLocationIds: $rootLocationIds, states: $states, filtering: $filtering, sorting: $sorting, search: $search)
+  patientsTotal(locationNodeId: $locationId, rootLocationIds: $rootLocationIds, states: $states, filters: $filters, sorts: $sorts, search: $search)
 }

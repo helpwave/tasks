@@ -5,7 +5,7 @@ import {
   useEffect,
   useMemo,
   useState,
-  type ReactNode,
+  type ReactNode
 } from 'react'
 import type { MachineGeneratedTask } from '@/types/systemSuggestion'
 import type { SuggestedTaskItem } from '@/types/systemSuggestion'
@@ -13,16 +13,16 @@ import type { SuggestedTaskItem } from '@/types/systemSuggestion'
 type ToastState = { message: string } | null
 
 type SystemSuggestionTasksContextValue = {
-  getCreatedTasksForPatient: (patientId: string) => MachineGeneratedTask[]
+  getCreatedTasksForPatient: (patientId: string) => MachineGeneratedTask[],
   addCreatedTasks: (
     patientId: string,
     items: SuggestedTaskItem[],
     assignToMe?: boolean
-  ) => void
-  setCreatedTaskDone: (patientId: string, taskId: string, done: boolean) => void
-  toast: ToastState
-  showToast: (message: string) => void
-  clearToast: () => void
+  ) => void,
+  setCreatedTaskDone: (patientId: string, taskId: string, done: boolean) => void,
+  toast: ToastState,
+  showToast: (message: string) => void,
+  clearToast: () => void,
 }
 
 const SystemSuggestionTasksContext = createContext<SystemSuggestionTasksContextValue | null>(null)

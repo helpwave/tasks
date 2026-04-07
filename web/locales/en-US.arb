@@ -3,12 +3,23 @@
   "account": "Account",
   "active": "Active",
   "add": "Add",
+  "addFastAccess": "Add Fast Access",
+  "addFastAccessDescription": "Add a name for the new fast access.",
   "addPatient": "Add Patient",
   "addProperty": "Add Property",
   "addTask": "Add Task",
   "archivedPropertyDescription": "Archived Properties can no longer be assigned to objects.",
   "archiveProperty": "Archive Property",
   "assignedTo": "Assigned to",
+  "assigneeTeam": "Assignee team",
+  "additionalAssigneesCount": "+{count}",
+  "@additionalAssigneesCount": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
   "authenticationFailed": "Authentication Failed",
   "birthdate": "Birthdate",
   "cancel": "Cancel",
@@ -31,8 +42,12 @@
       }
     }
   },
+  "copyShareLink": "Copy link",
+  "copyViewToMyViews": "Copy to my quick access",
+  "confirmDeleteView": "Delete this saved quick access? This cannot be undone.",
   "create": "Create",
   "createTask": "Create Task",
+  "creationDate": "Creation date",
   "currentTime": "Current Time",
   "dashboard": "Dashboard",
   "dashboardWelcomeDescription": "Here is what is happening today.",
@@ -82,6 +97,7 @@
   "descriptionPlaceholder": "Add more details...",
   "developmentAndPreviewInstance": "Development and preview instance",
   "dismiss": "Dismiss",
+  "duplicate": "Duplicate",
   "done": "Done",
   "dueDate": "Due Date",
   "edit": "Edit",
@@ -91,15 +107,21 @@
   "estimatedTime": "Estimated Time (minutes)",
   "feedback": "Feedback",
   "female": "Female",
+  "filter": "Filter",
   "filterAll": "All",
   "filterUndone": "Undone",
   "firstName": "First Name",
   "freeBeds": "Free Beds",
   "homePage": "Home Page",
+  "hide": "Hide",
   "imprint": "Imprint",
   "inactive": "Inactive",
   "language": "Language",
   "lastName": "Last Name",
+  "listViewCard": "Card view",
+  "listViewTable": "Table view",
+  "loadMore": "Load more",
+  "more": "More",
   "location": "Location",
   "locationBed": "Bed",
   "locationClinic": "Clinic",
@@ -123,11 +145,29 @@
   "myTasks": "My tasks",
   "name": "Name",
   "no": "No",
+  "none": "None",
   "noClosedTasks": "No closed tasks",
   "noOpenTasks": "No open tasks",
   "noPatient": "No Patient",
+  "noPatientsInTaskView": "No patients found for this task quick access.",
   "noResultsFound": "No results found",
   "notAssigned": "Not assigned",
+  "nFilter": "{count, plural, =1{# filter} other{# filters}}",
+  "@nFilter": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "nSorting": "{count, plural, =1{# sort} other{# sorts}}",
+  "@nSorting": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
   "nPatient": "{count, plural, =1{# Patient} other{# Patients}}",
   "@nPatient": {
     "placeholders": {
@@ -155,6 +195,7 @@
   "occupancy": "Occupancy",
   "openSurvey": "Open Survey",
   "openTasks": "Open Tasks",
+  "openView": "Open",
   "option": "Option",
   "organizations": "Organizations",
   "overview": "Overview",
@@ -192,6 +233,7 @@
   "priorityNone": "None",
   "privacy": "Privacy",
   "properties": "Properties",
+  "propertiesSettingsDescription": "Custom fields for tasks and patients: define types and use them in filters.",
   "property": "Property",
   "rAdd": "Add {name}",
   "@rAdd": {
@@ -201,7 +243,7 @@
       }
     }
   },
-  "rEdit": "Update {name}!",
+  "rEdit": "Update {name}",
   "@rEdit": {
     "placeholders": {
       "name": {
@@ -214,7 +256,26 @@
   "refreshing": "Refreshing…",
   "removeProperty": "Remove Property",
   "removePropertyConfirmation": "Are you sure you want to remove this property? This action cannot be undone.",
+  "readOnlyView": "Read-only",
   "retakeSurvey": "Retake Survey",
+  "saveView": "Save quick access",
+  "saveViewDescription": "Name this quick access. Filters, sorting, search, and location are stored.",
+  "saveViewOverwriteCurrent": "Overwrite current quick access",
+  "saveViewAsNew": "Save as new quick access",
+  "saveViewDescriptionFromSystemList": "Creates a new quick access entry from this layout. This page is fixed by the app and is not saved in place — open it from the sidebar when you need it.",
+  "discardViewChanges": "Discard changes",
+  "savedViews": "Quick access",
+  "viewDerivedPatientsHint": "Patients that appear on tasks matching this quick access (distinct).",
+  "viewSettings": "Quick access",
+  "viewSettingsDescription": "Manage saved task and patient quick access.",
+  "views": "Quick Access",
+  "viewsEntityPatient": "Patients",
+  "viewsEntityTask": "Tasks",
+  "viewVisibility": "Visibility",
+  "viewVisibilityPrivate": "Private",
+  "viewVisibilityLinkShared": "Link shared",
+  "viewAnyoneWithLinkCanView": "Anyone with the link can view",
+  "copyShareLinkEnableSharingFirst": "Turn on link sharing so others with the link can open this quick access.",
   "rShow": "Show {name}",
   "@rShow": {
     "placeholders": {
@@ -236,6 +297,7 @@
   "shiftHandover": "Shift Handover",
   "showAllTasks": "Show All Tasks",
   "showTeamTasks": "Show Team Tasks",
+  "sorting": "Sorting",
   "stagingModalDisclaimerMarkdown": "This public instance of helpwave tasks is for '\\b{development and preview purposes}'. Please make sure to '\\b{only}' enter '\\b{non-confidential testing data}'. This instance can be '\\negative{\\b{deleted at any time}}'",
   "status": "Status",
   "subjectType": "Subject Type",
@@ -275,6 +337,7 @@
   "totalPatients": "Total Patients",
   "type": "Type",
   "updated": "Updated",
+  "user": "User",
   "users": "Users",
   "wards": "Wards",
   "yes": "Yes",
@@ -340,5 +403,42 @@
   "selectPosition": "Select Location",
   "selectTeams": "Select Teams",
   "waitPatient": "Set Patient to Waiting",
-  "waitingForPatient": "Waiting for patient"
+  "waitingForPatient": "Waiting for patient",
+  "taskPresets": "Presets",
+  "taskPresetsDescription": "Reusable task lists with optional dependencies.",
+  "taskPresetName": "Name",
+  "taskPresetKey": "Key",
+  "taskPresetKeyHint": "Optional unique key for lookups. Leave empty to generate automatically.",
+  "taskPresetScope": "Scope",
+  "taskPresetScopePersonal": "Personal",
+  "taskPresetScopeGlobal": "Global",
+  "taskPresetAddRow": "Add task",
+  "taskPresetRemoveRow": "Remove",
+  "taskPresetSave": "Save preset",
+  "taskPresetCreate": "Create preset",
+  "taskPresetEdit": "Edit preset",
+  "taskPresetDelete": "Delete",
+  "taskPresetDeleteConfirm": "Delete this task preset?",
+  "taskPresetEmptyList": "No task presets yet.",
+  "loadTaskPreset": "Load preset",
+  "loadTaskPresetTitle": "Load task preset",
+  "loadTaskPresetConfirm": "Create {count, plural, =1{# task} other{# tasks}} for this patient?",
+  "@loadTaskPresetConfirm": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "taskPresetNoTasks": "This preset has no tasks.",
+  "taskPresetSelectPlaceholder": "Select a preset",
+  "taskPresetEditDetails": "Edit details",
+  "taskPresetApplyToRow": "Apply to preset row",
+  "taskPresetNoEstimate": "No estimate",
+  "tasksCreatedFromPreset": "Tasks created",
+  "taskFromPresetTooltip": "Created from a task preset",
+  "taskPresetSourceTitle": "Source preset",
+  "taskPresetSourceNotFound": "Preset could not be loaded.",
+  "taskPresetSourceTasksInGraph": "Tasks in template",
+  "taskPresetSourceOpenSettings": "Open in settings"
 }

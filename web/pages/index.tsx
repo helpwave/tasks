@@ -5,15 +5,14 @@ import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { Avatar } from '@helpwave/hightide'
 import { CurrentTime } from '@/components/Date/CurrentTime'
 import { ClockIcon, ListCheckIcon, UsersIcon } from 'lucide-react'
-import { useCallback, useMemo, useState, type ReactNode } from 'react'
+import { useMemo, type ReactNode } from 'react'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import Link from 'next/link'
-import { Drawer } from '@helpwave/hightide'
-import { PatientDetailView } from '@/components/patients/PatientDetailView'
-import { TaskDetailView } from '@/components/tasks/TaskDetailView'
-import { useOverviewData, useCompleteTask, useReopenTask } from '@/data'
-import { RecentTasksTable } from '@/components/tables/RecentTasksTable'
-import { RecentPatientsTable } from '@/components/tables/RecentPatientsTable'
+import { useOverviewData } from '@/data'
+import { TaskList } from '@/components/tables/TaskList'
+import { PatientList } from '@/components/tables/PatientList'
+import { overviewRecentTaskToTaskViewModel } from '@/utils/overviewRecentTaskToTaskViewModel'
+import { overviewRecentPatientToPatientViewModel } from '@/utils/overviewRecentPatientToPatientViewModel'
 import clsx from 'clsx'
 
 
@@ -79,15 +78,16 @@ const Dashboard: NextPage = () => {
     recentPatientsPagination: { pageSize: 5, pageIndex: 0 },
   }), [selectedRootLocationIds])
   const { data, refetch } = useOverviewData(overviewVariables)
-  const [completeTask] = useCompleteTask()
-  const [reopenTask] = useReopenTask()
 
-  const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null)
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
+  const taskListTasks = useMemo(
+    () => (data?.recentTasks ?? []).map(overviewRecentTaskToTaskViewModel),
+    [data?.recentTasks]
+  )
 
-  const recentPatients = useMemo(() => data?.recentPatients ?? [], [data])
-  const recentTasks = useMemo(() => data?.recentTasks ?? [], [data])
-
+  const patientListPatients = useMemo(
+    () => (data?.recentPatients ?? []).map(overviewRecentPatientToPatientViewModel),
+    [data?.recentPatients]
+  )
 
   return (
     <Page pageTitle={titleWrapper(translation('homePage'))}>
@@ -124,53 +124,32 @@ const Dashboard: NextPage = () => {
         </div>
 
         <div className="flex flex-col gap-4 w-full">
-          <RecentTasksTable
-            tasks={recentTasks}
-            completeTask={useCallback((id) => completeTask({ variables: { id }, onCompleted: () => refetch() }), [completeTask, refetch])}
-            reopenTask={useCallback((id) => reopenTask({ variables: { id }, onCompleted: () => refetch() }), [reopenTask, refetch])}
-            onSelectPatient={setSelectedPatientId}
-            onSelectTask={setSelectedTaskId}
-            className="w-full min-w-0"
-          />
+          <div className="mt-2 w-full min-w-0">
+            <div className="flex-col-0 mb-4">
+              <span className="typography-title-lg">{translation('recentTasks')}</span>
+              <span className="text-description">{translation('tasksUpdatedRecently')}</span>
+            </div>
+            <TaskList
+              embedded
+              tasks={taskListTasks}
+              onRefetch={() => void refetch()}
+              showAssignee={true}
+              totalCount={data?.recentTasksTotal ?? undefined}
+            />
+          </div>
 
-          <RecentPatientsTable
-            patients={recentPatients}
-            onSelectPatient={setSelectedPatientId}
-            className="w-full min-w-0"
-          />
+          <div className="mt-2 w-full min-w-0">
+            <div className="flex-col-0 mb-4">
+              <span className="typography-title-lg">{translation('recentPatients')}</span>
+              <span className="text-description">{translation('patientsUpdatedRecently')}</span>
+            </div>
+            <PatientList
+              embedded
+              embeddedPatients={patientListPatients}
+              embeddedOnRefetch={() => void refetch()}
+            />
+          </div>
         </div>
-
-        <Drawer
-          alignment="right"
-          titleElement={translation('editPatient')}
-          description={undefined}
-          isOpen={!!selectedPatientId}
-          onClose={() => setSelectedPatientId(null)}
-        >
-          {selectedPatientId && (
-            <PatientDetailView
-              patientId={selectedPatientId}
-              onClose={() => setSelectedPatientId(null)}
-              onSuccess={() => {}}
-            />
-          )}
-        </Drawer>
-
-        <Drawer
-          alignment="right"
-          titleElement={translation('editTask')}
-          description={undefined}
-          isOpen={!!selectedTaskId}
-          onClose={() => setSelectedTaskId(null)}
-        >
-          {selectedTaskId && (
-            <TaskDetailView
-              taskId={selectedTaskId}
-              onClose={() => setSelectedTaskId(null)}
-              onSuccess={() => {}}
-            />
-          )}
-        </Drawer>
 
       </div>
     </Page>

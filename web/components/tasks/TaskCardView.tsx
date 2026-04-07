@@ -1,6 +1,6 @@
-import { Button, Checkbox, Chip } from '@helpwave/hightide'
+import { Button, Checkbox, Tooltip } from '@helpwave/hightide'
 import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
-import { Clock, User, Users, Flag } from 'lucide-react'
+import { Clock, Combine, User, Users, Flag } from 'lucide-react'
 import clsx from 'clsx'
 import { DateDisplay } from '@/components/Date/DateDisplay'
 import { LocationChipsBySetting } from '@/components/patients/LocationChipsBySetting'
@@ -8,9 +8,12 @@ import type { TaskViewModel } from '@/components/tables/TaskList'
 import { useRouter } from 'next/router'
 import type { TaskPriority } from '@/api/gql/generated'
 import { useCompleteTask, useReopenTask } from '@/data'
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useRef, useMemo, type ReactNode } from 'react'
 import { UserInfoPopup } from '@/components/UserInfoPopup'
 import { PriorityUtils } from '@/utils/priority'
+import { ExpandableTextBlock } from '@/components/common/ExpandableTextBlock'
+import { TaskPresetSourceDialog } from '@/components/tasks/TaskPresetSourceDialog'
+import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 
 type FlexibleTask = {
   id: string,
@@ -42,19 +45,18 @@ type FlexibleTask = {
     id: string,
     title: string,
   } | null,
-  machineGenerated?: boolean,
-  source?: 'manual' | 'systemSuggestion',
+  sourceTaskPresetId?: string | null,
 }
 
 type TaskCardViewProps = {
   task: FlexibleTask | TaskViewModel,
   onToggleDone?: (taskId: string, done: boolean) => void,
-  onClick: (task: FlexibleTask | TaskViewModel) => void,
+  onClick?: (task: FlexibleTask | TaskViewModel) => void,
   showAssignee?: boolean,
   showPatient?: boolean,
-  onRefetch?: () => void,
   className?: string,
   fullWidth?: boolean,
+  extraContent?: ReactNode,
 }
 
 const isOverdue = (dueDate: Date | undefined, done: boolean): boolean => {
@@ -76,8 +78,10 @@ const toDate = (date: Date | string | null | undefined): Date | undefined => {
   return new Date(date)
 }
 
-export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showAssignee: _showAssignee = false, showPatient = true, onRefetch, className, fullWidth: _fullWidth = false }: TaskCardViewProps) => {
+export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showAssignee: _showAssignee = false, showPatient = true, className, fullWidth: _fullWidth = false, extraContent }: TaskCardViewProps) => {
+  const translation = useTasksTranslation()
   const router = useRouter()
+  const [presetDialogId, setPresetDialogId] = useState<string | null>(null)
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
   const [optimisticDone, setOptimisticDone] = useState<boolean | null>(null)
   const pendingCheckedRef = useRef<boolean | null>(null)
@@ -94,6 +98,7 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
   const closeToDue = dueDate ? isCloseToDueDate(dueDate, task.done) : false
   const dueDateColorClass = overdue ? '!text-red-500' : closeToDue ? '!text-orange-500' : ''
   const assigneeAvatarUrl = task.assignee?.avatarURL || (flexibleTask.assignee?.avatarUrl)
+  const isClickable = Boolean(onClick)
 
   const expectedFinishDate = useMemo(() => {
     if (!dueDate || !flexibleTask.estimatedTime) return null
@@ -126,7 +131,6 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
         onCompleted: () => {
           pendingCheckedRef.current = null
           setOptimisticDone(null)
-          onRefetch?.()
         },
         onError: () => {
           pendingCheckedRef.current = null
@@ -139,7 +143,6 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
         onCompleted: () => {
           pendingCheckedRef.current = null
           setOptimisticDone(null)
-          onRefetch?.()
         },
         onError: () => {
           pendingCheckedRef.current = null
@@ -162,130 +165,159 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
     P4: 'border-l-4 border-l-priority-p4',
   }[(task as FlexibleTask).priority as TaskPriority] ?? ''
 
+  const assigneeImage = useMemo(
+    () => ({
+      avatarUrl: assigneeAvatarUrl || 'https://cdn.helpwave.de/boringavatar.svg',
+      alt: task.assignee?.name ?? '',
+    }),
+    [assigneeAvatarUrl, task.assignee?.name]
+  )
+
   return (
     <div
-      onClick={() => onClick(task)}
+      onClick={onClick ? () => onClick(task) : undefined}
       className={clsx(
-        'border-2 p-4 rounded-lg text-left transition-colors hover:border-primary ',
-        'relative bg-surface-variant bg-on-surface-variant overflow-hidden cursor-pointer w-full min-h-35',
+        'border-2 p-4 rounded-lg text-left transition-colors',
+        'relative bg-surface-variant bg-on-surface-variant w-full',
+        isClickable ? 'cursor-pointer hover:border-primary' : 'cursor-default',
         borderColorClass,
         priorityBorderClass,
         className
       )}
-      role="button"
-      tabIndex={0}
+      role={isClickable ? 'button' : undefined}
+      tabIndex={isClickable ? 0 : undefined}
       onKeyDown={(e) => {
+        if (!isClickable || !onClick) return
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault()
           onClick(task)
         }
       }}
     >
-      <div className="flex items-start gap-4 w-full min-w-0">
-        <div onClick={(e) => e.stopPropagation()}>
-          <Checkbox
-            value={displayDone}
-            onValueChange={handleToggleDone}
-            className={clsx('rounded-full mt-0.5 shrink-0', PriorityUtils.toCheckboxColor(task?.priority as TaskPriority | null | undefined))}
-          />
-        </div>
-        <div className={clsx('flex-1 min-w-0 overflow-hidden', { 'pb-16': showPatient, 'pb-12': !showPatient })}>
-          <div className={clsx('flex items-center justify-between gap-2 flex-wrap min-w-0', { 'mb-2': showPatient, 'mb-4': !showPatient })}>
-            <div className="flex items-center gap-2 min-w-0 flex-1">
-              {(task as FlexibleTask).priority && (
-                <div
-                  className={clsx(
-                    'w-2 h-2 rounded-full shrink-0',
-                    PriorityUtils.toBackgroundColor(task?.priority as TaskPriority | null | undefined)
+      <div className="flex flex-col gap-3 w-full min-w-0">
+        <div className="flex flex-col sm:flex-row sm:items-start gap-4 w-full min-w-0">
+          <div className="flex items-start gap-4 w-full min-w-0 sm:flex-1 sm:min-w-0">
+            <div onClick={(e) => e.stopPropagation()}>
+              <Checkbox
+                value={displayDone}
+                onValueChange={handleToggleDone}
+                className={clsx('rounded-full mt-0.5 shrink-0', PriorityUtils.toCheckboxColor(task?.priority as TaskPriority | null | undefined))}
+              />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-2 sm:flex-wrap min-w-0 mb-2">
+                <div className="flex items-center gap-2 min-w-0 w-full sm:flex-1 sm:w-auto">
+                  {(task as FlexibleTask).priority && (
+                    <div
+                      className={clsx(
+                        'w-2 h-2 rounded-full shrink-0',
+                        PriorityUtils.toBackgroundColor(task?.priority as TaskPriority | null | undefined)
+                      )}
+                    />
                   )}
-                />
-              )}
-              <div
-                className={clsx(
-                  'font-semibold text-lg min-w-0 flex-1 truncate',
-                  { 'line-through text-description': task.done }
+                  <div
+                    className={clsx(
+                      'font-semibold text-lg min-w-0 flex-1 whitespace-normal break-words',
+                      { 'line-through text-description': task.done }
+                    )}
+                  >
+                    {taskName}
+                  </div>
+                </div>
+                {task.assigneeTeam && (
+                  <div className="flex items-center gap-1.5 text-base text-description min-w-0 w-full sm:w-auto sm:shrink-0 sm:justify-end">
+                    <Users className="size-5 text-description shrink-0" />
+                    <span className="min-w-0 break-words sm:truncate sm:max-w-40">{task.assigneeTeam.title}</span>
+                  </div>
                 )}
-              >
-                {taskName}
+                {!task.assigneeTeam && task.assignee && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setSelectedUserId(task.assignee!.id)
+                    }}
+                    className="flex items-center gap-1.5 text-base text-description min-w-0 w-full sm:w-auto sm:shrink-0 sm:justify-end hover:opacity-75 transition-opacity text-left"
+                  >
+                    <AvatarStatusComponent
+                      size="sm"
+                      isOnline={task.assignee?.isOnline ?? null}
+                      image={assigneeImage}
+                    />
+                    <span className="min-w-0 break-words sm:truncate sm:max-w-[150px]">{task.assignee.name}</span>
+                  </button>
+                )}
               </div>
-              {((task as FlexibleTask).machineGenerated || (task as FlexibleTask).source === 'systemSuggestion') && (
-                <Chip color="secondary" coloringStyle="tonal" size="xs" className="shrink-0">
-                  System
-                </Chip>
+              {descriptionPreview && (
+                <ExpandableTextBlock className="text-base text-description">
+                  {descriptionPreview}
+                </ExpandableTextBlock>
               )}
             </div>
-            {task.assigneeTeam && (
-              <div className="flex items-center gap-1.5 text-base text-description shrink-0 min-w-0">
-                <Users className="size-5 text-description" />
-                <span className="truncate max-w-40">{task.assigneeTeam.title}</span>
+          </div>
+          <div className="shrink-0 flex flex-col gap-2 text-sm text-description pt-0.5 w-full pl-14 sm:pl-0 sm:items-end sm:w-auto sm:max-w-[min(100%,11rem)]">
+            <div className="flex flex-col gap-2 items-stretch sm:flex-row sm:flex-wrap sm:items-center sm:justify-end gap-x-3 gap-y-2">
+              {(task as FlexibleTask).sourceTaskPresetId && (
+                <Tooltip tooltip={translation('taskFromPresetTooltip')} alignment="top">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setPresetDialogId((task as FlexibleTask).sourceTaskPresetId ?? null)
+                    }}
+                    className="shrink-0 rounded-lg p-1.5 cursor-pointer border border-primary/45 bg-primary/15 text-primary shadow-sm hover:bg-primary/25 hover:border-primary/70 active:bg-primary/30 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary"
+                    aria-label={translation('taskFromPresetTooltip')}
+                  >
+                    <Combine className="size-4" strokeWidth={2} />
+                  </button>
+                </Tooltip>
+              )}
+              {(task as FlexibleTask).estimatedTime && (
+                <div className="flex items-center gap-1 min-w-0">
+                  <Clock className="size-4 shrink-0" />
+                  <span className="min-w-0 break-words">
+                    {(task as FlexibleTask).estimatedTime! < 60
+                      ? `${(task as FlexibleTask).estimatedTime}m`
+                      : `${Math.floor((task as FlexibleTask).estimatedTime! / 60)}h ${(task as FlexibleTask).estimatedTime! % 60}m`}
+                  </span>
+                </div>
+              )}
+              {dueDate && (
+                <div className={clsx('flex items-center gap-2 min-w-0', dueDateColorClass)}>
+                  <Clock className="size-4 shrink-0" />
+                  <DateDisplay date={dueDate} mode="absolute" showTime={true} />
+                </div>
+              )}
+            </div>
+            {expectedFinishDate && (
+              <div className="flex items-center gap-2 text-xs min-w-0">
+                <Flag className="size-4 shrink-0" />
+                <DateDisplay date={expectedFinishDate} mode="absolute" showTime={true} />
               </div>
-            )}
-            {!task.assigneeTeam && task.assignee && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setSelectedUserId(task.assignee!.id)
-                }}
-                className="flex items-center gap-1.5 text-base text-description shrink-0 min-w-0 hover:opacity-75 transition-opacity"
-              >
-                <AvatarStatusComponent
-                  size="sm"
-                  isOnline={task.assignee?.isOnline ?? null}
-                  image={{
-                    avatarUrl: assigneeAvatarUrl || 'https://cdn.helpwave.de/boringavatar.svg',
-                    alt: task.assignee.name
-                  }}
-                />
-                <span className="truncate max-w-[150px]">{task.assignee.name}</span>
-              </button>
             )}
           </div>
-          {descriptionPreview && (
-            <div className={clsx('text-base text-description line-clamp-2', { 'mb-2': showPatient, 'mb-4': !showPatient })}>{descriptionPreview}</div>
-          )}
         </div>
-      </div>
-      {showPatient && task.patient && (
-        <div className="absolute bottom-5" style={{ left: 'calc(1.25rem + 1.5rem + 1rem)' }}>
-          <Button
-            color="neutral"
-            size="sm"
-            onClick={handlePatientClick}
-            className="flex-row-0 justify-start w-fit"
-          >
-            <User className="size-4 scale-[1.2] mr-2" />
-            {task.patient.name}
-          </Button>
-          {task.patient.locations && task.patient.locations.length > 0 && (
-            <div className="mt-1">
-              <LocationChipsBySetting locations={task.patient.locations} small />
-            </div>
-          )}
-        </div>
-      )}
-      <div className={clsx('absolute right-5 flex flex-col items-end gap-2 text-sm text-description', { 'bottom-5': showPatient, 'bottom-6': !showPatient })}>
-        <div className="flex items-center gap-3">
-          {(task as FlexibleTask).estimatedTime && (
-            <div className="flex items-center gap-1">
-              <Clock className="size-4" />
-              <span>
-                {(task as FlexibleTask).estimatedTime! < 60
-                  ? `${(task as FlexibleTask).estimatedTime}m`
-                  : `${Math.floor((task as FlexibleTask).estimatedTime! / 60)}h ${(task as FlexibleTask).estimatedTime! % 60}m`}
-              </span>
-            </div>
-          )}
-          {dueDate && (
-            <div className={clsx('flex items-center gap-2', dueDateColorClass)}>
-              <Clock className="size-4" />
-              <DateDisplay date={dueDate} mode="relative" showTime={true} />
-            </div>
-          )}
-        </div>
-        {expectedFinishDate && (
-          <div className="flex items-center gap-2 text-xs">
-            <Flag className="size-4" />
-            <DateDisplay date={expectedFinishDate} mode="relative" showTime={true} />
+        {showPatient && task.patient && (
+          <div className="min-w-0 pl-14">
+            <Button
+              color="neutral"
+              size="sm"
+              onClick={handlePatientClick}
+              className="flex-row-0 justify-start w-full min-w-0"
+            >
+              <User className="size-4 scale-[1.2] mr-2" />
+              <span className="min-w-0 whitespace-normal break-words text-left">{task.patient.name}</span>
+            </Button>
+            {task.patient.locations && task.patient.locations.length > 0 && (
+              <div className="mt-1">
+                <LocationChipsBySetting locations={task.patient.locations} small />
+              </div>
+            )}
+          </div>
+        )}
+        {extraContent && (
+          <div className="border-t border-border pt-3 space-y-2 text-sm px-0">
+            {extraContent}
           </div>
         )}
       </div>
@@ -293,6 +325,11 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
         userId={selectedUserId}
         isOpen={!!selectedUserId}
         onClose={() => setSelectedUserId(null)}
+      />
+      <TaskPresetSourceDialog
+        isOpen={presetDialogId != null}
+        presetId={presetDialogId}
+        onClose={() => setPresetDialogId(null)}
       />
     </div>
   )

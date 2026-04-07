@@ -1,5 +1,5 @@
-query GetTasks($rootLocationIds: [ID!], $assigneeId: ID, $assigneeTeamId: ID, $filtering: [FilterInput!], $sorting: [SortInput!], $pagination: PaginationInput, $search: FullTextSearchInput) {
-  tasks(rootLocationIds: $rootLocationIds, assigneeId: $assigneeId, assigneeTeamId: $assigneeTeamId, filtering: $filtering, sorting: $sorting, pagination: $pagination, search: $search) {
+query GetTasks($rootLocationIds: [ID!], $assigneeId: ID, $assigneeTeamId: ID, $filters: [QueryFilterClauseInput!], $sorts: [QuerySortClauseInput!], $pagination: PaginationInput, $search: QuerySearchInput) {
+  tasks(rootLocationIds: $rootLocationIds, assigneeId: $assigneeId, assigneeTeamId: $assigneeTeamId, filters: $filters, sorts: $sorts, pagination: $pagination, search: $search) {
     id
     title
     description
@@ -9,9 +9,15 @@ query GetTasks($rootLocationIds: [ID!], $assigneeId: ID, $assigneeTeamId: ID, $f
     estimatedTime
     creationDate
     updateDate
+    sourceTaskPresetId
     patient {
       id
       name
+      firstname
+      lastname
+      birthdate
+      sex
+      state
       assignedLocation {
         id
         title
@@ -21,6 +27,44 @@ query GetTasks($rootLocationIds: [ID!], $assigneeId: ID, $assigneeTeamId: ID, $f
         }
       }
       assignedLocations {
+        id
+        title
+        kind
+        parent {
+          id
+          title
+          parent {
+            id
+            title
+            parent {
+              id
+              title
+            }
+          }
+        }
+      }
+      clinic {
+        id
+        title
+        kind
+        parent {
+          id
+          title
+          parent {
+            id
+            title
+            parent {
+              id
+              title
+              parent {
+                id
+                title
+              }
+            }
+          }
+        }
+      }
+      position {
         id
         title
         kind
@@ -40,8 +84,61 @@ query GetTasks($rootLocationIds: [ID!], $assigneeId: ID, $assigneeTeamId: ID, $f
           }
         }
       }
+      teams {
+        id
+        title
+        kind
+        parent {
+          id
+          title
+          parent {
+            id
+            title
+            parent {
+              id
+              title
+              parent {
+                id
+                title
+              }
+            }
+          }
+        }
+      }
+      properties {
+        id
+        definition {
+          id
+          name
+          description
+          fieldType
+          isActive
+          allowedEntities
+          options
+        }
+        textValue
+        numberValue
+        booleanValue
+        dateValue
+        dateTimeValue
+        selectValue
+        multiSelectValues
+        userValue
+        user {
+          id
+          name
+          avatarUrl
+          lastOnline
+          isOnline
+        }
+        team {
+          id
+          title
+          kind
+        }
+      }
     }
-    assignee {
+    assignees {
       id
       name
       avatarUrl
@@ -86,6 +183,5 @@ query GetTasks($rootLocationIds: [ID!], $assigneeId: ID, $assigneeTeamId: ID, $f
       }
     }
   }
-  tasksTotal(rootLocationIds: $rootLocationIds, assigneeId: $assigneeId, assigneeTeamId: $assigneeTeamId, filtering: $filtering, sorting: $sorting, search: $search)
+  tasksTotal(rootLocationIds: $rootLocationIds, assigneeId: $assigneeId, assigneeTeamId: $assigneeTeamId, filters: $filters, sorts: $sorts, search: $search)
 }
-

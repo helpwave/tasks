@@ -3,23 +3,15 @@ from collections.abc import AsyncGenerator
 import strawberry
 from api.audit import audit_log
 from api.context import Info
-from api.decorators.filter_sort import (
-    apply_filtering,
-    apply_sorting,
-    filtered_and_sorted_query,
-    get_property_field_types,
-)
-from api.decorators.full_text_search import (
-    apply_full_text_search,
-    full_text_search_query,
-)
-from api.inputs import (
-    FilterInput,
-    FullTextSearchInput,
-    PaginationInput,
-    SortInput,
-)
 from api.inputs import CreatePatientInput, PatientState, UpdatePatientInput
+from api.inputs import PaginationInput
+from api.query.execute import count_unified_query, is_unset, unified_list_query
+from api.query.inputs import (
+    QueryFilterClauseInput,
+    QuerySearchInput,
+    QuerySortClauseInput,
+)
+from api.query.registry import PATIENT
 from api.resolvers.base import BaseMutationResolver, BaseSubscriptionResolver
 from api.services.authorization import AuthorizationService
 from api.services.checksum import validate_checksum
@@ -28,6 +20,11 @@ from api.services.notifications import notify_entity_deleted
 from api.services.property import PropertyService
 from api.types.patient import PatientType
 from api.errors import raise_forbidden
+from api.query.dedupe_select import dedupe_orm_select_by_root_id
+from api.query.patient_location_scope import (
+    apply_patient_subtree_filter_from_cte,
+    build_location_descendants_cte,
+)
 from database import models
 from sqlalchemy import func, select
 from sqlalchemy.orm import aliased, selectinload
@@ -74,16 +71,10 @@ class PatientQuery:
         if location_node_id:
             if location_node_id not in accessible_location_ids:
                 raise_forbidden()
-            filter_cte = (
-                select(models.LocationNode.id)
-                .where(models.LocationNode.id == location_node_id)
-                .cte(name="location_descendants", recursive=True)
+            filter_cte = build_location_descendants_cte(
+                [str(location_node_id)],
+                cte_name="location_descendants",
             )
-            children = select(models.LocationNode.id).join(
-                filter_cte,
-                models.LocationNode.parent_id == filter_cte.c.id,
-            )
-            filter_cte = filter_cte.union_all(children)
         elif root_location_ids:
             valid_root_location_ids = [
                 lid for lid in root_location_ids if lid in accessible_location_ids
@@ -91,55 +82,15 @@ class PatientQuery:
             if not valid_root_location_ids:
                 return query.where(False), []
             root_location_ids = valid_root_location_ids
-            filter_cte = (
-                select(models.LocationNode.id)
-                .where(models.LocationNode.id.in_(root_location_ids))
-                .cte(name="root_location_descendants", recursive=True)
+            filter_cte = build_location_descendants_cte(
+                [str(lid) for lid in root_location_ids],
+                cte_name="root_location_descendants",
             )
-            root_children = select(models.LocationNode.id).join(
-                filter_cte, models.LocationNode.parent_id == filter_cte.c.id
-            )
-            filter_cte = filter_cte.union_all(root_children)
 
         if filter_cte is not None:
-            patient_locations_filter = aliased(models.patient_locations)
-            patient_teams_filter = aliased(models.patient_teams)
-
-            query = (
-                query.outerjoin(
-                    patient_locations_filter,
-                    models.Patient.id == patient_locations_filter.c.patient_id,
-                )
-                .outerjoin(
-                    patient_teams_filter,
-                    models.Patient.id == patient_teams_filter.c.patient_id,
-                )
-                .where(
-                    (models.Patient.clinic_id.in_(select(filter_cte.c.id)))
-                    | (
-                        models.Patient.position_id.isnot(None)
-                        & models.Patient.position_id.in_(
-                            select(filter_cte.c.id)
-                        )
-                    )
-                    | (
-                        models.Patient.assigned_location_id.isnot(None)
-                        & models.Patient.assigned_location_id.in_(
-                            select(filter_cte.c.id)
-                        )
-                    )
-                    | (
-                        patient_locations_filter.c.location_id.in_(
-                            select(filter_cte.c.id)
-                        )
-                    )
-                    | (
-                        patient_teams_filter.c.location_id.in_(
-                            select(filter_cte.c.id)
-                        )
-                    )
-                )
-                .distinct()
+            query = dedupe_orm_select_by_root_id(
+                apply_patient_subtree_filter_from_cte(query, filter_cte),
+                models.Patient,
             )
 
         return query, accessible_location_ids
@@ -170,18 +121,17 @@ class PatientQuery:
         return patient
 
     @strawberry.field
-    @filtered_and_sorted_query()
-    @full_text_search_query()
+    @unified_list_query(PATIENT)
     async def patients(
         self,
         info: Info,
         location_node_id: strawberry.ID | None = None,
         root_location_ids: list[strawberry.ID] | None = None,
         states: list[PatientState] | None = None,
-        filtering: list[FilterInput] | None = None,
-        sorting: list[SortInput] | None = None,
+        filters: list[QueryFilterClauseInput] | None = None,
+        sorts: list[QuerySortClauseInput] | None = None,
         pagination: PaginationInput | None = None,
-        search: FullTextSearchInput | None = None,
+        search: QuerySearchInput | None = None,
     ) -> list[PatientType]:
         query, _ = await PatientQuery._build_patients_base_query(
             info, location_node_id, root_location_ids, states
@@ -195,45 +145,34 @@ class PatientQuery:
         location_node_id: strawberry.ID | None = None,
         root_location_ids: list[strawberry.ID] | None = None,
         states: list[PatientState] | None = None,
-        filtering: list[FilterInput] | None = None,
-        sorting: list[SortInput] | None = None,
-        search: FullTextSearchInput | None = None,
+        filters: list[QueryFilterClauseInput] | None = None,
+        sorts: list[QuerySortClauseInput] | None = None,
+        search: QuerySearchInput | None = None,
     ) -> int:
         query, _ = await PatientQuery._build_patients_base_query(
             info, location_node_id, root_location_ids, states
         )
 
-        if search and search is not strawberry.UNSET:
-            query = apply_full_text_search(query, search, models.Patient)
-
-        property_field_types = await get_property_field_types(
-            info.context.db, filtering, sorting
+        return await count_unified_query(
+            query,
+            entity=PATIENT,
+            db=info.context.db,
+            filters=filters if filters is not None and not is_unset(filters) else None,
+            sorts=sorts if sorts is not None and not is_unset(sorts) else None,
+            search=search if search is not None and not is_unset(search) else None,
+            info=info,
         )
-        if filtering:
-            query = apply_filtering(
-                query, filtering, models.Patient, property_field_types
-            )
-        if sorting:
-            query = apply_sorting(
-                query, sorting, models.Patient, property_field_types
-            )
-
-        subquery = query.subquery()
-        count_query = select(func.count(func.distinct(subquery.c.id)))
-        result = await info.context.db.execute(count_query)
-        return result.scalar() or 0
 
     @strawberry.field
-    @filtered_and_sorted_query()
-    @full_text_search_query()
+    @unified_list_query(PATIENT)
     async def recent_patients(
         self,
         info: Info,
         root_location_ids: list[strawberry.ID] | None = None,
-        filtering: list[FilterInput] | None = None,
-        sorting: list[SortInput] | None = None,
+        filters: list[QueryFilterClauseInput] | None = None,
+        sorts: list[QuerySortClauseInput] | None = None,
         pagination: PaginationInput | None = None,
-        search: FullTextSearchInput | None = None,
+        search: QuerySearchInput | None = None,
     ) -> list[PatientType]:
         auth_service = AuthorizationService(info.context.db)
         accessible_location_ids = (
@@ -285,7 +224,7 @@ class PatientQuery:
                 root_cte = root_cte.union_all(root_children)
                 patient_locations_root = aliased(models.patient_locations)
                 patient_teams_root = aliased(models.patient_teams)
-                query = (
+                query = dedupe_orm_select_by_root_id(
                     query.outerjoin(
                         patient_locations_root,
                         models.Patient.id == patient_locations_root.c.patient_id,
@@ -306,8 +245,8 @@ class PatientQuery:
                         )
                         | (patient_locations_root.c.location_id.in_(select(root_cte.c.id)))
                         | (patient_teams_root.c.location_id.in_(select(root_cte.c.id)))
-                    )
-                    .distinct()
+                    ),
+                    models.Patient,
                 )
 
         return query
@@ -317,9 +256,9 @@ class PatientQuery:
         self,
         info: Info,
         root_location_ids: list[strawberry.ID] | None = None,
-        filtering: list[FilterInput] | None = None,
-        sorting: list[SortInput] | None = None,
-        search: FullTextSearchInput | None = None,
+        filters: list[QueryFilterClauseInput] | None = None,
+        sorts: list[QuerySortClauseInput] | None = None,
+        search: QuerySearchInput | None = None,
     ) -> int:
         auth_service = AuthorizationService(info.context.db)
         accessible_location_ids = (
@@ -366,7 +305,7 @@ class PatientQuery:
                 root_cte = root_cte.union_all(root_children)
                 patient_locations_root = aliased(models.patient_locations)
                 patient_teams_root = aliased(models.patient_teams)
-                query = (
+                query = dedupe_orm_select_by_root_id(
                     query.outerjoin(
                         patient_locations_root,
                         models.Patient.id == patient_locations_root.c.patient_id,
@@ -387,29 +326,19 @@ class PatientQuery:
                         )
                         | (patient_locations_root.c.location_id.in_(select(root_cte.c.id)))
                         | (patient_teams_root.c.location_id.in_(select(root_cte.c.id)))
-                    )
-                    .distinct()
+                    ),
+                    models.Patient,
                 )
 
-        if search and search is not strawberry.UNSET:
-            query = apply_full_text_search(query, search, models.Patient)
-
-        property_field_types = await get_property_field_types(
-            info.context.db, filtering, sorting
+        return await count_unified_query(
+            query,
+            entity=PATIENT,
+            db=info.context.db,
+            filters=filters if filters is not None and not is_unset(filters) else None,
+            sorts=sorts if sorts is not None and not is_unset(sorts) else None,
+            search=search if search is not None and not is_unset(search) else None,
+            info=info,
         )
-        if filtering:
-            query = apply_filtering(
-                query, filtering, models.Patient, property_field_types
-            )
-        if sorting:
-            query = apply_sorting(
-                query, sorting, models.Patient, property_field_types
-            )
-
-        subquery = query.subquery()
-        count_query = select(func.count(func.distinct(subquery.c.id)))
-        result = await info.context.db.execute(count_query)
-        return result.scalar() or 0
 
 
 @strawberry.type

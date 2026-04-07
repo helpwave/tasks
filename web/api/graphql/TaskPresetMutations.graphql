@@ -1,0 +1,49 @@
+mutation CreateTaskPreset($data: CreateTaskPresetInput!) {
+  createTaskPreset(data: $data) {
+    id
+    name
+    key
+    scope
+    ownerUserId
+    graph {
+      nodes {
+        id
+        title
+        description
+        priority
+        estimatedTime
+      }
+      edges {
+        fromId
+        toId
+      }
+    }
+  }
+}
+
+mutation UpdateTaskPreset($id: ID!, $data: UpdateTaskPresetInput!) {
+  updateTaskPreset(id: $id, data: $data) {
+    id
+    name
+    key
+    scope
+    ownerUserId
+    graph {
+      nodes {
+        id
+        title
+        description
+        priority
+        estimatedTime
+      }
+      edges {
+        fromId
+        toId
+      }
+    }
+  }
+}
+
+mutation DeleteTaskPreset($id: ID!) {
+  deleteTaskPreset(id: $id)
+}

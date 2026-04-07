@@ -1,7 +1,7 @@
 'use client'
 
 import type { AnchorHTMLAttributes, ComponentProps, HTMLAttributes, PropsWithChildren } from 'react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Head from 'next/head'
 import titleWrapper from '@/utils/titleWrapper'
 import Link from 'next/link'
@@ -31,12 +31,15 @@ import {
   Users,
   Menu as MenuIcon,
   X,
-  MessageSquare
+  MessageSquare,
+  Rabbit
 } from 'lucide-react'
 import { TasksLogo } from '@/components/TasksLogo'
+import { usePathname } from 'next/navigation'
 import { useRouter } from 'next/router'
 import { useTasksContext } from '@/hooks/useTasksContext'
-import { useLocations } from '@/data'
+import { useLocations, useMySavedViews } from '@/data'
+import type { MySavedViewsQuery } from '@/api/gql/generated'
 import { hashString } from '@/utils/hash'
 import { useSwipeGesture } from '@/hooks/useSwipeGesture'
 import { LocationSelectionDialog } from '@/components/locations/LocationSelectionDialog'
@@ -414,7 +417,7 @@ export const Header = ({ onMenuClick, isMenuOpen, ...props }: HeaderProps) => {
             color="neutral"
             coloringStyle="text"
             onClick={onMenuClick}
-            className="lg:hidden"
+            className="min-h-11 min-w-11 lg:hidden"
           >
             {isMenuOpen ? <X className="size-6" /> : <MenuIcon className="size-6" />}
           </IconButton>
@@ -495,13 +498,22 @@ export const Sidebar = ({ isOpen, onClose, ...props }: SidebarProps) => {
   const translation = useTasksTranslation()
   const locationRoute = '/location'
   const context = useTasksContext()
+  const { data: savedViewsData, loading: savedViewsLoading } = useMySavedViews()
+  const savedViews = (savedViewsData?.mySavedViews ?? []) as MySavedViewsQuery['mySavedViews']
+  const pathname = usePathname() ?? ''
+  const quickAccessNavRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    quickAccessNavRef.current?.scrollIntoView({ block: 'nearest' })
+  }, [pathname])
 
   return (
     <>
       {isOpen && (
         <div
-          className="fixed inset-0 bg-overlay-shadow z-40 lg:hidden"
+          className="fixed inset-0 z-40 touch-manipulation bg-overlay-shadow lg:hidden"
           onClick={onClose}
+          role="presentation"
         />
       )}
       <aside
@@ -509,6 +521,7 @@ export const Sidebar = ({ isOpen, onClose, ...props }: SidebarProps) => {
         className={clsx(
           'flex-col-4 w-50 min-w-56 rounded-lg bg-surface text-on-surface overflow-hidden shadow-md',
           'fixed lg:relative inset-y-0 z-50 lg:z-auto',
+          'pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]',
           'w-screen max-w-sm lg:w-50 lg:min-w-56',
           'transform transition-transform duration-300 ease-out',
           isOpen
@@ -530,7 +543,7 @@ export const Sidebar = ({ isOpen, onClose, ...props }: SidebarProps) => {
               color="neutral"
               coloringStyle="text"
               onClick={onClose}
-              className="lg:hidden"
+              className="min-h-11 min-w-11 lg:hidden"
             >
               <X className="size-6" />
             </IconButton>
@@ -549,6 +562,49 @@ export const Sidebar = ({ isOpen, onClose, ...props }: SidebarProps) => {
             <span className="flex grow">{translation('patients')}</span>
             {context?.totalPatientsCount !== undefined && (<span className="text-description">{context.totalPatientsCount}</span>)}
           </SidebarLink>
+          <div ref={quickAccessNavRef} className="min-h-0 scroll-mt-2">
+            <ExpandableRoot
+              className="shadow-none"
+              isExpanded={context.sidebar.isShowingSavedViews}
+              onExpandedChange={isExpanded => context.update(prevState => ({
+                ...prevState,
+                sidebar: {
+                  ...prevState.sidebar,
+                  isShowingSavedViews: isExpanded,
+                },
+              }))}
+            >
+              <ExpandableHeader className="px-2.5 py-1.5">
+                <div className="flex-row-2">
+                  <Rabbit className="size-5" />
+                  {translation('savedViews')}
+                </div>
+              </ExpandableHeader>
+              <ExpandableContent className="!max-h-none !h-auto !overflow-visible gap-y-0 pl-4 p-0">
+                {savedViews.length > 0
+                  ? savedViews.map((v: MySavedViewsQuery['mySavedViews'][number]) => (
+                    <SidebarLink key={v.id} href={`/view/${v.id}`} onClick={onClose}>
+                      {v.name}
+                    </SidebarLink>
+                  ))
+                  : savedViewsLoading
+                    ? (
+                      <div className="px-2.5 py-1.5 typography-body-sm text-description">
+                        {translation('loading')}
+                      </div>
+                    )
+                    : (
+                      <Link
+                        href="/settings/views"
+                        className="flex-row-1.5 w-full px-2.5 py-1.5 items-center rounded-md typography-body-sm text-description hover:bg-surface-hover"
+                        onClick={onClose}
+                      >
+                        {translation('viewSettings')}
+                      </Link>
+                    )}
+              </ExpandableContent>
+            </ExpandableRoot>
+          </div>
           {(context?.teams?.length ?? 0) > 0 && (
             <ExpandableRoot
               className="shadow-none"
@@ -657,7 +713,7 @@ export const Page = ({
   })
 
   return (
-    <div className="flex-row-0 h-screen w-screen overflow-hidden overflow-x-hidden">
+    <div className="flex-row-0 h-dvh min-h-dvh max-h-dvh w-screen overflow-hidden overflow-x-hidden">
       <Head>
         <title>{titleWrapper(pageTitle)}</title>
       </Head>
@@ -670,10 +726,10 @@ export const Page = ({
       />
       <div
         ref={mainContentRef as React.RefObject<HTMLDivElement>}
-        className="flex-col-4 lg:pl-8 grow overflow-y-scroll"
+        className="flex-col-4 lg:pl-8 grow overflow-y-auto overscroll-y-contain"
       >
         <Header
-          className="sticky top-0 right-0 p-4 bg-background text-on-background"
+          className="sticky top-0 right-0 z-20 p-4 bg-background text-on-background"
           onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)}
           isMenuOpen={isSidebarOpen}
         />

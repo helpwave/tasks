@@ -6,7 +6,7 @@ mutation CreateTask($data: CreateTaskInput!) {
     done
     dueDate
     updateDate
-    assignee {
+    assignees {
       id
       name
       avatarUrl
@@ -35,7 +35,7 @@ mutation UpdateTask($id: ID!, $data: UpdateTaskInput!) {
       id
       name
     }
-    assignee {
+    assignees {
       id
       name
       avatarUrl
@@ -77,10 +77,10 @@ mutation UpdateTask($id: ID!, $data: UpdateTaskInput!) {
   }
 }
 
-mutation AssignTask($id: ID!, $userId: ID!) {
-  assignTask(id: $id, userId: $userId) {
+mutation AddTaskAssignee($id: ID!, $userId: ID!) {
+  addTaskAssignee(id: $id, userId: $userId) {
     id
-    assignee {
+    assignees {
       id
       name
       avatarUrl
@@ -90,10 +90,10 @@ mutation AssignTask($id: ID!, $userId: ID!) {
   }
 }
 
-mutation UnassignTask($id: ID!) {
-  unassignTask(id: $id) {
+mutation RemoveTaskAssignee($id: ID!, $userId: ID!) {
+  removeTaskAssignee(id: $id, userId: $userId) {
     id
-    assignee {
+    assignees {
       id
       name
       avatarUrl
@@ -141,6 +141,29 @@ mutation UnassignTaskFromTeam($id: ID!) {
       id
       title
       kind
+    }
+  }
+}
+
+mutation ApplyTaskGraph($data: ApplyTaskGraphInput!) {
+  applyTaskGraph(data: $data) {
+    id
+    title
+    description
+    done
+    dueDate
+    updateDate
+    sourceTaskPresetId
+    assignees {
+      id
+      name
+      avatarUrl
+      lastOnline
+      isOnline
+    }
+    patient {
+      id
+      name
     }
   }
 }

@@ -50,6 +50,7 @@ export {
   useMyTasks,
   useTasksPaginated,
   usePatientsPaginated,
+  useQueryableFields,
   useCreateTask,
   useUpdateTask,
   useDeleteTask,
@@ -70,6 +71,14 @@ export {
   useUpdatePropertyDefinition,
   useDeletePropertyDefinition,
   useUpdateProfilePicture,
+  useMySavedViews,
+  useSavedView,
+  useTaskPresets,
+  useTaskPreset,
+  useCreateTaskPreset,
+  useUpdateTaskPreset,
+  useDeleteTaskPreset,
+  useApplyTaskGraph,
 } from './hooks'
 export type {
   ClientMutationId,

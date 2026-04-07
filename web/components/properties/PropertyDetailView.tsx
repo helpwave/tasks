@@ -200,10 +200,10 @@ export const PropertyDetailView = ({
 
   return (
     <FormProvider state={form}>
-      <div className="flex-col-0 h-full overflow-hidden">
+      <div className="flex-col-0 h-full min-h-0 overflow-hidden px-1 sm:px-0">
         <form
           onSubmit={event => { event.preventDefault(); form.submit() }}
-          className="flex-col-6 flex-1 overflow-y-auto"
+          className="flex flex-col flex-1 gap-6 overflow-y-auto sm:gap-6"
         >
           <FormField<PropertyFormValues, 'name'>
             name="name"
@@ -249,9 +249,7 @@ export const PropertyDetailView = ({
                 }}
               >
                 {propertySubjectTypeList.map(v => (
-                  <SelectOption key={v} value={v}>
-                    {translation('sPropertySubjectType', { subject: v })}
-                  </SelectOption>
+                  <SelectOption key={v} value={v} label={translation('sPropertySubjectType', { subject: v })} />
                 ))}
               </Select>
             )}
@@ -276,9 +274,7 @@ export const PropertyDetailView = ({
                 }}
               >
                 {propertyFieldTypeList.map(v => (
-                  <SelectOption key={v} value={v}>
-                    {translation('sPropertyType', { type: v })}
-                  </SelectOption>
+                  <SelectOption key={v} value={v} label={translation('sPropertyType', { type: v })} />
                 ))}
               </Select>
             )}
@@ -293,7 +289,7 @@ export const PropertyDetailView = ({
                   <span className="typography-title-md">
                     {translation('selectOptions')}
                   </span>
-                  <div className="flex-col-2 min-h-64 max-h-64 overflow-y-auto">
+                  <div className="flex-col-2 min-h-48 max-h-64 sm:min-h-64 overflow-y-auto">
                     <FormObserverKey<PropertyFormValues, 'selectData'> formKey="selectData">
                       {({ value: selectData }) => {
                         return selectData?.options.map((option) => (
@@ -449,8 +445,8 @@ export const PropertyDetailView = ({
               label={translation('archiveProperty')}
             >
               {({ dataProps: { value, onValueChange }, focusableElementProps, interactionStates }) => (
-                <div className="flex-row-4 justify-between items-center">
-                  <div className="flex-col-1">
+                <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
+                  <div className="flex-col-1 min-w-0">
                     <span className="typography-title-md">
                       {translation('archiveProperty')}
                     </span>
@@ -476,12 +472,12 @@ export const PropertyDetailView = ({
         </form>
 
         {!isEditMode && (
-          <div className="flex-row-0 pt-2 justify-end">
+          <div className="flex flex-row pt-2 justify-stretch sm:justify-end">
             <Button
               type="submit"
               onClick={() => form.submit()}
               disabled={isLoading}
-              className="w-fit"
+              className="min-h-11 w-full sm:w-fit"
             >
               {translation('create')}
             </Button>

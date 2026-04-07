@@ -1,9 +1,12 @@
-query GetOverviewData($rootLocationIds: [ID!], $recentPatientsFiltering: [FilterInput!], $recentPatientsSorting: [SortInput!], $recentPatientsPagination: PaginationInput, $recentPatientsSearch: FullTextSearchInput, $recentTasksFiltering: [FilterInput!], $recentTasksSorting: [SortInput!], $recentTasksPagination: PaginationInput, $recentTasksSearch: FullTextSearchInput) {
-  recentPatients(rootLocationIds: $rootLocationIds, filtering: $recentPatientsFiltering, sorting: $recentPatientsSorting, pagination: $recentPatientsPagination, search: $recentPatientsSearch) {
+query GetOverviewData($rootLocationIds: [ID!], $recentPatientsFilters: [QueryFilterClauseInput!], $recentPatientsSorts: [QuerySortClauseInput!], $recentPatientsPagination: PaginationInput, $recentPatientsSearch: QuerySearchInput, $recentTasksFilters: [QueryFilterClauseInput!], $recentTasksSorts: [QuerySortClauseInput!], $recentTasksPagination: PaginationInput, $recentTasksSearch: QuerySearchInput) {
+  recentPatients(rootLocationIds: $rootLocationIds, filters: $recentPatientsFilters, sorts: $recentPatientsSorts, pagination: $recentPatientsPagination, search: $recentPatientsSearch) {
     id
     name
+    firstname
+    lastname
     sex
     birthdate
+    state
     position {
       id
       title
@@ -14,6 +17,8 @@ query GetOverviewData($rootLocationIds: [ID!], $recentPatientsFiltering: [Filter
       }
     }
     tasks {
+      id
+      done
       updateDate
     }
     properties {
@@ -49,21 +54,29 @@ query GetOverviewData($rootLocationIds: [ID!], $recentPatientsFiltering: [Filter
       }
     }
   }
-  recentPatientsTotal(rootLocationIds: $rootLocationIds, filtering: $recentPatientsFiltering, sorting: $recentPatientsSorting, search: $recentPatientsSearch)
-  recentTasks(rootLocationIds: $rootLocationIds, filtering: $recentTasksFiltering, sorting: $recentTasksSorting, pagination: $recentTasksPagination, search: $recentTasksSearch) {
+  recentPatientsTotal(rootLocationIds: $rootLocationIds, filters: $recentPatientsFilters, sorts: $recentPatientsSorts, search: $recentPatientsSearch)
+  recentTasks(rootLocationIds: $rootLocationIds, filters: $recentTasksFilters, sorts: $recentTasksSorts, pagination: $recentTasksPagination, search: $recentTasksSearch) {
     id
     title
     description
     done
     dueDate
+    creationDate
     updateDate
     priority
-    assignee {
+    estimatedTime
+    sourceTaskPresetId
+    assignees {
       id
       name
       avatarUrl
       lastOnline
       isOnline
+    }
+    assigneeTeam {
+      id
+      title
+      kind
     }
     patient {
       id
@@ -111,5 +124,5 @@ query GetOverviewData($rootLocationIds: [ID!], $recentPatientsFiltering: [Filter
       }
     }
   }
-  recentTasksTotal(rootLocationIds: $rootLocationIds, filtering: $recentTasksFiltering, sorting: $recentTasksSorting, search: $recentTasksSearch)
+  recentTasksTotal(rootLocationIds: $rootLocationIds, filters: $recentTasksFilters, sorts: $recentTasksSorts, search: $recentTasksSearch)
 }

@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { Chip, ProgressIndicator, Tooltip } from '@helpwave/hightide'
 import { DateDisplay } from '@/components/Date/DateDisplay'
 import { LocationChipsBySetting } from '@/components/patients/LocationChipsBySetting'
@@ -8,11 +9,13 @@ import type { PatientViewModel } from '../tables/PatientList'
 
 type PatientCardViewProps = {
   patient: PatientViewModel,
-  onClick: (patient: PatientViewModel) => void,
+  onClick?: (patient: PatientViewModel) => void,
+  extraContent?: ReactNode,
 }
 
-export const PatientCardView = ({ patient, onClick }: PatientCardViewProps) => {
+export const PatientCardView = ({ patient, onClick, extraContent }: PatientCardViewProps) => {
   const translation = useTasksTranslation()
+  const isClickable = Boolean(onClick)
 
   const sex = patient.sex
   const colorClass = sex === Sex.Male
@@ -33,12 +36,13 @@ export const PatientCardView = ({ patient, onClick }: PatientCardViewProps) => {
 
   return (
     <button
-      onClick={() => onClick(patient)}
-      className="border-2 p-5 rounded-lg text-left w-full transition-colors hover:border-primary relative bg-[rgba(255,255,255,1)] dark:bg-[rgba(55,65,81,1)]"
+      type="button"
+      onClick={onClick ? () => onClick(patient) : undefined}
+      className={`border-2 p-5 rounded-lg text-left w-full transition-colors relative bg-[rgba(255,255,255,1)] dark:bg-[rgba(55,65,81,1)] ${isClickable ? 'cursor-pointer hover:border-primary' : 'cursor-default'}`}
     >
       <div className="flex flex-col gap-3">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="font-semibold text-lg flex-1">{patient.name}</h3>
+          <h3 className="font-semibold text-lg flex-1 min-w-0 whitespace-normal break-words">{patient.name}</h3>
           {total > 0 && (
             <Tooltip
               tooltip={(
@@ -74,6 +78,7 @@ export const PatientCardView = ({ patient, onClick }: PatientCardViewProps) => {
           )}
           <PatientStateChip state={patient.state} />
         </div>
+        {extraContent}
       </div>
     </button>
   )

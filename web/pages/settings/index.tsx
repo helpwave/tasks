@@ -17,7 +17,7 @@ import { useStorage } from '@/hooks/useStorage'
 import type { HightideTranslationLocales, ThemeType } from '@helpwave/hightide'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { useAuth } from '@/hooks/useAuth'
-import { LogOut, MonitorCog, MoonIcon, SunIcon, Trash2, ClipboardList, Shield, TableProperties, Building2, MessageSquareText, Upload, X } from 'lucide-react'
+import { LogOut, MonitorCog, MoonIcon, SunIcon, Trash2, ClipboardList, Shield, TableProperties, Building2, MessageSquareText, Upload, X, Rabbit, Combine } from 'lucide-react'
 import { useRouter } from 'next/router'
 import clsx from 'clsx'
 import { removeUser } from '@/api/auth/authService'
@@ -250,18 +250,46 @@ const SettingsPage: NextPage = () => {
 
           <div className="flex-col-6">
             <h2 className="typography-title-md border-b border-divider pb-2">{translation('system')}</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="flex flex-col gap-6 max-w-200">
               <Button
                 color="neutral"
                 coloringStyle="outline"
-                className="justify-start h-auto py-4"
+                className="justify-start h-auto py-4 w-full"
                 onClick={() => router.push('/properties')}
               >
-                <TableProperties className="mr-2" />
+                <TableProperties className="mr-2 shrink-0" />
                 <div className="flex-col-1 items-start">
                   <span className="typography-label-lg">{translation('properties')}</span>
                   <span className="typography-body-sm text-description font-normal">
-                    {translation('properties')}
+                    {translation('propertiesSettingsDescription')}
+                  </span>
+                </div>
+              </Button>
+              <Button
+                color="neutral"
+                coloringStyle="outline"
+                className="justify-start h-auto py-4 w-full"
+                onClick={() => router.push('/settings/views')}
+              >
+                <Rabbit className="mr-2 shrink-0 size-5" />
+                <div className="flex-col-1 items-start">
+                  <span className="typography-label-lg">{translation('views')}</span>
+                  <span className="typography-body-sm text-description font-normal">
+                    {translation('viewSettingsDescription')}
+                  </span>
+                </div>
+              </Button>
+              <Button
+                color="neutral"
+                coloringStyle="outline"
+                className="justify-start h-auto py-4 w-full"
+                onClick={() => router.push('/settings/task-presets')}
+              >
+                <Combine className="mr-2 shrink-0" />
+                <div className="flex-col-1 items-start">
+                  <span className="typography-label-lg">{translation('taskPresets')}</span>
+                  <span className="typography-body-sm text-description font-normal">
+                    {translation('taskPresetsDescription')}
                   </span>
                 </div>
               </Button>
@@ -274,40 +302,38 @@ const SettingsPage: NextPage = () => {
 
               <div className="flex-col-2">
                 <span className="typography-label-lg">{translation('language')}</span>
-                <Select
+                <Select<HightideTranslationLocales>
                   value={locale}
-                  onValueChange={(language: string) => setLocale(language as HightideTranslationLocales)}
+                  onValueChange={(language) => setLocale(language)}
                   buttonProps={{
-                    selectedDisplay: (l) => LocalizationUtil.languagesLocalNames[l as HightideTranslationLocales],
+                    selectedDisplay: (selected) => selected ? LocalizationUtil.languagesLocalNames[selected.value] : '',
                     className: 'w-full'
                   }}
                 >
                   {LocalizationUtil.locals.map((local) => (
-                    <SelectOption key={local} value={local}>
-                      {LocalizationUtil.languagesLocalNames[local]}
-                    </SelectOption>
+                    <SelectOption key={local} value={local} label={LocalizationUtil.languagesLocalNames[local]} />
                   ))}
                 </Select>
               </div>
 
               <div className="flex-col-2">
                 <span className="typography-label-lg">{translation('pThemes', { count: 1 })}</span>
-                <Select
+                <Select<ThemeType>
                   value={theme}
-                  onValueChange={(theme) => setTheme(theme as ThemeType)}
+                  onValueChange={(theme) => setTheme(theme)}
                   iconAppearance="right"
                   buttonProps={{
-                    selectedDisplay: (value) => (
+                    selectedDisplay: (selected) => selected && (
                       <div className="flex-row-2 items-center">
                         <ThemeIcon theme={theme} />
-                        {translation('themeMode', { theme: value })}
+                        {translation('themeMode', { theme: selected.value })}
                       </div>
                     ),
                     className: 'w-full',
                   }}
                 >
                   {ThemeUtil.themes.map((t) => (
-                    <SelectOption key={t} value={t} className="gap-x-6 justify-between">
+                    <SelectOption key={t} value={t} className="gap-x-6 justify-between" label={translation('themeMode', { theme: t })} >
                       <div className="flex-row-2 items-center">
                         <ThemeIcon theme={t} />
                         {translation('themeMode', { theme: t })}

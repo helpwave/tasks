@@ -1,0 +1,98 @@
+query MySavedViews {
+  mySavedViews {
+    id
+    name
+    baseEntityType
+    filterDefinition
+    sortDefinition
+    parameters
+    relatedFilterDefinition
+    relatedSortDefinition
+    relatedParameters
+    ownerUserId
+    visibility
+    createdAt
+    updatedAt
+    isOwner
+  }
+}
+
+query SavedView($id: ID!) {
+  savedView(id: $id) {
+    id
+    name
+    baseEntityType
+    filterDefinition
+    sortDefinition
+    parameters
+    relatedFilterDefinition
+    relatedSortDefinition
+    relatedParameters
+    ownerUserId
+    visibility
+    createdAt
+    updatedAt
+    isOwner
+  }
+}
+
+mutation CreateSavedView($data: CreateSavedViewInput!) {
+  createSavedView(data: $data) {
+    id
+    name
+    baseEntityType
+    filterDefinition
+    sortDefinition
+    parameters
+    relatedFilterDefinition
+    relatedSortDefinition
+    relatedParameters
+    ownerUserId
+    visibility
+    createdAt
+    updatedAt
+    isOwner
+  }
+}
+
+mutation UpdateSavedView($id: ID!, $data: UpdateSavedViewInput!) {
+  updateSavedView(id: $id, data: $data) {
+    id
+    name
+    baseEntityType
+    filterDefinition
+    sortDefinition
+    parameters
+    relatedFilterDefinition
+    relatedSortDefinition
+    relatedParameters
+    ownerUserId
+    visibility
+    createdAt
+    updatedAt
+    isOwner
+  }
+}
+
+mutation DeleteSavedView($id: ID!) {
+  deleteSavedView(id: $id)
+}
+
+mutation DuplicateSavedView($id: ID!, $name: String!) {
+  duplicateSavedView(id: $id, name: $name) {
+    id
+    name
+    baseEntityType
+    filterDefinition
+    sortDefinition
+    parameters
+    relatedFilterDefinition
+    relatedSortDefinition
+    relatedParameters
+    ownerUserId
+    visibility
+    createdAt
+    updatedAt
+    isOwner
+  }
+}

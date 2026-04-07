@@ -1,6 +1,7 @@
 import {
   CheckboxProperty,
   DateProperty,
+  MultiSelectOption,
   MultiSelectProperty,
   NumberProperty,
   PropertyBase,
@@ -108,11 +109,8 @@ export const PropertyEntry = ({
         onEditComplete={singleSelectValue => onEditComplete({ ...value, singleSelectValue })}
       >
         {selectData?.options.map(option => (
-          <SelectOption key={option.id} value={option.id}>
-            {option.name}
-          </SelectOption>
-        ))
-        }
+          <SelectOption key={option.id} value={option.id} label={option.name} />
+        ))}
       </SingleSelectProperty>
     )
   case 'multiSelect':
@@ -124,11 +122,8 @@ export const PropertyEntry = ({
         onEditComplete={multiSelectValue => onEditComplete({ ...value, multiSelectValue })}
       >
         {selectData?.options.map(option => (
-          <SelectOption key={option.id} value={option.id}>
-            {option.name}
-          </SelectOption>
-        ))
-        }
+          <MultiSelectOption key={option.id} value={option.id} label={option.name} />
+        ))}
       </MultiSelectProperty>
     )
   case 'user':
@@ -152,7 +147,6 @@ export const PropertyEntry = ({
             onDialogClose={userValue => {
               onEditComplete({ ...value, userValue: userValue || undefined })
             }}
-            onValueClear={onValueClear}
             allowTeams={true}
           />
         )}

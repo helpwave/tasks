@@ -6,8 +6,10 @@ from api.context import Info
 from api.types.base import calculate_checksum_for_instance
 from api.types.property import PropertyValueType
 from database import models
+from sqlalchemy import inspect as sa_inspect
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
+from sqlalchemy.orm.attributes import NO_VALUE
 
 if TYPE_CHECKING:
     from api.types.location import LocationNodeType
@@ -24,24 +26,30 @@ class TaskType:
     due_date: datetime | None
     creation_date: datetime
     update_date: datetime | None
-    assignee_id: strawberry.ID | None
     assignee_team_id: strawberry.ID | None
-    patient_id: strawberry.ID
+    patient_id: strawberry.ID | None
+    source_task_preset_id: strawberry.ID | None
     priority: str | None
     estimated_time: int | None
 
     @strawberry.field
-    async def assignee(
+    async def assignees(
         self,
         info: Info,
-    ) -> Annotated["UserType", strawberry.lazy("api.types.user")] | None:
-
-        if not self.assignee_id:
-            return None
+    ) -> list[Annotated["UserType", strawberry.lazy("api.types.user")]]:
+        try:
+            state = sa_inspect(self)
+            attr = state.attrs.assignees
+            if attr.loaded_value is not NO_VALUE:
+                return list(attr.value)
+        except Exception:
+            pass
         result = await info.context.db.execute(
-            select(models.User).where(models.User.id == self.assignee_id),
+            select(models.User)
+            .join(models.task_assignees, models.task_assignees.c.user_id == models.User.id)
+            .where(models.task_assignees.c.task_id == self.id),
         )
-        return result.scalars().first()
+        return result.scalars().all()
 
     @strawberry.field
     async def assignee_team(
@@ -59,8 +67,9 @@ class TaskType:
     async def patient(
         self,
         info: Info,
-    ) -> Annotated["PatientType", strawberry.lazy("api.types.patient")]:
-
+    ) -> Annotated["PatientType", strawberry.lazy("api.types.patient")] | None:
+        if not self.patient_id:
+            return None
         result = await info.context.db.execute(
             select(models.Patient).where(models.Patient.id == self.patient_id),
         )

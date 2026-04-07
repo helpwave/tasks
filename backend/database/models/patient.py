@@ -84,7 +84,6 @@ class Patient(Base):
     tasks: Mapped[list[Task]] = relationship(
         "Task",
         back_populates="patient",
-        cascade="all, delete-orphan",
     )
     properties: Mapped[list[PropertyValue]] = relationship(
         "PropertyValue",

@@ -44,7 +44,7 @@ export const PropertyCell = ({
       return <FillerCell />
     }
     return (
-      <DateDisplay date={date} showTime={false} />
+      <DateDisplay date={date} showTime={false} mode="absolute" />
     )
   }
   case FieldType.FieldTypeDateTime: {
@@ -58,7 +58,7 @@ export const PropertyCell = ({
       return <FillerCell />
     }
     return (
-      <DateDisplay date={date} />
+      <DateDisplay date={date} mode="absolute" />
     )
   }
   case FieldType.FieldTypeSelect: {

@@ -2,7 +2,7 @@ import { useState, useMemo, useRef } from 'react'
 import { PropsUtil, Visibility } from '@helpwave/hightide'
 import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
-import { Users, ChevronDown, Info, SearchIcon, XIcon } from 'lucide-react'
+import { Users, ChevronDown, Info, SearchIcon } from 'lucide-react'
 import { useUsers, useLocations } from '@/data'
 import clsx from 'clsx'
 import { AssigneeSelectDialog } from './AssigneeSelectDialog'
@@ -12,10 +12,11 @@ interface AssigneeSelectProps {
   value: string,
   onValueChanged: (value: string) => void,
   onDialogClose?: (value: string) => void,
-  onValueClear?: () => void,
   allowTeams?: boolean,
   allowUnassigned?: boolean,
   excludeUserIds?: string[],
+  multiUserSelect?: boolean,
+  onMultiUserIdsSelected?: (userIds: string[]) => void,
   id?: string,
   className?: string,
   [key: string]: unknown,
@@ -25,10 +26,11 @@ export const  AssigneeSelect = ({
   value,
   onValueChanged,
   onDialogClose,
-  onValueClear,
   allowTeams = true,
   allowUnassigned: _allowUnassigned = false,
   excludeUserIds = [],
+  multiUserSelect = false,
+  onMultiUserIdsSelected,
   id,
   className,
 }: AssigneeSelectProps) => {
@@ -133,20 +135,6 @@ export const  AssigneeSelect = ({
                     <Info className="size-4" />
                   </button>
                 )}
-                {onValueClear && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      onValueClear()
-                    }}
-                    onKeyDown={(e) => e.stopPropagation()}
-                    className="p-1 hover:bg-surface-hover rounded transition-colors text-description hover:text-on-surface"
-                    aria-label="Clear selection"
-                  >
-                    <XIcon className="size-4" />
-                  </button>
-                )}
                 <ChevronDown className={clsx('size-6 ml-2 flex-shrink-0 transition-transform duration-200 text-description', isOpen && 'rotate-180')} />
               </div>
             </>
@@ -162,6 +150,8 @@ export const  AssigneeSelect = ({
         isOpen={isOpen}
         onClose={handleClose}
         onUserInfoClick={(userId) => setSelectedUserPopupState({ isOpen: true, userId })}
+        multiUserSelect={multiUserSelect}
+        onMultiUserIdsSelected={onMultiUserIdsSelected}
       />
       <UserInfoPopup
         userId={selectedUserPopupState.userId}

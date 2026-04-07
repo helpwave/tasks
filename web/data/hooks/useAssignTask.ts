@@ -1,8 +1,8 @@
 import { useCallback, useState } from 'react'
 import {
-  AssignTaskDocument,
-  type AssignTaskMutation,
-  type AssignTaskMutationVariables
+  AddTaskAssigneeDocument,
+  type AddTaskAssigneeMutation,
+  type AddTaskAssigneeMutationVariables
 } from '@/api/gql/generated'
 import {
   assignTaskOptimisticPlan,
@@ -13,8 +13,8 @@ import { useMutateOptimistic } from '@/hooks/useMutateOptimistic'
 import { useConflictOnConflict } from '@/providers/ConflictProvider'
 
 type MutateOptions = {
-  variables: AssignTaskMutationVariables,
-  onCompleted?: (data: AssignTaskMutation['assignTask']) => void,
+  variables: AddTaskAssigneeMutationVariables,
+  onCompleted?: (data: AddTaskAssigneeMutation['addTaskAssignee']) => void,
   onError?: (error: Error) => void,
 }
 
@@ -25,23 +25,23 @@ export function useAssignTask() {
   const [error, setError] = useState<Error | null>(null)
 
   const mutate = useCallback(
-    async (options: MutateOptions): Promise<AssignTaskMutation['assignTask'] | undefined> => {
+    async (options: MutateOptions): Promise<AddTaskAssigneeMutation['addTaskAssignee'] | undefined> => {
       setError(null)
       setLoading(true)
       try {
-        const data = await mutateOptimisticFn<AssignTaskMutation, AssignTaskMutationVariables>({
-          document: getParsedDocument(AssignTaskDocument),
+        const data = await mutateOptimisticFn<AddTaskAssigneeMutation, AddTaskAssigneeMutationVariables>({
+          document: getParsedDocument(AddTaskAssigneeDocument),
           variables: options.variables,
           optimisticPlan: assignTaskOptimisticPlan,
           optimisticPlanKey: assignTaskOptimisticPlanKey,
-          onSuccess: (d) => options.onCompleted?.(d.assignTask),
+          onSuccess: (d) => options.onCompleted?.(d.addTaskAssignee),
           onError: (err) => {
             setError(err)
             options.onError?.(err)
           },
           onConflict: onConflict ?? undefined,
         })
-        return data?.assignTask
+        return data?.addTaskAssignee
       } catch (e) {
         const err = e instanceof Error ? e : new Error(String(e))
         setError(err)

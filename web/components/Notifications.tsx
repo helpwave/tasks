@@ -78,7 +78,7 @@ export const Notifications = () => {
 
     const recentTasks = data?.recentTasks?.slice(0, 5) || []
     recentTasks.forEach((task) => {
-      if (task.assignee?.id === user?.id) {
+      if (task.assignees.some((assignee) => assignee.id === user?.id)) {
         return
       }
       const id = `task-${task.id}`

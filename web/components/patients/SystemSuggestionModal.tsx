@@ -7,18 +7,23 @@ import {
   FocusTrapWrapper,
   TabList,
   TabPanel,
-  TabSwitcher,
+  TabSwitcher
 } from '@helpwave/hightide'
 import { ArrowRight, BookCheck, Workflow } from 'lucide-react'
 import type { GuidelineAdherenceStatus } from '@/types/systemSuggestion'
 import type { SystemSuggestion } from '@/types/systemSuggestion'
 import { useSystemSuggestionTasks } from '@/context/SystemSuggestionTasksContext'
+import { useApplyTaskGraph } from '@/data'
+import { GetPatientDocument } from '@/api/gql/generated'
+import { suggestionItemsToTaskGraphInput } from '@/utils/taskGraph'
+import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 
 type SystemSuggestionModalProps = {
-  isOpen: boolean
-  onClose: () => void
-  suggestion: SystemSuggestion
-  patientName?: string
+  isOpen: boolean,
+  onClose: () => void,
+  suggestion: SystemSuggestion,
+  patientName?: string,
+  onApplied?: () => void,
 }
 
 const ADHERENCE_LABEL: Record<GuidelineAdherenceStatus, string> = {
@@ -29,12 +34,12 @@ const ADHERENCE_LABEL: Record<GuidelineAdherenceStatus, string> = {
 
 function adherenceToChipColor(status: GuidelineAdherenceStatus): 'positive' | 'negative' | 'warning' {
   switch (status) {
-    case 'adherent':
-      return 'positive'
-    case 'non_adherent':
-      return 'negative'
-    default:
-      return 'warning'
+  case 'adherent':
+    return 'positive'
+  case 'non_adherent':
+    return 'negative'
+  default:
+    return 'warning'
   }
 }
 
@@ -43,6 +48,7 @@ export function SystemSuggestionModal({
   onClose,
   suggestion,
   patientName,
+  onApplied,
 }: SystemSuggestionModalProps) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set(suggestion.suggestedTasks.map((t) => t.id)))
   const [activeTabId, setActiveTabId] = useState<string | undefined>(undefined)
@@ -54,7 +60,9 @@ export function SystemSuggestionModal({
     }
   }, [isOpen, suggestion.suggestedTasks])
 
-  const { addCreatedTasks, showToast } = useSystemSuggestionTasks()
+  const { showToast } = useSystemSuggestionTasks()
+  const translation = useTasksTranslation()
+  const [applyTaskGraph, { loading: applyLoading }] = useApplyTaskGraph()
 
   const toggleTask = useCallback((id: string) => {
     setSelectedIds((prev) => {
@@ -70,17 +78,61 @@ export function SystemSuggestionModal({
     [suggestion.suggestedTasks, selectedIds]
   )
 
-  const handleCreate = useCallback(() => {
-    addCreatedTasks(suggestion.patientId, selectedItems, false)
-    showToast('Tasks created')
+  const handleCreate = useCallback(async () => {
+    if (selectedItems.length === 0) return
+    const graph = suggestionItemsToTaskGraphInput(selectedItems)
+    await applyTaskGraph({
+      variables: {
+        data: {
+          patientId: suggestion.patientId,
+          graph,
+          assignToCurrentUser: false,
+        },
+      },
+      refetchQueries: [
+        { query: GetPatientDocument, variables: { id: suggestion.patientId } },
+      ],
+    })
+    showToast(translation('tasksCreatedFromPreset'))
+    onApplied?.()
     onClose()
-  }, [suggestion.patientId, selectedItems, addCreatedTasks, showToast, onClose])
+  }, [
+    applyTaskGraph,
+    selectedItems,
+    suggestion.patientId,
+    showToast,
+    translation,
+    onApplied,
+    onClose,
+  ])
 
-  const handleCreateAndAssign = useCallback(() => {
-    addCreatedTasks(suggestion.patientId, selectedItems, true)
-    showToast('Tasks created and assigned')
+  const handleCreateAndAssign = useCallback(async () => {
+    if (selectedItems.length === 0) return
+    const graph = suggestionItemsToTaskGraphInput(selectedItems)
+    await applyTaskGraph({
+      variables: {
+        data: {
+          patientId: suggestion.patientId,
+          graph,
+          assignToCurrentUser: true,
+        },
+      },
+      refetchQueries: [
+        { query: GetPatientDocument, variables: { id: suggestion.patientId } },
+      ],
+    })
+    showToast(translation('tasksCreatedFromPreset'))
+    onApplied?.()
     onClose()
-  }, [suggestion.patientId, selectedItems, addCreatedTasks, showToast, onClose])
+  }, [
+    applyTaskGraph,
+    selectedItems,
+    suggestion.patientId,
+    showToast,
+    translation,
+    onApplied,
+    onClose,
+  ])
 
   return (
     <Dialog
@@ -152,16 +204,16 @@ export function SystemSuggestionModal({
                 </Button>
                 <Button
                   color="primary"
-                  onClick={handleCreateAndAssign}
+                  onClick={() => void handleCreateAndAssign()}
                   coloringStyle="outline"
-                  disabled={selectedItems.length === 0}
+                  disabled={selectedItems.length === 0 || applyLoading}
                 >
                   Create & assign to me
                 </Button>
                 <Button
                   color="primary"
-                  onClick={handleCreate}
-                  disabled={selectedItems.length === 0}
+                  onClick={() => void handleCreate()}
+                  disabled={selectedItems.length === 0 || applyLoading}
                 >
                   Create
                 </Button>

@@ -31,7 +31,7 @@ export const PatientStateChip = ({ state, ...props }: PatientStateChipProps) => 
       {...props}
       color={getColor(state)}
       size={props.size ?? 'sm'}
-      className={clsx('font-[var(--font-space-grotesk)] uppercase text-xs', props.className)}
+      className={clsx('font-semibold uppercase text-xs', props.className)}
     >
       {translation('patientState', { state: state as string })}
     </Chip>
