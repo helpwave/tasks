@@ -296,6 +296,10 @@
       }
     }
   },
+  "loadTaskPresetConfirmTitle": "Confirm loading preset",
+  "loadTaskPresetSelectTasks": "Tasks from preset",
+  "loadTaskPresetCreateAndAssign": "Create & assign to me",
+  "loadTaskPresetTaskLabel": "Preset",
   "taskPresetNoTasks": "This preset has no tasks.",
   "taskPresetSelectPlaceholder": "Select a preset",
   "taskPresetEditDetails": "Edit details",

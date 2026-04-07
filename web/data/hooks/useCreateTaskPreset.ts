@@ -4,11 +4,14 @@ import {
   type CreateTaskPresetMutation,
   type CreateTaskPresetMutationVariables
 } from '@/api/gql/generated'
+import { refetchTaskPresetsMutationOptions } from '../cache/taskPresetMutationDefaults'
 import { getParsedDocument } from './queryHelpers'
 
 export function useCreateTaskPreset() {
   return useMutation<
     CreateTaskPresetMutation,
     CreateTaskPresetMutationVariables
-  >(getParsedDocument(CreateTaskPresetDocument))
+  >(getParsedDocument(CreateTaskPresetDocument), {
+    ...refetchTaskPresetsMutationOptions,
+  })
 }

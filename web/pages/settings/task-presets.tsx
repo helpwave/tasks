@@ -69,7 +69,7 @@ const TaskPresetsPage: NextPage = () => {
     void router.replace({ pathname: router.pathname, query: nextQuery }, undefined, { shallow: true })
   }, [router])
 
-  const { data, loading, refetch } = useTaskPresets()
+  const { data, loading } = useTaskPresets()
 
   const [createPreset] = useCreateTaskPreset()
   const [updatePreset] = useUpdateTaskPreset()
@@ -144,14 +144,13 @@ const TaskPresetsPage: NextPage = () => {
           },
         },
       })
-      await refetch()
       resetCreateForm()
       setCreateDrawerOpen(false)
       stripPresetQueryParam()
     } finally {
       setSaving(false)
     }
-  }, [createPreset, name, scope, rows, refetch, resetCreateForm, stripPresetQueryParam])
+  }, [createPreset, name, scope, rows, resetCreateForm, stripPresetQueryParam])
 
   const openEdit = useCallback(
     (id: string) => {
@@ -212,25 +211,23 @@ const TaskPresetsPage: NextPage = () => {
           },
         },
       })
-      await refetch()
       closeEditDialog()
     } finally {
       setSaving(false)
     }
-  }, [editId, editName, editRows, updatePreset, refetch, closeEditDialog])
+  }, [editId, editName, editRows, updatePreset, closeEditDialog])
 
   const confirmDelete = useCallback(async () => {
     if (!deleteId) return
     setSaving(true)
     try {
       await deletePreset({ variables: { id: deleteId } })
-      await refetch()
       setDeleteOpen(false)
       setDeleteId(null)
     } finally {
       setSaving(false)
     }
-  }, [deleteId, deletePreset, refetch])
+  }, [deleteId, deletePreset])
 
   const presetColumns = useMemo<ColumnDef<PresetTableRow>[]>(
     () => [

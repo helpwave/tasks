@@ -8,6 +8,10 @@ import { getParsedDocument } from './queryHelpers'
 
 export function useTaskPresets() {
   return useQuery<TaskPresetsQuery, TaskPresetsQueryVariables>(
-    getParsedDocument(TaskPresetsDocument)
+    getParsedDocument(TaskPresetsDocument),
+    {
+      fetchPolicy: 'cache-and-network',
+      nextFetchPolicy: 'cache-first',
+    }
   )
 }

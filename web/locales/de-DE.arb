@@ -430,6 +430,10 @@
       }
     }
   },
+  "loadTaskPresetConfirmTitle": "Vorlagenladen bestätigen",
+  "loadTaskPresetSelectTasks": "Aufgaben aus der Vorlage",
+  "loadTaskPresetCreateAndAssign": "Anlegen & mir zuweisen",
+  "loadTaskPresetTaskLabel": "Vorlage",
   "taskPresetNoTasks": "Diese Vorlage enthält keine Aufgaben.",
   "taskPresetSelectPlaceholder": "Vorlage wählen",
   "taskPresetEditDetails": "Details bearbeiten",

@@ -271,4 +271,5 @@ class ApplyTaskGraphInput:
     patient_id: strawberry.ID
     preset_id: strawberry.ID | None = None
     graph: TaskGraphInput | None = None
+    source_preset_id: strawberry.ID | None = None
     assign_to_current_user: bool = False

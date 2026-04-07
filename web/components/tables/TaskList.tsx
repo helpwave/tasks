@@ -730,9 +730,9 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
             </TaskRowRefreshingGate>
           )
         },
-        minSize: 200,
-        size: 250,
-        maxSize: 350,
+        minSize: 240,
+        size: 300,
+        maxSize: 440,
       })
     }
 

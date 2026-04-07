@@ -2,6 +2,7 @@ input ApplyTaskGraphInput {
   patientId: ID!
   presetId: ID = null
   graph: TaskGraphInput = null
+  sourcePresetId: ID = null
   assignToCurrentUser: Boolean! = false
 }
 
