@@ -6,7 +6,7 @@ python-jose[cryptography]==3.5.0
 redis==7.1.0
 requests==2.33.0
 sqlalchemy==2.0.45
-strawberry-graphql[fastapi]==0.287.3
+strawberry-graphql[fastapi]==0.312.3
 uvicorn[standard]==0.38.0
 influxdb_client==1.49.0
 pytest==8.3.4
