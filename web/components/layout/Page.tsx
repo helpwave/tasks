@@ -562,7 +562,7 @@ export const Sidebar = ({ isOpen, onClose, ...props }: SidebarProps) => {
             <span className="flex grow">{translation('patients')}</span>
             {context?.totalPatientsCount !== undefined && (<span className="text-description">{context.totalPatientsCount}</span>)}
           </SidebarLink>
-          <div ref={quickAccessNavRef} className="min-h-0 scroll-mt-2">
+          <div ref={quickAccessNavRef}>
             <ExpandableRoot
               className="shadow-none"
               isExpanded={context.sidebar.isShowingSavedViews}
