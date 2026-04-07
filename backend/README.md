@@ -23,7 +23,7 @@ The backend is a FastAPI application providing a GraphQL API using Strawberry fo
 ## Environment Variables
 
 ```bash
-DATABASE_URL=postgresql+asyncpg://postgres:password@localhost:5432/postgres
+DATABASE_URL=postgresql+asyncpg://postgres:password@localhost:5434/postgres
 REDIS_URL=redis://:password@localhost:6379
 ENV=development
 ISSUER_URI=http://localhost:8080/realms/tasks

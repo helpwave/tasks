@@ -15,8 +15,8 @@
    ```bash
    cd backend
    source test_env/bin/activate  # or your virtual environment
-   DATABASE_URL="postgresql+asyncpg://postgres:postgres@localhost:5432/postgres" \
-   REDIS_URL="redis://localhost:6379" \
+   DATABASE_URL="postgresql+asyncpg://postgres:password@localhost:5434/postgres" \
+   REDIS_URL="redis://:password@localhost:6379" \
    ENV="test" \
    uvicorn main:app --host 0.0.0.0 --port 8000
    ```

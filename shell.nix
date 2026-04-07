@@ -3,7 +3,7 @@
   postgresUser ? "postgres",
   postgresPassword ? "password",
   postgresDatabase ? "postgres",
-  postgresPort ? 5432,
+  postgresPort ? 5434,
   postgresVersion ? 15,
   redisHost ? "localhost",
   redisPort ? 6379,
@@ -61,6 +61,7 @@ pkgs.mkShell {
     export INFLUXDB_TOKEN="tasks-token-secret"
     export INFLUXDB_ORG="tasks"
     export INFLUXDB_BUCKET="audit"
+    export TASKS_DB_HOST_PORT="${toString postgresPort}"
 
     export LD_LIBRARY_PATH="${libPath}:$LD_LIBRARY_PATH"
 
@@ -125,7 +126,10 @@ pkgs.mkShell {
 
     start-docker() {
       echo ">>> Starting PostgreSQL, Redis, Keycloak and InfluxDB via Docker..."
-      (cd "$PROJECT_ROOT" && ${dockerCompose}/bin/docker-compose -f $DOCKER_COMPOSE_FILE up -d postgres redis keycloak influxdb)
+      if ! (cd "$PROJECT_ROOT" && ${dockerCompose}/bin/docker-compose -f $DOCKER_COMPOSE_FILE up -d postgres redis keycloak influxdb); then
+        echo ">>> ERROR: docker compose failed. If the error is 'port is already allocated', free host port ${toString postgresPort} or run: nix-shell --arg postgresPort 55432"
+        return 1
+      fi
     }
 
     stop-docker() {
@@ -154,12 +158,17 @@ pkgs.mkShell {
     }
 
     run-alembic-upgrade() {
-      while ! ${netcat}/bin/nc -z localhost ${toString postgresPort}; do
-        echo ">>> Waiting for database on :${toString postgresPort}...";
-        sleep 0.5;
+      local n=0
+      while ! PGPASSWORD="${postgresPassword}" ${postgresql}/bin/psql -h localhost -p ${toString postgresPort} -U "${postgresUser}" -d "${postgresDatabase}" -c 'select 1' >/dev/null 2>&1; do
+        n=$((n + 1))
+        if [ "$n" -gt 120 ]; then
+          echo ">>> ERROR: Postgres did not accept connections on :${toString postgresPort} with user ${postgresUser} (wrong port or container not running)."
+          return 1
+        fi
+        echo ">>> Waiting for Postgres on :${toString postgresPort}..."
+        sleep 0.5
       done
-      sleep 1;
-      echo ">>> Database is up!"
+      echo ">>> Postgres is up and credentials work."
       run-alembic upgrade head
     }
 
@@ -179,10 +188,10 @@ pkgs.mkShell {
 
     run-dev-all() {
       ${dockerCompose}/bin/docker-compose -f $DOCKER_COMPOSE_FILE ps --services | grep -vE "keycloak|postgres|redis|influxdb" | xargs ${dockerCompose}/bin/docker-compose -f $DOCKER_COMPOSE_FILE stop
-      start-docker
+      start-docker || exit 1
       trap "echo '>>> Stopping all dev services...'; stop-docker; exit" SIGINT
 
-      run-alembic-upgrade
+      run-alembic-upgrade || exit 1
 
       bash -c '
         trap "exit" SIGINT

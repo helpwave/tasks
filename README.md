@@ -28,7 +28,7 @@ This section covers setting up the local environment for coding. You need **Post
 The application relies on the following services. Ensure your environment variables are set:
 
 ```bash
-DATABASE_URL="postgresql+asyncpg://postgres:password@localhost:5432/postgres"
+DATABASE_URL="postgresql+asyncpg://postgres:password@localhost:5434/postgres"
 REDIS_URL="redis://:password@localhost:6379"
 ENV=development
 INFLUXDB_URL="http://localhost:8086"
@@ -40,6 +40,8 @@ INFLUXDB_BUCKET="audit"
 ### Option A: Manual Setup (Docker Compose)
 
 Use this if you prefer managing your own Python and Node versions.
+
+Development Postgres is published on **host port 5434** by default (not 5432) so it does not clash with a local PostgreSQL install that often listens on 5432 with a different superuser. The compose file uses `TASKS_DB_HOST_PORT` (default `5434`); the Nix shell sets it to match `postgresPort`. If that port is taken, run `nix-shell --arg postgresPort 55432` or set `TASKS_DB_HOST_PORT` when calling Docker Compose and use the same port in `DATABASE_URL`.
 
 1. **Start Infrastructure**
     Start Postgres, Redis, Keycloak, and InfluxDB:
