@@ -12,6 +12,8 @@ export function useTaskPreset(id: string | null | undefined) {
     {
       variables: { id: id ?? '' },
       skip: !id,
+      fetchPolicy: 'cache-and-network',
+      nextFetchPolicy: 'cache-first',
     }
   )
 }

@@ -1065,6 +1065,11 @@ class TaskMutation(BaseMutationResolver[models.Task]):
                 "Provide exactly one of presetId or graph",
                 extensions={"code": "BAD_REQUEST"},
             )
+        if data.preset_id and data.source_preset_id is not None:
+            raise GraphQLError(
+                "sourcePresetId is only allowed when graph is provided",
+                extensions={"code": "BAD_REQUEST"},
+            )
         graph_dict: dict[str, Any]
         if data.preset_id:
             pr = await info.context.db.execute(
@@ -1091,7 +1096,29 @@ class TaskMutation(BaseMutationResolver[models.Task]):
             )
             validate_task_graph_dict(graph_dict)
         assignee_id = user.id if data.assign_to_current_user else None
-        source_preset_id = str(data.preset_id) if data.preset_id else None
+        source_preset_id: str | None
+        if data.preset_id:
+            source_preset_id = str(data.preset_id)
+        elif data.source_preset_id is not None:
+            pr_src = await info.context.db.execute(
+                select(models.TaskPreset).where(
+                    models.TaskPreset.id == data.source_preset_id,
+                ),
+            )
+            preset_src = pr_src.scalars().first()
+            if not preset_src:
+                raise GraphQLError(
+                    "Preset not found",
+                    extensions={"code": "NOT_FOUND"},
+                )
+            if (
+                preset_src.scope == DbTaskPresetScope.PERSONAL.value
+                and preset_src.owner_user_id != user.id
+            ):
+                raise_forbidden()
+            source_preset_id = str(data.source_preset_id)
+        else:
+            source_preset_id = None
         return await apply_task_graph_to_patient(
             info.context.db,
             str(data.patient_id),

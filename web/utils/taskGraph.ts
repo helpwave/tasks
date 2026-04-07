@@ -52,6 +52,42 @@ export function graphNodesToListRows(graph: {
   }))
 }
 
+type PresetGraphSlice = {
+  nodes: Array<{
+    id: string,
+    title: string,
+    description?: string | null,
+    priority?: string | null,
+    estimatedTime?: number | null,
+  }>,
+  edges: Array<{ fromId: string, toId: string }>,
+}
+
+export function presetGraphToTaskGraphInput(
+  graph: PresetGraphSlice,
+  selectedNodeIds: ReadonlySet<string>
+): TaskGraphInput | null {
+  const nodes = graph.nodes.filter((n) => selectedNodeIds.has(n.id))
+  if (nodes.length === 0) return null
+  const nodeInputs: TaskGraphNodeInput[] = nodes.map((n) => {
+    const desc = (n.description ?? '').trim()
+    return {
+      nodeId: n.id,
+      title: n.title,
+      description: desc.length > 0 ? desc : undefined,
+      priority: n.priority ? (n.priority as TaskPriority) : undefined,
+      estimatedTime: n.estimatedTime ?? undefined,
+    }
+  })
+  const edges = graph.edges
+    .filter((e) => selectedNodeIds.has(e.fromId) && selectedNodeIds.has(e.toId))
+    .map((e) => ({
+      fromNodeId: e.fromId,
+      toNodeId: e.toId,
+    }))
+  return { nodes: nodeInputs, edges }
+}
+
 export function suggestionItemsToTaskGraphInput(items: SuggestedTaskItem[]): TaskGraphInput {
   const nodes: TaskGraphNodeInput[] = items.map((t, i) => ({
     nodeId: `s-${i}-${t.id}`,

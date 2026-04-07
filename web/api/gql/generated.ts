@@ -24,6 +24,7 @@ export type ApplyTaskGraphInput = {
   graph?: InputMaybe<TaskGraphInput>;
   patientId: Scalars['ID']['input'];
   presetId?: InputMaybe<Scalars['ID']['input']>;
+  sourcePresetId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type AuditLogType = {

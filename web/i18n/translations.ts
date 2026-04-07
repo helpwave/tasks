@@ -107,6 +107,10 @@ export type TasksTranslationEntries = {
   'loadMore': string,
   'loadTaskPreset': string,
   'loadTaskPresetConfirm': (values: { count: number }) => string,
+  'loadTaskPresetConfirmTitle': string,
+  'loadTaskPresetCreateAndAssign': string,
+  'loadTaskPresetSelectTasks': string,
+  'loadTaskPresetTaskLabel': string,
   'loadTaskPresetTitle': string,
   'location': string,
   'locationBed': string,
@@ -413,6 +417,10 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
       _out += ` für diesen Patienten anlegen?`
       return _out
     },
+    'loadTaskPresetConfirmTitle': `Vorlagenladen bestätigen`,
+    'loadTaskPresetCreateAndAssign': `Anlegen & mir zuweisen`,
+    'loadTaskPresetSelectTasks': `Aufgaben aus der Vorlage`,
+    'loadTaskPresetTaskLabel': `Vorlage`,
     'loadTaskPresetTitle': `Aufgaben-Vorlage laden`,
     'location': `Ort`,
     'locationBed': `Bett`,
@@ -807,6 +815,10 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
       _out += ` for this patient?`
       return _out
     },
+    'loadTaskPresetConfirmTitle': `Confirm loading preset`,
+    'loadTaskPresetCreateAndAssign': `Create & assign to me`,
+    'loadTaskPresetSelectTasks': `Tasks from preset`,
+    'loadTaskPresetTaskLabel': `Preset`,
     'loadTaskPresetTitle': `Load task preset`,
     'location': `Location`,
     'locationBed': `Bed`,
@@ -1201,6 +1213,10 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
       _out += ` for this patient?`
       return _out
     },
+    'loadTaskPresetConfirmTitle': `Confirm loading preset`,
+    'loadTaskPresetCreateAndAssign': `Create & assign to me`,
+    'loadTaskPresetSelectTasks': `Tasks from preset`,
+    'loadTaskPresetTaskLabel': `Preset`,
     'loadTaskPresetTitle': `Load task preset`,
     'location': `Ubicación`,
     'locationBed': `Cama`,
@@ -1594,6 +1610,10 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
       _out += ` for this patient?`
       return _out
     },
+    'loadTaskPresetConfirmTitle': `Confirm loading preset`,
+    'loadTaskPresetCreateAndAssign': `Create & assign to me`,
+    'loadTaskPresetSelectTasks': `Tasks from preset`,
+    'loadTaskPresetTaskLabel': `Preset`,
     'loadTaskPresetTitle': `Load task preset`,
     'location': `Emplacement`,
     'locationBed': `Lit`,
@@ -1987,6 +2007,10 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
       _out += ` for this patient?`
       return _out
     },
+    'loadTaskPresetConfirmTitle': `Confirm loading preset`,
+    'loadTaskPresetCreateAndAssign': `Create & assign to me`,
+    'loadTaskPresetSelectTasks': `Tasks from preset`,
+    'loadTaskPresetTaskLabel': `Preset`,
     'loadTaskPresetTitle': `Load task preset`,
     'location': `Locatie`,
     'locationBed': `Bed`,
@@ -2383,6 +2407,10 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
       _out += ` for this patient?`
       return _out
     },
+    'loadTaskPresetConfirmTitle': `Confirm loading preset`,
+    'loadTaskPresetCreateAndAssign': `Create & assign to me`,
+    'loadTaskPresetSelectTasks': `Tasks from preset`,
+    'loadTaskPresetTaskLabel': `Preset`,
     'loadTaskPresetTitle': `Load task preset`,
     'location': `Localização`,
     'locationBed': `Leito`,

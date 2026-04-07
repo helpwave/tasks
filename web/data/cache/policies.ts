@@ -54,6 +54,10 @@ export function buildCacheConfig(): InMemoryCacheConfig {
           },
           users: { keyArgs: [] },
           me: { keyArgs: [] },
+          taskPresets: {
+            merge: (_existing, incoming) => incoming,
+          },
+          taskPreset: { keyArgs: ['id'] },
         },
       },
       Task: { keyFields: ['id'] },
@@ -87,6 +91,7 @@ export function buildCacheConfig(): InMemoryCacheConfig {
       TaskGraphType: { keyFields: false },
       TaskGraphNodeType: { keyFields: false },
       TaskGraphEdgeType: { keyFields: false },
+      TaskPresetType: { keyFields: ['id'] },
     },
   }
 }
