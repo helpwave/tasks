@@ -1,3 +1,5 @@
+"""In-memory filtering for patients and tasks. Used after fetching from the GraphQL API when filtering/sorting are not done server-side."""
+
 from __future__ import annotations
 
 from datetime import date, datetime
@@ -5,10 +7,12 @@ from typing import Any
 
 
 def normalize_text(value: str | None) -> str:
+    """Strip and lowercase a string for consistent comparison. None and empty become empty string."""
     return (value or "").strip().lower()
 
 
 def parse_date(value: str | None) -> date | None:
+    """Parse a date string in YYYY-MM-DD or DD.MM.YYYY format. Returns None if invalid or empty."""
     if not value:
         return None
     for fmt in ("%Y-%m-%d", "%d.%m.%Y"):
@@ -20,12 +24,17 @@ def parse_date(value: str | None) -> date | None:
 
 
 def patient_full_name(patient: dict[str, Any]) -> str:
+    """Build a normalized full name from patient firstname/lastname, or from 'name' if firstname/lastname are absent."""
     firstname = patient.get("firstname") or ""
     lastname = patient.get("lastname") or ""
-    return normalize_text(f"{firstname} {lastname}")
+    combined = normalize_text(f"{firstname} {lastname}")
+    if combined:
+        return combined
+    return normalize_text(str(patient.get("name") or ""))
 
 
 def matches_name(patient: dict[str, Any], query: str) -> bool:
+    """Return True if the query string appears in the patient's full name (firstname lastname or lastname firstname). Empty query matches any patient."""
     query_value = normalize_text(query)
     if not query_value:
         return True
@@ -40,6 +49,7 @@ def matches_properties(
     properties: list[dict[str, Any]] | None,
     filters: list[dict[str, Any]] | None,
 ) -> bool:
+    """Return True if the entity has properties satisfying every filter. Each filter has 'name' (property definition name) and 'value'; value is matched against any of the property's value fields (textValue, numberValue, etc.). No filters means match all."""
     if not filters:
         return True
     if not properties:
@@ -92,6 +102,7 @@ def filter_patients(
     description: str | None,
     property_filters: list[dict[str, Any]] | None,
 ) -> list[dict[str, Any]]:
+    """Return patients that match all non-None criteria: name (substring in full name), birthdate (exact date), sex, state, description (substring), and optional property filters. None means do not filter on that field."""
     birthdate_value = parse_date(birthdate)
     sex_value = normalize_text(sex)
     state_value = normalize_text(state)
@@ -128,6 +139,7 @@ def filter_tasks(
     priority: str | None,
     property_filters: list[dict[str, Any]] | None,
 ) -> list[dict[str, Any]]:
+    """Return tasks that match all non-None criteria: patient_name (substring in patient full name), patient_id (exact), title_contains, description_contains, done (bool), priority (exact, case-insensitive), and optional property filters. None means do not filter on that field."""
     title_value = normalize_text(title_contains)
     description_value = normalize_text(description_contains)
     priority_value = normalize_text(priority)

@@ -1,5 +1,8 @@
-mcp
+anyio
+fastmcp
 httpx
-trio
-openai
 idna
+mcp
+openai
+platformdirs
+trio

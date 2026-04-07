@@ -1,3 +1,5 @@
+"""Build human-readable task summaries (counts, next due date, priorities) from a list of task dicts."""
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -5,6 +7,7 @@ from typing import Any
 
 
 def format_summary(tasks: list[dict[str, Any]]) -> dict[str, Any]:
+    """Produce a summary dict with total_tasks, open_tasks, done_tasks, next_due_date (earliest dueDate among tasks), and open_task_priorities (list of priority strings for open tasks). Task dicts must have 'done' and optionally 'dueDate', 'priority'."""
     total = len(tasks)
     done_tasks = [task for task in tasks if task.get("done") is True]
     open_tasks = [task for task in tasks if task.get("done") is False]

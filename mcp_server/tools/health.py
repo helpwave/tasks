@@ -1,3 +1,5 @@
+"""Health check MCP tool: verifies connectivity to the GraphQL backend."""
+
 from __future__ import annotations
 
 from mcp_server.graphql_client import GraphQLResponseError
@@ -5,9 +7,11 @@ from mcp_server.tooling import tool_error
 
 
 def register_health_tool(app, client) -> None:
+    """Register the health check tool on the given app. The tool runs a minimal GraphQL query to confirm the backend is reachable."""
     @app.tool()
     @tool_error("health")
     async def health() -> dict:
+        """Check backend connectivity. Returns {'status': 'ok'} if the GraphQL endpoint responds, or {'status': 'error', 'errors': [...]} if the request fails."""
         try:
             await client.execute("query Health { __typename }")
             return {"status": "ok"}

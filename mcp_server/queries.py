@@ -1,3 +1,5 @@
+"""GraphQL query and mutation strings for the backend API. Used by the GraphQL client in tools; variable names and shapes must match the backend schema (e.g. PaginationInput with pageIndex, pageSize; locationNodeId for patients)."""
+
 GET_PATIENT_QUERY = """
 query GetPatient($id: ID!) {
   patient(id: $id) {
@@ -10,13 +12,73 @@ query GetPatient($id: ID!) {
     state
     description
     checksum
+    assignedLocation {
+      id
+      title
+    }
+    assignedLocations {
+      id
+      title
+    }
+    clinic {
+      id
+      title
+      kind
+    }
+    position {
+      id
+      title
+      kind
+    }
+    teams {
+      id
+      title
+      kind
+    }
+    tasks {
+      id
+      title
+      description
+      done
+      dueDate
+      priority
+      estimatedTime
+      updateDate
+      assignee {
+        id
+        name
+      }
+      assigneeTeam {
+        id
+        title
+        kind
+      }
+    }
+    properties {
+      definition {
+        id
+        name
+        description
+        fieldType
+        isActive
+        allowedEntities
+        options
+      }
+      textValue
+      numberValue
+      booleanValue
+      dateValue
+      dateTimeValue
+      selectValue
+      multiSelectValues
+    }
   }
 }
 """
 
 LIST_PATIENTS_QUERY = """
-query GetPatients($locationId: ID, $rootLocationIds: [ID!], $states: [PatientState!], $limit: Int, $offset: Int) {
-  patients(locationNodeId: $locationId, rootLocationIds: $rootLocationIds, states: $states, limit: $limit, offset: $offset) {
+query GetPatients($locationNodeId: ID, $rootLocationIds: [ID!], $states: [PatientState!], $pagination: PaginationInput) {
+  patients(locationNodeId: $locationNodeId, rootLocationIds: $rootLocationIds, states: $states, pagination: $pagination) {
     id
     name
     firstname
@@ -55,25 +117,45 @@ query GetTask($id: ID!) {
     checksum
     patient {
       id
-      firstname
-      lastname
-      birthdate
+      name
     }
     assignee {
       id
       name
+      avatarUrl
+      lastOnline
+      isOnline
     }
     assigneeTeam {
       id
       title
+      kind
+    }
+    properties {
+      definition {
+        id
+        name
+        description
+        fieldType
+        isActive
+        allowedEntities
+        options
+      }
+      textValue
+      numberValue
+      booleanValue
+      dateValue
+      dateTimeValue
+      selectValue
+      multiSelectValues
     }
   }
 }
 """
 
 LIST_TASKS_QUERY = """
-query GetTasks($patientId: ID, $assigneeId: ID, $assigneeTeamId: ID, $rootLocationIds: [ID!], $limit: Int, $offset: Int) {
-  tasks(patientId: $patientId, assigneeId: $assigneeId, assigneeTeamId: $assigneeTeamId, rootLocationIds: $rootLocationIds, limit: $limit, offset: $offset) {
+query GetTasks($patientId: ID, $assigneeId: ID, $assigneeTeamId: ID, $rootLocationIds: [ID!], $pagination: PaginationInput) {
+  tasks(patientId: $patientId, assigneeId: $assigneeId, assigneeTeamId: $assigneeTeamId, rootLocationIds: $rootLocationIds, pagination: $pagination) {
     id
     title
     description
@@ -81,24 +163,54 @@ query GetTasks($patientId: ID, $assigneeId: ID, $assigneeTeamId: ID, $rootLocati
     dueDate
     priority
     estimatedTime
+    creationDate
     updateDate
     patient {
       id
-      firstname
-      lastname
-      birthdate
+      name
+      assignedLocation {
+        id
+        title
+        parent {
+          id
+          title
+        }
+      }
+      assignedLocations {
+        id
+        title
+        kind
+        parent {
+          id
+          title
+          parent {
+            id
+            title
+          }
+        }
+      }
     }
     assignee {
       id
       name
+      avatarUrl
+      lastOnline
+      isOnline
     }
     assigneeTeam {
       id
       title
+      kind
     }
     properties {
       definition {
+        id
         name
+        description
+        fieldType
+        isActive
+        allowedEntities
+        options
       }
       textValue
       numberValue

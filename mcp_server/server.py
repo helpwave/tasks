@@ -1,12 +1,18 @@
+"""MCP server entrypoint: configures FastMCP app, GraphQL client, and registers patient, task, and health tools."""
+
 from __future__ import annotations
 
 import sys
 from pathlib import Path
 
-from mcp.server.fastmcp import FastMCP
-
 if __package__ in (None, ""):
     sys.path.append(str(Path(__file__).resolve().parent.parent))
+
+vendor_path = Path(__file__).resolve().parent / "_vendor"
+if str(vendor_path) not in sys.path:
+    sys.path.insert(0, str(vendor_path))
+
+from fastmcp import FastMCP
 
 from mcp_server.config import load_settings
 from mcp_server.graphql_client import GraphQLClient
@@ -15,10 +21,6 @@ from mcp_server.tools.patients import register_patient_tools
 from mcp_server.tools.tasks import register_task_tools
 
 settings = load_settings()
-
-if settings.dev_mode_no_auth:
-    print("WARNING: Running in DEV_MODE_NO_AUTH. Authentication is disabled.", file=sys.stderr)
-
 client = GraphQLClient(
     url=settings.graphql_url,
     access_token=settings.access_token,
@@ -33,7 +35,8 @@ register_health_tool(app, client)
 
 
 def main() -> None:
-    app.run()
+    """Run the MCP server on port 8001 with HTTP transport. Requires MCP_GRAPHQL_URL (and optionally MCP_ACCESS_TOKEN or MCP_ACCESS_TOKEN_FILE, MCP_TIMEOUT_SECONDS) to be set or defaults will be used."""
+    app.run(port=800, transport="http")
 
 
 if __name__ == "__main__":

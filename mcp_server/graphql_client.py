@@ -1,3 +1,5 @@
+"""HTTP client for the backend GraphQL API: execute queries/mutations and parse errors."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -8,6 +10,8 @@ import httpx
 
 @dataclass(frozen=True)
 class GraphQLResponseError(Exception):
+    """Raised when the GraphQL response contains an errors array. Attributes: message (short description), errors (list of error dicts from the API)."""
+
     message: str
     errors: list[dict[str, Any]]
 
@@ -21,6 +25,8 @@ class GraphQLResponseError(Exception):
 
 @dataclass(frozen=True)
 class GraphQLClient:
+    """Async client for a single GraphQL endpoint. Sends POST requests with JSON body; supports optional Bearer token and configurable timeout."""
+
     url: str
     access_token: str | None
     timeout_seconds: float
@@ -28,6 +34,7 @@ class GraphQLClient:
     async def execute(
         self, query: str, variables: dict[str, Any] | None = None
     ) -> dict[str, Any]:
+        """Send a GraphQL query or mutation and return the 'data' object. Raises httpx.HTTPStatusError on non-2xx and GraphQLResponseError if the response contains errors."""
         headers: dict[str, str] = {"Content-Type": "application/json"}
         if self.access_token:
             headers["Authorization"] = f"Bearer {self.access_token}"

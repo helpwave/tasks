@@ -3,7 +3,16 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import sys
+from pathlib import Path
 from typing import Any
+
+if __package__ in (None, ""):
+    sys.path.append(str(Path(__file__).resolve().parent.parent))
+
+vendor_path = Path(__file__).resolve().parent / "_vendor"
+if str(vendor_path) not in sys.path:
+    sys.path.insert(0, str(vendor_path))
 
 import anyio
 import mcp.types as types
@@ -22,7 +31,7 @@ def build_env() -> dict[str, str]:
 
 async def run(list_tools: bool, call: str | None, args: dict[str, Any]) -> None:
     params = StdioServerParameters(
-        command="python",
+        command=sys.executable,
         args=["-m", "mcp_server.server"],
         env=build_env(),
         cwd=os.getcwd(),
