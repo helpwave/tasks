@@ -44,6 +44,7 @@ import { hashString } from '@/utils/hash'
 import { useSwipeGesture } from '@/hooks/useSwipeGesture'
 import { LocationSelectionDialog } from '@/components/locations/LocationSelectionDialog'
 import { FeedbackDialog } from '@/components/FeedbackDialog'
+import { AssistantHeaderButton, InProductAssistant } from '@/components/assistant/InProductAssistant'
 
 export const StagingDisclaimerDialog = () => {
   const config = getConfig()
@@ -401,6 +402,7 @@ export const Header = ({ onMenuClick, isMenuOpen, ...props }: HeaderProps) => {
   const translation = useTasksTranslation()
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false)
   const [isUserInfoOpen, setIsUserInfoOpen] = useState(false)
+  const [isAssistantOpen, setIsAssistantOpen] = useState(false)
 
   return (
     <>
@@ -424,6 +426,7 @@ export const Header = ({ onMenuClick, isMenuOpen, ...props }: HeaderProps) => {
         </div>
         <div className="flex-row-2 justify-end items-center gap-x-2">
           <RootLocationSelector className="hidden sm:flex" />
+          <AssistantHeaderButton onClick={() => setIsAssistantOpen(true)} />
           <IconButton
             tooltip={translation('feedback')}
             coloringStyle="text" color="neutral"
@@ -458,6 +461,7 @@ export const Header = ({ onMenuClick, isMenuOpen, ...props }: HeaderProps) => {
           </Tooltip>
         </div>
       </header>
+      <InProductAssistant isOpen={isAssistantOpen} onClose={() => setIsAssistantOpen(false)} />
       <FeedbackDialog isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} />
       <UserInfoPopup
         userId={user?.id ?? null}
