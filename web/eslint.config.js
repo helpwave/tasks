@@ -6,6 +6,7 @@ export default [
       'api/gql/*',
       'i18n/*',
       'next-env.d.ts',
+      'build/*',
     ],
   },
   {

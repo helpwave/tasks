@@ -1,11 +1,7 @@
-import { useMemo, useCallback } from 'react'
+import { useCallback } from 'react'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
-import {
-  PropertyEntity,
-  useGetPropertyDefinitionsQuery,
-  useGetTaskQuery,
-  type PropertyValueInput
-} from '@/api/gql/generated'
+import { type PropertyValueInput } from '@/api/gql/generated'
+import { useTask } from '@/data'
 import {
   TabList,
   TabPanel,
@@ -13,43 +9,26 @@ import {
 } from '@helpwave/hightide'
 import { PropertyList, type PropertyValue } from '@/components/tables/PropertyList'
 import { TaskDataEditor } from './TaskDataEditor'
-import { useOptimisticUpdateTaskMutation } from '@/api/optimistic-updates/GetTask'
+import { useUpdateTask } from '@/data'
 
 interface TaskDetailViewProps {
   taskId: string | null,
   onClose: () => void,
-  onSuccess: () => void,
+  onListSync?: () => void,
   initialPatientId?: string,
 }
 
-export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }: TaskDetailViewProps) => {
+export const TaskDetailView = ({ taskId, onClose, onListSync, initialPatientId }: TaskDetailViewProps) => {
   const translation = useTasksTranslation()
 
   const isEditMode = !!taskId
 
-  const { data: taskData } = useGetTaskQuery(
-    { id: taskId! },
-    {
-      enabled: isEditMode,
-      refetchOnMount: true,
-    }
+  const { data: taskData } = useTask(
+    taskId ?? '',
+    { skip: !isEditMode }
   )
 
-  const { data: propertyDefinitionsData } = useGetPropertyDefinitionsQuery()
-
-  const { mutate: updateTask } = useOptimisticUpdateTaskMutation({
-    id: taskId!,
-    onSuccess: () => {
-      onSuccess()
-    },
-  })
-
-  const hasAvailableProperties = useMemo(() => {
-    if (!propertyDefinitionsData?.propertyDefinitions) return false
-    return propertyDefinitionsData.propertyDefinitions.some(
-      def => def.isActive && def.allowedEntities.includes(PropertyEntity.Task)
-    )
-  }, [propertyDefinitionsData])
+  const [updateTask] = useUpdateTask()
 
   const convertPropertyValueToInput = useCallback((definitionId: string, value: PropertyValue | null): PropertyValueInput | null => {
     if (!value) return null
@@ -62,13 +41,14 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
       dateTimeValue: value.dateTimeValue?.toISOString() ?? undefined,
       selectValue: value.singleSelectValue ?? undefined,
       multiSelectValues: value.multiSelectValue ?? undefined,
+      userValue: value.userValue ?? undefined,
     }
   }, [])
 
   const handlePropertyValueChange = useCallback((definitionId: string, value: PropertyValue | null) => {
-    if (!isEditMode || !taskId || !taskData?.task) return
+    if (!isEditMode || !taskId || !taskData) return
 
-    const currentProperties = taskData.task.properties || []
+    const currentProperties = taskData.properties || []
     const propertyInputs: PropertyValueInput[] = []
 
     // Add all existing properties except the one being changed
@@ -83,6 +63,7 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
           dateTimeValue: prop.dateTimeValue ?? undefined,
           selectValue: prop.selectValue ?? undefined,
           multiSelectValues: prop.multiSelectValues ?? undefined,
+          userValue: (prop as { userValue?: string | null }).userValue ?? undefined,
         })
       }
     }
@@ -96,44 +77,48 @@ export const TaskDetailView = ({ taskId, onClose, onSuccess, initialPatientId }:
     }
 
     updateTask({
-      id: taskId,
-      data: {
-        properties: propertyInputs,
+      variables: {
+        id: taskId,
+        data: {
+          properties: propertyInputs,
+        },
       },
     })
-  }, [isEditMode, taskId, taskData?.task, convertPropertyValueToInput, updateTask])
+  }, [isEditMode, taskId, taskData, convertPropertyValueToInput, updateTask])
 
 
   return (
     <div className="flex-grow overflow-hidden flex flex-col">
       <TabSwitcher>
         <TabList/>
-        <TabPanel label={translation('overview')} className="h-full overflow-y-auto px-1">
+        <TabPanel label={translation('overview')} className="overflow-hidden h-full" initiallyActive={true}>
           <TaskDataEditor
             id={taskId}
             initialPatientId={initialPatientId}
-            onSuccess={onSuccess}
+            onListSync={onListSync}
             onClose={onClose}
           />
         </TabPanel>
-        {isEditMode && hasAvailableProperties && (
-          <TabPanel label={translation('properties')} className="h-full overflow-y-auto pr-2">
-            <div className="flex flex-col gap-4 pt-4">
-              <PropertyList
-                subjectId={taskId!}
-                subjectType="task"
-                fullWidthAddButton={true}
-                propertyValues={taskData?.task?.properties?.map(p => ({
-                  ...p,
-                  definition: {
-                    ...p.definition,
-                  },
-                }))}
-                onPropertyValueChange={handlePropertyValueChange}
-              />
-            </div>
-          </TabPanel>
-        )}
+        <TabPanel
+          label={translation('properties')}
+          className="h-full overflow-y-auto pr-2"
+          disabled={!isEditMode}
+        >
+          <div className="flex flex-col gap-4 pt-4">
+            <PropertyList
+              subjectId={taskId!}
+              subjectType="task"
+              fullWidthAddButton={true}
+              propertyValues={taskData?.properties?.map(p => ({
+                ...p,
+                definition: {
+                  ...p.definition,
+                },
+              }))}
+              onPropertyValueChange={handlePropertyValueChange}
+            />
+          </div>
+        </TabPanel>
       </TabSwitcher>
     </div>
   )

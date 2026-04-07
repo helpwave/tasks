@@ -4,6 +4,7 @@ import strawberry
 from api.audit import audit_log
 from api.context import Info
 from api.decorators.pagination import apply_pagination
+from api.errors import raise_forbidden
 from api.inputs import CreateLocationNodeInput, LocationType, UpdateLocationNodeInput
 from api.resolvers.base import BaseMutationResolver, BaseSubscriptionResolver
 from api.services.authorization import AuthorizationService
@@ -52,10 +53,7 @@ class LocationQuery:
                 info.context.user, info.context
             )
             if location.id not in accessible_location_ids:
-                raise GraphQLError(
-                    "Insufficient permission. Please contact an administrator if you believe this is an error.",
-                    extensions={"code": "FORBIDDEN"},
-                )
+                raise_forbidden()
 
         return location
 
@@ -83,10 +81,7 @@ class LocationQuery:
 
         if recursive and parent_id:
             if parent_id not in accessible_location_ids:
-                raise GraphQLError(
-                    "Insufficient permission. Please contact an administrator if you believe this is an error.",
-                    extensions={"code": "FORBIDDEN"},
-                )
+                raise_forbidden()
 
             cte = (
                 select(models.LocationNode)
@@ -106,10 +101,7 @@ class LocationQuery:
             )
             if parent_id:
                 if parent_id not in accessible_location_ids:
-                    raise GraphQLError(
-                        "Insufficient permission. Please contact an administrator if you believe this is an error.",
-                        extensions={"code": "FORBIDDEN"},
-                    )
+                    raise_forbidden()
                 query = query.where(models.LocationNode.parent_id == parent_id)
 
         if kind:
@@ -143,16 +135,10 @@ class LocationMutation(BaseMutationResolver[models.LocationNode]):
         )
 
         if not accessible_location_ids:
-            raise GraphQLError(
-                "Insufficient permission. Please contact an administrator if you believe this is an error.",
-                extensions={"code": "FORBIDDEN"},
-            )
+            raise_forbidden()
 
         if data.parent_id and data.parent_id not in accessible_location_ids:
-            raise GraphQLError(
-                "Insufficient permission. Please contact an administrator if you believe this is an error.",
-                extensions={"code": "FORBIDDEN"},
-            )
+            raise_forbidden()
 
         location = models.LocationNode(
             title=data.title,
@@ -180,10 +166,7 @@ class LocationMutation(BaseMutationResolver[models.LocationNode]):
         )
 
         if not accessible_location_ids:
-            raise GraphQLError(
-                "Insufficient permission. Please contact an administrator if you believe this is an error.",
-                extensions={"code": "FORBIDDEN"},
-            )
+            raise_forbidden()
 
         result = await db.execute(
             select(models.LocationNode).where(models.LocationNode.id == id)
@@ -197,16 +180,10 @@ class LocationMutation(BaseMutationResolver[models.LocationNode]):
             )
 
         if location.id not in accessible_location_ids:
-            raise GraphQLError(
-                "Insufficient permission. Please contact an administrator if you believe this is an error.",
-                extensions={"code": "FORBIDDEN"},
-            )
+            raise_forbidden()
 
         if data.parent_id is not None and data.parent_id not in accessible_location_ids:
-            raise GraphQLError(
-                "Insufficient permission. Please contact an administrator if you believe this is an error.",
-                extensions={"code": "FORBIDDEN"},
-            )
+            raise_forbidden()
 
         if data.title is not None:
             location.title = data.title
@@ -230,10 +207,7 @@ class LocationMutation(BaseMutationResolver[models.LocationNode]):
         )
 
         if not accessible_location_ids:
-            raise GraphQLError(
-                "Insufficient permission. Please contact an administrator if you believe this is an error.",
-                extensions={"code": "FORBIDDEN"},
-            )
+            raise_forbidden()
 
         result = await db.execute(
             select(models.LocationNode).where(models.LocationNode.id == id)
@@ -247,10 +221,7 @@ class LocationMutation(BaseMutationResolver[models.LocationNode]):
             )
 
         if location.id not in accessible_location_ids:
-            raise GraphQLError(
-                "Insufficient permission. Please contact an administrator if you believe this is an error.",
-                extensions={"code": "FORBIDDEN"},
-            )
+            raise_forbidden()
 
         await BaseMutationResolver.delete_entity(
             info, location, models.LocationNode, "location_node"

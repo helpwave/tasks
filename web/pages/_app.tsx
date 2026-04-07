@@ -11,6 +11,8 @@ import { getConfig } from '@/utils/config'
 import '../globals.css'
 import { AuthProvider } from '@/hooks/useAuth'
 import { TasksContextProvider } from '@/hooks/useTasksContext'
+import { ApolloProviderWithData } from '@/providers/ApolloProviderWithData'
+import { ConflictProvider } from '@/providers/ConflictProvider'
 import { SubscriptionProvider } from '@/providers/SubscriptionProvider'
 import { InstallPrompt } from '@/components/pwa/InstallPrompt'
 import { registerServiceWorker, requestNotificationPermission } from '@/utils/pushNotifications'
@@ -72,12 +74,16 @@ function MyApp({
             '/auth/callback',
           ]}
         >
-          <TasksContextProvider>
+          <ApolloProviderWithData>
             <SubscriptionProvider>
-              <Component {...pageProps} />
-              <InstallPrompt />
+              <TasksContextProvider>
+                <ConflictProvider>
+                  <Component {...pageProps} />
+                  <InstallPrompt />
+                </ConflictProvider>
+              </TasksContextProvider>
             </SubscriptionProvider>
-          </TasksContextProvider>
+          </ApolloProviderWithData>
         </AuthProvider>
         {config.env === 'development' && <ReactQueryDevtools buttonPosition="bottom-left" />}
       </QueryClientProvider>

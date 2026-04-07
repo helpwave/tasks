@@ -1,26 +1,91 @@
-import { useMemo, useState, forwardRef, useImperativeHandle, useEffect, useRef, useCallback } from 'react'
+import { useMemo, useState, forwardRef, useImperativeHandle, useEffect, useRef, useCallback, memo, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { Button, Checkbox, ConfirmDialog, FillerCell, SearchBar, TableColumnSwitcher, TableDisplay, TablePagination, TableProvider, Tooltip, useLocalStorage, Visibility } from '@helpwave/hightide'
-import { PlusIcon, Table as TableIcon, LayoutGrid, UserCheck, Users, Printer } from 'lucide-react'
-import type { TaskPriority, GetTasksQuery } from '@/api/gql/generated'
-import { useAssignTaskMutation, useAssignTaskToTeamMutation, useCompleteTaskMutation, useReopenTaskMutation, useGetUsersQuery, useGetLocationsQuery, useGetPropertyDefinitionsQuery, PropertyEntity, type GetGlobalDataQuery } from '@/api/gql/generated'
-import { AssigneeSelectDialog } from '@/components/tasks/AssigneeSelectDialog'
+import type { FilterListItem } from '@helpwave/hightide'
+import { Button, Checkbox, ConfirmDialog, FilterList, FillerCell, HelpwaveLogo, IconButton, SearchBar, TableColumnSwitcher, TableDisplay, TableProvider, SortingList, ExpansionIcon } from '@helpwave/hightide'
 import clsx from 'clsx'
-import { SmartDate } from '@/utils/date'
+import { LayoutGrid, PlusIcon, Table2, UserCheck, Users } from 'lucide-react'
+import type { IdentifierFilterValue } from '@helpwave/hightide'
+import type { TaskPriority, GetTasksQuery, QueryableField } from '@/api/gql/generated'
+import { FieldType, PropertyEntity } from '@/api/gql/generated'
+import { useAssignTask, useAssignTaskToTeam, useCompleteTask, useReopenTask, useUsers, useLocations, usePropertyDefinitions, useQueryableFields, useRefreshingEntityIds } from '@/data'
+import { AssigneeSelectDialog } from '@/components/tasks/AssigneeSelectDialog'
+import { DateDisplay } from '@/components/Date/DateDisplay'
 import { Drawer } from '@helpwave/hightide'
 import { TaskDetailView } from '@/components/tasks/TaskDetailView'
 import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
 import { PatientDetailView } from '@/components/patients/PatientDetailView'
-import { LocationChips } from '@/components/patients/LocationChips'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { useTasksContext } from '@/hooks/useTasksContext'
-import { useTaskViewToggle } from '@/hooks/useViewToggle'
-import { TaskCardView } from '@/components/tasks/TaskCardView'
 import { UserInfoPopup } from '@/components/UserInfoPopup'
-import type { ColumnDef, ColumnFiltersState, PaginationState, SortingState, TableState, VisibilityState } from '@tanstack/table-core'
+import type { ColumnDef, ColumnFiltersState, ColumnOrderState, PaginationState, SortingState, TableState, VisibilityState } from '@tanstack/table-core'
+import type { Dispatch, SetStateAction } from 'react'
+import { useDeferredColumnOrderChange } from '@/hooks/useDeferredColumnOrderChange'
+import { useStableSerializedList } from '@/hooks/useStableSerializedList'
+import { columnIdsFromColumnDefs, sanitizeColumnOrderForKnownColumns } from '@/utils/columnOrder'
+import { DueDateUtils } from '@/utils/dueDate'
 import { PriorityUtils } from '@/utils/priority'
-import { createPropertyColumn } from '@/utils/propertyColumn'
-import { useStateWithLocalStorage } from '@/hooks/useStateWithLocalStorage'
+import { getPropertyColumnsForEntity } from '@/utils/propertyColumn'
+import { useColumnVisibilityWithPropertyDefaults } from '@/hooks/usePropertyColumnVisibility'
+import { queryableFieldsToFilterListItems, queryableFieldsToSortingListItems, type QueryableChoiceTagLabelResolver } from '@/utils/queryableFilterList'
+import { LIST_PAGE_SIZE } from '@/utils/listPaging'
+import { TaskCardView } from '@/components/tasks/TaskCardView'
+import { RefreshingTaskIdsContext, TaskRowRefreshingGate } from '@/components/tables/TaskRowRefreshingGate'
+import { ExpandableTextBlock } from '@/components/common/ExpandableTextBlock'
+
+type TaskAssigneeTableCellProps = {
+  assigneeId: string,
+  avatarURL: string | null | undefined,
+  name: string,
+  isOnline: boolean | null,
+  onOpenUser: (id: string) => void,
+  printHiddenNameLine: string,
+  extraCountLabel: string | null,
+}
+
+const TaskAssigneeTableCell = memo(function TaskAssigneeTableCell({
+  assigneeId,
+  avatarURL,
+  name,
+  isOnline,
+  onOpenUser,
+  printHiddenNameLine,
+  extraCountLabel,
+}: TaskAssigneeTableCellProps) {
+  const image = useMemo(
+    () => ({
+      avatarUrl: avatarURL || 'https://cdn.helpwave.de/boringavatar.svg',
+      alt: name,
+    }),
+    [avatarURL, name]
+  )
+  return (
+    <>
+      <span className="print:block hidden">{printHiddenNameLine}</span>
+      <div className="flex-row-2 items-center gap-1.5 flex-wrap min-w-0 print:hidden">
+        <button
+          type="button"
+          onClick={() => onOpenUser(assigneeId)}
+          className="flex-row-2 items-center min-w-0 hover:opacity-75 transition-opacity"
+        >
+          <AvatarStatusComponent
+            isOnline={isOnline}
+            image={image}
+          />
+          <span className="truncate">{name}</span>
+        </button>
+        {extraCountLabel != null && (
+          <span className="text-description text-sm font-medium tabular-nums shrink-0">
+            {extraCountLabel}
+          </span>
+        )}
+      </div>
+    </>
+  )
+})
+
+function taskListDataSyncKey(tasks: TaskViewModel[]): string {
+  return tasks.map(t => `${t.id}:${t.done}:${t.updateDate.getTime()}`).join('\0')
+}
 
 export type TaskViewModel = {
   id: string,
@@ -41,6 +106,8 @@ export type TaskViewModel = {
   },
   assignee?: { id: string, name: string, avatarURL?: string | null, isOnline?: boolean | null },
   assigneeTeam?: { id: string, title: string },
+  /** Additional user assignees beyond the first (omit when team assignment). */
+  additionalAssigneeCount?: number,
   done: boolean,
   properties?: GetTasksQuery['tasks'][0]['properties'],
 }
@@ -55,6 +122,17 @@ type TaskDialogState = {
   taskId?: string,
 }
 
+type TaskListTableState = {
+  sorting: SortingState,
+  setSorting: Dispatch<SetStateAction<SortingState>>,
+  filters: ColumnFiltersState,
+  setFilters: Dispatch<SetStateAction<ColumnFiltersState>>,
+  columnVisibility: VisibilityState,
+  setColumnVisibility: Dispatch<SetStateAction<VisibilityState>>,
+  columnOrder: ColumnOrderState,
+  setColumnOrder: Dispatch<SetStateAction<ColumnOrderState>>,
+}
+
 type TaskListProps = {
   tasks: TaskViewModel[],
   onRefetch?: () => void,
@@ -62,188 +140,90 @@ type TaskListProps = {
   initialTaskId?: string,
   onInitialTaskOpened?: () => void,
   headerActions?: React.ReactNode,
+  saveViewSlot?: React.ReactNode,
   totalCount?: number,
+  loading?: boolean,
+  tableState?: TaskListTableState,
+  searchQuery?: string,
+  onSearchQueryChange?: (value: string) => void,
+  loadMore?: () => void,
+  hasMore?: boolean,
+  embedded?: boolean,
+  /** Row order and search already applied in parent (e.g. saved view derived task list). */
+  virtualDerivedOrder?: boolean,
 }
 
-const isOverdue = (dueDate: Date | undefined, done: boolean): boolean => {
-  if (!dueDate || done) return false
-  return dueDate.getTime() < Date.now()
-}
-
-const isCloseToDueDate = (dueDate: Date | undefined, done: boolean): boolean => {
-  if (!dueDate || done) return false
-  const now = Date.now()
-  const dueTime = dueDate.getTime()
-  const oneHour = 60 * 60 * 1000
-  return dueTime > now && dueTime - now <= oneHour
-}
-
-
-
-const STORAGE_KEY_SHOW_DONE = 'task-show-done'
-const STORAGE_KEY_COLUMN_VISIBILITY = 'task-list-column-visibility'
-const STORAGE_KEY_COLUMN_FILTERS = 'task-list-column-filters'
-const STORAGE_KEY_COLUMN_SORTING = 'task-list-column-sorting'
-const STORAGE_KEY_COLUMN_PAGINATION = 'task-list-column-pagination'
-
-export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initialTasks, onRefetch, showAssignee = false, initialTaskId, onInitialTaskOpened, headerActions, totalCount }, ref) => {
+export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initialTasks, onRefetch, showAssignee = false, initialTaskId, onInitialTaskOpened, headerActions, saveViewSlot, totalCount, loading = false, tableState: controlledTableState, searchQuery: searchQueryProp, onSearchQueryChange, loadMore: loadMoreProp, hasMore: hasMoreProp, embedded = false, virtualDerivedOrder = false }, ref) => {
   const translation = useTasksTranslation()
+  const { data: propertyDefinitionsData } = usePropertyDefinitions()
+  const { data: queryableFieldsData } = useQueryableFields('Task')
+  const queryableFieldsStable = useStableSerializedList(
+    queryableFieldsData?.queryableFields,
+    (f) => ({
+      key: f.key,
+      label: f.label,
+      filterable: f.filterable,
+      sortable: f.sortable,
+      sortDirections: f.sortDirections,
+      propertyDefinitionId: f.propertyDefinitionId,
+      kind: f.kind,
+      valueType: f.valueType,
+      choice: f.choice
+        ? { keys: f.choice.optionKeys, labels: f.choice.optionLabels }
+        : null,
+    })
+  )
 
-  const [pagination, setPagination] = useStateWithLocalStorage<PaginationState>({
-    key: STORAGE_KEY_COLUMN_PAGINATION,
-    defaultValue: {
-      pageSize: 10,
-      pageIndex: 0
-    }
-  })
-  const [sorting, setSorting] = useStateWithLocalStorage<SortingState>({
-    key: STORAGE_KEY_COLUMN_SORTING,
-    defaultValue: [
-      { id: 'done', desc: false },
-      { id: 'dueDate', desc: false },
-    ]
-  })
-  const [filters, setFilters] = useStateWithLocalStorage<ColumnFiltersState>({
-    key: STORAGE_KEY_COLUMN_FILTERS,
-    defaultValue: []
-  })
-  const [columnVisibility, setColumnVisibility] = useStateWithLocalStorage<VisibilityState>({
-    key: STORAGE_KEY_COLUMN_VISIBILITY,
-    defaultValue: {}
-  })
+  const [clientVisibleCount, setClientVisibleCount] = useState(LIST_PAGE_SIZE)
+  const [listLayout, setListLayout] = useState<'table' | 'card'>(() => (
+    typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches ? 'card' : 'table'
+  ))
+  const [internalSorting, setInternalSorting] = useState<SortingState>(() => [
+    { id: 'done', desc: false },
+    { id: 'dueDate', desc: false },
+  ])
+  const [internalFilters, setInternalFilters] = useState<ColumnFiltersState>([])
+  const [internalColumnVisibility, setInternalColumnVisibility] = useState<VisibilityState>({})
+  const [internalColumnOrder, setInternalColumnOrder] = useState<ColumnOrderState>([])
+
+  const sorting = controlledTableState?.sorting ?? internalSorting
+  const setSorting = controlledTableState?.setSorting ?? setInternalSorting
+  const filters = controlledTableState?.filters ?? internalFilters
+  const setFilters = controlledTableState?.setFilters ?? setInternalFilters
+  const columnVisibility = controlledTableState?.columnVisibility ?? internalColumnVisibility
+  const setColumnVisibilityRaw = controlledTableState?.setColumnVisibility ?? setInternalColumnVisibility
+  const columnOrder = controlledTableState?.columnOrder ?? internalColumnOrder
+  const setColumnOrder = controlledTableState?.setColumnOrder ?? setInternalColumnOrder
+
+  const setColumnVisibilityMerged = useColumnVisibilityWithPropertyDefaults(
+    propertyDefinitionsData,
+    PropertyEntity.Task,
+    setColumnVisibilityRaw
+  )
 
   const queryClient = useQueryClient()
-  const { totalPatientsCount, user, selectedRootLocationIds } = useTasksContext()
-  const { viewType, toggleView } = useTaskViewToggle()
+  const { totalPatientsCount, user } = useTasksContext()
+  const { refreshingTaskIds } = useRefreshingEntityIds()
   const [optimisticUpdates, setOptimisticUpdates] = useState<Map<string, boolean>>(new Map())
-  const { data: propertyDefinitionsData } = useGetPropertyDefinitionsQuery()
-
-  useEffect(() => {
-    if (propertyDefinitionsData?.propertyDefinitions) {
-      const taskProperties = propertyDefinitionsData.propertyDefinitions.filter(
-        def => def.isActive && def.allowedEntities.includes(PropertyEntity.Task)
-      )
-      const propertyColumnIds = taskProperties.map(prop => `property_${prop.id}`)
-      const hasPropertyColumnsInVisibility = propertyColumnIds.some(id => id in columnVisibility)
-
-      if (!hasPropertyColumnsInVisibility && propertyColumnIds.length > 0) {
-        const initialVisibility: VisibilityState = { ...columnVisibility }
-        propertyColumnIds.forEach(id => {
-          initialVisibility[id] = false
-        })
-        setColumnVisibility(initialVisibility)
-      }
-    }
-  }, [propertyDefinitionsData, columnVisibility, setColumnVisibility])
-  const { mutate: completeTask } = useCompleteTaskMutation({
-    onMutate: async (variables) => {
-      const selectedRootLocationIdsForQuery = selectedRootLocationIds && selectedRootLocationIds.length > 0 ? selectedRootLocationIds : undefined
-      await queryClient.cancelQueries({ queryKey: ['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }] })
-      const previousData = queryClient.getQueryData<GetGlobalDataQuery>(['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }])
-      if (previousData?.me?.tasks) {
-        queryClient.setQueryData<GetGlobalDataQuery>(['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }], {
-          ...previousData,
-          me: previousData.me ? {
-            ...previousData.me,
-            tasks: previousData.me.tasks.map(task => task.id === variables.id ? { ...task, done: true } : task)
-          } : null
-        })
-      }
-      setOptimisticUpdates(prev => {
-        const next = new Map(prev)
-        next.set(variables.id, true)
-        return next
-      })
-      return { previousData }
-    },
-    onSuccess: async () => {
-      setOptimisticUpdates(prev => {
-        const next = new Map(prev)
-        return next
-      })
-      await queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
-      await queryClient.invalidateQueries({ queryKey: ['GetTasks'] })
-      await queryClient.invalidateQueries({ queryKey: ['GetPatients'] })
-      onRefetch?.()
-    },
-    onError: (error, variables, context) => {
-      if (context?.previousData) {
-        const selectedRootLocationIdsForQuery = selectedRootLocationIds && selectedRootLocationIds.length > 0 ? selectedRootLocationIds : undefined
-        queryClient.setQueryData(['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }], context.previousData)
-      }
-      setOptimisticUpdates(prev => {
-        const next = new Map(prev)
-        next.delete(variables.id)
-        return next
-      })
-    }
-  })
-  const { mutate: reopenTask } = useReopenTaskMutation({
-    onMutate: async (variables) => {
-      const selectedRootLocationIdsForQuery = selectedRootLocationIds && selectedRootLocationIds.length > 0 ? selectedRootLocationIds : undefined
-      await queryClient.cancelQueries({ queryKey: ['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }] })
-      const previousData = queryClient.getQueryData<GetGlobalDataQuery>(['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }])
-      if (previousData?.me?.tasks) {
-        queryClient.setQueryData<GetGlobalDataQuery>(['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }], {
-          ...previousData,
-          me: previousData.me ? {
-            ...previousData.me,
-            tasks: previousData.me.tasks.map(task => task.id === variables.id ? { ...task, done: false } : task)
-          } : null
-        })
-      }
-      setOptimisticUpdates(prev => {
-        const next = new Map(prev)
-        next.set(variables.id, false)
-        return next
-      })
-      return { previousData }
-    },
-    onSuccess: async () => {
-      setOptimisticUpdates(prev => {
-        const next = new Map(prev)
-        return next
-      })
-      await queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
-      await queryClient.invalidateQueries({ queryKey: ['GetTasks'] })
-      await queryClient.invalidateQueries({ queryKey: ['GetPatients'] })
-      onRefetch?.()
-    },
-    onError: (error, variables, context) => {
-      if (context?.previousData) {
-        const selectedRootLocationIdsForQuery = selectedRootLocationIds && selectedRootLocationIds.length > 0 ? selectedRootLocationIds : undefined
-        queryClient.setQueryData(['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }], context.previousData)
-      }
-      setOptimisticUpdates(prev => {
-        const next = new Map(prev)
-        next.delete(variables.id)
-        return next
-      })
-    }
-  })
-  const { mutate: assignTask } = useAssignTaskMutation({
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
-      onRefetch?.()
-    }
-  })
-  const { mutate: assignTaskToTeam } = useAssignTaskToTeamMutation({
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
-      onRefetch?.()
-    }
-  })
+  const [completeTask] = useCompleteTask()
+  const [reopenTask] = useReopenTask()
+  const [assignTask] = useAssignTask()
+  const [assignTaskToTeam] = useAssignTaskToTeam()
 
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null)
   const [selectedUserPopupId, setSelectedUserPopupId] = useState<string | null>(null)
   const [taskDialogState, setTaskDialogState] = useState<TaskDialogState>({ isOpen: false })
-  const [searchQuery, setSearchQuery] = useState('')
+  const [internalSearchQuery, setInternalSearchQuery] = useState('')
+  const searchQuery = searchQueryProp !== undefined ? searchQueryProp : internalSearchQuery
+  const setSearchQuery = onSearchQueryChange ?? setInternalSearchQuery
   const [openedTaskId, setOpenedTaskId] = useState<string | null>(null)
   const [isHandoverDialogOpen, setIsHandoverDialogOpen] = useState(false)
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false)
   const isOpeningConfirmDialogRef = useRef(false)
-  const { value: showDone, setValue: setShowDone } = useLocalStorage<boolean>(STORAGE_KEY_SHOW_DONE, false)
+  const [isShowFilters, setIsShowFilters] = useState(false)
+  const [isShowSorting, setIsShowSorting] = useState(false)
+  const [isMobileIOS, setIsMobileIOS] = useState(false)
 
   const hasPatients = (totalPatientsCount ?? 0) > 0
 
@@ -258,15 +238,43 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
     }
   }))
 
+  const initialTaskPresent = Boolean(initialTaskId && initialTasks.some(t => t.id === initialTaskId))
+
+  const initialTasksSyncKey = useMemo(
+    () => taskListDataSyncKey(initialTasks),
+    [initialTasks]
+  )
+
   useEffect(() => {
-    if (initialTaskId && initialTasks.length > 0 && openedTaskId !== initialTaskId) {
+    if (initialTaskId && initialTaskPresent && openedTaskId !== initialTaskId) {
       setTaskDialogState({ isOpen: true, taskId: initialTaskId })
       setOpenedTaskId(initialTaskId)
       onInitialTaskOpened?.()
     } else if (!initialTaskId) {
       setOpenedTaskId(null)
     }
-  }, [initialTaskId, initialTasks, openedTaskId, onInitialTaskOpened])
+  }, [initialTaskId, initialTaskPresent, openedTaskId, onInitialTaskOpened])
+
+  useEffect(() => {
+    if (embedded) {
+      setListLayout('table')
+    }
+  }, [embedded])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const mediaQuery = window.matchMedia('(max-width: 768px)')
+    const ua = window.navigator.userAgent
+    const isIOSDevice = /iPad|iPhone|iPod/.test(ua) || (/Macintosh/.test(ua) && 'ontouchend' in document)
+    const update = () => {
+      setIsMobileIOS(isIOSDevice && mediaQuery.matches)
+    }
+    update()
+    mediaQuery.addEventListener('change', update)
+    return () => {
+      mediaQuery.removeEventListener('change', update)
+    }
+  }, [])
 
   useEffect(() => {
     setOptimisticUpdates(prev => {
@@ -283,7 +291,9 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
 
       return hasChanges ? next : prev
     })
-  }, [initialTasks])
+  }, [initialTasksSyncKey, initialTasks])
+
+  const isServerDriven = totalCount != null
 
   const tasks = useMemo(() => {
     let data = initialTasks.map(task => {
@@ -294,30 +304,59 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
       return task
     })
 
-    if (!showDone) {
-      data = data.filter(t => !t.done)
+    if (virtualDerivedOrder) {
+      return data
     }
 
-    if (searchQuery) {
+    if (!isServerDriven && searchQuery) {
       const lowerQuery = searchQuery.toLowerCase()
       data = data.filter(t =>
         t.name.toLowerCase().includes(lowerQuery) ||
-        t.patient?.name.toLowerCase().includes(lowerQuery))
+        (t.patient?.name.toLowerCase().includes(lowerQuery) ?? false))
     }
 
-    return [...data].sort((a, b) => {
-      if (a.done !== b.done) {
-        return a.done ? 1 : -1
-      }
+    if (!isServerDriven) {
+      return [...data].sort((a, b) => {
+        if (a.done !== b.done) {
+          return a.done ? 1 : -1
+        }
 
-      if (!a.dueDate && !b.dueDate) return 0
-      if (!a.dueDate) return 1
-      if (!b.dueDate) return -1
+        if (!a.dueDate && !b.dueDate) return 0
+        if (!a.dueDate) return 1
+        if (!b.dueDate) return -1
 
-      return a.dueDate.getTime() - b.dueDate.getTime()
-    })
-  }, [initialTasks, optimisticUpdates, searchQuery, showDone])
+        return a.dueDate.getTime() - b.dueDate.getTime()
+      })
+    }
+    return data
+  }, [initialTasks, optimisticUpdates, searchQuery, isServerDriven, virtualDerivedOrder])
 
+  useEffect(() => {
+    if (isServerDriven) return
+    setClientVisibleCount(LIST_PAGE_SIZE)
+  }, [initialTasksSyncKey, searchQuery, isServerDriven, virtualDerivedOrder])
+
+  const displayedTasks = useMemo(() => {
+    if (isServerDriven) return tasks
+    return tasks.slice(0, clientVisibleCount)
+  }, [isServerDriven, tasks, clientVisibleCount])
+
+  const tablePagination = useMemo(
+    (): PaginationState => ({
+      pageIndex: 0,
+      pageSize: Math.max(displayedTasks.length, 1),
+    }),
+    [displayedTasks.length]
+  )
+
+  const effectiveHasMore = isServerDriven ? (hasMoreProp ?? false) : tasks.length > clientVisibleCount
+
+  const handleLoadMore = useCallback(() => {
+    if (isServerDriven) loadMoreProp?.()
+    else setClientVisibleCount(c => c + LIST_PAGE_SIZE)
+  }, [isServerDriven, loadMoreProp])
+
+  const showBlockingLoadingOverlay = loading && displayedTasks.length === 0
 
   const openTasks = useMemo(() => {
     const tasksWithOptimistic = initialTasks.map(task => {
@@ -332,8 +371,8 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
 
   const canHandover = openTasks.length > 0
 
-  const { data: usersData } = useGetUsersQuery(undefined, {})
-  const { data: locationsData } = useGetLocationsQuery(undefined, {})
+  const { data: usersData } = useUsers()
+  const { data: locationsData } = useLocations()
 
   const teams = useMemo(() => {
     if (!locationsData?.locationNodes) return []
@@ -392,13 +431,17 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
 
     openTasks.forEach(task => {
       if (isTeam) {
-        assignTaskToTeam({ id: task.id, teamId: assigneeId })
+        assignTaskToTeam({
+          variables: { id: task.id, teamId: assigneeId },
+          onCompleted: () => onRefetch?.(),
+        })
       } else {
-        assignTask({ id: task.id, userId: assigneeId })
+        assignTask({
+          variables: { id: task.id, userId: assigneeId },
+          onCompleted: () => onRefetch?.(),
+        })
       }
     })
-
-    queryClient.invalidateQueries({ queryKey: ['GetTask'] })
     queryClient.invalidateQueries({ queryKey: ['GetTasks'] })
     queryClient.invalidateQueries({ queryKey: ['GetPatients'] })
     queryClient.invalidateQueries({ queryKey: ['GetOverviewData'] })
@@ -409,44 +452,125 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
     setIsHandoverDialogOpen(false)
   }
 
-  const taskProperties = useMemo(() => {
-    return propertyDefinitionsData?.propertyDefinitions
-      .filter(def => def.isActive && def.allowedEntities.includes(PropertyEntity.Task)) ?? []
-  }, [propertyDefinitionsData])
+  const taskPropertyColumns = useMemo<ColumnDef<TaskViewModel>[]>(
+    () => getPropertyColumnsForEntity<TaskViewModel>(propertyDefinitionsData, PropertyEntity.Task),
+    [propertyDefinitionsData]
+  )
 
-  const taskPropertyColumns = useMemo<ColumnDef<TaskViewModel>[]>(() => {
-    return taskProperties.map(prop => createPropertyColumn<TaskViewModel>(prop))
-  }, [taskProperties])
+  const propertyFieldTypeByDefId = useMemo(
+    () => new Map(propertyDefinitionsData?.propertyDefinitions.map(d => [d.id, d.fieldType]) ?? []),
+    [propertyDefinitionsData]
+  )
 
+  const resolveTaskQueryableLabel = useCallback((field: QueryableField): string => {
+    if (field.propertyDefinitionId) return field.label
+    const translatedByKey: Partial<Record<string, string>> = {
+      done: translation('done'),
+      title: translation('title'),
+      name: translation('title'),
+      description: translation('description'),
+      dueDate: translation('dueDate'),
+      priority: translation('priorityLabel'),
+      patient: translation('patient'),
+      assignee: translation('assignedTo'),
+      assigneeTeam: translation('assigneeTeam'),
+      updated: translation('updated'),
+      updateDate: translation('updated'),
+      position: translation('location'),
+      state: translation('status'),
+      firstname: translation('firstName'),
+      lastname: translation('lastName'),
+      birthdate: translation('birthdate'),
+      estimatedTime: translation('estimatedTime'),
+      creationDate: translation('creationDate'),
+    }
+    return translatedByKey[field.key] ?? field.label
+  }, [translation])
+
+  const resolveTaskChoiceTagLabel = useCallback<QueryableChoiceTagLabelResolver>((field, optionKey, backendLabel) => {
+    if (field.propertyDefinitionId) return backendLabel
+    if (field.key === 'priority') return translation('priority', { priority: optionKey })
+    return backendLabel
+  }, [translation])
+
+  const availableFilters: FilterListItem[] = useMemo(() => {
+    const raw = queryableFieldsStable
+    if (raw?.length) {
+      return queryableFieldsToFilterListItems(
+        raw,
+        propertyFieldTypeByDefId,
+        resolveTaskQueryableLabel,
+        resolveTaskChoiceTagLabel
+      )
+    }
+    return [
+      { id: 'title', label: translation('title'), dataType: 'text', tags: [] },
+      { id: 'description', label: translation('description'), dataType: 'text', tags: [] },
+      { id: 'dueDate', label: translation('dueDate'), dataType: 'date', tags: [] },
+      {
+        id: 'priority',
+        label: translation('priorityLabel'),
+        dataType: 'singleTag',
+        tags: ['P1', 'P2', 'P3', 'P4'].map(p => ({ label: translation('priority', { priority: p }), tag: p })),
+      },
+      { id: 'patient', label: translation('patient'), dataType: 'text', tags: [] },
+      { id: 'assignee', label: translation('assignedTo'), dataType: 'text', tags: [] },
+      ...propertyDefinitionsData?.propertyDefinitions.map(def => ({
+        id: `property_${def.id}`,
+        label: def.name,
+        dataType: 'text' as const,
+        tags: def.options.map((opt, idx) => ({ label: opt, tag: `${def.id}-opt-${idx}` })),
+      })) ?? [],
+    ]
+  }, [queryableFieldsStable, propertyFieldTypeByDefId, resolveTaskQueryableLabel, resolveTaskChoiceTagLabel, translation, propertyDefinitionsData?.propertyDefinitions])
+
+  const availableSortItems = useMemo(() => {
+    const raw = queryableFieldsStable
+    if (raw?.length) {
+      return queryableFieldsToSortingListItems(raw, resolveTaskQueryableLabel)
+    }
+    return availableFilters.map(({ id, label, dataType }) => ({ id, label, dataType }))
+  }, [queryableFieldsStable, availableFilters, resolveTaskQueryableLabel])
 
   const columns = useMemo<ColumnDef<TaskViewModel>[]>(() => {
     const cols: ColumnDef<TaskViewModel>[] = [
       {
         id: 'done',
-        header: translation('done'),
+        header: () => null,
         accessorKey: 'done',
         cell: ({ row }) => {
           const task = row.original
-          const optimisticDone = optimisticUpdates.get(task.id)
-          const displayDone = optimisticDone !== undefined ? optimisticDone : task.done
+          const displayDone = task.done
           return (
-            <Checkbox
-              value={displayDone}
-              onValueChange={(checked) => {
-                setOptimisticUpdates(prev => {
-                  const next = new Map(prev)
-                  next.set(task.id, checked)
-                  return next
-                })
-                if (checked) {
-                  completeTask({ id: task.id })
-                } else {
-                  reopenTask({ id: task.id })
-                }
-              }}
-              onClick={(e) => e.stopPropagation()}
-              className={clsx('rounded-full', PriorityUtils.toCheckboxColor(task.priority as TaskPriority | null | undefined))}
-            />
+            <TaskRowRefreshingGate taskId={task.id}>
+              <div
+                className="relative z-10"
+                onClick={(e) => e.stopPropagation()}
+                onPointerDown={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
+              >
+                <Checkbox
+                  value={displayDone}
+                  onValueChange={(checked) => {
+                    setOptimisticUpdates(prev => {
+                      const next = new Map(prev)
+                      next.set(task.id, checked)
+                      return next
+                    })
+                    if (checked) {
+                      completeTask({
+                        variables: { id: task.id },
+                      })
+                    } else {
+                      reopenTask({
+                        variables: { id: task.id },
+                      })
+                    }
+                  }}
+                  className={clsx('not-print:rounded-full', PriorityUtils.toCheckboxColor(task.priority as TaskPriority | null | undefined))}
+                />
+              </div>
+            </TaskRowRefreshingGate>
           )
         },
         minSize: 60,
@@ -456,18 +580,18 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
       },
       {
         id: 'title',
-        header: translation('title'),
+        header: embedded ? translation('task') : translation('title'),
         accessorKey: 'name',
-        cell: ({ row }) => {
-          return (
+        cell: ({ row }) => (
+          <TaskRowRefreshingGate taskId={row.original.id}>
             <div className="flex-row-2 items-center">
               {row.original.priority && (
                 <div className={clsx('w-2 h-2 rounded-full shrink-0', PriorityUtils.toBackgroundColor(row.original.priority as TaskPriority | null | undefined))} />
               )}
               <span>{row.original.name}</span>
             </div>
-          )
-        },
+          </TaskRowRefreshingGate>
+        ),
         minSize: 200,
         size: 300,
         filterFn: 'text',
@@ -477,21 +601,29 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
         header: translation('dueDate'),
         accessorKey: 'dueDate',
         cell: ({ row }) => {
-          if (!row.original.dueDate) return <span className="text-description">-</span>
-          const overdue = isOverdue(row.original.dueDate, row.original.done)
-          const closeToDue = isCloseToDueDate(row.original.dueDate, row.original.done)
+          if (!row.original.dueDate) {
+            return (
+              <TaskRowRefreshingGate taskId={row.original.id}>
+                <span className="text-description">-</span>
+              </TaskRowRefreshingGate>
+            )
+          }
+          const overdue = DueDateUtils.isOverdue(row.original.dueDate, row.original.done)
+          const closeToDue = DueDateUtils.isCloseToDueDate(row.original.dueDate, row.original.done)
           let colorClass = ''
           if (overdue) {
-            colorClass = '!text-red-500'
+            colorClass = 'text-red-500'
           } else if (closeToDue) {
-            colorClass = '!text-orange-500'
+            colorClass = 'text-orange-500'
           }
           return (
-            <SmartDate
-              date={row.original.dueDate}
-              mode="relative"
-              className={clsx(colorClass)}
-            />
+            <TaskRowRefreshingGate taskId={row.original.id}>
+              <DateDisplay
+                date={row.original.dueDate}
+                mode="absolute"
+                className={clsx(colorClass)}
+              />
+            </TaskRowRefreshingGate>
           )
         },
         minSize: 220,
@@ -508,14 +640,17 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
           const data = row.original
           if (!data.patient) {
             return (
-              <span className="text-description">
-                {translation('noPatient')}
-              </span>
+              <TaskRowRefreshingGate taskId={row.original.id}>
+                <span className="text-description">
+                  {translation('noPatient')}
+                </span>
+              </TaskRowRefreshingGate>
             )
           }
           return (
-            <>
-              <div className="flex flex-col gap-1 print:hidden">
+            <TaskRowRefreshingGate taskId={row.original.id}>
+              <>
+                <span className="print:block hidden">{data.patient?.name}</span>
                 <Button
                   color="neutral"
                   size="sm"
@@ -523,14 +658,12 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
                     event.stopPropagation()
                     setSelectedPatientId(data.patient?.id ?? null)
                   }}
-                  className="flex-row-0 justify-start w-fit"
+                  className="flex-row-0 justify-start w-fit print:hidden"
                 >
                   {data.patient?.name}
                 </Button>
-                <LocationChips locations={data.patient.locations || []} small />
-              </div>
-              <span className="hidden print:block">{data.patient?.name}</span>
-            </>
+              </>
+            </TaskRowRefreshingGate>
           )
         },
         sortingFn: 'text',
@@ -551,43 +684,49 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
           const assigneeTeam = row.original.assigneeTeam
           if (!assignee && !assigneeTeam) {
             return (
-              <span className="text-description">
-                {translation('notAssigned')}
-              </span>
+              <TaskRowRefreshingGate taskId={row.original.id}>
+                <span className="text-description">
+                  {translation('notAssigned')}
+                </span>
+              </TaskRowRefreshingGate>
             )
           }
 
           if (assigneeTeam) {
             return (
-              <div className="flex-row-2 items-center">
-                <Users className="size-5 text-description" />
-                <span>{assigneeTeam.title}</span>
-              </div>
+              <TaskRowRefreshingGate taskId={row.original.id}>
+                <div className="flex-row-2 items-center">
+                  <Users className="size-5 text-description print:hidden" />
+                  <span>{assigneeTeam.title}</span>
+                </div>
+              </TaskRowRefreshingGate>
             )
           }
 
           if (assignee) {
+            const extra = row.original.additionalAssigneeCount ?? 0
+            const printLine = `${assignee.name}${extra > 0 ? ` ${translation('additionalAssigneesCount', { count: extra })}` : ''}`
             return (
-              <button
-                onClick={() => setSelectedUserPopupId(assignee.id)}
-                className="flex-row-2 items-center hover:opacity-75 transition-opacity"
-              >
-                <AvatarStatusComponent
-                  isOnline={assignee?.isOnline ?? null}
-                  image={{
-                    avatarUrl: assignee.avatarURL || 'https://cdn.helpwave.de/boringavatar.svg',
-                    alt: assignee.name
-                  }}
+              <TaskRowRefreshingGate taskId={row.original.id}>
+                <TaskAssigneeTableCell
+                  assigneeId={assignee.id}
+                  avatarURL={assignee.avatarURL}
+                  name={assignee.name}
+                  isOnline={assignee.isOnline ?? null}
+                  onOpenUser={setSelectedUserPopupId}
+                  printHiddenNameLine={printLine}
+                  extraCountLabel={extra > 0 ? translation('additionalAssigneesCount', { count: extra }) : null}
                 />
-                <span>{assignee.name}</span>
-              </button>
+              </TaskRowRefreshingGate>
             )
           }
 
           return (
-            <span className="text-description">
-              {translation('notAssigned')}
-            </span>
+            <TaskRowRefreshingGate taskId={row.original.id}>
+              <span className="text-description">
+                {translation('notAssigned')}
+              </span>
+            </TaskRowRefreshingGate>
           )
         },
         minSize: 200,
@@ -596,236 +735,367 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
       })
     }
 
-    return [...cols, ...taskPropertyColumns]
-  },
-  [translation, completeTask, reopenTask, showAssignee, optimisticUpdates, taskPropertyColumns])
-
-  const handleToggleDone = (taskId: string, checked: boolean) => {
-    const task = initialTasks.find(t => t.id === taskId)
-    if (!task) return
-
-    setOptimisticUpdates(prev => {
-      const next = new Map(prev)
-      next.set(taskId, checked)
-      return next
+    cols.push({
+      id: 'updateDate',
+      header: translation('updated'),
+      accessorFn: (row) => row.updateDate,
+      cell: ({ row }) => (
+        <TaskRowRefreshingGate taskId={row.original.id}>
+          <DateDisplay date={row.original.updateDate} mode="absolute" />
+        </TaskRowRefreshingGate>
+      ),
+      minSize: 220,
+      size: 220,
+      maxSize: 220,
+      enableResizing: false,
+      filterFn: 'date',
     })
-    if (checked) {
-      completeTask({ id: taskId })
-    } else {
-      reopenTask({ id: taskId })
-    }
-  }
 
-  return (
-    <TableProvider
-      data={tasks}
-      columns={columns}
-      fillerRowCell={useCallback(() => (<FillerCell className="min-h-12"/>), [])}
-      initialState={{
-        pagination: {
-          pageSize: 10,
-        }
-      }}
-      state={{
-        columnVisibility,
-        pagination,
-        sorting,
-        columnFilters: filters,
-      } as Partial<TableState> as TableState}
-      onColumnVisibilityChange={setColumnVisibility}
-      onPaginationChange={setPagination}
-      onSortingChange={setSorting}
-      onColumnFiltersChange={setFilters}
-      enableMultiSort={true}
-      onRowClick={row => setTaskDialogState({ isOpen: true, taskId: row.original.id })}
-      pageCount={totalCount ? Math.ceil(totalCount / pagination.pageSize) : undefined}
-    >
-      <div className="flex flex-col h-full gap-4">
-        <div className="flex flex-col sm:flex-row justify-between w-full gap-4">
-          <div className="flex-row-2 items-center">
-            <SearchBar
-              placeholder={translation('search')}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onSearch={() => null}
-              containerProps={{ className: 'max-w-80 h-10' }}
-            />
-            <Visibility isVisible={viewType === 'table'}>
-              <TableColumnSwitcher />
-            </Visibility>
-          </div>
-          <div className="flex flex-wrap items-center justify-end gap-4 w-full sm:w-auto sm:ml-auto lg:pr-4">
-            <div className="flex items-center justify-between gap-4 w-full sm:w-auto">
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  value={showDone}
-                  onValueChange={setShowDone}
-                />
-                <span className="text-sm text-description whitespace-nowrap">{translation('showDone') || 'Show done'}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Tooltip tooltip={translation(viewType !== 'table' ? 'printOnlyAvailableInTableMode' : 'print')} position="top">
-                  <Button
-                    disabled={viewType !== 'table'}
-                    layout="icon"
-                    color="neutral"
-                    coloringStyle="text"
-                    onClick={() => window.print()}
-                  >
-                    <Printer className="size-5" />
-                  </Button>
-                </Tooltip>
-                <Tooltip tooltip={translation('tableView')} position="top">
-                  <Button
-                    layout="icon"
-                    color={viewType === 'table' ? 'primary' : 'neutral'}
-                    coloringStyle={viewType === 'table' ? undefined : 'text'}
-                    onClick={() => toggleView('table')}
-                  >
-                    <TableIcon className="size-5" />
-                  </Button>
-                </Tooltip>
-                <Tooltip tooltip={translation('cardView')} position="top">
-                  <Button
-                    layout="icon"
-                    color={viewType === 'card' ? 'primary' : 'neutral'}
-                    coloringStyle={viewType === 'card' ? undefined : 'text'}
-                    onClick={() => toggleView('card')}
-                  >
-                    <LayoutGrid className="size-5" />
-                  </Button>
-                </Tooltip>
-              </div>
-            </div>
-            {headerActions}
-            {canHandover && (
-              <Button
-                onClick={handleHandoverClick}
-                className="w-fit"
-              >
-                <UserCheck className="size-5"/>
-                {translation('shiftHandover') || 'Shift Handover'}
-              </Button>
-            )}
-            <Tooltip tooltip={translation('addTask')} position="top">
-              <Button
-                onClick={() => setTaskDialogState({ isOpen: true })}
-                disabled={!hasPatients}
-                layout="icon"
-              >
-                <PlusIcon/>
-              </Button>
-            </Tooltip>
+    const colsWithRefreshing = [
+      ...cols,
+      ...taskPropertyColumns.map((col) => ({
+        ...col,
+        cell: col.cell
+          ? (params: { row: { original: TaskViewModel } }) => (
+            <TaskRowRefreshingGate taskId={params.row.original.id}>
+              {(col.cell as (p: unknown) => React.ReactNode)(params)}
+            </TaskRowRefreshingGate>
+          )
+          : undefined,
+      })),
+    ]
+    return colsWithRefreshing
+  },
+  [translation, completeTask, reopenTask, showAssignee, taskPropertyColumns, embedded])
+
+  const taskCardPrimaryColumnIds = useMemo(() => {
+    const s = new Set<string>(['done', 'title', 'dueDate', 'patient'])
+    if (showAssignee) s.add('assignee')
+    return s
+  }, [showAssignee])
+
+  const renderTaskCardExtras = useCallback((task: TaskViewModel): ReactNode => {
+    const rows: ReactNode[] = []
+    for (const col of columns) {
+      const id = col.id as string | undefined
+      if (!id || taskCardPrimaryColumnIds.has(id)) continue
+      if (columnVisibility[id] === false) continue
+      if (!col.cell) continue
+      const isExpandableTextProperty = id.startsWith('property_') &&
+        propertyFieldTypeByDefId.get(id.replace('property_', '')) === FieldType.FieldTypeText
+      const headerLabel = typeof col.header === 'string' ? col.header : id
+      const cell = (col.cell as (p: { row: { original: TaskViewModel } }) => ReactNode)({ row: { original: task } })
+      const propertyId = id.startsWith('property_') ? id.replace('property_', '') : null
+      const propertyTextValue = propertyId
+        ? task.properties?.find(property => property.definition.id === propertyId)?.textValue
+        : null
+      rows.push(
+        <div key={id} className="flex flex-col gap-0.5 sm:flex-row sm:gap-3 sm:items-start text-left">
+          <span className="text-description shrink-0 min-w-[7rem]">{headerLabel}</span>
+          <div className="min-w-0 break-words">
+            {isExpandableTextProperty ? (
+              <ExpandableTextBlock>{propertyTextValue ?? ''}</ExpandableTextBlock>
+            ) : cell}
           </div>
         </div>
-        <Visibility isVisible={viewType === 'table'}>
-          <div className="flex-col-3 items-center">
-            <style>{`
-              table th[data-column-id="done"],
-              table th[data-id="done"],
-              table thead th:has([data-column-id="done"]),
-              table thead th:has([data-id="done"]) {
-                display: none !important;
-              }
-            `}</style>
-            <TableDisplay className="print-content" />
-            <TablePagination />
-          </div>
-        </Visibility>
-        <Visibility isVisible={viewType === 'card'}>
-          <div className="grid gap-4 -mx-4 px-4 lg:mx-0 lg:pl-0 lg:pr-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))' }}>
-            {tasks.length === 0 ? (
-              <div className="w-full text-center text-description py-8 col-span-full">
-                {translation('noOpenTasks')}
+      )
+    }
+    if (rows.length === 0) return null
+    return <>{rows}</>
+  }, [columns, columnVisibility, taskCardPrimaryColumnIds, propertyFieldTypeByDefId])
+
+  const knownColumnIdsOrdered = useMemo(
+    () => columnIdsFromColumnDefs(columns),
+    [columns]
+  )
+
+  const embeddedDashboardColumnVisibility = useMemo((): VisibilityState | null => {
+    if (!embedded) return null
+    const visible = new Set<string>(['done', 'title', 'patient', 'dueDate', 'assignee', 'updateDate'])
+    const vis: VisibilityState = {}
+    for (const id of knownColumnIdsOrdered) {
+      vis[id] = visible.has(id)
+    }
+    return vis
+  }, [embedded, knownColumnIdsOrdered])
+
+  const tableColumnVisibility = embedded && embeddedDashboardColumnVisibility != null
+    ? embeddedDashboardColumnVisibility
+    : columnVisibility
+
+  const sanitizedColumnOrder = useMemo(
+    () => sanitizeColumnOrderForKnownColumns(columnOrder, knownColumnIdsOrdered),
+    [columnOrder, knownColumnIdsOrdered]
+  )
+
+  const deferSetColumnOrder = useDeferredColumnOrderChange(setColumnOrder)
+  const embeddedTableStateNoop = useCallback(() => {}, [])
+  const hasOpenDrawer = taskDialogState.isOpen || selectedPatientId != null
+  const hasFilterPanelOpen = isShowFilters || isShowSorting
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return
+    if (isMobileIOS && hasOpenDrawer) {
+      document.body.dataset['taskDrawerFullscreen'] = 'true'
+    } else {
+      delete document.body.dataset['taskDrawerFullscreen']
+    }
+
+    return () => {
+      delete document.body.dataset['taskDrawerFullscreen']
+    }
+  }, [isMobileIOS, hasOpenDrawer])
+
+  return (
+    <RefreshingTaskIdsContext.Provider value={refreshingTaskIds}>
+      <TableProvider
+        data={displayedTasks}
+        columns={columns}
+        fillerRowCell={useCallback(() => (<FillerCell className="min-h-12" />), [])}
+        initialState={{
+          pagination: {
+            pageSize: LIST_PAGE_SIZE,
+          }
+        }}
+        state={{
+          columnVisibility: tableColumnVisibility,
+          columnOrder: sanitizedColumnOrder,
+          pagination: tablePagination,
+        } as Partial<TableState> as TableState}
+        onColumnVisibilityChange={embedded ? embeddedTableStateNoop : setColumnVisibilityMerged}
+        onColumnOrderChange={embedded ? embeddedTableStateNoop : deferSetColumnOrder}
+        onPaginationChange={() => {}}
+        onSortingChange={embedded ? embeddedTableStateNoop : setSorting}
+        onColumnFiltersChange={embedded ? embeddedTableStateNoop : setFilters}
+        enableMultiSort={true}
+        enablePinning={false}
+        onRowClick={row => setTaskDialogState({ isOpen: true, taskId: row.original.id })}
+        pageCount={1}
+        manualPagination={true}
+        manualSorting={true}
+        manualFiltering={true}
+        enableColumnFilters={false}
+        enableSorting={false}
+        enableColumnPinning={false}
+      >
+        <div className="flex flex-col h-full gap-4">
+          {!embedded && (
+            <div className="flex-col-2 w-full">
+              <div className="flex flex-col-reverse gap-3 sm:flex-row sm:flex-row-8 sm:justify-between sm:gap-0 w-full">
+                <div className="flex flex-wrap gap-2 items-center">
+                  <SearchBar
+                    placeholder={translation('search')}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onSearch={() => null}
+                    containerProps={{ className: 'w-full max-w-full min-w-0 sm:max-w-80' }}
+                  />
+                  <TableColumnSwitcher
+                    buttonProps={{ className: 'min-h-11 min-w-11 shrink-0' }}
+                    style={{ zIndex: 120 }}
+                  />
+                  <div className="inline-flex flex-wrap gap-2 items-center shrink-0">
+                    <Button
+                      onClick={() => setIsShowFilters(!isShowFilters)}
+                      color="neutral"
+                      className="font-semibold element"
+                    >
+                      {translation('filter') + ` (${filters.length})`}
+                      <ExpansionIcon isExpanded={isShowFilters} className="size-5" />
+                    </Button>
+                    <Button
+                      onClick={() => setIsShowSorting(!isShowSorting)}
+                      color="neutral"
+                      className="font-semibold"
+                    >
+                      {translation('sorting') + ` (${sorting.length})`}
+                      <ExpansionIcon isExpanded={isShowSorting} className="size-5" />
+                    </Button>
+                  </div>
+                  {saveViewSlot}
+                </div>
+                <div className="flex flex-wrap gap-2 items-center justify-end shrink-0">
+                  {headerActions}
+                  {canHandover && (
+                    <Button
+                      onClick={handleHandoverClick}
+                      className="w-fit"
+                    >
+                      <UserCheck className="size-5" />
+                      {translation('shiftHandover') || 'Shift Handover'}
+                    </Button>
+                  )}
+                  <IconButton
+                    tooltip={translation('listViewTable')}
+                    className="min-h-11 min-w-11"
+                    onClick={() => setListLayout('table')}
+                    color={listLayout === 'table' ? 'primary' : 'neutral'}
+                  >
+                    <Table2 className="size-5" />
+                  </IconButton>
+                  <IconButton
+                    tooltip={translation('listViewCard')}
+                    className="min-h-11 min-w-11"
+                    onClick={() => setListLayout('card')}
+                    color={listLayout === 'card' ? 'primary' : 'neutral'}
+                  >
+                    <LayoutGrid className="size-5" />
+                  </IconButton>
+                  <IconButton
+                    tooltip={translation('addTask')}
+                    color="primary"
+                    className="min-h-11 min-w-11"
+                    onClick={() => setTaskDialogState({ isOpen: true })}
+                    disabled={!hasPatients}
+                  >
+                    <PlusIcon />
+                  </IconButton>
+                </div>
               </div>
-            ) : (
-              tasks.map((task) => (
-                <TaskCardView
-                  key={task.id}
-                  task={task}
-                  onToggleDone={handleToggleDone}
-                  onClick={(t) => setTaskDialogState({ isOpen: true, taskId: t.id })}
-                  showAssignee={showAssignee}
-                  onRefetch={onRefetch}
-                  className={clsx('w-full')}
-                />
-              ))
+              {isShowFilters && (
+                <div className="relative touch-auto">
+                  <FilterList
+                    value={filters as IdentifierFilterValue[]}
+                    onValueChange={setFilters}
+                    availableItems={availableFilters}
+                  />
+                </div>
+              )}
+              {isShowSorting && (
+                <div className="relative touch-auto">
+                  <SortingList
+                    sorting={sorting}
+                    onSortingChange={setSorting}
+                    availableItems={availableSortItems}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+          <div className={clsx('flex-col-3 w-full relative print:static', isMobileIOS && hasFilterPanelOpen && 'pointer-events-none')}>
+            {showBlockingLoadingOverlay && (
+              <div className="absolute inset-0 z-10 flex items-center justify-center bg-surface/80 rounded-lg min-h-48">
+                <HelpwaveLogo animate="loading" color="currentColor" height={64} width={64} />
+              </div>
+            )}
+            {!embedded && (
+              <style>{`
+            table th[data-column-id="done"],
+            table th[data-id="done"],
+            table thead th:has([data-column-id="done"]),
+            table thead th:has([data-id="done"]) {
+              display: none !important;
+            }
+          `}</style>
+            )}
+            <div className={clsx('w-full', listLayout === 'table' ? 'block' : 'hidden print:block')}>
+              <TableDisplay className="print-content w-full overflow-x-auto touch-pan-x"/>
+            </div>
+            {listLayout === 'card' && (
+              <div className="flex flex-col gap-3 w-full print:hidden">
+                {displayedTasks.map((task) => (
+                  <TaskCardView
+                    key={task.id}
+                    task={task}
+                    showAssignee={showAssignee}
+                    showPatient={true}
+                    onClick={() => setTaskDialogState({ isOpen: true, taskId: task.id })}
+                    extraContent={renderTaskCardExtras(task)}
+                  />
+                ))}
+              </div>
+            )}
+            {effectiveHasMore && !embedded && (
+              <Button color="neutral" className="mt-2 w-full sm:w-auto self-center" onClick={handleLoadMore}>
+                {translation('loadMore')}
+              </Button>
             )}
           </div>
-        </Visibility>
-        <Drawer
-          alignment="right"
-          titleElement={taskDialogState.taskId ? translation('editTask') : translation('createTask')}
-          description={undefined}
-          isOpen={taskDialogState.isOpen}
-          onClose={() => setTaskDialogState({ isOpen: false })}
-        >
-          <TaskDetailView
-            taskId={taskDialogState.taskId ?? null}
+          <Drawer
+            alignment="right"
+            titleElement={taskDialogState.taskId ? translation('editTask') : translation('createTask')}
+            description={undefined}
+            isOpen={taskDialogState.isOpen}
             onClose={() => setTaskDialogState({ isOpen: false })}
-            onSuccess={onRefetch || (() => {
-            })}
-          />
-        </Drawer>
-        <Drawer
-          alignment="right"
-          titleElement={translation('editPatient')}
-          description={undefined}
-          isOpen={!!selectedPatientId}
-          onClose={() => setSelectedPatientId(null)}
-        >
-          {!!selectedPatientId && (
-            <PatientDetailView
-              patientId={selectedPatientId}
-              onClose={() => setSelectedPatientId(null)}
-              onSuccess={onRefetch || (() => {
-              })}
+          >
+            <TaskDetailView
+              taskId={taskDialogState.taskId ?? null}
+              onClose={() => setTaskDialogState({ isOpen: false })}
+              onListSync={onRefetch}
             />
-          )}
-        </Drawer>
-        <AssigneeSelectDialog
-          value={selectedUserId || ''}
-          onValueChanged={handleUserSelect}
-          allowTeams={true}
-          allowUnassigned={false}
-          excludeUserIds={user?.id ? [user.id] : []}
-          isOpen={isHandoverDialogOpen}
-          onClose={() => {
-            setIsHandoverDialogOpen(false)
-            if (!isConfirmDialogOpen && !isOpeningConfirmDialogRef.current) {
-              setSelectedUserId(null)
-            }
-          }}
-          dialogTitle={translation('shiftHandover') || 'Shift Handover'}
-          onUserInfoClick={(userId) => setSelectedUserPopupId(userId)}
-        />
-        {isConfirmDialogOpen && selectedUserId && (
-          <ConfirmDialog
-            isOpen={isConfirmDialogOpen}
-            onCancel={() => {
-              setIsConfirmDialogOpen(false)
-              setSelectedUserId(null)
+          </Drawer>
+          <Drawer
+            alignment="right"
+            titleElement={translation('editPatient')}
+            description={undefined}
+            isOpen={!!selectedPatientId}
+            onClose={() => setSelectedPatientId(null)}
+          >
+            {!!selectedPatientId && (
+              <PatientDetailView
+                patientId={selectedPatientId}
+                onClose={() => setSelectedPatientId(null)}
+                onSuccess={() => {
+                  onRefetch?.()
+                }}
+              />
+            )}
+          </Drawer>
+          <AssigneeSelectDialog
+            value={selectedUserId || ''}
+            onValueChanged={handleUserSelect}
+            allowTeams={true}
+            allowUnassigned={false}
+            excludeUserIds={user?.id ? [user.id] : []}
+            isOpen={isHandoverDialogOpen}
+            onClose={() => {
               setIsHandoverDialogOpen(false)
-            }}
-            onConfirm={() => {
-              if (selectedUserId) {
-                handleConfirmHandover()
+              if (!isConfirmDialogOpen && !isOpeningConfirmDialogRef.current) {
+                setSelectedUserId(null)
               }
             }}
-            titleElement={translation('confirmShiftHandover') || 'Confirm Shift Handover'}
-            description={getSelectedUserOrTeam && openTasks.length > 0 ? translation('confirmShiftHandoverDescriptionWithName', {
-              taskCount: openTasks.length,
-              name: getSelectedUserOrTeam.name
-            }) : (translation('confirmShiftHandoverDescription') || 'Are you sure you want to transfer all open tasks?')}
+            dialogTitle={translation('shiftHandover') || 'Shift Handover'}
+            onUserInfoClick={(userId) => setSelectedUserPopupId(userId)}
           />
-        )}
-        <UserInfoPopup
-          userId={selectedUserPopupId}
-          isOpen={!!selectedUserPopupId}
-          onClose={() => setSelectedUserPopupId(null)}
-        />
-      </div>
-    </TableProvider>
+          {isConfirmDialogOpen && selectedUserId && (
+            <ConfirmDialog
+              isOpen={isConfirmDialogOpen}
+              onCancel={() => {
+                setIsConfirmDialogOpen(false)
+                setSelectedUserId(null)
+                setIsHandoverDialogOpen(false)
+              }}
+              onConfirm={() => {
+                if (selectedUserId) {
+                  handleConfirmHandover()
+                }
+              }}
+              titleElement={translation('confirmShiftHandover') || 'Confirm Shift Handover'}
+              description={getSelectedUserOrTeam && openTasks.length > 0 ? translation('confirmShiftHandoverDescriptionWithName', {
+                taskCount: openTasks.length,
+                name: getSelectedUserOrTeam.name
+              }) : (translation('confirmShiftHandoverDescription') || 'Are you sure you want to transfer all open tasks?')}
+            />
+          )}
+          <UserInfoPopup
+            userId={selectedUserPopupId}
+            isOpen={!!selectedUserPopupId}
+            onClose={() => setSelectedUserPopupId(null)}
+          />
+          <style>{`
+            body[data-task-drawer-fullscreen="true"] [role="dialog"] {
+              width: 100dvw !important;
+              min-width: 100dvw !important;
+              max-width: 100dvw !important;
+              left: 0 !important;
+              right: 0 !important;
+              margin: 0 !important;
+              border-radius: 0 !important;
+            }
+          `}</style>
+        </div>
+      </TableProvider>
+    </RefreshingTaskIdsContext.Provider>
   )
 })
 

@@ -26,6 +26,64 @@ export const formatLocationPath = (location: PartialLocationNode | LocationNodeT
   return buildLocationPath(location).join(separator)
 }
 
+export type PartialLocationNodeWithParent = {
+  id: string,
+  title: string,
+  kind?: string,
+  parent?: PartialLocationNodeWithParent | null,
+}
+
+export const buildLocationPathNodes = (location: PartialLocationNodeWithParent | LocationNodeType | null | undefined): PartialLocationNodeWithParent[] => {
+  if (!location) return []
+
+  const path: PartialLocationNodeWithParent[] = []
+  let current: PartialLocationNodeWithParent | LocationNodeType | null | undefined = location as PartialLocationNodeWithParent
+
+  while (current) {
+    path.unshift({
+      id: current.id,
+      title: current.title,
+      kind: (current as PartialLocationNodeWithParent).kind,
+      parent: undefined,
+    })
+    current = (current as PartialLocationNodeWithParent).parent ?? null
+  }
+
+  return path
+}
+
+export const LOCATION_KIND_COLUMNS = ['CLINIC', 'WARD', 'ROOM', 'BED'] as const
+
+export type LocationKindColumn = typeof LOCATION_KIND_COLUMNS[number]
+
+export type LocationNodesByKind = Partial<Record<LocationKindColumn, { id: string, title: string, kind?: string }>>
+
+const COLUMN_KINDS: Record<LocationKindColumn, readonly string[]> = {
+  CLINIC: ['CLINIC', 'PRACTICE'],
+  WARD: ['WARD'],
+  ROOM: ['ROOM'],
+  BED: ['BED'],
+}
+
+export const getLocationNodesByKind = (
+  location: PartialLocationNodeWithParent | LocationNodeType | null | undefined
+): LocationNodesByKind => {
+  const path = buildLocationPathNodes(location)
+  const out: LocationNodesByKind = {}
+  for (const node of path) {
+    const nodeKind = node.kind?.toUpperCase()
+    if (!nodeKind) continue
+    for (const col of LOCATION_KIND_COLUMNS) {
+      if (out[col] !== undefined) continue
+      if (COLUMN_KINDS[col].includes(nodeKind)) {
+        out[col] = { id: node.id, title: node.title, kind: node.kind }
+        break
+      }
+    }
+  }
+  return out
+}
+
 export const buildLocationPathFromId = (
   locationId: string | null | undefined,
   allLocations: Map<string, { id: string, title: string, parentId?: string | null }>
@@ -52,4 +110,20 @@ export const formatLocationPathFromId = (
   separator: string = LOCATION_PATH_SEPARATOR
 ): string => {
   return buildLocationPathFromId(locationId, allLocations).join(separator)
+}
+
+const toChipColor = (kind: string) => {
+  const k = kind.toUpperCase()
+  if (k === 'HOSPITAL') return 'coloring-solid location-hospital'
+  if (k === 'PRACTICE') return 'coloring-solid location-practice'
+  if (k === 'CLINIC') return 'coloring-solid location-clinic'
+  if (k === 'TEAM') return 'coloring-solid location-team'
+  if (k === 'WARD') return 'coloring-solid location-ward'
+  if (k === 'ROOM') return 'coloring-solid location-room'
+  if (k === 'BED') return 'coloring-solid location-bed'
+  return ''
+}
+
+export const LocationUtils = {
+  toChipColor
 }

@@ -1,7 +1,7 @@
 'use client'
 
-import type { AnchorHTMLAttributes, HTMLAttributes, PropsWithChildren } from 'react'
-import { useEffect, useState } from 'react'
+import type { AnchorHTMLAttributes, ComponentProps, HTMLAttributes, PropsWithChildren } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Head from 'next/head'
 import titleWrapper from '@/utils/titleWrapper'
 import Link from 'next/link'
@@ -11,10 +11,11 @@ import {
   ExpandableContent,
   ExpandableHeader,
   ExpandableRoot,
+  IconButton as HightideIconButton,
   MarkdownInterpreter,
-  Tooltip,
-  useLocalStorage
+  Tooltip
 } from '@helpwave/hightide'
+import { useStorage } from '@/hooks/useStorage'
 import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
 import { getConfig } from '@/utils/config'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
@@ -28,16 +29,17 @@ import {
   SettingsIcon,
   User,
   Users,
-  Clock,
   Menu as MenuIcon,
   X,
-  MessageSquare
+  MessageSquare,
+  Rabbit
 } from 'lucide-react'
-import { Notifications } from '@/components/Notifications'
 import { TasksLogo } from '@/components/TasksLogo'
+import { usePathname } from 'next/navigation'
 import { useRouter } from 'next/router'
 import { useTasksContext } from '@/hooks/useTasksContext'
-import { useGetLocationsQuery } from '@/api/gql/generated'
+import { useLocations, useMySavedViews } from '@/data'
+import type { MySavedViewsQuery } from '@/api/gql/generated'
 import { hashString } from '@/utils/hash'
 import { useSwipeGesture } from '@/hooks/useSwipeGesture'
 import { LocationSelectionDialog } from '@/components/locations/LocationSelectionDialog'
@@ -51,7 +53,7 @@ export const StagingDisclaimerDialog = () => {
   const {
     value: lastTimeStagingDisclaimerDismissed,
     setValue: setLastTimeStagingDisclaimerDismissed
-  } = useLocalStorage('staging-disclaimer-dismissed-time', 0)
+  } = useStorage({ key: 'staging-disclaimer-dismissed-time', defaultValue: 0 })
 
   const dismissStagingDisclaimer = () => {
     setLastTimeStagingDisclaimerDismissed(new Date().getTime())
@@ -104,17 +106,17 @@ export const SurveyModal = () => {
   const {
     value: onboardingSurveyCompleted,
     setValue: setOnboardingSurveyCompleted
-  } = useLocalStorage('onboarding-survey-completed', 0)
+  } = useStorage({ key: 'onboarding-survey-completed', defaultValue: 0 })
 
   const {
     value: weeklySurveyLastCompleted,
     setValue: setWeeklySurveyLastCompleted
-  } = useLocalStorage('weekly-survey-last-completed', 0)
+  } = useStorage({ key: 'weekly-survey-last-completed', defaultValue: 0 })
 
   const {
     value: surveyLastDismissed,
     setValue: setSurveyLastDismissed
-  } = useLocalStorage('survey-last-dismissed', 0)
+  } = useStorage({ key: 'survey-last-dismissed', defaultValue: 0 })
 
   useEffect(() => {
     if (!config.onboardingSurveyUrl && !config.weeklySurveyUrl) {
@@ -215,12 +217,27 @@ const RootLocationSelector = ({ className, onSelect }: RootLocationSelectorProps
   const translation = useTasksTranslation()
   const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false)
   const [selectedLocationsCache, setSelectedLocationsCache] = useState<Array<{ id: string, title: string, kind?: string }>>([])
+  const {
+    value: storedSelectedRootLocationsRaw,
+    setValue: setStoredSelectedRootLocations
+  } = useStorage<Array<{ id: string, title: string, kind?: string }>>({
+    key: 'selected-root-location-nodes',
+    defaultValue: []
+  })
 
-  const { data: locationsData } = useGetLocationsQuery(
-    {},
+  const storedSelectedRootLocations = useMemo(() =>
+    Array.isArray(storedSelectedRootLocationsRaw)
+      ? storedSelectedRootLocationsRaw.filter(
+        (loc): loc is { id: string, title: string, kind?: string } =>
+          Boolean(loc && typeof loc.id === 'string' && typeof loc.title === 'string')
+      )
+      : [],
+  [storedSelectedRootLocationsRaw])
+
+  const { data: locationsData } = useLocations(
+    { limit: 1000 },
     {
-      enabled: !!selectedRootLocationIds && selectedRootLocationIds.length > 0,
-      refetchOnWindowFocus: true,
+      skip: !selectedRootLocationIds || selectedRootLocationIds.length === 0,
     }
   )
 
@@ -262,16 +279,66 @@ const RootLocationSelector = ({ className, onSelect }: RootLocationSelectorProps
     }
   }, [rootLocations, selectedRootLocationIds])
 
-  const selectedRootLocations = selectedLocationsCache.length > 0
-    ? selectedLocationsCache
-    : (rootLocations?.filter(loc => selectedRootLocationIds?.includes(loc.id)) || [])
+  const resolvedFromRoot = rootLocations?.filter(loc => selectedRootLocationIds?.includes(loc.id)) || []
+  const resolvedFromLocationsData = useMemo(() => {
+    if (
+      !selectedRootLocationIds?.length ||
+      resolvedFromRoot.length === selectedRootLocationIds.length ||
+      !locationsData?.locationNodes
+    ) {
+      return []
+    }
+    const allLocations = locationsData.locationNodes as Array<{ id: string, title: string, kind?: string }>
+    const out: Array<{ id: string, title: string, kind?: string }> = []
+    for (const id of selectedRootLocationIds) {
+      const inRoot = rootLocations?.find(loc => loc.id === id)
+      if (inRoot) {
+        out.push({ id: inRoot.id, title: inRoot.title, kind: inRoot.kind })
+      } else {
+        const inAll = allLocations.find(loc => loc.id === id)
+        if (inAll) {
+          out.push({ id: inAll.id, title: inAll.title, kind: inAll.kind })
+        }
+      }
+    }
+    return out
+  }, [selectedRootLocationIds, rootLocations, locationsData?.locationNodes, resolvedFromRoot.length])
+
+  const storedResolved = useMemo(
+    () =>
+      selectedRootLocationIds?.length
+        ? storedSelectedRootLocations.filter(loc => selectedRootLocationIds.includes(loc.id))
+        : [],
+    [selectedRootLocationIds, storedSelectedRootLocations]
+  )
+
+  const selectedRootLocations =
+    selectedLocationsCache.length > 0
+      ? selectedLocationsCache
+      : resolvedFromRoot.length > 0
+        ? resolvedFromRoot
+        : resolvedFromLocationsData.length > 0
+          ? resolvedFromLocationsData
+          : storedResolved
   const firstSelectedRootLocation = selectedRootLocations[0]
   const hasNoLocationSelected = !selectedRootLocationIds || selectedRootLocationIds.length === 0
+  const hasSelectionButNoNames =
+    !hasNoLocationSelected && selectedRootLocations.length === 0
+
+  useEffect(() => {
+    if (selectedRootLocations.length === 0) return
+    const storedIds = storedResolved.map(loc => loc.id).join(',')
+    const nextIds = selectedRootLocations.map(loc => loc.id).join(',')
+    if (storedIds !== nextIds) {
+      setStoredSelectedRootLocations(selectedRootLocations)
+    }
+  }, [selectedRootLocations, storedResolved, setStoredSelectedRootLocations])
 
   const handleRootLocationSelect = (locations: Array<{ id: string, title: string, kind?: string }>) => {
     if (locations.length === 0) return
     const locationIds = locations.map(loc => loc.id)
     setSelectedLocationsCache(locations)
+    setStoredSelectedRootLocations(locations)
     update(prevState => {
       return {
         ...prevState,
@@ -282,7 +349,10 @@ const RootLocationSelector = ({ className, onSelect }: RootLocationSelectorProps
     onSelect?.()
   }
 
-  if (!rootLocations || rootLocations.length === 0) {
+  const canShowSelector =
+    (rootLocations && rootLocations.length > 0) ||
+    (selectedRootLocationIds && selectedRootLocationIds.length > 0)
+  if (!canShowSelector) {
     return null
   }
 
@@ -300,7 +370,9 @@ const RootLocationSelector = ({ className, onSelect }: RootLocationSelectorProps
             : selectedRootLocations.length === 2
               ? `${selectedRootLocations[0]?.title ?? ''}, ${selectedRootLocations[1]?.title ?? ''}`
               : `${selectedRootLocations[0]?.title ?? ''} +${selectedRootLocations.length - 1}`
-          : translation('selectLocation') || 'Select Location'}
+          : hasSelectionButNoNames
+            ? (translation('loading') ?? 'Loading...')
+            : (translation('selectLocation') || 'Select Location')}
       </Button>
       <LocationSelectionDialog
         isOpen={isLocationPickerOpen}
@@ -313,6 +385,10 @@ const RootLocationSelector = ({ className, onSelect }: RootLocationSelectorProps
     </div>
   )
 }
+
+type IconButtonProps = ComponentProps<typeof HightideIconButton>
+
+const IconButton = (props: IconButtonProps) => <HightideIconButton {...props} />
 
 type HeaderProps = HTMLAttributes<HTMLHeadElement> & {
   onMenuClick?: () => void,
@@ -335,35 +411,39 @@ export const Header = ({ onMenuClick, isMenuOpen, ...props }: HeaderProps) => {
           props.className
         )}
       >
-        <div className="flex-col-0 pl-4 lg:pl-0">
-          <Button
-            layout="icon"
+        <div className="flex-col-0 lg:pl-0">
+          <IconButton
+            tooltip={translation('menu')}
             color="neutral"
             coloringStyle="text"
             onClick={onMenuClick}
-            className="lg:hidden"
+            className="min-h-11 min-w-11 lg:hidden"
           >
             {isMenuOpen ? <X className="size-6" /> : <MenuIcon className="size-6" />}
-          </Button>
+          </IconButton>
         </div>
         <div className="flex-row-2 justify-end items-center gap-x-2">
           <RootLocationSelector className="hidden sm:flex" />
-          <Notifications />
-          <Tooltip tooltip={translation('feedback')}>
-            <Button coloringStyle="text" layout="icon" color="neutral" onClick={() => setIsFeedbackOpen(true)}>
-              <MessageSquare />
-            </Button>
-          </Tooltip>
-          <Tooltip tooltip={translation('settings')}>
-            <Button coloringStyle="text" layout="icon" color="neutral" onClick={() => router.push('/settings')}>
-              <SettingsIcon />
-            </Button>
-          </Tooltip>
+          <IconButton
+            tooltip={translation('feedback')}
+            coloringStyle="text" color="neutral"
+            onClick={() => setIsFeedbackOpen(true)}
+          >
+            <MessageSquare />
+          </IconButton>
+          <IconButton
+            tooltip={translation('settings')}
+            coloringStyle="text" color="neutral"
+            onClick={() => router.push('/settings')}
+          >
+            <SettingsIcon />
+          </IconButton>
           <Tooltip tooltip={user?.isOnline ? 'Online' : 'Offline'}>
             <Button
               onClick={() => setIsUserInfoOpen(!!user?.id)}
               coloringStyle="text"
               color="neutral"
+              className="min-w-auto"
             >
               <span className="hidden sm:inline typography-title-sm">{user?.name}</span>
               <AvatarStatusComponent
@@ -418,13 +498,22 @@ export const Sidebar = ({ isOpen, onClose, ...props }: SidebarProps) => {
   const translation = useTasksTranslation()
   const locationRoute = '/location'
   const context = useTasksContext()
+  const { data: savedViewsData, loading: savedViewsLoading } = useMySavedViews()
+  const savedViews = (savedViewsData?.mySavedViews ?? []) as MySavedViewsQuery['mySavedViews']
+  const pathname = usePathname() ?? ''
+  const quickAccessNavRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    quickAccessNavRef.current?.scrollIntoView({ block: 'nearest' })
+  }, [pathname])
 
   return (
     <>
       {isOpen && (
         <div
-          className="fixed inset-0 bg-overlay-shadow z-40 lg:hidden"
+          className="fixed inset-0 z-40 touch-manipulation bg-overlay-shadow lg:hidden"
           onClick={onClose}
+          role="presentation"
         />
       )}
       <aside
@@ -432,6 +521,7 @@ export const Sidebar = ({ isOpen, onClose, ...props }: SidebarProps) => {
         className={clsx(
           'flex-col-4 w-50 min-w-56 rounded-lg bg-surface text-on-surface overflow-hidden shadow-md',
           'fixed lg:relative inset-y-0 z-50 lg:z-auto',
+          'pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]',
           'w-screen max-w-sm lg:w-50 lg:min-w-56',
           'transform transition-transform duration-300 ease-out',
           isOpen
@@ -448,15 +538,15 @@ export const Sidebar = ({ isOpen, onClose, ...props }: SidebarProps) => {
               <TasksLogo />
               <span className="typography-title-md whitespace-nowrap">{'helpwave tasks'}</span>
             </Link>
-            <Button
-              layout="icon"
+            <IconButton
+              tooltip={translation('close')}
               color="neutral"
               coloringStyle="text"
               onClick={onClose}
-              className="lg:hidden"
+              className="min-h-11 min-w-11 lg:hidden"
             >
               <X className="size-6" />
-            </Button>
+            </IconButton>
           </div>
           <SidebarLink href="/" onClick={onClose}>
             <Grid2X2PlusIcon className="-rotate-90 size-5" />
@@ -467,24 +557,59 @@ export const Sidebar = ({ isOpen, onClose, ...props }: SidebarProps) => {
             <span className="flex grow">{translation('myTasks')}</span>
             {context?.myTasksCount !== undefined && (<span className="text-description">{context.myTasksCount}</span>)}
           </SidebarLink>
-          {context?.waitingPatientsCount !== undefined && context.waitingPatientsCount > 0 && (
-            <SidebarLink href="/waitingroom" onClick={onClose}>
-              <Clock className="size-5" />
-              <span className="flex grow">{translation('waitingroom')}</span>
-              <span className="text-description">{context.waitingPatientsCount}</span>
-            </SidebarLink>
-          )}
           <SidebarLink href="/patients" onClick={onClose}>
             <User className="size-5" />
             <span className="flex grow">{translation('patients')}</span>
             {context?.totalPatientsCount !== undefined && (<span className="text-description">{context.totalPatientsCount}</span>)}
           </SidebarLink>
-
-          {context?.teams && context.teams.length > 0 && (
+          <div ref={quickAccessNavRef} className="min-h-0 scroll-mt-2">
             <ExpandableRoot
               className="shadow-none"
-              isExpanded={context.sidebar.isShowingTeams}
+              isExpanded={context.sidebar.isShowingSavedViews}
               onExpandedChange={isExpanded => context.update(prevState => ({
+                ...prevState,
+                sidebar: {
+                  ...prevState.sidebar,
+                  isShowingSavedViews: isExpanded,
+                },
+              }))}
+            >
+              <ExpandableHeader className="px-2.5 py-1.5">
+                <div className="flex-row-2">
+                  <Rabbit className="size-5" />
+                  {translation('savedViews')}
+                </div>
+              </ExpandableHeader>
+              <ExpandableContent className="!max-h-none !h-auto !overflow-visible gap-y-0 pl-4 p-0">
+                {savedViews.length > 0
+                  ? savedViews.map((v: MySavedViewsQuery['mySavedViews'][number]) => (
+                    <SidebarLink key={v.id} href={`/view/${v.id}`} onClick={onClose}>
+                      {v.name}
+                    </SidebarLink>
+                  ))
+                  : savedViewsLoading
+                    ? (
+                      <div className="px-2.5 py-1.5 typography-body-sm text-description">
+                        {translation('loading')}
+                      </div>
+                    )
+                    : (
+                      <Link
+                        href="/settings/views"
+                        className="flex-row-1.5 w-full px-2.5 py-1.5 items-center rounded-md typography-body-sm text-description hover:bg-surface-hover"
+                        onClick={onClose}
+                      >
+                        {translation('viewSettings')}
+                      </Link>
+                    )}
+              </ExpandableContent>
+            </ExpandableRoot>
+          </div>
+          {(context?.teams?.length ?? 0) > 0 && (
+            <ExpandableRoot
+              className="shadow-none"
+              isExpanded={context?.sidebar?.isShowingTeams ?? false}
+              onExpandedChange={isExpanded => context?.update(prevState => ({
                 ...prevState,
                 sidebar: {
                   ...prevState.sidebar,
@@ -499,7 +624,7 @@ export const Sidebar = ({ isOpen, onClose, ...props }: SidebarProps) => {
                 </div>
               </ExpandableHeader>
               <ExpandableContent className="!max-h-none !h-auto !overflow-visible gap-y-0 pl-4 p-0">
-                {context.teams.map(team => (
+                {(context?.teams ?? []).map(team => (
                   <SidebarLink key={team.id} href={`${locationRoute}/${team.id}`} onClick={onClose}>
                     {team.title}
                   </SidebarLink>
@@ -508,11 +633,11 @@ export const Sidebar = ({ isOpen, onClose, ...props }: SidebarProps) => {
             </ExpandableRoot>
           )}
 
-          {context?.wards && context.wards.length > 0 && (
+          {(context?.wards?.length ?? 0) > 0 && (
             <ExpandableRoot
               className="shadow-none"
-              isExpanded={context.sidebar.isShowingWards}
-              onExpandedChange={isExpanded => context.update(prevState => ({
+              isExpanded={context?.sidebar?.isShowingWards ?? false}
+              onExpandedChange={isExpanded => context?.update(prevState => ({
                 ...prevState,
                 sidebar: {
                   ...prevState.sidebar,
@@ -527,7 +652,7 @@ export const Sidebar = ({ isOpen, onClose, ...props }: SidebarProps) => {
                 </div>
               </ExpandableHeader>
               <ExpandableContent className="!max-h-none !h-auto !overflow-visible gap-y-0 pl-4 p-0">
-                {context.wards.map(ward => (
+                {(context?.wards ?? []).map(ward => (
                   <SidebarLink key={ward.id} href={`${locationRoute}/${ward.id}`} onClick={onClose}>
                     {ward.title}
                   </SidebarLink>
@@ -536,11 +661,11 @@ export const Sidebar = ({ isOpen, onClose, ...props }: SidebarProps) => {
             </ExpandableRoot>
           )}
 
-          {context?.clinics && context.clinics.length > 0 && (
+          {(context?.clinics?.length ?? 0) > 0 && (
             <ExpandableRoot
               className="shadow-none"
-              isExpanded={context.sidebar.isShowingClinics}
-              onExpandedChange={isExpanded => context.update(prevState => ({
+              isExpanded={context?.sidebar?.isShowingClinics ?? false}
+              onExpandedChange={isExpanded => context?.update(prevState => ({
                 ...prevState,
                 sidebar: {
                   ...prevState.sidebar,
@@ -555,7 +680,7 @@ export const Sidebar = ({ isOpen, onClose, ...props }: SidebarProps) => {
                 </div>
               </ExpandableHeader>
               <ExpandableContent className="!max-h-none !h-auto !overflow-visible gap-y-0 pl-4 p-0">
-                {context.clinics.map(clinic => (
+                {(context?.clinics ?? []).map(clinic => (
                   <SidebarLink key={clinic.id} href={`${locationRoute}/${clinic.id}`} onClick={onClose}>
                     {clinic.title}
                   </SidebarLink>
@@ -588,7 +713,7 @@ export const Page = ({
   })
 
   return (
-    <div className="flex-row-0 h-screen w-screen overflow-hidden overflow-x-hidden">
+    <div className="flex-row-0 h-dvh min-h-dvh max-h-dvh w-screen overflow-hidden overflow-x-hidden">
       <Head>
         <title>{titleWrapper(pageTitle)}</title>
       </Head>
@@ -601,10 +726,10 @@ export const Page = ({
       />
       <div
         ref={mainContentRef as React.RefObject<HTMLDivElement>}
-        className="flex-col-4 pl-8 grow overflow-y-scroll"
+        className="flex-col-4 lg:pl-8 grow overflow-y-auto overscroll-y-contain"
       >
         <Header
-          className="sticky top-0 right-0 p-4 bg-background text-on-background"
+          className="sticky top-0 right-0 z-20 p-4 bg-background text-on-background"
           onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)}
           isMenuOpen={isSidebarOpen}
         />

@@ -1,5 +1,5 @@
 import { FieldType } from '@/api/gql/generated'
-import type { TableFilterCategory } from '@helpwave/hightide'
+import type { DataType } from '@helpwave/hightide'
 
 /**
  * Maps a FieldType to the appropriate filter function name for TanStack Table.
@@ -9,7 +9,7 @@ import type { TableFilterCategory } from '@helpwave/hightide'
  * - date vs datetime (for proper date/time filtering)
  * - tags (multi-select) vs tags_single (single select)
  */
-export function getPropertyFilterFn(fieldType: FieldType): TableFilterCategory {
+export function getPropertyFilterFn(fieldType: FieldType): DataType {
   switch (fieldType) {
   case FieldType.FieldTypeCheckbox:
     return 'boolean'
@@ -20,9 +20,11 @@ export function getPropertyFilterFn(fieldType: FieldType): TableFilterCategory {
   case FieldType.FieldTypeNumber:
     return 'number'
   case FieldType.FieldTypeSelect:
-    return 'tagsSingle'
+    return 'singleTag'
   case FieldType.FieldTypeMultiSelect:
-    return 'tags'
+    return 'multiTags'
+  case FieldType.FieldTypeUser:
+    return 'text'
   default:
     return 'text'
   }

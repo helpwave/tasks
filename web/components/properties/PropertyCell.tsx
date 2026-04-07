@@ -1,8 +1,10 @@
 import { Chip, FillerCell, Tooltip } from '@helpwave/hightide'
-import { SmartDate } from '@/utils/date'
+import { Users } from 'lucide-react'
+import { DateDisplay } from '@/components/Date/DateDisplay'
 import { FieldType } from '@/api/gql/generated'
 import type { PropertyValueType } from '@/api/gql/generated'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
+import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
 
 export interface PropertyCellProps {
   property?: PropertyValueType | undefined,
@@ -42,7 +44,7 @@ export const PropertyCell = ({
       return <FillerCell />
     }
     return (
-      <SmartDate date={date} showTime={false} />
+      <DateDisplay date={date} showTime={false} mode="absolute" />
     )
   }
   case FieldType.FieldTypeDateTime: {
@@ -56,7 +58,7 @@ export const PropertyCell = ({
       return <FillerCell />
     }
     return (
-      <SmartDate date={date} />
+      <DateDisplay date={date} mode="absolute" />
     )
   }
   case FieldType.FieldTypeSelect: {
@@ -101,14 +103,42 @@ export const PropertyCell = ({
     )
   case FieldType.FieldTypeText: {
     const textValue = property.textValue ?? property.numberValue ?? ''
-    const displayText = typeof textValue === 'string' && textValue.length > 15
-      ? `${textValue.substring(0, 15)}...`
-      : String(textValue)
     return (
-      <Tooltip tooltip={textValue} tooltipClassName="whitespace-wrap">
-        <span className="truncate block max-w-full overflow-hidden text-ellipsis">{displayText}</span>
+      <Tooltip tooltip={textValue}>
+        <span className="truncate block max-w-full overflow-hidden text-ellipsis">{textValue}</span>
       </Tooltip>
     )
+  }
+  case FieldType.FieldTypeUser: {
+    if (property.user) {
+      return (
+        <div className="flex items-center gap-2 min-w-0">
+          <AvatarStatusComponent
+            size="sm"
+            isOnline={property.user.isOnline ?? null}
+            image={property.user.avatarUrl ? {
+              avatarUrl: property.user.avatarUrl,
+              alt: property.user.name,
+            } : undefined}
+          />
+          <span className="truncate">{property.user.name}</span>
+        </div>
+      )
+    }
+    if (property.team) {
+      return (
+        <div className="flex items-center gap-2 min-w-0">
+          <Users className="size-4 text-description flex-shrink-0" />
+          <span className="truncate">{property.team.title}</span>
+        </div>
+      )
+    }
+    if (property.userValue) {
+      return (
+        <span className="truncate block">{property.userValue}</span>
+      )
+    }
+    return <FillerCell />
   }
   default:
     return <FillerCell />

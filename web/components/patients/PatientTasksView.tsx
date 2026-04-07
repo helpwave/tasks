@@ -6,7 +6,7 @@ import { TaskCardView } from '@/components/tasks/TaskCardView'
 import clsx from 'clsx'
 import type { GetPatientQuery } from '@/api/gql/generated'
 import { TaskDetailView } from '@/components/tasks/TaskDetailView'
-import { useOptimisticCompleteTaskMutation, useOptimisticReopenTaskMutation } from '@/api/optimistic-updates/GetPatient'
+import { useCompleteTask, useReopenTask } from '@/data'
 
 interface PatientTasksViewProps {
   patientId: string,
@@ -33,33 +33,8 @@ export const PatientTasksView = ({
   const [isCreatingTask, setIsCreatingTask] = useState(false)
   const [optimisticTaskUpdates, setOptimisticTaskUpdates] = useState<Map<string, boolean>>(new Map())
 
-  const { mutate: completeTask } = useOptimisticCompleteTaskMutation({
-    id: patientId,
-    onSuccess: async () => {
-      onSuccess?.()
-    },
-    onError: (error, variables) => {
-      setOptimisticTaskUpdates(prev => {
-        const next = new Map(prev)
-        next.delete(variables.id)
-        return next
-      })
-    },
-  })
-
-  const { mutate: reopenTask } = useOptimisticReopenTaskMutation({
-    id: patientId,
-    onSuccess: async () => {
-      onSuccess?.()
-    },
-    onError: (error, variables) => {
-      setOptimisticTaskUpdates(prev => {
-        const next = new Map(prev)
-        next.delete(variables.id)
-        return next
-      })
-    },
-  })
+  const [completeTask] = useCompleteTask()
+  const [reopenTask] = useReopenTask()
 
   const tasks = useMemo(() => {
     const baseTasks = patientData?.patient?.tasks || []
@@ -86,75 +61,97 @@ export const PatientTasksView = ({
       return next
     })
     if (done) {
-      completeTask({ id: taskId })
+      completeTask({
+        variables: { id: taskId },
+        onCompleted: () => onSuccess?.(),
+        onError: () => {
+          setOptimisticTaskUpdates(prev => {
+            const next = new Map(prev)
+            next.delete(taskId)
+            return next
+          })
+        },
+      })
     } else {
-      reopenTask({ id: taskId })
+      reopenTask({
+        variables: { id: taskId },
+        onCompleted: () => onSuccess?.(),
+        onError: () => {
+          setOptimisticTaskUpdates(prev => {
+            const next = new Map(prev)
+            next.delete(taskId)
+            return next
+          })
+        },
+      })
     }
   }
 
   return (
     <>
-      <div className="flex flex-col gap-4 pt-4">
-        <div className="mb-2">
+      <div className="flex-col-0 pt-4 overflow-hidden h-full justify-between flex-1">
+        <div className="flex-col-4 flex-1 overflow-y-auto px-2 ">
+          <ExpandableRoot className="shadow-none group/expandable" isInitialExpanded={true}>
+            <ExpandableHeader
+              className="justify-start p-2 ext-lg font-bold"
+              isUsingDefaultIcon={false}
+            >
+              <ChevronDown className={clsx('size-5 transition-transform -rotate-90 group-data-[expanded]/expandable:rotate-0')} />
+              <Circle className="size-5 text-warning" />
+              {translation('openTasks')} ({openTasks.length})
+            </ExpandableHeader>
+            <ExpandableContent className="!max-h-none !h-auto !overflow-visible px-1 data-[expanded]:py-2">
+              {openTasks.length === 0 &&
+                <div className="text-description italic">{translation('noOpenTasks')}</div>}
+              {openTasks.map(task => (
+                <TaskCardView
+                  key={task.id}
+                  task={task}
+                  onClick={(t) => setTaskId(t.id)}
+                  onToggleDone={handleToggleDone}
+                  showPatient={false}
+                  showAssignee={!!((task.assignees?.length ?? 0) > 0 || task.assigneeTeam)}
+                  fullWidth={true}
+                />
+              ))}
+            </ExpandableContent>
+          </ExpandableRoot>
+
+          <ExpandableRoot className="shadow-none opacity-75 group/expandable">
+            <ExpandableHeader
+              className="justify-start p-2 ext-lg font-bold"
+              isUsingDefaultIcon={false}
+            >
+              <ChevronDown className={clsx('size-5 transition-transform -rotate-90 group-data-[expanded]/expandable:rotate-0')} />
+              <CheckCircle2 className="size-5 text-positive" />
+              {translation('closedTasks')} ({closedTasks.length})
+            </ExpandableHeader>
+            <ExpandableContent className="!max-h-none !h-auto !overflow-visible px-1 data-[expanded]:py-2">
+              {closedTasks.length === 0 &&
+                <div className="text-description italic">{translation('noClosedTasks')}</div>}
+              {closedTasks.map(task => (
+                <TaskCardView
+                  key={task.id}
+                  task={task}
+                  onClick={(t) => setTaskId(t.id)}
+                  onToggleDone={handleToggleDone}
+                  showPatient={false}
+                  showAssignee={!!((task.assignees?.length ?? 0) > 0 || task.assigneeTeam)}
+                  fullWidth={true}
+                />
+              ))}
+            </ExpandableContent>
+          </ExpandableRoot>
+        </div>
+        <div className="flex-row-4 justify-end mt-2">
           <Button
             onClick={() => setIsCreatingTask(true)}
-            className="w-full"
+            className="w-fit"
           >
             <PlusIcon />
             {translation('addTask')}
           </Button>
         </div>
-        <ExpandableRoot className="shadow-none group/expandable" isExpanded={true}>
-          <ExpandableHeader
-            className="justify-start p-2 ext-lg font-bold"
-            isUsingDefaultIcon={false}
-          >
-            <ChevronDown className={clsx('size-5 transition-transform -rotate-90 group-data-[expanded]/expandable:rotate-0')} />
-            <Circle className="size-5 text-warning" />
-            {translation('openTasks')} ({openTasks.length})
-          </ExpandableHeader>
-          <ExpandableContent className="!max-h-none !h-auto !overflow-visible px-1 data-[expanded]:py-2">
-            {openTasks.length === 0 &&
-                <div className="text-description italic">{translation('noOpenTasks')}</div>}
-            {openTasks.map(task => (
-              <TaskCardView
-                key={task.id}
-                task={task}
-                onClick={(t) => setTaskId(t.id)}
-                onToggleDone={handleToggleDone}
-                showPatient={false}
-                showAssignee={!!(task.assignee || task.assigneeTeam)}
-                fullWidth={true}
-              />
-            ))}
-          </ExpandableContent>
-        </ExpandableRoot>
-
-        <ExpandableRoot className="shadow-none opacity-75 group/expandable">
-          <ExpandableHeader
-            className="justify-start p-2 ext-lg font-bold"
-            isUsingDefaultIcon={false}
-          >
-            <ChevronDown className={clsx('size-5 transition-transform -rotate-90 group-data-[expanded]/expandable:rotate-0')} />
-            <CheckCircle2 className="size-5 text-positive" />
-            {translation('closedTasks')} ({closedTasks.length})
-          </ExpandableHeader>
-          <ExpandableContent className="!max-h-none !h-auto !overflow-visible px-1 data-[expanded]:py-2">
-            {closedTasks.length === 0 &&
-                <div className="text-description italic">{translation('noClosedTasks')}</div>}
-            {closedTasks.map(task => (
-              <TaskCardView
-                key={task.id}
-                task={task}
-                onClick={(t) => setTaskId(t.id)}
-                onToggleDone={handleToggleDone}
-                showPatient={false}
-                showAssignee={!!(task.assignee || task.assigneeTeam)}
-                fullWidth={true}
-              />
-            ))}
-          </ExpandableContent>
-        </ExpandableRoot>
       </div>
       <Drawer
         isOpen={!!taskId || isCreatingTask}
@@ -169,9 +166,8 @@ export const PatientTasksView = ({
         <TaskDetailView
           taskId={taskId}
           initialPatientId={isCreatingTask ? patientId : undefined}
-          onSuccess={() => {
+          onListSync={() => {
             onSuccess?.()
-            setIsCreatingTask(false)
           }}
           onClose={() => {
             setTaskId(null)

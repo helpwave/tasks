@@ -128,7 +128,23 @@ def verify_token(token: str) -> dict:
         raise Exception(f"{e!s}")
 
 
+def get_token_from_connection_params(connection_params: dict | None) -> str | None:
+    if not connection_params or not isinstance(connection_params, dict):
+        return None
+    auth = connection_params.get("authorization")
+    if not auth or not isinstance(auth, str):
+        return None
+    parts = auth.split()
+    if len(parts) == 2 and parts[0].lower() == "bearer":
+        return parts[1]
+    return None
+
+
 def get_token_source(connection: HTTPConnection) -> str | None:
+    if hasattr(connection, "connection_params") and connection.connection_params:
+        token = get_token_from_connection_params(connection.connection_params)
+        if token:
+            return token
     auth_header = connection.headers.get("authorization")
     if auth_header:
         parts = auth_header.split()

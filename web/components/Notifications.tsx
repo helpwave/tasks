@@ -1,9 +1,10 @@
 import { useEffect, useMemo } from 'react'
-import { Button, Chip, PopUp, PopUpContext, PopUpOpener, PopUpRoot, Tooltip, useLocalStorage, Visibility } from '@helpwave/hightide'
+import { Button, Chip, IconButton, PopUp, PopUpContext, PopUpOpener, PopUpRoot, Visibility } from '@helpwave/hightide'
+import { useStorage } from '@/hooks/useStorage'
 import { Bell } from 'lucide-react'
-import { useGetOverviewDataQuery } from '@/api/gql/generated'
+import { useOverviewData } from '@/data'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
-import { SmartDate } from '@/utils/date'
+import { DateDisplay } from '@/components/Date/DateDisplay'
 import { useRouter } from 'next/router'
 import { useTasksContext } from '@/hooks/useTasksContext'
 
@@ -21,19 +22,17 @@ export const Notifications = () => {
   const translation = useTasksTranslation()
   const router = useRouter()
   const { user } = useTasksContext()
-  const { data, refetch } = useGetOverviewDataQuery(undefined, {
-    refetchOnWindowFocus: true,
-  })
+  const { data, refetch } = useOverviewData()
 
   const {
     value: readNotificationsRaw,
     setValue: setReadNotificationsRaw
-  } = useLocalStorage<string[]>('read-notifications', [])
+  } = useStorage<string[]>({ key: 'read-notifications', defaultValue: [] })
 
   const {
     value: dismissedNotificationsRaw,
     setValue: setDismissedNotificationsRaw
-  } = useLocalStorage<string[]>('dismissed-notifications', [])
+  } = useStorage<string[]>({ key: 'dismissed-notifications', defaultValue: [] })
 
   const readNotifications = useMemo(() => {
     return new Set(readNotificationsRaw || [])
@@ -79,7 +78,7 @@ export const Notifications = () => {
 
     const recentTasks = data?.recentTasks?.slice(0, 5) || []
     recentTasks.forEach((task) => {
-      if (task.assignee?.id === user?.id) {
+      if (task.assignees.some((assignee) => assignee.id === user?.id)) {
         return
       }
       const id = `task-${task.id}`
@@ -133,29 +132,23 @@ export const Notifications = () => {
 
   return (
     <PopUpRoot>
-      <PopUpContext.Consumer>
-        {({ isOpen }) => (
-          <Tooltip tooltip={translation('notifications')} disabled={isOpen}>
-            <PopUpOpener>
-              {({ props }) => (
-                <Button
-                  {...props}
-                  coloringStyle="text"
-                  layout="icon"
-                  color="neutral"
-                >
-                  <Bell className="size-5" />
-                  {unreadCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 flex-row-0 min-w-4.5 h-4.5 items-center justify-center rounded-full bg-primary text-on-primary text-xs font-bold leading-none">
-                      {unreadCount > 9 ? '9+' : unreadCount}
-                    </span>
-                  )}
-                </Button>
-              )}
-            </PopUpOpener>
-          </Tooltip>
+      <PopUpOpener>
+        {({ props }) => (
+          <IconButton
+            {...props}
+            tooltip={translation('notifications')}
+            coloringStyle="text"
+            color="neutral"
+          >
+            <Bell className="size-5" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 flex-row-0 min-w-4.5 h-4.5 items-center justify-center rounded-full bg-primary text-on-primary text-xs font-bold leading-none">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
+          </IconButton>
         )}
-      </PopUpContext.Consumer>
+      </PopUpOpener>
       <PopUp
         options={{
           horizontalAlignment: 'center'
@@ -211,7 +204,7 @@ export const Notifications = () => {
                         <span className="typography-body-xs text-description truncate">
                           {notification.subtitle}
                           {notification.date && (
-                            <> • <SmartDate date={notification.date} showTime={true} /></>
+                            <> • <DateDisplay date={notification.date} showTime={true} /></>
                           )}
                         </span>
                       </div>

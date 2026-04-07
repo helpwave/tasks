@@ -3,14 +3,15 @@ import { Page } from '@/components/layout/Page'
 import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
-import { Button, Chip, FillerCell, LoadingContainer, Table } from '@helpwave/hightide'
+import { Button, Chip, FillerCell, IconButton, LoadingContainer, Table } from '@helpwave/hightide'
 import { useCallback, useMemo, useState } from 'react'
 import type { ColumnDef } from '@tanstack/table-core'
 import { EditIcon, PlusIcon } from 'lucide-react'
 import { Drawer } from '@helpwave/hightide'
 import type { Property } from '@/components/tables/PropertyList'
 import { PropertyDetailView } from '@/components/properties/PropertyDetailView'
-import { useGetPropertyDefinitionsQuery, FieldType, PropertyEntity } from '@/api/gql/generated'
+import { FieldType, PropertyEntity } from '@/api/gql/generated'
+import { usePropertyDefinitions } from '@/data'
 
 const PropertiesPage: NextPage = () => {
   const translation = useTasksTranslation()
@@ -26,6 +27,7 @@ const PropertiesPage: NextPage = () => {
       [FieldType.FieldTypeDateTime]: 'dateTime',
       [FieldType.FieldTypeSelect]: 'singleSelect',
       [FieldType.FieldTypeMultiSelect]: 'multiSelect',
+      [FieldType.FieldTypeUser]: 'user',
       [FieldType.FieldTypeUnspecified]: 'text',
     }
     return mapping[fieldType] || 'text'
@@ -35,7 +37,7 @@ const PropertiesPage: NextPage = () => {
     return entity === PropertyEntity.Patient ? 'patient' : 'task'
   }
 
-  const { data: propertyDefinitionsData, refetch } = useGetPropertyDefinitionsQuery()
+  const { data: propertyDefinitionsData, refetch } = usePropertyDefinitions()
 
   const data = propertyDefinitionsData?.propertyDefinitions?.map(def => ({
     id: def.id,
@@ -140,14 +142,14 @@ const PropertiesPage: NextPage = () => {
       id: 'actions',
       header: '',
       cell: ({ row }) => (
-        <Button
-          layout="icon"
+        <IconButton
+          tooltip={translation('edit')}
           coloringStyle="text"
           color="neutral"
           onClick={() => handleEdit(row.original)}
         >
           <EditIcon/>
-        </Button>
+        </IconButton>
       ),
       enableSorting: false,
       enableColumnFilter: false,
@@ -179,7 +181,7 @@ const PropertiesPage: NextPage = () => {
               fillerRowCell: useCallback(() => (<FillerCell className="min-h-12"/>), []),
               initialState: {
                 pagination: {
-                  pageSize: 25,
+                  pageSize: 10,
                 }
               }
             }}

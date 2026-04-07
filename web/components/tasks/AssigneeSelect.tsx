@@ -1,9 +1,9 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { PropsUtil, Visibility } from '@helpwave/hightide'
 import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { Users, ChevronDown, Info, SearchIcon } from 'lucide-react'
-import { useGetUsersQuery, useGetLocationsQuery } from '@/api/gql/generated'
+import { useUsers, useLocations } from '@/data'
 import clsx from 'clsx'
 import { AssigneeSelectDialog } from './AssigneeSelectDialog'
 import { UserInfoPopup } from '../UserInfoPopup'
@@ -11,9 +11,12 @@ import { UserInfoPopup } from '../UserInfoPopup'
 interface AssigneeSelectProps {
   value: string,
   onValueChanged: (value: string) => void,
+  onDialogClose?: (value: string) => void,
   allowTeams?: boolean,
   allowUnassigned?: boolean,
   excludeUserIds?: string[],
+  multiUserSelect?: boolean,
+  onMultiUserIdsSelected?: (userIds: string[]) => void,
   id?: string,
   className?: string,
   [key: string]: unknown,
@@ -22,20 +25,23 @@ interface AssigneeSelectProps {
 export const  AssigneeSelect = ({
   value,
   onValueChanged,
+  onDialogClose,
   allowTeams = true,
   allowUnassigned: _allowUnassigned = false,
   excludeUserIds = [],
+  multiUserSelect = false,
+  onMultiUserIdsSelected,
   id,
   className,
 }: AssigneeSelectProps) => {
   const translation = useTasksTranslation()
   const [isOpen, setIsOpen] = useState(false)
   const [selectedUserPopupState, setSelectedUserPopupState] = useState<{ isOpen: boolean, userId: string | null }>({ isOpen: false, userId: null })
+  const closedBySelectionRef = useRef(false)
 
 
-  const { data: usersData } = useGetUsersQuery(undefined, {
-  })
-  const { data: locationsData } = useGetLocationsQuery(undefined, {})
+  const { data: usersData } = useUsers()
+  const { data: locationsData } = useLocations()
 
   const teams = useMemo(() => {
     if (!locationsData?.locationNodes) return []
@@ -61,7 +67,9 @@ export const  AssigneeSelect = ({
   const selectedItem = getSelectedUser()
 
   const handleSelect = (selectedValue: string) => {
+    closedBySelectionRef.current = true
     onValueChanged(selectedValue)
+    onDialogClose?.(selectedValue)
     setIsOpen(false)
   }
 
@@ -70,6 +78,10 @@ export const  AssigneeSelect = ({
   }
 
   const handleClose = () => {
+    if (!closedBySelectionRef.current) {
+      onDialogClose?.(value)
+    }
+    closedBySelectionRef.current = false
     setIsOpen(false)
   }
 
@@ -138,6 +150,8 @@ export const  AssigneeSelect = ({
         isOpen={isOpen}
         onClose={handleClose}
         onUserInfoClick={(userId) => setSelectedUserPopupState({ isOpen: true, userId })}
+        multiUserSelect={multiUserSelect}
+        onMultiUserIdsSelected={onMultiUserIdsSelected}
       />
       <UserInfoPopup
         userId={selectedUserPopupState.userId}

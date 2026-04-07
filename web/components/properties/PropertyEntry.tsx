@@ -1,13 +1,16 @@
 import {
   CheckboxProperty,
   DateProperty,
+  MultiSelectOption,
   MultiSelectProperty,
   NumberProperty,
+  PropertyBase,
   SelectOption,
   SingleSelectProperty,
   TextProperty
 } from '@helpwave/hightide'
 import type { PropertyFieldType, PropertySelectOption, PropertyValue } from '@/components/tables/PropertyList'
+import { AssigneeSelect } from '@/components/tasks/AssigneeSelect'
 
 type PropertyEntrySelectProps = {
   onAddOption?: (name: string) => void,
@@ -94,7 +97,7 @@ export const PropertyEntry = ({
         {...commonProps}
         value={value.boolValue}
         onValueChange={boolValue => onChange({ ...value, boolValue })}
-        onEditComplete={boolValue => onChange({ ...value, boolValue })}
+        onEditComplete={boolValue => onEditComplete({ ...value, boolValue })}
       />
     )
   case 'singleSelect':
@@ -106,11 +109,8 @@ export const PropertyEntry = ({
         onEditComplete={singleSelectValue => onEditComplete({ ...value, singleSelectValue })}
       >
         {selectData?.options.map(option => (
-          <SelectOption key={option.id} value={option.id}>
-            {option.name}
-          </SelectOption>
-        ))
-        }
+          <SelectOption key={option.id} value={option.id} label={option.name} />
+        ))}
       </SingleSelectProperty>
     )
   case 'multiSelect':
@@ -122,12 +122,35 @@ export const PropertyEntry = ({
         onEditComplete={multiSelectValue => onEditComplete({ ...value, multiSelectValue })}
       >
         {selectData?.options.map(option => (
-          <SelectOption key={option.id} value={option.id}>
-            {option.name}
-          </SelectOption>
-        ))
-        }
+          <MultiSelectOption key={option.id} value={option.id} label={option.name} />
+        ))}
       </MultiSelectProperty>
+    )
+  case 'user':
+    return (
+      <PropertyBase
+        name={name}
+        hasValue={!!(value.userValue)}
+        readOnly={readOnly}
+        onRemove={onRemove}
+        onValueClear={onValueClear}
+        allowClear={!!onValueClear}
+        allowRemove={!!onRemove}
+      >
+        {() => (
+          <AssigneeSelect
+            value={value.userValue ?? ''}
+            onValueChanged={userValue => {
+              onChange({ ...value, userValue: userValue || undefined })
+              onEditComplete({ ...value, userValue: userValue || undefined })
+            }}
+            onDialogClose={userValue => {
+              onEditComplete({ ...value, userValue: userValue || undefined })
+            }}
+            allowTeams={true}
+          />
+        )}
+      </PropertyBase>
     )
   default:
     return <></>

@@ -2,17 +2,16 @@ import { Button, Checkbox } from '@helpwave/hightide'
 import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
 import { Clock, User, Users, Flag } from 'lucide-react'
 import clsx from 'clsx'
-import { SmartDate } from '@/utils/date'
-import { LocationChips } from '@/components/patients/LocationChips'
+import { DateDisplay } from '@/components/Date/DateDisplay'
+import { LocationChipsBySetting } from '@/components/patients/LocationChipsBySetting'
 import type { TaskViewModel } from '@/components/tables/TaskList'
 import { useRouter } from 'next/router'
 import type { TaskPriority } from '@/api/gql/generated'
-import { useCompleteTaskMutation, useReopenTaskMutation, type GetGlobalDataQuery } from '@/api/gql/generated'
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useCompleteTask, useReopenTask } from '@/data'
+import { useState, useEffect, useRef, useMemo, type ReactNode } from 'react'
 import { UserInfoPopup } from '@/components/UserInfoPopup'
-import { useQueryClient } from '@tanstack/react-query'
-import { useTasksContext } from '@/hooks/useTasksContext'
 import { PriorityUtils } from '@/utils/priority'
+import { ExpandableTextBlock } from '@/components/common/ExpandableTextBlock'
 
 type FlexibleTask = {
   id: string,
@@ -49,12 +48,12 @@ type FlexibleTask = {
 type TaskCardViewProps = {
   task: FlexibleTask | TaskViewModel,
   onToggleDone?: (taskId: string, done: boolean) => void,
-  onClick: (task: FlexibleTask | TaskViewModel) => void,
+  onClick?: (task: FlexibleTask | TaskViewModel) => void,
   showAssignee?: boolean,
   showPatient?: boolean,
-  onRefetch?: () => void,
   className?: string,
   fullWidth?: boolean,
+  extraContent?: ReactNode,
 }
 
 const isOverdue = (dueDate: Date | undefined, done: boolean): boolean => {
@@ -76,10 +75,8 @@ const toDate = (date: Date | string | null | undefined): Date | undefined => {
   return new Date(date)
 }
 
-export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showAssignee: _showAssignee = false, showPatient = true, onRefetch, className, fullWidth: _fullWidth = false }: TaskCardViewProps) => {
+export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showAssignee: _showAssignee = false, showPatient = true, className, fullWidth: _fullWidth = false, extraContent }: TaskCardViewProps) => {
   const router = useRouter()
-  const queryClient = useQueryClient()
-  const { selectedRootLocationIds } = useTasksContext()
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
   const [optimisticDone, setOptimisticDone] = useState<boolean | null>(null)
   const pendingCheckedRef = useRef<boolean | null>(null)
@@ -88,78 +85,15 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
   const descriptionPreview = task.description
   const displayDone = optimisticDone !== null ? optimisticDone : task.done
 
-  const { mutate: completeTask } = useCompleteTaskMutation({
-    onMutate: async (variables) => {
-      const selectedRootLocationIdsForQuery = selectedRootLocationIds && selectedRootLocationIds.length > 0 ? selectedRootLocationIds : undefined
-      await queryClient.cancelQueries({ queryKey: ['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }] })
-      const previousData = queryClient.getQueryData<GetGlobalDataQuery>(['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }])
-      const newDone = pendingCheckedRef.current ?? true
-      if (previousData?.me?.tasks) {
-        queryClient.setQueryData<GetGlobalDataQuery>(['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }], {
-          ...previousData,
-          me: previousData.me ? {
-            ...previousData.me,
-            tasks: previousData.me.tasks.map(task => task.id === variables.id ? { ...task, done: newDone } : task)
-          } : null
-        })
-      }
-      return { previousData }
-    },
-    onSuccess: async () => {
-      pendingCheckedRef.current = null
-      setOptimisticDone(null)
-      await queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
-      await queryClient.invalidateQueries({ queryKey: ['GetOverviewData'] })
-      onRefetch?.()
-    },
-    onError: (error, variables, context) => {
-      pendingCheckedRef.current = null
-      setOptimisticDone(null)
-      if (context?.previousData) {
-        const selectedRootLocationIdsForQuery = selectedRootLocationIds && selectedRootLocationIds.length > 0 ? selectedRootLocationIds : undefined
-        queryClient.setQueryData(['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }], context.previousData)
-      }
-    }
-  })
-  const { mutate: reopenTask } = useReopenTaskMutation({
-    onMutate: async (variables) => {
-      const selectedRootLocationIdsForQuery = selectedRootLocationIds && selectedRootLocationIds.length > 0 ? selectedRootLocationIds : undefined
-      await queryClient.cancelQueries({ queryKey: ['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }] })
-      const previousData = queryClient.getQueryData<GetGlobalDataQuery>(['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }])
-      const newDone = pendingCheckedRef.current ?? false
-      if (previousData?.me?.tasks) {
-        queryClient.setQueryData<GetGlobalDataQuery>(['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }], {
-          ...previousData,
-          me: previousData.me ? {
-            ...previousData.me,
-            tasks: previousData.me.tasks.map(task => task.id === variables.id ? { ...task, done: newDone } : task)
-          } : null
-        })
-      }
-      return { previousData }
-    },
-    onSuccess: async () => {
-      pendingCheckedRef.current = null
-      setOptimisticDone(null)
-      await queryClient.invalidateQueries({ queryKey: ['GetGlobalData'] })
-      await queryClient.invalidateQueries({ queryKey: ['GetOverviewData'] })
-      onRefetch?.()
-    },
-    onError: (error, variables, context) => {
-      pendingCheckedRef.current = null
-      setOptimisticDone(null)
-      if (context?.previousData) {
-        const selectedRootLocationIdsForQuery = selectedRootLocationIds && selectedRootLocationIds.length > 0 ? selectedRootLocationIds : undefined
-        queryClient.setQueryData(['GetGlobalData', { rootLocationIds: selectedRootLocationIdsForQuery }], context.previousData)
-      }
-    }
-  })
+  const [completeTask] = useCompleteTask()
+  const [reopenTask] = useReopenTask()
 
   const dueDate = toDate(task.dueDate)
   const overdue = dueDate ? isOverdue(dueDate, task.done) : false
   const closeToDue = dueDate ? isCloseToDueDate(dueDate, task.done) : false
   const dueDateColorClass = overdue ? '!text-red-500' : closeToDue ? '!text-orange-500' : ''
   const assigneeAvatarUrl = task.assignee?.avatarURL || (flexibleTask.assignee?.avatarUrl)
+  const isClickable = Boolean(onClick)
 
   const expectedFinishDate = useMemo(() => {
     if (!dueDate || !flexibleTask.estimatedTime) return null
@@ -187,9 +121,29 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
     pendingCheckedRef.current = checked
     setOptimisticDone(checked)
     if (checked) {
-      completeTask({ id: task.id })
+      completeTask({
+        variables: { id: task.id },
+        onCompleted: () => {
+          pendingCheckedRef.current = null
+          setOptimisticDone(null)
+        },
+        onError: () => {
+          pendingCheckedRef.current = null
+          setOptimisticDone(null)
+        },
+      })
     } else {
-      reopenTask({ id: task.id })
+      reopenTask({
+        variables: { id: task.id },
+        onCompleted: () => {
+          pendingCheckedRef.current = null
+          setOptimisticDone(null)
+        },
+        onError: () => {
+          pendingCheckedRef.current = null
+          setOptimisticDone(null)
+        },
+      })
     }
   }
 
@@ -206,125 +160,143 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
     P4: 'border-l-4 border-l-priority-p4',
   }[(task as FlexibleTask).priority as TaskPriority] ?? ''
 
+  const assigneeImage = useMemo(
+    () => ({
+      avatarUrl: assigneeAvatarUrl || 'https://cdn.helpwave.de/boringavatar.svg',
+      alt: task.assignee?.name ?? '',
+    }),
+    [assigneeAvatarUrl, task.assignee?.name]
+  )
+
   return (
     <div
-      onClick={() => onClick(task)}
+      onClick={onClick ? () => onClick(task) : undefined}
       className={clsx(
-        'border-2 p-4 rounded-lg text-left transition-colors hover:border-primary ',
-        'relative bg-surface-variant bg-on-surface-variant overflow-hidden cursor-pointer w-full min-h-35',
+        'border-2 p-4 rounded-lg text-left transition-colors',
+        'relative bg-surface-variant bg-on-surface-variant w-full',
+        isClickable ? 'cursor-pointer hover:border-primary' : 'cursor-default',
         borderColorClass,
         priorityBorderClass,
         className
       )}
-      role="button"
-      tabIndex={0}
+      role={isClickable ? 'button' : undefined}
+      tabIndex={isClickable ? 0 : undefined}
       onKeyDown={(e) => {
+        if (!isClickable || !onClick) return
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault()
           onClick(task)
         }
       }}
     >
-      <div className="flex items-start gap-4 w-full min-w-0">
-        <div onClick={(e) => e.stopPropagation()}>
-          <Checkbox
-            value={displayDone}
-            onValueChange={handleToggleDone}
-            className={clsx('rounded-full mt-0.5 shrink-0', PriorityUtils.toCheckboxColor(task?.priority as TaskPriority | null | undefined))}
-          />
-        </div>
-        <div className={clsx('flex-1 min-w-0 overflow-hidden', { 'pb-16': showPatient, 'pb-12': !showPatient })}>
-          <div className={clsx('flex items-center justify-between gap-2 flex-wrap min-w-0', { 'mb-2': showPatient, 'mb-4': !showPatient })}>
-            <div className="flex items-center gap-2 min-w-0 flex-1">
-              {(task as FlexibleTask).priority && (
-                <div
-                  className={clsx(
-                    'w-2 h-2 rounded-full shrink-0',
-                    PriorityUtils.toBackgroundColor(task?.priority as TaskPriority | null | undefined)
-                  )}
-                />
-              )}
-              <div
-                className={clsx(
-                  'font-semibold text-lg min-w-0 flex-1 truncate',
-                  { 'line-through text-description': task.done }
-                )}
-              >
-                {taskName}
-              </div>
+      <div className="flex flex-col gap-3 w-full min-w-0">
+        <div className="flex flex-col sm:flex-row sm:items-start gap-4 w-full min-w-0">
+          <div className="flex items-start gap-4 w-full min-w-0 sm:flex-1 sm:min-w-0">
+            <div onClick={(e) => e.stopPropagation()}>
+              <Checkbox
+                value={displayDone}
+                onValueChange={handleToggleDone}
+                className={clsx('rounded-full mt-0.5 shrink-0', PriorityUtils.toCheckboxColor(task?.priority as TaskPriority | null | undefined))}
+              />
             </div>
-            {task.assigneeTeam && (
-              <div className="flex items-center gap-1.5 text-base text-description shrink-0 min-w-0">
-                <Users className="size-5 text-description" />
-                <span className="truncate max-w-40">{task.assigneeTeam.title}</span>
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-2 sm:flex-wrap min-w-0 mb-2">
+                <div className="flex items-center gap-2 min-w-0 w-full sm:flex-1 sm:w-auto">
+                  {(task as FlexibleTask).priority && (
+                    <div
+                      className={clsx(
+                        'w-2 h-2 rounded-full shrink-0',
+                        PriorityUtils.toBackgroundColor(task?.priority as TaskPriority | null | undefined)
+                      )}
+                    />
+                  )}
+                  <div
+                    className={clsx(
+                      'font-semibold text-lg min-w-0 flex-1 whitespace-normal break-words',
+                      { 'line-through text-description': task.done }
+                    )}
+                  >
+                    {taskName}
+                  </div>
+                </div>
+                {task.assigneeTeam && (
+                  <div className="flex items-center gap-1.5 text-base text-description min-w-0 w-full sm:w-auto sm:shrink-0 sm:justify-end">
+                    <Users className="size-5 text-description shrink-0" />
+                    <span className="min-w-0 break-words sm:truncate sm:max-w-40">{task.assigneeTeam.title}</span>
+                  </div>
+                )}
+                {!task.assigneeTeam && task.assignee && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setSelectedUserId(task.assignee!.id)
+                    }}
+                    className="flex items-center gap-1.5 text-base text-description min-w-0 w-full sm:w-auto sm:shrink-0 sm:justify-end hover:opacity-75 transition-opacity text-left"
+                  >
+                    <AvatarStatusComponent
+                      size="sm"
+                      isOnline={task.assignee?.isOnline ?? null}
+                      image={assigneeImage}
+                    />
+                    <span className="min-w-0 break-words sm:truncate sm:max-w-[150px]">{task.assignee.name}</span>
+                  </button>
+                )}
               </div>
-            )}
-            {!task.assigneeTeam && task.assignee && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setSelectedUserId(task.assignee!.id)
-                }}
-                className="flex items-center gap-1.5 text-base text-description shrink-0 min-w-0 hover:opacity-75 transition-opacity"
-              >
-                <AvatarStatusComponent
-                  size="sm"
-                  isOnline={task.assignee?.isOnline ?? null}
-                  image={{
-                    avatarUrl: assigneeAvatarUrl || 'https://cdn.helpwave.de/boringavatar.svg',
-                    alt: task.assignee.name
-                  }}
-                />
-                <span className="truncate max-w-[150px]">{task.assignee.name}</span>
-              </button>
+              {descriptionPreview && (
+                <ExpandableTextBlock className="text-base text-description">
+                  {descriptionPreview}
+                </ExpandableTextBlock>
+              )}
+            </div>
+          </div>
+          <div className="shrink-0 flex flex-col gap-2 text-sm text-description pt-0.5 w-full pl-14 sm:pl-0 sm:items-end sm:w-auto sm:max-w-[min(100%,11rem)]">
+            <div className="flex flex-col gap-2 items-stretch sm:flex-row sm:flex-wrap sm:items-center sm:justify-end gap-x-3 gap-y-2">
+              {(task as FlexibleTask).estimatedTime && (
+                <div className="flex items-center gap-1 min-w-0">
+                  <Clock className="size-4 shrink-0" />
+                  <span className="min-w-0 break-words">
+                    {(task as FlexibleTask).estimatedTime! < 60
+                      ? `${(task as FlexibleTask).estimatedTime}m`
+                      : `${Math.floor((task as FlexibleTask).estimatedTime! / 60)}h ${(task as FlexibleTask).estimatedTime! % 60}m`}
+                  </span>
+                </div>
+              )}
+              {dueDate && (
+                <div className={clsx('flex items-center gap-2 min-w-0', dueDateColorClass)}>
+                  <Clock className="size-4 shrink-0" />
+                  <DateDisplay date={dueDate} mode="absolute" showTime={true} />
+                </div>
+              )}
+            </div>
+            {expectedFinishDate && (
+              <div className="flex items-center gap-2 text-xs min-w-0">
+                <Flag className="size-4 shrink-0" />
+                <DateDisplay date={expectedFinishDate} mode="absolute" showTime={true} />
+              </div>
             )}
           </div>
-          {descriptionPreview && (
-            <div className={clsx('text-base text-description line-clamp-2', { 'mb-2': showPatient, 'mb-4': !showPatient })}>{descriptionPreview}</div>
-          )}
         </div>
-      </div>
-      {showPatient && task.patient && (
-        <div className="absolute bottom-5" style={{ left: 'calc(1.25rem + 1.5rem + 1rem)' }}>
-          <Button
-            color="neutral"
-            size="sm"
-            onClick={handlePatientClick}
-            className="flex-row-0 justify-start w-fit"
-          >
-            <User className="size-4 scale-[1.2] mr-2" />
-            {task.patient.name}
-          </Button>
-          {task.patient.locations && task.patient.locations.length > 0 && (
-            <div className="mt-1">
-              <LocationChips locations={task.patient.locations} small />
-            </div>
-          )}
-        </div>
-      )}
-      <div className={clsx('absolute right-5 flex flex-col items-end gap-2 text-sm text-description', { 'bottom-5': showPatient, 'bottom-6': !showPatient })}>
-        <div className="flex items-center gap-3">
-          {(task as FlexibleTask).estimatedTime && (
-            <div className="flex items-center gap-1">
-              <Clock className="size-4" />
-              <span>
-                {(task as FlexibleTask).estimatedTime! < 60
-                  ? `${(task as FlexibleTask).estimatedTime}m`
-                  : `${Math.floor((task as FlexibleTask).estimatedTime! / 60)}h ${(task as FlexibleTask).estimatedTime! % 60}m`}
-              </span>
-            </div>
-          )}
-          {dueDate && (
-            <div className={clsx('flex items-center gap-2', dueDateColorClass)}>
-              <Clock className="size-4" />
-              <SmartDate date={dueDate} mode="relative" showTime={true} />
-            </div>
-          )}
-        </div>
-        {expectedFinishDate && (
-          <div className="flex items-center gap-2 text-xs">
-            <Flag className="size-4" />
-            <SmartDate date={expectedFinishDate} mode="relative" showTime={true} />
+        {showPatient && task.patient && (
+          <div className="min-w-0 pl-14">
+            <Button
+              color="neutral"
+              size="sm"
+              onClick={handlePatientClick}
+              className="flex-row-0 justify-start w-full min-w-0"
+            >
+              <User className="size-4 scale-[1.2] mr-2" />
+              <span className="min-w-0 whitespace-normal break-words text-left">{task.patient.name}</span>
+            </Button>
+            {task.patient.locations && task.patient.locations.length > 0 && (
+              <div className="mt-1">
+                <LocationChipsBySetting locations={task.patient.locations} small />
+              </div>
+            )}
+          </div>
+        )}
+        {extraContent && (
+          <div className="border-t border-border pt-3 space-y-2 text-sm px-0">
+            {extraContent}
           </div>
         )}
       </div>

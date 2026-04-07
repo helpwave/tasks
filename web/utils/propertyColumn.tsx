@@ -1,23 +1,28 @@
 import type { ColumnDef } from '@tanstack/table-core'
-import { ColumnType, FieldType, type PropertyDefinitionType, type PropertyValueType } from '@/api/gql/generated'
+import { FieldType, type LocationType, type PropertyDefinitionType, type PropertyValueType, type PropertyEntity } from '@/api/gql/generated'
 import { getPropertyFilterFn } from './propertyFilterMapping'
 import { PropertyCell } from '@/components/properties/PropertyCell'
 
-type PropertyValue = PropertyValueType & {
+export type PropertyValueRow = Pick<PropertyValueType, 'textValue' | 'numberValue' | 'booleanValue' | 'dateValue' | 'dateTimeValue' | 'selectValue' | 'multiSelectValues' | 'userValue'> & {
   definition: PropertyDefinitionType,
+  user?: { id: string, name: string, avatarUrl?: string | null, isOnline?: boolean } | null,
+  team?: { id: string, title: string, kind: LocationType } | null,
 }
 
 type RowWithProperties = {
-  properties?: PropertyValue[] | null,
+  properties?: PropertyValueRow[] | null,
 }
 
 function getPropertyAccessorValue(
-  property: PropertyValue | undefined,
+  property: PropertyValueRow | undefined,
   fieldType: FieldType
 ): string | number | boolean | string[] | null {
   if (!property) return null
   if (fieldType === FieldType.FieldTypeMultiSelect) {
     return property.multiSelectValues ?? null
+  }
+  if (fieldType === FieldType.FieldTypeUser) {
+    return property.userValue ?? null
   }
   return (
     property.textValue ??
@@ -32,7 +37,7 @@ function getPropertyAccessorValue(
 
 function getFilterData(prop: PropertyDefinitionType) {
   const filterFn = getPropertyFilterFn(prop.fieldType)
-  if (filterFn === 'tags' || filterFn === 'tagsSingle') {
+  if (filterFn === 'multiTags' || filterFn === 'singleTag') {
     return {
       tags: prop.options.map((opt, idx) => ({
         label: opt,
@@ -44,7 +49,8 @@ function getFilterData(prop: PropertyDefinitionType) {
 }
 
 export function createPropertyColumn<T extends RowWithProperties>(
-  prop: PropertyDefinitionType
+  prop: PropertyDefinitionType,
+  hasFilter?: boolean
 ): ColumnDef<T> {
   const columnId = `property_${prop.id}`
   const filterFn = getPropertyFilterFn(prop.fieldType)
@@ -63,10 +69,11 @@ export function createPropertyColumn<T extends RowWithProperties>(
       const property = row.original.properties?.find(
         p => p.definition.id === prop.id
       )
-      return (<PropertyCell property={property} fieldType={prop.fieldType} />)
+      return (<PropertyCell property={property as PropertyValueType} fieldType={prop.fieldType} />)
     },
     meta: {
-      columnType: ColumnType.Property,
+      columnType: 'PROPERTY',
+      columnLabel: prop.name,
       propertyDefinitionId: prop.id,
       fieldType: prop.fieldType,
       ...(filterData && { filterData }),
@@ -74,6 +81,22 @@ export function createPropertyColumn<T extends RowWithProperties>(
     minSize: 220,
     size: 220,
     maxSize: 300,
-    filterFn,
+    filterFn: hasFilter ? filterFn : undefined,
   } as ColumnDef<T>
+}
+
+type PropertyDefinitionsData = {
+  propertyDefinitions?: PropertyDefinitionType[],
+} | null | undefined
+
+export function getPropertyColumnsForEntity<T extends RowWithProperties>(
+  propertyDefinitionsData: PropertyDefinitionsData,
+  entity: PropertyEntity,
+  hasFilter?: boolean
+): ColumnDef<T>[] {
+  if (!propertyDefinitionsData?.propertyDefinitions) return []
+  const properties = propertyDefinitionsData.propertyDefinitions.filter(
+    def => def.isActive && def.allowedEntities.includes(entity)
+  )
+  return properties.map(prop => createPropertyColumn<T>(prop, hasFilter))
 }

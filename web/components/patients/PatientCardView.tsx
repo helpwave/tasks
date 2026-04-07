@@ -1,6 +1,7 @@
+import type { ReactNode } from 'react'
 import { Chip, ProgressIndicator, Tooltip } from '@helpwave/hightide'
-import { SmartDate } from '@/utils/date'
-import { LocationChips } from '@/components/patients/LocationChips'
+import { DateDisplay } from '@/components/Date/DateDisplay'
+import { LocationChipsBySetting } from '@/components/patients/LocationChipsBySetting'
 import { PatientStateChip } from '@/components/patients/PatientStateChip'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { Sex } from '@/api/gql/generated'
@@ -8,11 +9,13 @@ import type { PatientViewModel } from '../tables/PatientList'
 
 type PatientCardViewProps = {
   patient: PatientViewModel,
-  onClick: (patient: PatientViewModel) => void,
+  onClick?: (patient: PatientViewModel) => void,
+  extraContent?: ReactNode,
 }
 
-export const PatientCardView = ({ patient, onClick }: PatientCardViewProps) => {
+export const PatientCardView = ({ patient, onClick, extraContent }: PatientCardViewProps) => {
   const translation = useTasksTranslation()
+  const isClickable = Boolean(onClick)
 
   const sex = patient.sex
   const colorClass = sex === Sex.Male
@@ -30,21 +33,25 @@ export const PatientCardView = ({ patient, onClick }: PatientCardViewProps) => {
   const { openTasksCount, closedTasksCount } = patient
   const total = openTasksCount + closedTasksCount
   const progress = total === 0 ? 0 : closedTasksCount / total
-  const tooltipText = `${translation('openTasks')}: ${openTasksCount}\n${translation('closedTasks')}: ${closedTasksCount}`
 
   return (
     <button
-      onClick={() => onClick(patient)}
-      className="border-2 p-5 rounded-lg text-left w-full transition-colors hover:border-primary relative bg-[rgba(255,255,255,1)] dark:bg-[rgba(55,65,81,1)]"
+      type="button"
+      onClick={onClick ? () => onClick(patient) : undefined}
+      className={`border-2 p-5 rounded-lg text-left w-full transition-colors relative bg-[rgba(255,255,255,1)] dark:bg-[rgba(55,65,81,1)] ${isClickable ? 'cursor-pointer hover:border-primary' : 'cursor-default'}`}
     >
       <div className="flex flex-col gap-3">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="font-semibold text-lg flex-1">{patient.name}</h3>
+          <h3 className="font-semibold text-lg flex-1 min-w-0 whitespace-normal break-words">{patient.name}</h3>
           {total > 0 && (
             <Tooltip
-              tooltip={tooltipText}
-              position="top"
-              tooltipClassName="whitespace-pre-line"
+              tooltip={(
+                <div>
+                  <span>{`${translation('openTasks')}: ${openTasksCount}`}</span>
+                  <span>{`${translation('closedTasks')}: ${closedTasksCount}`}</span>
+                </div>
+              )}
+              alignment="top"
             >
               <div className="shrink-0">
                 <ProgressIndicator progress={progress} rotation={-90} />
@@ -55,7 +62,7 @@ export const PatientCardView = ({ patient, onClick }: PatientCardViewProps) => {
 
         <div className="flex items-center gap-2 text-sm text-description">
           <span className="font-medium">{translation('birthdate')}:</span>
-          <SmartDate date={patient.birthdate} showTime={false} />
+          <DateDisplay date={patient.birthdate} showTime={false} />
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -67,10 +74,11 @@ export const PatientCardView = ({ patient, onClick }: PatientCardViewProps) => {
             <span>{label}</span>
           </Chip>
           {patient.position && (
-            <LocationChips locations={[patient.position]} small />
+            <LocationChipsBySetting locations={[patient.position]} small />
           )}
           <PatientStateChip state={patient.state} />
         </div>
+        {extraContent}
       </div>
     </button>
   )

@@ -1,11 +1,7 @@
 import { useMemo, useCallback } from 'react'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import type { CreatePatientInput, PropertyValueInput } from '@/api/gql/generated'
-import {
-  PropertyEntity,
-  useGetPatientQuery,
-  useGetPropertyDefinitionsQuery
-} from '@/api/gql/generated'
+import { usePatient } from '@/data'
 import {
   ProgressIndicator,
   TabList,
@@ -14,15 +10,18 @@ import {
   Tooltip
 } from '@helpwave/hightide'
 import { PatientStateChip } from '@/components/patients/PatientStateChip'
-import { LocationChips } from '@/components/patients/LocationChips'
+import { LocationChips } from '@/components/locations/LocationChips'
 import { PatientTasksView } from './PatientTasksView'
 import { PatientDataEditor } from './PatientDataEditor'
 import { AuditLogTimeline } from '@/components/AuditLogTimeline'
 import { PropertyList, type PropertyValue } from '../tables/PropertyList'
-import { useOptimisticUpdatePatientMutation } from '@/api/optimistic-updates/GetPatient'
+import { useUpdatePatient } from '@/data'
 
 export const toISODate = (d: Date | string | null | undefined): string | null => {
   if (!d) return null
+  if (typeof d === 'string' && d.length >= 10 && d[10] === 'T') {
+    return d.slice(0, 10)
+  }
   const date = typeof d === 'string' ? new Date(d) : d
   if (!(date instanceof Date) || isNaN(date.getTime())) return null
   const year = date.getFullYear()
@@ -61,26 +60,12 @@ export const PatientDetailView = ({
 
   const isEditMode = !!patientId
 
-  const { data: patientData } = useGetPatientQuery(
-    { id: patientId! },
-    { enabled: isEditMode }
+  const { data: patientData } = usePatient(
+    patientId ?? '',
+    { skip: !isEditMode }
   )
 
-  const { data: propertyDefinitionsData } = useGetPropertyDefinitionsQuery()
-
-  const { mutate: updatePatient } = useOptimisticUpdatePatientMutation({
-    id: patientId!,
-    onSuccess: () => {
-      onSuccess()
-    },
-  })
-
-  const hasAvailableProperties = useMemo(() => {
-    if (!propertyDefinitionsData?.propertyDefinitions) return false
-    return propertyDefinitionsData.propertyDefinitions.some(
-      def => def.isActive && def.allowedEntities.includes(PropertyEntity.Patient)
-    )
-  }, [propertyDefinitionsData])
+  const [updatePatient] = useUpdatePatient()
 
   const convertPropertyValueToInput = useCallback((definitionId: string, value: PropertyValue | null): PropertyValueInput | null => {
     if (!value) return null
@@ -93,13 +78,14 @@ export const PatientDetailView = ({
       dateTimeValue: value.dateTimeValue?.toISOString() ?? undefined,
       selectValue: value.singleSelectValue ?? undefined,
       multiSelectValues: value.multiSelectValue ?? undefined,
+      userValue: value.userValue ?? undefined,
     }
   }, [])
 
   const handlePropertyValueChange = useCallback((definitionId: string, value: PropertyValue | null) => {
-    if (!isEditMode || !patientId || !patientData?.patient) return
+    if (!isEditMode || !patientId || !patientData) return
 
-    const currentProperties = patientData.patient.properties || []
+    const currentProperties = patientData.properties || []
     const propertyInputs: PropertyValueInput[] = []
 
     // Add all existing properties except the one being changed
@@ -114,6 +100,7 @@ export const PatientDetailView = ({
           dateTimeValue: prop.dateTimeValue ?? undefined,
           selectValue: prop.selectValue ?? undefined,
           multiSelectValues: prop.multiSelectValues ?? undefined,
+          userValue: (prop as { userValue?: string | null }).userValue ?? undefined,
         })
       }
     }
@@ -127,30 +114,33 @@ export const PatientDetailView = ({
     }
 
     updatePatient({
-      id: patientId,
-      data: {
-        properties: propertyInputs,
+      variables: {
+        id: patientId,
+        data: {
+          properties: propertyInputs,
+        },
       },
+      onCompleted: () => onSuccess(),
     })
-  }, [isEditMode, patientId, patientData?.patient, convertPropertyValueToInput, updatePatient])
+  }, [isEditMode, patientId, patientData, convertPropertyValueToInput, updatePatient, onSuccess])
 
   const taskStats: { totalTasks: number, openTasks: number, closedTasks: number, taskProgress: number } = useMemo(() => ({
-    totalTasks: patientData?.patient?.tasks?.length ?? 0,
-    openTasks: patientData?.patient?.tasks?.filter(task => !task.done).length ?? 0,
-    closedTasks: patientData?.patient?.tasks?.filter(task => task.done).length ?? 0,
-    taskProgress: patientData?.patient?.tasks?.length ?? 0 > 0 ? (patientData?.patient?.tasks?.filter(task => task.done).length ?? 0) / (patientData?.patient?.tasks?.length ?? 0) : 0,
-  }), [patientData?.patient?.tasks])
+    totalTasks: patientData?.tasks?.length ?? 0,
+    openTasks: patientData?.tasks?.filter(task => !task.done).length ?? 0,
+    closedTasks: patientData?.tasks?.filter(task => task.done).length ?? 0,
+    taskProgress: patientData?.tasks?.length ?? 0 > 0 ? (patientData?.tasks?.filter(task => task.done).length ?? 0) / (patientData?.tasks?.length ?? 0) : 0,
+  }), [patientData?.tasks])
 
-  const patientName = patientData?.patient ? `${patientData.patient.firstname} ${patientData.patient.lastname}` : ''
+  const patientName = patientData ? `${patientData.firstname} ${patientData.lastname}` : ''
   const displayLocation = useMemo(() => {
-    if (patientData?.patient?.position) {
-      return [patientData.patient.position]
+    if (patientData?.position) {
+      return [patientData.position]
     }
-    if (patientData?.patient?.assignedLocations && patientData.patient.assignedLocations.length > 0) {
-      return patientData.patient.assignedLocations
+    if (patientData?.assignedLocations && patientData.assignedLocations.length > 0) {
+      return patientData.assignedLocations
     }
     return []
-  }, [patientData?.patient?.position, patientData?.patient?.assignedLocations])
+  }, [patientData?.position, patientData?.assignedLocations])
 
 
   return (
@@ -162,17 +152,21 @@ export const PatientDetailView = ({
             <div className="flex items-center gap-2">
               {taskStats.totalTasks > 0 && (
                 <Tooltip
-                  tooltip={`${translation('openTasks')}: ${taskStats.openTasks}\n${translation('closedTasks')}: ${taskStats.closedTasks}`}
-                  position="top"
-                  tooltipClassName="whitespace-pre-line"
+                  tooltip={(
+                    <div className="flex-col-0">
+                      <span>{`${translation('openTasks')}: ${taskStats.openTasks}`}</span>
+                      <span>{`${translation('closedTasks')}: ${taskStats.closedTasks}`}</span>
+                    </div>
+                  )}
+                  alignment="top"
                 >
                   <div className="w-12">
                     <ProgressIndicator progress={taskStats.taskProgress} rotation={-90} />
                   </div>
                 </Tooltip>
               )}
-              {patientData?.patient?.state && (
-                <PatientStateChip state={patientData.patient.state} />
+              {patientData?.state && (
+                <PatientStateChip state={patientData.state} />
               )}
             </div>
           </div>
@@ -184,30 +178,30 @@ export const PatientDetailView = ({
         </div>
       )}
       <TabSwitcher>
-        <TabList/>
-        {isEditMode && patientId && (
-          <TabPanel label={translation('tasks')} className="flex-col-0 px-1 pt-4 pb-16 overflow-y-auto">
+        <TabList />
+        <TabPanel label={translation('tasks')} className="flex-col-0 flex-1overflow-hidden h-full" disabled={!(isEditMode && patientId)}>
+          {patientId && (
             <PatientTasksView
               patientId={patientId}
-              patientData={patientData}
+              patientData={patientData ? { patient: patientData } : undefined}
               onSuccess={onSuccess}
             />
-          </TabPanel>
-        )}
+          )}
+        </TabPanel>
 
-        {isEditMode && hasAvailableProperties && patientId && (
-          <TabPanel label={translation('properties')} className="flex-col-0 px-1 pt-4 pb-16 overflow-y-auto">
+        <TabPanel label={translation('properties')} className="flex-col-0 px-2 pt-4 overflow-y-auto" disabled={!(isEditMode && patientId)}>
+          {patientId && (
             <PropertyList
               subjectId={patientId}
               subjectType="patient"
               fullWidthAddButton={true}
-              propertyValues={patientData?.patient?.properties}
+              propertyValues={patientData?.properties}
               onPropertyValueChange={handlePropertyValueChange}
             />
-          </TabPanel>
-        )}
+          )}
+        </TabPanel>
 
-        <TabPanel label={translation('patientData')} className="flex-col-0 px-1 pt-4 pb-16 overflow-y-auto">
+        <TabPanel label={translation('patientData')} className="flex-col-0" initiallyActive={true}>
           <PatientDataEditor
             id={patientId || null}
             initialCreateData={initialCreateData}
@@ -216,11 +210,11 @@ export const PatientDetailView = ({
           />
         </TabPanel>
 
-        {isEditMode && patientId && (
-          <TabPanel label="Audit Log" className="flex-col-0 px-1 pt-4 pb-16 overflow-y-auto">
+        <TabPanel label="Audit Log" className="flex-col-0 px-2 pt-4 overflow-y-auto" disabled={!(isEditMode && patientId)}>
+          {patientId && (
             <AuditLogTimeline caseId={patientId} enabled={true} />
-          </TabPanel>
-        )}
+          )}
+        </TabPanel>
       </TabSwitcher>
     </div>
   )

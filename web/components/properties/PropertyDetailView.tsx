@@ -10,18 +10,15 @@ import {
   FormField,
   FormProvider,
   useCreateForm,
-  FormObserverKey
+  FormObserverKey,
+  IconButton
 } from '@helpwave/hightide'
 import type { Property, PropertyFieldType, PropertySelectOption, PropertySubjectType } from '@/components/tables/PropertyList'
 import { propertyFieldTypeList, propertySubjectTypeList } from '@/components/tables/PropertyList'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { PlusIcon, XIcon } from 'lucide-react'
-import {
-  useCreatePropertyDefinitionMutation,
-  useUpdatePropertyDefinitionMutation,
-  FieldType,
-  PropertyEntity
-} from '@/api/gql/generated'
+import { FieldType, PropertyEntity } from '@/api/gql/generated'
+import { useCreatePropertyDefinition, useUpdatePropertyDefinition } from '@/data'
 
 interface PropertyDetailViewProps {
   id?: string,
@@ -51,6 +48,7 @@ const mapFieldTypeToBackend = (fieldType: PropertyFieldType): FieldType => {
     dateTime: FieldType.FieldTypeDateTime,
     singleSelect: FieldType.FieldTypeSelect,
     multiSelect: FieldType.FieldTypeMultiSelect,
+    user: FieldType.FieldTypeUser,
   }
   return mapping[fieldType]
 }
@@ -75,32 +73,8 @@ export const PropertyDetailView = ({
     isCustom: false,
   })
 
-  const [isCreating, setIsCreating] = useState<boolean>(false)
-  const { mutate: createProperty } = useCreatePropertyDefinitionMutation({
-    onMutate: () => {
-      setIsCreating(true)
-    },
-    onSettled: () => {
-      setIsCreating(false)
-    },
-    onSuccess: () => {
-      onSuccess()
-      onClose()
-    }
-  })
-
-  const [isUpdating, setIsUpdating] = useState<boolean>(false)
-  const { mutate: updateProperty } = useUpdatePropertyDefinitionMutation({
-    onMutate: () => {
-      setIsUpdating(true)
-    },
-    onSettled: () => {
-      setIsUpdating(false)
-    },
-    onSuccess: () => {
-      onSuccess()
-    }
-  })
+  const [createProperty, { loading: isCreating }] = useCreatePropertyDefinition()
+  const [updateProperty, { loading: isUpdating }] = useUpdatePropertyDefinition()
 
   const persist = (updates: Partial<PropertyFormValues>) => {
     if (!isEditMode || !id) return
@@ -118,8 +92,8 @@ export const PropertyDetailView = ({
     }
 
     updateProperty({
-      id,
-      data: backendUpdates
+      variables: { id, data: backendUpdates },
+      onCompleted: () => onSuccess(),
     })
   }
 
@@ -149,7 +123,13 @@ export const PropertyDetailView = ({
         isActive: !values.isArchived,
       }
 
-      createProperty({ data: createData })
+      createProperty({
+        variables: { data: createData },
+        onCompleted: () => {
+          onSuccess()
+          onClose()
+        },
+      })
     },
     validators: {
       name: (value) => {
@@ -220,10 +200,10 @@ export const PropertyDetailView = ({
 
   return (
     <FormProvider state={form}>
-      <div className="flex-col-0 h-full overflow-hidden">
+      <div className="flex-col-0 h-full min-h-0 overflow-hidden px-1 sm:px-0">
         <form
           onSubmit={event => { event.preventDefault(); form.submit() }}
-          className="flex-col-6 flex-1 overflow-y-auto"
+          className="flex flex-col flex-1 gap-6 overflow-y-auto sm:gap-6"
         >
           <FormField<PropertyFormValues, 'name'>
             name="name"
@@ -269,9 +249,7 @@ export const PropertyDetailView = ({
                 }}
               >
                 {propertySubjectTypeList.map(v => (
-                  <SelectOption key={v} value={v}>
-                    {translation('sPropertySubjectType', { subject: v })}
-                  </SelectOption>
+                  <SelectOption key={v} value={v} label={translation('sPropertySubjectType', { subject: v })} />
                 ))}
               </Select>
             )}
@@ -296,9 +274,7 @@ export const PropertyDetailView = ({
                 }}
               >
                 {propertyFieldTypeList.map(v => (
-                  <SelectOption key={v} value={v}>
-                    {translation('sPropertyType', { type: v })}
-                  </SelectOption>
+                  <SelectOption key={v} value={v} label={translation('sPropertyType', { type: v })} />
                 ))}
               </Select>
             )}
@@ -313,7 +289,7 @@ export const PropertyDetailView = ({
                   <span className="typography-title-md">
                     {translation('selectOptions')}
                   </span>
-                  <div className="flex-col-2 min-h-64 max-h-64 overflow-y-auto">
+                  <div className="flex-col-2 min-h-48 max-h-64 sm:min-h-64 overflow-y-auto">
                     <FormObserverKey<PropertyFormValues, 'selectData'> formKey="selectData">
                       {({ value: selectData }) => {
                         return selectData?.options.map((option) => (
@@ -348,11 +324,11 @@ export const PropertyDetailView = ({
                               }}
                               className="pr-11 w-full"
                             />
-                            <Button
+                            <IconButton
+                              tooltip={translation('delete')}
                               coloringStyle="text"
                               color="negative"
                               size="sm"
-                              layout="icon"
                               className="absolute right-1 top-1 rounded"
                               onClick={() => {
                                 const update = {
@@ -366,7 +342,7 @@ export const PropertyDetailView = ({
                               }}
                             >
                               <XIcon />
-                            </Button>
+                            </IconButton>
                           </div>
                         ))
                       }}
@@ -416,11 +392,11 @@ export const PropertyDetailView = ({
                               className="pr-16 w-full"
                               placeholder={translation('rAdd', { name: translation('option') })}
                             />
-                            <Button
+                            <IconButton
+                              tooltip={translation('add')}
                               coloringStyle="text"
                               color="primary"
                               size="sm"
-                              layout="icon"
                               className="absolute right-1 top-1 rounded"
                               disabled={!newOption.name}
                               onClick={() => {
@@ -453,7 +429,7 @@ export const PropertyDetailView = ({
                               }}
                             >
                               <PlusIcon />
-                            </Button>
+                            </IconButton>
                           </div>
                         )
                       }}
@@ -469,8 +445,8 @@ export const PropertyDetailView = ({
               label={translation('archiveProperty')}
             >
               {({ dataProps: { value, onValueChange }, focusableElementProps, interactionStates }) => (
-                <div className="flex-row-4 justify-between items-center">
-                  <div className="flex-col-1">
+                <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
+                  <div className="flex-col-1 min-w-0">
                     <span className="typography-title-md">
                       {translation('archiveProperty')}
                     </span>
@@ -496,12 +472,12 @@ export const PropertyDetailView = ({
         </form>
 
         {!isEditMode && (
-          <div className="flex-row-0 pt-2 justify-end">
+          <div className="flex flex-row pt-2 justify-stretch sm:justify-end">
             <Button
               type="submit"
               onClick={() => form.submit()}
               disabled={isLoading}
-              className="w-fit"
+              className="min-h-11 w-full sm:w-fit"
             >
               {translation('create')}
             </Button>

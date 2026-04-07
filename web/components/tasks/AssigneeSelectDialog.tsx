@@ -1,10 +1,12 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
-import { SearchBar, Dialog } from '@helpwave/hightide'
+import { SearchBar, Dialog, Button, Checkbox } from '@helpwave/hightide'
 import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { Users, Info } from 'lucide-react'
-import { useGetUsersQuery, useGetLocationsQuery } from '@/api/gql/generated'
+import { useUsers, useLocations } from '@/data'
 import clsx from 'clsx'
+
+const EMPTY_MULTI_USER_IDS: string[] = []
 
 interface AssigneeSelectDialogProps {
   value: string,
@@ -16,6 +18,9 @@ interface AssigneeSelectDialogProps {
   onClose: () => void,
   dialogTitle?: string,
   onUserInfoClick?: (userId: string) => void,
+  multiUserSelect?: boolean,
+  onMultiUserIdsSelected?: (userIds: string[]) => void,
+  initialMultiUserIds?: string[],
 }
 
 export const AssigneeSelectDialog = ({
@@ -28,14 +33,18 @@ export const AssigneeSelectDialog = ({
   onClose,
   dialogTitle,
   onUserInfoClick,
+  multiUserSelect = false,
+  onMultiUserIdsSelected,
+  initialMultiUserIds,
 }: AssigneeSelectDialogProps) => {
   const translation = useTasksTranslation()
   const [searchQuery, setSearchQuery] = useState('')
+  const [pendingUserIds, setPendingUserIds] = useState<Set<string>>(new Set())
   const searchInputRef = useRef<HTMLDivElement>(null)
+  const initialMultiIds = initialMultiUserIds ?? EMPTY_MULTI_USER_IDS
 
-  const { data: usersData } = useGetUsersQuery(undefined, {
-  })
-  const { data: locationsData } = useGetLocationsQuery(undefined, {})
+  const { data: usersData } = useUsers()
+  const { data: locationsData } = useLocations()
 
   const teams = useMemo(() => {
     if (!locationsData?.locationNodes) return []
@@ -89,7 +98,16 @@ export const AssigneeSelectDialog = ({
     } else {
       setSearchQuery('')
     }
-  }, [isOpen])
+    if (isOpen && multiUserSelect) {
+      setPendingUserIds(prev => {
+        const next = new Set(initialMultiIds)
+        if (prev.size === next.size && [...next].every((id) => prev.has(id))) {
+          return prev
+        }
+        return next
+      })
+    }
+  }, [isOpen, multiUserSelect, initialMultiIds])
 
   const handleSelect = (selectedValue: string) => {
     onValueChanged(selectedValue)
@@ -97,8 +115,30 @@ export const AssigneeSelectDialog = ({
     onClose()
   }
 
+  const togglePendingUser = (userId: string) => {
+    setPendingUserIds(prev => {
+      const next = new Set(prev)
+      if (next.has(userId)) {
+        next.delete(userId)
+      } else {
+        next.add(userId)
+      }
+      return next
+    })
+  }
+
+  const handleApplyMultiUsers = () => {
+    if (onMultiUserIdsSelected) {
+      onMultiUserIdsSelected([...pendingUserIds])
+    }
+    setSearchQuery('')
+    setPendingUserIds(new Set())
+    onClose()
+  }
+
   const handleClose = () => {
     setSearchQuery('')
+    setPendingUserIds(new Set())
     onClose()
   }
 
@@ -113,7 +153,7 @@ export const AssigneeSelectDialog = ({
     >
       <div ref={searchInputRef} className="flex-shrink-0">
         <SearchBar
-          placeholder={translation('searchUsersOrTeams') || 'Search users or teams...'}
+          placeholder={translation('searchUserOrTeam') || translation('searchUsersOrTeams') || 'Search for user (or team)...'}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onSearch={() => null}
@@ -130,12 +170,19 @@ export const AssigneeSelectDialog = ({
                   key={u.id}
                   className={clsx(
                     'w-full px-3 py-2 hover:bg-surface-hover transition-colors flex items-center gap-2 bg-surface',
-                    value === u.id && 'bg-surface-selected'
+                    !multiUserSelect && value === u.id && 'bg-surface-selected',
+                    multiUserSelect && pendingUserIds.has(u.id) && 'bg-surface-selected'
                   )}
                 >
+                  {multiUserSelect && (
+                    <Checkbox
+                      value={pendingUserIds.has(u.id)}
+                      onValueChange={() => togglePendingUser(u.id)}
+                    />
+                  )}
                   <button
                     type="button"
-                    onClick={() => handleSelect(u.id)}
+                    onClick={() => (multiUserSelect ? togglePendingUser(u.id) : handleSelect(u.id))}
                     className="flex items-center gap-2 flex-1 min-w-0 text-left"
                   >
                     <AvatarStatusComponent
@@ -190,6 +237,24 @@ export const AssigneeSelectDialog = ({
             </div>
           )}
         </div>
+        {multiUserSelect && onMultiUserIdsSelected && (
+          <div className="flex-shrink-0 pt-3 border-t border-divider flex justify-end gap-2">
+            <Button
+              type="button"
+              color="neutral"
+              coloringStyle="outline"
+              onClick={handleClose}
+            >
+              {translation('cancel') || 'Cancel'}
+            </Button>
+            <Button
+              type="button"
+              onClick={handleApplyMultiUsers}
+            >
+              {pendingUserIds.size > 0 ? `Add selected (${pendingUserIds.size})` : 'Add selected'}
+            </Button>
+          </div>
+        )}
       </div>
     </Dialog>
   )

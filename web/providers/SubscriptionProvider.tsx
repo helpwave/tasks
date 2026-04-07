@@ -1,11 +1,14 @@
+'use client'
+
 import { type PropsWithChildren } from 'react'
-import { useGlobalSubscriptions } from '@/hooks/useGlobalSubscriptions'
-import { useTasksContext } from '@/hooks/useTasksContext'
+import { useApolloClient } from '@apollo/client/react'
+import { useApolloGlobalSubscriptions } from '@/data/subscriptions/useApolloGlobalSubscriptions'
 
 export function SubscriptionProvider({ children }: PropsWithChildren) {
-  const { selectedRootLocationIds } = useTasksContext()
-  useGlobalSubscriptions(selectedRootLocationIds)
-
+  const client = useApolloClient()
+  useApolloGlobalSubscriptions(client, undefined, {
+    conflictStrategy: 'defer',
+  })
   return <>{children}</>
 }
 

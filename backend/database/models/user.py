@@ -10,6 +10,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 if TYPE_CHECKING:
     from .location import LocationNode
+    from .saved_view import SavedView
     from .task import Task
 
 user_root_locations = Table(
@@ -43,7 +44,14 @@ class User(Base):
         nullable=True,
     )
 
-    tasks: Mapped[list[Task]] = relationship("Task", back_populates="assignee")
+    tasks: Mapped[list[Task]] = relationship(
+        "Task",
+        secondary="task_assignees",
+        back_populates="assignees",
+    )
+    saved_views: Mapped[list["SavedView"]] = relationship(
+        "SavedView", back_populates="owner"
+    )
     root_locations: Mapped[list[LocationNode]] = relationship(
         "LocationNode",
         secondary=user_root_locations,

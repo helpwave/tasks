@@ -1,5 +1,5 @@
-query GetPatients($locationId: ID, $rootLocationIds: [ID!], $states: [PatientState!], $filtering: [FilterInput!], $sorting: [SortInput!], $pagination: PaginationInput, $search: FullTextSearchInput) {
-  patients(locationNodeId: $locationId, rootLocationIds: $rootLocationIds, states: $states, filtering: $filtering, sorting: $sorting, pagination: $pagination, search: $search) {
+query GetPatients($locationId: ID, $rootLocationIds: [ID!], $states: [PatientState!], $filters: [QueryFilterClauseInput!], $sorts: [QuerySortClauseInput!], $pagination: PaginationInput, $search: QuerySearchInput) {
+  patients(locationNodeId: $locationId, rootLocationIds: $rootLocationIds, states: $states, filters: $filters, sorts: $sorts, pagination: $pagination, search: $search) {
     id
     name
     firstname
@@ -60,15 +60,19 @@ query GetPatients($locationId: ID, $rootLocationIds: [ID!], $states: [PatientSta
       parent {
         id
         title
+        kind
         parent {
           id
           title
+          kind
           parent {
             id
             title
+            kind
             parent {
               id
               title
+              kind
             }
           }
         }
@@ -105,7 +109,7 @@ query GetPatients($locationId: ID, $rootLocationIds: [ID!], $states: [PatientSta
       estimatedTime
       creationDate
       updateDate
-      assignee {
+      assignees {
         id
         name
         avatarUrl
@@ -119,6 +123,7 @@ query GetPatients($locationId: ID, $rootLocationIds: [ID!], $states: [PatientSta
       }
     }
     properties {
+      id
       definition {
         id
         name
@@ -135,7 +140,20 @@ query GetPatients($locationId: ID, $rootLocationIds: [ID!], $states: [PatientSta
       dateTimeValue
       selectValue
       multiSelectValues
+      userValue
+      user {
+        id
+        name
+        avatarUrl
+        lastOnline
+        isOnline
+      }
+      team {
+        id
+        title
+        kind
+      }
     }
   }
-  patientsTotal(locationNodeId: $locationId, rootLocationIds: $rootLocationIds, states: $states, filtering: $filtering, sorting: $sorting, search: $search)
+  patientsTotal(locationNodeId: $locationId, rootLocationIds: $rootLocationIds, states: $states, filters: $filters, sorts: $sorts, search: $search)
 }

@@ -72,6 +72,8 @@ alembic downgrade -1
 alembic revision --autogenerate -m "description"
 ```
 
+If `alembic heads` shows more than one head, run `alembic upgrade head` after pulling so merge revisions are applied. After upgrades that add tables (`task_assignees`, etc.), `alembic upgrade head` must succeed before the API can query those tables.
+
 ## Docker
 
 The backend is containerized and available as:

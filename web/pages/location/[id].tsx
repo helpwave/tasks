@@ -3,14 +3,18 @@ import { Page } from '@/components/layout/Page'
 import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
-import { LoadingContainer, TabSwitcher, Chip, Button, TabPanel } from '@helpwave/hightide'
+import { LoadingContainer, TabSwitcher, Chip, Button, TabPanel, TabList } from '@helpwave/hightide'
+import { CenteredLoadingLogo } from '@/components/CenteredLoadingLogo'
 import { PatientList } from '@/components/tables/PatientList'
 import type { TaskViewModel } from '@/components/tables/TaskList'
 import { TaskList } from '@/components/tables/TaskList'
-import { useGetLocationNodeQuery, useGetPatientsQuery, useGetTasksQuery, type LocationType } from '@/api/gql/generated'
+import { type LocationType, PatientState } from '@/api/gql/generated'
+import { useLocationNode, usePatients, useTasks } from '@/data'
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/router'
-import { LocationChips } from '@/components/patients/LocationChips'
+import type { ColumnFiltersState } from '@tanstack/react-table'
+import type { FilterValue } from '@helpwave/hightide'
+import { LocationChips } from '@/components/locations/LocationChips'
 import { LOCATION_PATH_SEPARATOR } from '@/utils/location'
 
 const getKindStyles = (kind: string) => {
@@ -31,35 +35,39 @@ const LocationPage: NextPage = () => {
   const id = Array.isArray(router.query['id']) ? router.query['id'][0] : router.query['id']
   const [showAllTasks, setShowAllTasks] = useState(false)
 
-  const { data: locationData, isLoading: isLoadingLocation, isError: isLocationError } = useGetLocationNodeQuery(
-    { id: id! },
-    {
-      enabled: !!id,
-      refetchOnWindowFocus: true,
-    }
+  const { data: locationNode, loading: isLoadingLocation, error: locationError } = useLocationNode(
+    id ?? '',
+    { skip: !id }
   )
+  const locationData = useMemo(
+    () => (locationNode ? { locationNode } : undefined),
+    [locationNode]
+  )
+  const isLocationError = !!locationError
 
   const isTeamLocation = locationData?.locationNode?.kind === 'TEAM'
 
-  const { data: patientsData, refetch: refetchPatients, isLoading: isLoadingPatients } = useGetPatientsQuery(
-    { rootLocationIds: id ? [id] : undefined },
-    {
-      enabled: !!id && !isTeamLocation,
-      refetchOnWindowFocus: true,
-      refetchOnMount: true,
+  const viewDefaultLocationFilters = useMemo((): ColumnFiltersState => {
+    if (!id) return []
+    const value: FilterValue = {
+      dataType: 'singleTag',
+      operator: 'equals',
+      parameter: { uuidValue: id },
     }
+    return [{ id: 'position', value }]
+  }, [id])
+
+  const { data: patientsData, refetch: refetchPatients, loading: isLoadingPatients } = usePatients(
+    { rootLocationIds: id ? [id] : undefined },
+    { skip: !id || isTeamLocation }
   )
 
-  const { data: tasksData, refetch: refetchTasks, isLoading: isLoadingTasks } = useGetTasksQuery(
+  const { data: tasksData, refetch: refetchTasks, loading: isLoadingTasks } = useTasks(
     {
       assigneeTeamId: isTeamLocation && !showAllTasks ? id : undefined,
       rootLocationIds: undefined,
     },
-    {
-      enabled: !!id && isTeamLocation,
-      refetchOnWindowFocus: true,
-      refetchOnMount: true,
-    }
+    { skip: !id || !isTeamLocation }
   )
 
   const tasks: TaskViewModel[] = useMemo(() => {
@@ -80,19 +88,22 @@ const LocationPage: NextPage = () => {
             locations: task.patient.assignedLocations || []
           }
           : undefined,
-        assignee: task.assignee
-          ? { id: task.assignee.id, name: task.assignee.name, avatarURL: task.assignee.avatarUrl, isOnline: task.assignee.isOnline ?? null }
+        assignee: task.assignees[0]
+          ? { id: task.assignees[0].id, name: task.assignees[0].name, avatarURL: task.assignees[0].avatarUrl, isOnline: task.assignees[0].isOnline ?? null }
           : undefined,
         assigneeTeam: task.assigneeTeam
           ? { id: task.assigneeTeam.id, title: task.assigneeTeam.title }
           : undefined,
+        additionalAssigneeCount:
+          !task.assigneeTeam && task.assignees.length > 1 ? task.assignees.length - 1 : 0,
       }))
     }
 
     if (!patientsData?.patients) return []
 
+    const admittedOrWaitingStates: PatientState[] = [PatientState.Admitted, PatientState.Wait]
     return patientsData.patients.flatMap(patient => {
-      if (!patient.tasks) return []
+      if (!admittedOrWaitingStates.includes(patient.state) || !patient.tasks) return []
 
       const mergedLocations = [
         ...(patient.clinic ? [patient.clinic] : []),
@@ -114,18 +125,20 @@ const LocationPage: NextPage = () => {
           name: patient.name,
           locations: mergedLocations
         },
-        assignee: task.assignee
-          ? { id: task.assignee.id, name: task.assignee.name, avatarURL: task.assignee.avatarUrl, isOnline: task.assignee.isOnline ?? null }
+        assignee: task.assignees[0]
+          ? { id: task.assignees[0].id, name: task.assignees[0].name, avatarURL: task.assignees[0].avatarUrl, isOnline: task.assignees[0].isOnline ?? null }
           : undefined,
         assigneeTeam: task.assigneeTeam
           ? { id: task.assigneeTeam.id, title: task.assigneeTeam.title }
           : undefined,
+        additionalAssigneeCount:
+          !task.assigneeTeam && task.assignees.length > 1 ? task.assignees.length - 1 : 0,
       }))
     })
   }, [patientsData, tasksData, isTeamLocation])
 
-  const isLoading = isLoadingLocation || (isTeamLocation ? isLoadingTasks : isLoadingPatients)
-  const isError = isLocationError || !id
+  const isLoading = !id || isLoadingLocation || (isTeamLocation ? isLoadingTasks : isLoadingPatients)
+  const isError = !!id && isLocationError
 
   const handleRefetch = () => {
     if (isTeamLocation) {
@@ -174,6 +187,8 @@ const LocationPage: NextPage = () => {
                     {translation('locationType', { type: locationKind })}
                   </Chip>
                 )}
+              </div>
+              {parentChain.length > 0 && (
                 <div className="flex flex-wrap items-center -space-x-1 scale-75 origin-top-left">
                   {parentChain.map((parent, index) => (
                     <div key={parent.id} className="flex items-center">
@@ -182,42 +197,49 @@ const LocationPage: NextPage = () => {
                     </div>
                   ))}
                 </div>
-              </div>
+              )}
             </div>
           )
         }
       >
-        {isLoading && (
-          <LoadingContainer className="flex-col-0 grow" />
-        )}
-        {!isLoading && isError && (
-          <div className="bg-negative/20 flex-col-0 justify-center items-center p-4 rounded-md">
-            {translation('errorOccurred')}
-          </div>
-        )}
-        {!isLoading && !isError && (
+        {!id && <CenteredLoadingLogo />}
+        {id && (
           <TabSwitcher>
-            <TabPanel label={translation('patients')}>
-              <PatientList locationId={id || undefined} />
+            <TabList className="mb-8" />
+            <TabPanel label={translation('patients')} className="flex-col-0 min-h-48 overflow-auto">
+              {isError ? (
+                <div className="bg-negative/20 flex-col-0 justify-center items-center p-4 rounded-md">
+                  {translation('errorOccurred')}
+                </div>
+              ) : (
+                <PatientList key={id} viewDefaultFilters={viewDefaultLocationFilters} />
+              )}
             </TabPanel>
-            <TabPanel label={translation('tasks')}>
-              <TaskList
-                tasks={tasks}
-                onRefetch={handleRefetch}
-                showAssignee={true}
-                headerActions={
-                  isTeamLocation ? (
-                    <Button
-                      onClick={() => setShowAllTasks(!showAllTasks)}
-                      color="neutral"
-                      coloringStyle="outline"
-                      className="w-full sm:w-auto flex-shrink-0"
-                    >
-                      {showAllTasks ? translation('showTeamTasks') ?? 'Show Team Tasks' : translation('showAllTasks') ?? 'Show All Tasks'}
-                    </Button>
-                  ) : undefined
-                }
-              />
+            <TabPanel label={translation('tasks')} className="flex-col-0 min-h-48 overflow-auto">
+              {isError ? (
+                <div className="bg-negative/20 flex-col-0 justify-center items-center p-4 rounded-md">
+                  {translation('errorOccurred')}
+                </div>
+              ) : (
+                <TaskList
+                  tasks={tasks}
+                  onRefetch={handleRefetch}
+                  showAssignee={true}
+                  loading={isTeamLocation ? isLoadingTasks : isLoadingPatients}
+                  headerActions={
+                    isTeamLocation ? (
+                      <Button
+                        onClick={() => setShowAllTasks(!showAllTasks)}
+                        color="neutral"
+                        coloringStyle="outline"
+                        className="w-full sm:w-auto flex-shrink-0"
+                      >
+                        {showAllTasks ? translation('showTeamTasks') ?? 'Show Team Tasks' : translation('showAllTasks') ?? 'Show All Tasks'}
+                      </Button>
+                    ) : undefined
+                  }
+                />
+              )}
             </TabPanel>
           </TabSwitcher>
         )}

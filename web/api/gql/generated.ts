@@ -1,5 +1,4 @@
-import { useQuery, useMutation, UseQueryOptions, UseMutationOptions } from '@tanstack/react-query';
-import { fetcher } from './fetcher';
+import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
@@ -14,7 +13,9 @@ export type Scalars = {
   Boolean: { input: boolean; output: boolean; }
   Int: { input: number; output: number; }
   Float: { input: number; output: number; }
+  /** Date (isoformat) */
   Date: { input: any; output: any; }
+  /** Date with time (isoformat) */
   DateTime: { input: any; output: any; }
 };
 
@@ -26,11 +27,6 @@ export type AuditLogType = {
   timestamp: Scalars['DateTime']['output'];
   userId?: Maybe<Scalars['String']['output']>;
 };
-
-export enum ColumnType {
-  DirectAttribute = 'DIRECT_ATTRIBUTE',
-  Property = 'PROPERTY'
-}
 
 export type CreateLocationNodeInput = {
   kind: LocationType;
@@ -62,13 +58,25 @@ export type CreatePropertyDefinitionInput = {
   options?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
+export type CreateSavedViewInput = {
+  baseEntityType: SavedViewEntityType;
+  filterDefinition: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+  parameters: Scalars['String']['input'];
+  relatedFilterDefinition?: InputMaybe<Scalars['String']['input']>;
+  relatedParameters?: InputMaybe<Scalars['String']['input']>;
+  relatedSortDefinition?: InputMaybe<Scalars['String']['input']>;
+  sortDefinition: Scalars['String']['input'];
+  visibility?: SavedViewVisibility;
+};
+
 export type CreateTaskInput = {
-  assigneeId?: InputMaybe<Scalars['ID']['input']>;
+  assigneeIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   assigneeTeamId?: InputMaybe<Scalars['ID']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
   dueDate?: InputMaybe<Scalars['DateTime']['input']>;
   estimatedTime?: InputMaybe<Scalars['Int']['input']>;
-  patientId: Scalars['ID']['input'];
+  patientId?: InputMaybe<Scalars['ID']['input']>;
   previousTaskIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   priority?: InputMaybe<TaskPriority>;
   properties?: InputMaybe<Array<PropertyValueInput>>;
@@ -83,85 +91,9 @@ export enum FieldType {
   FieldTypeNumber = 'FIELD_TYPE_NUMBER',
   FieldTypeSelect = 'FIELD_TYPE_SELECT',
   FieldTypeText = 'FIELD_TYPE_TEXT',
-  FieldTypeUnspecified = 'FIELD_TYPE_UNSPECIFIED'
+  FieldTypeUnspecified = 'FIELD_TYPE_UNSPECIFIED',
+  FieldTypeUser = 'FIELD_TYPE_USER'
 }
-
-export type FilterInput = {
-  column: Scalars['String']['input'];
-  columnType?: ColumnType;
-  operator: FilterOperator;
-  parameter: FilterParameter;
-  propertyDefinitionId?: InputMaybe<Scalars['String']['input']>;
-};
-
-export enum FilterOperator {
-  BooleanIsFalse = 'BOOLEAN_IS_FALSE',
-  BooleanIsTrue = 'BOOLEAN_IS_TRUE',
-  DatetimeBetween = 'DATETIME_BETWEEN',
-  DatetimeEquals = 'DATETIME_EQUALS',
-  DatetimeGreaterThan = 'DATETIME_GREATER_THAN',
-  DatetimeGreaterThanOrEqual = 'DATETIME_GREATER_THAN_OR_EQUAL',
-  DatetimeLessThan = 'DATETIME_LESS_THAN',
-  DatetimeLessThanOrEqual = 'DATETIME_LESS_THAN_OR_EQUAL',
-  DatetimeNotBetween = 'DATETIME_NOT_BETWEEN',
-  DatetimeNotEquals = 'DATETIME_NOT_EQUALS',
-  DateBetween = 'DATE_BETWEEN',
-  DateEquals = 'DATE_EQUALS',
-  DateGreaterThan = 'DATE_GREATER_THAN',
-  DateGreaterThanOrEqual = 'DATE_GREATER_THAN_OR_EQUAL',
-  DateLessThan = 'DATE_LESS_THAN',
-  DateLessThanOrEqual = 'DATE_LESS_THAN_OR_EQUAL',
-  DateNotBetween = 'DATE_NOT_BETWEEN',
-  DateNotEquals = 'DATE_NOT_EQUALS',
-  IsNotNull = 'IS_NOT_NULL',
-  IsNull = 'IS_NULL',
-  NumberBetween = 'NUMBER_BETWEEN',
-  NumberEquals = 'NUMBER_EQUALS',
-  NumberGreaterThan = 'NUMBER_GREATER_THAN',
-  NumberGreaterThanOrEqual = 'NUMBER_GREATER_THAN_OR_EQUAL',
-  NumberLessThan = 'NUMBER_LESS_THAN',
-  NumberLessThanOrEqual = 'NUMBER_LESS_THAN_OR_EQUAL',
-  NumberNotBetween = 'NUMBER_NOT_BETWEEN',
-  NumberNotEquals = 'NUMBER_NOT_EQUALS',
-  TagsContains = 'TAGS_CONTAINS',
-  TagsEquals = 'TAGS_EQUALS',
-  TagsNotContains = 'TAGS_NOT_CONTAINS',
-  TagsNotEquals = 'TAGS_NOT_EQUALS',
-  TagsSingleContains = 'TAGS_SINGLE_CONTAINS',
-  TagsSingleEquals = 'TAGS_SINGLE_EQUALS',
-  TagsSingleNotContains = 'TAGS_SINGLE_NOT_CONTAINS',
-  TagsSingleNotEquals = 'TAGS_SINGLE_NOT_EQUALS',
-  TextContains = 'TEXT_CONTAINS',
-  TextEndsWith = 'TEXT_ENDS_WITH',
-  TextEquals = 'TEXT_EQUALS',
-  TextNotContains = 'TEXT_NOT_CONTAINS',
-  TextNotEquals = 'TEXT_NOT_EQUALS',
-  TextNotWhitespace = 'TEXT_NOT_WHITESPACE',
-  TextStartsWith = 'TEXT_STARTS_WITH'
-}
-
-export type FilterParameter = {
-  compareDate?: InputMaybe<Scalars['Date']['input']>;
-  compareDateTime?: InputMaybe<Scalars['DateTime']['input']>;
-  compareValue?: InputMaybe<Scalars['Float']['input']>;
-  isCaseSensitive?: Scalars['Boolean']['input'];
-  max?: InputMaybe<Scalars['Float']['input']>;
-  maxDate?: InputMaybe<Scalars['Date']['input']>;
-  maxDateTime?: InputMaybe<Scalars['DateTime']['input']>;
-  min?: InputMaybe<Scalars['Float']['input']>;
-  minDate?: InputMaybe<Scalars['Date']['input']>;
-  minDateTime?: InputMaybe<Scalars['DateTime']['input']>;
-  propertyDefinitionId?: InputMaybe<Scalars['String']['input']>;
-  searchTags?: InputMaybe<Array<Scalars['String']['input']>>;
-  searchText?: InputMaybe<Scalars['String']['input']>;
-};
-
-export type FullTextSearchInput = {
-  includeProperties?: Scalars['Boolean']['input'];
-  propertyDefinitionIds?: InputMaybe<Array<Scalars['String']['input']>>;
-  searchColumns?: InputMaybe<Array<Scalars['String']['input']>>;
-  searchText: Scalars['String']['input'];
-};
 
 export type LocationNodeType = {
   __typename?: 'LocationNodeType';
@@ -188,40 +120,44 @@ export enum LocationType {
 
 export type Mutation = {
   __typename?: 'Mutation';
+  addTaskAssignee: TaskType;
   admitPatient: PatientType;
-  assignTask: TaskType;
   assignTaskToTeam: TaskType;
   completeTask: TaskType;
   createLocationNode: LocationNodeType;
   createPatient: PatientType;
   createPropertyDefinition: PropertyDefinitionType;
+  createSavedView: SavedView;
   createTask: TaskType;
   deleteLocationNode: Scalars['Boolean']['output'];
   deletePatient: Scalars['Boolean']['output'];
   deletePropertyDefinition: Scalars['Boolean']['output'];
+  deleteSavedView: Scalars['Boolean']['output'];
   deleteTask: Scalars['Boolean']['output'];
   dischargePatient: PatientType;
+  duplicateSavedView: SavedView;
   markPatientDead: PatientType;
+  removeTaskAssignee: TaskType;
   reopenTask: TaskType;
-  unassignTask: TaskType;
   unassignTaskFromTeam: TaskType;
   updateLocationNode: LocationNodeType;
   updatePatient: PatientType;
   updateProfilePicture: UserType;
   updatePropertyDefinition: PropertyDefinitionType;
+  updateSavedView: SavedView;
   updateTask: TaskType;
   waitPatient: PatientType;
 };
 
 
-export type MutationAdmitPatientArgs = {
+export type MutationAddTaskAssigneeArgs = {
   id: Scalars['ID']['input'];
+  userId: Scalars['ID']['input'];
 };
 
 
-export type MutationAssignTaskArgs = {
+export type MutationAdmitPatientArgs = {
   id: Scalars['ID']['input'];
-  userId: Scalars['ID']['input'];
 };
 
 
@@ -251,6 +187,11 @@ export type MutationCreatePropertyDefinitionArgs = {
 };
 
 
+export type MutationCreateSavedViewArgs = {
+  data: CreateSavedViewInput;
+};
+
+
 export type MutationCreateTaskArgs = {
   data: CreateTaskInput;
 };
@@ -271,6 +212,11 @@ export type MutationDeletePropertyDefinitionArgs = {
 };
 
 
+export type MutationDeleteSavedViewArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
 export type MutationDeleteTaskArgs = {
   id: Scalars['ID']['input'];
 };
@@ -281,17 +227,24 @@ export type MutationDischargePatientArgs = {
 };
 
 
+export type MutationDuplicateSavedViewArgs = {
+  id: Scalars['ID']['input'];
+  name: Scalars['String']['input'];
+};
+
+
 export type MutationMarkPatientDeadArgs = {
   id: Scalars['ID']['input'];
 };
 
 
-export type MutationReopenTaskArgs = {
+export type MutationRemoveTaskAssigneeArgs = {
   id: Scalars['ID']['input'];
+  userId: Scalars['ID']['input'];
 };
 
 
-export type MutationUnassignTaskArgs = {
+export type MutationReopenTaskArgs = {
   id: Scalars['ID']['input'];
 };
 
@@ -320,6 +273,12 @@ export type MutationUpdateProfilePictureArgs = {
 
 export type MutationUpdatePropertyDefinitionArgs = {
   data: UpdatePropertyDefinitionInput;
+  id: Scalars['ID']['input'];
+};
+
+
+export type MutationUpdateSavedViewArgs = {
+  data: UpdateSavedViewInput;
   id: Scalars['ID']['input'];
 };
 
@@ -400,6 +359,7 @@ export type PropertyValueInput = {
   numberValue?: InputMaybe<Scalars['Float']['input']>;
   selectValue?: InputMaybe<Scalars['String']['input']>;
   textValue?: InputMaybe<Scalars['String']['input']>;
+  userValue?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type PropertyValueType = {
@@ -408,10 +368,14 @@ export type PropertyValueType = {
   dateTimeValue?: Maybe<Scalars['DateTime']['output']>;
   dateValue?: Maybe<Scalars['Date']['output']>;
   definition: PropertyDefinitionType;
+  id: Scalars['ID']['output'];
   multiSelectValues?: Maybe<Array<Scalars['String']['output']>>;
   numberValue?: Maybe<Scalars['Float']['output']>;
   selectValue?: Maybe<Scalars['String']['output']>;
+  team?: Maybe<LocationNodeType>;
   textValue?: Maybe<Scalars['String']['output']>;
+  user?: Maybe<UserType>;
+  userValue?: Maybe<Scalars['String']['output']>;
 };
 
 export type Query = {
@@ -421,14 +385,17 @@ export type Query = {
   locationNodes: Array<LocationNodeType>;
   locationRoots: Array<LocationNodeType>;
   me?: Maybe<UserType>;
+  mySavedViews: Array<SavedView>;
   patient?: Maybe<PatientType>;
   patients: Array<PatientType>;
   patientsTotal: Scalars['Int']['output'];
   propertyDefinitions: Array<PropertyDefinitionType>;
+  queryableFields: Array<QueryableField>;
   recentPatients: Array<PatientType>;
   recentPatientsTotal: Scalars['Int']['output'];
   recentTasks: Array<TaskType>;
   recentTasksTotal: Scalars['Int']['output'];
+  savedView?: Maybe<SavedView>;
   task?: Maybe<TaskType>;
   tasks: Array<TaskType>;
   tasksTotal: Scalars['Int']['output'];
@@ -466,53 +433,67 @@ export type QueryPatientArgs = {
 
 
 export type QueryPatientsArgs = {
-  filtering?: InputMaybe<Array<FilterInput>>;
+  filters?: InputMaybe<Array<QueryFilterClauseInput>>;
   locationNodeId?: InputMaybe<Scalars['ID']['input']>;
   pagination?: InputMaybe<PaginationInput>;
   rootLocationIds?: InputMaybe<Array<Scalars['ID']['input']>>;
-  search?: InputMaybe<FullTextSearchInput>;
-  sorting?: InputMaybe<Array<SortInput>>;
+  search?: InputMaybe<QuerySearchInput>;
+  sorts?: InputMaybe<Array<QuerySortClauseInput>>;
   states?: InputMaybe<Array<PatientState>>;
 };
 
 
 export type QueryPatientsTotalArgs = {
-  filtering?: InputMaybe<Array<FilterInput>>;
+  filters?: InputMaybe<Array<QueryFilterClauseInput>>;
   locationNodeId?: InputMaybe<Scalars['ID']['input']>;
   rootLocationIds?: InputMaybe<Array<Scalars['ID']['input']>>;
-  search?: InputMaybe<FullTextSearchInput>;
-  sorting?: InputMaybe<Array<SortInput>>;
+  search?: InputMaybe<QuerySearchInput>;
+  sorts?: InputMaybe<Array<QuerySortClauseInput>>;
   states?: InputMaybe<Array<PatientState>>;
 };
 
 
+export type QueryQueryableFieldsArgs = {
+  entity: Scalars['String']['input'];
+};
+
+
 export type QueryRecentPatientsArgs = {
-  filtering?: InputMaybe<Array<FilterInput>>;
+  filters?: InputMaybe<Array<QueryFilterClauseInput>>;
   pagination?: InputMaybe<PaginationInput>;
-  search?: InputMaybe<FullTextSearchInput>;
-  sorting?: InputMaybe<Array<SortInput>>;
+  rootLocationIds?: InputMaybe<Array<Scalars['ID']['input']>>;
+  search?: InputMaybe<QuerySearchInput>;
+  sorts?: InputMaybe<Array<QuerySortClauseInput>>;
 };
 
 
 export type QueryRecentPatientsTotalArgs = {
-  filtering?: InputMaybe<Array<FilterInput>>;
-  search?: InputMaybe<FullTextSearchInput>;
-  sorting?: InputMaybe<Array<SortInput>>;
+  filters?: InputMaybe<Array<QueryFilterClauseInput>>;
+  rootLocationIds?: InputMaybe<Array<Scalars['ID']['input']>>;
+  search?: InputMaybe<QuerySearchInput>;
+  sorts?: InputMaybe<Array<QuerySortClauseInput>>;
 };
 
 
 export type QueryRecentTasksArgs = {
-  filtering?: InputMaybe<Array<FilterInput>>;
+  filters?: InputMaybe<Array<QueryFilterClauseInput>>;
   pagination?: InputMaybe<PaginationInput>;
-  search?: InputMaybe<FullTextSearchInput>;
-  sorting?: InputMaybe<Array<SortInput>>;
+  rootLocationIds?: InputMaybe<Array<Scalars['ID']['input']>>;
+  search?: InputMaybe<QuerySearchInput>;
+  sorts?: InputMaybe<Array<QuerySortClauseInput>>;
 };
 
 
 export type QueryRecentTasksTotalArgs = {
-  filtering?: InputMaybe<Array<FilterInput>>;
-  search?: InputMaybe<FullTextSearchInput>;
-  sorting?: InputMaybe<Array<SortInput>>;
+  filters?: InputMaybe<Array<QueryFilterClauseInput>>;
+  rootLocationIds?: InputMaybe<Array<Scalars['ID']['input']>>;
+  search?: InputMaybe<QuerySearchInput>;
+  sorts?: InputMaybe<Array<QuerySortClauseInput>>;
+};
+
+
+export type QuerySavedViewArgs = {
+  id: Scalars['ID']['input'];
 };
 
 
@@ -524,23 +505,23 @@ export type QueryTaskArgs = {
 export type QueryTasksArgs = {
   assigneeId?: InputMaybe<Scalars['ID']['input']>;
   assigneeTeamId?: InputMaybe<Scalars['ID']['input']>;
-  filtering?: InputMaybe<Array<FilterInput>>;
+  filters?: InputMaybe<Array<QueryFilterClauseInput>>;
   pagination?: InputMaybe<PaginationInput>;
   patientId?: InputMaybe<Scalars['ID']['input']>;
   rootLocationIds?: InputMaybe<Array<Scalars['ID']['input']>>;
-  search?: InputMaybe<FullTextSearchInput>;
-  sorting?: InputMaybe<Array<SortInput>>;
+  search?: InputMaybe<QuerySearchInput>;
+  sorts?: InputMaybe<Array<QuerySortClauseInput>>;
 };
 
 
 export type QueryTasksTotalArgs = {
   assigneeId?: InputMaybe<Scalars['ID']['input']>;
   assigneeTeamId?: InputMaybe<Scalars['ID']['input']>;
-  filtering?: InputMaybe<Array<FilterInput>>;
+  filters?: InputMaybe<Array<QueryFilterClauseInput>>;
   patientId?: InputMaybe<Scalars['ID']['input']>;
   rootLocationIds?: InputMaybe<Array<Scalars['ID']['input']>>;
-  search?: InputMaybe<FullTextSearchInput>;
-  sorting?: InputMaybe<Array<SortInput>>;
+  search?: InputMaybe<QuerySearchInput>;
+  sorts?: InputMaybe<Array<QuerySortClauseInput>>;
 };
 
 
@@ -550,11 +531,147 @@ export type QueryUserArgs = {
 
 
 export type QueryUsersArgs = {
-  filtering?: InputMaybe<Array<FilterInput>>;
+  filters?: InputMaybe<Array<QueryFilterClauseInput>>;
   pagination?: InputMaybe<PaginationInput>;
-  search?: InputMaybe<FullTextSearchInput>;
-  sorting?: InputMaybe<Array<SortInput>>;
+  search?: InputMaybe<QuerySearchInput>;
+  sorts?: InputMaybe<Array<QuerySortClauseInput>>;
 };
+
+export type QueryFilterClauseInput = {
+  fieldKey: Scalars['String']['input'];
+  operator: QueryOperator;
+  value?: InputMaybe<QueryFilterValueInput>;
+};
+
+export type QueryFilterValueInput = {
+  boolValue?: InputMaybe<Scalars['Boolean']['input']>;
+  dateMax?: InputMaybe<Scalars['Date']['input']>;
+  dateMin?: InputMaybe<Scalars['Date']['input']>;
+  dateValue?: InputMaybe<Scalars['DateTime']['input']>;
+  floatMax?: InputMaybe<Scalars['Float']['input']>;
+  floatMin?: InputMaybe<Scalars['Float']['input']>;
+  floatValue?: InputMaybe<Scalars['Float']['input']>;
+  stringValue?: InputMaybe<Scalars['String']['input']>;
+  stringValues?: InputMaybe<Array<Scalars['String']['input']>>;
+  uuidValue?: InputMaybe<Scalars['String']['input']>;
+  uuidValues?: InputMaybe<Array<Scalars['String']['input']>>;
+};
+
+export enum QueryOperator {
+  AllIn = 'ALL_IN',
+  AnyEq = 'ANY_EQ',
+  AnyIn = 'ANY_IN',
+  Between = 'BETWEEN',
+  Contains = 'CONTAINS',
+  EndsWith = 'ENDS_WITH',
+  Eq = 'EQ',
+  Gt = 'GT',
+  Gte = 'GTE',
+  In = 'IN',
+  IsEmpty = 'IS_EMPTY',
+  IsNotEmpty = 'IS_NOT_EMPTY',
+  IsNotNull = 'IS_NOT_NULL',
+  IsNull = 'IS_NULL',
+  Lt = 'LT',
+  Lte = 'LTE',
+  Neq = 'NEQ',
+  NoneIn = 'NONE_IN',
+  NotIn = 'NOT_IN',
+  StartsWith = 'STARTS_WITH'
+}
+
+export type QuerySearchInput = {
+  includeProperties?: Scalars['Boolean']['input'];
+  searchText?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type QuerySortClauseInput = {
+  direction: SortDirection;
+  fieldKey: Scalars['String']['input'];
+};
+
+export type QueryableChoiceMeta = {
+  __typename?: 'QueryableChoiceMeta';
+  optionKeys: Array<Scalars['String']['output']>;
+  optionLabels: Array<Scalars['String']['output']>;
+};
+
+export type QueryableField = {
+  __typename?: 'QueryableField';
+  allowedOperators: Array<QueryOperator>;
+  choice?: Maybe<QueryableChoiceMeta>;
+  filterable: Scalars['Boolean']['output'];
+  key: Scalars['String']['output'];
+  kind: QueryableFieldKind;
+  label: Scalars['String']['output'];
+  propertyDefinitionId?: Maybe<Scalars['String']['output']>;
+  relation?: Maybe<QueryableRelationMeta>;
+  searchable: Scalars['Boolean']['output'];
+  sortDirections: Array<SortDirection>;
+  sortable: Scalars['Boolean']['output'];
+  valueType: QueryableValueType;
+};
+
+export enum QueryableFieldKind {
+  Choice = 'CHOICE',
+  ChoiceList = 'CHOICE_LIST',
+  Property = 'PROPERTY',
+  Reference = 'REFERENCE',
+  ReferenceList = 'REFERENCE_LIST',
+  Scalar = 'SCALAR'
+}
+
+export type QueryableRelationMeta = {
+  __typename?: 'QueryableRelationMeta';
+  allowedFilterModes: Array<ReferenceFilterMode>;
+  idFieldKey: Scalars['String']['output'];
+  labelFieldKey: Scalars['String']['output'];
+  targetEntity: Scalars['String']['output'];
+};
+
+export enum QueryableValueType {
+  Boolean = 'BOOLEAN',
+  Date = 'DATE',
+  Datetime = 'DATETIME',
+  Number = 'NUMBER',
+  String = 'STRING',
+  StringList = 'STRING_LIST',
+  Uuid = 'UUID',
+  UuidList = 'UUID_LIST'
+}
+
+export enum ReferenceFilterMode {
+  Id = 'ID',
+  Label = 'LABEL'
+}
+
+export type SavedView = {
+  __typename?: 'SavedView';
+  baseEntityType: SavedViewEntityType;
+  createdAt: Scalars['String']['output'];
+  filterDefinition: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  isOwner: Scalars['Boolean']['output'];
+  name: Scalars['String']['output'];
+  ownerUserId: Scalars['ID']['output'];
+  parameters: Scalars['String']['output'];
+  relatedFilterDefinition: Scalars['String']['output'];
+  relatedParameters: Scalars['String']['output'];
+  relatedSortDefinition: Scalars['String']['output'];
+  sortDefinition: Scalars['String']['output'];
+  updatedAt: Scalars['String']['output'];
+  visibility: SavedViewVisibility;
+};
+
+export enum SavedViewEntityType {
+  Patient = 'PATIENT',
+  Task = 'TASK'
+}
+
+export enum SavedViewVisibility {
+  LinkShared = 'LINK_SHARED',
+  Private = 'PRIVATE'
+}
 
 export enum Sex {
   Female = 'FEMALE',
@@ -566,13 +683,6 @@ export enum SortDirection {
   Asc = 'ASC',
   Desc = 'DESC'
 }
-
-export type SortInput = {
-  column: Scalars['String']['input'];
-  columnType?: ColumnType;
-  direction: SortDirection;
-  propertyDefinitionId?: InputMaybe<Scalars['String']['input']>;
-};
 
 export type Subscription = {
   __typename?: 'Subscription';
@@ -640,10 +750,9 @@ export enum TaskPriority {
 
 export type TaskType = {
   __typename?: 'TaskType';
-  assignee?: Maybe<UserType>;
-  assigneeId?: Maybe<Scalars['ID']['output']>;
   assigneeTeam?: Maybe<LocationNodeType>;
   assigneeTeamId?: Maybe<Scalars['ID']['output']>;
+  assignees: Array<UserType>;
   checksum: Scalars['String']['output'];
   creationDate: Scalars['DateTime']['output'];
   description?: Maybe<Scalars['String']['output']>;
@@ -651,8 +760,8 @@ export type TaskType = {
   dueDate?: Maybe<Scalars['DateTime']['output']>;
   estimatedTime?: Maybe<Scalars['Int']['output']>;
   id: Scalars['ID']['output'];
-  patient: PatientType;
-  patientId: Scalars['ID']['output'];
+  patient?: Maybe<PatientType>;
+  patientId?: Maybe<Scalars['ID']['output']>;
   priority?: Maybe<Scalars['String']['output']>;
   properties: Array<PropertyValueType>;
   title: Scalars['String']['output'];
@@ -692,14 +801,26 @@ export type UpdatePropertyDefinitionInput = {
   options?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
+export type UpdateSavedViewInput = {
+  filterDefinition?: InputMaybe<Scalars['String']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  parameters?: InputMaybe<Scalars['String']['input']>;
+  relatedFilterDefinition?: InputMaybe<Scalars['String']['input']>;
+  relatedParameters?: InputMaybe<Scalars['String']['input']>;
+  relatedSortDefinition?: InputMaybe<Scalars['String']['input']>;
+  sortDefinition?: InputMaybe<Scalars['String']['input']>;
+  visibility?: InputMaybe<SavedViewVisibility>;
+};
+
 export type UpdateTaskInput = {
-  assigneeId?: InputMaybe<Scalars['ID']['input']>;
+  assigneeIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   assigneeTeamId?: InputMaybe<Scalars['ID']['input']>;
   checksum?: InputMaybe<Scalars['String']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
   done?: InputMaybe<Scalars['Boolean']['input']>;
   dueDate?: InputMaybe<Scalars['DateTime']['input']>;
   estimatedTime?: InputMaybe<Scalars['Int']['input']>;
+  patientId?: InputMaybe<Scalars['ID']['input']>;
   previousTaskIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   priority?: InputMaybe<TaskPriority>;
   properties?: InputMaybe<Array<PropertyValueInput>>;
@@ -755,61 +876,62 @@ export type GetLocationsQuery = { __typename?: 'Query', locationNodes: Array<{ _
 export type GetMyTasksQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetMyTasksQuery = { __typename?: 'Query', me?: { __typename?: 'UserType', id: string, tasks: Array<{ __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, dueDate?: any | null, priority?: string | null, estimatedTime?: number | null, creationDate: any, updateDate?: any | null, patient: { __typename?: 'PatientType', id: string, name: string, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null, assignedLocations: Array<{ __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null }> }, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null, lastOnline?: any | null, isOnline: boolean } | null }> } | null };
+export type GetMyTasksQuery = { __typename?: 'Query', me?: { __typename?: 'UserType', id: string, tasks: Array<{ __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, dueDate?: any | null, priority?: string | null, estimatedTime?: number | null, creationDate: any, updateDate?: any | null, patient?: { __typename?: 'PatientType', id: string, name: string, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null, assignedLocations: Array<{ __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null }> } | null, assignees: Array<{ __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null, lastOnline?: any | null, isOnline: boolean }> }> } | null };
 
 export type GetOverviewDataQueryVariables = Exact<{
-  recentPatientsFiltering?: InputMaybe<Array<FilterInput> | FilterInput>;
-  recentPatientsSorting?: InputMaybe<Array<SortInput> | SortInput>;
+  rootLocationIds?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
+  recentPatientsFilters?: InputMaybe<Array<QueryFilterClauseInput> | QueryFilterClauseInput>;
+  recentPatientsSorts?: InputMaybe<Array<QuerySortClauseInput> | QuerySortClauseInput>;
   recentPatientsPagination?: InputMaybe<PaginationInput>;
-  recentPatientsSearch?: InputMaybe<FullTextSearchInput>;
-  recentTasksFiltering?: InputMaybe<Array<FilterInput> | FilterInput>;
-  recentTasksSorting?: InputMaybe<Array<SortInput> | SortInput>;
+  recentPatientsSearch?: InputMaybe<QuerySearchInput>;
+  recentTasksFilters?: InputMaybe<Array<QueryFilterClauseInput> | QueryFilterClauseInput>;
+  recentTasksSorts?: InputMaybe<Array<QuerySortClauseInput> | QuerySortClauseInput>;
   recentTasksPagination?: InputMaybe<PaginationInput>;
-  recentTasksSearch?: InputMaybe<FullTextSearchInput>;
+  recentTasksSearch?: InputMaybe<QuerySearchInput>;
 }>;
 
 
-export type GetOverviewDataQuery = { __typename?: 'Query', recentPatientsTotal: number, recentTasksTotal: number, recentPatients: Array<{ __typename?: 'PatientType', id: string, name: string, sex: Sex, birthdate: any, position?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null, tasks: Array<{ __typename?: 'TaskType', updateDate?: any | null }>, properties: Array<{ __typename?: 'PropertyValueType', textValue?: string | null, numberValue?: number | null, booleanValue?: boolean | null, dateValue?: any | null, dateTimeValue?: any | null, selectValue?: string | null, multiSelectValues?: Array<string> | null, definition: { __typename?: 'PropertyDefinitionType', id: string, name: string, description?: string | null, fieldType: FieldType, isActive: boolean, allowedEntities: Array<PropertyEntity>, options: Array<string> } }> }>, recentTasks: Array<{ __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, dueDate?: any | null, updateDate?: any | null, priority?: string | null, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null, lastOnline?: any | null, isOnline: boolean } | null, patient: { __typename?: 'PatientType', id: string, name: string, position?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null }, properties: Array<{ __typename?: 'PropertyValueType', textValue?: string | null, numberValue?: number | null, booleanValue?: boolean | null, dateValue?: any | null, dateTimeValue?: any | null, selectValue?: string | null, multiSelectValues?: Array<string> | null, definition: { __typename?: 'PropertyDefinitionType', id: string, name: string, description?: string | null, fieldType: FieldType, isActive: boolean, allowedEntities: Array<PropertyEntity>, options: Array<string> } }> }> };
+export type GetOverviewDataQuery = { __typename?: 'Query', recentPatientsTotal: number, recentTasksTotal: number, recentPatients: Array<{ __typename?: 'PatientType', id: string, name: string, firstname: string, lastname: string, sex: Sex, birthdate: any, state: PatientState, position?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null, tasks: Array<{ __typename?: 'TaskType', id: string, done: boolean, updateDate?: any | null }>, properties: Array<{ __typename?: 'PropertyValueType', id: string, textValue?: string | null, numberValue?: number | null, booleanValue?: boolean | null, dateValue?: any | null, dateTimeValue?: any | null, selectValue?: string | null, multiSelectValues?: Array<string> | null, userValue?: string | null, definition: { __typename?: 'PropertyDefinitionType', id: string, name: string, description?: string | null, fieldType: FieldType, isActive: boolean, allowedEntities: Array<PropertyEntity>, options: Array<string> }, user?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null, lastOnline?: any | null, isOnline: boolean } | null, team?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType } | null }> }>, recentTasks: Array<{ __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, dueDate?: any | null, creationDate: any, updateDate?: any | null, priority?: string | null, estimatedTime?: number | null, assignees: Array<{ __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null, lastOnline?: any | null, isOnline: boolean }>, assigneeTeam?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType } | null, patient?: { __typename?: 'PatientType', id: string, name: string, position?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null } | null, properties: Array<{ __typename?: 'PropertyValueType', id: string, textValue?: string | null, numberValue?: number | null, booleanValue?: boolean | null, dateValue?: any | null, dateTimeValue?: any | null, selectValue?: string | null, multiSelectValues?: Array<string> | null, userValue?: string | null, definition: { __typename?: 'PropertyDefinitionType', id: string, name: string, description?: string | null, fieldType: FieldType, isActive: boolean, allowedEntities: Array<PropertyEntity>, options: Array<string> }, user?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null, lastOnline?: any | null, isOnline: boolean } | null, team?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType } | null }> }> };
 
 export type GetPatientQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type GetPatientQuery = { __typename?: 'Query', patient?: { __typename?: 'PatientType', id: string, firstname: string, lastname: string, birthdate: any, sex: Sex, state: PatientState, description?: string | null, checksum: string, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string } | null, assignedLocations: Array<{ __typename?: 'LocationNodeType', id: string, title: string }>, clinic: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null } | null } | null }, position?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null } | null } | null } | null, teams: Array<{ __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null } | null } | null }>, tasks: Array<{ __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, dueDate?: any | null, priority?: string | null, estimatedTime?: number | null, updateDate?: any | null, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null, lastOnline?: any | null, isOnline: boolean } | null, assigneeTeam?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType } | null }>, properties: Array<{ __typename?: 'PropertyValueType', textValue?: string | null, numberValue?: number | null, booleanValue?: boolean | null, dateValue?: any | null, dateTimeValue?: any | null, selectValue?: string | null, multiSelectValues?: Array<string> | null, definition: { __typename?: 'PropertyDefinitionType', id: string, name: string, description?: string | null, fieldType: FieldType, isActive: boolean, allowedEntities: Array<PropertyEntity>, options: Array<string> } }> } | null };
+export type GetPatientQuery = { __typename?: 'Query', patient?: { __typename?: 'PatientType', id: string, firstname: string, lastname: string, birthdate: any, sex: Sex, state: PatientState, description?: string | null, checksum: string, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string } | null, assignedLocations: Array<{ __typename?: 'LocationNodeType', id: string, title: string }>, clinic: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null } | null } | null }, position?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null } | null } | null } | null, teams: Array<{ __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null } | null } | null }>, tasks: Array<{ __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, dueDate?: any | null, priority?: string | null, estimatedTime?: number | null, updateDate?: any | null, assignees: Array<{ __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null, lastOnline?: any | null, isOnline: boolean }>, assigneeTeam?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType } | null }>, properties: Array<{ __typename?: 'PropertyValueType', id: string, textValue?: string | null, numberValue?: number | null, booleanValue?: boolean | null, dateValue?: any | null, dateTimeValue?: any | null, selectValue?: string | null, multiSelectValues?: Array<string> | null, userValue?: string | null, definition: { __typename?: 'PropertyDefinitionType', id: string, name: string, description?: string | null, fieldType: FieldType, isActive: boolean, allowedEntities: Array<PropertyEntity>, options: Array<string> }, user?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null, lastOnline?: any | null, isOnline: boolean } | null, team?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType } | null }> } | null };
 
 export type GetPatientsQueryVariables = Exact<{
   locationId?: InputMaybe<Scalars['ID']['input']>;
   rootLocationIds?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
   states?: InputMaybe<Array<PatientState> | PatientState>;
-  filtering?: InputMaybe<Array<FilterInput> | FilterInput>;
-  sorting?: InputMaybe<Array<SortInput> | SortInput>;
+  filters?: InputMaybe<Array<QueryFilterClauseInput> | QueryFilterClauseInput>;
+  sorts?: InputMaybe<Array<QuerySortClauseInput> | QuerySortClauseInput>;
   pagination?: InputMaybe<PaginationInput>;
-  search?: InputMaybe<FullTextSearchInput>;
+  search?: InputMaybe<QuerySearchInput>;
 }>;
 
 
-export type GetPatientsQuery = { __typename?: 'Query', patientsTotal: number, patients: Array<{ __typename?: 'PatientType', id: string, name: string, firstname: string, lastname: string, birthdate: any, sex: Sex, state: PatientState, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null, assignedLocations: Array<{ __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null } | null }>, clinic: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null } | null } | null }, position?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null } | null } | null } | null, teams: Array<{ __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null } | null } | null }>, tasks: Array<{ __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, dueDate?: any | null, priority?: string | null, estimatedTime?: number | null, creationDate: any, updateDate?: any | null, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null, lastOnline?: any | null, isOnline: boolean } | null, assigneeTeam?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType } | null }>, properties: Array<{ __typename?: 'PropertyValueType', textValue?: string | null, numberValue?: number | null, booleanValue?: boolean | null, dateValue?: any | null, dateTimeValue?: any | null, selectValue?: string | null, multiSelectValues?: Array<string> | null, definition: { __typename?: 'PropertyDefinitionType', id: string, name: string, description?: string | null, fieldType: FieldType, isActive: boolean, allowedEntities: Array<PropertyEntity>, options: Array<string> } }> }> };
+export type GetPatientsQuery = { __typename?: 'Query', patientsTotal: number, patients: Array<{ __typename?: 'PatientType', id: string, name: string, firstname: string, lastname: string, birthdate: any, sex: Sex, state: PatientState, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null, assignedLocations: Array<{ __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null } | null }>, clinic: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null } | null } | null }, position?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType } | null } | null } | null } | null } | null, teams: Array<{ __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null } | null } | null }>, tasks: Array<{ __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, dueDate?: any | null, priority?: string | null, estimatedTime?: number | null, creationDate: any, updateDate?: any | null, assignees: Array<{ __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null, lastOnline?: any | null, isOnline: boolean }>, assigneeTeam?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType } | null }>, properties: Array<{ __typename?: 'PropertyValueType', id: string, textValue?: string | null, numberValue?: number | null, booleanValue?: boolean | null, dateValue?: any | null, dateTimeValue?: any | null, selectValue?: string | null, multiSelectValues?: Array<string> | null, userValue?: string | null, definition: { __typename?: 'PropertyDefinitionType', id: string, name: string, description?: string | null, fieldType: FieldType, isActive: boolean, allowedEntities: Array<PropertyEntity>, options: Array<string> }, user?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null, lastOnline?: any | null, isOnline: boolean } | null, team?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType } | null }> }> };
 
 export type GetTaskQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type GetTaskQuery = { __typename?: 'Query', task?: { __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, dueDate?: any | null, priority?: string | null, estimatedTime?: number | null, checksum: string, patient: { __typename?: 'PatientType', id: string, name: string }, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null, lastOnline?: any | null, isOnline: boolean } | null, assigneeTeam?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType } | null, properties: Array<{ __typename?: 'PropertyValueType', textValue?: string | null, numberValue?: number | null, booleanValue?: boolean | null, dateValue?: any | null, dateTimeValue?: any | null, selectValue?: string | null, multiSelectValues?: Array<string> | null, definition: { __typename?: 'PropertyDefinitionType', id: string, name: string, description?: string | null, fieldType: FieldType, isActive: boolean, allowedEntities: Array<PropertyEntity>, options: Array<string> } }> } | null };
+export type GetTaskQuery = { __typename?: 'Query', task?: { __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, dueDate?: any | null, priority?: string | null, estimatedTime?: number | null, checksum: string, updateDate?: any | null, patient?: { __typename?: 'PatientType', id: string, name: string } | null, assignees: Array<{ __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null, lastOnline?: any | null, isOnline: boolean }>, assigneeTeam?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType } | null, properties: Array<{ __typename?: 'PropertyValueType', id: string, textValue?: string | null, numberValue?: number | null, booleanValue?: boolean | null, dateValue?: any | null, dateTimeValue?: any | null, selectValue?: string | null, multiSelectValues?: Array<string> | null, userValue?: string | null, definition: { __typename?: 'PropertyDefinitionType', id: string, name: string, description?: string | null, fieldType: FieldType, isActive: boolean, allowedEntities: Array<PropertyEntity>, options: Array<string> }, user?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null, lastOnline?: any | null, isOnline: boolean } | null, team?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType } | null }> } | null };
 
 export type GetTasksQueryVariables = Exact<{
   rootLocationIds?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
   assigneeId?: InputMaybe<Scalars['ID']['input']>;
   assigneeTeamId?: InputMaybe<Scalars['ID']['input']>;
-  filtering?: InputMaybe<Array<FilterInput> | FilterInput>;
-  sorting?: InputMaybe<Array<SortInput> | SortInput>;
+  filters?: InputMaybe<Array<QueryFilterClauseInput> | QueryFilterClauseInput>;
+  sorts?: InputMaybe<Array<QuerySortClauseInput> | QuerySortClauseInput>;
   pagination?: InputMaybe<PaginationInput>;
-  search?: InputMaybe<FullTextSearchInput>;
+  search?: InputMaybe<QuerySearchInput>;
 }>;
 
 
-export type GetTasksQuery = { __typename?: 'Query', tasksTotal: number, tasks: Array<{ __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, dueDate?: any | null, priority?: string | null, estimatedTime?: number | null, creationDate: any, updateDate?: any | null, patient: { __typename?: 'PatientType', id: string, name: string, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null, assignedLocations: Array<{ __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null }> }, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null, lastOnline?: any | null, isOnline: boolean } | null, assigneeTeam?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType } | null, properties: Array<{ __typename?: 'PropertyValueType', textValue?: string | null, numberValue?: number | null, booleanValue?: boolean | null, dateValue?: any | null, dateTimeValue?: any | null, selectValue?: string | null, multiSelectValues?: Array<string> | null, definition: { __typename?: 'PropertyDefinitionType', id: string, name: string, description?: string | null, fieldType: FieldType, isActive: boolean, allowedEntities: Array<PropertyEntity>, options: Array<string> } }> }> };
+export type GetTasksQuery = { __typename?: 'Query', tasksTotal: number, tasks: Array<{ __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, dueDate?: any | null, priority?: string | null, estimatedTime?: number | null, creationDate: any, updateDate?: any | null, patient?: { __typename?: 'PatientType', id: string, name: string, firstname: string, lastname: string, birthdate: any, sex: Sex, state: PatientState, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null, assignedLocations: Array<{ __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null } | null }>, clinic: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null } | null } | null }, position?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType } | null } | null } | null } | null, teams: Array<{ __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string, parent?: { __typename?: 'LocationNodeType', id: string, title: string } | null } | null } | null } | null }>, properties: Array<{ __typename?: 'PropertyValueType', id: string, textValue?: string | null, numberValue?: number | null, booleanValue?: boolean | null, dateValue?: any | null, dateTimeValue?: any | null, selectValue?: string | null, multiSelectValues?: Array<string> | null, userValue?: string | null, definition: { __typename?: 'PropertyDefinitionType', id: string, name: string, description?: string | null, fieldType: FieldType, isActive: boolean, allowedEntities: Array<PropertyEntity>, options: Array<string> }, user?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null, lastOnline?: any | null, isOnline: boolean } | null, team?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType } | null }> } | null, assignees: Array<{ __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null, lastOnline?: any | null, isOnline: boolean }>, assigneeTeam?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType } | null, properties: Array<{ __typename?: 'PropertyValueType', id: string, textValue?: string | null, numberValue?: number | null, booleanValue?: boolean | null, dateValue?: any | null, dateTimeValue?: any | null, selectValue?: string | null, multiSelectValues?: Array<string> | null, userValue?: string | null, definition: { __typename?: 'PropertyDefinitionType', id: string, name: string, description?: string | null, fieldType: FieldType, isActive: boolean, allowedEntities: Array<PropertyEntity>, options: Array<string> }, user?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null, lastOnline?: any | null, isOnline: boolean } | null, team?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType } | null }> }> };
 
 export type GetUserQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -843,7 +965,7 @@ export type UpdatePatientMutationVariables = Exact<{
 }>;
 
 
-export type UpdatePatientMutation = { __typename?: 'Mutation', updatePatient: { __typename?: 'PatientType', id: string, name: string, firstname: string, lastname: string, birthdate: any, sex: Sex, state: PatientState, checksum: string, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string } | null, assignedLocations: Array<{ __typename?: 'LocationNodeType', id: string, title: string }>, clinic: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType }, position?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType } | null, teams: Array<{ __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType }>, properties: Array<{ __typename?: 'PropertyValueType', textValue?: string | null, numberValue?: number | null, booleanValue?: boolean | null, dateValue?: any | null, dateTimeValue?: any | null, selectValue?: string | null, multiSelectValues?: Array<string> | null, definition: { __typename?: 'PropertyDefinitionType', id: string, name: string, description?: string | null, fieldType: FieldType, isActive: boolean, allowedEntities: Array<PropertyEntity>, options: Array<string> } }> } };
+export type UpdatePatientMutation = { __typename?: 'Mutation', updatePatient: { __typename?: 'PatientType', id: string, name: string, firstname: string, lastname: string, birthdate: any, sex: Sex, state: PatientState, description?: string | null, checksum: string, assignedLocation?: { __typename?: 'LocationNodeType', id: string, title: string } | null, assignedLocations: Array<{ __typename?: 'LocationNodeType', id: string, title: string }>, clinic: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType }, position?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType } | null, teams: Array<{ __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType }>, properties: Array<{ __typename?: 'PropertyValueType', id: string, textValue?: string | null, numberValue?: number | null, booleanValue?: boolean | null, dateValue?: any | null, dateTimeValue?: any | null, selectValue?: string | null, multiSelectValues?: Array<string> | null, userValue?: string | null, definition: { __typename?: 'PropertyDefinitionType', id: string, name: string, description?: string | null, fieldType: FieldType, isActive: boolean, allowedEntities: Array<PropertyEntity>, options: Array<string> }, user?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null, lastOnline?: any | null, isOnline: boolean } | null, team?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType } | null }> } };
 
 export type AdmitPatientMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -915,6 +1037,55 @@ export type GetPropertiesForSubjectQueryVariables = Exact<{
 
 export type GetPropertiesForSubjectQuery = { __typename?: 'Query', propertyDefinitions: Array<{ __typename?: 'PropertyDefinitionType', id: string, name: string, description?: string | null, fieldType: FieldType, isActive: boolean, allowedEntities: Array<PropertyEntity>, options: Array<string> }> };
 
+export type QueryableFieldsQueryVariables = Exact<{
+  entity: Scalars['String']['input'];
+}>;
+
+
+export type QueryableFieldsQuery = { __typename?: 'Query', queryableFields: Array<{ __typename?: 'QueryableField', key: string, label: string, kind: QueryableFieldKind, valueType: QueryableValueType, allowedOperators: Array<QueryOperator>, sortable: boolean, sortDirections: Array<SortDirection>, searchable: boolean, filterable: boolean, propertyDefinitionId?: string | null, relation?: { __typename?: 'QueryableRelationMeta', targetEntity: string, idFieldKey: string, labelFieldKey: string, allowedFilterModes: Array<ReferenceFilterMode> } | null, choice?: { __typename?: 'QueryableChoiceMeta', optionKeys: Array<string>, optionLabels: Array<string> } | null }> };
+
+export type MySavedViewsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type MySavedViewsQuery = { __typename?: 'Query', mySavedViews: Array<{ __typename?: 'SavedView', id: string, name: string, baseEntityType: SavedViewEntityType, filterDefinition: string, sortDefinition: string, parameters: string, relatedFilterDefinition: string, relatedSortDefinition: string, relatedParameters: string, ownerUserId: string, visibility: SavedViewVisibility, createdAt: string, updatedAt: string, isOwner: boolean }> };
+
+export type SavedViewQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type SavedViewQuery = { __typename?: 'Query', savedView?: { __typename?: 'SavedView', id: string, name: string, baseEntityType: SavedViewEntityType, filterDefinition: string, sortDefinition: string, parameters: string, relatedFilterDefinition: string, relatedSortDefinition: string, relatedParameters: string, ownerUserId: string, visibility: SavedViewVisibility, createdAt: string, updatedAt: string, isOwner: boolean } | null };
+
+export type CreateSavedViewMutationVariables = Exact<{
+  data: CreateSavedViewInput;
+}>;
+
+
+export type CreateSavedViewMutation = { __typename?: 'Mutation', createSavedView: { __typename?: 'SavedView', id: string, name: string, baseEntityType: SavedViewEntityType, filterDefinition: string, sortDefinition: string, parameters: string, relatedFilterDefinition: string, relatedSortDefinition: string, relatedParameters: string, ownerUserId: string, visibility: SavedViewVisibility, createdAt: string, updatedAt: string, isOwner: boolean } };
+
+export type UpdateSavedViewMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  data: UpdateSavedViewInput;
+}>;
+
+
+export type UpdateSavedViewMutation = { __typename?: 'Mutation', updateSavedView: { __typename?: 'SavedView', id: string, name: string, baseEntityType: SavedViewEntityType, filterDefinition: string, sortDefinition: string, parameters: string, relatedFilterDefinition: string, relatedSortDefinition: string, relatedParameters: string, ownerUserId: string, visibility: SavedViewVisibility, createdAt: string, updatedAt: string, isOwner: boolean } };
+
+export type DeleteSavedViewMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteSavedViewMutation = { __typename?: 'Mutation', deleteSavedView: boolean };
+
+export type DuplicateSavedViewMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  name: Scalars['String']['input'];
+}>;
+
+
+export type DuplicateSavedViewMutation = { __typename?: 'Mutation', duplicateSavedView: { __typename?: 'SavedView', id: string, name: string, baseEntityType: SavedViewEntityType, filterDefinition: string, sortDefinition: string, parameters: string, relatedFilterDefinition: string, relatedSortDefinition: string, relatedParameters: string, ownerUserId: string, visibility: SavedViewVisibility, createdAt: string, updatedAt: string, isOwner: boolean } };
+
 export type PatientCreatedSubscriptionVariables = Exact<{
   rootLocationIds?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
 }>;
@@ -982,7 +1153,7 @@ export type CreateTaskMutationVariables = Exact<{
 }>;
 
 
-export type CreateTaskMutation = { __typename?: 'Mutation', createTask: { __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, dueDate?: any | null, updateDate?: any | null, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null, lastOnline?: any | null, isOnline: boolean } | null, patient: { __typename?: 'PatientType', id: string, name: string } } };
+export type CreateTaskMutation = { __typename?: 'Mutation', createTask: { __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, dueDate?: any | null, updateDate?: any | null, assignees: Array<{ __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null, lastOnline?: any | null, isOnline: boolean }>, patient?: { __typename?: 'PatientType', id: string, name: string } | null } };
 
 export type UpdateTaskMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -990,22 +1161,23 @@ export type UpdateTaskMutationVariables = Exact<{
 }>;
 
 
-export type UpdateTaskMutation = { __typename?: 'Mutation', updateTask: { __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, dueDate?: any | null, priority?: string | null, estimatedTime?: number | null, updateDate?: any | null, checksum: string, patient: { __typename?: 'PatientType', id: string, name: string }, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null, lastOnline?: any | null, isOnline: boolean } | null, properties: Array<{ __typename?: 'PropertyValueType', textValue?: string | null, numberValue?: number | null, booleanValue?: boolean | null, dateValue?: any | null, dateTimeValue?: any | null, selectValue?: string | null, multiSelectValues?: Array<string> | null, definition: { __typename?: 'PropertyDefinitionType', id: string, name: string, description?: string | null, fieldType: FieldType, isActive: boolean, allowedEntities: Array<PropertyEntity>, options: Array<string> } }> } };
+export type UpdateTaskMutation = { __typename?: 'Mutation', updateTask: { __typename?: 'TaskType', id: string, title: string, description?: string | null, done: boolean, dueDate?: any | null, priority?: string | null, estimatedTime?: number | null, updateDate?: any | null, checksum: string, patient?: { __typename?: 'PatientType', id: string, name: string } | null, assignees: Array<{ __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null, lastOnline?: any | null, isOnline: boolean }>, properties: Array<{ __typename?: 'PropertyValueType', id: string, textValue?: string | null, numberValue?: number | null, booleanValue?: boolean | null, dateValue?: any | null, dateTimeValue?: any | null, selectValue?: string | null, multiSelectValues?: Array<string> | null, userValue?: string | null, definition: { __typename?: 'PropertyDefinitionType', id: string, name: string, description?: string | null, fieldType: FieldType, isActive: boolean, allowedEntities: Array<PropertyEntity>, options: Array<string> }, user?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null, lastOnline?: any | null, isOnline: boolean } | null, team?: { __typename?: 'LocationNodeType', id: string, title: string, kind: LocationType } | null }> } };
 
-export type AssignTaskMutationVariables = Exact<{
+export type AddTaskAssigneeMutationVariables = Exact<{
   id: Scalars['ID']['input'];
   userId: Scalars['ID']['input'];
 }>;
 
 
-export type AssignTaskMutation = { __typename?: 'Mutation', assignTask: { __typename?: 'TaskType', id: string, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null, lastOnline?: any | null, isOnline: boolean } | null } };
+export type AddTaskAssigneeMutation = { __typename?: 'Mutation', addTaskAssignee: { __typename?: 'TaskType', id: string, assignees: Array<{ __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null, lastOnline?: any | null, isOnline: boolean }> } };
 
-export type UnassignTaskMutationVariables = Exact<{
+export type RemoveTaskAssigneeMutationVariables = Exact<{
   id: Scalars['ID']['input'];
+  userId: Scalars['ID']['input'];
 }>;
 
 
-export type UnassignTaskMutation = { __typename?: 'Mutation', unassignTask: { __typename?: 'TaskType', id: string, assignee?: { __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null, lastOnline?: any | null, isOnline: boolean } | null } };
+export type RemoveTaskAssigneeMutation = { __typename?: 'Mutation', removeTaskAssignee: { __typename?: 'TaskType', id: string, assignees: Array<{ __typename?: 'UserType', id: string, name: string, avatarUrl?: string | null, lastOnline?: any | null, isOnline: boolean }> } };
 
 export type DeleteTaskMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -1051,1615 +1223,53 @@ export type UpdateProfilePictureMutationVariables = Exact<{
 export type UpdateProfilePictureMutation = { __typename?: 'Mutation', updateProfilePicture: { __typename?: 'UserType', id: string, username: string, name: string, email?: string | null, firstname?: string | null, lastname?: string | null, title?: string | null, avatarUrl?: string | null, lastOnline?: any | null, isOnline: boolean } };
 
 
-
-export const GetAuditLogsDocument = `
-    query GetAuditLogs($caseId: ID!, $limit: Int, $offset: Int) {
-  auditLogs(caseId: $caseId, limit: $limit, offset: $offset) {
-    caseId
-    activity
-    userId
-    timestamp
-    context
-  }
-}
-    `;
-
-export const useGetAuditLogsQuery = <
-      TData = GetAuditLogsQuery,
-      TError = unknown
-    >(
-      variables: GetAuditLogsQueryVariables,
-      options?: Omit<UseQueryOptions<GetAuditLogsQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetAuditLogsQuery, TError, TData>['queryKey'] }
-    ) => {
-    
-    return useQuery<GetAuditLogsQuery, TError, TData>(
-      {
-    queryKey: ['GetAuditLogs', variables],
-    queryFn: fetcher<GetAuditLogsQuery, GetAuditLogsQueryVariables>(GetAuditLogsDocument, variables),
-    ...options
-  }
-    )};
-
-export const GetLocationNodeDocument = `
-    query GetLocationNode($id: ID!) {
-  locationNode(id: $id) {
-    id
-    title
-    kind
-    parentId
-    parent {
-      id
-      title
-      kind
-      parentId
-      parent {
-        id
-        title
-        kind
-        parentId
-        parent {
-          id
-          title
-          kind
-          parentId
-          parent {
-            id
-            title
-            kind
-            parentId
-          }
-        }
-      }
-    }
-  }
-}
-    `;
-
-export const useGetLocationNodeQuery = <
-      TData = GetLocationNodeQuery,
-      TError = unknown
-    >(
-      variables: GetLocationNodeQueryVariables,
-      options?: Omit<UseQueryOptions<GetLocationNodeQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetLocationNodeQuery, TError, TData>['queryKey'] }
-    ) => {
-    
-    return useQuery<GetLocationNodeQuery, TError, TData>(
-      {
-    queryKey: ['GetLocationNode', variables],
-    queryFn: fetcher<GetLocationNodeQuery, GetLocationNodeQueryVariables>(GetLocationNodeDocument, variables),
-    ...options
-  }
-    )};
-
-export const GetLocationsDocument = `
-    query GetLocations($limit: Int, $offset: Int) {
-  locationNodes(limit: $limit, offset: $offset) {
-    id
-    title
-    kind
-    parentId
-  }
-}
-    `;
-
-export const useGetLocationsQuery = <
-      TData = GetLocationsQuery,
-      TError = unknown
-    >(
-      variables?: GetLocationsQueryVariables,
-      options?: Omit<UseQueryOptions<GetLocationsQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetLocationsQuery, TError, TData>['queryKey'] }
-    ) => {
-    
-    return useQuery<GetLocationsQuery, TError, TData>(
-      {
-    queryKey: variables === undefined ? ['GetLocations'] : ['GetLocations', variables],
-    queryFn: fetcher<GetLocationsQuery, GetLocationsQueryVariables>(GetLocationsDocument, variables),
-    ...options
-  }
-    )};
-
-export const GetMyTasksDocument = `
-    query GetMyTasks {
-  me {
-    id
-    tasks {
-      id
-      title
-      description
-      done
-      dueDate
-      priority
-      estimatedTime
-      creationDate
-      updateDate
-      patient {
-        id
-        name
-        assignedLocation {
-          id
-          title
-          parent {
-            id
-            title
-          }
-        }
-        assignedLocations {
-          id
-          title
-          kind
-          parent {
-            id
-            title
-            parent {
-              id
-              title
-            }
-          }
-        }
-      }
-      assignee {
-        id
-        name
-        avatarUrl
-        lastOnline
-        isOnline
-      }
-    }
-  }
-}
-    `;
-
-export const useGetMyTasksQuery = <
-      TData = GetMyTasksQuery,
-      TError = unknown
-    >(
-      variables?: GetMyTasksQueryVariables,
-      options?: Omit<UseQueryOptions<GetMyTasksQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetMyTasksQuery, TError, TData>['queryKey'] }
-    ) => {
-    
-    return useQuery<GetMyTasksQuery, TError, TData>(
-      {
-    queryKey: variables === undefined ? ['GetMyTasks'] : ['GetMyTasks', variables],
-    queryFn: fetcher<GetMyTasksQuery, GetMyTasksQueryVariables>(GetMyTasksDocument, variables),
-    ...options
-  }
-    )};
-
-export const GetOverviewDataDocument = `
-    query GetOverviewData($recentPatientsFiltering: [FilterInput!], $recentPatientsSorting: [SortInput!], $recentPatientsPagination: PaginationInput, $recentPatientsSearch: FullTextSearchInput, $recentTasksFiltering: [FilterInput!], $recentTasksSorting: [SortInput!], $recentTasksPagination: PaginationInput, $recentTasksSearch: FullTextSearchInput) {
-  recentPatients(
-    filtering: $recentPatientsFiltering
-    sorting: $recentPatientsSorting
-    pagination: $recentPatientsPagination
-    search: $recentPatientsSearch
-  ) {
-    id
-    name
-    sex
-    birthdate
-    position {
-      id
-      title
-      kind
-      parent {
-        id
-        title
-      }
-    }
-    tasks {
-      updateDate
-    }
-    properties {
-      definition {
-        id
-        name
-        description
-        fieldType
-        isActive
-        allowedEntities
-        options
-      }
-      textValue
-      numberValue
-      booleanValue
-      dateValue
-      dateTimeValue
-      selectValue
-      multiSelectValues
-    }
-  }
-  recentPatientsTotal(
-    filtering: $recentPatientsFiltering
-    sorting: $recentPatientsSorting
-    search: $recentPatientsSearch
-  )
-  recentTasks(
-    filtering: $recentTasksFiltering
-    sorting: $recentTasksSorting
-    pagination: $recentTasksPagination
-    search: $recentTasksSearch
-  ) {
-    id
-    title
-    description
-    done
-    dueDate
-    updateDate
-    priority
-    assignee {
-      id
-      name
-      avatarUrl
-      lastOnline
-      isOnline
-    }
-    patient {
-      id
-      name
-      position {
-        id
-        title
-        kind
-        parent {
-          id
-          title
-        }
-      }
-    }
-    properties {
-      definition {
-        id
-        name
-        description
-        fieldType
-        isActive
-        allowedEntities
-        options
-      }
-      textValue
-      numberValue
-      booleanValue
-      dateValue
-      dateTimeValue
-      selectValue
-      multiSelectValues
-    }
-  }
-  recentTasksTotal(
-    filtering: $recentTasksFiltering
-    sorting: $recentTasksSorting
-    search: $recentTasksSearch
-  )
-}
-    `;
-
-export const useGetOverviewDataQuery = <
-      TData = GetOverviewDataQuery,
-      TError = unknown
-    >(
-      variables?: GetOverviewDataQueryVariables,
-      options?: Omit<UseQueryOptions<GetOverviewDataQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetOverviewDataQuery, TError, TData>['queryKey'] }
-    ) => {
-    
-    return useQuery<GetOverviewDataQuery, TError, TData>(
-      {
-    queryKey: variables === undefined ? ['GetOverviewData'] : ['GetOverviewData', variables],
-    queryFn: fetcher<GetOverviewDataQuery, GetOverviewDataQueryVariables>(GetOverviewDataDocument, variables),
-    ...options
-  }
-    )};
-
-export const GetPatientDocument = `
-    query GetPatient($id: ID!) {
-  patient(id: $id) {
-    id
-    firstname
-    lastname
-    birthdate
-    sex
-    state
-    description
-    checksum
-    assignedLocation {
-      id
-      title
-    }
-    assignedLocations {
-      id
-      title
-    }
-    clinic {
-      id
-      title
-      kind
-      parent {
-        id
-        title
-        parent {
-          id
-          title
-          parent {
-            id
-            title
-            parent {
-              id
-              title
-            }
-          }
-        }
-      }
-    }
-    position {
-      id
-      title
-      kind
-      parent {
-        id
-        title
-        parent {
-          id
-          title
-          parent {
-            id
-            title
-            parent {
-              id
-              title
-            }
-          }
-        }
-      }
-    }
-    teams {
-      id
-      title
-      kind
-      parent {
-        id
-        title
-        parent {
-          id
-          title
-          parent {
-            id
-            title
-            parent {
-              id
-              title
-            }
-          }
-        }
-      }
-    }
-    tasks {
-      id
-      title
-      description
-      done
-      dueDate
-      priority
-      estimatedTime
-      updateDate
-      assignee {
-        id
-        name
-        avatarUrl
-        lastOnline
-        isOnline
-      }
-      assigneeTeam {
-        id
-        title
-        kind
-      }
-    }
-    properties {
-      definition {
-        id
-        name
-        description
-        fieldType
-        isActive
-        allowedEntities
-        options
-      }
-      textValue
-      numberValue
-      booleanValue
-      dateValue
-      dateTimeValue
-      selectValue
-      multiSelectValues
-    }
-  }
-}
-    `;
-
-export const useGetPatientQuery = <
-      TData = GetPatientQuery,
-      TError = unknown
-    >(
-      variables: GetPatientQueryVariables,
-      options?: Omit<UseQueryOptions<GetPatientQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetPatientQuery, TError, TData>['queryKey'] }
-    ) => {
-    
-    return useQuery<GetPatientQuery, TError, TData>(
-      {
-    queryKey: ['GetPatient', variables],
-    queryFn: fetcher<GetPatientQuery, GetPatientQueryVariables>(GetPatientDocument, variables),
-    ...options
-  }
-    )};
-
-export const GetPatientsDocument = `
-    query GetPatients($locationId: ID, $rootLocationIds: [ID!], $states: [PatientState!], $filtering: [FilterInput!], $sorting: [SortInput!], $pagination: PaginationInput, $search: FullTextSearchInput) {
-  patients(
-    locationNodeId: $locationId
-    rootLocationIds: $rootLocationIds
-    states: $states
-    filtering: $filtering
-    sorting: $sorting
-    pagination: $pagination
-    search: $search
-  ) {
-    id
-    name
-    firstname
-    lastname
-    birthdate
-    sex
-    state
-    assignedLocation {
-      id
-      title
-      parent {
-        id
-        title
-      }
-    }
-    assignedLocations {
-      id
-      title
-      kind
-      parent {
-        id
-        title
-        parent {
-          id
-          title
-          parent {
-            id
-            title
-          }
-        }
-      }
-    }
-    clinic {
-      id
-      title
-      kind
-      parent {
-        id
-        title
-        parent {
-          id
-          title
-          parent {
-            id
-            title
-            parent {
-              id
-              title
-            }
-          }
-        }
-      }
-    }
-    position {
-      id
-      title
-      kind
-      parent {
-        id
-        title
-        parent {
-          id
-          title
-          parent {
-            id
-            title
-            parent {
-              id
-              title
-            }
-          }
-        }
-      }
-    }
-    teams {
-      id
-      title
-      kind
-      parent {
-        id
-        title
-        parent {
-          id
-          title
-          parent {
-            id
-            title
-            parent {
-              id
-              title
-            }
-          }
-        }
-      }
-    }
-    tasks {
-      id
-      title
-      description
-      done
-      dueDate
-      priority
-      estimatedTime
-      creationDate
-      updateDate
-      assignee {
-        id
-        name
-        avatarUrl
-        lastOnline
-        isOnline
-      }
-      assigneeTeam {
-        id
-        title
-        kind
-      }
-    }
-    properties {
-      definition {
-        id
-        name
-        description
-        fieldType
-        isActive
-        allowedEntities
-        options
-      }
-      textValue
-      numberValue
-      booleanValue
-      dateValue
-      dateTimeValue
-      selectValue
-      multiSelectValues
-    }
-  }
-  patientsTotal(
-    locationNodeId: $locationId
-    rootLocationIds: $rootLocationIds
-    states: $states
-    filtering: $filtering
-    sorting: $sorting
-    search: $search
-  )
-}
-    `;
-
-export const useGetPatientsQuery = <
-      TData = GetPatientsQuery,
-      TError = unknown
-    >(
-      variables?: GetPatientsQueryVariables,
-      options?: Omit<UseQueryOptions<GetPatientsQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetPatientsQuery, TError, TData>['queryKey'] }
-    ) => {
-    
-    return useQuery<GetPatientsQuery, TError, TData>(
-      {
-    queryKey: variables === undefined ? ['GetPatients'] : ['GetPatients', variables],
-    queryFn: fetcher<GetPatientsQuery, GetPatientsQueryVariables>(GetPatientsDocument, variables),
-    ...options
-  }
-    )};
-
-export const GetTaskDocument = `
-    query GetTask($id: ID!) {
-  task(id: $id) {
-    id
-    title
-    description
-    done
-    dueDate
-    priority
-    estimatedTime
-    checksum
-    patient {
-      id
-      name
-    }
-    assignee {
-      id
-      name
-      avatarUrl
-      lastOnline
-      isOnline
-    }
-    assigneeTeam {
-      id
-      title
-      kind
-    }
-    properties {
-      definition {
-        id
-        name
-        description
-        fieldType
-        isActive
-        allowedEntities
-        options
-      }
-      textValue
-      numberValue
-      booleanValue
-      dateValue
-      dateTimeValue
-      selectValue
-      multiSelectValues
-    }
-  }
-}
-    `;
-
-export const useGetTaskQuery = <
-      TData = GetTaskQuery,
-      TError = unknown
-    >(
-      variables: GetTaskQueryVariables,
-      options?: Omit<UseQueryOptions<GetTaskQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetTaskQuery, TError, TData>['queryKey'] }
-    ) => {
-    
-    return useQuery<GetTaskQuery, TError, TData>(
-      {
-    queryKey: ['GetTask', variables],
-    queryFn: fetcher<GetTaskQuery, GetTaskQueryVariables>(GetTaskDocument, variables),
-    ...options
-  }
-    )};
-
-export const GetTasksDocument = `
-    query GetTasks($rootLocationIds: [ID!], $assigneeId: ID, $assigneeTeamId: ID, $filtering: [FilterInput!], $sorting: [SortInput!], $pagination: PaginationInput, $search: FullTextSearchInput) {
-  tasks(
-    rootLocationIds: $rootLocationIds
-    assigneeId: $assigneeId
-    assigneeTeamId: $assigneeTeamId
-    filtering: $filtering
-    sorting: $sorting
-    pagination: $pagination
-    search: $search
-  ) {
-    id
-    title
-    description
-    done
-    dueDate
-    priority
-    estimatedTime
-    creationDate
-    updateDate
-    patient {
-      id
-      name
-      assignedLocation {
-        id
-        title
-        parent {
-          id
-          title
-        }
-      }
-      assignedLocations {
-        id
-        title
-        kind
-        parent {
-          id
-          title
-          parent {
-            id
-            title
-          }
-        }
-      }
-    }
-    assignee {
-      id
-      name
-      avatarUrl
-      lastOnline
-      isOnline
-    }
-    assigneeTeam {
-      id
-      title
-      kind
-    }
-    properties {
-      definition {
-        id
-        name
-        description
-        fieldType
-        isActive
-        allowedEntities
-        options
-      }
-      textValue
-      numberValue
-      booleanValue
-      dateValue
-      dateTimeValue
-      selectValue
-      multiSelectValues
-    }
-  }
-  tasksTotal(
-    rootLocationIds: $rootLocationIds
-    assigneeId: $assigneeId
-    assigneeTeamId: $assigneeTeamId
-    filtering: $filtering
-    sorting: $sorting
-    search: $search
-  )
-}
-    `;
-
-export const useGetTasksQuery = <
-      TData = GetTasksQuery,
-      TError = unknown
-    >(
-      variables?: GetTasksQueryVariables,
-      options?: Omit<UseQueryOptions<GetTasksQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetTasksQuery, TError, TData>['queryKey'] }
-    ) => {
-    
-    return useQuery<GetTasksQuery, TError, TData>(
-      {
-    queryKey: variables === undefined ? ['GetTasks'] : ['GetTasks', variables],
-    queryFn: fetcher<GetTasksQuery, GetTasksQueryVariables>(GetTasksDocument, variables),
-    ...options
-  }
-    )};
-
-export const GetUserDocument = `
-    query GetUser($id: ID!) {
-  user(id: $id) {
-    id
-    username
-    name
-    email
-    firstname
-    lastname
-    title
-    avatarUrl
-    lastOnline
-    isOnline
-  }
-}
-    `;
-
-export const useGetUserQuery = <
-      TData = GetUserQuery,
-      TError = unknown
-    >(
-      variables: GetUserQueryVariables,
-      options?: Omit<UseQueryOptions<GetUserQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetUserQuery, TError, TData>['queryKey'] }
-    ) => {
-    
-    return useQuery<GetUserQuery, TError, TData>(
-      {
-    queryKey: ['GetUser', variables],
-    queryFn: fetcher<GetUserQuery, GetUserQueryVariables>(GetUserDocument, variables),
-    ...options
-  }
-    )};
-
-export const GetUsersDocument = `
-    query GetUsers {
-  users {
-    id
-    name
-    avatarUrl
-    lastOnline
-    isOnline
-  }
-}
-    `;
-
-export const useGetUsersQuery = <
-      TData = GetUsersQuery,
-      TError = unknown
-    >(
-      variables?: GetUsersQueryVariables,
-      options?: Omit<UseQueryOptions<GetUsersQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetUsersQuery, TError, TData>['queryKey'] }
-    ) => {
-    
-    return useQuery<GetUsersQuery, TError, TData>(
-      {
-    queryKey: variables === undefined ? ['GetUsers'] : ['GetUsers', variables],
-    queryFn: fetcher<GetUsersQuery, GetUsersQueryVariables>(GetUsersDocument, variables),
-    ...options
-  }
-    )};
-
-export const GetGlobalDataDocument = `
-    query GetGlobalData($rootLocationIds: [ID!]) {
-  me {
-    id
-    username
-    name
-    firstname
-    lastname
-    avatarUrl
-    lastOnline
-    isOnline
-    organizations
-    rootLocations {
-      id
-      title
-      kind
-    }
-    tasks(rootLocationIds: $rootLocationIds) {
-      id
-      done
-    }
-  }
-  wards: locationNodes(kind: WARD) {
-    id
-    title
-    parentId
-  }
-  teams: locationNodes(kind: TEAM) {
-    id
-    title
-    parentId
-  }
-  clinics: locationNodes(kind: CLINIC) {
-    id
-    title
-    parentId
-  }
-  patients(rootLocationIds: $rootLocationIds) {
-    id
-    state
-    assignedLocation {
-      id
-    }
-  }
-  waitingPatients: patients(states: [WAIT], rootLocationIds: $rootLocationIds) {
-    id
-    state
-  }
-}
-    `;
-
-export const useGetGlobalDataQuery = <
-      TData = GetGlobalDataQuery,
-      TError = unknown
-    >(
-      variables?: GetGlobalDataQueryVariables,
-      options?: Omit<UseQueryOptions<GetGlobalDataQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetGlobalDataQuery, TError, TData>['queryKey'] }
-    ) => {
-    
-    return useQuery<GetGlobalDataQuery, TError, TData>(
-      {
-    queryKey: variables === undefined ? ['GetGlobalData'] : ['GetGlobalData', variables],
-    queryFn: fetcher<GetGlobalDataQuery, GetGlobalDataQueryVariables>(GetGlobalDataDocument, variables),
-    ...options
-  }
-    )};
-
-export const CreatePatientDocument = `
-    mutation CreatePatient($data: CreatePatientInput!) {
-  createPatient(data: $data) {
-    id
-    name
-    firstname
-    lastname
-    birthdate
-    sex
-    state
-    assignedLocation {
-      id
-      title
-    }
-    assignedLocations {
-      id
-      title
-    }
-    clinic {
-      id
-      title
-      kind
-    }
-    position {
-      id
-      title
-      kind
-    }
-    teams {
-      id
-      title
-      kind
-    }
-  }
-}
-    `;
-
-export const useCreatePatientMutation = <
-      TError = unknown,
-      TContext = unknown
-    >(options?: UseMutationOptions<CreatePatientMutation, TError, CreatePatientMutationVariables, TContext>) => {
-    
-    return useMutation<CreatePatientMutation, TError, CreatePatientMutationVariables, TContext>(
-      {
-    mutationKey: ['CreatePatient'],
-    mutationFn: (variables?: CreatePatientMutationVariables) => fetcher<CreatePatientMutation, CreatePatientMutationVariables>(CreatePatientDocument, variables)(),
-    ...options
-  }
-    )};
-
-export const UpdatePatientDocument = `
-    mutation UpdatePatient($id: ID!, $data: UpdatePatientInput!) {
-  updatePatient(id: $id, data: $data) {
-    id
-    name
-    firstname
-    lastname
-    birthdate
-    sex
-    state
-    checksum
-    assignedLocation {
-      id
-      title
-    }
-    assignedLocations {
-      id
-      title
-    }
-    clinic {
-      id
-      title
-      kind
-    }
-    position {
-      id
-      title
-      kind
-    }
-    teams {
-      id
-      title
-      kind
-    }
-    properties {
-      definition {
-        id
-        name
-        description
-        fieldType
-        isActive
-        allowedEntities
-        options
-      }
-      textValue
-      numberValue
-      booleanValue
-      dateValue
-      dateTimeValue
-      selectValue
-      multiSelectValues
-    }
-  }
-}
-    `;
-
-export const useUpdatePatientMutation = <
-      TError = unknown,
-      TContext = unknown
-    >(options?: UseMutationOptions<UpdatePatientMutation, TError, UpdatePatientMutationVariables, TContext>) => {
-    
-    return useMutation<UpdatePatientMutation, TError, UpdatePatientMutationVariables, TContext>(
-      {
-    mutationKey: ['UpdatePatient'],
-    mutationFn: (variables?: UpdatePatientMutationVariables) => fetcher<UpdatePatientMutation, UpdatePatientMutationVariables>(UpdatePatientDocument, variables)(),
-    ...options
-  }
-    )};
-
-export const AdmitPatientDocument = `
-    mutation AdmitPatient($id: ID!) {
-  admitPatient(id: $id) {
-    id
-    state
-  }
-}
-    `;
-
-export const useAdmitPatientMutation = <
-      TError = unknown,
-      TContext = unknown
-    >(options?: UseMutationOptions<AdmitPatientMutation, TError, AdmitPatientMutationVariables, TContext>) => {
-    
-    return useMutation<AdmitPatientMutation, TError, AdmitPatientMutationVariables, TContext>(
-      {
-    mutationKey: ['AdmitPatient'],
-    mutationFn: (variables?: AdmitPatientMutationVariables) => fetcher<AdmitPatientMutation, AdmitPatientMutationVariables>(AdmitPatientDocument, variables)(),
-    ...options
-  }
-    )};
-
-export const DischargePatientDocument = `
-    mutation DischargePatient($id: ID!) {
-  dischargePatient(id: $id) {
-    id
-    state
-  }
-}
-    `;
-
-export const useDischargePatientMutation = <
-      TError = unknown,
-      TContext = unknown
-    >(options?: UseMutationOptions<DischargePatientMutation, TError, DischargePatientMutationVariables, TContext>) => {
-    
-    return useMutation<DischargePatientMutation, TError, DischargePatientMutationVariables, TContext>(
-      {
-    mutationKey: ['DischargePatient'],
-    mutationFn: (variables?: DischargePatientMutationVariables) => fetcher<DischargePatientMutation, DischargePatientMutationVariables>(DischargePatientDocument, variables)(),
-    ...options
-  }
-    )};
-
-export const MarkPatientDeadDocument = `
-    mutation MarkPatientDead($id: ID!) {
-  markPatientDead(id: $id) {
-    id
-    state
-  }
-}
-    `;
-
-export const useMarkPatientDeadMutation = <
-      TError = unknown,
-      TContext = unknown
-    >(options?: UseMutationOptions<MarkPatientDeadMutation, TError, MarkPatientDeadMutationVariables, TContext>) => {
-    
-    return useMutation<MarkPatientDeadMutation, TError, MarkPatientDeadMutationVariables, TContext>(
-      {
-    mutationKey: ['MarkPatientDead'],
-    mutationFn: (variables?: MarkPatientDeadMutationVariables) => fetcher<MarkPatientDeadMutation, MarkPatientDeadMutationVariables>(MarkPatientDeadDocument, variables)(),
-    ...options
-  }
-    )};
-
-export const WaitPatientDocument = `
-    mutation WaitPatient($id: ID!) {
-  waitPatient(id: $id) {
-    id
-    state
-  }
-}
-    `;
-
-export const useWaitPatientMutation = <
-      TError = unknown,
-      TContext = unknown
-    >(options?: UseMutationOptions<WaitPatientMutation, TError, WaitPatientMutationVariables, TContext>) => {
-    
-    return useMutation<WaitPatientMutation, TError, WaitPatientMutationVariables, TContext>(
-      {
-    mutationKey: ['WaitPatient'],
-    mutationFn: (variables?: WaitPatientMutationVariables) => fetcher<WaitPatientMutation, WaitPatientMutationVariables>(WaitPatientDocument, variables)(),
-    ...options
-  }
-    )};
-
-export const DeletePatientDocument = `
-    mutation DeletePatient($id: ID!) {
-  deletePatient(id: $id)
-}
-    `;
-
-export const useDeletePatientMutation = <
-      TError = unknown,
-      TContext = unknown
-    >(options?: UseMutationOptions<DeletePatientMutation, TError, DeletePatientMutationVariables, TContext>) => {
-    
-    return useMutation<DeletePatientMutation, TError, DeletePatientMutationVariables, TContext>(
-      {
-    mutationKey: ['DeletePatient'],
-    mutationFn: (variables?: DeletePatientMutationVariables) => fetcher<DeletePatientMutation, DeletePatientMutationVariables>(DeletePatientDocument, variables)(),
-    ...options
-  }
-    )};
-
-export const CreatePropertyDefinitionDocument = `
-    mutation CreatePropertyDefinition($data: CreatePropertyDefinitionInput!) {
-  createPropertyDefinition(data: $data) {
-    id
-    name
-    description
-    fieldType
-    isActive
-    allowedEntities
-    options
-  }
-}
-    `;
-
-export const useCreatePropertyDefinitionMutation = <
-      TError = unknown,
-      TContext = unknown
-    >(options?: UseMutationOptions<CreatePropertyDefinitionMutation, TError, CreatePropertyDefinitionMutationVariables, TContext>) => {
-    
-    return useMutation<CreatePropertyDefinitionMutation, TError, CreatePropertyDefinitionMutationVariables, TContext>(
-      {
-    mutationKey: ['CreatePropertyDefinition'],
-    mutationFn: (variables?: CreatePropertyDefinitionMutationVariables) => fetcher<CreatePropertyDefinitionMutation, CreatePropertyDefinitionMutationVariables>(CreatePropertyDefinitionDocument, variables)(),
-    ...options
-  }
-    )};
-
-export const UpdatePropertyDefinitionDocument = `
-    mutation UpdatePropertyDefinition($id: ID!, $data: UpdatePropertyDefinitionInput!) {
-  updatePropertyDefinition(id: $id, data: $data) {
-    id
-    name
-    description
-    fieldType
-    isActive
-    allowedEntities
-    options
-  }
-}
-    `;
-
-export const useUpdatePropertyDefinitionMutation = <
-      TError = unknown,
-      TContext = unknown
-    >(options?: UseMutationOptions<UpdatePropertyDefinitionMutation, TError, UpdatePropertyDefinitionMutationVariables, TContext>) => {
-    
-    return useMutation<UpdatePropertyDefinitionMutation, TError, UpdatePropertyDefinitionMutationVariables, TContext>(
-      {
-    mutationKey: ['UpdatePropertyDefinition'],
-    mutationFn: (variables?: UpdatePropertyDefinitionMutationVariables) => fetcher<UpdatePropertyDefinitionMutation, UpdatePropertyDefinitionMutationVariables>(UpdatePropertyDefinitionDocument, variables)(),
-    ...options
-  }
-    )};
-
-export const DeletePropertyDefinitionDocument = `
-    mutation DeletePropertyDefinition($id: ID!) {
-  deletePropertyDefinition(id: $id)
-}
-    `;
-
-export const useDeletePropertyDefinitionMutation = <
-      TError = unknown,
-      TContext = unknown
-    >(options?: UseMutationOptions<DeletePropertyDefinitionMutation, TError, DeletePropertyDefinitionMutationVariables, TContext>) => {
-    
-    return useMutation<DeletePropertyDefinitionMutation, TError, DeletePropertyDefinitionMutationVariables, TContext>(
-      {
-    mutationKey: ['DeletePropertyDefinition'],
-    mutationFn: (variables?: DeletePropertyDefinitionMutationVariables) => fetcher<DeletePropertyDefinitionMutation, DeletePropertyDefinitionMutationVariables>(DeletePropertyDefinitionDocument, variables)(),
-    ...options
-  }
-    )};
-
-export const GetPropertyDefinitionsDocument = `
-    query GetPropertyDefinitions {
-  propertyDefinitions {
-    id
-    name
-    description
-    fieldType
-    isActive
-    allowedEntities
-    options
-  }
-}
-    `;
-
-export const useGetPropertyDefinitionsQuery = <
-      TData = GetPropertyDefinitionsQuery,
-      TError = unknown
-    >(
-      variables?: GetPropertyDefinitionsQueryVariables,
-      options?: Omit<UseQueryOptions<GetPropertyDefinitionsQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetPropertyDefinitionsQuery, TError, TData>['queryKey'] }
-    ) => {
-    
-    return useQuery<GetPropertyDefinitionsQuery, TError, TData>(
-      {
-    queryKey: variables === undefined ? ['GetPropertyDefinitions'] : ['GetPropertyDefinitions', variables],
-    queryFn: fetcher<GetPropertyDefinitionsQuery, GetPropertyDefinitionsQueryVariables>(GetPropertyDefinitionsDocument, variables),
-    ...options
-  }
-    )};
-
-export const GetPropertiesForSubjectDocument = `
-    query GetPropertiesForSubject($subjectId: ID!, $subjectType: PropertyEntity!) {
-  propertyDefinitions {
-    id
-    name
-    description
-    fieldType
-    isActive
-    allowedEntities
-    options
-  }
-}
-    `;
-
-export const useGetPropertiesForSubjectQuery = <
-      TData = GetPropertiesForSubjectQuery,
-      TError = unknown
-    >(
-      variables: GetPropertiesForSubjectQueryVariables,
-      options?: Omit<UseQueryOptions<GetPropertiesForSubjectQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetPropertiesForSubjectQuery, TError, TData>['queryKey'] }
-    ) => {
-    
-    return useQuery<GetPropertiesForSubjectQuery, TError, TData>(
-      {
-    queryKey: ['GetPropertiesForSubject', variables],
-    queryFn: fetcher<GetPropertiesForSubjectQuery, GetPropertiesForSubjectQueryVariables>(GetPropertiesForSubjectDocument, variables),
-    ...options
-  }
-    )};
-
-export const PatientCreatedDocument = `
-    subscription PatientCreated($rootLocationIds: [ID!]) {
-  patientCreated(rootLocationIds: $rootLocationIds)
-}
-    `;
-export const PatientUpdatedDocument = `
-    subscription PatientUpdated($patientId: ID, $rootLocationIds: [ID!]) {
-  patientUpdated(patientId: $patientId, rootLocationIds: $rootLocationIds)
-}
-    `;
-export const PatientStateChangedDocument = `
-    subscription PatientStateChanged($patientId: ID, $rootLocationIds: [ID!]) {
-  patientStateChanged(patientId: $patientId, rootLocationIds: $rootLocationIds)
-}
-    `;
-export const TaskCreatedDocument = `
-    subscription TaskCreated($rootLocationIds: [ID!]) {
-  taskCreated(rootLocationIds: $rootLocationIds)
-}
-    `;
-export const TaskUpdatedDocument = `
-    subscription TaskUpdated($taskId: ID, $rootLocationIds: [ID!]) {
-  taskUpdated(taskId: $taskId, rootLocationIds: $rootLocationIds)
-}
-    `;
-export const TaskDeletedDocument = `
-    subscription TaskDeleted($rootLocationIds: [ID!]) {
-  taskDeleted(rootLocationIds: $rootLocationIds)
-}
-    `;
-export const LocationNodeUpdatedDocument = `
-    subscription LocationNodeUpdated($locationId: ID) {
-  locationNodeUpdated(locationId: $locationId)
-}
-    `;
-export const LocationNodeCreatedDocument = `
-    subscription LocationNodeCreated {
-  locationNodeCreated
-}
-    `;
-export const LocationNodeDeletedDocument = `
-    subscription LocationNodeDeleted {
-  locationNodeDeleted
-}
-    `;
-export const CreateTaskDocument = `
-    mutation CreateTask($data: CreateTaskInput!) {
-  createTask(data: $data) {
-    id
-    title
-    description
-    done
-    dueDate
-    updateDate
-    assignee {
-      id
-      name
-      avatarUrl
-      lastOnline
-      isOnline
-    }
-    patient {
-      id
-      name
-    }
-  }
-}
-    `;
-
-export const useCreateTaskMutation = <
-      TError = unknown,
-      TContext = unknown
-    >(options?: UseMutationOptions<CreateTaskMutation, TError, CreateTaskMutationVariables, TContext>) => {
-    
-    return useMutation<CreateTaskMutation, TError, CreateTaskMutationVariables, TContext>(
-      {
-    mutationKey: ['CreateTask'],
-    mutationFn: (variables?: CreateTaskMutationVariables) => fetcher<CreateTaskMutation, CreateTaskMutationVariables>(CreateTaskDocument, variables)(),
-    ...options
-  }
-    )};
-
-export const UpdateTaskDocument = `
-    mutation UpdateTask($id: ID!, $data: UpdateTaskInput!) {
-  updateTask(id: $id, data: $data) {
-    id
-    title
-    description
-    done
-    dueDate
-    priority
-    estimatedTime
-    updateDate
-    checksum
-    patient {
-      id
-      name
-    }
-    assignee {
-      id
-      name
-      avatarUrl
-      lastOnline
-      isOnline
-    }
-    properties {
-      definition {
-        id
-        name
-        description
-        fieldType
-        isActive
-        allowedEntities
-        options
-      }
-      textValue
-      numberValue
-      booleanValue
-      dateValue
-      dateTimeValue
-      selectValue
-      multiSelectValues
-    }
-  }
-}
-    `;
-
-export const useUpdateTaskMutation = <
-      TError = unknown,
-      TContext = unknown
-    >(options?: UseMutationOptions<UpdateTaskMutation, TError, UpdateTaskMutationVariables, TContext>) => {
-    
-    return useMutation<UpdateTaskMutation, TError, UpdateTaskMutationVariables, TContext>(
-      {
-    mutationKey: ['UpdateTask'],
-    mutationFn: (variables?: UpdateTaskMutationVariables) => fetcher<UpdateTaskMutation, UpdateTaskMutationVariables>(UpdateTaskDocument, variables)(),
-    ...options
-  }
-    )};
-
-export const AssignTaskDocument = `
-    mutation AssignTask($id: ID!, $userId: ID!) {
-  assignTask(id: $id, userId: $userId) {
-    id
-    assignee {
-      id
-      name
-      avatarUrl
-      lastOnline
-      isOnline
-    }
-  }
-}
-    `;
-
-export const useAssignTaskMutation = <
-      TError = unknown,
-      TContext = unknown
-    >(options?: UseMutationOptions<AssignTaskMutation, TError, AssignTaskMutationVariables, TContext>) => {
-    
-    return useMutation<AssignTaskMutation, TError, AssignTaskMutationVariables, TContext>(
-      {
-    mutationKey: ['AssignTask'],
-    mutationFn: (variables?: AssignTaskMutationVariables) => fetcher<AssignTaskMutation, AssignTaskMutationVariables>(AssignTaskDocument, variables)(),
-    ...options
-  }
-    )};
-
-export const UnassignTaskDocument = `
-    mutation UnassignTask($id: ID!) {
-  unassignTask(id: $id) {
-    id
-    assignee {
-      id
-      name
-      avatarUrl
-      lastOnline
-      isOnline
-    }
-  }
-}
-    `;
-
-export const useUnassignTaskMutation = <
-      TError = unknown,
-      TContext = unknown
-    >(options?: UseMutationOptions<UnassignTaskMutation, TError, UnassignTaskMutationVariables, TContext>) => {
-    
-    return useMutation<UnassignTaskMutation, TError, UnassignTaskMutationVariables, TContext>(
-      {
-    mutationKey: ['UnassignTask'],
-    mutationFn: (variables?: UnassignTaskMutationVariables) => fetcher<UnassignTaskMutation, UnassignTaskMutationVariables>(UnassignTaskDocument, variables)(),
-    ...options
-  }
-    )};
-
-export const DeleteTaskDocument = `
-    mutation DeleteTask($id: ID!) {
-  deleteTask(id: $id)
-}
-    `;
-
-export const useDeleteTaskMutation = <
-      TError = unknown,
-      TContext = unknown
-    >(options?: UseMutationOptions<DeleteTaskMutation, TError, DeleteTaskMutationVariables, TContext>) => {
-    
-    return useMutation<DeleteTaskMutation, TError, DeleteTaskMutationVariables, TContext>(
-      {
-    mutationKey: ['DeleteTask'],
-    mutationFn: (variables?: DeleteTaskMutationVariables) => fetcher<DeleteTaskMutation, DeleteTaskMutationVariables>(DeleteTaskDocument, variables)(),
-    ...options
-  }
-    )};
-
-export const CompleteTaskDocument = `
-    mutation CompleteTask($id: ID!) {
-  completeTask(id: $id) {
-    id
-    done
-    updateDate
-  }
-}
-    `;
-
-export const useCompleteTaskMutation = <
-      TError = unknown,
-      TContext = unknown
-    >(options?: UseMutationOptions<CompleteTaskMutation, TError, CompleteTaskMutationVariables, TContext>) => {
-    
-    return useMutation<CompleteTaskMutation, TError, CompleteTaskMutationVariables, TContext>(
-      {
-    mutationKey: ['CompleteTask'],
-    mutationFn: (variables?: CompleteTaskMutationVariables) => fetcher<CompleteTaskMutation, CompleteTaskMutationVariables>(CompleteTaskDocument, variables)(),
-    ...options
-  }
-    )};
-
-export const ReopenTaskDocument = `
-    mutation ReopenTask($id: ID!) {
-  reopenTask(id: $id) {
-    id
-    done
-    updateDate
-  }
-}
-    `;
-
-export const useReopenTaskMutation = <
-      TError = unknown,
-      TContext = unknown
-    >(options?: UseMutationOptions<ReopenTaskMutation, TError, ReopenTaskMutationVariables, TContext>) => {
-    
-    return useMutation<ReopenTaskMutation, TError, ReopenTaskMutationVariables, TContext>(
-      {
-    mutationKey: ['ReopenTask'],
-    mutationFn: (variables?: ReopenTaskMutationVariables) => fetcher<ReopenTaskMutation, ReopenTaskMutationVariables>(ReopenTaskDocument, variables)(),
-    ...options
-  }
-    )};
-
-export const AssignTaskToTeamDocument = `
-    mutation AssignTaskToTeam($id: ID!, $teamId: ID!) {
-  assignTaskToTeam(id: $id, teamId: $teamId) {
-    id
-    assigneeTeam {
-      id
-      title
-      kind
-    }
-  }
-}
-    `;
-
-export const useAssignTaskToTeamMutation = <
-      TError = unknown,
-      TContext = unknown
-    >(options?: UseMutationOptions<AssignTaskToTeamMutation, TError, AssignTaskToTeamMutationVariables, TContext>) => {
-    
-    return useMutation<AssignTaskToTeamMutation, TError, AssignTaskToTeamMutationVariables, TContext>(
-      {
-    mutationKey: ['AssignTaskToTeam'],
-    mutationFn: (variables?: AssignTaskToTeamMutationVariables) => fetcher<AssignTaskToTeamMutation, AssignTaskToTeamMutationVariables>(AssignTaskToTeamDocument, variables)(),
-    ...options
-  }
-    )};
-
-export const UnassignTaskFromTeamDocument = `
-    mutation UnassignTaskFromTeam($id: ID!) {
-  unassignTaskFromTeam(id: $id) {
-    id
-    assigneeTeam {
-      id
-      title
-      kind
-    }
-  }
-}
-    `;
-
-export const useUnassignTaskFromTeamMutation = <
-      TError = unknown,
-      TContext = unknown
-    >(options?: UseMutationOptions<UnassignTaskFromTeamMutation, TError, UnassignTaskFromTeamMutationVariables, TContext>) => {
-    
-    return useMutation<UnassignTaskFromTeamMutation, TError, UnassignTaskFromTeamMutationVariables, TContext>(
-      {
-    mutationKey: ['UnassignTaskFromTeam'],
-    mutationFn: (variables?: UnassignTaskFromTeamMutationVariables) => fetcher<UnassignTaskFromTeamMutation, UnassignTaskFromTeamMutationVariables>(UnassignTaskFromTeamDocument, variables)(),
-    ...options
-  }
-    )};
-
-export const UpdateProfilePictureDocument = `
-    mutation UpdateProfilePicture($data: UpdateProfilePictureInput!) {
-  updateProfilePicture(data: $data) {
-    id
-    username
-    name
-    email
-    firstname
-    lastname
-    title
-    avatarUrl
-    lastOnline
-    isOnline
-  }
-}
-    `;
-
-export const useUpdateProfilePictureMutation = <
-      TError = unknown,
-      TContext = unknown
-    >(options?: UseMutationOptions<UpdateProfilePictureMutation, TError, UpdateProfilePictureMutationVariables, TContext>) => {
-    
-    return useMutation<UpdateProfilePictureMutation, TError, UpdateProfilePictureMutationVariables, TContext>(
-      {
-    mutationKey: ['UpdateProfilePicture'],
-    mutationFn: (variables?: UpdateProfilePictureMutationVariables) => fetcher<UpdateProfilePictureMutation, UpdateProfilePictureMutationVariables>(UpdateProfilePictureDocument, variables)(),
-    ...options
-  }
-    )};
+export const GetAuditLogsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetAuditLogs"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"caseId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"offset"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"auditLogs"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"caseId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"caseId"}}},{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}},{"kind":"Argument","name":{"kind":"Name","value":"offset"},"value":{"kind":"Variable","name":{"kind":"Name","value":"offset"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"caseId"}},{"kind":"Field","name":{"kind":"Name","value":"activity"}},{"kind":"Field","name":{"kind":"Name","value":"userId"}},{"kind":"Field","name":{"kind":"Name","value":"timestamp"}},{"kind":"Field","name":{"kind":"Name","value":"context"}}]}}]}}]} as unknown as DocumentNode<GetAuditLogsQuery, GetAuditLogsQueryVariables>;
+export const GetLocationNodeDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetLocationNode"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"locationNode"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}},{"kind":"Field","name":{"kind":"Name","value":"parentId"}},{"kind":"Field","name":{"kind":"Name","value":"parent"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}},{"kind":"Field","name":{"kind":"Name","value":"parentId"}},{"kind":"Field","name":{"kind":"Name","value":"parent"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}},{"kind":"Field","name":{"kind":"Name","value":"parentId"}},{"kind":"Field","name":{"kind":"Name","value":"parent"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}},{"kind":"Field","name":{"kind":"Name","value":"parentId"}},{"kind":"Field","name":{"kind":"Name","value":"parent"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}},{"kind":"Field","name":{"kind":"Name","value":"parentId"}}]}}]}}]}}]}}]}}]}}]} as unknown as DocumentNode<GetLocationNodeQuery, GetLocationNodeQueryVariables>;
+export const GetLocationsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetLocations"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"offset"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"locationNodes"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}},{"kind":"Argument","name":{"kind":"Name","value":"offset"},"value":{"kind":"Variable","name":{"kind":"Name","value":"offset"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}},{"kind":"Field","name":{"kind":"Name","value":"parentId"}}]}}]}}]} as unknown as DocumentNode<GetLocationsQuery, GetLocationsQueryVariables>;
+export const GetMyTasksDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetMyTasks"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"me"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"tasks"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"done"}},{"kind":"Field","name":{"kind":"Name","value":"dueDate"}},{"kind":"Field","name":{"kind":"Name","value":"priority"}},{"kind":"Field","name":{"kind":"Name","value":"estimatedTime"}},{"kind":"Field","name":{"kind":"Name","value":"creationDate"}},{"kind":"Field","name":{"kind":"Name","value":"updateDate"}},{"kind":"Field","name":{"kind":"Name","value":"patient"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"assignedLocation"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"parent"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"assignedLocations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}},{"kind":"Field","name":{"kind":"Name","value":"parent"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"parent"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}}]}}]}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"assignees"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"avatarUrl"}},{"kind":"Field","name":{"kind":"Name","value":"lastOnline"}},{"kind":"Field","name":{"kind":"Name","value":"isOnline"}}]}}]}}]}}]}}]} as unknown as DocumentNode<GetMyTasksQuery, GetMyTasksQueryVariables>;
+export const GetOverviewDataDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetOverviewData"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"rootLocationIds"}},"type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"recentPatientsFilters"}},"type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"QueryFilterClauseInput"}}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"recentPatientsSorts"}},"type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"QuerySortClauseInput"}}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"recentPatientsPagination"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"PaginationInput"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"recentPatientsSearch"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"QuerySearchInput"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"recentTasksFilters"}},"type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"QueryFilterClauseInput"}}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"recentTasksSorts"}},"type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"QuerySortClauseInput"}}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"recentTasksPagination"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"PaginationInput"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"recentTasksSearch"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"QuerySearchInput"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"recentPatients"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"rootLocationIds"},"value":{"kind":"Variable","name":{"kind":"Name","value":"rootLocationIds"}}},{"kind":"Argument","name":{"kind":"Name","value":"filters"},"value":{"kind":"Variable","name":{"kind":"Name","value":"recentPatientsFilters"}}},{"kind":"Argument","name":{"kind":"Name","value":"sorts"},"value":{"kind":"Variable","name":{"kind":"Name","value":"recentPatientsSorts"}}},{"kind":"Argument","name":{"kind":"Name","value":"pagination"},"value":{"kind":"Variable","name":{"kind":"Name","value":"recentPatientsPagination"}}},{"kind":"Argument","name":{"kind":"Name","value":"search"},"value":{"kind":"Variable","name":{"kind":"Name","value":"recentPatientsSearch"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"firstname"}},{"kind":"Field","name":{"kind":"Name","value":"lastname"}},{"kind":"Field","name":{"kind":"Name","value":"sex"}},{"kind":"Field","name":{"kind":"Name","value":"birthdate"}},{"kind":"Field","name":{"kind":"Name","value":"state"}},{"kind":"Field","name":{"kind":"Name","value":"position"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}},{"kind":"Field","name":{"kind":"Name","value":"parent"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"tasks"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"done"}},{"kind":"Field","name":{"kind":"Name","value":"updateDate"}}]}},{"kind":"Field","name":{"kind":"Name","value":"properties"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"definition"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"fieldType"}},{"kind":"Field","name":{"kind":"Name","value":"isActive"}},{"kind":"Field","name":{"kind":"Name","value":"allowedEntities"}},{"kind":"Field","name":{"kind":"Name","value":"options"}}]}},{"kind":"Field","name":{"kind":"Name","value":"textValue"}},{"kind":"Field","name":{"kind":"Name","value":"numberValue"}},{"kind":"Field","name":{"kind":"Name","value":"booleanValue"}},{"kind":"Field","name":{"kind":"Name","value":"dateValue"}},{"kind":"Field","name":{"kind":"Name","value":"dateTimeValue"}},{"kind":"Field","name":{"kind":"Name","value":"selectValue"}},{"kind":"Field","name":{"kind":"Name","value":"multiSelectValues"}},{"kind":"Field","name":{"kind":"Name","value":"userValue"}},{"kind":"Field","name":{"kind":"Name","value":"user"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"avatarUrl"}},{"kind":"Field","name":{"kind":"Name","value":"lastOnline"}},{"kind":"Field","name":{"kind":"Name","value":"isOnline"}}]}},{"kind":"Field","name":{"kind":"Name","value":"team"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}}]}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"recentPatientsTotal"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"rootLocationIds"},"value":{"kind":"Variable","name":{"kind":"Name","value":"rootLocationIds"}}},{"kind":"Argument","name":{"kind":"Name","value":"filters"},"value":{"kind":"Variable","name":{"kind":"Name","value":"recentPatientsFilters"}}},{"kind":"Argument","name":{"kind":"Name","value":"sorts"},"value":{"kind":"Variable","name":{"kind":"Name","value":"recentPatientsSorts"}}},{"kind":"Argument","name":{"kind":"Name","value":"search"},"value":{"kind":"Variable","name":{"kind":"Name","value":"recentPatientsSearch"}}}]},{"kind":"Field","name":{"kind":"Name","value":"recentTasks"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"rootLocationIds"},"value":{"kind":"Variable","name":{"kind":"Name","value":"rootLocationIds"}}},{"kind":"Argument","name":{"kind":"Name","value":"filters"},"value":{"kind":"Variable","name":{"kind":"Name","value":"recentTasksFilters"}}},{"kind":"Argument","name":{"kind":"Name","value":"sorts"},"value":{"kind":"Variable","name":{"kind":"Name","value":"recentTasksSorts"}}},{"kind":"Argument","name":{"kind":"Name","value":"pagination"},"value":{"kind":"Variable","name":{"kind":"Name","value":"recentTasksPagination"}}},{"kind":"Argument","name":{"kind":"Name","value":"search"},"value":{"kind":"Variable","name":{"kind":"Name","value":"recentTasksSearch"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"done"}},{"kind":"Field","name":{"kind":"Name","value":"dueDate"}},{"kind":"Field","name":{"kind":"Name","value":"creationDate"}},{"kind":"Field","name":{"kind":"Name","value":"updateDate"}},{"kind":"Field","name":{"kind":"Name","value":"priority"}},{"kind":"Field","name":{"kind":"Name","value":"estimatedTime"}},{"kind":"Field","name":{"kind":"Name","value":"assignees"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"avatarUrl"}},{"kind":"Field","name":{"kind":"Name","value":"lastOnline"}},{"kind":"Field","name":{"kind":"Name","value":"isOnline"}}]}},{"kind":"Field","name":{"kind":"Name","value":"assigneeTeam"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}}]}},{"kind":"Field","name":{"kind":"Name","value":"patient"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"position"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}},{"kind":"Field","name":{"kind":"Name","value":"parent"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}}]}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"properties"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"definition"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"fieldType"}},{"kind":"Field","name":{"kind":"Name","value":"isActive"}},{"kind":"Field","name":{"kind":"Name","value":"allowedEntities"}},{"kind":"Field","name":{"kind":"Name","value":"options"}}]}},{"kind":"Field","name":{"kind":"Name","value":"textValue"}},{"kind":"Field","name":{"kind":"Name","value":"numberValue"}},{"kind":"Field","name":{"kind":"Name","value":"booleanValue"}},{"kind":"Field","name":{"kind":"Name","value":"dateValue"}},{"kind":"Field","name":{"kind":"Name","value":"dateTimeValue"}},{"kind":"Field","name":{"kind":"Name","value":"selectValue"}},{"kind":"Field","name":{"kind":"Name","value":"multiSelectValues"}},{"kind":"Field","name":{"kind":"Name","value":"userValue"}},{"kind":"Field","name":{"kind":"Name","value":"user"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"avatarUrl"}},{"kind":"Field","name":{"kind":"Name","value":"lastOnline"}},{"kind":"Field","name":{"kind":"Name","value":"isOnline"}}]}},{"kind":"Field","name":{"kind":"Name","value":"team"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}}]}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"recentTasksTotal"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"rootLocationIds"},"value":{"kind":"Variable","name":{"kind":"Name","value":"rootLocationIds"}}},{"kind":"Argument","name":{"kind":"Name","value":"filters"},"value":{"kind":"Variable","name":{"kind":"Name","value":"recentTasksFilters"}}},{"kind":"Argument","name":{"kind":"Name","value":"sorts"},"value":{"kind":"Variable","name":{"kind":"Name","value":"recentTasksSorts"}}},{"kind":"Argument","name":{"kind":"Name","value":"search"},"value":{"kind":"Variable","name":{"kind":"Name","value":"recentTasksSearch"}}}]}]}}]} as unknown as DocumentNode<GetOverviewDataQuery, GetOverviewDataQueryVariables>;
+export const GetPatientDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetPatient"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"patient"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"firstname"}},{"kind":"Field","name":{"kind":"Name","value":"lastname"}},{"kind":"Field","name":{"kind":"Name","value":"birthdate"}},{"kind":"Field","name":{"kind":"Name","value":"sex"}},{"kind":"Field","name":{"kind":"Name","value":"state"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"checksum"}},{"kind":"Field","name":{"kind":"Name","value":"assignedLocation"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}}]}},{"kind":"Field","name":{"kind":"Name","value":"assignedLocations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}}]}},{"kind":"Field","name":{"kind":"Name","value":"clinic"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}},{"kind":"Field","name":{"kind":"Name","value":"parent"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"parent"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"parent"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"parent"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}}]}}]}}]}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"position"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}},{"kind":"Field","name":{"kind":"Name","value":"parent"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"parent"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"parent"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"parent"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}}]}}]}}]}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"teams"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}},{"kind":"Field","name":{"kind":"Name","value":"parent"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"parent"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"parent"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"parent"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}}]}}]}}]}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"tasks"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"done"}},{"kind":"Field","name":{"kind":"Name","value":"dueDate"}},{"kind":"Field","name":{"kind":"Name","value":"priority"}},{"kind":"Field","name":{"kind":"Name","value":"estimatedTime"}},{"kind":"Field","name":{"kind":"Name","value":"updateDate"}},{"kind":"Field","name":{"kind":"Name","value":"assignees"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"avatarUrl"}},{"kind":"Field","name":{"kind":"Name","value":"lastOnline"}},{"kind":"Field","name":{"kind":"Name","value":"isOnline"}}]}},{"kind":"Field","name":{"kind":"Name","value":"assigneeTeam"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"properties"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"definition"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"fieldType"}},{"kind":"Field","name":{"kind":"Name","value":"isActive"}},{"kind":"Field","name":{"kind":"Name","value":"allowedEntities"}},{"kind":"Field","name":{"kind":"Name","value":"options"}}]}},{"kind":"Field","name":{"kind":"Name","value":"textValue"}},{"kind":"Field","name":{"kind":"Name","value":"numberValue"}},{"kind":"Field","name":{"kind":"Name","value":"booleanValue"}},{"kind":"Field","name":{"kind":"Name","value":"dateValue"}},{"kind":"Field","name":{"kind":"Name","value":"dateTimeValue"}},{"kind":"Field","name":{"kind":"Name","value":"selectValue"}},{"kind":"Field","name":{"kind":"Name","value":"multiSelectValues"}},{"kind":"Field","name":{"kind":"Name","value":"userValue"}},{"kind":"Field","name":{"kind":"Name","value":"user"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"avatarUrl"}},{"kind":"Field","name":{"kind":"Name","value":"lastOnline"}},{"kind":"Field","name":{"kind":"Name","value":"isOnline"}}]}},{"kind":"Field","name":{"kind":"Name","value":"team"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}}]}}]}}]}}]}}]} as unknown as DocumentNode<GetPatientQuery, GetPatientQueryVariables>;
+export const GetPatientsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetPatients"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"locationId"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"rootLocationIds"}},"type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"states"}},"type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"PatientState"}}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"filters"}},"type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"QueryFilterClauseInput"}}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"sorts"}},"type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"QuerySortClauseInput"}}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"pagination"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"PaginationInput"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"search"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"QuerySearchInput"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"patients"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"locationNodeId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"locationId"}}},{"kind":"Argument","name":{"kind":"Name","value":"rootLocationIds"},"value":{"kind":"Variable","name":{"kind":"Name","value":"rootLocationIds"}}},{"kind":"Argument","name":{"kind":"Name","value":"states"},"value":{"kind":"Variable","name":{"kind":"Name","value":"states"}}},{"kind":"Argument","name":{"kind":"Name","value":"filters"},"value":{"kind":"Variable","name":{"kind":"Name","value":"filters"}}},{"kind":"Argument","name":{"kind":"Name","value":"sorts"},"value":{"kind":"Variable","name":{"kind":"Name","value":"sorts"}}},{"kind":"Argument","name":{"kind":"Name","value":"pagination"},"value":{"kind":"Variable","name":{"kind":"Name","value":"pagination"}}},{"kind":"Argument","name":{"kind":"Name","value":"search"},"value":{"kind":"Variable","name":{"kind":"Name","value":"search"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"firstname"}},{"kind":"Field","name":{"kind":"Name","value":"lastname"}},{"kind":"Field","name":{"kind":"Name","value":"birthdate"}},{"kind":"Field","name":{"kind":"Name","value":"sex"}},{"kind":"Field","name":{"kind":"Name","value":"state"}},{"kind":"Field","name":{"kind":"Name","value":"assignedLocation"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"parent"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"assignedLocations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}},{"kind":"Field","name":{"kind":"Name","value":"parent"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"parent"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"parent"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}}]}}]}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"clinic"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}},{"kind":"Field","name":{"kind":"Name","value":"parent"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"parent"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"parent"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"parent"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}}]}}]}}]}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"position"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}},{"kind":"Field","name":{"kind":"Name","value":"parent"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}},{"kind":"Field","name":{"kind":"Name","value":"parent"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}},{"kind":"Field","name":{"kind":"Name","value":"parent"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}},{"kind":"Field","name":{"kind":"Name","value":"parent"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}}]}}]}}]}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"teams"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}},{"kind":"Field","name":{"kind":"Name","value":"parent"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"parent"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"parent"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"parent"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}}]}}]}}]}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"tasks"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"done"}},{"kind":"Field","name":{"kind":"Name","value":"dueDate"}},{"kind":"Field","name":{"kind":"Name","value":"priority"}},{"kind":"Field","name":{"kind":"Name","value":"estimatedTime"}},{"kind":"Field","name":{"kind":"Name","value":"creationDate"}},{"kind":"Field","name":{"kind":"Name","value":"updateDate"}},{"kind":"Field","name":{"kind":"Name","value":"assignees"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"avatarUrl"}},{"kind":"Field","name":{"kind":"Name","value":"lastOnline"}},{"kind":"Field","name":{"kind":"Name","value":"isOnline"}}]}},{"kind":"Field","name":{"kind":"Name","value":"assigneeTeam"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"properties"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"definition"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"fieldType"}},{"kind":"Field","name":{"kind":"Name","value":"isActive"}},{"kind":"Field","name":{"kind":"Name","value":"allowedEntities"}},{"kind":"Field","name":{"kind":"Name","value":"options"}}]}},{"kind":"Field","name":{"kind":"Name","value":"textValue"}},{"kind":"Field","name":{"kind":"Name","value":"numberValue"}},{"kind":"Field","name":{"kind":"Name","value":"booleanValue"}},{"kind":"Field","name":{"kind":"Name","value":"dateValue"}},{"kind":"Field","name":{"kind":"Name","value":"dateTimeValue"}},{"kind":"Field","name":{"kind":"Name","value":"selectValue"}},{"kind":"Field","name":{"kind":"Name","value":"multiSelectValues"}},{"kind":"Field","name":{"kind":"Name","value":"userValue"}},{"kind":"Field","name":{"kind":"Name","value":"user"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"avatarUrl"}},{"kind":"Field","name":{"kind":"Name","value":"lastOnline"}},{"kind":"Field","name":{"kind":"Name","value":"isOnline"}}]}},{"kind":"Field","name":{"kind":"Name","value":"team"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}}]}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"patientsTotal"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"locationNodeId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"locationId"}}},{"kind":"Argument","name":{"kind":"Name","value":"rootLocationIds"},"value":{"kind":"Variable","name":{"kind":"Name","value":"rootLocationIds"}}},{"kind":"Argument","name":{"kind":"Name","value":"states"},"value":{"kind":"Variable","name":{"kind":"Name","value":"states"}}},{"kind":"Argument","name":{"kind":"Name","value":"filters"},"value":{"kind":"Variable","name":{"kind":"Name","value":"filters"}}},{"kind":"Argument","name":{"kind":"Name","value":"sorts"},"value":{"kind":"Variable","name":{"kind":"Name","value":"sorts"}}},{"kind":"Argument","name":{"kind":"Name","value":"search"},"value":{"kind":"Variable","name":{"kind":"Name","value":"search"}}}]}]}}]} as unknown as DocumentNode<GetPatientsQuery, GetPatientsQueryVariables>;
+export const GetTaskDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetTask"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"task"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"done"}},{"kind":"Field","name":{"kind":"Name","value":"dueDate"}},{"kind":"Field","name":{"kind":"Name","value":"priority"}},{"kind":"Field","name":{"kind":"Name","value":"estimatedTime"}},{"kind":"Field","name":{"kind":"Name","value":"checksum"}},{"kind":"Field","name":{"kind":"Name","value":"updateDate"}},{"kind":"Field","name":{"kind":"Name","value":"patient"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"assignees"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"avatarUrl"}},{"kind":"Field","name":{"kind":"Name","value":"lastOnline"}},{"kind":"Field","name":{"kind":"Name","value":"isOnline"}}]}},{"kind":"Field","name":{"kind":"Name","value":"assigneeTeam"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}}]}},{"kind":"Field","name":{"kind":"Name","value":"properties"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"definition"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"fieldType"}},{"kind":"Field","name":{"kind":"Name","value":"isActive"}},{"kind":"Field","name":{"kind":"Name","value":"allowedEntities"}},{"kind":"Field","name":{"kind":"Name","value":"options"}}]}},{"kind":"Field","name":{"kind":"Name","value":"textValue"}},{"kind":"Field","name":{"kind":"Name","value":"numberValue"}},{"kind":"Field","name":{"kind":"Name","value":"booleanValue"}},{"kind":"Field","name":{"kind":"Name","value":"dateValue"}},{"kind":"Field","name":{"kind":"Name","value":"dateTimeValue"}},{"kind":"Field","name":{"kind":"Name","value":"selectValue"}},{"kind":"Field","name":{"kind":"Name","value":"multiSelectValues"}},{"kind":"Field","name":{"kind":"Name","value":"userValue"}},{"kind":"Field","name":{"kind":"Name","value":"user"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"avatarUrl"}},{"kind":"Field","name":{"kind":"Name","value":"lastOnline"}},{"kind":"Field","name":{"kind":"Name","value":"isOnline"}}]}},{"kind":"Field","name":{"kind":"Name","value":"team"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}}]}}]}}]}}]}}]} as unknown as DocumentNode<GetTaskQuery, GetTaskQueryVariables>;
+export const GetTasksDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetTasks"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"rootLocationIds"}},"type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"assigneeId"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"assigneeTeamId"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"filters"}},"type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"QueryFilterClauseInput"}}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"sorts"}},"type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"QuerySortClauseInput"}}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"pagination"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"PaginationInput"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"search"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"QuerySearchInput"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"tasks"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"rootLocationIds"},"value":{"kind":"Variable","name":{"kind":"Name","value":"rootLocationIds"}}},{"kind":"Argument","name":{"kind":"Name","value":"assigneeId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"assigneeId"}}},{"kind":"Argument","name":{"kind":"Name","value":"assigneeTeamId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"assigneeTeamId"}}},{"kind":"Argument","name":{"kind":"Name","value":"filters"},"value":{"kind":"Variable","name":{"kind":"Name","value":"filters"}}},{"kind":"Argument","name":{"kind":"Name","value":"sorts"},"value":{"kind":"Variable","name":{"kind":"Name","value":"sorts"}}},{"kind":"Argument","name":{"kind":"Name","value":"pagination"},"value":{"kind":"Variable","name":{"kind":"Name","value":"pagination"}}},{"kind":"Argument","name":{"kind":"Name","value":"search"},"value":{"kind":"Variable","name":{"kind":"Name","value":"search"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"done"}},{"kind":"Field","name":{"kind":"Name","value":"dueDate"}},{"kind":"Field","name":{"kind":"Name","value":"priority"}},{"kind":"Field","name":{"kind":"Name","value":"estimatedTime"}},{"kind":"Field","name":{"kind":"Name","value":"creationDate"}},{"kind":"Field","name":{"kind":"Name","value":"updateDate"}},{"kind":"Field","name":{"kind":"Name","value":"patient"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"firstname"}},{"kind":"Field","name":{"kind":"Name","value":"lastname"}},{"kind":"Field","name":{"kind":"Name","value":"birthdate"}},{"kind":"Field","name":{"kind":"Name","value":"sex"}},{"kind":"Field","name":{"kind":"Name","value":"state"}},{"kind":"Field","name":{"kind":"Name","value":"assignedLocation"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"parent"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"assignedLocations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}},{"kind":"Field","name":{"kind":"Name","value":"parent"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"parent"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"parent"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}}]}}]}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"clinic"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}},{"kind":"Field","name":{"kind":"Name","value":"parent"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"parent"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"parent"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"parent"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}}]}}]}}]}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"position"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}},{"kind":"Field","name":{"kind":"Name","value":"parent"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}},{"kind":"Field","name":{"kind":"Name","value":"parent"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}},{"kind":"Field","name":{"kind":"Name","value":"parent"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}}]}}]}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"teams"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}},{"kind":"Field","name":{"kind":"Name","value":"parent"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"parent"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"parent"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"parent"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}}]}}]}}]}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"properties"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"definition"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"fieldType"}},{"kind":"Field","name":{"kind":"Name","value":"isActive"}},{"kind":"Field","name":{"kind":"Name","value":"allowedEntities"}},{"kind":"Field","name":{"kind":"Name","value":"options"}}]}},{"kind":"Field","name":{"kind":"Name","value":"textValue"}},{"kind":"Field","name":{"kind":"Name","value":"numberValue"}},{"kind":"Field","name":{"kind":"Name","value":"booleanValue"}},{"kind":"Field","name":{"kind":"Name","value":"dateValue"}},{"kind":"Field","name":{"kind":"Name","value":"dateTimeValue"}},{"kind":"Field","name":{"kind":"Name","value":"selectValue"}},{"kind":"Field","name":{"kind":"Name","value":"multiSelectValues"}},{"kind":"Field","name":{"kind":"Name","value":"userValue"}},{"kind":"Field","name":{"kind":"Name","value":"user"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"avatarUrl"}},{"kind":"Field","name":{"kind":"Name","value":"lastOnline"}},{"kind":"Field","name":{"kind":"Name","value":"isOnline"}}]}},{"kind":"Field","name":{"kind":"Name","value":"team"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}}]}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"assignees"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"avatarUrl"}},{"kind":"Field","name":{"kind":"Name","value":"lastOnline"}},{"kind":"Field","name":{"kind":"Name","value":"isOnline"}}]}},{"kind":"Field","name":{"kind":"Name","value":"assigneeTeam"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}}]}},{"kind":"Field","name":{"kind":"Name","value":"properties"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"definition"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"fieldType"}},{"kind":"Field","name":{"kind":"Name","value":"isActive"}},{"kind":"Field","name":{"kind":"Name","value":"allowedEntities"}},{"kind":"Field","name":{"kind":"Name","value":"options"}}]}},{"kind":"Field","name":{"kind":"Name","value":"textValue"}},{"kind":"Field","name":{"kind":"Name","value":"numberValue"}},{"kind":"Field","name":{"kind":"Name","value":"booleanValue"}},{"kind":"Field","name":{"kind":"Name","value":"dateValue"}},{"kind":"Field","name":{"kind":"Name","value":"dateTimeValue"}},{"kind":"Field","name":{"kind":"Name","value":"selectValue"}},{"kind":"Field","name":{"kind":"Name","value":"multiSelectValues"}},{"kind":"Field","name":{"kind":"Name","value":"userValue"}},{"kind":"Field","name":{"kind":"Name","value":"user"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"avatarUrl"}},{"kind":"Field","name":{"kind":"Name","value":"lastOnline"}},{"kind":"Field","name":{"kind":"Name","value":"isOnline"}}]}},{"kind":"Field","name":{"kind":"Name","value":"team"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}}]}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"tasksTotal"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"rootLocationIds"},"value":{"kind":"Variable","name":{"kind":"Name","value":"rootLocationIds"}}},{"kind":"Argument","name":{"kind":"Name","value":"assigneeId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"assigneeId"}}},{"kind":"Argument","name":{"kind":"Name","value":"assigneeTeamId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"assigneeTeamId"}}},{"kind":"Argument","name":{"kind":"Name","value":"filters"},"value":{"kind":"Variable","name":{"kind":"Name","value":"filters"}}},{"kind":"Argument","name":{"kind":"Name","value":"sorts"},"value":{"kind":"Variable","name":{"kind":"Name","value":"sorts"}}},{"kind":"Argument","name":{"kind":"Name","value":"search"},"value":{"kind":"Variable","name":{"kind":"Name","value":"search"}}}]}]}}]} as unknown as DocumentNode<GetTasksQuery, GetTasksQueryVariables>;
+export const GetUserDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetUser"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"user"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"username"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"email"}},{"kind":"Field","name":{"kind":"Name","value":"firstname"}},{"kind":"Field","name":{"kind":"Name","value":"lastname"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"avatarUrl"}},{"kind":"Field","name":{"kind":"Name","value":"lastOnline"}},{"kind":"Field","name":{"kind":"Name","value":"isOnline"}}]}}]}}]} as unknown as DocumentNode<GetUserQuery, GetUserQueryVariables>;
+export const GetUsersDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetUsers"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"users"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"avatarUrl"}},{"kind":"Field","name":{"kind":"Name","value":"lastOnline"}},{"kind":"Field","name":{"kind":"Name","value":"isOnline"}}]}}]}}]} as unknown as DocumentNode<GetUsersQuery, GetUsersQueryVariables>;
+export const GetGlobalDataDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetGlobalData"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"rootLocationIds"}},"type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"me"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"username"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"firstname"}},{"kind":"Field","name":{"kind":"Name","value":"lastname"}},{"kind":"Field","name":{"kind":"Name","value":"avatarUrl"}},{"kind":"Field","name":{"kind":"Name","value":"lastOnline"}},{"kind":"Field","name":{"kind":"Name","value":"isOnline"}},{"kind":"Field","name":{"kind":"Name","value":"organizations"}},{"kind":"Field","name":{"kind":"Name","value":"rootLocations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}}]}},{"kind":"Field","name":{"kind":"Name","value":"tasks"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"rootLocationIds"},"value":{"kind":"Variable","name":{"kind":"Name","value":"rootLocationIds"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"done"}}]}}]}},{"kind":"Field","alias":{"kind":"Name","value":"wards"},"name":{"kind":"Name","value":"locationNodes"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"kind"},"value":{"kind":"EnumValue","value":"WARD"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"parentId"}}]}},{"kind":"Field","alias":{"kind":"Name","value":"teams"},"name":{"kind":"Name","value":"locationNodes"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"kind"},"value":{"kind":"EnumValue","value":"TEAM"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"parentId"}}]}},{"kind":"Field","alias":{"kind":"Name","value":"clinics"},"name":{"kind":"Name","value":"locationNodes"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"kind"},"value":{"kind":"EnumValue","value":"CLINIC"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"parentId"}}]}},{"kind":"Field","name":{"kind":"Name","value":"patients"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"rootLocationIds"},"value":{"kind":"Variable","name":{"kind":"Name","value":"rootLocationIds"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"state"}},{"kind":"Field","name":{"kind":"Name","value":"assignedLocation"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}},{"kind":"Field","alias":{"kind":"Name","value":"waitingPatients"},"name":{"kind":"Name","value":"patients"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"states"},"value":{"kind":"ListValue","values":[{"kind":"EnumValue","value":"WAIT"}]}},{"kind":"Argument","name":{"kind":"Name","value":"rootLocationIds"},"value":{"kind":"Variable","name":{"kind":"Name","value":"rootLocationIds"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"state"}}]}}]}}]} as unknown as DocumentNode<GetGlobalDataQuery, GetGlobalDataQueryVariables>;
+export const CreatePatientDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreatePatient"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"data"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"CreatePatientInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"createPatient"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"Variable","name":{"kind":"Name","value":"data"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"firstname"}},{"kind":"Field","name":{"kind":"Name","value":"lastname"}},{"kind":"Field","name":{"kind":"Name","value":"birthdate"}},{"kind":"Field","name":{"kind":"Name","value":"sex"}},{"kind":"Field","name":{"kind":"Name","value":"state"}},{"kind":"Field","name":{"kind":"Name","value":"assignedLocation"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}}]}},{"kind":"Field","name":{"kind":"Name","value":"assignedLocations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}}]}},{"kind":"Field","name":{"kind":"Name","value":"clinic"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}}]}},{"kind":"Field","name":{"kind":"Name","value":"position"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}}]}},{"kind":"Field","name":{"kind":"Name","value":"teams"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}}]}}]}}]}}]} as unknown as DocumentNode<CreatePatientMutation, CreatePatientMutationVariables>;
+export const UpdatePatientDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpdatePatient"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"data"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"UpdatePatientInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"updatePatient"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}},{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"Variable","name":{"kind":"Name","value":"data"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"firstname"}},{"kind":"Field","name":{"kind":"Name","value":"lastname"}},{"kind":"Field","name":{"kind":"Name","value":"birthdate"}},{"kind":"Field","name":{"kind":"Name","value":"sex"}},{"kind":"Field","name":{"kind":"Name","value":"state"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"checksum"}},{"kind":"Field","name":{"kind":"Name","value":"assignedLocation"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}}]}},{"kind":"Field","name":{"kind":"Name","value":"assignedLocations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}}]}},{"kind":"Field","name":{"kind":"Name","value":"clinic"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}}]}},{"kind":"Field","name":{"kind":"Name","value":"position"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}}]}},{"kind":"Field","name":{"kind":"Name","value":"teams"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}}]}},{"kind":"Field","name":{"kind":"Name","value":"properties"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"definition"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"fieldType"}},{"kind":"Field","name":{"kind":"Name","value":"isActive"}},{"kind":"Field","name":{"kind":"Name","value":"allowedEntities"}},{"kind":"Field","name":{"kind":"Name","value":"options"}}]}},{"kind":"Field","name":{"kind":"Name","value":"textValue"}},{"kind":"Field","name":{"kind":"Name","value":"numberValue"}},{"kind":"Field","name":{"kind":"Name","value":"booleanValue"}},{"kind":"Field","name":{"kind":"Name","value":"dateValue"}},{"kind":"Field","name":{"kind":"Name","value":"dateTimeValue"}},{"kind":"Field","name":{"kind":"Name","value":"selectValue"}},{"kind":"Field","name":{"kind":"Name","value":"multiSelectValues"}},{"kind":"Field","name":{"kind":"Name","value":"userValue"}},{"kind":"Field","name":{"kind":"Name","value":"user"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"avatarUrl"}},{"kind":"Field","name":{"kind":"Name","value":"lastOnline"}},{"kind":"Field","name":{"kind":"Name","value":"isOnline"}}]}},{"kind":"Field","name":{"kind":"Name","value":"team"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}}]}}]}}]}}]}}]} as unknown as DocumentNode<UpdatePatientMutation, UpdatePatientMutationVariables>;
+export const AdmitPatientDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"AdmitPatient"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"admitPatient"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"state"}}]}}]}}]} as unknown as DocumentNode<AdmitPatientMutation, AdmitPatientMutationVariables>;
+export const DischargePatientDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DischargePatient"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"dischargePatient"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"state"}}]}}]}}]} as unknown as DocumentNode<DischargePatientMutation, DischargePatientMutationVariables>;
+export const MarkPatientDeadDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"MarkPatientDead"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"markPatientDead"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"state"}}]}}]}}]} as unknown as DocumentNode<MarkPatientDeadMutation, MarkPatientDeadMutationVariables>;
+export const WaitPatientDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"WaitPatient"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"waitPatient"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"state"}}]}}]}}]} as unknown as DocumentNode<WaitPatientMutation, WaitPatientMutationVariables>;
+export const DeletePatientDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DeletePatient"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"deletePatient"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}]}]}}]} as unknown as DocumentNode<DeletePatientMutation, DeletePatientMutationVariables>;
+export const CreatePropertyDefinitionDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreatePropertyDefinition"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"data"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"CreatePropertyDefinitionInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"createPropertyDefinition"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"Variable","name":{"kind":"Name","value":"data"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"fieldType"}},{"kind":"Field","name":{"kind":"Name","value":"isActive"}},{"kind":"Field","name":{"kind":"Name","value":"allowedEntities"}},{"kind":"Field","name":{"kind":"Name","value":"options"}}]}}]}}]} as unknown as DocumentNode<CreatePropertyDefinitionMutation, CreatePropertyDefinitionMutationVariables>;
+export const UpdatePropertyDefinitionDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpdatePropertyDefinition"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"data"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"UpdatePropertyDefinitionInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"updatePropertyDefinition"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}},{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"Variable","name":{"kind":"Name","value":"data"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"fieldType"}},{"kind":"Field","name":{"kind":"Name","value":"isActive"}},{"kind":"Field","name":{"kind":"Name","value":"allowedEntities"}},{"kind":"Field","name":{"kind":"Name","value":"options"}}]}}]}}]} as unknown as DocumentNode<UpdatePropertyDefinitionMutation, UpdatePropertyDefinitionMutationVariables>;
+export const DeletePropertyDefinitionDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DeletePropertyDefinition"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"deletePropertyDefinition"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}]}]}}]} as unknown as DocumentNode<DeletePropertyDefinitionMutation, DeletePropertyDefinitionMutationVariables>;
+export const GetPropertyDefinitionsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetPropertyDefinitions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"propertyDefinitions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"fieldType"}},{"kind":"Field","name":{"kind":"Name","value":"isActive"}},{"kind":"Field","name":{"kind":"Name","value":"allowedEntities"}},{"kind":"Field","name":{"kind":"Name","value":"options"}}]}}]}}]} as unknown as DocumentNode<GetPropertyDefinitionsQuery, GetPropertyDefinitionsQueryVariables>;
+export const GetPropertiesForSubjectDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetPropertiesForSubject"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"subjectId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"subjectType"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"PropertyEntity"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"propertyDefinitions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"fieldType"}},{"kind":"Field","name":{"kind":"Name","value":"isActive"}},{"kind":"Field","name":{"kind":"Name","value":"allowedEntities"}},{"kind":"Field","name":{"kind":"Name","value":"options"}}]}}]}}]} as unknown as DocumentNode<GetPropertiesForSubjectQuery, GetPropertiesForSubjectQueryVariables>;
+export const QueryableFieldsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"QueryableFields"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"entity"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"queryableFields"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"entity"},"value":{"kind":"Variable","name":{"kind":"Name","value":"entity"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"key"}},{"kind":"Field","name":{"kind":"Name","value":"label"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}},{"kind":"Field","name":{"kind":"Name","value":"valueType"}},{"kind":"Field","name":{"kind":"Name","value":"allowedOperators"}},{"kind":"Field","name":{"kind":"Name","value":"sortable"}},{"kind":"Field","name":{"kind":"Name","value":"sortDirections"}},{"kind":"Field","name":{"kind":"Name","value":"searchable"}},{"kind":"Field","name":{"kind":"Name","value":"filterable"}},{"kind":"Field","name":{"kind":"Name","value":"propertyDefinitionId"}},{"kind":"Field","name":{"kind":"Name","value":"relation"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"targetEntity"}},{"kind":"Field","name":{"kind":"Name","value":"idFieldKey"}},{"kind":"Field","name":{"kind":"Name","value":"labelFieldKey"}},{"kind":"Field","name":{"kind":"Name","value":"allowedFilterModes"}}]}},{"kind":"Field","name":{"kind":"Name","value":"choice"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"optionKeys"}},{"kind":"Field","name":{"kind":"Name","value":"optionLabels"}}]}}]}}]}}]} as unknown as DocumentNode<QueryableFieldsQuery, QueryableFieldsQueryVariables>;
+export const MySavedViewsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"MySavedViews"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"mySavedViews"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"baseEntityType"}},{"kind":"Field","name":{"kind":"Name","value":"filterDefinition"}},{"kind":"Field","name":{"kind":"Name","value":"sortDefinition"}},{"kind":"Field","name":{"kind":"Name","value":"parameters"}},{"kind":"Field","name":{"kind":"Name","value":"relatedFilterDefinition"}},{"kind":"Field","name":{"kind":"Name","value":"relatedSortDefinition"}},{"kind":"Field","name":{"kind":"Name","value":"relatedParameters"}},{"kind":"Field","name":{"kind":"Name","value":"ownerUserId"}},{"kind":"Field","name":{"kind":"Name","value":"visibility"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"isOwner"}}]}}]}}]} as unknown as DocumentNode<MySavedViewsQuery, MySavedViewsQueryVariables>;
+export const SavedViewDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"SavedView"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"savedView"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"baseEntityType"}},{"kind":"Field","name":{"kind":"Name","value":"filterDefinition"}},{"kind":"Field","name":{"kind":"Name","value":"sortDefinition"}},{"kind":"Field","name":{"kind":"Name","value":"parameters"}},{"kind":"Field","name":{"kind":"Name","value":"relatedFilterDefinition"}},{"kind":"Field","name":{"kind":"Name","value":"relatedSortDefinition"}},{"kind":"Field","name":{"kind":"Name","value":"relatedParameters"}},{"kind":"Field","name":{"kind":"Name","value":"ownerUserId"}},{"kind":"Field","name":{"kind":"Name","value":"visibility"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"isOwner"}}]}}]}}]} as unknown as DocumentNode<SavedViewQuery, SavedViewQueryVariables>;
+export const CreateSavedViewDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateSavedView"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"data"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"CreateSavedViewInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"createSavedView"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"Variable","name":{"kind":"Name","value":"data"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"baseEntityType"}},{"kind":"Field","name":{"kind":"Name","value":"filterDefinition"}},{"kind":"Field","name":{"kind":"Name","value":"sortDefinition"}},{"kind":"Field","name":{"kind":"Name","value":"parameters"}},{"kind":"Field","name":{"kind":"Name","value":"relatedFilterDefinition"}},{"kind":"Field","name":{"kind":"Name","value":"relatedSortDefinition"}},{"kind":"Field","name":{"kind":"Name","value":"relatedParameters"}},{"kind":"Field","name":{"kind":"Name","value":"ownerUserId"}},{"kind":"Field","name":{"kind":"Name","value":"visibility"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"isOwner"}}]}}]}}]} as unknown as DocumentNode<CreateSavedViewMutation, CreateSavedViewMutationVariables>;
+export const UpdateSavedViewDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpdateSavedView"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"data"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"UpdateSavedViewInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"updateSavedView"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}},{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"Variable","name":{"kind":"Name","value":"data"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"baseEntityType"}},{"kind":"Field","name":{"kind":"Name","value":"filterDefinition"}},{"kind":"Field","name":{"kind":"Name","value":"sortDefinition"}},{"kind":"Field","name":{"kind":"Name","value":"parameters"}},{"kind":"Field","name":{"kind":"Name","value":"relatedFilterDefinition"}},{"kind":"Field","name":{"kind":"Name","value":"relatedSortDefinition"}},{"kind":"Field","name":{"kind":"Name","value":"relatedParameters"}},{"kind":"Field","name":{"kind":"Name","value":"ownerUserId"}},{"kind":"Field","name":{"kind":"Name","value":"visibility"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"isOwner"}}]}}]}}]} as unknown as DocumentNode<UpdateSavedViewMutation, UpdateSavedViewMutationVariables>;
+export const DeleteSavedViewDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DeleteSavedView"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"deleteSavedView"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}]}]}}]} as unknown as DocumentNode<DeleteSavedViewMutation, DeleteSavedViewMutationVariables>;
+export const DuplicateSavedViewDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DuplicateSavedView"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"name"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"duplicateSavedView"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}},{"kind":"Argument","name":{"kind":"Name","value":"name"},"value":{"kind":"Variable","name":{"kind":"Name","value":"name"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"baseEntityType"}},{"kind":"Field","name":{"kind":"Name","value":"filterDefinition"}},{"kind":"Field","name":{"kind":"Name","value":"sortDefinition"}},{"kind":"Field","name":{"kind":"Name","value":"parameters"}},{"kind":"Field","name":{"kind":"Name","value":"relatedFilterDefinition"}},{"kind":"Field","name":{"kind":"Name","value":"relatedSortDefinition"}},{"kind":"Field","name":{"kind":"Name","value":"relatedParameters"}},{"kind":"Field","name":{"kind":"Name","value":"ownerUserId"}},{"kind":"Field","name":{"kind":"Name","value":"visibility"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"isOwner"}}]}}]}}]} as unknown as DocumentNode<DuplicateSavedViewMutation, DuplicateSavedViewMutationVariables>;
+export const PatientCreatedDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"subscription","name":{"kind":"Name","value":"PatientCreated"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"rootLocationIds"}},"type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"patientCreated"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"rootLocationIds"},"value":{"kind":"Variable","name":{"kind":"Name","value":"rootLocationIds"}}}]}]}}]} as unknown as DocumentNode<PatientCreatedSubscription, PatientCreatedSubscriptionVariables>;
+export const PatientUpdatedDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"subscription","name":{"kind":"Name","value":"PatientUpdated"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"patientId"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"rootLocationIds"}},"type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"patientUpdated"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"patientId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"patientId"}}},{"kind":"Argument","name":{"kind":"Name","value":"rootLocationIds"},"value":{"kind":"Variable","name":{"kind":"Name","value":"rootLocationIds"}}}]}]}}]} as unknown as DocumentNode<PatientUpdatedSubscription, PatientUpdatedSubscriptionVariables>;
+export const PatientStateChangedDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"subscription","name":{"kind":"Name","value":"PatientStateChanged"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"patientId"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"rootLocationIds"}},"type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"patientStateChanged"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"patientId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"patientId"}}},{"kind":"Argument","name":{"kind":"Name","value":"rootLocationIds"},"value":{"kind":"Variable","name":{"kind":"Name","value":"rootLocationIds"}}}]}]}}]} as unknown as DocumentNode<PatientStateChangedSubscription, PatientStateChangedSubscriptionVariables>;
+export const TaskCreatedDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"subscription","name":{"kind":"Name","value":"TaskCreated"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"rootLocationIds"}},"type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"taskCreated"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"rootLocationIds"},"value":{"kind":"Variable","name":{"kind":"Name","value":"rootLocationIds"}}}]}]}}]} as unknown as DocumentNode<TaskCreatedSubscription, TaskCreatedSubscriptionVariables>;
+export const TaskUpdatedDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"subscription","name":{"kind":"Name","value":"TaskUpdated"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"taskId"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"rootLocationIds"}},"type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"taskUpdated"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"taskId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"taskId"}}},{"kind":"Argument","name":{"kind":"Name","value":"rootLocationIds"},"value":{"kind":"Variable","name":{"kind":"Name","value":"rootLocationIds"}}}]}]}}]} as unknown as DocumentNode<TaskUpdatedSubscription, TaskUpdatedSubscriptionVariables>;
+export const TaskDeletedDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"subscription","name":{"kind":"Name","value":"TaskDeleted"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"rootLocationIds"}},"type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"taskDeleted"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"rootLocationIds"},"value":{"kind":"Variable","name":{"kind":"Name","value":"rootLocationIds"}}}]}]}}]} as unknown as DocumentNode<TaskDeletedSubscription, TaskDeletedSubscriptionVariables>;
+export const LocationNodeUpdatedDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"subscription","name":{"kind":"Name","value":"LocationNodeUpdated"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"locationId"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"locationNodeUpdated"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"locationId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"locationId"}}}]}]}}]} as unknown as DocumentNode<LocationNodeUpdatedSubscription, LocationNodeUpdatedSubscriptionVariables>;
+export const LocationNodeCreatedDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"subscription","name":{"kind":"Name","value":"LocationNodeCreated"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"locationNodeCreated"}}]}}]} as unknown as DocumentNode<LocationNodeCreatedSubscription, LocationNodeCreatedSubscriptionVariables>;
+export const LocationNodeDeletedDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"subscription","name":{"kind":"Name","value":"LocationNodeDeleted"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"locationNodeDeleted"}}]}}]} as unknown as DocumentNode<LocationNodeDeletedSubscription, LocationNodeDeletedSubscriptionVariables>;
+export const CreateTaskDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateTask"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"data"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"CreateTaskInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"createTask"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"Variable","name":{"kind":"Name","value":"data"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"done"}},{"kind":"Field","name":{"kind":"Name","value":"dueDate"}},{"kind":"Field","name":{"kind":"Name","value":"updateDate"}},{"kind":"Field","name":{"kind":"Name","value":"assignees"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"avatarUrl"}},{"kind":"Field","name":{"kind":"Name","value":"lastOnline"}},{"kind":"Field","name":{"kind":"Name","value":"isOnline"}}]}},{"kind":"Field","name":{"kind":"Name","value":"patient"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]}}]} as unknown as DocumentNode<CreateTaskMutation, CreateTaskMutationVariables>;
+export const UpdateTaskDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpdateTask"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"data"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"UpdateTaskInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"updateTask"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}},{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"Variable","name":{"kind":"Name","value":"data"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"done"}},{"kind":"Field","name":{"kind":"Name","value":"dueDate"}},{"kind":"Field","name":{"kind":"Name","value":"priority"}},{"kind":"Field","name":{"kind":"Name","value":"estimatedTime"}},{"kind":"Field","name":{"kind":"Name","value":"updateDate"}},{"kind":"Field","name":{"kind":"Name","value":"checksum"}},{"kind":"Field","name":{"kind":"Name","value":"patient"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"assignees"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"avatarUrl"}},{"kind":"Field","name":{"kind":"Name","value":"lastOnline"}},{"kind":"Field","name":{"kind":"Name","value":"isOnline"}}]}},{"kind":"Field","name":{"kind":"Name","value":"properties"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"definition"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"fieldType"}},{"kind":"Field","name":{"kind":"Name","value":"isActive"}},{"kind":"Field","name":{"kind":"Name","value":"allowedEntities"}},{"kind":"Field","name":{"kind":"Name","value":"options"}}]}},{"kind":"Field","name":{"kind":"Name","value":"textValue"}},{"kind":"Field","name":{"kind":"Name","value":"numberValue"}},{"kind":"Field","name":{"kind":"Name","value":"booleanValue"}},{"kind":"Field","name":{"kind":"Name","value":"dateValue"}},{"kind":"Field","name":{"kind":"Name","value":"dateTimeValue"}},{"kind":"Field","name":{"kind":"Name","value":"selectValue"}},{"kind":"Field","name":{"kind":"Name","value":"multiSelectValues"}},{"kind":"Field","name":{"kind":"Name","value":"userValue"}},{"kind":"Field","name":{"kind":"Name","value":"user"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"avatarUrl"}},{"kind":"Field","name":{"kind":"Name","value":"lastOnline"}},{"kind":"Field","name":{"kind":"Name","value":"isOnline"}}]}},{"kind":"Field","name":{"kind":"Name","value":"team"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}}]}}]}}]}}]}}]} as unknown as DocumentNode<UpdateTaskMutation, UpdateTaskMutationVariables>;
+export const AddTaskAssigneeDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"AddTaskAssignee"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"userId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"addTaskAssignee"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}},{"kind":"Argument","name":{"kind":"Name","value":"userId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"userId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"assignees"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"avatarUrl"}},{"kind":"Field","name":{"kind":"Name","value":"lastOnline"}},{"kind":"Field","name":{"kind":"Name","value":"isOnline"}}]}}]}}]}}]} as unknown as DocumentNode<AddTaskAssigneeMutation, AddTaskAssigneeMutationVariables>;
+export const RemoveTaskAssigneeDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"RemoveTaskAssignee"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"userId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"removeTaskAssignee"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}},{"kind":"Argument","name":{"kind":"Name","value":"userId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"userId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"assignees"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"avatarUrl"}},{"kind":"Field","name":{"kind":"Name","value":"lastOnline"}},{"kind":"Field","name":{"kind":"Name","value":"isOnline"}}]}}]}}]}}]} as unknown as DocumentNode<RemoveTaskAssigneeMutation, RemoveTaskAssigneeMutationVariables>;
+export const DeleteTaskDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DeleteTask"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"deleteTask"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}]}]}}]} as unknown as DocumentNode<DeleteTaskMutation, DeleteTaskMutationVariables>;
+export const CompleteTaskDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CompleteTask"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"completeTask"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"done"}},{"kind":"Field","name":{"kind":"Name","value":"updateDate"}}]}}]}}]} as unknown as DocumentNode<CompleteTaskMutation, CompleteTaskMutationVariables>;
+export const ReopenTaskDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"ReopenTask"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"reopenTask"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"done"}},{"kind":"Field","name":{"kind":"Name","value":"updateDate"}}]}}]}}]} as unknown as DocumentNode<ReopenTaskMutation, ReopenTaskMutationVariables>;
+export const AssignTaskToTeamDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"AssignTaskToTeam"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"teamId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"assignTaskToTeam"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}},{"kind":"Argument","name":{"kind":"Name","value":"teamId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"teamId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"assigneeTeam"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}}]}}]}}]}}]} as unknown as DocumentNode<AssignTaskToTeamMutation, AssignTaskToTeamMutationVariables>;
+export const UnassignTaskFromTeamDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UnassignTaskFromTeam"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"unassignTaskFromTeam"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"assigneeTeam"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}}]}}]}}]}}]} as unknown as DocumentNode<UnassignTaskFromTeamMutation, UnassignTaskFromTeamMutationVariables>;
+export const UpdateProfilePictureDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpdateProfilePicture"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"data"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"UpdateProfilePictureInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"updateProfilePicture"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"Variable","name":{"kind":"Name","value":"data"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"username"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"email"}},{"kind":"Field","name":{"kind":"Name","value":"firstname"}},{"kind":"Field","name":{"kind":"Name","value":"lastname"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"avatarUrl"}},{"kind":"Field","name":{"kind":"Name","value":"lastOnline"}},{"kind":"Field","name":{"kind":"Name","value":"isOnline"}}]}}]}}]} as unknown as DocumentNode<UpdateProfilePictureMutation, UpdateProfilePictureMutationVariables>;

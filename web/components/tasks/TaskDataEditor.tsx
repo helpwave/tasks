@@ -1,18 +1,12 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import type { CreateTaskInput, UpdateTaskInput, TaskPriority } from '@/api/gql/generated'
-import {
-  PatientState,
-  useCreateTaskMutation,
-  useDeleteTaskMutation,
-  useGetPatientsQuery,
-  useGetTaskQuery
-} from '@/api/gql/generated'
+import { PatientState } from '@/api/gql/generated'
+import { useCreateTask, useDeleteTask, useLocations, usePatients, useTask, useUpdateTask, useUsers, useRefreshingEntityIds } from '@/data'
 import type { FormFieldDataHandling } from '@helpwave/hightide'
 import {
   Button,
   Checkbox,
-  DateTimeInput,
   FormProvider,
   FormField,
   Input,
@@ -24,106 +18,88 @@ import {
   Drawer,
   useFormObserverKey,
   Visibility,
-  FormObserver
+  FormObserver,
+  FlexibleDateTimeInput,
+  IconButton
 } from '@helpwave/hightide'
+import { CenteredLoadingLogo } from '@/components/CenteredLoadingLogo'
 import { useTasksContext } from '@/hooks/useTasksContext'
-import { User, Flag } from 'lucide-react'
-import { SmartDate } from '@/utils/date'
+import { User, Flag, Info, Users, XIcon } from 'lucide-react'
+import { DateDisplay } from '@/components/Date/DateDisplay'
 import { AssigneeSelect } from './AssigneeSelect'
+import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
+import { UserInfoPopup } from '@/components/UserInfoPopup'
 import { localToUTCWithSameTime, PatientDetailView } from '@/components/patients/PatientDetailView'
-import { useOptimisticUpdateTaskMutation } from '@/api/optimistic-updates/GetTask'
 import { ErrorDialog } from '@/components/ErrorDialog'
 import clsx from 'clsx'
 import { PriorityUtils } from '@/utils/priority'
 
 type TaskFormValues = CreateTaskInput & {
   done: boolean,
+  assigneeIds?: string[] | null,
   assigneeTeamId?: string | null,
 }
 
 interface TaskDataEditorProps {
   id: null | string,
   initialPatientId?: string,
-  onSuccess?: () => void,
+  onListSync?: () => void,
   onClose?: () => void,
 }
 
 export const TaskDataEditor = ({
   id,
   initialPatientId,
-  onSuccess,
+  onListSync,
   onClose,
 }: TaskDataEditorProps) => {
   const translation = useTasksTranslation()
   const { selectedRootLocationIds } = useTasksContext()
   const [errorDialog, setErrorDialog] = useState<{ isOpen: boolean, message?: string }>({ isOpen: false })
   const [isShowingPatientDialog, setIsShowingPatientDialog] = useState<boolean>(false)
+  const [assigneeUserPopupId, setAssigneeUserPopupId] = useState<string | null>(null)
 
   const isEditMode = id !== null
   const taskId = id
+  const { refreshingTaskIds } = useRefreshingEntityIds()
 
-  const { data: taskData, isLoading: isLoadingTask } = useGetTaskQuery(
-    { id: taskId! },
-    {
-      enabled: isEditMode,
-      refetchOnMount: true,
-    }
+  const { data: taskData, loading: isLoadingTask } = useTask(
+    taskId ?? '',
+    { skip: !isEditMode }
   )
 
-  const { data: patientsData } = useGetPatientsQuery(
+  const { data: patientsData } = usePatients(
     {
       rootLocationIds: selectedRootLocationIds && selectedRootLocationIds.length > 0 ? selectedRootLocationIds : undefined,
       states: [PatientState.Admitted, PatientState.Wait],
     },
-    {
-      enabled: !isEditMode,
-    }
+    { skip: isEditMode }
   )
 
-  const [isCreating, setIsCreating] = useState<boolean>(false)
-  const { mutate: createTask } = useCreateTaskMutation({
-    onMutate: () => {
-      setIsCreating(true)
-    },
-    onSettled: () => {
-      setIsCreating(false)
-    },
-    onSuccess: async () => {
-      onSuccess?.()
-      onClose?.()
-    },
-    onError: (error) => {
-      setErrorDialog({ isOpen: true, message: error instanceof Error ? error.message : 'Failed to create task' })
-    },
-  })
+  const [createTask, { loading: isCreating }] = useCreateTask()
+  const [updateTaskMutate] = useUpdateTask()
+  const { data: usersData } = useUsers()
+  const { data: locationsData } = useLocations()
+  const updateTask = (vars: { id: string, data: UpdateTaskInput }) => {
+    updateTaskMutate({
+      variables: vars,
+      onError: (err) => {
+        setErrorDialog({
+          isOpen: true,
+          message: err instanceof Error ? err.message : 'Update failed',
+        })
+      },
+    }).catch(() => { })
+  }
 
-  const { mutate: updateTask } = useOptimisticUpdateTaskMutation({
-    id: taskId!,
-    onSuccess: () => {
-      onSuccess?.()
-    },
-  })
-
-  const [isDeleting, setIsDeleting] = useState<boolean>(false)
-  const { mutate: deleteTask } = useDeleteTaskMutation({
-    onMutate: () => {
-      setIsDeleting(true)
-    },
-    onSettled: () => {
-      setIsDeleting(false)
-    },
-    onSuccess: () => {
-      onSuccess?.()
-      onClose?.()
-    },
-  })
+  const [deleteTask, { loading: isDeleting }] = useDeleteTask()
 
   const form = useCreateForm<TaskFormValues>({
     initialValues: {
       title: '',
       description: '',
       patientId: initialPatientId || '',
-      assigneeId: null,
+      assigneeIds: [],
       assigneeTeamId: null,
       dueDate: null,
       priority: null,
@@ -132,17 +108,26 @@ export const TaskDataEditor = ({
     },
     onFormSubmit: (values) => {
       createTask({
-        data: {
-          title: values.title,
-          patientId: values.patientId,
-          description: values.description,
-          assigneeId: values.assigneeId,
-          assigneeTeamId: values.assigneeTeamId,
-          dueDate: values.dueDate ? localToUTCWithSameTime(values.dueDate)?.toISOString() : null,
-          priority: (values.priority as TaskPriority | null) || undefined,
-          estimatedTime: values.estimatedTime,
-          properties: values.properties
-        } as CreateTaskInput & { priority?: TaskPriority | null, estimatedTime?: number | null }
+        variables: {
+          data: {
+            title: values.title,
+            patientId: values.patientId || null,
+            description: values.description,
+            assigneeIds: values.assigneeIds ?? [],
+            assigneeTeamId: values.assigneeTeamId,
+            dueDate: values.dueDate ? localToUTCWithSameTime(values.dueDate)?.toISOString() : null,
+            priority: (values.priority as TaskPriority | null) || undefined,
+            estimatedTime: values.estimatedTime,
+            properties: values.properties
+          } as CreateTaskInput & { priority?: TaskPriority | null, estimatedTime?: number | null }
+        },
+        onCompleted: () => {
+          onListSync?.()
+          onClose?.()
+        },
+        onError: (error) => {
+          setErrorDialog({ isOpen: true, message: error instanceof Error ? error.message : 'Failed to create task' })
+        },
       })
     },
     validators: {
@@ -152,41 +137,49 @@ export const TaskDataEditor = ({
         }
         return null
       },
-      patientId: (value) => {
-        if (!value || !value.trim()) {
-          return translation('patient') + ' is required'
-        }
-        return null
-      },
     },
     onValidUpdate: (_, updates) => {
-      if (isEditMode && taskId) {
-        const data: UpdateTaskInput = {
-          title: updates?.title,
-          description: updates?.description,
-          dueDate: updates?.dueDate ? localToUTCWithSameTime(updates.dueDate)?.toISOString() : undefined,
-          priority: updates?.priority as TaskPriority | null | undefined,
-          estimatedTime: updates?.estimatedTime,
-          done: updates?.done,
-          assigneeId: updates?.assigneeId,
-          assigneeTeamId: updates?.assigneeTeamId,
-        }
-        updateTask({ id: taskId, data })
+      if (!isEditMode || !taskId || !taskData) return
+      const data: UpdateTaskInput = {
+        title: updates?.title,
+        patientId: updates?.patientId === undefined ? undefined : (updates.patientId || null),
+        description: updates?.description,
+        dueDate: updates?.dueDate ? localToUTCWithSameTime(updates.dueDate)?.toISOString() : undefined,
+        priority: updates?.priority as TaskPriority | null | undefined,
+        estimatedTime: updates?.estimatedTime,
+        done: updates?.done,
+        assigneeIds: updates?.assigneeIds,
+        assigneeTeamId: updates?.assigneeTeamId,
       }
+      const current = taskData
+      const sameTitle = (data.title ?? current.title) === current.title
+      const sameDescription = (data.description ?? current.description ?? '') === (current.description ?? '')
+      const sameDueDate = (data.dueDate ?? current.dueDate ?? null) === (current.dueDate ?? null)
+      const samePriority = (data.priority ?? current.priority ?? null) === (current.priority ?? null)
+      const sameEstimatedTime = (data.estimatedTime ?? current.estimatedTime ?? null) === (current.estimatedTime ?? null)
+      const sameDone = (data.done ?? current.done) === current.done
+      const currentAssigneeIds = [...(current.assignees?.map((assignee) => assignee.id) ?? [])].sort()
+      const nextAssigneeIds = [...(data.assigneeIds ?? currentAssigneeIds)].sort()
+      const sameAssigneeIds = currentAssigneeIds.length === nextAssigneeIds.length
+        && currentAssigneeIds.every((assigneeId, index) => assigneeId === nextAssigneeIds[index])
+      const sameAssigneeTeamId = (data.assigneeTeamId ?? current.assigneeTeam?.id ?? null) === (current.assigneeTeam?.id ?? null)
+      const samePatientId = (data.patientId ?? current.patient?.id ?? null) === (current.patient?.id ?? null)
+      if (sameTitle && sameDescription && sameDueDate && samePriority && sameEstimatedTime && sameDone && samePatientId && sameAssigneeIds && sameAssigneeTeamId) return
+      updateTask({ id: taskId, data })
     }
   })
 
   const { update: updateForm } = form
 
   useEffect(() => {
-    if (taskData?.task && isEditMode) {
-      const task = taskData.task
+    if (taskData && isEditMode) {
+      const task = taskData
       updateForm(prev => ({
         ...prev,
         title: task.title,
         description: task.description || '',
         patientId: task.patient?.id || '',
-        assigneeId: task.assignee?.id || null,
+        assigneeIds: task.assignees?.map((assignee) => assignee.id) ?? [],
         assigneeTeamId: task.assigneeTeam?.id || null,
         dueDate: task.dueDate ? new Date(task.dueDate) : null,
         priority: (task.priority as TaskPriority | null) || null,
@@ -196,12 +189,26 @@ export const TaskDataEditor = ({
     } else if (initialPatientId && !taskId) {
       updateForm(prev => ({ ...prev, patientId: initialPatientId }))
     }
-  }, [taskData?.task, isEditMode, initialPatientId, taskId, updateForm])
+  }, [taskData, isEditMode, initialPatientId, taskId, updateForm])
 
   const patients = patientsData?.patients || []
 
   const dueDate = useFormObserverKey({ formStore: form.store, formKey: 'dueDate' })?.value ?? null
   const estimatedTime = useFormObserverKey({ formStore: form.store, formKey: 'estimatedTime' })?.value ?? null
+  const assigneeIds = useFormObserverKey({ formStore: form.store, formKey: 'assigneeIds' })?.value as string[] | null | undefined
+  const assigneeTeamId = useFormObserverKey({ formStore: form.store, formKey: 'assigneeTeamId' })?.value as string | null | undefined
+  const selectedAssignees = useMemo(
+    () => usersData?.users?.filter((user) => (assigneeIds ?? []).includes(user.id)) ?? [],
+    [usersData, assigneeIds]
+  )
+  const teams = useMemo(
+    () => locationsData?.locationNodes?.filter((loc) => loc.kind === 'TEAM') ?? [],
+    [locationsData]
+  )
+  const selectedTeamTitle = useMemo(
+    () => (assigneeTeamId ? teams.find((t) => t.id === assigneeTeamId)?.title : undefined),
+    [assigneeTeamId, teams]
+  )
   const expectedFinishDate = useMemo(() => {
     if (!dueDate || !estimatedTime) return null
     const finishDate = new Date(dueDate)
@@ -210,7 +217,7 @@ export const TaskDataEditor = ({
   }, [dueDate, estimatedTime])
 
   if (isEditMode && isLoadingTask) {
-    return <LoadingContainer/>
+    return <CenteredLoadingLogo />
   }
 
   const priorities = [
@@ -220,11 +227,19 @@ export const TaskDataEditor = ({
     { value: 'P4', label: translation('priority', { priority: 'P4' }) },
   ]
 
+  const isRefreshing = isEditMode && taskId != null && refreshingTaskIds.has(taskId)
+
   return (
     <>
+      {isRefreshing && (
+        <div className="flex items-center gap-2 py-2 px-3 rounded-md bg-neutral-100 dark:bg-neutral-800 mb-4">
+          <LoadingContainer className="size-5 shrink-0" />
+          <span className="text-sm text-neutral-600 dark:text-neutral-400">{translation('refreshing')}</span>
+        </div>
+      )}
       <FormProvider state={form}>
-        <form onSubmit={event => { event.preventDefault(); form.submit() }}>
-          <div className="flex flex-col gap-6 pt-4 pb-24">
+        <form onSubmit={event => { event.preventDefault(); form.submit() }} className="flex-col-0 overflow-hidden">
+          <div className="flex flex-col gap-6 pt-4 pb-24 overflow-y-auto px-2">
             <div className="flex items-center gap-3">
               <Visibility isVisible={isEditMode}>
                 <FormObserver>
@@ -233,7 +248,6 @@ export const TaskDataEditor = ({
                       id="task-done"
                       value={done || false}
                       onValueChange={(checked) => {
-                        // TODO replace with form.update when it allows setting the update trigger
                         form.store.setValue('done', checked, true)
                       }}
                       className={clsx('rounded-full scale-125',
@@ -263,19 +277,16 @@ export const TaskDataEditor = ({
             <FormField<TaskFormValues, 'patientId'>
               name="patientId"
               label={translation('patient')}
-              required
-              showRequiredIndicator={!isEditMode}
             >
               {({ dataProps, focusableElementProps, interactionStates }) => {
                 return (!isEditMode) ? (
                   <Select
                     {...dataProps as FormFieldDataHandling<string>} {...focusableElementProps} {...interactionStates}
                   >
+                    <SelectOption value="" label={translation('none') || 'None'} />
                     {patients.map(patient => {
                       return (
-                        <SelectOption key={patient.id} value={patient.id}>
-                          {patient.name}
-                        </SelectOption>
+                        <SelectOption key={patient.id} value={patient.id} label={patient.name} />
                       )
                     })}
                   </Select>
@@ -286,35 +297,111 @@ export const TaskDataEditor = ({
                       onClick={() => setIsShowingPatientDialog(true)}
                       className="w-fit"
                     >
-                      <User className="size-4"/>
-                      { taskData?.task?.patient?.name}
+                      <User className="size-4" />
+                      {taskData?.patient?.name || translation('none') || 'None'}
                     </Button>
                   </div>
                 )
               }}
             </FormField>
 
-            <FormField<TaskFormValues, 'assigneeId'>
-              name="assigneeId"
+            <FormField<TaskFormValues, 'assigneeIds'>
+              name="assigneeIds"
               label={translation('assignedTo')}
             >
-              {({ dataProps }) => (
-                // TODO add interaction states to AssigneeSelect
-                <AssigneeSelect
-                  value={dataProps.value ?? ''}
-                  onValueChanged={(value) => {
-                    updateForm(prev => {
-                      if(value.startsWith('team:')) {
-                        return ({
-                          ...prev, assigneeId: null, assigneeTeamId: value.replace('team:', '') })
-                      } else {
-                        return ({ ...prev, assigneeId: value, assigneeTeamId: null })
-                      }
-                    })
-                  }}
-                  allowTeams={true}
-                  allowUnassigned={true}
-                />
+              {() => (
+                <div className="flex flex-col gap-2">
+                  <AssigneeSelect
+                    value={assigneeTeamId ? `team:${assigneeTeamId}` : ''}
+                    onValueChanged={(value) => {
+                      updateForm(prev => {
+                        if (!value) {
+                          return { ...prev, assigneeIds: [], assigneeTeamId: null }
+                        }
+                        if (value.startsWith('team:')) {
+                          return { ...prev, assigneeIds: [], assigneeTeamId: value.replace('team:', '') }
+                        }
+                        const currentAssigneeIds = prev.assigneeIds ?? []
+                        if (currentAssigneeIds.includes(value)) {
+                          return prev
+                        }
+                        return { ...prev, assigneeIds: [...currentAssigneeIds, value], assigneeTeamId: null }
+                      }, isEditMode)
+                    }}
+                    multiUserSelect={true}
+                    onMultiUserIdsSelected={(ids) => {
+                      if (ids.length === 0) return
+                      updateForm(prev => ({
+                        ...prev,
+                        assigneeIds: [...new Set([...(prev.assigneeIds ?? []), ...ids])],
+                        assigneeTeamId: null,
+                      }), isEditMode)
+                    }}
+                    allowTeams={true}
+                    allowUnassigned={true}
+                    excludeUserIds={assigneeIds ?? []}
+                  />
+                  {(selectedAssignees.length > 0 || assigneeTeamId) && (
+                    <div className="flex flex-wrap gap-2">
+                      {selectedAssignees.map((assignee) => (
+                        <div
+                          key={assignee.id}
+                          className="inline-flex items-center gap-1.5 rounded-md border border-divider bg-surface px-2.5 py-2 max-w-full"
+                        >
+                          <div className="flex-row-2 items-center min-w-0 gap-2 flex-1">
+                            <AvatarStatusComponent
+                              isOnline={assignee.isOnline ?? null}
+                              image={{
+                                avatarUrl: assignee.avatarUrl ?? 'https://cdn.helpwave.de/boringavatar.svg',
+                                alt: assignee.name
+                              }}
+                            />
+                            <span className="truncate text-sm">{assignee.name}</span>
+                          </div>
+                          <IconButton
+                            tooltip={translation('userInformation')}
+                            coloringStyle="text"
+                            color="neutral"
+                            onClick={() => setAssigneeUserPopupId(assignee.id)}
+                          >
+                            <Info className="size-4" />
+                          </IconButton>
+                          <IconButton
+                            tooltip={translation('clear')}
+                            coloringStyle="text"
+                            color="neutral"
+                            onClick={() => {
+                              updateForm(prev => ({
+                                ...prev,
+                                assigneeIds: (prev.assigneeIds ?? []).filter((id) => id !== assignee.id),
+                              }), isEditMode)
+                            }}
+                          >
+                            <XIcon className="size-4" />
+                          </IconButton>
+                        </div>
+                      ))}
+                      {assigneeTeamId && (
+                        <div className="inline-flex items-center gap-1.5 rounded-md border border-divider bg-surface px-2.5 py-2 max-w-full">
+                          <div className="flex-row-2 items-center min-w-0 gap-2 flex-1 px-0.5">
+                            <Users className="size-5 text-description shrink-0" />
+                            <span className="truncate text-sm">{selectedTeamTitle ?? translation('locationType', { type: 'TEAM' })}</span>
+                          </div>
+                          <IconButton
+                            tooltip={translation('clear')}
+                            coloringStyle="text"
+                            color="neutral"
+                            onClick={() => {
+                              updateForm(prev => ({ ...prev, assigneeTeamId: null }), isEditMode)
+                            }}
+                          >
+                            <XIcon className="size-4" />
+                          </IconButton>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               )}
             </FormField>
 
@@ -323,11 +410,11 @@ export const TaskDataEditor = ({
               label={translation('dueDate')}
             >
               {({ dataProps, focusableElementProps, interactionStates }) => (
-                <DateTimeInput
+                <FlexibleDateTimeInput
+                  key={isEditMode ? `${taskId}-${dueDate?.getTime() ?? 'pending'}` : 'create'}
                   {...dataProps} {...focusableElementProps} {...interactionStates}
-                  value={dataProps.value ?? undefined}
-                  isControlled={true}
-                  mode="dateTime"
+                  value={dataProps.value ?? null}
+                  defaultMode="date"
                 />
               )}
             </FormField>
@@ -348,9 +435,9 @@ export const TaskDataEditor = ({
                       dataProps.onEditComplete?.(priority)
                     }}
                   >
-                    <SelectOption value="none" iconAppearance="right">{translation('priorityNone')}</SelectOption>
+                    <SelectOption value="none" iconAppearance="right" label={translation('priorityNone')} />
                     {priorities.map(({ value, label }) => (
-                      <SelectOption key={value} value={value} iconAppearance="right">
+                      <SelectOption key={value} value={value} iconAppearance="right" label={label}>
                         <div className="flex items-center gap-2">
                           <span className={`w-2 h-2 rounded-full ${PriorityUtils.toBackgroundColor(value as TaskPriority | null | undefined)}`} />
                           <span>{label}</span>
@@ -388,7 +475,7 @@ export const TaskDataEditor = ({
             {expectedFinishDate && (
               <div className="flex items-center gap-2">
                 <Flag className="size-4" />
-                <SmartDate date={expectedFinishDate} mode="relative" showTime={true} />
+                <DateDisplay date={expectedFinishDate} mode="relative" showTime={true} />
               </div>
             )}
 
@@ -411,7 +498,13 @@ export const TaskDataEditor = ({
                 <Button
                   onClick={() => {
                     if (taskId) {
-                      deleteTask({ id: taskId })
+                      deleteTask({
+                        variables: { id: taskId },
+                        onCompleted: () => {
+                          onListSync?.()
+                          onClose?.()
+                        },
+                      })
                     }
                   }}
                   disabled={isDeleting}
@@ -449,11 +542,16 @@ export const TaskDataEditor = ({
           description={undefined}
         >
           <PatientDetailView
-            patientId={taskData?.task?.patient?.id}
+            patientId={taskData?.patient?.id}
             onClose={() => setIsShowingPatientDialog(false)}
-            onSuccess={() => {}}
+            onSuccess={() => { }}
           />
         </Drawer>
+        <UserInfoPopup
+          userId={assigneeUserPopupId}
+          isOpen={!!assigneeUserPopupId}
+          onClose={() => setAssigneeUserPopupId(null)}
+        />
       </FormProvider>
     </>
   )

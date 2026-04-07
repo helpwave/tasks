@@ -1,10 +1,12 @@
 import type { Dispatch, SetStateAction } from 'react'
-import { createContext, type PropsWithChildren, useContext, useEffect, useRef, useState } from 'react'
+import { createContext, type PropsWithChildren, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { usePathname } from 'next/navigation'
-import { useGetGlobalDataQuery, useGetLocationsQuery } from '@/api/gql/generated'
+import { HelpwaveLogo } from '@helpwave/hightide'
+import { useGlobalData, useLocations } from '@/data'
 import { useQueryClient } from '@tanstack/react-query'
 import { useAuth } from './useAuth'
-import { useLocalStorage } from '@helpwave/hightide'
+import { useStorage } from './useStorage'
+import { useConnectionStatus } from './useConnectionStatus'
 
 function filterLocationsByRootSubtree(
   locations: Array<{ id: string, title: string, parentId?: string | null }>,
@@ -13,15 +15,17 @@ function filterLocationsByRootSubtree(
   allLocations?: Array<{ id: string, title: string, parentId?: string | null }>
 ): Array<{ id: string, title: string, kind?: string }> {
   if (!selectedRootLocationIds || selectedRootLocationIds.length === 0) {
-    return []
+    return locations.map(loc => ({ id: loc.id, title: loc.title }))
+  }
+
+  if (!allLocations || allLocations.length === 0) {
+    return locations.map(loc => ({ id: loc.id, title: loc.title }))
   }
 
   const rootLocationSet = new Set(selectedRootLocationIds)
   const allLocationsMap = new Map<string, { id: string, title: string, parentId?: string | null }>()
 
-  if (allLocations) {
-    allLocations.forEach(loc => allLocationsMap.set(loc.id, loc))
-  }
+  allLocations.forEach(loc => allLocationsMap.set(loc.id, loc))
   locations.forEach(loc => allLocationsMap.set(loc.id, loc))
   rootLocations.forEach(loc => allLocationsMap.set(loc.id, { id: loc.id, title: loc.title, parentId: null }))
 
@@ -74,6 +78,7 @@ type SidebarContextType = {
   isShowingTeams: boolean,
   isShowingWards: boolean,
   isShowingClinics: boolean,
+  isShowingSavedViews: boolean,
 }
 
 export type TasksContextState = {
@@ -89,6 +94,7 @@ export type TasksContextState = {
   sidebar: SidebarContextType,
   user?: User,
   rootLocations?: LocationNode[],
+  isRootLocationReinitializing?: boolean,
 }
 
 export type TasksContextType = TasksContextState & {
@@ -108,44 +114,48 @@ export const useTasksContext = (): TasksContextType => {
 }
 
 export const TasksContextProvider = ({ children }: PropsWithChildren) => {
-  const pathName = usePathname()
+  const pathName = usePathname() ?? ''
   const { identity, isLoading: isAuthLoading } = useAuth()
   const queryClient = useQueryClient()
   const {
-    value: storedSelectedRootLocationIds,
+    value: storedSelectedRootLocationIdsRaw,
     setValue: setStoredSelectedRootLocationIds
-  } = useLocalStorage<string[]>('selected-root-location-ids', [])
+  } = useStorage<string[]>({ key: 'selected-root-location-ids', defaultValue: [] })
+  const storedSelectedRootLocationIds = useMemo(
+    () =>
+      Array.isArray(storedSelectedRootLocationIdsRaw)
+        ? storedSelectedRootLocationIdsRaw.filter((id): id is string => typeof id === 'string')
+        : [],
+    [storedSelectedRootLocationIdsRaw]
+  )
   const [state, setState] = useState<TasksContextState>({
     sidebar: {
       isShowingTeams: false,
       isShowingWards: false,
       isShowingClinics: false,
+      isShowingSavedViews: false,
     },
     selectedRootLocationIds: storedSelectedRootLocationIds.length > 0 ? storedSelectedRootLocationIds : undefined,
+    isRootLocationReinitializing: false,
   })
 
-  const { data: allLocationsData } = useGetLocationsQuery(
-    {},
-    {
-      enabled: !isAuthLoading && !!identity,
-      refetchOnWindowFocus: true,
-    }
+  const { data: allLocationsData } = useLocations(
+    { limit: 1000 },
+    { skip: isAuthLoading || !identity }
   )
 
   const selectedRootLocationIdsForQuery = state.selectedRootLocationIds && state.selectedRootLocationIds.length > 0
     ? state.selectedRootLocationIds
     : undefined
 
-  const { data } = useGetGlobalDataQuery(
+  const { data, refetch: refetchGlobalData } = useGlobalData(
     {
       rootLocationIds: selectedRootLocationIdsForQuery
     },
-    {
-      enabled: !isAuthLoading && !!identity,
-      refetchOnWindowFocus: true,
-      refetchOnMount: true,
-    }
+    { skip: isAuthLoading || !identity }
   )
+  const connectionStatus = useConnectionStatus()
+  const prevConnectionStatusRef = useRef(connectionStatus)
 
   const prevRootLocationIdsRef = useRef<string>('')
   const prevSelectedRootLocationIdsRef = useRef<string>('')
@@ -154,19 +164,8 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
     const currentSelectedIds = (state.selectedRootLocationIds || []).sort().join(',')
     if (prevSelectedRootLocationIdsRef.current !== currentSelectedIds) {
       prevSelectedRootLocationIdsRef.current = currentSelectedIds
-
+      setState(prev => ({ ...prev, isRootLocationReinitializing: true }))
       queryClient.invalidateQueries()
-      queryClient.removeQueries({
-        predicate: (query) => {
-          const queryKey = query.queryKey as unknown[]
-          const queryKeyStr = JSON.stringify(queryKey)
-          return queryKeyStr.includes('GetPatients') ||
-            queryKeyStr.includes('GetTasks') ||
-            queryKeyStr.includes('GetLocations') ||
-            queryKeyStr.includes('GetGlobalData') ||
-            queryKeyStr.includes('GetOverviewData')
-        }
-      })
     }
   }, [state.selectedRootLocationIds, queryClient])
 
@@ -182,6 +181,32 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
   }, [data?.me?.rootLocations, queryClient])
 
   useEffect(() => {
+    if (connectionStatus === 'connected' && prevConnectionStatusRef.current !== 'connected') {
+      refetchGlobalData()
+    }
+    prevConnectionStatusRef.current = connectionStatus
+  }, [connectionStatus, refetchGlobalData])
+
+  const myTasksCount = data?.me?.tasks?.filter(t => !t.done).length ?? 0
+  const waitingPatientsCountForKey = data?.waitingPatients?.filter(p => p.state === 'WAIT').length ?? data?.waitingPatients?.length ?? 0
+  const effectInputKey = [
+    data?.me?.id ?? '',
+    (data?.me?.rootLocations ?? []).map(l => l.id).sort().join(','),
+    (data?.patients ?? []).length,
+    (data?.me?.tasks ?? []).length,
+    myTasksCount,
+    waitingPatientsCountForKey,
+    (allLocationsData?.locationNodes ?? []).map(n => n.id).sort().join(','),
+    (storedSelectedRootLocationIds ?? []).slice().sort().join(','),
+  ].join('|')
+  const prevEffectKeyRef = useRef<string>('')
+  const hasCompletedFirstSyncRef = useRef(false)
+
+  useEffect(() => {
+    const skipped = prevEffectKeyRef.current === effectInputKey
+    if (skipped) return
+    prevEffectKeyRef.current = effectInputKey
+
     const totalPatientsCount = data?.patients?.length ?? 0
     const waitingPatientsCount = data?.waitingPatients?.length ?? 0
     const backendRootLocations = data?.me?.rootLocations?.map(loc => ({ id: loc.id, title: loc.title, kind: loc.kind })) ?? []
@@ -195,24 +220,49 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
       }
     })
 
+    const validStoredIds =
+      allowedRootLocationIds.size > 0
+        ? storedSelectedRootLocationIds.filter(id => allowedRootLocationIds.has(id))
+        : []
+
+    const trimWouldWipeSelection =
+      validStoredIds.length === 0 && storedSelectedRootLocationIds.length > 0
+    if (
+      allowedRootLocationIds.size > 0 &&
+      validStoredIds.length !== storedSelectedRootLocationIds.length &&
+      !trimWouldWipeSelection
+    ) {
+      try {
+        setStoredSelectedRootLocationIds(validStoredIds)
+      } catch {
+        void 0
+      }
+    }
+
     setState(prevState => {
       let selectedRootLocationIds = prevState.selectedRootLocationIds || []
 
       if (allowedRootLocationIds.size > 0) {
-        const isInitialSet = storedSelectedRootLocationIds.length === 0
+        const isInitialSet =
+          storedSelectedRootLocationIds.length === 0 && hasCompletedFirstSyncRef.current
 
         const validSelectedIds = selectedRootLocationIds.filter(id => allowedRootLocationIds.has(id))
-        if (validSelectedIds.length !== selectedRootLocationIds.length) {
+        const filterWouldWipeSelection =
+          validSelectedIds.length === 0 && storedSelectedRootLocationIds.length > 0
+        if (
+          validSelectedIds.length !== selectedRootLocationIds.length &&
+          !filterWouldWipeSelection
+        ) {
           selectedRootLocationIds = validSelectedIds
         }
 
-        const validStoredIds = storedSelectedRootLocationIds.filter(id => allowedRootLocationIds.has(id))
-        if (validStoredIds.length !== storedSelectedRootLocationIds.length) {
-          setStoredSelectedRootLocationIds(validStoredIds)
+        if (selectedRootLocationIds.length === 0 && validStoredIds.length > 0) {
+          selectedRootLocationIds = validStoredIds
         }
 
         if (isInitialSet && selectedRootLocationIds.length === 0) {
-          selectedRootLocationIds = backendRootLocations.map(loc => loc.id)
+          const backendIds = backendRootLocations.map(loc => loc.id)
+          selectedRootLocationIds = backendIds
         }
       }
 
@@ -232,7 +282,7 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
           avatarUrl: data.me.avatarUrl,
           organizations: data.me.organizations ?? null,
           isOnline: data.me.isOnline ?? null
-        } : undefined,
+        } : prevState.user,
         myTasksCount: data?.me?.tasks?.filter(t => !t.done).length ?? 0,
         totalPatientsCount,
         waitingPatientsCount,
@@ -259,29 +309,52 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
         ),
         rootLocations,
         selectedRootLocationIds,
+        isRootLocationReinitializing: false,
       }
     })
-  }, [data, storedSelectedRootLocationIds, allLocationsData, setStoredSelectedRootLocationIds])
+    hasCompletedFirstSyncRef.current = true
+  }, [effectInputKey, data, storedSelectedRootLocationIds, allLocationsData, setStoredSelectedRootLocationIds])
 
   const lastWrittenLocationIdsRef = useRef<string[] | undefined>(undefined)
 
   useEffect(() => {
-    if (state.selectedRootLocationIds !== undefined) {
-      const currentIds = state.selectedRootLocationIds
-      const lastWritten = lastWrittenLocationIdsRef.current
-      if (JSON.stringify(currentIds) !== JSON.stringify(lastWritten)) {
-        lastWrittenLocationIdsRef.current = currentIds
+    if (state.selectedRootLocationIds === undefined) {
+      return
+    }
+    const currentIds = state.selectedRootLocationIds
+    const skipBecauseStoredHasContent =
+      currentIds.length === 0 && storedSelectedRootLocationIds.length > 0
+    if (skipBecauseStoredHasContent) {
+      return
+    }
+    const lastWritten = lastWrittenLocationIdsRef.current
+    const shouldWrite = JSON.stringify(currentIds) !== JSON.stringify(lastWritten)
+    if (shouldWrite) {
+      lastWrittenLocationIdsRef.current = currentIds
+      try {
         setStoredSelectedRootLocationIds(currentIds)
+      } catch {
+        void 0
       }
     }
-  }, [state.selectedRootLocationIds, setStoredSelectedRootLocationIds])
+  }, [
+    state.selectedRootLocationIds,
+    storedSelectedRootLocationIds.length,
+    setStoredSelectedRootLocationIds,
+  ])
 
   const updateState: Dispatch<SetStateAction<TasksContextState>> = (updater) => {
     setState(prevState => {
       const newState = typeof updater === 'function' ? updater(prevState) : updater
       if (newState.selectedRootLocationIds !== prevState.selectedRootLocationIds) {
-        const idsToStore = newState.selectedRootLocationIds || []
-        setStoredSelectedRootLocationIds(idsToStore)
+        const idsToStore = Array.isArray(newState.selectedRootLocationIds)
+          ? newState.selectedRootLocationIds.filter((id): id is string => typeof id === 'string')
+          : []
+        try {
+          setStoredSelectedRootLocationIds(idsToStore)
+        } catch {
+          void 0
+        }
       }
       return newState
     })
@@ -296,6 +369,19 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
       }}
     >
       {children}
+      {state.isRootLocationReinitializing && (
+        <div
+          className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-surface/90"
+          aria-hidden="true"
+        >
+          <HelpwaveLogo
+            animate="loading"
+            color="currentColor"
+            height={128}
+            width={128}
+          />
+        </div>
+      )}
     </TasksContext.Provider>
   )
 }
