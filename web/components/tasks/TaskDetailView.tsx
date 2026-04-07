@@ -16,9 +16,10 @@ interface TaskDetailViewProps {
   onClose: () => void,
   onListSync?: () => void,
   initialPatientId?: string,
+  initialPatientName?: string,
 }
 
-export const TaskDetailView = ({ taskId, onClose, onListSync, initialPatientId }: TaskDetailViewProps) => {
+export const TaskDetailView = ({ taskId, onClose, onListSync, initialPatientId, initialPatientName }: TaskDetailViewProps) => {
   const translation = useTasksTranslation()
 
   const isEditMode = !!taskId
@@ -95,6 +96,7 @@ export const TaskDetailView = ({ taskId, onClose, onListSync, initialPatientId }
           <TaskDataEditor
             id={taskId}
             initialPatientId={initialPatientId}
+            initialPatientName={initialPatientName}
             onListSync={onListSync}
             onClose={onClose}
           />

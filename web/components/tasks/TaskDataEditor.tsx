@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useRef } from 'react'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import type { CreateTaskInput, UpdateTaskInput, TaskPriority } from '@/api/gql/generated'
 import { PatientState } from '@/api/gql/generated'
@@ -43,6 +43,7 @@ type TaskFormValues = CreateTaskInput & {
 interface TaskDataEditorProps {
   id: null | string,
   initialPatientId?: string,
+  initialPatientName?: string,
   onListSync?: () => void,
   onClose?: () => void,
 }
@@ -50,6 +51,7 @@ interface TaskDataEditorProps {
 export const TaskDataEditor = ({
   id,
   initialPatientId,
+  initialPatientName,
   onListSync,
   onClose,
 }: TaskDataEditorProps) => {
@@ -68,13 +70,14 @@ export const TaskDataEditor = ({
     { skip: !isEditMode }
   )
 
-  const { data: patientsData } = usePatients(
+  const { data: patientsData, refetch: refetchPatients } = usePatients(
     {
       rootLocationIds: selectedRootLocationIds && selectedRootLocationIds.length > 0 ? selectedRootLocationIds : undefined,
       states: [PatientState.Admitted, PatientState.Wait],
     },
     { skip: isEditMode }
   )
+  const hasRetriedMissingInitialPatientRef = useRef(false)
 
   const [createTask, { loading: isCreating }] = useCreateTask()
   const [updateTaskMutate] = useUpdateTask()
@@ -191,7 +194,33 @@ export const TaskDataEditor = ({
     }
   }, [taskData, isEditMode, initialPatientId, taskId, updateForm])
 
-  const patients = patientsData?.patients || []
+  useEffect(() => {
+    hasRetriedMissingInitialPatientRef.current = false
+  }, [initialPatientId])
+
+  const patients = useMemo(() => {
+    const list = patientsData?.patients ?? []
+    if (!initialPatientId || list.some(patient => patient.id === initialPatientId)) {
+      return list
+    }
+    const fallbackName = initialPatientName?.trim()
+    if (!fallbackName) return list
+    return [
+      {
+        id: initialPatientId,
+        name: fallbackName,
+      },
+      ...list,
+    ]
+  }, [patientsData?.patients, initialPatientId, initialPatientName])
+
+  useEffect(() => {
+    if (isEditMode || !initialPatientId || hasRetriedMissingInitialPatientRef.current) return
+    const hasInitialPatient = (patientsData?.patients ?? []).some(patient => patient.id === initialPatientId)
+    if (hasInitialPatient) return
+    hasRetriedMissingInitialPatientRef.current = true
+    refetchPatients()
+  }, [isEditMode, initialPatientId, patientsData?.patients, refetchPatients])
 
   const dueDate = useFormObserverKey({ formStore: form.store, formKey: 'dueDate' })?.value ?? null
   const estimatedTime = useFormObserverKey({ formStore: form.store, formKey: 'estimatedTime' })?.value ?? null
@@ -278,10 +307,15 @@ export const TaskDataEditor = ({
               name="patientId"
               label={translation('patient')}
             >
-              {({ dataProps, focusableElementProps, interactionStates }) => {
+              {({ dataProps: { value, onValueChange, onEditComplete }, focusableElementProps, interactionStates }) => {
                 return (!isEditMode) ? (
                   <Select
-                    {...dataProps as FormFieldDataHandling<string>} {...focusableElementProps} {...interactionStates}
+                    {...focusableElementProps} {...interactionStates}
+                    value={value || ''}
+                    onValueChange={(nextValue) => {
+                      onValueChange?.(nextValue)
+                      onEditComplete?.(nextValue)
+                    }}
                   >
                     <SelectOption value="" label={translation('none') || 'None'} />
                     {patients.map(patient => {
