@@ -221,6 +221,8 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
   const [isHandoverDialogOpen, setIsHandoverDialogOpen] = useState(false)
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false)
+  const [isCreateTaskDraftDirty, setIsCreateTaskDraftDirty] = useState(false)
+  const [isDiscardTaskCreateOpen, setIsDiscardTaskCreateOpen] = useState(false)
   const isOpeningConfirmDialogRef = useRef(false)
   const [isShowFilters, setIsShowFilters] = useState(false)
   const [isShowSorting, setIsShowSorting] = useState(false)
@@ -834,6 +836,20 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
   const hasOpenDrawer = taskDialogState.isOpen || selectedPatientId != null
   const hasFilterPanelOpen = isShowFilters || isShowSorting
 
+  const closeTaskDrawer = useCallback(() => {
+    setTaskDialogState({ isOpen: false })
+    setIsCreateTaskDraftDirty(false)
+    setIsDiscardTaskCreateOpen(false)
+  }, [])
+
+  const requestCloseTaskDrawer = useCallback(() => {
+    if (taskDialogState.isOpen && !taskDialogState.taskId && isCreateTaskDraftDirty) {
+      setIsDiscardTaskCreateOpen(true)
+      return
+    }
+    closeTaskDrawer()
+  }, [taskDialogState.isOpen, taskDialogState.taskId, isCreateTaskDraftDirty, closeTaskDrawer])
+
   useEffect(() => {
     if (typeof document === 'undefined') return
     if (isMobileIOS && hasOpenDrawer) {
@@ -1017,14 +1033,24 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
             titleElement={taskDialogState.taskId ? translation('editTask') : translation('createTask')}
             description={undefined}
             isOpen={taskDialogState.isOpen}
-            onClose={() => setTaskDialogState({ isOpen: false })}
+            onClose={requestCloseTaskDrawer}
           >
             <TaskDetailView
               taskId={taskDialogState.taskId ?? null}
-              onClose={() => setTaskDialogState({ isOpen: false })}
+              onClose={requestCloseTaskDrawer}
               onListSync={onRefetch}
+              onCreateDraftDirtyChange={taskDialogState.isOpen && !taskDialogState.taskId ? setIsCreateTaskDraftDirty : undefined}
             />
           </Drawer>
+          <ConfirmDialog
+            isOpen={isDiscardTaskCreateOpen}
+            onCancel={() => setIsDiscardTaskCreateOpen(false)}
+            onConfirm={closeTaskDrawer}
+            titleElement={translation('discardDraftTitle')}
+            description={translation('discardDraftMessage')}
+            confirmType="negative"
+            buttonOverwrites={[{}, {}, { text: translation('discard') }]}
+          />
           <Drawer
             alignment="right"
             titleElement={translation('editPatient')}

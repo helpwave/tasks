@@ -53,6 +53,7 @@ interface PatientDetailViewProps {
   onSuccess: () => void,
   initialCreateData?: Partial<CreatePatientInput>,
   onOpenSystemSuggestion?: (suggestion: SystemSuggestion, patientName: string) => void,
+  onCreateDraftDirtyChange?: (dirty: boolean) => void,
 }
 
 export const PatientDetailView = ({
@@ -61,6 +62,7 @@ export const PatientDetailView = ({
   onSuccess,
   initialCreateData = {},
   onOpenSystemSuggestion,
+  onCreateDraftDirtyChange,
 }: PatientDetailViewProps) => {
   const translation = useTasksTranslation()
 
@@ -240,6 +242,7 @@ export const PatientDetailView = ({
             initialCreateData={initialCreateData}
             onSuccess={onSuccess}
             onClose={onClose}
+            onCreateDraftDirtyChange={isEditMode ? undefined : onCreateDraftDirtyChange}
           />
         </TabPanel>
 
