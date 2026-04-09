@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from 'react'
-import { Button, Drawer, ExpandableContent, ExpandableHeader, ExpandableRoot } from '@helpwave/hightide'
+import { Button, ConfirmDialog, Drawer, ExpandableContent, ExpandableHeader, ExpandableRoot } from '@helpwave/hightide'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { CheckCircle2, ChevronDown, Circle, Combine, PlusIcon } from 'lucide-react'
 import { TaskCardView } from '@/components/tasks/TaskCardView'
@@ -34,12 +34,31 @@ export const PatientTasksView = ({
   const translation = useTasksTranslation()
   const [taskId, setTaskId] = useState<string | null>(null)
   const [isCreatingTask, setIsCreatingTask] = useState(false)
+  const [isCreateTaskDraftDirty, setIsCreateTaskDraftDirty] = useState(false)
+  const [isDiscardTaskCreateOpen, setIsDiscardTaskCreateOpen] = useState(false)
   const [loadPresetOpen, setLoadPresetOpen] = useState(false)
   const [optimisticTaskUpdates, setOptimisticTaskUpdates] = useState<Map<string, boolean>>(new Map())
 
   const [completeTask] = useCompleteTask()
   const [reopenTask] = useReopenTask()
   const initialPatientName = `${patientData?.patient?.firstname ?? ''} ${patientData?.patient?.lastname ?? ''}`.trim()
+
+  const isTaskCreateDrawer = isCreatingTask && !taskId
+
+  const closeTaskDrawer = useCallback(() => {
+    setTaskId(null)
+    setIsCreatingTask(false)
+    setIsCreateTaskDraftDirty(false)
+    setIsDiscardTaskCreateOpen(false)
+  }, [])
+
+  const requestCloseTaskDrawer = useCallback(() => {
+    if (isTaskCreateDrawer && isCreateTaskDraftDirty) {
+      setIsDiscardTaskCreateOpen(true)
+      return
+    }
+    closeTaskDrawer()
+  }, [isTaskCreateDrawer, isCreateTaskDraftDirty, closeTaskDrawer])
 
   const apiTasksWithOptimistic = useMemo(() => {
     const baseTasks = patientData?.patient?.tasks || []
@@ -177,10 +196,7 @@ export const PatientTasksView = ({
       />
       <Drawer
         isOpen={!!taskId || isCreatingTask}
-        onClose={() => {
-          setTaskId(null)
-          setIsCreatingTask(false)
-        }}
+        onClose={requestCloseTaskDrawer}
         alignment="right"
         titleElement={taskId ? translation('editTask') : translation('createTask')}
         description={undefined}
@@ -192,12 +208,19 @@ export const PatientTasksView = ({
           onListSync={() => {
             onSuccess?.()
           }}
-          onClose={() => {
-            setTaskId(null)
-            setIsCreatingTask(false)
-          }}
+          onClose={requestCloseTaskDrawer}
+          onCreateDraftDirtyChange={isTaskCreateDrawer ? setIsCreateTaskDraftDirty : undefined}
         />
       </Drawer>
+      <ConfirmDialog
+        isOpen={isDiscardTaskCreateOpen}
+        onCancel={() => setIsDiscardTaskCreateOpen(false)}
+        onConfirm={closeTaskDrawer}
+        titleElement={translation('discardDraftTitle')}
+        description={translation('discardDraftMessage')}
+        confirmType="negative"
+        buttonOverwrites={[{}, {}, { text: translation('discard') }]}
+      />
     </>
   )
 }

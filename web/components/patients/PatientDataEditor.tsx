@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import type { FormFieldDataHandling } from '@helpwave/hightide'
 import { FormProvider, Input, DateTimeInput, Select, SelectOption, Textarea, Checkbox, Button, ConfirmDialog, LoadingContainer, useCreateForm, FormField, Visibility, useFormObserverKey, IconButton } from '@helpwave/hightide'
 import { CenteredLoadingLogo } from '@/components/CenteredLoadingLogo'
@@ -22,6 +22,8 @@ import {
 } from '@/data'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { ErrorDialog } from '@/components/ErrorDialog'
+import { useCreateDraftDirty } from '@/hooks/useCreateDraftDirty'
+import { serializePatientCreateDraft } from '@/utils/createDraftSnapshots'
 
 type PatientFormValues = Omit<CreatePatientInput, 'clinicId' | 'teamIds' | 'positionId'> & {
   clinic: NonNullable<GetPatientQuery['patient']>['clinic'] | null,
@@ -34,6 +36,7 @@ interface PatientDataEditorProps {
   initialCreateData?: Partial<CreatePatientInput>,
   onSuccess?: () => void,
   onClose?: () => void,
+  onCreateDraftDirtyChange?: (dirty: boolean) => void,
 }
 
 const getDefaultBirthdate = () => {
@@ -59,6 +62,7 @@ export const PatientDataEditor = ({
   initialCreateData = {},
   onSuccess,
   onClose,
+  onCreateDraftDirtyChange,
 }: PatientDataEditorProps) => {
   const translation = useTasksTranslation()
   const { selectedLocationId, selectedRootLocationIds, rootLocations } = useTasksContext()
@@ -206,6 +210,18 @@ export const PatientDataEditor = ({
   })
 
   const { store, update: updateForm } = form
+
+  const serializePatientDraft = useCallback(
+    (values: PatientFormValues) => serializePatientCreateDraft(values),
+    []
+  )
+
+  useCreateDraftDirty({
+    enabled: !isEditMode && onCreateDraftDirtyChange != null,
+    store,
+    serialize: serializePatientDraft,
+    onDirtyChange: onCreateDraftDirtyChange,
+  })
 
   useEffect(() => {
     if (patientData) {

@@ -1,7 +1,7 @@
 import { useMemo, useState, forwardRef, useImperativeHandle, useEffect, useCallback, useRef, type ReactNode } from 'react'
 import { useMutation } from '@apollo/client/react'
 import type { IdentifierFilterValue, FilterListItem, FilterListPopUpBuilderProps } from '@helpwave/hightide'
-import { Chip, FillerCell, HelpwaveLogo, LoadingContainer, SearchBar, ProgressIndicator, Tooltip, Drawer, TableProvider, TableDisplay, TableColumnSwitcher, IconButton, useLocale, FilterList, SortingList, Button, ExpansionIcon, Visibility } from '@helpwave/hightide'
+import { Chip, ConfirmDialog, FillerCell, HelpwaveLogo, LoadingContainer, SearchBar, ProgressIndicator, Tooltip, Drawer, TableProvider, TableDisplay, TableColumnSwitcher, IconButton, useLocale, FilterList, SortingList, Button, ExpansionIcon, Visibility } from '@helpwave/hightide'
 import clsx from 'clsx'
 import { LayoutGrid, PlusIcon, Table2 } from 'lucide-react'
 import type { LocationType } from '@/api/gql/generated'
@@ -219,6 +219,8 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
   ])
 
   const [isSaveViewDialogOpen, setIsSaveViewDialogOpen] = useState(false)
+  const [isCreatePatientDraftDirty, setIsCreatePatientDraftDirty] = useState(false)
+  const [isDiscardPatientCreateOpen, setIsDiscardPatientCreateOpen] = useState(false)
 
   const [suggestionModalOpen, setSuggestionModalOpen] = useState(false)
   const [suggestionModalSuggestion, setSuggestionModalSuggestion] = useState<SystemSuggestion | null>(null)
@@ -482,10 +484,22 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
     setIsPanelOpen(true)
   }, [])
 
-  const handleClose = () => {
+  const isPatientCreateMode = !selectedPatient && !openedPatientId
+
+  const performPatientDrawerClose = useCallback(() => {
     setIsPanelOpen(false)
     setSelectedPatient(undefined)
     setOpenedPatientId(null)
+    setIsCreatePatientDraftDirty(false)
+    setIsDiscardPatientCreateOpen(false)
+  }, [])
+
+  const handleClose = () => {
+    if (isPanelOpen && isPatientCreateMode && isCreatePatientDraftDirty) {
+      setIsDiscardPatientCreateOpen(true)
+      return
+    }
+    performPatientDrawerClose()
   }
 
   const patientPropertyColumns = useMemo<ColumnDef<PatientViewModel>[]>(
@@ -1081,8 +1095,18 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
               onPatientUpdated?.()
             }}
             onOpenSystemSuggestion={openSuggestionModal}
+            onCreateDraftDirtyChange={isPatientCreateMode ? setIsCreatePatientDraftDirty : undefined}
           />
         </Drawer>
+        <ConfirmDialog
+          isOpen={isDiscardPatientCreateOpen}
+          onCancel={() => setIsDiscardPatientCreateOpen(false)}
+          onConfirm={performPatientDrawerClose}
+          titleElement={translation('discardDraftTitle')}
+          description={translation('discardDraftMessage')}
+          confirmType="negative"
+          buttonOverwrites={[{}, {}, { text: translation('discard') }]}
+        />
         <SystemSuggestionModal
           isOpen={suggestionModalOpen}
           onClose={closeSuggestionModal}

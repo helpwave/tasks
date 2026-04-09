@@ -17,9 +17,10 @@ interface TaskDetailViewProps {
   onListSync?: () => void,
   initialPatientId?: string,
   initialPatientName?: string,
+  onCreateDraftDirtyChange?: (dirty: boolean) => void,
 }
 
-export const TaskDetailView = ({ taskId, onClose, onListSync, initialPatientId, initialPatientName }: TaskDetailViewProps) => {
+export const TaskDetailView = ({ taskId, onClose, onListSync, initialPatientId, initialPatientName, onCreateDraftDirtyChange }: TaskDetailViewProps) => {
   const translation = useTasksTranslation()
 
   const isEditMode = !!taskId
@@ -99,6 +100,7 @@ export const TaskDetailView = ({ taskId, onClose, onListSync, initialPatientId, 
             initialPatientName={initialPatientName}
             onListSync={onListSync}
             onClose={onClose}
+            onCreateDraftDirtyChange={isEditMode ? undefined : onCreateDraftDirtyChange}
           />
         </TabPanel>
         <TabPanel

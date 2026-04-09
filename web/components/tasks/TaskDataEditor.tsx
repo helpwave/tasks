@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useRef } from 'react'
+import { useEffect, useState, useMemo, useRef, useCallback } from 'react'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import type { CreateTaskInput, UpdateTaskInput, TaskPriority } from '@/api/gql/generated'
 import { PatientState } from '@/api/gql/generated'
@@ -31,6 +31,8 @@ import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
 import { UserInfoPopup } from '@/components/UserInfoPopup'
 import { localToUTCWithSameTime, PatientDetailView } from '@/components/patients/PatientDetailView'
 import { ErrorDialog } from '@/components/ErrorDialog'
+import { useCreateDraftDirty } from '@/hooks/useCreateDraftDirty'
+import { serializeTaskCreateDraft } from '@/utils/createDraftSnapshots'
 import clsx from 'clsx'
 import { PriorityUtils } from '@/utils/priority'
 
@@ -62,6 +64,7 @@ interface TaskDataEditorProps {
   initialPatientName?: string,
   onListSync?: () => void,
   onClose?: () => void,
+  onCreateDraftDirtyChange?: (dirty: boolean) => void,
   presetRowEditor?: PresetRowEditorConfig | null,
 }
 
@@ -71,6 +74,7 @@ export const TaskDataEditor = ({
   initialPatientName,
   onListSync,
   onClose,
+  onCreateDraftDirtyChange,
   presetRowEditor,
 }: TaskDataEditorProps) => {
   const translation = useTasksTranslation()
@@ -202,6 +206,18 @@ export const TaskDataEditor = ({
   })
 
   const { update: updateForm } = form
+
+  const serializeTaskDraft = useCallback(
+    (values: TaskFormValues) => serializeTaskCreateDraft(values),
+    []
+  )
+
+  useCreateDraftDirty({
+    enabled: !isEditMode && !isPresetRowMode && onCreateDraftDirtyChange != null,
+    store: form.store,
+    serialize: serializeTaskDraft,
+    onDirtyChange: onCreateDraftDirtyChange,
+  })
 
   useEffect(() => {
     if (!isPresetRowMode || !presetRowEditor) return
