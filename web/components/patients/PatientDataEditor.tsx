@@ -6,7 +6,7 @@ import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import type { CreatePatientInput, LocationNodeType, UpdatePatientInput, GetPatientQuery } from '@/api/gql/generated'
 import { Sex, PatientState } from '@/api/gql/generated'
 import { useLocations, usePatient } from '@/data'
-import { Building2, CheckIcon, Locate, Users, XIcon } from 'lucide-react'
+import { Building2, CheckIcon, Locate, PlusIcon, Users, XIcon } from 'lucide-react'
 import { formatLocationPath, formatLocationPathFromId } from '@/utils/location'
 import { toISODate } from './PatientDetailView'
 import { LocationSelectionDialog } from '@/components/locations/LocationSelectionDialog'
@@ -135,6 +135,7 @@ export const PatientDataEditor = ({
       createPatient({
         variables: { data },
         onCompleted: () => {
+          onCreateDraftDirtyChange?.(false)
           onSuccess?.()
           onClose?.()
         },
@@ -593,6 +594,7 @@ export const PatientDataEditor = ({
               onClick={form.submit}
               disabled={isCreating}
             >
+              <PlusIcon className="size-4" />
               {translation('create')}
             </Button>
           </div>

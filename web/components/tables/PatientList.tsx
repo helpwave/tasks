@@ -1,7 +1,7 @@
 import { useMemo, useState, forwardRef, useImperativeHandle, useEffect, useCallback, useRef, type ReactNode } from 'react'
 import { useMutation } from '@apollo/client/react'
 import type { IdentifierFilterValue, FilterListItem, FilterListPopUpBuilderProps } from '@helpwave/hightide'
-import { Chip, ConfirmDialog, FillerCell, HelpwaveLogo, LoadingContainer, SearchBar, ProgressIndicator, Tooltip, Drawer, TableProvider, TableDisplay, TableColumnSwitcher, IconButton, useLocale, FilterList, SortingList, Button, ExpansionIcon, Visibility } from '@helpwave/hightide'
+import { Chip, FillerCell, HelpwaveLogo, LoadingContainer, SearchBar, ProgressIndicator, Tooltip, Drawer, TableProvider, TableDisplay, TableColumnSwitcher, IconButton, useLocale, FilterList, SortingList, Button, ExpansionIcon, Visibility, ConfirmDialog } from '@helpwave/hightide'
 import clsx from 'clsx'
 import { LayoutGrid, PlusIcon, Table2 } from 'lucide-react'
 import type { LocationType } from '@/api/gql/generated'
@@ -148,6 +148,8 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
   const [selectedPatient, setSelectedPatient] = useState<PatientViewModel | undefined>(undefined)
   const [searchQuery, setSearchQuery] = useState(viewDefaultSearchQuery ?? '')
   const [openedPatientId, setOpenedPatientId] = useState<string | null>(null)
+  const [isCreatePatientDraftDirty, setIsCreatePatientDraftDirty] = useState(false)
+  const [isDiscardPatientCreateOpen, setIsDiscardPatientCreateOpen] = useState(false)
   const [isShowFilters, setIsShowFilters] = useState(false)
   const [isShowSorting, setIsShowSorting] = useState(false)
 
@@ -219,8 +221,6 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
   ])
 
   const [isSaveViewDialogOpen, setIsSaveViewDialogOpen] = useState(false)
-  const [isCreatePatientDraftDirty, setIsCreatePatientDraftDirty] = useState(false)
-  const [isDiscardPatientCreateOpen, setIsDiscardPatientCreateOpen] = useState(false)
 
   const [suggestionModalOpen, setSuggestionModalOpen] = useState(false)
   const [suggestionModalSuggestion, setSuggestionModalSuggestion] = useState<SystemSuggestion | null>(null)
@@ -486,7 +486,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
 
   const isPatientCreateMode = !selectedPatient && !openedPatientId
 
-  const performPatientDrawerClose = useCallback(() => {
+  const closePatientDrawer = useCallback(() => {
     setIsPanelOpen(false)
     setSelectedPatient(undefined)
     setOpenedPatientId(null)
@@ -494,13 +494,13 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
     setIsDiscardPatientCreateOpen(false)
   }, [])
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     if (isPanelOpen && isPatientCreateMode && isCreatePatientDraftDirty) {
       setIsDiscardPatientCreateOpen(true)
       return
     }
-    performPatientDrawerClose()
-  }
+    closePatientDrawer()
+  }, [isPanelOpen, isPatientCreateMode, isCreatePatientDraftDirty, closePatientDrawer])
 
   const patientPropertyColumns = useMemo<ColumnDef<PatientViewModel>[]>(
     () => getPropertyColumnsForEntity<PatientViewModel>(propertyDefinitionsData, PropertyEntity.Patient, false),
@@ -1088,7 +1088,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
         >
           <PatientDetailView
             patientId={selectedPatient?.id ?? openedPatientId ?? undefined}
-            onClose={handleClose}
+            onClose={closePatientDrawer}
             onSuccess={() => {
               embeddedOnRefetch?.()
               void refetch()
@@ -1101,7 +1101,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
         <ConfirmDialog
           isOpen={isDiscardPatientCreateOpen}
           onCancel={() => setIsDiscardPatientCreateOpen(false)}
-          onConfirm={performPatientDrawerClose}
+          onConfirm={closePatientDrawer}
           titleElement={translation('discardDraftTitle')}
           description={translation('discardDraftMessage')}
           confirmType="negative"

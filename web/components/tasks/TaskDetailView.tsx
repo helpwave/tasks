@@ -14,13 +14,14 @@ import { useUpdateTask } from '@/data'
 interface TaskDetailViewProps {
   taskId: string | null,
   onClose: () => void,
+  onCreateSuccessClose?: () => void,
   onListSync?: () => void,
   initialPatientId?: string,
   initialPatientName?: string,
   onCreateDraftDirtyChange?: (dirty: boolean) => void,
 }
 
-export const TaskDetailView = ({ taskId, onClose, onListSync, initialPatientId, initialPatientName, onCreateDraftDirtyChange }: TaskDetailViewProps) => {
+export const TaskDetailView = ({ taskId, onClose, onCreateSuccessClose, onListSync, initialPatientId, initialPatientName, onCreateDraftDirtyChange }: TaskDetailViewProps) => {
   const translation = useTasksTranslation()
 
   const isEditMode = !!taskId
@@ -100,6 +101,7 @@ export const TaskDetailView = ({ taskId, onClose, onListSync, initialPatientId, 
             initialPatientName={initialPatientName}
             onListSync={onListSync}
             onClose={onClose}
+            onCreateSuccessClose={onCreateSuccessClose}
             onCreateDraftDirtyChange={isEditMode ? undefined : onCreateDraftDirtyChange}
           />
         </TabPanel>

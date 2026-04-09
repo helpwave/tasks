@@ -203,7 +203,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
   )
 
   const queryClient = useQueryClient()
-  const { totalPatientsCount, user } = useTasksContext()
+  const { user } = useTasksContext()
   const { refreshingTaskIds } = useRefreshingEntityIds()
   const [optimisticUpdates, setOptimisticUpdates] = useState<Map<string, boolean>>(new Map())
   const [completeTask] = useCompleteTask()
@@ -223,18 +223,15 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false)
   const [isCreateTaskDraftDirty, setIsCreateTaskDraftDirty] = useState(false)
   const [isDiscardTaskCreateOpen, setIsDiscardTaskCreateOpen] = useState(false)
+  const skipNextTaskDrawerGuardRef = useRef(false)
   const isOpeningConfirmDialogRef = useRef(false)
   const [isShowFilters, setIsShowFilters] = useState(false)
   const [isShowSorting, setIsShowSorting] = useState(false)
   const [isMobileIOS, setIsMobileIOS] = useState(false)
 
-  const hasPatients = (totalPatientsCount ?? 0) > 0
-
   useImperativeHandle(ref, () => ({
     openCreate: () => {
-      if (hasPatients) {
-        setTaskDialogState({ isOpen: true })
-      }
+      setTaskDialogState({ isOpen: true })
     },
     openTask: (taskId: string) => {
       setTaskDialogState({ isOpen: true, taskId })
@@ -842,13 +839,29 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
     setIsDiscardTaskCreateOpen(false)
   }, [])
 
+  const closeTaskDrawerFromSubmit = useCallback(() => {
+    skipNextTaskDrawerGuardRef.current = true
+    closeTaskDrawer()
+  }, [closeTaskDrawer])
+
   const requestCloseTaskDrawer = useCallback(() => {
+    if (skipNextTaskDrawerGuardRef.current) {
+      skipNextTaskDrawerGuardRef.current = false
+      closeTaskDrawer()
+      return
+    }
     if (taskDialogState.isOpen && !taskDialogState.taskId && isCreateTaskDraftDirty) {
       setIsDiscardTaskCreateOpen(true)
       return
     }
     closeTaskDrawer()
   }, [taskDialogState.isOpen, taskDialogState.taskId, isCreateTaskDraftDirty, closeTaskDrawer])
+
+  useEffect(() => {
+    if (taskDialogState.isOpen) {
+      skipNextTaskDrawerGuardRef.current = false
+    }
+  }, [taskDialogState.isOpen])
 
   useEffect(() => {
     if (typeof document === 'undefined') return
@@ -963,7 +976,6 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
                     color="primary"
                     className="min-h-11 min-w-11"
                     onClick={() => setTaskDialogState({ isOpen: true })}
-                    disabled={!hasPatients}
                   >
                     <PlusIcon />
                   </IconButton>
@@ -1037,7 +1049,8 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
           >
             <TaskDetailView
               taskId={taskDialogState.taskId ?? null}
-              onClose={requestCloseTaskDrawer}
+              onClose={closeTaskDrawerFromSubmit}
+              onCreateSuccessClose={closeTaskDrawerFromSubmit}
               onListSync={onRefetch}
               onCreateDraftDirtyChange={taskDialogState.isOpen && !taskDialogState.taskId ? setIsCreateTaskDraftDirty : undefined}
             />

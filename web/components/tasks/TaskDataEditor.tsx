@@ -24,7 +24,7 @@ import {
 } from '@helpwave/hightide'
 import { CenteredLoadingLogo } from '@/components/CenteredLoadingLogo'
 import { useTasksContext } from '@/hooks/useTasksContext'
-import { User, Flag, Info, Users, XIcon } from 'lucide-react'
+import { User, Flag, Info, PlusIcon, Users, XIcon } from 'lucide-react'
 import { DateDisplay } from '@/components/Date/DateDisplay'
 import { AssigneeSelect } from './AssigneeSelect'
 import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
@@ -64,6 +64,7 @@ interface TaskDataEditorProps {
   initialPatientName?: string,
   onListSync?: () => void,
   onClose?: () => void,
+  onCreateSuccessClose?: () => void,
   onCreateDraftDirtyChange?: (dirty: boolean) => void,
   presetRowEditor?: PresetRowEditorConfig | null,
 }
@@ -74,6 +75,7 @@ export const TaskDataEditor = ({
   initialPatientName,
   onListSync,
   onClose,
+  onCreateSuccessClose,
   onCreateDraftDirtyChange,
   presetRowEditor,
 }: TaskDataEditorProps) => {
@@ -158,8 +160,13 @@ export const TaskDataEditor = ({
           } as CreateTaskInput & { priority?: TaskPriority | null, estimatedTime?: number | null }
         },
         onCompleted: () => {
+          onCreateDraftDirtyChange?.(false)
           onListSync?.()
-          onClose?.()
+          if (onCreateSuccessClose) {
+            onCreateSuccessClose()
+          } else {
+            onClose?.()
+          }
         },
         onError: (error) => {
           setErrorDialog({ isOpen: true, message: error instanceof Error ? error.message : 'Failed to create task' })
@@ -621,16 +628,17 @@ export const TaskDataEditor = ({
           {!isEditMode && !isPresetRowMode && (
             <div className="flex-none pt-4 mt-auto border-t border-divider flex justify-end gap-2">
               <Button
-                type="submit"
+                onClick={form.submit}
                 disabled={isCreating}
               >
+                <PlusIcon className="size-4" />
                 {isCreating ? 'Creating...' : translation('create')}
               </Button>
             </div>
           )}
           {isPresetRowMode && (
             <div className="flex-none pt-4 mt-auto border-t border-divider flex justify-end gap-2">
-              <Button type="submit" color="primary">
+              <Button onClick={form.submit} color="primary">
                 {translation('taskPresetApplyToRow')}
               </Button>
             </div>
