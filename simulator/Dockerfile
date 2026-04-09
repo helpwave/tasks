@@ -6,7 +6,7 @@ ENV PIP_NO_WARN_ABOUT_ROOT_USER=1
 
 WORKDIR /build
 
-RUN apk add --no-cache gcc=15.2.0-r2 musl-dev=1.2.5-r21 libffi-dev=3.5.2-r0 libressl-dev=4.2.1-r0
+RUN apk add --no-cache gcc=15.2.0-r2 musl-dev=1.2.5-r22 libffi-dev=3.5.2-r0 libressl-dev=4.2.1-r0
 
 COPY requirements.txt /build
 
