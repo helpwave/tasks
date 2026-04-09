@@ -19,3 +19,7 @@ htmlcov/
 # profile pictures
 /web/profile/
 /profile/
+
+# __pycache__
+__pycache__/
+*/__pycache__/
