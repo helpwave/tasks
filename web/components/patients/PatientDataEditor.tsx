@@ -564,12 +564,13 @@ export const PatientDataEditor = ({
           </FormField>
 
           {isEditMode && patientId && patientData && (
-            <div className="pt-6 mt-6 border-t border-divider flex justify-end gap-2">
+            <div className="pt-6 mt-6 border-t border-divider flex w-full min-w-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end sm:items-stretch">
               {patientData.state !== PatientState.Dead && (
                 <Button
                   onClick={() => setIsMarkDeadDialogOpen(true)}
                   color="negative"
                   coloringStyle="outline"
+                  className="w-full min-w-0 max-w-full whitespace-normal text-center leading-snug h-auto min-h-11 py-2.5 sm:w-auto sm:shrink"
                 >
                   {translation('markPatientDead')}
                 </Button>
@@ -578,6 +579,7 @@ export const PatientDataEditor = ({
                 onClick={() => setIsDeleteDialogOpen(true)}
                 color="negative"
                 coloringStyle="outline"
+                className="w-full min-w-0 max-w-full whitespace-normal text-center leading-snug h-auto min-h-11 py-2.5 sm:w-auto sm:shrink"
               >
                 {translation('deletePatient') ?? 'Delete Patient'}
               </Button>
