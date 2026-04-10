@@ -275,10 +275,12 @@ def apply_patient_sorts(
                 else models.Patient.lastname.asc()
             )
         elif key == "name":
-            expr = patient_display_name_expr(models.Patient)
-            order_parts.append(
-                expr.desc().nulls_last() if desc_order else expr.asc().nulls_first()
-            )
+            if desc_order:
+                order_parts.append(models.Patient.lastname.desc().nulls_last())
+                order_parts.append(models.Patient.firstname.desc().nulls_last())
+            else:
+                order_parts.append(models.Patient.lastname.asc().nulls_first())
+                order_parts.append(models.Patient.firstname.asc().nulls_first())
         elif key == "state":
             order_parts.append(
                 _state_order_case().desc()

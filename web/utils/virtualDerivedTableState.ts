@@ -392,7 +392,9 @@ function comparePatientBySortId(
   const cmp = (x: number) => x * dir
 
   if (sortId === 'name') {
-    return cmp(a.name.localeCompare(b.name))
+    const byLast = a.lastname.localeCompare(b.lastname)
+    if (byLast !== 0) return cmp(byLast)
+    return cmp(a.firstname.localeCompare(b.firstname))
   }
   if (sortId === 'state') {
     return cmp(a.state.localeCompare(b.state))
