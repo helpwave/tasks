@@ -41,6 +41,7 @@ function buildEmbeddedPatientsFromTasks(tasks: GetTasksQuery['tasks']): PatientV
       birthdate: new Date(patient.birthdate),
       sex: patient.sex,
       state: patient.state,
+      clinic: patient.clinic,
       position: patient.position,
       openTasksCount: countForAggregate ? open : 0,
       closedTasksCount: countForAggregate ? closed : 0,
