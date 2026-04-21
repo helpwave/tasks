@@ -61,6 +61,7 @@ export type PatientViewModel = {
   name: string,
   firstname: string,
   lastname: string,
+  clinic: GetPatientsQuery['patients'][0]['clinic'] | null,
   position: GetPatientsQuery['patients'][0]['position'],
   openTasksCount: number,
   closedTasksCount: number,
@@ -407,6 +408,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       name: p.name,
       firstname: p.firstname,
       lastname: p.lastname,
+      clinic: p.clinic ?? null,
       birthdate: new Date(p.birthdate),
       sex: p.sex,
       state: p.state,
@@ -580,6 +582,28 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       maxSize: 200,
     },
     {
+      id: 'clinic',
+      header: translation('clinic'),
+      accessorFn: ({ clinic }: PatientViewModel) => clinic?.title,
+      cell: ({ row }: { row: Row<PatientViewModel> }) => {
+        if (refreshingPatientIds.has(row.original.id)) return rowLoadingCell
+        const clinic = row.original.clinic
+        return (
+          <>
+            <span className="print:block hidden">{clinic?.title}</span>
+            <LocationChips
+              locations={clinic ? [{ id: clinic.id, title: clinic.title, kind: clinic.kind as LocationType }] : []}
+              small
+              className="print:hidden"
+            />
+          </>
+        )
+      },
+      minSize: 160,
+      size: 220,
+      maxSize: 300,
+    },
+    {
       id: 'position',
       header: translation('location'),
       accessorFn: ({ position }: PatientViewModel) => position?.title,
@@ -596,7 +620,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       size: 260,
       maxSize: 320,
     },
-    ...(['CLINIC', 'WARD', 'ROOM', 'BED'] as const).map((kind): ColumnDef<PatientViewModel> => ({
+    ...(['WARD', 'ROOM', 'BED'] as const).map((kind): ColumnDef<PatientViewModel> => ({
       id: `location-${kind}`,
       header: translation(LOCATION_KIND_HEADERS[kind] as 'locationClinic' | 'locationWard' | 'locationRoom' | 'locationBed'),
       accessorFn: (row: PatientViewModel) => {
@@ -760,8 +784,8 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       'birthdate': translation('birthdate'),
       'sex': translation('sex'),
       'state': translation('status'),
+      'clinic': translation('clinic'),
       'position': translation('location'),
-      'location-CLINIC': translation('locationClinic'),
       'location-WARD': translation('locationWard'),
       'location-ROOM': translation('locationRoom'),
       'location-BED': translation('locationBed'),
@@ -808,6 +832,12 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
         tags: allPatientStates.map(state => ({ label: translation('patientState', { state: state as string }), tag: state })),
       },
       {
+        id: 'clinic',
+        label: translation('clinic'),
+        dataType: 'text',
+        tags: [],
+      },
+      {
         id: 'sex',
         label: translation('sex'),
         dataType: 'singleTag',
@@ -817,7 +847,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
           { label: translation('diverse'), tag: Sex.Unknown },
         ],
       },
-      ...(['CLINIC', 'WARD', 'ROOM', 'BED'] as const).map((kind): FilterListItem => ({
+      ...(['WARD', 'ROOM', 'BED'] as const).map((kind): FilterListItem => ({
         id: `location-${kind}`,
         label: translation(LOCATION_KIND_HEADERS[kind] as 'locationClinic' | 'locationWard' | 'locationRoom' | 'locationBed'),
         dataType: 'text',

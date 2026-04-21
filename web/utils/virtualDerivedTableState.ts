@@ -271,6 +271,9 @@ function patientMatchesColumnFilter(patient: PatientViewModel, filter: ColumnFil
     }
     return matchesTextOperator(patient.position?.title ?? '', op, fv.parameter.stringValue ?? '')
   }
+  if (id === 'clinic') {
+    return matchesTextOperator(patient.clinic?.title ?? '', op, fv.parameter.stringValue ?? '')
+  }
   if (id === 'tasks') {
     const open = patient.openTasksCount
     const closed = patient.closedTasksCount
@@ -392,7 +395,9 @@ function comparePatientBySortId(
   const cmp = (x: number) => x * dir
 
   if (sortId === 'name') {
-    return cmp(a.name.localeCompare(b.name))
+    const byLast = a.lastname.localeCompare(b.lastname)
+    if (byLast !== 0) return cmp(byLast)
+    return cmp(a.firstname.localeCompare(b.firstname))
   }
   if (sortId === 'state') {
     return cmp(a.state.localeCompare(b.state))
@@ -408,6 +413,9 @@ function comparePatientBySortId(
   }
   if (sortId === 'position') {
     return cmp((a.position?.title ?? '').localeCompare(b.position?.title ?? ''))
+  }
+  if (sortId === 'clinic') {
+    return cmp((a.clinic?.title ?? '').localeCompare(b.clinic?.title ?? ''))
   }
   if (sortId === 'tasks') {
     const ta = a.openTasksCount + a.closedTasksCount

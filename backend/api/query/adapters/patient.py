@@ -48,6 +48,15 @@ def _ensure_position_join(query: Select[Any], ctx: dict[str, Any]) -> tuple[Sele
     return query, ln
 
 
+def _ensure_clinic_join(query: Select[Any], ctx: dict[str, Any]) -> tuple[Select[Any], Any]:
+    if "clinic_node" in ctx:
+        return query, ctx["clinic_node"]
+    ln = aliased(models.LocationNode)
+    ctx["clinic_node"] = ln
+    query = query.outerjoin(ln, models.Patient.clinic_id == ln.id)
+    return query, ln
+
+
 def _parse_property_key(field_key: str) -> str | None:
     if not field_key.startswith("property_"):
         return None
@@ -55,7 +64,6 @@ def _parse_property_key(field_key: str) -> str | None:
 
 
 LOCATION_SORT_KEY_KINDS: dict[str, tuple[str, ...]] = {
-    "location-CLINIC": ("CLINIC", "PRACTICE"),
     "location-WARD": ("WARD",),
     "location-ROOM": ("ROOM",),
     "location-BED": ("BED",),
@@ -63,7 +71,6 @@ LOCATION_SORT_KEY_KINDS: dict[str, tuple[str, ...]] = {
 
 
 LOCATION_SORT_KEY_LABELS: dict[str, str] = {
-    "location-CLINIC": "Clinic",
     "location-WARD": "Ward",
     "location-ROOM": "Room",
     "location-BED": "Bed",
@@ -233,6 +240,14 @@ def apply_patient_filter_clause(
             return query
         return query
 
+    if key == "clinic":
+        query, ln = _ensure_clinic_join(query, ctx)
+        expr = location_title_expr(ln)
+        c = apply_ops_to_column(expr, op, val)
+        if c is not None:
+            query = query.where(c)
+        return query
+
     return query
 
 
@@ -275,10 +290,12 @@ def apply_patient_sorts(
                 else models.Patient.lastname.asc()
             )
         elif key == "name":
-            expr = patient_display_name_expr(models.Patient)
-            order_parts.append(
-                expr.desc().nulls_last() if desc_order else expr.asc().nulls_first()
-            )
+            if desc_order:
+                order_parts.append(models.Patient.lastname.desc().nulls_last())
+                order_parts.append(models.Patient.firstname.desc().nulls_last())
+            else:
+                order_parts.append(models.Patient.lastname.asc().nulls_first())
+                order_parts.append(models.Patient.firstname.asc().nulls_first())
         elif key == "state":
             order_parts.append(
                 _state_order_case().desc()
@@ -303,6 +320,12 @@ def apply_patient_sorts(
             )
         elif key == "position":
             query, ln = _ensure_position_join(query, ctx)
+            t = location_title_expr(ln)
+            order_parts.append(
+                t.desc().nulls_last() if desc_order else t.asc().nulls_first()
+            )
+        elif key == "clinic":
+            query, ln = _ensure_clinic_join(query, ctx)
             t = location_title_expr(ln)
             order_parts.append(
                 t.desc().nulls_last() if desc_order else t.asc().nulls_first()
@@ -470,6 +493,16 @@ def build_patient_queryable_fields_static() -> list[QueryableField]:
             sortable=True,
             sort_directions=sort_directions_for(True),
             searchable=True,
+        ),
+        QueryableField(
+            key="clinic",
+            label="Clinic",
+            kind=QueryableFieldKind.SCALAR,
+            value_type=QueryableValueType.STRING,
+            allowed_operators=str_ops,
+            sortable=True,
+            sort_directions=sort_directions_for(True),
+            searchable=False,
         ),
         QueryableField(
             key="position",

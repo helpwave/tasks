@@ -17,6 +17,7 @@ export function overviewRecentPatientToPatientViewModel(p: OverviewRecentPatient
     birthdate: new Date(p.birthdate),
     sex: p.sex,
     state: p.state,
+    clinic: null,
     position: p.position as PatientViewModel['position'],
     openTasksCount: countForAggregate ? tasks.filter(t => !t.done).length : 0,
     closedTasksCount: countForAggregate ? tasks.filter(t => t.done).length : 0,
