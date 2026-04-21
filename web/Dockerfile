@@ -1,7 +1,12 @@
-FROM node:22-alpine AS base
+ARG NODE_ALPINE_DIGEST="sha256:8ea2348b068a9544dae7317b4f3aafcdc032df1647bb7d768a05a5cad1a7683f"
+
+FROM node:22-alpine@${NODE_ALPINE_DIGEST} AS base
 
 FROM base AS deps
-RUN apk add --no-cache gcompat=1.1.0-r4
+RUN apk add --no-cache \
+    gcompat=1.1.0-r4 \
+    libucontext=1.3.3-r0 \
+    musl-obstack=1.2.3-r2
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
@@ -18,7 +23,12 @@ ENV NODE_ENV=production
 ENV PORT=80
 ENV HOSTNAME="0.0.0.0"
 
-RUN apk add --no-cache libcap=2.77-r0 && \
+RUN apk add --no-cache \
+    libcap=2.78-r0 \
+    libcap-getcap=2.78-r0 \
+    libcap-setcap=2.78-r0 \
+    libcap-utils=2.78-r0 \
+    libcap2=2.78-r0 && \
     setcap 'cap_net_bind_service=+ep' /usr/local/bin/node && \
     addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 tasks && \
