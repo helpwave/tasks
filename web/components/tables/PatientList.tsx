@@ -8,6 +8,7 @@ import type { LocationType } from '@/api/gql/generated'
 import { Sex, PatientState, type GetPatientsQuery, type TaskType, PropertyEntity, FieldType, type QueryableField } from '@/api/gql/generated'
 import { usePropertyDefinitions, usePatientsPaginated, useQueryableFields, useRefreshingEntityIds } from '@/data'
 import { PatientDetailView } from '@/components/patients/PatientDetailView'
+import type { PatientDetailListSuccessHint } from '@/components/patients/patientDetailListHint'
 import { LocationChips } from '@/components/locations/LocationChips'
 import { LocationChipsBySetting } from '@/components/patients/LocationChipsBySetting'
 import { PatientStateChip } from '@/components/patients/PatientStateChip'
@@ -1119,9 +1120,12 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
           <PatientDetailView
             patientId={selectedPatient?.id ?? openedPatientId ?? undefined}
             onClose={closePatientDrawer}
-            onSuccess={() => {
-              embeddedOnRefetch?.()
-              void refetch()
+            onSuccess={(hint?: PatientDetailListSuccessHint) => {
+              const needsRefetch = hint?.needsPatientListRefetch ?? true
+              if (needsRefetch) {
+                embeddedOnRefetch?.()
+                void refetch()
+              }
               onPatientUpdated?.()
             }}
             onOpenSystemSuggestion={openSuggestionModal}

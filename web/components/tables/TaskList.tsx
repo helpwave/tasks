@@ -14,6 +14,7 @@ import { Drawer } from '@helpwave/hightide'
 import { TaskDetailView } from '@/components/tasks/TaskDetailView'
 import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
 import { PatientDetailView } from '@/components/patients/PatientDetailView'
+import type { PatientDetailListSuccessHint } from '@/components/patients/patientDetailListHint'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { UserInfoPopup } from '@/components/UserInfoPopup'
@@ -1075,8 +1076,10 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
               <PatientDetailView
                 patientId={selectedPatientId}
                 onClose={() => setSelectedPatientId(null)}
-                onSuccess={() => {
-                  onRefetch?.()
+                onSuccess={(hint?: PatientDetailListSuccessHint) => {
+                  if (hint?.needsPatientListRefetch ?? true) {
+                    onRefetch?.()
+                  }
                 }}
               />
             )}

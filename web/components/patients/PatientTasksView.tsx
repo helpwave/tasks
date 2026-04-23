@@ -8,11 +8,12 @@ import type { GetPatientQuery } from '@/api/gql/generated'
 import { TaskDetailView } from '@/components/tasks/TaskDetailView'
 import { useCompleteTask, useReopenTask } from '@/data'
 import { LoadTaskPresetDialog } from '@/components/patients/LoadTaskPresetDialog'
+import type { PatientDetailListSuccessHint } from '@/components/patients/patientDetailListHint'
 
 interface PatientTasksViewProps {
   patientId: string,
   patientData: GetPatientQuery | undefined,
-  onSuccess?: () => void,
+  onSuccess?: (hint?: PatientDetailListSuccessHint) => void,
 }
 
 const sortByDueDate = <T extends { dueDate?: string | Date | null }>(tasks: T[]): T[] => {
@@ -63,7 +64,7 @@ export const PatientTasksView = ({
     if (done) {
       completeTask({
         variables: { id: taskId },
-        onCompleted: () => onSuccess?.(),
+        onCompleted: () => onSuccess?.({ needsPatientListRefetch: true }),
         onError: () => {
           setOptimisticTaskUpdates(prev => {
             const next = new Map(prev)
@@ -75,7 +76,7 @@ export const PatientTasksView = ({
     } else {
       reopenTask({
         variables: { id: taskId },
-        onCompleted: () => onSuccess?.(),
+        onCompleted: () => onSuccess?.({ needsPatientListRefetch: true }),
         onError: () => {
           setOptimisticTaskUpdates(prev => {
             const next = new Map(prev)
@@ -190,7 +191,7 @@ export const PatientTasksView = ({
           initialPatientId={isCreatingTask ? patientId : undefined}
           initialPatientName={isCreatingTask ? initialPatientName : undefined}
           onListSync={() => {
-            onSuccess?.()
+            onSuccess?.({ needsPatientListRefetch: true })
           }}
           onClose={() => {
             setTaskId(null)
