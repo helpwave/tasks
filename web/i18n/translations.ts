@@ -31,6 +31,15 @@ export type TasksTranslationEntries = {
   'cancel': string,
   'clear': string,
   'clearCache': string,
+  'clearPropertyColumnActionPatient': string,
+  'clearPropertyColumnActionTask': string,
+  'clearPropertyColumnConfirmButtonPatient': string,
+  'clearPropertyColumnConfirmButtonTask': string,
+  'clearPropertyColumnDialogDescriptionPatient': (values: { propertyName: string, count: number }) => string,
+  'clearPropertyColumnDialogDescriptionTask': (values: { propertyName: string, count: number }) => string,
+  'clearPropertyColumnDialogTitlePatient': string,
+  'clearPropertyColumnDialogTitleTask': string,
+  'clearPropertyColumnTypeNameInstruction': (values: { propertyName: string }) => string,
   'clinic': string,
   'clinics': string,
   'close': string,
@@ -317,6 +326,21 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'cancel': `Abbrechen`,
     'clear': `Löschen`,
     'clearCache': `Cache leeren`,
+    'clearPropertyColumnActionPatient': `Werte dieser Eigenschaft bei gelisteten Patienten leeren`,
+    'clearPropertyColumnActionTask': `Diese Eigenschaft von gelisteten Aufgaben entfernen`,
+    'clearPropertyColumnConfirmButtonPatient': `Eigenschaftswerte leeren`,
+    'clearPropertyColumnConfirmButtonTask': `Eigenschaft von Aufgaben entfernen`,
+    'clearPropertyColumnDialogDescriptionPatient': ({ propertyName, count }): string => {
+      return `Dadurch werden alle Werte der Eigenschaft "${propertyName}" bei ${count} aktuell in dieser Liste geladenen Patienten geleert. Die Eigenschaft bleibt an diesen Patienten bestehen. Nicht geladene Patienten in dieser Liste bleiben unverändert.`
+    },
+    'clearPropertyColumnDialogDescriptionTask': ({ propertyName, count }): string => {
+      return `Dadurch wird die Eigenschaft "${propertyName}" von ${count} aktuell in dieser Liste geladenen Aufgaben dauerhaft entfernt. Nicht geladene Aufgaben in dieser Liste bleiben unverändert.`
+    },
+    'clearPropertyColumnDialogTitlePatient': `Eigenschaftswerte bei Patienten leeren`,
+    'clearPropertyColumnDialogTitleTask': `Eigenschaft von Aufgaben entfernen`,
+    'clearPropertyColumnTypeNameInstruction': ({ propertyName }): string => {
+      return `Zum Bestätigen "${propertyName}" eingeben.`
+    },
     'clinic': `Klinik`,
     'clinics': `Kliniken`,
     'close': `Schließen`,
@@ -717,6 +741,21 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'cancel': `Cancel`,
     'clear': `Clear`,
     'clearCache': `Clear Cache`,
+    'clearPropertyColumnActionPatient': `Clear values for this property on listed patients`,
+    'clearPropertyColumnActionTask': `Remove this property from listed tasks`,
+    'clearPropertyColumnConfirmButtonPatient': `Clear property values`,
+    'clearPropertyColumnConfirmButtonTask': `Remove property from tasks`,
+    'clearPropertyColumnDialogDescriptionPatient': ({ propertyName, count }): string => {
+      return `This will clear all values for the property "${propertyName}" on ${count} patients currently loaded in this list. The property stays attached to those patients. Patients not loaded in this list are not affected.`
+    },
+    'clearPropertyColumnDialogDescriptionTask': ({ propertyName, count }): string => {
+      return `This will permanently remove the property "${propertyName}" from ${count} tasks currently loaded in this list. Tasks not loaded in this list are not affected.`
+    },
+    'clearPropertyColumnDialogTitlePatient': `Clear property values on patients`,
+    'clearPropertyColumnDialogTitleTask': `Remove property from tasks`,
+    'clearPropertyColumnTypeNameInstruction': ({ propertyName }): string => {
+      return `Type "${propertyName}" to confirm.`
+    },
     'clinic': `Clinic`,
     'clinics': `Clinics`,
     'close': `Close`,
@@ -1118,6 +1157,21 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'cancel': `Cancelar`,
     'clear': `Borrar`,
     'clearCache': `Vaciar caché`,
+    'clearPropertyColumnActionPatient': `Clear values for this property on listed patients`,
+    'clearPropertyColumnActionTask': `Remove this property from listed tasks`,
+    'clearPropertyColumnConfirmButtonPatient': `Clear property values`,
+    'clearPropertyColumnConfirmButtonTask': `Remove property from tasks`,
+    'clearPropertyColumnDialogDescriptionPatient': ({ propertyName, count }): string => {
+      return `This will clear all values for the property "${propertyName}" on ${count} patients currently loaded in this list. The property stays attached to those patients. Patients not loaded in this list are not affected.`
+    },
+    'clearPropertyColumnDialogDescriptionTask': ({ propertyName, count }): string => {
+      return `This will permanently remove the property "${propertyName}" from ${count} tasks currently loaded in this list. Tasks not loaded in this list are not affected.`
+    },
+    'clearPropertyColumnDialogTitlePatient': `Clear property values on patients`,
+    'clearPropertyColumnDialogTitleTask': `Remove property from tasks`,
+    'clearPropertyColumnTypeNameInstruction': ({ propertyName }): string => {
+      return `Type "${propertyName}" to confirm.`
+    },
     'clinic': `Clínica`,
     'clinics': `Clínicas`,
     'close': `Cerrar`,
@@ -1518,6 +1572,21 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'cancel': `Annuler`,
     'clear': `Effacer`,
     'clearCache': `Vider le cache`,
+    'clearPropertyColumnActionPatient': `Clear values for this property on listed patients`,
+    'clearPropertyColumnActionTask': `Remove this property from listed tasks`,
+    'clearPropertyColumnConfirmButtonPatient': `Clear property values`,
+    'clearPropertyColumnConfirmButtonTask': `Remove property from tasks`,
+    'clearPropertyColumnDialogDescriptionPatient': ({ propertyName, count }): string => {
+      return `This will clear all values for the property "${propertyName}" on ${count} patients currently loaded in this list. The property stays attached to those patients. Patients not loaded in this list are not affected.`
+    },
+    'clearPropertyColumnDialogDescriptionTask': ({ propertyName, count }): string => {
+      return `This will permanently remove the property "${propertyName}" from ${count} tasks currently loaded in this list. Tasks not loaded in this list are not affected.`
+    },
+    'clearPropertyColumnDialogTitlePatient': `Clear property values on patients`,
+    'clearPropertyColumnDialogTitleTask': `Remove property from tasks`,
+    'clearPropertyColumnTypeNameInstruction': ({ propertyName }): string => {
+      return `Type "${propertyName}" to confirm.`
+    },
     'clinic': `Clinique`,
     'clinics': `Cliniques`,
     'close': `Fermer`,
@@ -1918,6 +1987,21 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'cancel': `Annuleren`,
     'clear': `Wissen`,
     'clearCache': `Cache legen`,
+    'clearPropertyColumnActionPatient': `Clear values for this property on listed patients`,
+    'clearPropertyColumnActionTask': `Remove this property from listed tasks`,
+    'clearPropertyColumnConfirmButtonPatient': `Clear property values`,
+    'clearPropertyColumnConfirmButtonTask': `Remove property from tasks`,
+    'clearPropertyColumnDialogDescriptionPatient': ({ propertyName, count }): string => {
+      return `This will clear all values for the property "${propertyName}" on ${count} patients currently loaded in this list. The property stays attached to those patients. Patients not loaded in this list are not affected.`
+    },
+    'clearPropertyColumnDialogDescriptionTask': ({ propertyName, count }): string => {
+      return `This will permanently remove the property "${propertyName}" from ${count} tasks currently loaded in this list. Tasks not loaded in this list are not affected.`
+    },
+    'clearPropertyColumnDialogTitlePatient': `Clear property values on patients`,
+    'clearPropertyColumnDialogTitleTask': `Remove property from tasks`,
+    'clearPropertyColumnTypeNameInstruction': ({ propertyName }): string => {
+      return `Type "${propertyName}" to confirm.`
+    },
     'clinic': `Kliniek`,
     'clinics': `Klinieken`,
     'close': `Sluiten`,
@@ -2321,6 +2405,21 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'cancel': `Cancelar`,
     'clear': `Limpar`,
     'clearCache': `Limpar cache`,
+    'clearPropertyColumnActionPatient': `Clear values for this property on listed patients`,
+    'clearPropertyColumnActionTask': `Remove this property from listed tasks`,
+    'clearPropertyColumnConfirmButtonPatient': `Clear property values`,
+    'clearPropertyColumnConfirmButtonTask': `Remove property from tasks`,
+    'clearPropertyColumnDialogDescriptionPatient': ({ propertyName, count }): string => {
+      return `This will clear all values for the property "${propertyName}" on ${count} patients currently loaded in this list. The property stays attached to those patients. Patients not loaded in this list are not affected.`
+    },
+    'clearPropertyColumnDialogDescriptionTask': ({ propertyName, count }): string => {
+      return `This will permanently remove the property "${propertyName}" from ${count} tasks currently loaded in this list. Tasks not loaded in this list are not affected.`
+    },
+    'clearPropertyColumnDialogTitlePatient': `Clear property values on patients`,
+    'clearPropertyColumnDialogTitleTask': `Remove property from tasks`,
+    'clearPropertyColumnTypeNameInstruction': ({ propertyName }): string => {
+      return `Type "${propertyName}" to confirm.`
+    },
     'clinic': `Clínica`,
     'clinics': `Clínicas`,
     'close': `Fechar`,

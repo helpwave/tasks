@@ -4,9 +4,9 @@ import type { IdentifierFilterValue, FilterListItem, FilterListPopUpBuilderProps
 import { Chip, FillerCell, HelpwaveLogo, LoadingContainer, SearchBar, ProgressIndicator, Tooltip, Drawer, TableProvider, TableDisplay, TableColumnSwitcher, IconButton, useLocale, FilterList, SortingList, Button, ExpansionIcon, Visibility, ConfirmDialog } from '@helpwave/hightide'
 import clsx from 'clsx'
 import { LayoutGrid, PlusIcon, Table2 } from 'lucide-react'
-import type { LocationType } from '@/api/gql/generated'
+import type { LocationType, PropertyValueInput } from '@/api/gql/generated'
 import { Sex, PatientState, type GetPatientsQuery, type TaskType, PropertyEntity, FieldType, type QueryableField } from '@/api/gql/generated'
-import { usePropertyDefinitions, usePatientsPaginated, useQueryableFields, useRefreshingEntityIds } from '@/data'
+import { usePropertyDefinitions, usePatientsPaginated, useQueryableFields, useRefreshingEntityIds, useUpdatePatient } from '@/data'
 import { PatientDetailView } from '@/components/patients/PatientDetailView'
 import { LocationChips } from '@/components/locations/LocationChips'
 import { LocationChipsBySetting } from '@/components/patients/LocationChipsBySetting'
@@ -55,6 +55,9 @@ import type { ViewParameters } from '@/utils/viewDefinition'
 import { DUMMY_SUGGESTION } from '@/data/mockSystemSuggestions'
 import { SystemSuggestionModal } from '@/components/patients/SystemSuggestionModal'
 import type { SystemSuggestion } from '@/types/systemSuggestion'
+import { PropertyColumnHeader } from '@/components/properties/PropertyColumnHeader'
+import { ClearPropertyColumnDialog } from '@/components/properties/ClearPropertyColumnDialog'
+import { buildPropertyValueInputsExcludingDefinition } from '@/utils/propertyValueInputs'
 
 export type PatientViewModel = {
   id: string,
@@ -70,6 +73,11 @@ export type PatientViewModel = {
   state: PatientState,
   tasks: TaskType[],
   properties?: GetPatientsQuery['patients'][0]['properties'],
+}
+
+type ClearPatientPropertyState = {
+  propertyDefinitionId: string,
+  propertyName: string,
 }
 
 const LOCATION_KIND_HEADERS: Record<LocationKindColumn, string> = {
@@ -153,6 +161,11 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
   const [isDiscardPatientCreateOpen, setIsDiscardPatientCreateOpen] = useState(false)
   const [isShowFilters, setIsShowFilters] = useState(false)
   const [isShowSorting, setIsShowSorting] = useState(false)
+  const [clearPropertyState, setClearPropertyState] = useState<ClearPatientPropertyState | null>(null)
+  const [isClearingProperty, setIsClearingProperty] = useState(false)
+  const [clearPropertyProcessedCount, setClearPropertyProcessedCount] = useState(0)
+  const [clearPropertyError, setClearPropertyError] = useState<string | null>(null)
+  const [updatePatient] = useUpdatePatient()
 
   const [fetchPageIndex, setFetchPageIndex] = useState(0)
   const [listLayout, setListLayout] = useState<'table' | 'card'>(() => (
@@ -509,6 +522,97 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
     [propertyDefinitionsData]
   )
 
+  const clearablePatients = useMemo(() => {
+    if (!clearPropertyState) return []
+    return patients.filter(patient => (patient.properties ?? []).some(
+      property => property.definition.id === clearPropertyState.propertyDefinitionId
+    ))
+  }, [clearPropertyState, patients])
+
+  const handleOpenClearProperty = useCallback((propertyDefinitionId: string, propertyName: string) => {
+    setClearPropertyError(null)
+    setClearPropertyProcessedCount(0)
+    setClearPropertyState({ propertyDefinitionId, propertyName })
+  }, [])
+
+  const handleCloseClearProperty = useCallback(() => {
+    if (isClearingProperty) return
+    setClearPropertyState(null)
+    setClearPropertyProcessedCount(0)
+    setClearPropertyError(null)
+  }, [isClearingProperty])
+
+  const handleConfirmClearProperty = useCallback(async () => {
+    if (!clearPropertyState || isClearingProperty) return
+    const targets = patients.filter(patient => (patient.properties ?? []).some(
+      property => property.definition.id === clearPropertyState.propertyDefinitionId
+    ))
+    setClearPropertyError(null)
+    setClearPropertyProcessedCount(0)
+    setIsClearingProperty(true)
+
+    try {
+      const batchSize = 8
+      for (let index = 0; index < targets.length; index += batchSize) {
+        const chunk = targets.slice(index, index + batchSize)
+        await Promise.all(chunk.map(async (patient) => {
+          const propertyInputs = buildPropertyValueInputsExcludingDefinition(
+            patient.properties,
+            clearPropertyState.propertyDefinitionId
+          )
+          propertyInputs.push({
+            definitionId: clearPropertyState.propertyDefinitionId,
+          } satisfies PropertyValueInput)
+          await updatePatient({
+            variables: {
+              id: patient.id,
+              data: {
+                properties: propertyInputs,
+              },
+            },
+          })
+        }))
+        setClearPropertyProcessedCount(Math.min(index + chunk.length, targets.length))
+      }
+      setClearPropertyState(null)
+      embeddedOnRefetch?.()
+      void refetch()
+      onPatientUpdated?.()
+    } catch (error) {
+      setClearPropertyError(error instanceof Error ? error.message : String(error))
+    } finally {
+      setIsClearingProperty(false)
+    }
+  }, [
+    clearPropertyState,
+    isClearingProperty,
+    patients,
+    updatePatient,
+    embeddedOnRefetch,
+    refetch,
+    onPatientUpdated,
+  ])
+
+  const patientPropertyColumnsWithActions = useMemo<ColumnDef<PatientViewModel>[]>(() => (
+    patientPropertyColumns.map((column) => {
+      const meta = column.meta as { columnType?: string, propertyDefinitionId?: string, columnLabel?: string } | undefined
+      const propertyDefinitionId = meta?.propertyDefinitionId
+      const columnLabel = meta?.columnLabel
+      if (meta?.columnType !== 'PROPERTY' || !propertyDefinitionId || !columnLabel) {
+        return column
+      }
+      const nextColumn = { ...column } as ColumnDef<PatientViewModel>
+      nextColumn.header = () => (
+        <PropertyColumnHeader
+          title={columnLabel}
+          clearActionLabel={translation('clearPropertyColumnActionPatient')}
+          onClear={() => handleOpenClearProperty(propertyDefinitionId, columnLabel)}
+        />
+      )
+      return nextColumn
+    })
+  ), [patientPropertyColumns, translation, handleOpenClearProperty])
+
   const dateFormat = useMemo(() => Intl.DateTimeFormat(locale, {
     year: 'numeric',
     month: '2-digit',
@@ -730,14 +834,14 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       maxSize: 220,
       filterFn: 'date',
     },
-    ...patientPropertyColumns.map((col) => ({
+    ...patientPropertyColumnsWithActions.map((col) => ({
       ...col,
       cell: col.cell
         ? (params: { row: { original: PatientViewModel } }) =>
           refreshingPatientIds.has(params.row.original.id) ? rowLoadingCell : (col.cell as (p: unknown) => React.ReactNode)(params)
         : undefined,
     })),
-  ], [translation, patientPropertyColumns, refreshingPatientIds, rowLoadingCell, dateFormat])
+  ], [translation, patientPropertyColumnsWithActions, refreshingPatientIds, rowLoadingCell, dateFormat])
 
   const propertyFieldTypeByDefId = useMemo(
     () => new Map(propertyDefinitionsData?.propertyDefinitions.map(d => [d.id, d.fieldType]) ?? []),
@@ -753,7 +857,8 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       if (!col.cell) continue
       const isExpandableTextProperty = id.startsWith('property_') &&
         propertyFieldTypeByDefId.get(id.replace('property_', '')) === FieldType.FieldTypeText
-      const headerLabel = typeof col.header === 'string' ? col.header : id
+      const meta = col.meta as { columnLabel?: string } | undefined
+      const headerLabel = typeof col.header === 'string' ? col.header : (meta?.columnLabel ?? id)
       const cell = (col.cell as (p: { row: { original: PatientViewModel } }) => ReactNode)({ row: { original: patient } })
       const propertyId = id.startsWith('property_') ? id.replace('property_', '') : null
       const propertyTextValue = propertyId
@@ -1136,6 +1241,30 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
           description={translation('discardDraftMessage')}
           confirmType="negative"
           buttonOverwrites={[{}, {}, { text: translation('discard') }]}
+        />
+        <ClearPropertyColumnDialog
+          isOpen={clearPropertyState !== null}
+          title={translation('clearPropertyColumnDialogTitlePatient')}
+          description={clearPropertyState
+            ? translation('clearPropertyColumnDialogDescriptionPatient', {
+              propertyName: clearPropertyState.propertyName,
+              count: clearablePatients.length,
+            })
+            : ''}
+          instructionLabel={clearPropertyState
+            ? translation('clearPropertyColumnTypeNameInstruction', {
+              propertyName: clearPropertyState.propertyName,
+            })
+            : ''}
+          confirmLabel={translation('clearPropertyColumnConfirmButtonPatient')}
+          cancelLabel={translation('cancel')}
+          propertyName={clearPropertyState?.propertyName ?? ''}
+          isSubmitting={isClearingProperty}
+          processedCount={clearPropertyProcessedCount}
+          affectedCount={clearablePatients.length}
+          errorMessage={clearPropertyError}
+          onClose={handleCloseClearProperty}
+          onConfirm={() => void handleConfirmClearProperty()}
         />
         <SystemSuggestionModal
           isOpen={suggestionModalOpen}

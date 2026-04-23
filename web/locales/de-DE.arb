@@ -256,6 +256,42 @@
   "refreshing": "Aktualisiere…",
   "removeProperty": "Eigenschaft entfernen",
   "removePropertyConfirmation": "Sind Sie sicher, dass Sie diese Eigenschaft entfernen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
+  "clearPropertyColumnActionTask": "Diese Eigenschaft von gelisteten Aufgaben entfernen",
+  "clearPropertyColumnActionPatient": "Werte dieser Eigenschaft bei gelisteten Patienten leeren",
+  "clearPropertyColumnDialogTitleTask": "Eigenschaft von Aufgaben entfernen",
+  "clearPropertyColumnDialogTitlePatient": "Eigenschaftswerte bei Patienten leeren",
+  "clearPropertyColumnDialogDescriptionTask": "Dadurch wird die Eigenschaft \"{propertyName}\" von {count} aktuell in dieser Liste geladenen Aufgaben dauerhaft entfernt. Nicht geladene Aufgaben in dieser Liste bleiben unverändert.",
+  "@clearPropertyColumnDialogDescriptionTask": {
+    "placeholders": {
+      "propertyName": {
+        "type": "string"
+      },
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "clearPropertyColumnDialogDescriptionPatient": "Dadurch werden alle Werte der Eigenschaft \"{propertyName}\" bei {count} aktuell in dieser Liste geladenen Patienten geleert. Die Eigenschaft bleibt an diesen Patienten bestehen. Nicht geladene Patienten in dieser Liste bleiben unverändert.",
+  "@clearPropertyColumnDialogDescriptionPatient": {
+    "placeholders": {
+      "propertyName": {
+        "type": "string"
+      },
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "clearPropertyColumnTypeNameInstruction": "Zum Bestätigen \"{propertyName}\" eingeben.",
+  "@clearPropertyColumnTypeNameInstruction": {
+    "placeholders": {
+      "propertyName": {
+        "type": "string"
+      }
+    }
+  },
+  "clearPropertyColumnConfirmButtonTask": "Eigenschaft von Aufgaben entfernen",
+  "clearPropertyColumnConfirmButtonPatient": "Eigenschaftswerte leeren",
   "readOnlyView": "Nur lesen",
   "retakeSurvey": "Umfrage erneut durchführen",
   "saveView": "Schnellzugriff speichern",

@@ -152,6 +152,32 @@
   "refreshing": "Atualizando…",
   "removeProperty": "Remover propriedade",
   "removePropertyConfirmation": "Tem certeza de que deseja remover esta propriedade? Esta ação não pode ser desfeita.",
+  "clearPropertyColumnActionTask": "Remove this property from listed tasks",
+  "clearPropertyColumnActionPatient": "Clear values for this property on listed patients",
+  "clearPropertyColumnDialogTitleTask": "Remove property from tasks",
+  "clearPropertyColumnDialogTitlePatient": "Clear property values on patients",
+  "clearPropertyColumnDialogDescriptionTask": "This will permanently remove the property \"{propertyName}\" from {count} tasks currently loaded in this list. Tasks not loaded in this list are not affected.",
+  "@clearPropertyColumnDialogDescriptionTask": {
+    "placeholders": {
+      "propertyName": { "type": "string" },
+      "count": { "type": "number" }
+    }
+  },
+  "clearPropertyColumnDialogDescriptionPatient": "This will clear all values for the property \"{propertyName}\" on {count} patients currently loaded in this list. The property stays attached to those patients. Patients not loaded in this list are not affected.",
+  "@clearPropertyColumnDialogDescriptionPatient": {
+    "placeholders": {
+      "propertyName": { "type": "string" },
+      "count": { "type": "number" }
+    }
+  },
+  "clearPropertyColumnTypeNameInstruction": "Type \"{propertyName}\" to confirm.",
+  "@clearPropertyColumnTypeNameInstruction": {
+    "placeholders": {
+      "propertyName": { "type": "string" }
+    }
+  },
+  "clearPropertyColumnConfirmButtonTask": "Remove property from tasks",
+  "clearPropertyColumnConfirmButtonPatient": "Clear property values",
   "readOnlyView": "Somente leitura",
   "retakeSurvey": "Refazer pesquisa",
   "saveView": "Salvar acesso rápido",
