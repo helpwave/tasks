@@ -10,6 +10,7 @@ import {
 import { PropertyList, type PropertyValue } from '@/components/tables/PropertyList'
 import { TaskDataEditor } from './TaskDataEditor'
 import { useUpdateTask } from '@/data'
+import { buildPropertyValueInputsExcludingDefinition } from '@/utils/propertyValueInputs'
 
 interface TaskDetailViewProps {
   taskId: string | null,
@@ -51,27 +52,11 @@ export const TaskDetailView = ({ taskId, onClose, onCreateSuccessClose, onListSy
   const handlePropertyValueChange = useCallback((definitionId: string, value: PropertyValue | null) => {
     if (!isEditMode || !taskId || !taskData) return
 
-    const currentProperties = taskData.properties || []
-    const propertyInputs: PropertyValueInput[] = []
+    const propertyInputs = buildPropertyValueInputsExcludingDefinition(
+      taskData.properties,
+      definitionId
+    )
 
-    // Add all existing properties except the one being changed
-    for (const prop of currentProperties) {
-      if (prop.definition.id !== definitionId) {
-        propertyInputs.push({
-          definitionId: prop.definition.id,
-          textValue: prop.textValue ?? undefined,
-          numberValue: prop.numberValue ?? undefined,
-          booleanValue: prop.booleanValue ?? undefined,
-          dateValue: prop.dateValue ?? undefined,
-          dateTimeValue: prop.dateTimeValue ?? undefined,
-          selectValue: prop.selectValue ?? undefined,
-          multiSelectValues: prop.multiSelectValues ?? undefined,
-          userValue: (prop as { userValue?: string | null }).userValue ?? undefined,
-        })
-      }
-    }
-
-    // Add the changed property if it's not null
     if (value !== null) {
       const newPropertyInput = convertPropertyValueToInput(definitionId, value)
       if (newPropertyInput) {

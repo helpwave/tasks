@@ -20,6 +20,7 @@ import { PropertyList, type PropertyValue } from '../tables/PropertyList'
 import { useUpdatePatient } from '@/data'
 import { getAdherenceByPatientId, getSuggestionByPatientId } from '@/data/mockSystemSuggestions'
 import type { SystemSuggestion } from '@/types/systemSuggestion'
+import { buildPropertyValueInputsExcludingDefinition } from '@/utils/propertyValueInputs'
 
 export const toISODate = (d: Date | string | null | undefined): string | null => {
   if (!d) return null
@@ -93,27 +94,11 @@ export const PatientDetailView = ({
   const handlePropertyValueChange = useCallback((definitionId: string, value: PropertyValue | null) => {
     if (!isEditMode || !patientId || !patientData) return
 
-    const currentProperties = patientData.properties || []
-    const propertyInputs: PropertyValueInput[] = []
+    const propertyInputs = buildPropertyValueInputsExcludingDefinition(
+      patientData.properties,
+      definitionId
+    )
 
-    // Add all existing properties except the one being changed
-    for (const prop of currentProperties) {
-      if (prop.definition.id !== definitionId) {
-        propertyInputs.push({
-          definitionId: prop.definition.id,
-          textValue: prop.textValue ?? undefined,
-          numberValue: prop.numberValue ?? undefined,
-          booleanValue: prop.booleanValue ?? undefined,
-          dateValue: prop.dateValue ?? undefined,
-          dateTimeValue: prop.dateTimeValue ?? undefined,
-          selectValue: prop.selectValue ?? undefined,
-          multiSelectValues: prop.multiSelectValues ?? undefined,
-          userValue: (prop as { userValue?: string | null }).userValue ?? undefined,
-        })
-      }
-    }
-
-    // Add the changed property if it's not null
     if (value !== null) {
       const newPropertyInput = convertPropertyValueToInput(definitionId, value)
       if (newPropertyInput) {
