@@ -9,6 +9,7 @@ import { useLocations, usePatient } from '@/data'
 import { Building2, CheckIcon, Locate, PlusIcon, Users, XIcon } from 'lucide-react'
 import { formatLocationPath, formatLocationPathFromId } from '@/utils/location'
 import { toISODate } from './PatientDetailView'
+import type { PatientDetailListSuccessHint } from './patientDetailListHint'
 import { LocationSelectionDialog } from '@/components/locations/LocationSelectionDialog'
 import {
   useCreatePatient,
@@ -34,7 +35,7 @@ type PatientFormValues = Omit<CreatePatientInput, 'clinicId' | 'teamIds' | 'posi
 interface PatientDataEditorProps {
   id: null | string,
   initialCreateData?: Partial<CreatePatientInput>,
-  onSuccess?: () => void,
+  onSuccess?: (hint?: PatientDetailListSuccessHint) => void,
   onClose?: () => void,
   onCreateDraftDirtyChange?: (dirty: boolean) => void,
 }
@@ -136,7 +137,7 @@ export const PatientDataEditor = ({
         variables: { data },
         onCompleted: () => {
           onCreateDraftDirtyChange?.(false)
-          onSuccess?.()
+          onSuccess?.({ needsPatientListRefetch: true })
           onClose?.()
         },
         onError: (error) => {
@@ -203,9 +204,10 @@ export const PatientDataEditor = ({
       const samePosition = (data.positionId ?? current.position?.id) === current.position?.id
       const sameDescription = (data.description ?? current.description ?? '') === (current.description ?? '')
       if (sameFirstname && sameLastname && sameBirthdate && sameSex && sameAssignedIds && sameClinic && sameTeamIds && samePosition && sameDescription) return
+      const needsPatientListRefetch = !sameClinic || !sameTeamIds || !samePosition || !sameAssignedIds
       updatePatient({
         variables: { id: patientId, data },
-        onCompleted: () => onSuccess?.(),
+        onCompleted: () => onSuccess?.({ needsPatientListRefetch }),
       })
     }
   })
@@ -412,7 +414,7 @@ export const PatientDataEditor = ({
                 <div className="flex gap-4 flex-wrap">
                   <Button
                     disabled={value === PatientState.Admitted}
-                    onClick={() => admitPatient({ variables: { id: patientId! }, onCompleted: () => onSuccess?.() })}
+                    onClick={() => admitPatient({ variables: { id: patientId! }, onCompleted: () => onSuccess?.({ needsPatientListRefetch: true }) })}
                     color={value === PatientState.Admitted ? 'positive' : 'neutral'}
                   >
                     <Visibility isVisible={value === PatientState.Admitted}>
@@ -432,7 +434,7 @@ export const PatientDataEditor = ({
                   </Button>
                   <Button
                     disabled={value === PatientState.Wait}
-                    onClick={() => waitPatient({ variables: { id: patientId! }, onCompleted: () => onSuccess?.() })}
+                    onClick={() => waitPatient({ variables: { id: patientId! }, onCompleted: () => onSuccess?.({ needsPatientListRefetch: true }) })}
                     color={value === PatientState.Wait ? 'warning' : 'neutral'}
                   >
                     <Visibility isVisible={value === PatientState.Admitted}>
@@ -605,7 +607,7 @@ export const PatientDataEditor = ({
           onCancel={() => setIsMarkDeadDialogOpen(false)}
           onConfirm={() => {
             if (patientId && markPatientDead) {
-              markPatientDead({ variables: { id: patientId }, onCompleted: () => onSuccess?.() })
+              markPatientDead({ variables: { id: patientId }, onCompleted: () => onSuccess?.({ needsPatientListRefetch: true }) })
             }
             setIsMarkDeadDialogOpen(false)
           }}
@@ -619,7 +621,7 @@ export const PatientDataEditor = ({
           onCancel={() => setIsDischargeDialogOpen(false)}
           onConfirm={() => {
             if (patientId && dischargePatient) {
-              dischargePatient({ variables: { id: patientId }, onCompleted: () => onSuccess?.() })
+              dischargePatient({ variables: { id: patientId }, onCompleted: () => onSuccess?.({ needsPatientListRefetch: true }) })
             }
             setIsDischargeDialogOpen(false)
           }}
@@ -636,7 +638,7 @@ export const PatientDataEditor = ({
               deletePatient({
                 variables: { id: patientId },
                 onCompleted: () => {
-                  onSuccess?.()
+                  onSuccess?.({ needsPatientListRefetch: true })
                   onClose?.()
                 },
               })

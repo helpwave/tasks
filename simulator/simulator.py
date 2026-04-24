@@ -1,6 +1,11 @@
 from typing import Optional
 from graphql_client import GraphQLClient
-from config import logger
+from config import (
+    SIMULATOR_INITIAL_MIN_PATIENTS,
+    SIMULATOR_LOOP_SLEEP_SECONDS_MAX,
+    SIMULATOR_LOOP_SLEEP_SECONDS_MIN,
+    logger,
+)
 from location_manager import LocationManager
 from patient_manager import PatientManager
 from task_manager import TaskManager
@@ -55,8 +60,10 @@ class ClinicSimulator:
         self.location_manager.ensure_hospital_structure()
         self.location_manager.print_structure()
 
-        logger.info("Creating initial patients...")
-        while len(self.patient_manager.patient_ids) < 5:
+        logger.info(
+            f"Creating initial patients (target at least {SIMULATOR_INITIAL_MIN_PATIENTS})...",
+        )
+        while len(self.patient_manager.patient_ids) < SIMULATOR_INITIAL_MIN_PATIENTS:
             admit_directly = random.random() < 0.4
             patient_id, diagnosis = self.patient_manager.create_patient(
                 admit_directly=admit_directly
@@ -68,14 +75,14 @@ class ClinicSimulator:
         logger.info("Starting continuous simulation loop...")
 
         actions = [
-            (self._action_create_task, 0.25),
-            (self._action_update_task, 0.20),
-            (self._action_create_patient, 0.15),
-            (self._action_admit_patient, 0.10),
-            (self._action_move_patient, 0.10),
-            (self._action_update_position, 0.08),
-            (self._action_discharge_patient, 0.07),
-            (self._action_add_team, 0.05),
+            (self._action_create_task, 0.32),
+            (self._action_update_task, 0.18),
+            (self._action_create_patient, 0.28),
+            (self._action_admit_patient, 0.06),
+            (self._action_move_patient, 0.06),
+            (self._action_update_position, 0.04),
+            (self._action_discharge_patient, 0.03),
+            (self._action_add_team, 0.03),
         ]
 
         while True:
@@ -86,7 +93,12 @@ class ClinicSimulator:
                 )[0]
 
                 func()
-                time.sleep(random.uniform(2.0, 5.0))
+                time.sleep(
+                    random.uniform(
+                        SIMULATOR_LOOP_SLEEP_SECONDS_MIN,
+                        SIMULATOR_LOOP_SLEEP_SECONDS_MAX,
+                    ),
+                )
 
             except KeyboardInterrupt:
                 logger.info("Simulation stopped by user.")
