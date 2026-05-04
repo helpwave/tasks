@@ -3,11 +3,11 @@ import { useQueryClient } from '@tanstack/react-query'
 import type { FilterListItem } from '@helpwave/hightide'
 import { Button, Checkbox, ConfirmDialog, FilterList, FillerCell, HelpwaveLogo, IconButton, SearchBar, TableColumnSwitcher, TableDisplay, TableProvider, SortingList, ExpansionIcon } from '@helpwave/hightide'
 import clsx from 'clsx'
-import { LayoutGrid, PlusIcon, Table2, UserCheck, Users } from 'lucide-react'
+import { Edit2, LayoutGrid, PlusIcon, Table2, UserCheck, Users } from 'lucide-react'
 import type { IdentifierFilterValue } from '@helpwave/hightide'
 import type { TaskPriority, GetTasksQuery, QueryableField } from '@/api/gql/generated'
 import { FieldType, PropertyEntity } from '@/api/gql/generated'
-import { useAssignTask, useAssignTaskToTeam, useCompleteTask, useReopenTask, useUsers, useLocations, usePropertyDefinitions, useQueryableFields, useRefreshingEntityIds } from '@/data'
+import { useAssignTask, useAssignTaskToTeam, useCompleteTask, useReopenTask, useUsers, useLocations, usePropertyDefinitions, useQueryableFields, useRefreshingEntityIds, useUpdateTask } from '@/data'
 import { AssigneeSelectDialog } from '@/components/tasks/AssigneeSelectDialog'
 import { DateDisplay } from '@/components/Date/DateDisplay'
 import { Drawer } from '@helpwave/hightide'
@@ -31,6 +31,7 @@ import { LIST_PAGE_SIZE } from '@/utils/listPaging'
 import { TaskCardView } from '@/components/tasks/TaskCardView'
 import { RefreshingTaskIdsContext, TaskRowRefreshingGate } from '@/components/tables/TaskRowRefreshingGate'
 import { ExpandableTextBlock } from '@/components/common/ExpandableTextBlock'
+import { InTableTextEditPopUp } from '@/components/tables/in-table-edit/InTableTextEditPopUp'
 
 type TaskAssigneeTableCellProps = {
   assigneeId: string,
@@ -210,6 +211,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
   const [reopenTask] = useReopenTask()
   const [assignTask] = useAssignTask()
   const [assignTaskToTeam] = useAssignTaskToTeam()
+  const [updateTaskMutate] = useUpdateTask()
 
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null)
   const [selectedUserPopupId, setSelectedUserPopupId] = useState<string | null>(null)
@@ -588,7 +590,31 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
               {row.original.priority && (
                 <div className={clsx('w-2 h-2 rounded-full shrink-0', PriorityUtils.toBackgroundColor(row.original.priority as TaskPriority | null | undefined))} />
               )}
-              <span>{row.original.name}</span>
+              <InTableTextEditPopUp
+                value={row.original.name}
+                onUpdate={next => {
+                  const title = next ?? ''
+                  if (title === row.original.name) {
+                    return
+                  }
+                  setOptimisticUpdates(prev => {
+                    const map = new Map(prev)
+                    map.set(row.original.id, true)
+                    return map
+                  })
+                  updateTaskMutate({
+                    variables: { id: row.original.id, data: { title } },
+                  })
+                }}
+                buttonProps={{
+                  className: 'justify-between group gap-x-2 w-full',
+                }}
+              >
+                <span className="truncate">
+                  {row.original.name}
+                </span>
+                <Edit2 className="size-4 min-w-4 group-hover:block hidden"/>
+              </InTableTextEditPopUp>
             </div>
           </TaskRowRefreshingGate>
         ),
