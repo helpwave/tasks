@@ -1,26 +1,41 @@
 import type { ReactNode } from 'react'
 import { useState, type ComponentProps } from 'react'
 import type { ButtonProps } from '@helpwave/hightide'
-import { Button, Input, PopUp, PopUpContext, PopUpOpener, PopUpRoot } from '@helpwave/hightide'
+import { Button, DateTimeInput, PopUp, PopUpContext, PopUpOpener, PopUpRoot } from '@helpwave/hightide'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import clsx from 'clsx'
 
-type InTableTextEditPopUpProps = {
-  value: string | null,
-  onUpdate: (next: string | null) => void,
+function sameMoment(a: Date | null, b: Date | null): boolean {
+  if (a == null && b == null) {
+    return true
+  }
+  if (a == null || b == null) {
+    return false
+  }
+  return a.getTime() === b.getTime()
+}
+
+type InTableDateTimeEditPopUpProps = {
+  value: Date | null,
+  onUpdate: (next: Date | null) => void,
   buttonProps?: ButtonProps,
   children: ReactNode,
+  dateTimeInputProps?: Omit<
+    ComponentProps<typeof DateTimeInput>,
+    'value' | 'onValueChange' | 'onEditComplete'
+  >,
 } & Partial<Pick<ComponentProps<typeof PopUp>, 'options' | 'className'>>
 
-export function InTableTextEditPopUp({
+export function InTableDateTimeEditPopUp({
   value,
   onUpdate,
   buttonProps,
   children,
+  dateTimeInputProps,
   options = { horizontalAlignment: 'afterStart', verticalAlignment: 'afterEnd' },
   className = 'p-2',
-}: InTableTextEditPopUpProps) {
-  const [draft, setDraft] = useState(value)
+}: InTableDateTimeEditPopUpProps) {
+  const [draft, setDraft] = useState<Date | null>(value)
   const translation = useTasksTranslation()
 
   return (
@@ -28,7 +43,7 @@ export function InTableTextEditPopUp({
       onIsOpenChange={open => {
         if (open) {
           setDraft(value)
-        } else if (draft !== value) {
+        } else if (!sameMoment(draft, value)) {
           onUpdate(draft)
         }
       }}
@@ -51,10 +66,15 @@ export function InTableTextEditPopUp({
         }}
       </PopUpOpener>
       <PopUp options={options} className={clsx(className, 'flex-col-2 items-end')} onClick={e => e.stopPropagation()}>
-        <Input
-          value={draft ?? ''}
+        <DateTimeInput
+          mode="dateTime"
+          {...dateTimeInputProps}
+          value={draft}
           onValueChange={next => {
             setDraft(next)
+          }}
+          onEditComplete={v => {
+            setDraft(v)
           }}
         />
         <PopUpContext.Consumer>

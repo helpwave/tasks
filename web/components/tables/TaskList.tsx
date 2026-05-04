@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import type { FilterListItem } from '@helpwave/hightide'
 import { Button, Checkbox, ConfirmDialog, FilterList, FillerCell, HelpwaveLogo, IconButton, SearchBar, TableColumnSwitcher, TableDisplay, TableProvider, SortingList, ExpansionIcon } from '@helpwave/hightide'
 import clsx from 'clsx'
-import { Edit2, LayoutGrid, PlusIcon, Table2, UserCheck, Users } from 'lucide-react'
+import { Edit2, ExternalLink, LayoutGrid, PlusIcon, Table2, UserCheck, Users } from 'lucide-react'
 import type { IdentifierFilterValue } from '@helpwave/hightide'
 import type { TaskPriority, GetTasksQuery, QueryableField } from '@/api/gql/generated'
 import { FieldType, PropertyEntity } from '@/api/gql/generated'
@@ -13,7 +13,7 @@ import { DateDisplay } from '@/components/Date/DateDisplay'
 import { Drawer } from '@helpwave/hightide'
 import { TaskDetailView } from '@/components/tasks/TaskDetailView'
 import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
-import { PatientDetailView } from '@/components/patients/PatientDetailView'
+import { localToUTCWithSameTime, PatientDetailView } from '@/components/patients/PatientDetailView'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { UserInfoPopup } from '@/components/UserInfoPopup'
@@ -32,6 +32,7 @@ import { TaskCardView } from '@/components/tasks/TaskCardView'
 import { RefreshingTaskIdsContext, TaskRowRefreshingGate } from '@/components/tables/TaskRowRefreshingGate'
 import { ExpandableTextBlock } from '@/components/common/ExpandableTextBlock'
 import { InTableTextEditPopUp } from '@/components/tables/in-table-edit/InTableTextEditPopUp'
+import { InTableDateTimeEditPopUp } from './in-table-edit/InTableDateTimeEditPopUp'
 
 type TaskAssigneeTableCellProps = {
   assigneeId: string,
@@ -63,17 +64,20 @@ const TaskAssigneeTableCell = memo(function TaskAssigneeTableCell({
     <>
       <span className="print:block hidden">{printHiddenNameLine}</span>
       <div className="flex-row-2 items-center gap-1.5 flex-wrap min-w-0 print:hidden">
-        <button
-          type="button"
+        <Button
+          color="neutral"
+          size="md"
+          coloringStyle="text"
           onClick={() => onOpenUser(assigneeId)}
           className="flex-row-2 items-center min-w-0 hover:opacity-75 transition-opacity"
         >
           <AvatarStatusComponent
+            size="sm"
             isOnline={isOnline}
             image={image}
           />
           <span className="truncate">{name}</span>
-        </button>
+        </Button>
         {extraCountLabel != null && (
           <span className="text-description text-sm font-medium tabular-nums shrink-0">
             {extraCountLabel}
@@ -544,9 +548,8 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
           const task = row.original
           const displayDone = task.done
           return (
-            <TaskRowRefreshingGate taskId={task.id}>
+            <TaskRowRefreshingGate taskId={task.id} className="flex-row-0 justify-center items-center">
               <div
-                className="relative z-10"
                 onClick={(e) => e.stopPropagation()}
                 onPointerDown={(e) => e.stopPropagation()}
                 onMouseDown={(e) => e.stopPropagation()}
@@ -644,17 +647,38 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
           }
           return (
             <TaskRowRefreshingGate taskId={row.original.id}>
-              <DateDisplay
-                date={row.original.dueDate}
-                mode="absolute"
-                className={clsx(colorClass)}
-              />
+              <InTableDateTimeEditPopUp
+                value={row.original.dueDate}
+                onUpdate={next => {
+                  if (next === row.original.dueDate) {
+                    return
+                  }
+                  setOptimisticUpdates(prev => {
+                    const map = new Map(prev)
+                    map.set(row.original.id, true)
+                    return map
+                  })
+                  updateTaskMutate({
+                    variables: { id: row.original.id, data: { dueDate: next ? localToUTCWithSameTime(next)?.toISOString() : null } },
+                  })
+                }}
+                buttonProps={{
+                  className: 'justify-between group gap-x-2 w-full',
+                }}
+              >
+                <DateDisplay
+                  date={row.original.dueDate}
+                  mode="absolute"
+                  className={clsx(colorClass, 'truncate')}
+                />
+                <Edit2 className="size-4 min-w-4 group-hover:block hidden"/>
+              </InTableDateTimeEditPopUp>
             </TaskRowRefreshingGate>
           )
         },
-        minSize: 220,
-        size: 220,
-        maxSize: 220,
+        minSize: 230,
+        size: 230,
+        maxSize: 230,
         enableResizing: false,
         filterFn: 'date',
       },
@@ -684,9 +708,10 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
                     event.stopPropagation()
                     setSelectedPatientId(data.patient?.id ?? null)
                   }}
-                  className="flex-row-0 justify-start w-fit print:hidden"
+                  className="flex-row-2 justify-between min-w-40 w-fit print:hidden group"
                 >
-                  {data.patient?.name}
+                  <span className="truncate">{data.patient?.name}</span>
+                  <ExternalLink className="size-4 min-w-4 group-hover:block hidden"/>
                 </Button>
               </>
             </TaskRowRefreshingGate>
@@ -766,7 +791,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
       header: translation('updated'),
       accessorFn: (row) => row.updateDate,
       cell: ({ row }) => (
-        <TaskRowRefreshingGate taskId={row.original.id}>
+        <TaskRowRefreshingGate taskId={row.original.id} className="flex-row-0 justify-center items-center">
           <DateDisplay date={row.original.updateDate} mode="absolute" />
         </TaskRowRefreshingGate>
       ),
@@ -792,7 +817,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
     ]
     return colsWithRefreshing
   },
-  [translation, completeTask, reopenTask, showAssignee, taskPropertyColumns, embedded])
+  [embedded, translation, showAssignee, taskPropertyColumns, completeTask, reopenTask, updateTaskMutate])
 
   const taskCardPrimaryColumnIds = useMemo(() => {
     const s = new Set<string>(['done', 'title', 'dueDate', 'patient'])
