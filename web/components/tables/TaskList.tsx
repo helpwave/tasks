@@ -7,7 +7,7 @@ import { LayoutGrid, PlusIcon, Table2, UserCheck, Users } from 'lucide-react'
 import type { IdentifierFilterValue } from '@helpwave/hightide'
 import type { TaskPriority, GetTasksQuery, QueryableField } from '@/api/gql/generated'
 import { FieldType, PropertyEntity } from '@/api/gql/generated'
-import { useAssignTask, useAssignTaskToTeam, useCompleteTask, useReopenTask, useUsers, useLocations, usePropertyDefinitions, useQueryableFields, useRefreshingEntityIds, useUpdateTask } from '@/data'
+import { useAssignTask, useAssignTaskToTeam, useCompleteTask, useReopenTask, useUsers, useLocations, usePropertyDefinitions, useQueryableFields, useRefreshingEntityIds } from '@/data'
 import { AssigneeSelectDialog } from '@/components/tasks/AssigneeSelectDialog'
 import { DateDisplay } from '@/components/Date/DateDisplay'
 import { Drawer } from '@helpwave/hightide'
@@ -33,7 +33,7 @@ import { RefreshingTaskIdsContext, TaskRowRefreshingGate } from '@/components/ta
 import { ExpandableTextBlock } from '@/components/common/ExpandableTextBlock'
 import { PropertyColumnHeader } from '@/components/properties/PropertyColumnHeader'
 import { ClearPropertyColumnDialog } from '@/components/properties/ClearPropertyColumnDialog'
-import { buildPropertyValueInputsExcludingDefinition } from '@/utils/propertyValueInputs'
+import { useTaskPropertyClearDialog } from '@/hooks/useTaskPropertyClearDialog'
 
 type TaskAssigneeTableCellProps = {
   assigneeId: string,
@@ -126,11 +126,6 @@ type TaskDialogState = {
   taskId?: string,
 }
 
-type ClearTaskPropertyState = {
-  propertyDefinitionId: string,
-  propertyName: string,
-}
-
 type TaskListTableState = {
   sorting: SortingState,
   setSorting: Dispatch<SetStateAction<SortingState>>,
@@ -218,7 +213,6 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
   const [reopenTask] = useReopenTask()
   const [assignTask] = useAssignTask()
   const [assignTaskToTeam] = useAssignTaskToTeam()
-  const [updateTask] = useUpdateTask()
 
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null)
   const [selectedUserPopupId, setSelectedUserPopupId] = useState<string | null>(null)
@@ -237,10 +231,6 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
   const [isShowFilters, setIsShowFilters] = useState(false)
   const [isShowSorting, setIsShowSorting] = useState(false)
   const [isMobileIOS, setIsMobileIOS] = useState(false)
-  const [clearPropertyState, setClearPropertyState] = useState<ClearTaskPropertyState | null>(null)
-  const [isClearingProperty, setIsClearingProperty] = useState(false)
-  const [clearPropertyProcessedCount, setClearPropertyProcessedCount] = useState(0)
-  const [clearPropertyError, setClearPropertyError] = useState<string | null>(null)
 
   useImperativeHandle(ref, () => ({
     openCreate: () => {
@@ -470,62 +460,25 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
     [propertyDefinitionsData]
   )
 
+  const {
+    clearPropertyState,
+    isClearingProperty,
+    clearPropertyProcessedCount,
+    clearPropertyError,
+    handleOpenClearProperty,
+    handleCloseClearProperty,
+    handleConfirmClearProperty,
+  } = useTaskPropertyClearDialog({
+    tasks,
+    onRefetch,
+  })
+
   const clearableTasks = useMemo(() => {
     if (!clearPropertyState) return []
     return tasks.filter(task => (task.properties ?? []).some(
       property => property.definition.id === clearPropertyState.propertyDefinitionId
     ))
   }, [clearPropertyState, tasks])
-
-  const handleOpenClearProperty = useCallback((propertyDefinitionId: string, propertyName: string) => {
-    setClearPropertyError(null)
-    setClearPropertyProcessedCount(0)
-    setClearPropertyState({ propertyDefinitionId, propertyName })
-  }, [])
-
-  const handleCloseClearProperty = useCallback(() => {
-    if (isClearingProperty) return
-    setClearPropertyState(null)
-    setClearPropertyProcessedCount(0)
-    setClearPropertyError(null)
-  }, [isClearingProperty])
-
-  const handleConfirmClearProperty = useCallback(async () => {
-    if (!clearPropertyState || isClearingProperty) return
-    const targets = tasks.filter(task => (task.properties ?? []).some(
-      property => property.definition.id === clearPropertyState.propertyDefinitionId
-    ))
-    setClearPropertyError(null)
-    setClearPropertyProcessedCount(0)
-    setIsClearingProperty(true)
-
-    try {
-      const batchSize = 8
-      for (let index = 0; index < targets.length; index += batchSize) {
-        const chunk = targets.slice(index, index + batchSize)
-        await Promise.all(chunk.map(async (task) => {
-          await updateTask({
-            variables: {
-              id: task.id,
-              data: {
-                properties: buildPropertyValueInputsExcludingDefinition(
-                  task.properties,
-                  clearPropertyState.propertyDefinitionId
-                ),
-              },
-            },
-          })
-        }))
-        setClearPropertyProcessedCount(Math.min(index + chunk.length, targets.length))
-      }
-      setClearPropertyState(null)
-      onRefetch?.()
-    } catch (error) {
-      setClearPropertyError(error instanceof Error ? error.message : String(error))
-    } finally {
-      setIsClearingProperty(false)
-    }
-  }, [clearPropertyState, isClearingProperty, tasks, updateTask, onRefetch])
 
   const taskPropertyColumnsWithActions = useMemo<ColumnDef<TaskViewModel>[]>(() => (
     taskPropertyColumns.map((column) => {

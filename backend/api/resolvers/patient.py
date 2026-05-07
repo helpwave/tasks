@@ -16,7 +16,7 @@ from api.resolvers.base import BaseMutationResolver, BaseSubscriptionResolver
 from api.services.authorization import AuthorizationService
 from api.services.checksum import validate_checksum
 from api.services.location import LocationService
-from api.services.notifications import notify_entity_deleted
+from api.services.notifications import notify_entity_deleted, notify_entity_update
 from api.services.property import PropertyService
 from api.types.patient import PatientType
 from api.errors import raise_forbidden
@@ -26,6 +26,7 @@ from api.query.patient_location_scope import (
     build_location_descendants_cte,
 )
 from database import models
+from graphql import GraphQLError
 from sqlalchemy import func, select
 from sqlalchemy.orm import aliased, selectinload
 from sqlalchemy.sql import Select
@@ -350,6 +351,56 @@ class PatientMutation(BaseMutationResolver[models.Patient]):
     @staticmethod
     def _get_location_service(db) -> LocationService:
         return LocationService(db)
+
+    @strawberry.mutation
+    @audit_log("clear_patient_property")
+    async def clear_patient_property(
+        self,
+        info: Info,
+        property_definition_id: strawberry.ID,
+        patient_ids: list[strawberry.ID],
+    ) -> int:
+        if not patient_ids:
+            return 0
+
+        unique_patient_ids = list(dict.fromkeys(str(patient_id) for patient_id in patient_ids))
+        db = info.context.db
+        auth_service = AuthorizationService(db)
+        result = await db.execute(
+            select(models.Patient)
+            .where(models.Patient.id.in_(unique_patient_ids))
+            .where(models.Patient.deleted.is_(False))
+            .options(
+                selectinload(models.Patient.assigned_locations),
+                selectinload(models.Patient.teams),
+            )
+        )
+        patients = result.scalars().all()
+
+        if len(patients) != len(unique_patient_ids):
+            raise GraphQLError(
+                "One or more patients were not found.",
+                extensions={"code": "BAD_REQUEST"},
+            )
+
+        for patient in patients:
+            if not await auth_service.can_access_patient(
+                info.context.user, patient, info.context
+            ):
+                raise_forbidden()
+
+        delete_result = await db.execute(
+            models.PropertyValue.__table__.delete().where(
+                models.PropertyValue.definition_id == str(property_definition_id),
+                models.PropertyValue.patient_id.in_(unique_patient_ids),
+            )
+        )
+        await db.commit()
+
+        for patient in patients:
+            await notify_entity_update("patient", patient.id)
+
+        return int(delete_result.rowcount or 0)
 
     @strawberry.mutation
     @audit_log("create_patient")
