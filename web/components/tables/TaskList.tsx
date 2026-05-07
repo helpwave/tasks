@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import type { FilterListItem } from '@helpwave/hightide'
 import { Button, Checkbox, ConfirmDialog, FilterList, FillerCell, HelpwaveLogo, IconButton, SearchBar, TableColumnSwitcher, TableDisplay, TableProvider, SortingList, ExpansionIcon } from '@helpwave/hightide'
 import clsx from 'clsx'
-import { Edit2, ExternalLink, LayoutGrid, PlusIcon, Table2, UserCheck, Users } from 'lucide-react'
+import { Edit2, ExternalLink, LayoutGrid, PlusIcon, Table2, UserCheck } from 'lucide-react'
 import type { IdentifierFilterValue } from '@helpwave/hightide'
 import type { TaskPriority, GetTasksQuery, QueryableField } from '@/api/gql/generated'
 import { FieldType, PropertyEntity } from '@/api/gql/generated'
@@ -33,6 +33,7 @@ import { RefreshingTaskIdsContext, TaskRowRefreshingGate } from '@/components/ta
 import { ExpandableTextBlock } from '@/components/common/ExpandableTextBlock'
 import { InTableTextEditPopUp } from '@/components/tables/in-table-edit/InTableTextEditPopUp'
 import { InTableDateTimeEditPopUp } from './in-table-edit/InTableDateTimeEditPopUp'
+import { AssigneeSelect } from '../tasks/AssigneeSelect'
 
 type TaskAssigneeTableCellProps = {
   assigneeId: string,
@@ -733,50 +734,45 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
         cell: ({ row }) => {
           const assignee = row.original.assignee
           const assigneeTeam = row.original.assigneeTeam
-          if (!assignee && !assigneeTeam) {
-            return (
-              <TaskRowRefreshingGate taskId={row.original.id}>
-                <span className="text-description">
-                  {translation('notAssigned')}
-                </span>
-              </TaskRowRefreshingGate>
-            )
-          }
-
-          if (assigneeTeam) {
-            return (
-              <TaskRowRefreshingGate taskId={row.original.id}>
-                <div className="flex-row-2 items-center">
-                  <Users className="size-5 text-description print:hidden" />
-                  <span>{assigneeTeam.title}</span>
-                </div>
-              </TaskRowRefreshingGate>
-            )
-          }
-
-          if (assignee) {
-            const extra = row.original.additionalAssigneeCount ?? 0
-            const printLine = `${assignee.name}${extra > 0 ? ` ${translation('additionalAssigneesCount', { count: extra })}` : ''}`
-            return (
-              <TaskRowRefreshingGate taskId={row.original.id}>
-                <TaskAssigneeTableCell
-                  assigneeId={assignee.id}
-                  avatarURL={assignee.avatarURL}
-                  name={assignee.name}
-                  isOnline={assignee.isOnline ?? null}
-                  onOpenUser={setSelectedUserPopupId}
-                  printHiddenNameLine={printLine}
-                  extraCountLabel={extra > 0 ? translation('additionalAssigneesCount', { count: extra }) : null}
-                />
-              </TaskRowRefreshingGate>
-            )
-          }
 
           return (
-            <TaskRowRefreshingGate taskId={row.original.id}>
-              <span className="text-description">
-                {translation('notAssigned')}
-              </span>
+            <TaskRowRefreshingGate taskId={row.original.id} onClick={(e) => {e.stopPropagation()}}>
+              <AssigneeSelect
+                value={assigneeTeam ? `team:${assigneeTeam?.id}` : assignee?.id ?? ''}
+                onValueChanged={(value) => {
+                  setOptimisticUpdates(prev => {
+                    const map = new Map(prev)
+                    map.set(row.original.id, true)
+                    return map
+                  })
+                  let data: { assigneeIds: string[], assigneeTeamId: string | null } = { assigneeIds: [], assigneeTeamId: null }
+                  if (!value) {
+                    data = { assigneeIds: [], assigneeTeamId: null }
+                  }
+                  if (value.startsWith('team:')) {
+                    data = { assigneeIds: [], assigneeTeamId: value.replace('team:', '') }
+                  } else {
+                    data = { assigneeIds: [value], assigneeTeamId: null }
+                  }
+                  updateTaskMutate({
+                    variables: { id: row.original.id, data },
+                  })
+                }}
+                onDialogClose={() => {
+                  setOptimisticUpdates(prev => {
+                    const map = new Map(prev)
+                    map.set(row.original.id, true)
+                    return map
+                  })
+                }}
+                allowTeams={true}
+                allowUnassigned={true}
+                id={`assignee-select-${row.original.id}`}
+                className="flex-row-2 justify-between min-w-40 w-fit print:hidden group"
+              >
+                <span className="truncate">{assignee?.name}</span>
+                <ExternalLink className="size-4 min-w-4 group-hover:block hidden"/>
+              </AssigneeSelect>
             </TaskRowRefreshingGate>
           )
         },
