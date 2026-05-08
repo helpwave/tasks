@@ -15,6 +15,7 @@ import { PatientStateChip } from '@/components/patients/PatientStateChip'
 import { LocationChips } from '@/components/locations/LocationChips'
 import { PatientTasksView } from './PatientTasksView'
 import { PatientDataEditor } from './PatientDataEditor'
+import type { PatientDetailListSuccessHint } from './patientDetailListHint'
 import { AuditLogTimeline } from '@/components/AuditLogTimeline'
 import { PropertyList, type PropertyValue } from '../tables/PropertyList'
 import { useUpdatePatient } from '@/data'
@@ -50,7 +51,7 @@ export const localToUTCWithSameTime = (d: Date | null | undefined): Date | null 
 interface PatientDetailViewProps {
   patientId?: string,
   onClose: () => void,
-  onSuccess: () => void,
+  onSuccess?: (hint?: PatientDetailListSuccessHint) => void,
   initialCreateData?: Partial<CreatePatientInput>,
   onOpenSystemSuggestion?: (suggestion: SystemSuggestion, patientName: string) => void,
   onCreateDraftDirtyChange?: (dirty: boolean) => void,
@@ -128,7 +129,7 @@ export const PatientDetailView = ({
           properties: propertyInputs,
         },
       },
-      onCompleted: () => onSuccess(),
+      onCompleted: () => onSuccess?.({ needsPatientListRefetch: false }),
     })
   }, [isEditMode, patientId, patientData, convertPropertyValueToInput, updatePatient, onSuccess])
 

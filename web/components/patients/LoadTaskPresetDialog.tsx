@@ -14,6 +14,7 @@ import { useApplyTaskGraph, useTaskPresets } from '@/data'
 import { GetPatientDocument, type TaskPresetsQuery } from '@/api/gql/generated'
 import { useSystemSuggestionTasks } from '@/context/SystemSuggestionTasksContext'
 import { presetGraphToTaskGraphInput } from '@/utils/taskGraph'
+import type { PatientDetailListSuccessHint } from '@/components/patients/patientDetailListHint'
 
 type PresetRow = TaskPresetsQuery['taskPresets'][number]
 
@@ -21,7 +22,7 @@ type LoadTaskPresetDialogProps = {
   isOpen: boolean,
   onClose: () => void,
   patientId: string,
-  onSuccess?: () => void,
+  onSuccess?: (hint?: PatientDetailListSuccessHint) => void,
 }
 
 export function LoadTaskPresetDialog({
@@ -110,7 +111,7 @@ export function LoadTaskPresetDialog({
       showToast(translation('tasksCreatedFromPreset'))
       setConfirmOpen(false)
       onClose()
-      onSuccess?.()
+      onSuccess?.({ needsPatientListRefetch: true })
     },
     [
       applyTaskGraph,

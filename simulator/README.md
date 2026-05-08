@@ -42,6 +42,9 @@ INFLUXDB_URL=http://localhost:8086
 INFLUXDB_TOKEN=tasks-token-secret
 INFLUXDB_ORG=tasks
 INFLUXDB_BUCKET=audit
+SIMULATOR_INITIAL_MIN_PATIENTS=25
+SIMULATOR_LOOP_SLEEP_SECONDS_MIN=0.12
+SIMULATOR_LOOP_SLEEP_SECONDS_MAX=0.45
 ```
 
 ### Authentication Modes
@@ -110,16 +113,16 @@ The simulator is split into multiple modules:
    - Non-Interactive: Direct Grant flow (if USE_DIRECT_GRANT=true and USERNAME/PASSWORD are set) - no browser required
 2. Loads current state (locations, patients, tasks, users)
 3. Displays the location structure hierarchy
-4. Creates initial patients (some in waiting room, some admitted)
-5. Continuously performs random actions:
-   - Create tasks (25%)
-   - Update tasks (20%)
-   - Create patients (15%)
-   - Admit patients (10%)
-   - Move patients (10%)
-   - Update positions (8%)
-   - Discharge patients (7%)
-   - Add teams (5%)
+4. Seeds at least `SIMULATOR_INITIAL_MIN_PATIENTS` patients (default 25; some waiting, some admitted), each with diagnosis-based treatment tasks
+5. Continuously performs random actions (approximate weights):
+   - Create tasks (32%)
+   - Update tasks (18%)
+   - Create patients (28%)
+   - Admit patients (6%)
+   - Move patients (6%)
+   - Update positions (4%)
+   - Discharge patients (3%)
+   - Add teams (3%)
 
 ## Diagnosis Types
 
