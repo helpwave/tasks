@@ -104,6 +104,7 @@ enum LocationType {
 type Mutation {
   createPatient(data: CreatePatientInput!): PatientType!
   updatePatient(id: ID!, data: UpdatePatientInput!): PatientType!
+  clearPatientProperty(propertyDefinitionId: ID!, patientIds: [ID!]!): Int!
   deletePatient(id: ID!): Boolean!
   admitPatient(id: ID!): PatientType!
   dischargePatient(id: ID!): PatientType!
@@ -111,6 +112,7 @@ type Mutation {
   waitPatient(id: ID!): PatientType!
   createTask(data: CreateTaskInput!): TaskType!
   updateTask(id: ID!, data: UpdateTaskInput!): TaskType!
+  clearTaskProperty(propertyDefinitionId: ID!, taskIds: [ID!]!): Int!
   addTaskAssignee(id: ID!, userId: ID!): TaskType!
   removeTaskAssignee(id: ID!, userId: ID!): TaskType!
   assignTaskToTeam(id: ID!, teamId: ID!): TaskType!

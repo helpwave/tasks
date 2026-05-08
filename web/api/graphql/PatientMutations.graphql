@@ -102,6 +102,10 @@ mutation UpdatePatient($id: ID!, $data: UpdatePatientInput!) {
   }
 }
 
+mutation ClearPatientProperty($propertyDefinitionId: ID!, $patientIds: [ID!]!) {
+  clearPatientProperty(propertyDefinitionId: $propertyDefinitionId, patientIds: $patientIds)
+}
+
 mutation AdmitPatient($id: ID!) {
   admitPatient(id: $id) {
     id
