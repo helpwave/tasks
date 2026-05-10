@@ -1,4 +1,4 @@
-import { useMemo, useState, forwardRef, useImperativeHandle, useEffect, useRef, useCallback, memo, type ReactNode } from 'react'
+import { useMemo, useState, forwardRef, useImperativeHandle, useEffect, useRef, useCallback, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import type { FilterListItem } from '@helpwave/hightide'
 import { Button, Checkbox, ConfirmDialog, FilterList, FillerCell, HelpwaveLogo, IconButton, SearchBar, TableColumnSwitcher, TableDisplay, TableProvider, SortingList, ExpansionIcon } from '@helpwave/hightide'
@@ -12,7 +12,6 @@ import { AssigneeSelectDialog } from '@/components/tasks/AssigneeSelectDialog'
 import { DateDisplay } from '@/components/Date/DateDisplay'
 import { Drawer } from '@helpwave/hightide'
 import { TaskDetailView } from '@/components/tasks/TaskDetailView'
-import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
 import { localToUTCWithSameTime, PatientDetailView } from '@/components/patients/PatientDetailView'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { useTasksContext } from '@/hooks/useTasksContext'
@@ -24,7 +23,8 @@ import { useStableSerializedList } from '@/hooks/useStableSerializedList'
 import { columnIdsFromColumnDefs, sanitizeColumnOrderForKnownColumns } from '@/utils/columnOrder'
 import { DueDateUtils } from '@/utils/dueDate'
 import { PriorityUtils } from '@/utils/priority'
-import { getPropertyColumnsForEntity } from '@/utils/propertyColumn'
+import { getPropertyColumnsForEntity, type PropertyColumnValueChangedPayload } from '@/utils/propertyColumn'
+import { mergePropertyChangeIntoInputs } from '@/utils/propertyUpdateMerge'
 import { useColumnVisibilityWithPropertyDefaults } from '@/hooks/usePropertyColumnVisibility'
 import { queryableFieldsToFilterListItems, queryableFieldsToSortingListItems, type QueryableChoiceTagLabelResolver } from '@/utils/queryableFilterList'
 import { LIST_PAGE_SIZE } from '@/utils/listPaging'
@@ -34,60 +34,6 @@ import { ExpandableTextBlock } from '@/components/common/ExpandableTextBlock'
 import { InTableTextEditPopUp } from '@/components/tables/in-table-edit/InTableTextEditPopUp'
 import { InTableDateTimeEditPopUp } from './in-table-edit/InTableDateTimeEditPopUp'
 import { AssigneeSelect } from '../tasks/AssigneeSelect'
-
-type TaskAssigneeTableCellProps = {
-  assigneeId: string,
-  avatarURL: string | null | undefined,
-  name: string,
-  isOnline: boolean | null,
-  onOpenUser: (id: string) => void,
-  printHiddenNameLine: string,
-  extraCountLabel: string | null,
-}
-
-const TaskAssigneeTableCell = memo(function TaskAssigneeTableCell({
-  assigneeId,
-  avatarURL,
-  name,
-  isOnline,
-  onOpenUser,
-  printHiddenNameLine,
-  extraCountLabel,
-}: TaskAssigneeTableCellProps) {
-  const image = useMemo(
-    () => ({
-      avatarUrl: avatarURL || 'https://cdn.helpwave.de/boringavatar.svg',
-      alt: name,
-    }),
-    [avatarURL, name]
-  )
-  return (
-    <>
-      <span className="print:block hidden">{printHiddenNameLine}</span>
-      <div className="flex-row-2 items-center gap-1.5 flex-wrap min-w-0 print:hidden">
-        <Button
-          color="neutral"
-          size="md"
-          coloringStyle="text"
-          onClick={() => onOpenUser(assigneeId)}
-          className="flex-row-2 items-center min-w-0 hover:opacity-75 transition-opacity"
-        >
-          <AvatarStatusComponent
-            size="sm"
-            isOnline={isOnline}
-            image={image}
-          />
-          <span className="truncate">{name}</span>
-        </Button>
-        {extraCountLabel != null && (
-          <span className="text-description text-sm font-medium tabular-nums shrink-0">
-            {extraCountLabel}
-          </span>
-        )}
-      </div>
-    </>
-  )
-})
 
 function taskListDataSyncKey(tasks: TaskViewModel[]): string {
   return tasks.map(t => `${t.id}:${t.done}:${t.updateDate.getTime()}`).join('\0')
@@ -459,9 +405,35 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
     setIsHandoverDialogOpen(false)
   }
 
+  const handleTaskPropertyValueChanged = useCallback(
+    (payload: PropertyColumnValueChangedPayload<TaskViewModel>) => {
+      const merged = mergePropertyChangeIntoInputs(payload.row.properties, payload.definitionId, payload.input)
+      updateTaskMutate({
+        variables: {
+          id: payload.row.id,
+          data: { properties: merged },
+        },
+      })
+      setOptimisticUpdates(prev => {
+        const next = new Map(prev)
+        next.set(payload.row.id, true)
+        return next
+      })
+    },
+    [updateTaskMutate]
+  )
+
   const taskPropertyColumns = useMemo<ColumnDef<TaskViewModel>[]>(
-    () => getPropertyColumnsForEntity<TaskViewModel>(propertyDefinitionsData, PropertyEntity.Task),
-    [propertyDefinitionsData]
+    () => getPropertyColumnsForEntity<TaskViewModel>(
+      propertyDefinitionsData,
+      PropertyEntity.Task,
+      undefined,
+      {
+        allowUpdates: !embedded,
+        onValueChanged: handleTaskPropertyValueChanged,
+      }
+    ),
+    [propertyDefinitionsData, embedded, handleTaskPropertyValueChanged]
   )
 
   const propertyFieldTypeByDefId = useMemo(
@@ -731,51 +703,43 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
         id: 'assignee',
         header: translation('assignedTo'),
         accessorFn: ({ assignee, assigneeTeam }) => assignee?.name || assigneeTeam?.title,
-        cell: ({ row }) => {
-          const assignee = row.original.assignee
-          const assigneeTeam = row.original.assigneeTeam
-
-          return (
-            <TaskRowRefreshingGate taskId={row.original.id} onClick={(e) => {e.stopPropagation()}}>
-              <AssigneeSelect
-                value={assigneeTeam ? `team:${assigneeTeam?.id}` : assignee?.id ?? ''}
-                onValueChanged={(value) => {
-                  setOptimisticUpdates(prev => {
-                    const map = new Map(prev)
-                    map.set(row.original.id, true)
-                    return map
-                  })
-                  let data: { assigneeIds: string[], assigneeTeamId: string | null } = { assigneeIds: [], assigneeTeamId: null }
-                  if (!value) {
-                    data = { assigneeIds: [], assigneeTeamId: null }
-                  }
-                  if (value.startsWith('team:')) {
-                    data = { assigneeIds: [], assigneeTeamId: value.replace('team:', '') }
-                  } else {
-                    data = { assigneeIds: [value], assigneeTeamId: null }
-                  }
-                  updateTaskMutate({
-                    variables: { id: row.original.id, data },
-                  })
-                }}
-                onDialogClose={() => {
-                  setOptimisticUpdates(prev => {
-                    const map = new Map(prev)
-                    map.set(row.original.id, true)
-                    return map
-                  })
-                }}
-                allowTeams={true}
-                allowUnassigned={true}
-                id={`assignee-select-${row.original.id}`}
-                className="flex-row-2 justify-between min-w-40 w-fit print:hidden group"
-              >
-                <span className="truncate">{assignee?.name}</span>
-                <ExternalLink className="size-4 min-w-4 group-hover:block hidden"/>
-              </AssigneeSelect>
-            </TaskRowRefreshingGate>
-          )
-        },
+        cell: ({ row }) => (
+          <TaskRowRefreshingGate taskId={row.original.id} onClick={(e) => {e.stopPropagation()}}>
+            <AssigneeSelect
+              value={row.original.assigneeTeam ? `team:${row.original.assigneeTeam.id}` : row.original.assignee?.id ?? ''}
+              onValueChanged={(value) => {
+                setOptimisticUpdates(prev => {
+                  const map = new Map(prev)
+                  map.set(row.original.id, true)
+                  return map
+                })
+                let data: { assigneeIds: string[], assigneeTeamId: string | null } = { assigneeIds: [], assigneeTeamId: null }
+                if (!value) {
+                  data = { assigneeIds: [], assigneeTeamId: null }
+                }
+                if (value.startsWith('team:')) {
+                  data = { assigneeIds: [], assigneeTeamId: value.replace('team:', '') }
+                } else {
+                  data = { assigneeIds: [value], assigneeTeamId: null }
+                }
+                updateTaskMutate({
+                  variables: { id: row.original.id, data },
+                })
+              }}
+              onDialogClose={() => {
+                setOptimisticUpdates(prev => {
+                  const map = new Map(prev)
+                  map.set(row.original.id, true)
+                  return map
+                })
+              }}
+              allowTeams={true}
+              allowUnassigned={true}
+              id={`assignee-select-${row.original.id}`}
+              className="flex-row-2 justify-between min-w-40 w-fit print:hidden"
+            />
+          </TaskRowRefreshingGate>
+        ),
         minSize: 240,
         size: 300,
         maxSize: 440,
@@ -787,7 +751,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
       header: translation('updated'),
       accessorFn: (row) => row.updateDate,
       cell: ({ row }) => (
-        <TaskRowRefreshingGate taskId={row.original.id} className="flex-row-0 justify-center items-center">
+        <TaskRowRefreshingGate taskId={row.original.id} className="flex-row-0 items-center">
           <DateDisplay date={row.original.updateDate} mode="absolute" />
         </TaskRowRefreshingGate>
       ),

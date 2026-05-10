@@ -1,7 +1,15 @@
 import type { ColumnDef } from '@tanstack/table-core'
-import { FieldType, type LocationType, type PropertyDefinitionType, type PropertyValueType, type PropertyEntity } from '@/api/gql/generated'
+import {
+  FieldType,
+  type LocationType,
+  type PropertyDefinitionType,
+  type PropertyEntity,
+  type PropertyValueInput,
+  type PropertyValueType
+} from '@/api/gql/generated'
 import { getPropertyFilterFn } from './propertyFilterMapping'
 import { PropertyCell } from '@/components/properties/PropertyCell'
+import { EditablePropertyCell } from '@/components/properties/EditablePropertyCell'
 
 export type PropertyValueRow = Pick<PropertyValueType, 'textValue' | 'numberValue' | 'booleanValue' | 'dateValue' | 'dateTimeValue' | 'selectValue' | 'multiSelectValues' | 'userValue'> & {
   definition: PropertyDefinitionType,
@@ -11,6 +19,18 @@ export type PropertyValueRow = Pick<PropertyValueType, 'textValue' | 'numberValu
 
 type RowWithProperties = {
   properties?: PropertyValueRow[] | null,
+}
+
+export type PropertyColumnValueChangedPayload<T extends RowWithProperties> = {
+  row: T,
+  definitionId: string,
+  fieldType: FieldType,
+  input: PropertyValueInput | null,
+}
+
+export type PropertyColumnFactoryOptions<T extends RowWithProperties> = {
+  allowUpdates?: boolean,
+  onValueChanged?: (payload: PropertyColumnValueChangedPayload<T>) => void | Promise<void>,
 }
 
 function getPropertyAccessorValue(
@@ -50,11 +70,14 @@ function getFilterData(prop: PropertyDefinitionType) {
 
 export function createPropertyColumn<T extends RowWithProperties>(
   prop: PropertyDefinitionType,
-  hasFilter?: boolean
+  hasFilter?: boolean,
+  options?: PropertyColumnFactoryOptions<T>
 ): ColumnDef<T> {
   const columnId = `property_${prop.id}`
   const filterFn = getPropertyFilterFn(prop.fieldType)
   const filterData = getFilterData(prop)
+  const allowUpdates = !!options?.allowUpdates && !!options?.onValueChanged
+  const onValueChanged = options?.onValueChanged
 
   return {
     id: columnId,
@@ -69,6 +92,23 @@ export function createPropertyColumn<T extends RowWithProperties>(
       const property = row.original.properties?.find(
         p => p.definition.id === prop.id
       )
+      if (allowUpdates && onValueChanged) {
+        return (
+          <EditablePropertyCell
+            definition={prop}
+            property={property as PropertyValueType | undefined}
+            allowUpdates={true}
+            onValueChanged={(input) => {
+              void onValueChanged({
+                row: row.original,
+                definitionId: prop.id,
+                fieldType: prop.fieldType,
+                input,
+              })
+            }}
+          />
+        )
+      }
       return (<PropertyCell property={property as PropertyValueType} fieldType={prop.fieldType} />)
     },
     meta: {
@@ -92,11 +132,12 @@ type PropertyDefinitionsData = {
 export function getPropertyColumnsForEntity<T extends RowWithProperties>(
   propertyDefinitionsData: PropertyDefinitionsData,
   entity: PropertyEntity,
-  hasFilter?: boolean
+  hasFilter?: boolean,
+  options?: PropertyColumnFactoryOptions<T>
 ): ColumnDef<T>[] {
   if (!propertyDefinitionsData?.propertyDefinitions) return []
   const properties = propertyDefinitionsData.propertyDefinitions.filter(
     def => def.isActive && def.allowedEntities.includes(entity)
   )
-  return properties.map(prop => createPropertyColumn<T>(prop, hasFilter))
+  return properties.map(p => createPropertyColumn<T>(p, hasFilter, options))
 }

@@ -20,9 +20,10 @@ type InTableDateTimeEditPopUpProps = {
   onUpdate: (next: Date | null) => void,
   buttonProps?: ButtonProps,
   children: ReactNode,
+  mode?: 'date' | 'dateTime',
   dateTimeInputProps?: Omit<
     ComponentProps<typeof DateTimeInput>,
-    'value' | 'onValueChange' | 'onEditComplete'
+    'value' | 'onValueChange' | 'onEditComplete' | 'mode'
   >,
 } & Partial<Pick<ComponentProps<typeof PopUp>, 'options' | 'className'>>
 
@@ -31,6 +32,7 @@ export function InTableDateTimeEditPopUp({
   onUpdate,
   buttonProps,
   children,
+  mode = 'dateTime',
   dateTimeInputProps,
   options = { horizontalAlignment: 'afterStart', verticalAlignment: 'afterEnd' },
   className = 'p-2',
@@ -67,7 +69,7 @@ export function InTableDateTimeEditPopUp({
       </PopUpOpener>
       <PopUp options={options} className={clsx(className, 'flex-col-2 items-end')} onClick={e => e.stopPropagation()}>
         <DateTimeInput
-          mode="dateTime"
+          mode={mode}
           {...dateTimeInputProps}
           value={draft}
           onValueChange={next => {
@@ -86,7 +88,6 @@ export function InTableDateTimeEditPopUp({
                 {translation('cancel')}
               </Button>
               <Button color="primary" size="sm" onClick={() => {
-                onUpdate(draft)
                 setIsOpen(false)
               }}>
                 {translation('done')}

@@ -1,34 +1,35 @@
 import type { ReactNode } from 'react'
 import { useState, type ComponentProps } from 'react'
 import type { ButtonProps } from '@helpwave/hightide'
-import { Button, Input, PopUp, PopUpContext, PopUpOpener, PopUpRoot } from '@helpwave/hightide'
+import { Button, Checkbox, PopUp, PopUpContext, PopUpOpener, PopUpRoot } from '@helpwave/hightide'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import clsx from 'clsx'
 
-type InTableTextEditPopUpProps = {
-  value: string | null,
-  onUpdate: (next: string | null) => void,
+type InTableCheckboxEditPopUpProps = {
+  value: boolean | null,
+  onUpdate: (next: boolean | null) => void,
   buttonProps?: ButtonProps,
   children: ReactNode,
 } & Partial<Pick<ComponentProps<typeof PopUp>, 'options' | 'className'>>
 
-export function InTableTextEditPopUp({
+export function InTableCheckboxEditPopUp({
   value,
   onUpdate,
   buttonProps,
   children,
   options = { horizontalAlignment: 'afterStart', verticalAlignment: 'afterEnd' },
   className = 'p-2',
-}: InTableTextEditPopUpProps) {
-  const [draft, setDraft] = useState(value)
+}: InTableCheckboxEditPopUpProps) {
+  const baseline = value ?? false
+  const [draft, setDraft] = useState<boolean>(baseline)
   const translation = useTasksTranslation()
 
   return (
     <PopUpRoot
       onIsOpenChange={open => {
         if (open) {
-          setDraft(value)
-        } else if (draft !== value) {
+          setDraft(value ?? false)
+        } else if (draft !== baseline) {
           onUpdate(draft)
         }
       }}
@@ -51,11 +52,9 @@ export function InTableTextEditPopUp({
         }}
       </PopUpOpener>
       <PopUp options={options} className={clsx(className, 'flex-col-2 items-end')} onClick={e => e.stopPropagation()}>
-        <Input
-          value={draft ?? ''}
-          onValueChange={next => {
-            setDraft(next)
-          }}
+        <Checkbox
+          value={draft}
+          onValueChange={setDraft}
         />
         <PopUpContext.Consumer>
           {({ setIsOpen }) => (
