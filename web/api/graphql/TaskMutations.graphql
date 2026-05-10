@@ -77,6 +77,10 @@ mutation UpdateTask($id: ID!, $data: UpdateTaskInput!) {
   }
 }
 
+mutation ClearTaskProperty($propertyDefinitionId: ID!, $taskIds: [ID!]!) {
+  clearTaskProperty(propertyDefinitionId: $propertyDefinitionId, taskIds: $taskIds)
+}
+
 mutation AddTaskAssignee($id: ID!, $userId: ID!) {
   addTaskAssignee(id: $id, userId: $userId) {
     id

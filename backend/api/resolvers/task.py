@@ -24,6 +24,7 @@ from api.resolvers.base import BaseMutationResolver, BaseSubscriptionResolver
 from api.services.authorization import AuthorizationService
 from api.services.checksum import validate_checksum
 from api.services.datetime import normalize_datetime_to_utc
+from api.services.notifications import notify_entity_update
 from api.services.property import PropertyService
 from api.services.task_graph import (
     apply_task_graph_to_patient,
@@ -708,6 +709,63 @@ class TaskMutation(BaseMutationResolver[models.Task]):
                 "Task must have a patient, assignees, or an assignee team.",
                 extensions={"code": "BAD_REQUEST"},
             )
+
+    @strawberry.mutation
+    @audit_log("clear_task_property")
+    async def clear_task_property(
+        self,
+        info: Info,
+        property_definition_id: strawberry.ID,
+        task_ids: list[strawberry.ID],
+    ) -> int:
+        if not task_ids:
+            return 0
+
+        unique_task_ids = list(dict.fromkeys(str(task_id) for task_id in task_ids))
+        db = info.context.db
+        auth_service = AuthorizationService(db)
+        result = await db.execute(
+            select(models.Task)
+            .where(models.Task.id.in_(unique_task_ids))
+            .options(
+                selectinload(models.Task.patient).selectinload(
+                    models.Patient.assigned_locations,
+                ),
+                selectinload(models.Task.assignees),
+            ),
+        )
+        tasks = result.scalars().all()
+
+        if len(tasks) != len(unique_task_ids):
+            raise GraphQLError(
+                "One or more tasks were not found.",
+                extensions={"code": "BAD_REQUEST"},
+            )
+
+        for task in tasks:
+            if not await auth_service.can_access_task(
+                info.context.user,
+                task,
+                info.context,
+            ):
+                raise_forbidden()
+
+        delete_result = await db.execute(
+            models.PropertyValue.__table__.delete().where(
+                models.PropertyValue.definition_id == str(property_definition_id),
+                models.PropertyValue.task_id.in_(unique_task_ids),
+            ),
+        )
+        await db.commit()
+
+        touched_patient_ids: set[str] = set()
+        for task in tasks:
+            await notify_entity_update("task", task.id)
+            if task.patient_id and task.patient_id not in touched_patient_ids:
+                touched_patient_ids.add(task.patient_id)
+                await notify_entity_update("patient", task.patient_id)
+
+        return int(delete_result.rowcount or 0)
 
     @strawberry.mutation
     @audit_log("create_task")

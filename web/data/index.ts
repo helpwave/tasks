@@ -79,6 +79,8 @@ export {
   useUpdateTaskPreset,
   useDeleteTaskPreset,
   useApplyTaskGraph,
+  useClearTaskProperty,
+  useClearPatientProperty,
 } from './hooks'
 export type {
   ClientMutationId,

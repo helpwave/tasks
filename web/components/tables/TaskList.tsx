@@ -34,6 +34,9 @@ import { ExpandableTextBlock } from '@/components/common/ExpandableTextBlock'
 import { InTableTextEditPopUp } from '@/components/tables/in-table-edit/InTableTextEditPopUp'
 import { InTableDateTimeEditPopUp } from './in-table-edit/InTableDateTimeEditPopUp'
 import { AssigneeSelect } from '../tasks/AssigneeSelect'
+import { PropertyColumnHeader } from '@/components/properties/PropertyColumnHeader'
+import { ClearPropertyColumnDialog } from '@/components/properties/ClearPropertyColumnDialog'
+import { useTaskPropertyClearDialog } from '@/hooks/useTaskPropertyClearDialog'
 
 function taskListDataSyncKey(tasks: TaskViewModel[]): string {
   return tasks.map(t => `${t.id}:${t.done}:${t.updateDate.getTime()}`).join('\0')
@@ -436,6 +439,46 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
     [propertyDefinitionsData, embedded, handleTaskPropertyValueChanged]
   )
 
+  const {
+    clearPropertyState,
+    isClearingProperty,
+    clearPropertyProcessedCount,
+    clearPropertyError,
+    handleOpenClearProperty,
+    handleCloseClearProperty,
+    handleConfirmClearProperty,
+  } = useTaskPropertyClearDialog({
+    tasks,
+    onRefetch,
+  })
+
+  const clearableTasks = useMemo(() => {
+    if (!clearPropertyState) return []
+    return tasks.filter(task => (task.properties ?? []).some(
+      property => property.definition.id === clearPropertyState.propertyDefinitionId
+    ))
+  }, [clearPropertyState, tasks])
+
+  const taskPropertyColumnsWithActions = useMemo<ColumnDef<TaskViewModel>[]>(() => (
+    taskPropertyColumns.map((column) => {
+      const meta = column.meta as { columnType?: string, propertyDefinitionId?: string, columnLabel?: string } | undefined
+      const propertyDefinitionId = meta?.propertyDefinitionId
+      const columnLabel = meta?.columnLabel
+      if (meta?.columnType !== 'PROPERTY' || !propertyDefinitionId || !columnLabel) {
+        return column
+      }
+      const nextColumn = { ...column } as ColumnDef<TaskViewModel>
+      nextColumn.header = () => (
+        <PropertyColumnHeader
+          title={columnLabel}
+          clearActionLabel={translation('clearPropertyColumnActionTask')}
+          onClear={() => handleOpenClearProperty(propertyDefinitionId, columnLabel)}
+        />
+      )
+      return nextColumn
+    })
+  ), [taskPropertyColumns, translation, handleOpenClearProperty])
+
   const propertyFieldTypeByDefId = useMemo(
     () => new Map(propertyDefinitionsData?.propertyDefinitions.map(d => [d.id, d.fieldType]) ?? []),
     [propertyDefinitionsData]
@@ -764,7 +807,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
 
     const colsWithRefreshing = [
       ...cols,
-      ...taskPropertyColumns.map((col) => ({
+      ...taskPropertyColumnsWithActions.map((col) => ({
         ...col,
         cell: col.cell
           ? (params: { row: { original: TaskViewModel } }) => (
@@ -777,7 +820,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
     ]
     return colsWithRefreshing
   },
-  [embedded, translation, showAssignee, taskPropertyColumns, completeTask, reopenTask, updateTaskMutate])
+  [embedded, translation, showAssignee, taskPropertyColumnsWithActions, completeTask, reopenTask, updateTaskMutate])
 
   const taskCardPrimaryColumnIds = useMemo(() => {
     const s = new Set<string>(['done', 'title', 'dueDate', 'patient'])
@@ -794,7 +837,8 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
       if (!col.cell) continue
       const isExpandableTextProperty = id.startsWith('property_') &&
         propertyFieldTypeByDefId.get(id.replace('property_', '')) === FieldType.FieldTypeText
-      const headerLabel = typeof col.header === 'string' ? col.header : id
+      const meta = col.meta as { columnLabel?: string } | undefined
+      const headerLabel = typeof col.header === 'string' ? col.header : (meta?.columnLabel ?? id)
       const cell = (col.cell as (p: { row: { original: TaskViewModel } }) => ReactNode)({ row: { original: task } })
       const propertyId = id.startsWith('property_') ? id.replace('property_', '') : null
       const propertyTextValue = propertyId
@@ -1074,6 +1118,30 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
             description={translation('discardDraftMessage')}
             confirmType="negative"
             buttonOverwrites={[{}, {}, { text: translation('discard') }]}
+          />
+          <ClearPropertyColumnDialog
+            isOpen={clearPropertyState !== null}
+            title={translation('clearPropertyColumnDialogTitleTask')}
+            description={clearPropertyState
+              ? translation('clearPropertyColumnDialogDescriptionTask', {
+                propertyName: clearPropertyState.propertyName,
+                count: clearableTasks.length,
+              })
+              : ''}
+            instructionLabel={clearPropertyState
+              ? translation('clearPropertyColumnTypeNameInstruction', {
+                propertyName: clearPropertyState.propertyName,
+              })
+              : ''}
+            confirmLabel={translation('clearPropertyColumnConfirmButtonTask')}
+            cancelLabel={translation('cancel')}
+            propertyName={clearPropertyState?.propertyName ?? ''}
+            isSubmitting={isClearingProperty}
+            processedCount={clearPropertyProcessedCount}
+            affectedCount={clearableTasks.length}
+            errorMessage={clearPropertyError}
+            onClose={handleCloseClearProperty}
+            onConfirm={() => void handleConfirmClearProperty()}
           />
           <Drawer
             alignment="right"

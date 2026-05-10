@@ -2,6 +2,7 @@ import pytest
 from api.context import Context
 from api.resolvers.patient import PatientQuery, PatientMutation
 from api.inputs import Sex, PatientState
+from database.models.property import PropertyDefinition, PropertyValue
 
 
 class MockInfo:
@@ -75,3 +76,63 @@ async def test_patient_mutation_discharge_patient(db_session, sample_patient, sa
     mutation = PatientMutation()
     result = await mutation.discharge_patient(info, sample_patient.id)
     assert result.state == PatientState.DISCHARGED.value
+
+
+@pytest.mark.asyncio
+async def test_patient_mutation_clear_patient_property(
+    db_session, sample_patient, sample_user_with_location_access
+):
+    info = MockInfo(db_session, sample_user_with_location_access)
+    mutation = PatientMutation()
+    property_definition = PropertyDefinition(
+        id="patient-property-definition-1",
+        name="Test Patient Property",
+        field_type="FIELD_TYPE_TEXT",
+        allowed_entities="PATIENT",
+        is_active=True,
+    )
+    other_property_definition = PropertyDefinition(
+        id="other-patient-definition",
+        name="Other Patient Property",
+        field_type="FIELD_TYPE_TEXT",
+        allowed_entities="PATIENT",
+        is_active=True,
+    )
+    value_on_target = PropertyValue(
+        id="patient-property-value-1",
+        definition_id=property_definition.id,
+        patient_id=sample_patient.id,
+        text_value="A",
+    )
+    value_on_other_definition = PropertyValue(
+        id="patient-property-value-2",
+        definition_id=other_property_definition.id,
+        patient_id=sample_patient.id,
+        text_value="B",
+    )
+    db_session.add(property_definition)
+    db_session.add(other_property_definition)
+    db_session.add(value_on_target)
+    db_session.add(value_on_other_definition)
+    await db_session.commit()
+
+    cleared_count = await mutation.clear_patient_property(
+        info,
+        property_definition_id=property_definition.id,
+        patient_ids=[sample_patient.id],
+    )
+
+    assert cleared_count == 1
+    remaining = await db_session.execute(
+        PropertyValue.__table__.select().where(
+            PropertyValue.id.in_(
+                [
+                    value_on_target.id,
+                    value_on_other_definition.id,
+                ]
+            )
+        )
+    )
+    remaining_ids = {row.id for row in remaining}
+    assert value_on_target.id not in remaining_ids
+    assert value_on_other_definition.id in remaining_ids

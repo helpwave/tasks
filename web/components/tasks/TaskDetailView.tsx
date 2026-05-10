@@ -72,6 +72,7 @@ export const TaskDetailView = ({ taskId, onClose, onCreateSuccessClose, onListSy
     }
 
     // Add the changed property if it's not null
+
     if (value !== null) {
       const newPropertyInput = convertPropertyValueToInput(definitionId, value)
       if (newPropertyInput) {
