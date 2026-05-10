@@ -70,10 +70,10 @@ export function InTableMultiSelectEditPopUp({
             return (
               <label key={tag} className="flex-row-2 items-center gap-2 cursor-pointer">
                 <Checkbox
-                  value={draft.includes(tag)}
+                  value={tag != null && draft.includes(tag)}
                   onValueChange={(checked) => {
                     if (checked) {
-                      setDraft(prev => (prev.includes(tag) ? prev : [...prev, tag]))
+                      setDraft(prev => (tag != null && prev.includes(tag) ? prev : [...prev, tag ?? '']))
                     } else {
                       setDraft(prev => prev.filter(t => t !== tag))
                     }
