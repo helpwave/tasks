@@ -1,20 +1,22 @@
+import type { HTMLAttributes } from 'react'
 import { createContext, useContext, type ReactNode } from 'react'
 import { Loader2 } from 'lucide-react'
+import clsx from 'clsx'
 
 const EMPTY_TASK_IDS = new Set<string>()
 
 export const RefreshingTaskIdsContext = createContext<ReadonlySet<string>>(EMPTY_TASK_IDS)
 
-type TaskRowRefreshingGateProps = {
+type TaskRowRefreshingGateProps = HTMLAttributes<HTMLDivElement> & {
   taskId: string,
   children: ReactNode,
 }
 
-export function TaskRowRefreshingGate({ taskId, children }: TaskRowRefreshingGateProps) {
+export function TaskRowRefreshingGate({ taskId, children, className, ...restProps }: TaskRowRefreshingGateProps) {
   const ids = useContext(RefreshingTaskIdsContext)
   const refreshing = ids.has(taskId)
   return (
-    <div className="relative min-h-8 min-w-0">
+    <div className={clsx('relative min-h-8 min-w-0', className)} {...restProps}>
       <div className={refreshing ? 'opacity-50' : undefined}>
         {children}
       </div>

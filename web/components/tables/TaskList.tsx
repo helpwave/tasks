@@ -1,19 +1,18 @@
-import { useMemo, useState, forwardRef, useImperativeHandle, useEffect, useRef, useCallback, memo, type ReactNode } from 'react'
+import { useMemo, useState, forwardRef, useImperativeHandle, useEffect, useRef, useCallback, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import type { FilterListItem } from '@helpwave/hightide'
 import { Button, Checkbox, ConfirmDialog, FilterList, FillerCell, HelpwaveLogo, IconButton, SearchBar, TableColumnSwitcher, TableDisplay, TableProvider, SortingList, ExpansionIcon } from '@helpwave/hightide'
 import clsx from 'clsx'
-import { LayoutGrid, PlusIcon, Table2, UserCheck, Users } from 'lucide-react'
+import { Edit2, ExternalLink, LayoutGrid, PlusIcon, Table2, UserCheck } from 'lucide-react'
 import type { IdentifierFilterValue } from '@helpwave/hightide'
 import type { TaskPriority, GetTasksQuery, QueryableField } from '@/api/gql/generated'
 import { FieldType, PropertyEntity } from '@/api/gql/generated'
-import { useAssignTask, useAssignTaskToTeam, useCompleteTask, useReopenTask, useUsers, useLocations, usePropertyDefinitions, useQueryableFields, useRefreshingEntityIds } from '@/data'
+import { useAssignTask, useAssignTaskToTeam, useCompleteTask, useReopenTask, useUsers, useLocations, usePropertyDefinitions, useQueryableFields, useRefreshingEntityIds, useUpdateTask } from '@/data'
 import { AssigneeSelectDialog } from '@/components/tasks/AssigneeSelectDialog'
 import { DateDisplay } from '@/components/Date/DateDisplay'
 import { Drawer } from '@helpwave/hightide'
 import { TaskDetailView } from '@/components/tasks/TaskDetailView'
-import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
-import { PatientDetailView } from '@/components/patients/PatientDetailView'
+import { localToUTCWithSameTime, PatientDetailView } from '@/components/patients/PatientDetailView'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { UserInfoPopup } from '@/components/UserInfoPopup'
@@ -24,67 +23,20 @@ import { useStableSerializedList } from '@/hooks/useStableSerializedList'
 import { columnIdsFromColumnDefs, sanitizeColumnOrderForKnownColumns } from '@/utils/columnOrder'
 import { DueDateUtils } from '@/utils/dueDate'
 import { PriorityUtils } from '@/utils/priority'
-import { getPropertyColumnsForEntity } from '@/utils/propertyColumn'
+import { getPropertyColumnsForEntity, type PropertyColumnValueChangedPayload } from '@/utils/propertyColumn'
+import { mergePropertyChangeIntoInputs } from '@/utils/propertyUpdateMerge'
 import { useColumnVisibilityWithPropertyDefaults } from '@/hooks/usePropertyColumnVisibility'
 import { queryableFieldsToFilterListItems, queryableFieldsToSortingListItems, type QueryableChoiceTagLabelResolver } from '@/utils/queryableFilterList'
 import { LIST_PAGE_SIZE } from '@/utils/listPaging'
 import { TaskCardView } from '@/components/tasks/TaskCardView'
 import { RefreshingTaskIdsContext, TaskRowRefreshingGate } from '@/components/tables/TaskRowRefreshingGate'
 import { ExpandableTextBlock } from '@/components/common/ExpandableTextBlock'
+import { InTableTextEditPopUp } from '@/components/tables/in-table-edit/InTableTextEditPopUp'
+import { InTableDateTimeEditPopUp } from './in-table-edit/InTableDateTimeEditPopUp'
+import { AssigneeSelect } from '../tasks/AssigneeSelect'
 import { PropertyColumnHeader } from '@/components/properties/PropertyColumnHeader'
 import { ClearPropertyColumnDialog } from '@/components/properties/ClearPropertyColumnDialog'
 import { useTaskPropertyClearDialog } from '@/hooks/useTaskPropertyClearDialog'
-
-type TaskAssigneeTableCellProps = {
-  assigneeId: string,
-  avatarURL: string | null | undefined,
-  name: string,
-  isOnline: boolean | null,
-  onOpenUser: (id: string) => void,
-  printHiddenNameLine: string,
-  extraCountLabel: string | null,
-}
-
-const TaskAssigneeTableCell = memo(function TaskAssigneeTableCell({
-  assigneeId,
-  avatarURL,
-  name,
-  isOnline,
-  onOpenUser,
-  printHiddenNameLine,
-  extraCountLabel,
-}: TaskAssigneeTableCellProps) {
-  const image = useMemo(
-    () => ({
-      avatarUrl: avatarURL || 'https://cdn.helpwave.de/boringavatar.svg',
-      alt: name,
-    }),
-    [avatarURL, name]
-  )
-  return (
-    <>
-      <span className="print:block hidden">{printHiddenNameLine}</span>
-      <div className="flex-row-2 items-center gap-1.5 flex-wrap min-w-0 print:hidden">
-        <button
-          type="button"
-          onClick={() => onOpenUser(assigneeId)}
-          className="flex-row-2 items-center min-w-0 hover:opacity-75 transition-opacity"
-        >
-          <AvatarStatusComponent
-            isOnline={isOnline}
-            image={image}
-          />
-          <span className="truncate">{name}</span>
-        </button>
-        {extraCountLabel != null && (
-          <span className="text-description text-sm font-medium tabular-nums shrink-0">
-            {extraCountLabel}
-          </span>
-        )}
-      </div>
-    </>
-  )
-})
 
 function taskListDataSyncKey(tasks: TaskViewModel[]): string {
   return tasks.map(t => `${t.id}:${t.done}:${t.updateDate.getTime()}`).join('\0')
@@ -213,6 +165,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
   const [reopenTask] = useReopenTask()
   const [assignTask] = useAssignTask()
   const [assignTaskToTeam] = useAssignTaskToTeam()
+  const [updateTaskMutate] = useUpdateTask()
 
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null)
   const [selectedUserPopupId, setSelectedUserPopupId] = useState<string | null>(null)
@@ -455,9 +408,35 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
     setIsHandoverDialogOpen(false)
   }
 
+  const handleTaskPropertyValueChanged = useCallback(
+    (payload: PropertyColumnValueChangedPayload<TaskViewModel>) => {
+      const merged = mergePropertyChangeIntoInputs(payload.row.properties, payload.definitionId, payload.input)
+      updateTaskMutate({
+        variables: {
+          id: payload.row.id,
+          data: { properties: merged },
+        },
+      })
+      setOptimisticUpdates(prev => {
+        const next = new Map(prev)
+        next.set(payload.row.id, true)
+        return next
+      })
+    },
+    [updateTaskMutate]
+  )
+
   const taskPropertyColumns = useMemo<ColumnDef<TaskViewModel>[]>(
-    () => getPropertyColumnsForEntity<TaskViewModel>(propertyDefinitionsData, PropertyEntity.Task),
-    [propertyDefinitionsData]
+    () => getPropertyColumnsForEntity<TaskViewModel>(
+      propertyDefinitionsData,
+      PropertyEntity.Task,
+      undefined,
+      {
+        allowUpdates: !embedded,
+        onValueChanged: handleTaskPropertyValueChanged,
+      }
+    ),
+    [propertyDefinitionsData, embedded, handleTaskPropertyValueChanged]
   )
 
   const {
@@ -585,9 +564,8 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
           const task = row.original
           const displayDone = task.done
           return (
-            <TaskRowRefreshingGate taskId={task.id}>
+            <TaskRowRefreshingGate taskId={task.id} className="flex-row-0 justify-center items-center">
               <div
-                className="relative z-10"
                 onClick={(e) => e.stopPropagation()}
                 onPointerDown={(e) => e.stopPropagation()}
                 onMouseDown={(e) => e.stopPropagation()}
@@ -631,7 +609,31 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
               {row.original.priority && (
                 <div className={clsx('w-2 h-2 rounded-full shrink-0', PriorityUtils.toBackgroundColor(row.original.priority as TaskPriority | null | undefined))} />
               )}
-              <span>{row.original.name}</span>
+              <InTableTextEditPopUp
+                value={row.original.name}
+                onUpdate={next => {
+                  const title = next ?? ''
+                  if (title === row.original.name) {
+                    return
+                  }
+                  setOptimisticUpdates(prev => {
+                    const map = new Map(prev)
+                    map.set(row.original.id, true)
+                    return map
+                  })
+                  updateTaskMutate({
+                    variables: { id: row.original.id, data: { title } },
+                  })
+                }}
+                buttonProps={{
+                  className: 'justify-between group gap-x-2 w-full',
+                }}
+              >
+                <span className="truncate">
+                  {row.original.name}
+                </span>
+                <Edit2 className="size-4 min-w-4 group-hover:block hidden"/>
+              </InTableTextEditPopUp>
             </div>
           </TaskRowRefreshingGate>
         ),
@@ -661,17 +663,38 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
           }
           return (
             <TaskRowRefreshingGate taskId={row.original.id}>
-              <DateDisplay
-                date={row.original.dueDate}
-                mode="absolute"
-                className={clsx(colorClass)}
-              />
+              <InTableDateTimeEditPopUp
+                value={row.original.dueDate}
+                onUpdate={next => {
+                  if (next === row.original.dueDate) {
+                    return
+                  }
+                  setOptimisticUpdates(prev => {
+                    const map = new Map(prev)
+                    map.set(row.original.id, true)
+                    return map
+                  })
+                  updateTaskMutate({
+                    variables: { id: row.original.id, data: { dueDate: next ? localToUTCWithSameTime(next)?.toISOString() : null } },
+                  })
+                }}
+                buttonProps={{
+                  className: 'justify-between group gap-x-2 w-full',
+                }}
+              >
+                <DateDisplay
+                  date={row.original.dueDate}
+                  mode="absolute"
+                  className={clsx(colorClass, 'truncate')}
+                />
+                <Edit2 className="size-4 min-w-4 group-hover:block hidden"/>
+              </InTableDateTimeEditPopUp>
             </TaskRowRefreshingGate>
           )
         },
-        minSize: 220,
-        size: 220,
-        maxSize: 220,
+        minSize: 230,
+        size: 230,
+        maxSize: 230,
         enableResizing: false,
         filterFn: 'date',
       },
@@ -701,9 +724,10 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
                     event.stopPropagation()
                     setSelectedPatientId(data.patient?.id ?? null)
                   }}
-                  className="flex-row-0 justify-start w-fit print:hidden"
+                  className="flex-row-2 justify-between min-w-40 w-fit print:hidden group"
                 >
-                  {data.patient?.name}
+                  <span className="truncate">{data.patient?.name}</span>
+                  <ExternalLink className="size-4 min-w-4 group-hover:block hidden"/>
                 </Button>
               </>
             </TaskRowRefreshingGate>
@@ -722,56 +746,43 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
         id: 'assignee',
         header: translation('assignedTo'),
         accessorFn: ({ assignee, assigneeTeam }) => assignee?.name || assigneeTeam?.title,
-        cell: ({ row }) => {
-          const assignee = row.original.assignee
-          const assigneeTeam = row.original.assigneeTeam
-          if (!assignee && !assigneeTeam) {
-            return (
-              <TaskRowRefreshingGate taskId={row.original.id}>
-                <span className="text-description">
-                  {translation('notAssigned')}
-                </span>
-              </TaskRowRefreshingGate>
-            )
-          }
-
-          if (assigneeTeam) {
-            return (
-              <TaskRowRefreshingGate taskId={row.original.id}>
-                <div className="flex-row-2 items-center">
-                  <Users className="size-5 text-description print:hidden" />
-                  <span>{assigneeTeam.title}</span>
-                </div>
-              </TaskRowRefreshingGate>
-            )
-          }
-
-          if (assignee) {
-            const extra = row.original.additionalAssigneeCount ?? 0
-            const printLine = `${assignee.name}${extra > 0 ? ` ${translation('additionalAssigneesCount', { count: extra })}` : ''}`
-            return (
-              <TaskRowRefreshingGate taskId={row.original.id}>
-                <TaskAssigneeTableCell
-                  assigneeId={assignee.id}
-                  avatarURL={assignee.avatarURL}
-                  name={assignee.name}
-                  isOnline={assignee.isOnline ?? null}
-                  onOpenUser={setSelectedUserPopupId}
-                  printHiddenNameLine={printLine}
-                  extraCountLabel={extra > 0 ? translation('additionalAssigneesCount', { count: extra }) : null}
-                />
-              </TaskRowRefreshingGate>
-            )
-          }
-
-          return (
-            <TaskRowRefreshingGate taskId={row.original.id}>
-              <span className="text-description">
-                {translation('notAssigned')}
-              </span>
-            </TaskRowRefreshingGate>
-          )
-        },
+        cell: ({ row }) => (
+          <TaskRowRefreshingGate taskId={row.original.id} onClick={(e) => {e.stopPropagation()}}>
+            <AssigneeSelect
+              value={row.original.assigneeTeam ? `team:${row.original.assigneeTeam.id}` : row.original.assignee?.id ?? ''}
+              onValueChanged={(value) => {
+                setOptimisticUpdates(prev => {
+                  const map = new Map(prev)
+                  map.set(row.original.id, true)
+                  return map
+                })
+                let data: { assigneeIds: string[], assigneeTeamId: string | null } = { assigneeIds: [], assigneeTeamId: null }
+                if (!value) {
+                  data = { assigneeIds: [], assigneeTeamId: null }
+                }
+                if (value.startsWith('team:')) {
+                  data = { assigneeIds: [], assigneeTeamId: value.replace('team:', '') }
+                } else {
+                  data = { assigneeIds: [value], assigneeTeamId: null }
+                }
+                updateTaskMutate({
+                  variables: { id: row.original.id, data },
+                })
+              }}
+              onDialogClose={() => {
+                setOptimisticUpdates(prev => {
+                  const map = new Map(prev)
+                  map.set(row.original.id, true)
+                  return map
+                })
+              }}
+              allowTeams={true}
+              allowUnassigned={true}
+              id={`assignee-select-${row.original.id}`}
+              className="flex-row-2 justify-between min-w-40 w-fit print:hidden"
+            />
+          </TaskRowRefreshingGate>
+        ),
         minSize: 240,
         size: 300,
         maxSize: 440,
@@ -783,7 +794,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
       header: translation('updated'),
       accessorFn: (row) => row.updateDate,
       cell: ({ row }) => (
-        <TaskRowRefreshingGate taskId={row.original.id}>
+        <TaskRowRefreshingGate taskId={row.original.id} className="flex-row-0 items-center">
           <DateDisplay date={row.original.updateDate} mode="absolute" />
         </TaskRowRefreshingGate>
       ),
@@ -809,7 +820,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
     ]
     return colsWithRefreshing
   },
-  [translation, completeTask, reopenTask, showAssignee, taskPropertyColumnsWithActions, embedded])
+  [embedded, translation, showAssignee, taskPropertyColumnsWithActions, completeTask, reopenTask, updateTaskMutate])
 
   const taskCardPrimaryColumnIds = useMemo(() => {
     const s = new Set<string>(['done', 'title', 'dueDate', 'patient'])

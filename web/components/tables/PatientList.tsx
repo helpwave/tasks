@@ -6,7 +6,7 @@ import clsx from 'clsx'
 import { LayoutGrid, PlusIcon, Table2 } from 'lucide-react'
 import type { LocationType } from '@/api/gql/generated'
 import { Sex, PatientState, type GetPatientsQuery, type TaskType, PropertyEntity, FieldType, type QueryableField } from '@/api/gql/generated'
-import { usePropertyDefinitions, usePatientsPaginated, useQueryableFields, useRefreshingEntityIds } from '@/data'
+import { usePropertyDefinitions, usePatientsPaginated, useQueryableFields, useRefreshingEntityIds, useUpdatePatient } from '@/data'
 import { PatientDetailView } from '@/components/patients/PatientDetailView'
 import { LocationChips } from '@/components/locations/LocationChips'
 import { LocationChipsBySetting } from '@/components/patients/LocationChipsBySetting'
@@ -15,7 +15,7 @@ import { getLocationNodesByKind, type LocationKindColumn } from '@/utils/locatio
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import type { ColumnDef, ColumnFiltersState, ColumnOrderState, PaginationState, Row, SortingState, TableState, VisibilityState } from '@tanstack/table-core'
-import { getPropertyColumnsForEntity } from '@/utils/propertyColumn'
+import { getPropertyColumnsForEntity, type PropertyColumnValueChangedPayload } from '@/utils/propertyColumn'
 import { getPropertyColumnIds, useColumnVisibilityWithPropertyDefaults } from '@/hooks/usePropertyColumnVisibility'
 import { columnFiltersToQueryFilterClauses, sortingStateToQuerySortClauses } from '@/utils/tableStateToApi'
 import { LIST_PAGE_SIZE } from '@/utils/listPaging'
@@ -51,6 +51,7 @@ import {
   tableViewStateMatchesBaseline
 } from '@/utils/viewDefinition'
 import { applyVirtualDerivedPatients } from '@/utils/virtualDerivedTableState'
+import { mergePropertyChangeIntoInputs } from '@/utils/propertyUpdateMerge'
 import type { ViewParameters } from '@/utils/viewDefinition'
 import { DUMMY_SUGGESTION } from '@/data/mockSystemSuggestions'
 import { SystemSuggestionModal } from '@/components/patients/SystemSuggestionModal'
@@ -124,12 +125,13 @@ type PatientListProps = {
   savedViewScope?: 'base' | 'related',
 }
 
-export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initialPatientId, onInitialPatientOpened, acceptedStates: _acceptedStates, rootLocationIds, locationId, viewDefaultFilters, viewDefaultSorting, viewDefaultSearchQuery, viewDefaultColumnVisibility, viewDefaultColumnOrder, readOnly: _readOnly, hideSaveView, savedViewId, onSavedViewCreated, onPatientUpdated, embedded = false, embeddedPatients, embeddedOnRefetch, derivedVirtualMode = false, savedViewScope = 'base' }, ref) => {
+export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initialPatientId, onInitialPatientOpened, acceptedStates: _acceptedStates, rootLocationIds, locationId, viewDefaultFilters, viewDefaultSorting, viewDefaultSearchQuery, viewDefaultColumnVisibility, viewDefaultColumnOrder, readOnly = false, hideSaveView, savedViewId, onSavedViewCreated, onPatientUpdated, embedded = false, embeddedPatients, embeddedOnRefetch, derivedVirtualMode = false, savedViewScope = 'base' }, ref) => {
   const translation = useTasksTranslation()
   const { locale } = useLocale()
   const { selectedRootLocationIds } = useTasksContext()
   const { refreshingPatientIds } = useRefreshingEntityIds()
   const { data: propertyDefinitionsData } = usePropertyDefinitions()
+  const [updatePatient] = useUpdatePatient()
   const { data: queryableFieldsData } = useQueryableFields('Patient')
   const queryableFieldsStable = useStableSerializedList(
     queryableFieldsData?.queryableFields,
@@ -507,9 +509,30 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
     closePatientDrawer()
   }, [isPanelOpen, isPatientCreateMode, isCreatePatientDraftDirty, closePatientDrawer])
 
+  const handlePatientPropertyValueChanged = useCallback(
+    (payload: PropertyColumnValueChangedPayload<PatientViewModel>) => {
+      const merged = mergePropertyChangeIntoInputs(payload.row.properties, payload.definitionId, payload.input)
+      void updatePatient({
+        variables: {
+          id: payload.row.id,
+          data: { properties: merged },
+        },
+      })
+    },
+    [updatePatient]
+  )
+
   const patientPropertyColumns = useMemo<ColumnDef<PatientViewModel>[]>(
-    () => getPropertyColumnsForEntity<PatientViewModel>(propertyDefinitionsData, PropertyEntity.Patient, false),
-    [propertyDefinitionsData]
+    () => getPropertyColumnsForEntity<PatientViewModel>(
+      propertyDefinitionsData,
+      PropertyEntity.Patient,
+      false,
+      {
+        allowUpdates: !readOnly,
+        onValueChanged: handlePatientPropertyValueChanged,
+      }
+    ),
+    [propertyDefinitionsData, readOnly, handlePatientPropertyValueChanged]
   )
 
   const onPatientPropertyClearRefetch = useCallback(() => {
