@@ -1,0 +1,20 @@
+/*
+ * Content-aware sizing for the task/patient tables. Scoped to
+ * `.hw-autosize-table` so other tables (settings, properties) keep the default
+ * fixed layout from @helpwave/hightide.
+ *
+ * Switching to `table-layout: auto` lets columns grow to fit their content
+ * (long values, chips) instead of clipping/overflowing a fixed width, while the
+ * surrounding container keeps horizontal scrolling when the total exceeds the
+ * viewport. Multi-value cells (e.g. multi-select chips) already wrap, so they
+ * now flow onto additional lines instead of spilling to the right.
+ */
+table[data-name="table"].hw-autosize-table {
+  table-layout: auto;
+  width: 100% !important;
+}
+
+table[data-name="table"].hw-autosize-table [data-name="table-body-cell"],
+table[data-name="table"].hw-autosize-table [data-name="table-header-cell"] {
+  vertical-align: top;
+}

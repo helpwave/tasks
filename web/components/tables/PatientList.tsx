@@ -1162,7 +1162,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
             </div>
           )}
           <div className={clsx(listLayout === 'table' ? 'block' : 'hidden print:block')}>
-            <TableDisplay className="print-content overflow-x-auto touch-pan-x"/>
+            <TableDisplay className="print-content hw-autosize-table overflow-x-auto touch-pan-x"/>
           </div>
           {listLayout === 'card' && (
             <div className="flex flex-col gap-3 w-full print:hidden">
