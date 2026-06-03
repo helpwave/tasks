@@ -40,12 +40,11 @@ ENV PORT=80
 ENV HOST="0.0.0.0"
 
 # Native libraries required by WeasyPrint for PDF rendering (Pango/Cairo/fonts).
-# Versions intentionally unpinned; pin to match the repo convention once the
-# target Alpine digest's package versions are known.
+# Pinned to the Alpine 3.22 versions of the base image; bump alongside it.
 RUN apk add --no-cache \
-    pango \
-    fontconfig \
-    ttf-dejavu
+    font-dejavu=2.37-r6 \
+    fontconfig=2.15.0-r3 \
+    pango=1.56.3-r0
 
 COPY --from=builder /build/venv /usr/local/
 COPY . /app
