@@ -185,6 +185,7 @@ export type TasksTranslationEntries = {
   'pickTeamsDescription': string,
   'position': string,
   'preferences': string,
+  'print': string,
   'priority': (values: { priority: string }) => string,
   'priorityLabel': string,
   'priorityNone': string,
@@ -556,6 +557,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'pickTeamsDescription': `Wählen Sie ein oder mehrere Teams für diesen Patienten aus. Sie können Klinik-, Team-, Praxis- oder Krankenhaus-Standorte auswählen.`,
     'position': `Standort`,
     'preferences': `Präferenzen`,
+    'print': `Drucken`,
     'priority': ({ priority }): string => {
       return TranslationGen.resolveSelect(priority, {
         'P1': `Normal`,
@@ -972,6 +974,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'pickTeamsDescription': `Select one or more teams for this patient. You can select clinic, team, practice, or hospital locations.`,
     'position': `Location`,
     'preferences': `Preferences`,
+    'print': `Print`,
     'priority': ({ priority }): string => {
       return TranslationGen.resolveSelect(priority, {
         'P1': `Normal`,
@@ -1387,6 +1390,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'pickTeamsDescription': `Seleccione uno o más equipos para este paciente. Puede elegir clínica, equipo, consulta u hospital.`,
     'position': `Ubicación`,
     'preferences': `Preferencias`,
+    'print': `Imprimir`,
     'priority': ({ priority }): string => {
       return TranslationGen.resolveSelect(priority, {
         'P1': `Normal`,
@@ -1802,6 +1806,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'pickTeamsDescription': `Sélectionnez une ou plusieurs équipes pour ce patient. Vous pouvez choisir clinique, équipe, cabinet ou hôpital.`,
     'position': `Emplacement`,
     'preferences': `Préférences`,
+    'print': `Imprimer`,
     'priority': ({ priority }): string => {
       return TranslationGen.resolveSelect(priority, {
         'P1': `Normal`,
@@ -2217,6 +2222,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'pickTeamsDescription': `Selecteer een of meer teams voor deze patiënt. U kunt kliniek, team, praktijk of ziekenhuis selecteren.`,
     'position': `Locatie`,
     'preferences': `Voorkeuren`,
+    'print': `Afdrukken`,
     'priority': ({ priority }): string => {
       return TranslationGen.resolveSelect(priority, {
         'P1': `Normaal`,
@@ -2635,6 +2641,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'pickTeamsDescription': `Selecione uma ou mais equipes para este paciente. Você pode escolher clínica, equipe, consultório ou hospital.`,
     'position': `Localização`,
     'preferences': `Preferências`,
+    'print': `Imprimir`,
     'priority': ({ priority }): string => {
       return TranslationGen.resolveSelect(priority, {
         'P1': `Normal`,

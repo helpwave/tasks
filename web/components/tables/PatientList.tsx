@@ -20,6 +20,7 @@ import { getPropertyColumnIds, useColumnVisibilityWithPropertyDefaults } from '@
 import { columnFiltersToQueryFilterClauses, sortingStateToQuerySortClauses } from '@/utils/tableStateToApi'
 import { LIST_PAGE_SIZE } from '@/utils/listPaging'
 import { useAccumulatedPagination } from '@/hooks/useAccumulatedPagination'
+import { TableExportButton } from '@/components/tables/TableExportButton'
 import { DateDisplay } from '@/components/Date/DateDisplay'
 import { PatientCardView } from '@/components/patients/PatientCardView'
 import { queryableFieldsToFilterListItems, queryableFieldsToSortingListItems, type QueryableChoiceTagLabelResolver } from '@/utils/queryableFilterList'
@@ -1124,6 +1125,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
                 >
                   <LayoutGrid className="size-5" />
                 </IconButton>
+                <TableExportButton title={translation('patients')} />
                 {!derivedVirtualMode && (
                   <IconButton
                     tooltip={translation('addPatient')}
