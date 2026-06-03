@@ -30,6 +30,7 @@ import { queryableFieldsToFilterListItems, queryableFieldsToSortingListItems, ty
 import { LIST_PAGE_SIZE } from '@/utils/listPaging'
 import { TaskCardView } from '@/components/tasks/TaskCardView'
 import { RefreshingTaskIdsContext, TaskRowRefreshingGate } from '@/components/tables/TaskRowRefreshingGate'
+import { TableExportButton } from '@/components/tables/TableExportButton'
 import { InfiniteScrollSentinel } from '@/components/common/InfiniteScrollSentinel'
 import { ExpandableTextBlock } from '@/components/common/ExpandableTextBlock'
 import { InTableTextEditPopUp } from '@/components/tables/in-table-edit/InTableTextEditPopUp'
@@ -1028,6 +1029,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
                   >
                     <LayoutGrid className="size-5" />
                   </IconButton>
+                  <TableExportButton title={translation('tasks')} excludeColumnIds={['done']} />
                   <IconButton
                     tooltip={translation('addTask')}
                     color="primary"

@@ -20,6 +20,7 @@ import { getPropertyColumnIds, useColumnVisibilityWithPropertyDefaults } from '@
 import { columnFiltersToQueryFilterClauses, sortingStateToQuerySortClauses } from '@/utils/tableStateToApi'
 import { LIST_PAGE_SIZE } from '@/utils/listPaging'
 import { useAccumulatedPagination } from '@/hooks/useAccumulatedPagination'
+import { TableExportButton } from '@/components/tables/TableExportButton'
 import { RowRefreshingGate } from '@/components/tables/RowRefreshingGate'
 import { InfiniteScrollSentinel } from '@/components/common/InfiniteScrollSentinel'
 import { DateDisplay } from '@/components/Date/DateDisplay'
@@ -1118,6 +1119,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
                 >
                   <LayoutGrid className="size-5" />
                 </IconButton>
+                <TableExportButton title={translation('patients')} />
                 {!derivedVirtualMode && (
                   <IconButton
                     tooltip={translation('addPatient')}
