@@ -10,7 +10,7 @@ from config import ALLOWED_ORIGINS, IS_DEV, LOGGER
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from routers import auth, export
+from routers import auth
 from scaffold import load_scaffold_data
 from starlette.requests import ClientDisconnect
 from strawberry import Schema
@@ -61,7 +61,6 @@ async def client_disconnect_handler(request: Request, exc: ClientDisconnect):
     )
 
 app.include_router(auth.router)
-app.include_router(export.router)
 app.include_router(graphql_app, prefix="/graphql")
 
 
