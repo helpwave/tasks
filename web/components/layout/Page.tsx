@@ -40,7 +40,7 @@ import { useRouter } from 'next/router'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { useLocations, useMySavedViews } from '@/data'
 import type { MySavedViewsQuery } from '@/api/gql/generated'
-import { hashString } from '@/utils/hash'
+import { buildSurveyUrl, ONE_WEEK_MS, surveyStorageKeys, type SurveyType } from '@/utils/survey'
 import { useSwipeGesture } from '@/hooks/useSwipeGesture'
 import { LocationSelectionDialog } from '@/components/locations/LocationSelectionDialog'
 import { FeedbackDialog } from '@/components/FeedbackDialog'
@@ -100,23 +100,18 @@ export const SurveyModal = () => {
   const { user } = useTasksContext()
 
   const [isSurveyOpen, setSurveyOpen] = useState(false)
-  const [surveyType, setSurveyType] = useState<'onboarding' | 'weekly' | null>(null)
+  const [surveyType, setSurveyType] = useState<SurveyType | null>(null)
   const [surveyUrl, setSurveyUrl] = useState<string | null>(null)
 
   const {
     value: onboardingSurveyCompleted,
     setValue: setOnboardingSurveyCompleted
-  } = useStorage({ key: 'onboarding-survey-completed', defaultValue: 0 })
+  } = useStorage({ key: surveyStorageKeys.onboardingCompleted, defaultValue: 0 })
 
   const {
     value: weeklySurveyLastCompleted,
     setValue: setWeeklySurveyLastCompleted
-  } = useStorage({ key: 'weekly-survey-last-completed', defaultValue: 0 })
-
-  const {
-    value: surveyLastDismissed,
-    setValue: setSurveyLastDismissed
-  } = useStorage({ key: 'survey-last-dismissed', defaultValue: 0 })
+  } = useStorage({ key: surveyStorageKeys.weeklyLastCompleted, defaultValue: 0 })
 
   useEffect(() => {
     if (!config.onboardingSurveyUrl && !config.weeklySurveyUrl) {
@@ -133,50 +128,50 @@ export const SurveyModal = () => {
 
     const setupSurvey = async () => {
       const now = new Date().getTime()
-      const ONE_WEEK = 1000 * 60 * 60 * 24 * 7
-      const TEN_MINUTES = 1000 * 60 * 10
 
-      if (surveyLastDismissed > 0 && now - surveyLastDismissed < TEN_MINUTES) {
-        return
-      }
-
-      const hashedUserId = await hashString(user.id)
-
+      // Onboarding survey: shown once at the very beginning. Once the user has interacted
+      // with it (opened or dismissed) it is never shown again.
       if (config.onboardingSurveyUrl && onboardingSurveyCompleted === 0) {
-        const url = new URL(config.onboardingSurveyUrl)
-        url.searchParams.set('a', hashedUserId)
         setSurveyType('onboarding')
-        setSurveyUrl(url.toString())
+        setSurveyUrl(await buildSurveyUrl(config.onboardingSurveyUrl, user.id))
         setSurveyOpen(true)
         return
       }
 
-      if (config.weeklySurveyUrl && onboardingSurveyCompleted > 0 && (weeklySurveyLastCompleted === 0 || now - weeklySurveyLastCompleted >= ONE_WEEK)) {
-        const url = new URL(config.weeklySurveyUrl)
-        url.searchParams.set('a', hashedUserId)
+      // Weekly survey: shown once the onboarding survey has been handled (or is not
+      // configured), then again at most once per week.
+      const onboardingHandled = onboardingSurveyCompleted > 0 || !config.onboardingSurveyUrl
+      if (config.weeklySurveyUrl && onboardingHandled && (weeklySurveyLastCompleted === 0 || now - weeklySurveyLastCompleted >= ONE_WEEK_MS)) {
         setSurveyType('weekly')
-        setSurveyUrl(url.toString())
+        setSurveyUrl(await buildSurveyUrl(config.weeklySurveyUrl, user.id))
         setSurveyOpen(true)
         return
       }
     }
 
     setupSurvey().catch(() => { })
-  }, [config.onboardingSurveyUrl, config.weeklySurveyUrl, user?.id, onboardingSurveyCompleted, weeklySurveyLastCompleted, surveyLastDismissed, isSurveyOpen])
+  }, [config.onboardingSurveyUrl, config.weeklySurveyUrl, user?.id, onboardingSurveyCompleted, weeklySurveyLastCompleted, isSurveyOpen])
+
+  // Persist that the user interacted with the survey dialog so it does not annoy them
+  // again (onboarding: ever, weekly: until the next week).
+  const persistInteraction = () => {
+    const now = new Date().getTime()
+    if (surveyType === 'onboarding') {
+      setOnboardingSurveyCompleted(now)
+    } else if (surveyType === 'weekly') {
+      setWeeklySurveyLastCompleted(now)
+    }
+  }
 
   const handleDismiss = () => {
-    setSurveyLastDismissed(new Date().getTime())
+    persistInteraction()
     setSurveyOpen(false)
   }
 
   const handleOpenSurvey = () => {
     if (surveyUrl) {
       window.open(surveyUrl, '_blank', 'noopener,noreferrer')
-      if (surveyType === 'onboarding') {
-        setOnboardingSurveyCompleted(new Date().getTime())
-      } else if (surveyType === 'weekly') {
-        setWeeklySurveyLastCompleted(new Date().getTime())
-      }
+      persistInteraction()
       setSurveyOpen(false)
     }
   }
