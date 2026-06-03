@@ -1075,7 +1075,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
           `}</style>
             )}
             <div className={clsx('w-full', listLayout === 'table' ? 'block' : 'hidden print:block')}>
-              <TableDisplay className="print-content hw-autosize-table w-full overflow-x-auto touch-pan-x"/>
+              <TableDisplay className="print-content hw-autosize-table w-full overflow-x-auto hw-touch-scroll"/>
             </div>
             {listLayout === 'card' && (
               <div className="flex flex-col gap-3 w-full print:hidden">
