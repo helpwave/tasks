@@ -19,6 +19,7 @@ export type UseTasksPaginatedResult = {
   error: Error | undefined,
   totalCount: number | undefined,
   refetch: () => void,
+  prefetchPage: (pageIndex: number) => void,
 }
 
 export function useTasksPaginated(

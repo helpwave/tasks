@@ -107,7 +107,7 @@ const TasksPage: NextPage = () => {
     [apiFilters, apiSorting, searchInput, selectedRootLocationIds, user?.id]
   )
 
-  const { data: tasksData, refetch, totalCount, loading: tasksLoading } = useTasksPaginated(
+  const { data: tasksData, refetch, totalCount, loading: tasksLoading, prefetchPage } = useTasksPaginated(
     !!selectedRootLocationIds && !!user
       ? { rootLocationIds: selectedRootLocationIds, assigneeId: user?.id }
       : undefined,
@@ -119,13 +119,15 @@ const TasksPage: NextPage = () => {
     }
   )
 
-  const { accumulated: accumulatedTasksRaw, loadMore, hasMore } = useAccumulatedPagination({
+  const { accumulated: accumulatedTasksRaw, loadMore, hasMore, isFetchingMore } = useAccumulatedPagination({
     resetKey: accumulationResetKey,
     pageData: tasksData,
     pageIndex: fetchPageIndex,
     setPageIndex: setFetchPageIndex,
     totalCount,
     loading: tasksLoading,
+    pageSize: LIST_PAGE_SIZE,
+    prefetchPage,
   })
 
   const taskId = router.query['taskId'] as string | undefined
@@ -195,6 +197,7 @@ const TasksPage: NextPage = () => {
           onSearchQueryChange={setSearchQuery}
           loadMore={loadMore}
           hasMore={hasMore}
+          isFetchingMore={isFetchingMore}
           saveViewSlot={(
             <Visibility isVisible={hasUnsavedViewChanges}>
               <SaveViewActionsMenu

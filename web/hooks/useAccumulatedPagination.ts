@@ -1,4 +1,16 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+
+const DEFAULT_PREFETCH_PAGES = 2
+
+function reconcileFirstPage<T extends { id: string }>(prev: T[], incoming: T[]): T[] {
+  // When more pages were already accumulated, keep the tail and only refresh the
+  // leading page so a page-0 background refetch never shrinks the visible list.
+  if (incoming.length === 0) return prev
+  if (prev.length <= incoming.length) return incoming
+  const incomingIds = new Set(incoming.map(x => x.id))
+  const tail = prev.filter(item => !incomingIds.has(item.id))
+  return [...incoming, ...tail]
+}
 
 export function useAccumulatedPagination<T extends { id: string }>(options: {
   resetKey: string,
@@ -7,12 +19,21 @@ export function useAccumulatedPagination<T extends { id: string }>(options: {
   setPageIndex: React.Dispatch<React.SetStateAction<number>>,
   totalCount: number | undefined,
   loading: boolean,
+  pageSize: number,
+  /** Warms the cache for upcoming pages so scrolling stays instant. */
+  prefetchPage?: (pageIndex: number) => void,
+  /** How many pages ahead to keep ready. Defaults to 2. */
+  prefetchPages?: number,
 }): {
   accumulated: T[],
   loadMore: () => void,
   hasMore: boolean,
+  isFetchingMore: boolean,
 } {
-  const { resetKey, pageData, pageIndex, setPageIndex, totalCount, loading } = options
+  const {
+    resetKey, pageData, pageIndex, setPageIndex, totalCount, loading,
+    pageSize, prefetchPage, prefetchPages = DEFAULT_PREFETCH_PAGES,
+  } = options
   const [accumulated, setAccumulated] = useState<T[]>([])
   const prevResetKeyRef = useRef(resetKey)
 
@@ -27,7 +48,9 @@ export function useAccumulatedPagination<T extends { id: string }>(options: {
   useEffect(() => {
     if (pageData === undefined || loading) return
     if (pageIndex === 0) {
-      setAccumulated(pageData)
+      // Reconcile the first page in place so unchanged rows keep their position
+      // and the table is not remounted on every background refetch.
+      setAccumulated(prev => reconcileFirstPage(prev, pageData))
       return
     }
     setAccumulated(prev => {
@@ -40,11 +63,27 @@ export function useAccumulatedPagination<T extends { id: string }>(options: {
     })
   }, [pageData, pageIndex, loading])
 
+  const hasMore = totalCount != null && accumulated.length < totalCount
+  const isFetchingMore = loading && pageIndex > 0
+
   const loadMore = useCallback(() => {
     setPageIndex(i => i + 1)
   }, [setPageIndex])
 
-  const hasMore = totalCount != null && accumulated.length < totalCount
+  const lastLoadedPage = useMemo(() => {
+    if (pageSize <= 0) return pageIndex
+    return Math.max(pageIndex, Math.ceil(accumulated.length / pageSize) - 1)
+  }, [pageIndex, accumulated.length, pageSize])
 
-  return { accumulated, loadMore, hasMore }
+  useEffect(() => {
+    if (!prefetchPage || loading || totalCount == null || pageSize <= 0) return
+    const lastAvailablePage = Math.ceil(totalCount / pageSize) - 1
+    for (let i = 1; i <= prefetchPages; i++) {
+      const target = lastLoadedPage + i
+      if (target > lastAvailablePage) break
+      prefetchPage(target)
+    }
+  }, [prefetchPage, prefetchPages, lastLoadedPage, totalCount, pageSize, loading])
+
+  return { accumulated, loadMore, hasMore, isFetchingMore }
 }

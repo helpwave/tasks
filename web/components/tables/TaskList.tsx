@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import type { FilterListItem } from '@helpwave/hightide'
 import { Button, Checkbox, ConfirmDialog, FilterList, FillerCell, HelpwaveLogo, IconButton, SearchBar, TableColumnSwitcher, TableDisplay, TableProvider, SortingList, ExpansionIcon } from '@helpwave/hightide'
 import clsx from 'clsx'
-import { Edit2, ExternalLink, LayoutGrid, PlusIcon, Table2, UserCheck } from 'lucide-react'
+import { Edit2, ExternalLink, LayoutGrid, Loader2, PlusIcon, Table2, UserCheck } from 'lucide-react'
 import type { IdentifierFilterValue } from '@helpwave/hightide'
 import type { TaskPriority, GetTasksQuery, QueryableField } from '@/api/gql/generated'
 import { FieldType, PropertyEntity } from '@/api/gql/generated'
@@ -30,6 +30,7 @@ import { queryableFieldsToFilterListItems, queryableFieldsToSortingListItems, ty
 import { LIST_PAGE_SIZE } from '@/utils/listPaging'
 import { TaskCardView } from '@/components/tasks/TaskCardView'
 import { RefreshingTaskIdsContext, TaskRowRefreshingGate } from '@/components/tables/TaskRowRefreshingGate'
+import { InfiniteScrollSentinel } from '@/components/common/InfiniteScrollSentinel'
 import { ExpandableTextBlock } from '@/components/common/ExpandableTextBlock'
 import { InTableTextEditPopUp } from '@/components/tables/in-table-edit/InTableTextEditPopUp'
 import { InTableDateTimeEditPopUp } from './in-table-edit/InTableDateTimeEditPopUp'
@@ -104,12 +105,13 @@ type TaskListProps = {
   onSearchQueryChange?: (value: string) => void,
   loadMore?: () => void,
   hasMore?: boolean,
+  isFetchingMore?: boolean,
   embedded?: boolean,
   /** Row order and search already applied in parent (e.g. saved view derived task list). */
   virtualDerivedOrder?: boolean,
 }
 
-export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initialTasks, onRefetch, showAssignee = false, initialTaskId, onInitialTaskOpened, headerActions, saveViewSlot, totalCount, loading = false, tableState: controlledTableState, searchQuery: searchQueryProp, onSearchQueryChange, loadMore: loadMoreProp, hasMore: hasMoreProp, embedded = false, virtualDerivedOrder = false }, ref) => {
+export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initialTasks, onRefetch, showAssignee = false, initialTaskId, onInitialTaskOpened, headerActions, saveViewSlot, totalCount, loading = false, tableState: controlledTableState, searchQuery: searchQueryProp, onSearchQueryChange, loadMore: loadMoreProp, hasMore: hasMoreProp, isFetchingMore = false, embedded = false, virtualDerivedOrder = false }, ref) => {
   const translation = useTasksTranslation()
   const { data: propertyDefinitionsData } = usePropertyDefinitions()
   const { data: queryableFieldsData } = useQueryableFields('Task')
@@ -1089,10 +1091,24 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
                 ))}
               </div>
             )}
-            {effectiveHasMore && !embedded && (
-              <Button color="neutral" className="mt-2 w-full sm:w-auto self-center" onClick={handleLoadMore}>
-                {translation('loadMore')}
-              </Button>
+            {!embedded && (
+              <>
+                <InfiniteScrollSentinel
+                  onLoadMore={handleLoadMore}
+                  hasMore={effectiveHasMore}
+                  isFetchingMore={isFetchingMore}
+                />
+                {isFetchingMore && (
+                  <div className="flex justify-center py-2 print:hidden" aria-busy>
+                    <Loader2 className="size-5 animate-spin text-description" />
+                  </div>
+                )}
+                {effectiveHasMore && !isFetchingMore && (
+                  <Button color="neutral" className="mt-2 w-full sm:w-auto self-center print:hidden" onClick={handleLoadMore}>
+                    {translation('loadMore')}
+                  </Button>
+                )}
+              </>
             )}
           </div>
           <Drawer

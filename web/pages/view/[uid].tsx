@@ -268,7 +268,7 @@ function SavedTaskViewTab({
     [apiFilters, apiSorting, searchInput, rootIds, assigneeId]
   )
 
-  const { data: tasksData, refetch, totalCount, loading: tasksLoading } = useTasksPaginated(
+  const { data: tasksData, refetch, totalCount, loading: tasksLoading, prefetchPage } = useTasksPaginated(
     rootIds && assigneeId
       ? { rootLocationIds: rootIds, assigneeId }
       : undefined,
@@ -280,13 +280,15 @@ function SavedTaskViewTab({
     }
   )
 
-  const { accumulated: accumulatedTasksRaw, loadMore, hasMore } = useAccumulatedPagination({
+  const { accumulated: accumulatedTasksRaw, loadMore, hasMore, isFetchingMore } = useAccumulatedPagination({
     resetKey: accumulationResetKey,
     pageData: tasksData,
     pageIndex: fetchPageIndex,
     setPageIndex: setFetchPageIndex,
     totalCount,
     loading: tasksLoading,
+    pageSize: LIST_PAGE_SIZE,
+    prefetchPage,
   })
 
   const tasks: TaskViewModel[] = useMemo(() => {
@@ -358,6 +360,7 @@ function SavedTaskViewTab({
         ) : undefined}
         loadMore={loadMore}
         hasMore={hasMore}
+        isFetchingMore={isFetchingMore}
         tableState={{
           sorting,
           setSorting,
