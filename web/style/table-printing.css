@@ -138,6 +138,32 @@
     display: none !important;
   }
 
+  /*
+   * Inline-editable property cells render their value inside a <button>
+   * trigger (see EditablePropertyCell / InTable*EditPopUp). The generic
+   * `button { display: none }` rule below would otherwise wipe those values
+   * out of the printout, so keep buttons that live inside table cells visible
+   * and strip their interactive chrome so they read as plain text.
+   */
+  .print-content thead tr th button,
+  .print-content tbody tr td button {
+    display: inline-flex !important;
+    align-items: center;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    color: black !important;
+    box-shadow: none !important;
+    font: inherit !important;
+    text-align: left !important;
+  }
+
   .print-button,
   button {
     display: none !important;
