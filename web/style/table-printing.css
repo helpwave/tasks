@@ -1,7 +1,10 @@
 @media print {
   @page {
     size: A4 landscape;
-    margin: 0;
+    /* Give the printout breathing room on every edge. The table below is
+       constrained to the resulting printable width, so the margins are added
+       without clipping any columns. */
+    margin: 1cm;
   }
 
   * {
@@ -65,7 +68,10 @@
     @apply !text-sm;
     page-break-inside: auto;
 
-    table-layout: auto !important;
+    /* Fixed layout makes every column share the printable width evenly instead
+       of growing to fit its content, so a wide table scales down to the page
+       (with its new margins) rather than overflowing and getting clipped. */
+    table-layout: fixed !important;
     border-collapse: collapse;
     border: 1px solid black;
   }
@@ -75,11 +81,11 @@
     break-after: avoid;
   }
 
-  /* TODO consider this, if all columns should have the same width
+  /* Drop any per-column widths the on-screen auto-size feature applied so the
+     fixed layout can share the printable width evenly across all columns. */
   .print-content colgroup col {
-      width: auto !important;
+    width: auto !important;
   }
-  */
 
   .print-content thead tr th,
   .print-content tbody tr td,
@@ -91,6 +97,11 @@
     @apply !text-sm;
     overflow: visible !important;
     white-space: pre-wrap !important;
+    /* With fixed table layout columns can get narrow, so allow long values to
+       wrap (and break mid-word as a last resort) instead of spilling past the
+       column edge and being clipped at the page margin. */
+    word-break: break-word !important;
+    overflow-wrap: anywhere !important;
   }
 
   .print-content thead tr th {
