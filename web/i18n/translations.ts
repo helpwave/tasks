@@ -160,6 +160,7 @@ export type TasksTranslationEntries = {
   'nTask': (values: { count: number }) => string,
   'nYears': (values: { years: number }) => string,
   'occupancy': string,
+  'onboardingSurvey': string,
   'ok': string,
   'openSurvey': string,
   'openTasks': string,
@@ -298,6 +299,7 @@ export type TasksTranslationEntries = {
   'waitingForPatient': string,
   'waitPatient': string,
   'wards': string,
+  'weeklySurvey': string,
   'yes': string,
 }
 
@@ -523,6 +525,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
       })
     },
     'occupancy': `Belegung`,
+    'onboardingSurvey': `Onboarding-Umfrage`,
     'ok': `OK`,
     'openSurvey': `Umfrage öffnen`,
     'openTasks': `Offene Aufgaben`,
@@ -715,6 +718,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'waitingForPatient': `Warten auf Patient`,
     'waitPatient': `Patient auf Warteliste setzen`,
     'wards': `Stationen`,
+    'weeklySurvey': `Wöchentliche Umfrage`,
     'yes': `Ja`
   },
   'en-US': {
@@ -939,6 +943,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
       })
     },
     'occupancy': `Occupancy`,
+    'onboardingSurvey': `Onboarding Survey`,
     'ok': `OK`,
     'openSurvey': `Open Survey`,
     'openTasks': `Open Tasks`,
@@ -1131,6 +1136,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'waitingForPatient': `Waiting for patient`,
     'waitPatient': `Set Patient to Waiting`,
     'wards': `Wards`,
+    'weeklySurvey': `Weekly Survey`,
     'yes': `Yes`
   },
   'es-ES': {
@@ -1355,6 +1361,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
       })
     },
     'occupancy': `Ocupación`,
+    'onboardingSurvey': `Encuesta de incorporación`,
     'ok': `OK`,
     'openSurvey': `Abrir encuesta`,
     'openTasks': `Tareas abiertas`,
@@ -1546,6 +1553,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'waitingForPatient': `En espera de paciente`,
     'waitPatient': `Poner paciente en espera`,
     'wards': `Plantas`,
+    'weeklySurvey': `Encuesta semanal`,
     'yes': `Sí`
   },
   'fr-FR': {
@@ -1770,6 +1778,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
       })
     },
     'occupancy': `Occupation`,
+    'onboardingSurvey': `Enquête d'intégration`,
     'ok': `OK`,
     'openSurvey': `Ouvrir l'enquête`,
     'openTasks': `Tâches ouvertes`,
@@ -1961,6 +1970,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'waitingForPatient': `En attente du patient`,
     'waitPatient': `Mettre le patient en attente`,
     'wards': `Services`,
+    'weeklySurvey': `Enquête hebdomadaire`,
     'yes': `Oui`
   },
   'nl-NL': {
@@ -2185,6 +2195,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
       })
     },
     'occupancy': `Bezetting`,
+    'onboardingSurvey': `Onboarding-enquête`,
     'ok': `OK`,
     'openSurvey': `Enquête openen`,
     'openTasks': `Open taken`,
@@ -2379,6 +2390,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'waitingForPatient': `Wachten op patiënt`,
     'waitPatient': `Patiënt in wachtrij zetten`,
     'wards': `Afdelingen`,
+    'weeklySurvey': `Wekelijkse enquête`,
     'yes': `Ja`
   },
   'pt-BR': {
@@ -2603,6 +2615,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
       })
     },
     'occupancy': `Ocupação`,
+    'onboardingSurvey': `Pesquisa de integração`,
     'ok': `OK`,
     'openSurvey': `Abrir pesquisa`,
     'openTasks': `Tarefas abertas`,
@@ -2794,6 +2807,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'waitingForPatient': `Aguardando paciente`,
     'waitPatient': `Colocar paciente em espera`,
     'wards': `Enfermarias`,
+    'weeklySurvey': `Pesquisa semanal`,
     'yes': `Sim`
   }
 }
