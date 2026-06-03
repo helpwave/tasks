@@ -29,8 +29,8 @@ export function TableExportButton({ title, subtitle, meta, excludeColumnIds }: T
     })
     if (exportColumns.length === 0) return
     const columns = exportColumns.map((column) => column.columnDef.header as string)
-    const rows = table.getRowModel().rows.map((row) =>
-      exportColumns.map((column) => cellToText(row.getValue(column.id)))
+    const rows = table.getRowModel().rows.map(
+      (row) => exportColumns.map((column) => cellToText(row.getValue(column.id)))
     )
     setIsExporting(true)
     try {

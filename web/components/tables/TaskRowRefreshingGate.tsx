@@ -1,7 +1,6 @@
 import type { HTMLAttributes } from 'react'
 import { createContext, useContext, type ReactNode } from 'react'
-import { Loader2 } from 'lucide-react'
-import clsx from 'clsx'
+import { RowRefreshingGate } from './RowRefreshingGate'
 
 const EMPTY_TASK_IDS = new Set<string>()
 
@@ -12,23 +11,11 @@ type TaskRowRefreshingGateProps = HTMLAttributes<HTMLDivElement> & {
   children: ReactNode,
 }
 
-export function TaskRowRefreshingGate({ taskId, children, className, ...restProps }: TaskRowRefreshingGateProps) {
+export function TaskRowRefreshingGate({ taskId, children, ...restProps }: TaskRowRefreshingGateProps) {
   const ids = useContext(RefreshingTaskIdsContext)
-  const refreshing = ids.has(taskId)
   return (
-    <div className={clsx('relative min-h-8 min-w-0', className)} {...restProps}>
-      <div className={refreshing ? 'opacity-50' : undefined}>
-        {children}
-      </div>
-      {refreshing && (
-        <div
-          className="pointer-events-none absolute inset-0 z-[1] flex items-center justify-center bg-surface/25"
-          aria-busy
-          aria-hidden
-        >
-          <Loader2 className="size-4 shrink-0 animate-spin text-description" />
-        </div>
-      )}
-    </div>
+    <RowRefreshingGate refreshing={ids.has(taskId)} {...restProps}>
+      {children}
+    </RowRefreshingGate>
   )
 }

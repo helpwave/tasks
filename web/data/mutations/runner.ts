@@ -87,7 +87,7 @@ export async function mutateOptimistic<TData, TVariables>(
       storage.removePendingMutation(resolvedId).catch(() => {})
     }
     if (typeof vars?.['id'] === 'string') {
-      clearEntityMutated('Task', vars['id'])
+      clearEntityMutated(entityType, vars['id'])
     }
     onSuccess?.(result.data, variables)
     schedulePersistCache(cache)

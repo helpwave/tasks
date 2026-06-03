@@ -42,8 +42,11 @@ function isLikelyEcho(
   const key = `${entityType}:${entityId}`
   const recent = recentMutationsByEntity.get(key)
   if (!recent) return false
-  if (payloadClientMutationId && payloadClientMutationId === recent.clientMutationId) {
-    return true
+  if (payloadClientMutationId) {
+    // An explicit mutation id is authoritative: it is an echo only when it
+    // matches our own in-flight mutation. A different id is a concurrent change
+    // from another client and must never be suppressed.
+    return payloadClientMutationId === recent.clientMutationId
   }
   if (Date.now() - recent.at < ECHO_WINDOW_MS) {
     return true
