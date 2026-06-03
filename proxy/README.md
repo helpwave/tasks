@@ -34,6 +34,7 @@ docker run --rm \
 
 - `/` - Frontend application
 - `/graphql` - Backend GraphQL API
+- `/export/*` - Backend export endpoints (e.g. table PDF export)
 - `/keycloak` - Keycloak authentication service
 
 ## Production
