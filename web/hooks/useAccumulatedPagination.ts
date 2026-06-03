@@ -2,6 +2,33 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 const DEFAULT_PREFETCH_PAGES = 2
 
+/**
+ * Pure derivation of the pagination boundaries. Kept separate so the
+ * "stop at the end" logic can be unit-tested without rendering the hook.
+ *
+ * `lastAvailablePage` is the highest page index that still maps onto real data;
+ * fetching beyond it only yields empty pages (offset past the total), which is
+ * what previously kept the infinite-scroll sentinel looping forever.
+ */
+export function computePaginationBounds(options: {
+  totalCount: number | undefined,
+  pageSize: number,
+  pageIndex: number,
+  accumulatedLength: number,
+}): {
+  lastAvailablePage: number | undefined,
+  hasMore: boolean,
+} {
+  const { totalCount, pageSize, pageIndex, accumulatedLength } = options
+  const lastAvailablePage = (totalCount == null || pageSize <= 0)
+    ? undefined
+    : Math.max(0, Math.ceil(totalCount / pageSize) - 1)
+  const hasMore = totalCount != null
+    && accumulatedLength < totalCount
+    && (lastAvailablePage == null || pageIndex < lastAvailablePage)
+  return { lastAvailablePage, hasMore }
+}
+
 function reconcileFirstPage<T extends { id: string }>(prev: T[], incoming: T[]): T[] {
   // When more pages were already accumulated, keep the tail and only refresh the
   // leading page so a page-0 background refetch never shrinks the visible list.
@@ -63,12 +90,38 @@ export function useAccumulatedPagination<T extends { id: string }>(options: {
     })
   }, [pageData, pageIndex, loading])
 
-  const hasMore = totalCount != null && accumulated.length < totalCount
+  // `lastAvailablePage` is the highest page index that still maps onto real data;
+  // `hasMore` is true only when more rows are expected *and* a further page
+  // exists to fetch. Gating on the page index keeps us from offering "Load more"
+  // (or auto-loading) when the visible list is empty but a stale total still
+  // claims rows exist.
+  const { lastAvailablePage, hasMore } = useMemo(
+    () => computePaginationBounds({
+      totalCount,
+      pageSize,
+      pageIndex,
+      accumulatedLength: accumulated.length,
+    }),
+    [totalCount, pageSize, pageIndex, accumulated.length]
+  )
+
+  // Recover from an out-of-range page index. When the result set shrinks while a
+  // later page is selected (e.g. switching to a custom view with fewer rows),
+  // the active query would otherwise keep requesting empty pages past the end,
+  // never growing `accumulated`, leaving `hasMore` permanently true and spinning
+  // the infinite-scroll sentinel in a loading loop.
+  useEffect(() => {
+    if (lastAvailablePage == null) return
+    if (pageIndex > lastAvailablePage) {
+      setPageIndex(lastAvailablePage)
+    }
+  }, [lastAvailablePage, pageIndex, setPageIndex])
+
   const isFetchingMore = loading && pageIndex > 0
 
   const loadMore = useCallback(() => {
-    setPageIndex(i => i + 1)
-  }, [setPageIndex])
+    setPageIndex(i => (lastAvailablePage != null && i >= lastAvailablePage ? i : i + 1))
+  }, [setPageIndex, lastAvailablePage])
 
   const lastLoadedPage = useMemo(() => {
     if (pageSize <= 0) return pageIndex
@@ -76,14 +129,13 @@ export function useAccumulatedPagination<T extends { id: string }>(options: {
   }, [pageIndex, accumulated.length, pageSize])
 
   useEffect(() => {
-    if (!prefetchPage || loading || totalCount == null || pageSize <= 0) return
-    const lastAvailablePage = Math.ceil(totalCount / pageSize) - 1
+    if (!prefetchPage || loading || lastAvailablePage == null) return
     for (let i = 1; i <= prefetchPages; i++) {
       const target = lastLoadedPage + i
       if (target > lastAvailablePage) break
       prefetchPage(target)
     }
-  }, [prefetchPage, prefetchPages, lastLoadedPage, totalCount, pageSize, loading])
+  }, [prefetchPage, prefetchPages, lastLoadedPage, lastAvailablePage, loading])
 
   return { accumulated, loadMore, hasMore, isFetchingMore }
 }
