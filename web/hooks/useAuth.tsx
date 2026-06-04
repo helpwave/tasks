@@ -7,14 +7,17 @@ import type { User } from 'oidc-client-ts'
 import { usePathname } from 'next/navigation'
 import { getConfig } from '@/utils/config'
 import {
+  dispatchSessionExpired,
   login,
   logout,
+  onTokenExpiredCallback,
   onTokenExpiringCallback,
   removeUser,
   renewToken,
   restoreSession,
   SESSION_EXPIRED_EVENT
 } from '@/api/auth/authService'
+import { SessionExpiredDialog } from '@/components/SessionExpiredDialog'
 
 type AuthState = {
   identity?: User,
@@ -48,9 +51,15 @@ export const AuthProvider = ({
 }: AuthProviderProps) => {
   const [authState, setAuthState] = useState<AuthState>({ isLoading: true })
   const { isLoading, identity } = authState
+  const [sessionExpired, setSessionExpired] = useState(false)
 
   const pathname = usePathname() ?? ''
   const redirectInFlightRef = useRef(false)
+  const identityRef = useRef<User | undefined>(undefined)
+
+  useEffect(() => {
+    identityRef.current = identity
+  }, [identity])
 
   const routePolicy = useMemo<'ignored' | 'unprotected' | 'protected'>(() => {
     if (!pathname) return 'protected'
@@ -94,10 +103,24 @@ export const AuthProvider = ({
 
         if (user) {
           setAuthState({ identity: user, isLoading: false })
-          unsubscribe = onTokenExpiringCallback(async () => {
+          // Try to silently renew shortly before the token expires. If that fails the
+          // refresh token is gone too, so surface the expired session instead of
+          // silently keeping a stale (unsaveable) screen around.
+          const renewOrExpire = async () => {
             const renewed = await renewToken()
-            if (mounted) setAuthState({ identity: renewed ?? undefined, isLoading: false })
-          }) as unknown as void | (() => void)
+            if (!mounted) return
+            if (renewed) {
+              setAuthState({ identity: renewed, isLoading: false })
+            } else {
+              dispatchSessionExpired()
+            }
+          }
+          const unsubscribeExpiring = onTokenExpiringCallback(() => { void renewOrExpire() })
+          const unsubscribeExpired = onTokenExpiredCallback(() => { void renewOrExpire() })
+          unsubscribe = () => {
+            unsubscribeExpiring()
+            unsubscribeExpired()
+          }
           return
         }
 
@@ -130,10 +153,44 @@ export const AuthProvider = ({
   useEffect(() => {
     const handleSessionExpired = () => {
       setAuthState({ identity: undefined, isLoading: false })
-      redirectToLogin()
+      setSessionExpired(true)
     }
     window.addEventListener(SESSION_EXPIRED_EVENT, handleSessionExpired)
     return () => window.removeEventListener(SESSION_EXPIRED_EVENT, handleSessionExpired)
+  }, [])
+
+  // Proactively detect an expired session when the user returns to the tab. Timers
+  // (and thus the OIDC expiry events) do not fire reliably while a tab is hidden or
+  // the device is asleep, so re-validate on focus to avoid presenting a stale,
+  // interactive screen whose changes can no longer be saved.
+  useEffect(() => {
+    if (routePolicy !== 'protected') return
+    const revalidate = async () => {
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return
+      if (!identityRef.current) return
+      try {
+        const user = await restoreSession()
+        if (user) {
+          setAuthState({ identity: user, isLoading: false })
+        } else {
+          dispatchSessionExpired()
+        }
+      } catch {
+        // Ignore transient errors (e.g. auth server temporarily unavailable).
+      }
+    }
+    const handler = () => { void revalidate() }
+    window.addEventListener('focus', handler)
+    document.addEventListener('visibilitychange', handler)
+    return () => {
+      window.removeEventListener('focus', handler)
+      document.removeEventListener('visibilitychange', handler)
+    }
+  }, [routePolicy])
+
+  const handleReLogin = useCallback(() => {
+    setSessionExpired(false)
+    void redirectToLogin()
   }, [redirectToLogin])
 
   const logoutAndReset = useCallback(() => {
@@ -164,6 +221,7 @@ export const AuthProvider = ({
       }}
     >
       {content}
+      <SessionExpiredDialog isOpen={sessionExpired} onLogin={handleReLogin} />
     </AuthContext.Provider>
   )
 }

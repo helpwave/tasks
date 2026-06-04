@@ -194,6 +194,12 @@ export const restoreSession = async (): Promise<User | undefined> => {
 
 export const onTokenExpiringCallback = (callback: () => void) => {
   userManager.events.addAccessTokenExpiring(callback)
+  return () => userManager.events.removeAccessTokenExpiring(callback)
+}
+
+export const onTokenExpiredCallback = (callback: () => void) => {
+  userManager.events.addAccessTokenExpired(callback)
+  return () => userManager.events.removeAccessTokenExpired(callback)
 }
 
 export const SESSION_EXPIRED_EVENT = 'sessionExpired'
