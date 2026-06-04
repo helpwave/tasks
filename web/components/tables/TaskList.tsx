@@ -665,6 +665,8 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
             <TaskRowRefreshingGate taskId={row.original.id}>
               <InTableDateTimeEditPopUp
                 value={row.original.dueDate}
+                flexible
+                mode={DueDateUtils.isDateOnly(row.original.dueDate) ? 'date' : 'dateTime'}
                 onUpdate={next => {
                   if (next === row.original.dueDate) {
                     return
@@ -685,6 +687,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
                 <DateDisplay
                   date={row.original.dueDate}
                   mode="absolute"
+                  showTime={!DueDateUtils.isDateOnly(row.original.dueDate)}
                   className={clsx(colorClass, 'truncate')}
                 />
                 <Edit2 className="size-4 min-w-4 group-hover:block hidden"/>

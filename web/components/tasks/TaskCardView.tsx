@@ -3,6 +3,7 @@ import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
 import { Clock, Combine, User, Users, Flag } from 'lucide-react'
 import clsx from 'clsx'
 import { DateDisplay } from '@/components/Date/DateDisplay'
+import { DueDateUtils } from '@/utils/dueDate'
 import { LocationChipsBySetting } from '@/components/patients/LocationChipsBySetting'
 import type { TaskViewModel } from '@/components/tables/TaskList'
 import { useRouter } from 'next/router'
@@ -285,7 +286,7 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
               {dueDate && (
                 <div className={clsx('flex items-center gap-2 min-w-0', dueDateColorClass)}>
                   <Clock className="size-4 shrink-0" />
-                  <DateDisplay date={dueDate} mode="absolute" showTime={true} />
+                  <DateDisplay date={dueDate} mode="absolute" showTime={!DueDateUtils.isDateOnly(dueDate)} />
                 </div>
               )}
             </div>
