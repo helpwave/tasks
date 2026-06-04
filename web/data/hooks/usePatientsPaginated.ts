@@ -21,6 +21,8 @@ export type UsePatientsPaginatedResult = {
   totalCount: number | undefined,
   refetch: () => void,
   prefetchPage: (pageIndex: number) => void,
+  readCachedPage: (pageIndex: number) => GetPatientsQuery['patients'] | undefined,
+  watchCachedPage: (pageIndex: number, onChange: () => void) => () => void,
 }
 
 function propertyFingerprint(prop: { definition?: { id: string }, textValue?: string | null, numberValue?: number | null, userValue?: string | null }): string {

@@ -107,7 +107,7 @@ const TasksPage: NextPage = () => {
     [apiFilters, apiSorting, searchInput, selectedRootLocationIds, user?.id]
   )
 
-  const { data: tasksData, refetch, totalCount, loading: tasksLoading, prefetchPage } = useTasksPaginated(
+  const { data: tasksData, refetch, totalCount, loading: tasksLoading, prefetchPage, readCachedPage, watchCachedPage } = useTasksPaginated(
     !!selectedRootLocationIds && !!user
       ? { rootLocationIds: selectedRootLocationIds, assigneeId: user?.id }
       : undefined,
@@ -128,6 +128,8 @@ const TasksPage: NextPage = () => {
     loading: tasksLoading,
     pageSize: LIST_PAGE_SIZE,
     prefetchPage,
+    readCachedPage,
+    watchCachedPage,
   })
 
   const taskId = router.query['taskId'] as string | undefined

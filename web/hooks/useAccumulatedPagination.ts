@@ -29,6 +29,31 @@ function reconcileFirstPage<T extends { id: string }>(prev: T[], incoming: T[]):
   return [...incoming, ...tail]
 }
 
+function sameItems<T extends { id: string }>(a: T[], b: T[]): boolean {
+  if (a.length !== b.length) return false
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) return false
+  }
+  return true
+}
+
+export function mergePagesById<T extends { id: string }>(
+  pages: ReadonlyArray<readonly T[] | undefined>
+): T[] {
+  const out: T[] = []
+  const seen = new Set<string>()
+  for (const page of pages) {
+    if (!page) continue
+    for (const item of page) {
+      if (!seen.has(item.id)) {
+        seen.add(item.id)
+        out.push(item)
+      }
+    }
+  }
+  return out
+}
+
 export function useAccumulatedPagination<T extends { id: string }>(options: {
   resetKey: string,
   pageData: T[] | undefined,
@@ -39,6 +64,8 @@ export function useAccumulatedPagination<T extends { id: string }>(options: {
   pageSize: number,
   prefetchPage?: (pageIndex: number) => void,
   prefetchPages?: number,
+  readCachedPage?: (pageIndex: number) => T[] | undefined,
+  watchCachedPage?: (pageIndex: number, onChange: () => void) => () => void,
 }): {
   accumulated: T[],
   loadMore: () => void,
@@ -48,9 +75,14 @@ export function useAccumulatedPagination<T extends { id: string }>(options: {
   const {
     resetKey, pageData, pageIndex, setPageIndex, totalCount, loading,
     pageSize, prefetchPage, prefetchPages = DEFAULT_PREFETCH_PAGES,
+    readCachedPage, watchCachedPage,
   } = options
   const [accumulated, setAccumulated] = useState<T[]>([])
   const prevResetKeyRef = useRef(resetKey)
+  const cacheBacked = !!readCachedPage && !!watchCachedPage
+
+  const pageDataRef = useRef(pageData)
+  pageDataRef.current = pageData
 
   useEffect(() => {
     if (prevResetKeyRef.current !== resetKey) {
@@ -61,6 +93,27 @@ export function useAccumulatedPagination<T extends { id: string }>(options: {
   }, [resetKey, setPageIndex])
 
   useEffect(() => {
+    if (!cacheBacked || !readCachedPage || !watchCachedPage) return
+    const materialize = () => {
+      const pages: Array<T[] | undefined> = []
+      for (let p = 0; p <= pageIndex; p++) {
+        pages.push(readCachedPage(p) ?? (p === pageIndex ? pageDataRef.current : undefined))
+      }
+      const next = mergePagesById(pages)
+      setAccumulated(prev => (sameItems(prev, next) ? prev : next))
+    }
+    materialize()
+    const unsubscribes: Array<() => void> = []
+    for (let p = 0; p <= pageIndex; p++) {
+      unsubscribes.push(watchCachedPage(p, materialize))
+    }
+    return () => {
+      for (const unsubscribe of unsubscribes) unsubscribe()
+    }
+  }, [cacheBacked, readCachedPage, watchCachedPage, pageIndex])
+
+  useEffect(() => {
+    if (cacheBacked) return
     if (pageData === undefined || loading) return
     if (pageIndex === 0) {
       setAccumulated(prev => reconcileFirstPage(prev, pageData))
@@ -75,7 +128,7 @@ export function useAccumulatedPagination<T extends { id: string }>(options: {
       }
       return next
     })
-  }, [pageData, pageIndex, loading])
+  }, [cacheBacked, pageData, pageIndex, loading])
 
   const { lastAvailablePage, hasMore } = useMemo(
     () => computePaginationBounds({

@@ -377,7 +377,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
   )
 
   const lastTotalCountRef = useRef<number | undefined>(undefined)
-  const { data: patientsData, refetch, totalCount, loading: patientsLoading, prefetchPage } = usePatientsPaginated(
+  const { data: patientsData, refetch, totalCount, loading: patientsLoading, prefetchPage, readCachedPage, watchCachedPage } = usePatientsPaginated(
     {
       locationId: hasLocationFilter ? undefined : (locationId || undefined),
       rootLocationIds: hasLocationFilter || locationId
@@ -405,6 +405,8 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
     loading: patientsLoading,
     pageSize: LIST_PAGE_SIZE,
     prefetchPage,
+    readCachedPage,
+    watchCachedPage,
   })
 
   const mapPatientRow = useCallback((p: GetPatientsQuery['patients'][0]): PatientViewModel => {

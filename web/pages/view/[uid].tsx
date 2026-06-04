@@ -268,7 +268,7 @@ function SavedTaskViewTab({
     [apiFilters, apiSorting, searchInput, rootIds, assigneeId]
   )
 
-  const { data: tasksData, refetch, totalCount, loading: tasksLoading, prefetchPage } = useTasksPaginated(
+  const { data: tasksData, refetch, totalCount, loading: tasksLoading, prefetchPage, readCachedPage, watchCachedPage } = useTasksPaginated(
     rootIds && assigneeId
       ? { rootLocationIds: rootIds, assigneeId }
       : undefined,
@@ -289,6 +289,8 @@ function SavedTaskViewTab({
     loading: tasksLoading,
     pageSize: LIST_PAGE_SIZE,
     prefetchPage,
+    readCachedPage,
+    watchCachedPage,
   })
 
   const tasks: TaskViewModel[] = useMemo(() => {

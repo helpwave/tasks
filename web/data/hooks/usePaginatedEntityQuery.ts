@@ -19,6 +19,8 @@ export type UsePaginatedEntityQueryResult<TItem> = {
   totalCount: number | undefined,
   refetch: () => void,
   prefetchPage: (pageIndex: number) => void,
+  readCachedPage: (pageIndex: number) => TItem[] | undefined,
+  watchCachedPage: (pageIndex: number, onChange: () => void) => () => void,
 }
 
 type VariablesWithPagination = {
@@ -80,6 +82,31 @@ export function usePaginatedEntityQuery<
     }).catch(() => {})
   }, [client, skipQuery, document, baseVariables, pageSize])
 
+  const readCachedPage = useCallback((pageIndex: number): TItem[] | undefined => {
+    if (!client || skipQuery === true || pageIndex < 0) return undefined
+    try {
+      const cached = client.cache.readQuery<TQueryData>({
+        query: getParsedDocument(document),
+        variables: { ...baseVariables, pagination: { pageIndex, pageSize } },
+        optimistic: true,
+      })
+      if (cached == null) return undefined
+      return extractItemsRef.current(cached)
+    } catch {
+      return undefined
+    }
+  }, [client, skipQuery, document, baseVariables, pageSize])
+
+  const watchCachedPage = useCallback((pageIndex: number, onChange: () => void): (() => void) => {
+    if (!client || skipQuery === true || pageIndex < 0) return () => {}
+    return client.cache.watch({
+      query: getParsedDocument(document),
+      variables: { ...baseVariables, pagination: { pageIndex, pageSize } },
+      optimistic: true,
+      callback: () => { onChange() },
+    })
+  }, [client, skipQuery, document, baseVariables, pageSize])
+
   return {
     data,
     loading: result.loading,
@@ -87,5 +114,7 @@ export function usePaginatedEntityQuery<
     totalCount,
     refetch,
     prefetchPage,
+    readCachedPage,
+    watchCachedPage,
   }
 }
