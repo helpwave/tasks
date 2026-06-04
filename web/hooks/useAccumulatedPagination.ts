@@ -81,10 +81,15 @@ export function useAccumulatedPagination<T extends { id: string }>(options: {
       return
     }
     setAccumulated(prev => {
-      const ids = new Set(prev.map(x => x.id))
-      const next = [...prev]
+      // Refresh already-accumulated rows in place with the freshly fetched copy
+      // (so a row reloaded after an edit reflects the server value instead of the
+      // stale object captured when the page was first appended), then append any
+      // rows we have not seen yet.
+      const incomingById = new Map(pageData.map(item => [item.id, item]))
+      const existingIds = new Set(prev.map(item => item.id))
+      const next = prev.map(item => incomingById.get(item.id) ?? item)
       for (const item of pageData) {
-        if (!ids.has(item.id)) next.push(item)
+        if (!existingIds.has(item.id)) next.push(item)
       }
       return next
     })

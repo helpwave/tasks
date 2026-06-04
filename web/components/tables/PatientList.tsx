@@ -1170,23 +1170,25 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
               ))}
             </div>
           )}
-          {!embedded && !derivedVirtualMode && (
+          {!embedded && !derivedVirtualMode && stableTotalCount != null && hasMore && (
             <>
               <InfiniteScrollSentinel
                 onLoadMore={loadMore}
-                hasMore={stableTotalCount != null && hasMore}
+                hasMore={hasMore}
                 isFetchingMore={isFetchingMore}
               />
-              {isFetchingMore && (
-                <div className="flex justify-center py-2 print:hidden" aria-busy>
-                  <Loader2 className="size-5 animate-spin text-description" />
-                </div>
-              )}
-              {stableTotalCount != null && hasMore && !isFetchingMore && (
-                <Button color="neutral" className="mt-2 w-full sm:w-auto self-center print:hidden" onClick={loadMore}>
-                  {translation('loadMore')}
-                </Button>
-              )}
+              {/* Always render the manual loader at the bottom: infinite-scroll
+                  auto-loading is unreliable on mobile, so the button is the
+                  dependable fallback for loading the next page by hand. */}
+              <Button
+                color="neutral"
+                className="mt-2 w-full sm:w-auto self-center print:hidden"
+                onClick={loadMore}
+                disabled={isFetchingMore}
+              >
+                {isFetchingMore && <Loader2 className="size-5 animate-spin" />}
+                {translation(isFetchingMore ? 'loading' : 'loadMore')}
+              </Button>
             </>
           )}
         </div>
