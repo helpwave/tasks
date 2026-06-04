@@ -8,7 +8,8 @@ import type { MutateOptimisticOptions, OptimisticPatch } from './types'
 import { schedulePersistCache } from '../cache/persist'
 import {
   clearEntityMutated,
-  markEntityMutated
+  markEntityMutated,
+  reloadEntityAfterMutation
 } from '../subscriptions/handler'
 import * as storage from '../storage/indexed-db'
 
@@ -87,17 +88,20 @@ export async function mutateOptimistic<TData, TVariables>(
       storage.removePendingMutation(resolvedId).catch(() => {})
     }
     if (typeof vars?.['id'] === 'string') {
-      clearEntityMutated('Task', vars['id'])
+      clearEntityMutated(entityType, vars['id'])
     }
     onSuccess?.(result.data, variables)
     schedulePersistCache(cache)
+    if (typeof vars?.['id'] === 'string') {
+      void reloadEntityAfterMutation(client, entityType, vars['id'])
+    }
     return result.data
   } catch (error) {
     for (const patch of patches) {
       try {
         patch.rollback(cache, variables)
       } catch {
-        //
+        void 0
       }
     }
     removePendingMutation(resolvedId)

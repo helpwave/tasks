@@ -29,7 +29,6 @@ type PropertyEntryProps = {
   readOnly?: boolean,
 }
 
-// TODO move to hightide
 export const PropertyEntry = ({
   value,
   name,

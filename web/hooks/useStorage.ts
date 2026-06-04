@@ -55,7 +55,7 @@ export function useStorage<T>(options: UseStorageOptions<T>): UseStorageResult<T
           try {
             window.localStorage.setItem(key, serialize(next))
           } catch {
-            // ignore storage errors
+            void 0
           }
         }
         return next

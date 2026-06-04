@@ -54,7 +54,6 @@ export const TaskDetailView = ({ taskId, onClose, onCreateSuccessClose, onListSy
     const currentProperties = taskData.properties || []
     const propertyInputs: PropertyValueInput[] = []
 
-    // Add all existing properties except the one being changed
     for (const prop of currentProperties) {
       if (prop.definition.id !== definitionId) {
         propertyInputs.push({
@@ -70,8 +69,6 @@ export const TaskDetailView = ({ taskId, onClose, onCreateSuccessClose, onListSy
         })
       }
     }
-
-    // Add the changed property if it's not null
 
     if (value !== null) {
       const newPropertyInput = convertPropertyValueToInput(definitionId, value)

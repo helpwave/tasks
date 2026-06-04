@@ -1,9 +1,9 @@
 import { useMemo, useState, forwardRef, useImperativeHandle, useEffect, useCallback, useRef, type ReactNode } from 'react'
 import { useMutation } from '@apollo/client/react'
 import type { IdentifierFilterValue, FilterListItem, FilterListPopUpBuilderProps } from '@helpwave/hightide'
-import { Chip, FillerCell, HelpwaveLogo, LoadingContainer, SearchBar, ProgressIndicator, Tooltip, Drawer, TableProvider, TableDisplay, TableColumnSwitcher, IconButton, useLocale, FilterList, SortingList, Button, ExpansionIcon, Visibility, ConfirmDialog } from '@helpwave/hightide'
+import { Chip, FillerCell, HelpwaveLogo, SearchBar, ProgressIndicator, Tooltip, Drawer, TableProvider, TableDisplay, TableColumnSwitcher, IconButton, useLocale, FilterList, SortingList, Button, ExpansionIcon, Visibility, ConfirmDialog } from '@helpwave/hightide'
 import clsx from 'clsx'
-import { LayoutGrid, PlusIcon, Table2 } from 'lucide-react'
+import { LayoutGrid, Loader2, PlusIcon, Table2 } from 'lucide-react'
 import type { LocationType } from '@/api/gql/generated'
 import { Sex, PatientState, type GetPatientsQuery, type TaskType, PropertyEntity, FieldType, type QueryableField } from '@/api/gql/generated'
 import { usePropertyDefinitions, usePatientsPaginated, useQueryableFields, useRefreshingEntityIds, useUpdatePatient } from '@/data'
@@ -20,6 +20,8 @@ import { getPropertyColumnIds, useColumnVisibilityWithPropertyDefaults } from '@
 import { columnFiltersToQueryFilterClauses, sortingStateToQuerySortClauses } from '@/utils/tableStateToApi'
 import { LIST_PAGE_SIZE } from '@/utils/listPaging'
 import { useAccumulatedPagination } from '@/hooks/useAccumulatedPagination'
+import { RowRefreshingGate } from '@/components/tables/RowRefreshingGate'
+import { InfiniteScrollSentinel } from '@/components/common/InfiniteScrollSentinel'
 import { DateDisplay } from '@/components/Date/DateDisplay'
 import { PatientCardView } from '@/components/patients/PatientCardView'
 import { queryableFieldsToFilterListItems, queryableFieldsToSortingListItems, type QueryableChoiceTagLabelResolver } from '@/utils/queryableFilterList'
@@ -112,16 +114,13 @@ type PatientListProps = {
   viewDefaultColumnOrder?: ColumnOrderState,
   readOnly?: boolean,
   hideSaveView?: boolean,
-  /** When set (e.g. on `/view/:id`), overwrite updates this saved view. */
   savedViewId?: string,
   onSavedViewCreated?: (id: string) => void,
   onPatientUpdated?: () => void,
   embedded?: boolean,
   embeddedPatients?: PatientViewModel[],
   embeddedOnRefetch?: () => void,
-  /** When set with embeddedPatients: client-side filter/sort/search on derived rows; show full toolbar. */
   derivedVirtualMode?: boolean,
-  /** Persist overwrite targets base view triple or related triple (opposite tab). */
   savedViewScope?: 'base' | 'related',
 }
 
@@ -378,7 +377,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
   )
 
   const lastTotalCountRef = useRef<number | undefined>(undefined)
-  const { data: patientsData, refetch, totalCount, loading: patientsLoading } = usePatientsPaginated(
+  const { data: patientsData, refetch, totalCount, loading: patientsLoading, prefetchPage, readCachedPage, watchCachedPage } = usePatientsPaginated(
     {
       locationId: hasLocationFilter ? undefined : (locationId || undefined),
       rootLocationIds: hasLocationFilter || locationId
@@ -397,13 +396,17 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
   if (totalCount != null) lastTotalCountRef.current = totalCount
   const stableTotalCount = totalCount ?? lastTotalCountRef.current
 
-  const { accumulated: accumulatedPatientsRaw, loadMore, hasMore } = useAccumulatedPagination({
+  const { accumulated: accumulatedPatientsRaw, loadMore, hasMore, isFetchingMore } = useAccumulatedPagination({
     resetKey: accumulationResetKey,
     pageData: patientsData,
     pageIndex: fetchPageIndex,
     setPageIndex: setFetchPageIndex,
     totalCount: stableTotalCount,
     loading: patientsLoading,
+    pageSize: LIST_PAGE_SIZE,
+    prefetchPage,
+    readCachedPage,
+    watchCachedPage,
   })
 
   const mapPatientRow = useCallback((p: GetPatientsQuery['patients'][0]): PatientViewModel => {
@@ -587,14 +590,19 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
     day: '2-digit'
   }), [locale])
 
-  const rowLoadingCell = useMemo(() => <LoadingContainer className="w-full min-h-8" />, [])
+  const gateCell = useCallback(
+    (patientId: string, content: ReactNode) => (
+      <RowRefreshingGate refreshing={refreshingPatientIds.has(patientId)}>{content}</RowRefreshingGate>
+    ),
+    [refreshingPatientIds]
+  )
 
   const columns = useMemo<ColumnDef<PatientViewModel>[]>(() => [
     {
       id: 'name',
       header: translation('name'),
       accessorKey: 'name',
-      cell: ({ row }) => (refreshingPatientIds.has(row.original.id) ? rowLoadingCell : row.original.name),
+      cell: ({ row }) => gateCell(row.original.id, row.original.name),
       minSize: 200,
       size: 250,
       maxSize: 300,
@@ -603,15 +611,12 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       id: 'state',
       header: translation('status'),
       accessorFn: ({ state }) => state,
-      cell: ({ row }) => {
-        if (refreshingPatientIds.has(row.original.id)) return rowLoadingCell
-        return (
-          <>
-            <span className="print:block hidden">{translation('patientState', { state: row.original.state as string })}</span>
-            <PatientStateChip state={row.original.state} className="print:hidden" />
-          </>
-        )
-      },
+      cell: ({ row }) => gateCell(row.original.id, (
+        <>
+          <span className="print:block hidden">{translation('patientState', { state: row.original.state as string })}</span>
+          <PatientStateChip state={row.original.state} className="print:hidden" />
+        </>
+      )),
       minSize: 120,
       size: 144,
       maxSize: 180,
@@ -621,7 +626,6 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       header: translation('sex'),
       accessorFn: ({ sex }) => sex,
       cell: ({ row }) => {
-        if (refreshingPatientIds.has(row.original.id)) return rowLoadingCell
         const sex = row.original.sex
         const colorClass = sex === Sex.Male
           ? 'gender-male'
@@ -635,7 +639,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
           [Sex.Unknown]: translation('diverse'),
         }[sex] || sex
 
-        return (
+        return gateCell(row.original.id, (
           <>
             <span className="print:block hidden">{label}</span>
             <Chip
@@ -647,7 +651,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
               <span>{label}</span>
             </Chip>
           </>
-        )
+        ))
       },
       minSize: 160,
       size: 160,
@@ -658,9 +662,8 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       header: translation('clinic'),
       accessorFn: ({ clinic }: PatientViewModel) => clinic?.title,
       cell: ({ row }: { row: Row<PatientViewModel> }) => {
-        if (refreshingPatientIds.has(row.original.id)) return rowLoadingCell
         const clinic = row.original.clinic
-        return (
+        return gateCell(row.original.id, (
           <>
             <span className="print:block hidden">{clinic?.title}</span>
             <LocationChips
@@ -669,7 +672,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
               className="print:hidden"
             />
           </>
-        )
+        ))
       },
       minSize: 160,
       size: 220,
@@ -679,15 +682,12 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       id: 'position',
       header: translation('location'),
       accessorFn: ({ position }: PatientViewModel) => position?.title,
-      cell: ({ row }: { row: Row<PatientViewModel> }) => {
-        if (refreshingPatientIds.has(row.original.id)) return rowLoadingCell
-        return (
-          <>
-            <span className="print:block hidden">{row.original.position?.title}</span>
-            <LocationChipsBySetting locations={row.original.position ? [row.original.position] : []} small className="print:hidden" />
-          </>
-        )
-      },
+      cell: ({ row }: { row: Row<PatientViewModel> }) => gateCell(row.original.id, (
+        <>
+          <span className="print:block hidden">{row.original.position?.title}</span>
+          <LocationChipsBySetting locations={row.original.position ? [row.original.position] : []} small className="print:hidden" />
+        </>
+      )),
       minSize: 200,
       size: 260,
       maxSize: 320,
@@ -700,15 +700,14 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
         return byKind[kind]?.title ?? ''
       },
       cell: ({ row }: { row: Row<PatientViewModel> }) => {
-        if (refreshingPatientIds.has(row.original.id)) return rowLoadingCell
         const byKind = getLocationNodesByKind(row.original.position ?? null)
         const node = byKind[kind]
-        return (
+        return gateCell(row.original.id, (
           <>
             <span className="print:block hidden">{node?.title}</span>
             <LocationChips locations={node ? [{ id: node.id, title: node.title, kind: node.kind as LocationType }] : []} small className="print:hidden" />
           </>
-        )
+        ))
       },
       minSize: 160,
       size: 220,
@@ -719,9 +718,6 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       header: translation('birthdate'),
       accessorKey: 'birthdate',
       cell: ({ row }) => {
-        if (refreshingPatientIds.has(row.original.id))
-          return rowLoadingCell
-
         const now = new Date()
         const birthdate = row.original.birthdate
         let years = now.getFullYear() - birthdate.getFullYear()
@@ -732,11 +728,11 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
           years--
         }
 
-        return (
+        return gateCell(row.original.id, (
           <span>
             {dateFormat.format(row.original.birthdate) + ' (' + translation('nYears', { years }) + ')'}
           </span>
-        )
+        ))
       },
       minSize: 200,
       size: 200,
@@ -750,12 +746,11 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
         return total === 0 ? 0 : closedTasksCount / total
       },
       cell: ({ row }) => {
-        if (refreshingPatientIds.has(row.original.id)) return rowLoadingCell
         const { openTasksCount, closedTasksCount } = row.original
         const total = openTasksCount + closedTasksCount
         const progress = total === 0 ? 0 : closedTasksCount / total
 
-        return (
+        return gateCell(row.original.id, (
           <Tooltip
             tooltip={(
               <div className="flex-col-0">
@@ -769,7 +764,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
               <ProgressIndicator progress={progress} rotation={-90} />
             </div>
           </Tooltip>
-        )
+        ))
       },
       minSize: 150,
       size: 150,
@@ -787,15 +782,13 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
         return updateDates[0]
       },
       cell: ({ row }) => {
-        if (refreshingPatientIds.has(row.original.id)) return rowLoadingCell
         const taskList = row.original.tasks || []
         const updateDates = taskList
           .map(t => t.updateDate ? new Date(t.updateDate) : null)
           .filter((d): d is Date => d !== null)
           .sort((a, b) => b.getTime() - a.getTime())
         const d = updateDates[0]
-        if (!d) return <FillerCell />
-        return <DateDisplay date={d} mode="absolute" />
+        return gateCell(row.original.id, d ? <DateDisplay date={d} mode="absolute" /> : <FillerCell />)
       },
       minSize: 220,
       size: 220,
@@ -806,10 +799,10 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       ...col,
       cell: col.cell
         ? (params: { row: { original: PatientViewModel } }) =>
-          refreshingPatientIds.has(params.row.original.id) ? rowLoadingCell : (col.cell as (p: unknown) => React.ReactNode)(params)
+          gateCell(params.row.original.id, (col.cell as (p: unknown) => React.ReactNode)(params))
         : undefined,
     })),
-  ], [translation, patientPropertyColumnsWithActions, refreshingPatientIds, rowLoadingCell, dateFormat])
+  ], [translation, patientPropertyColumnsWithActions, gateCell, dateFormat])
 
   const propertyFieldTypeByDefId = useMemo(
     () => new Map(propertyDefinitionsData?.propertyDefinitions.map(d => [d.id, d.fieldType]) ?? []),
@@ -1162,7 +1155,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
             </div>
           )}
           <div className={clsx(listLayout === 'table' ? 'block' : 'hidden print:block')}>
-            <TableDisplay className="print-content overflow-x-auto touch-pan-x"/>
+            <TableDisplay className="print-content hw-autosize-table overflow-x-auto hw-touch-scroll"/>
           </div>
           {listLayout === 'card' && (
             <div className="flex flex-col gap-3 w-full print:hidden">
@@ -1176,10 +1169,23 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
               ))}
             </div>
           )}
-          {stableTotalCount != null && hasMore && !embedded && !derivedVirtualMode && (
-            <Button color="neutral" className="mt-2 w-full sm:w-auto self-center" onClick={loadMore}>
-              {translation('loadMore')}
-            </Button>
+          {!embedded && !derivedVirtualMode && stableTotalCount != null && hasMore && (
+            <>
+              <InfiniteScrollSentinel
+                onLoadMore={loadMore}
+                hasMore={hasMore}
+                isFetchingMore={isFetchingMore}
+              />
+              <Button
+                color="neutral"
+                className="mt-2 w-full sm:w-auto self-center print:hidden"
+                onClick={loadMore}
+                disabled={isFetchingMore}
+              >
+                {isFetchingMore && <Loader2 className="size-5 animate-spin" />}
+                {translation(isFetchingMore ? 'loading' : 'loadMore')}
+              </Button>
+            </>
           )}
         </div>
         <Drawer

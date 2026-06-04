@@ -22,7 +22,7 @@ import { useRouter } from 'next/router'
 import clsx from 'clsx'
 import { removeUser } from '@/api/auth/authService'
 import { useQueryClient } from '@tanstack/react-query'
-import { hashString } from '@/utils/hash'
+import { openSurvey, surveyStorageKeys } from '@/utils/survey'
 import { getConfig } from '@/utils/config'
 import { FeedbackDialog } from '@/components/FeedbackDialog'
 import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
@@ -65,11 +65,11 @@ const SettingsPage: NextPage = () => {
 
   const {
     setValue: setOnboardingSurveyCompleted
-  } = useStorage({ key: 'onboarding-survey-completed', defaultValue: 0 })
+  } = useStorage({ key: surveyStorageKeys.onboardingCompleted, defaultValue: 0 })
 
   const {
     setValue: setWeeklySurveyLastCompleted
-  } = useStorage({ key: 'weekly-survey-last-completed', defaultValue: 0 })
+  } = useStorage({ key: surveyStorageKeys.weeklyLastCompleted, defaultValue: 0 })
 
   const handleClearCache = async () => {
     queryClient.clear()
@@ -84,19 +84,16 @@ const SettingsPage: NextPage = () => {
     window.location.href = '/'
   }
 
-  const handleRetakeSurvey = async () => {
-    if (!user?.id) return
+  const handleOpenOnboardingSurvey = async () => {
+    if (!user?.id || !config.onboardingSurveyUrl) return
+    await openSurvey(config.onboardingSurveyUrl, user.id)
+    setOnboardingSurveyCompleted(new Date().getTime())
+  }
 
-    setOnboardingSurveyCompleted(0)
-    setWeeklySurveyLastCompleted(0)
-
-    const surveyUrl = config.onboardingSurveyUrl || config.weeklySurveyUrl
-    if (surveyUrl) {
-      const hashedUserId = await hashString(user.id)
-      const url = new URL(surveyUrl)
-      url.searchParams.set('a', hashedUserId)
-      window.open(url.toString(), '_blank', 'noopener,noreferrer')
-    }
+  const handleOpenWeeklySurvey = async () => {
+    if (!user?.id || !config.weeklySurveyUrl) return
+    await openSurvey(config.weeklySurveyUrl, user.id)
+    setWeeklySurveyLastCompleted(new Date().getTime())
   }
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -349,14 +346,24 @@ const SettingsPage: NextPage = () => {
           <div className="flex-col-6">
             <h2 className="typography-title-md border-b border-divider pb-2">{translation('feedback')}</h2>
             <div className="flex-row-4 flex-wrap">
-              {(config.onboardingSurveyUrl || config.weeklySurveyUrl) && (
+              {config.onboardingSurveyUrl && (
                 <Button
                   color="neutral"
                   coloringStyle="outline"
-                  onClick={handleRetakeSurvey}
+                  onClick={handleOpenOnboardingSurvey}
                 >
                   <ClipboardList className="w-4 h-4" />
-                  {translation('retakeSurvey')}
+                  {translation('onboardingSurvey')}
+                </Button>
+              )}
+              {config.weeklySurveyUrl && (
+                <Button
+                  color="neutral"
+                  coloringStyle="outline"
+                  onClick={handleOpenWeeklySurvey}
+                >
+                  <ClipboardList className="w-4 h-4" />
+                  {translation('weeklySurvey')}
                 </Button>
               )}
               <Button
