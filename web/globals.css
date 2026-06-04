@@ -15,7 +15,7 @@
 }
 
 @layer utilities {
-  .touch-pan-x {
+  .hw-touch-scroll {
     -webkit-overflow-scrolling: touch;
   }
 }

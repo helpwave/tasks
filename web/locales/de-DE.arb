@@ -193,7 +193,9 @@
     }
   },
   "occupancy": "Belegung",
+  "onboardingSurvey": "Onboarding-Umfrage",
   "openSurvey": "Umfrage öffnen",
+  "weeklySurvey": "Wöchentliche Umfrage",
   "openTasks": "Offene Aufgaben",
   "openView": "Öffnen",
   "option": "Option",

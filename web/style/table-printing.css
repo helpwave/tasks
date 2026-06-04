@@ -1,7 +1,7 @@
 @media print {
   @page {
     size: A4 landscape;
-    margin: 0;
+    margin: 1cm;
   }
 
   * {
@@ -65,7 +65,7 @@
     @apply !text-sm;
     page-break-inside: auto;
 
-    table-layout: auto !important;
+    table-layout: fixed !important;
     border-collapse: collapse;
     border: 1px solid black;
   }
@@ -75,11 +75,9 @@
     break-after: avoid;
   }
 
-  /* TODO consider this, if all columns should have the same width
   .print-content colgroup col {
-      width: auto !important;
+    width: auto !important;
   }
-  */
 
   .print-content thead tr th,
   .print-content tbody tr td,
@@ -91,6 +89,8 @@
     @apply !text-sm;
     overflow: visible !important;
     white-space: pre-wrap !important;
+    word-break: break-word !important;
+    overflow-wrap: anywhere !important;
   }
 
   .print-content thead tr th {
@@ -136,6 +136,25 @@
   .print-content tbody tr:empty,
   .print-content tbody tr:has(td:only-child) {
     display: none !important;
+  }
+
+  .print-content thead tr th button,
+  .print-content tbody tr td button {
+    display: inline-flex !important;
+    align-items: center;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    color: black !important;
+    box-shadow: none !important;
+    font: inherit !important;
+    text-align: left !important;
   }
 
   .print-button,

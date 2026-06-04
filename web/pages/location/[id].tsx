@@ -167,7 +167,7 @@ const LocationPage: NextPage = () => {
       current = current.parent || null
     }
 
-    return chain.reverse() // Reverse to get root-to-parent order
+    return chain.reverse()
   }, [locationData])
 
   return (

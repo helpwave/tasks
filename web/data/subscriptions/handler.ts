@@ -1,7 +1,13 @@
 import type { ApolloClient } from '@apollo/client/core'
-import { GetTaskDocument, GetPatientDocument } from '@/api/gql/generated'
+import { GetTaskDocument, GetPatientDocument, GetTasksDocument, GetPatientsDocument } from '@/api/gql/generated'
 import { getParsedDocument } from '../hooks/queryHelpers'
 import { hasPendingMutationForEntity } from '../mutations/queue'
+import {
+  addRefreshingTask,
+  removeRefreshingTask,
+  addRefreshingPatient,
+  removeRefreshingPatient
+} from './refreshingEntities'
 
 export type SubscriptionPayload = {
   taskId?: string,
@@ -42,8 +48,8 @@ function isLikelyEcho(
   const key = `${entityType}:${entityId}`
   const recent = recentMutationsByEntity.get(key)
   if (!recent) return false
-  if (payloadClientMutationId && payloadClientMutationId === recent.clientMutationId) {
-    return true
+  if (payloadClientMutationId) {
+    return payloadClientMutationId === recent.clientMutationId
   }
   if (Date.now() - recent.at < ECHO_WINDOW_MS) {
     return true
@@ -177,4 +183,39 @@ export function mergeSubscriptionIntoCache(
     return mergePatientUpdatedIntoCache(client, payload.patientId, payload, options)
   }
   return Promise.resolve()
+}
+
+export async function reloadEntityAfterMutation(
+  client: ApolloClient,
+  entityType: 'Task' | 'Patient',
+  entityId: string
+): Promise<void> {
+  if (entityType === 'Task') {
+    addRefreshingTask(entityId)
+    await mergeTaskUpdatedIntoCache(
+      client,
+      entityId,
+      { taskId: entityId },
+      { conflictStrategy: 'server-wins' }
+    )
+      .then(() => client.refetchQueries({
+        include: [getParsedDocument(GetTasksDocument), getParsedDocument(GetPatientsDocument)],
+      }))
+      .catch(() => {})
+      .finally(() => removeRefreshingTask(entityId))
+    return
+  }
+
+  addRefreshingPatient(entityId)
+  await mergePatientUpdatedIntoCache(
+    client,
+    entityId,
+    { patientId: entityId },
+    { conflictStrategy: 'server-wins' }
+  )
+    .then(() => client.refetchQueries({
+      include: [getParsedDocument(GetPatientsDocument), getParsedDocument(GetTasksDocument)],
+    }))
+    .catch(() => {})
+    .finally(() => removeRefreshingPatient(entityId))
 }

@@ -20,6 +20,7 @@ export type UsePatientsPaginatedResult = {
   error: Error | undefined,
   totalCount: number | undefined,
   refetch: () => void,
+  prefetchPage: (pageIndex: number) => void,
 }
 
 function propertyFingerprint(prop: { definition?: { id: string }, textValue?: string | null, numberValue?: number | null, userValue?: string | null }): string {

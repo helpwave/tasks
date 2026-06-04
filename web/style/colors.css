@@ -1,5 +1,4 @@
 @theme {
-  /* Default Color Overwrites */
   --color-background: #EEEEEE;
   --color-foreground: #000000;
 
@@ -51,13 +50,10 @@
 
 @layer base {
 
-  /* Here are overrides for the light theme */
   @variant dark {
-    /* Header */
     --color-header-background: var(--color-black);
     --color-header-text: var(--color-white);
 
-    /* Location colors */
     --color-location-hospital: var(--color-red-900);
     --color-location-on-hospital: var(--color-red-300);
 

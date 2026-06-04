@@ -30,7 +30,7 @@ export async function replayPendingMutations(cache: ApolloCache): Promise<void> 
       try {
         patch.apply(cache, record.variables)
       } catch {
-        //
+        void 0
       }
     }
     addPendingMutation(record)
