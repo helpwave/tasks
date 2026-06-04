@@ -1,10 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { ApolloClient } from '@apollo/client/core'
 import {
   clearEntityMutated,
   markEntityMutated,
+  reloadEntityAfterMutation,
   shouldSkipMergePatient,
   shouldSkipMergeTask
 } from './handler'
+import { getRefreshingPatientIds } from './refreshingEntities'
 
 const noPending = () => false
 
@@ -70,6 +73,46 @@ describe('echo detection', () => {
     expect(
       shouldSkipMergePatient('patient-1', {}, { conflictStrategy: 'defer', getPendingForEntity: noPending })
     ).toBe(false)
+  })
+})
+
+describe('reloadEntityAfterMutation', () => {
+  it('reloads the entity, refetches active lists, and toggles the refreshing gate', async () => {
+    let gatedDuringRefetch = false
+    const client = {
+      query: vi.fn().mockResolvedValue({
+        data: { patient: { __typename: 'PatientType', id: 'patient-1', updateDate: '2026-01-02T00:00:00Z' } },
+      }),
+      cache: {
+        readQuery: vi.fn().mockReturnValue({ patient: { updateDate: '2026-01-01T00:00:00Z' } }),
+        writeQuery: vi.fn(),
+      },
+      refetchQueries: vi.fn().mockImplementation(() => {
+        // Capture the gate state while the reload is still in flight.
+        gatedDuringRefetch = getRefreshingPatientIds().has('patient-1')
+        return Promise.resolve([])
+      }),
+    } as unknown as ApolloClient
+
+    await reloadEntityAfterMutation(client, 'Patient', 'patient-1')
+
+    expect(client.query).toHaveBeenCalled()
+    expect(client.refetchQueries).toHaveBeenCalled()
+    expect(gatedDuringRefetch).toBe(true)
+    // The gate is released once the reload settles.
+    expect(getRefreshingPatientIds().has('patient-1')).toBe(false)
+  })
+
+  it('releases the refreshing gate even when the reload fails', async () => {
+    const client = {
+      query: vi.fn().mockRejectedValue(new Error('network down')),
+      cache: { readQuery: vi.fn(), writeQuery: vi.fn() },
+      refetchQueries: vi.fn(),
+    } as unknown as ApolloClient
+
+    await reloadEntityAfterMutation(client, 'Patient', 'patient-1')
+
+    expect(getRefreshingPatientIds().has('patient-1')).toBe(false)
   })
 })
 

@@ -8,7 +8,8 @@ import type { MutateOptimisticOptions, OptimisticPatch } from './types'
 import { schedulePersistCache } from '../cache/persist'
 import {
   clearEntityMutated,
-  markEntityMutated
+  markEntityMutated,
+  reloadEntityAfterMutation
 } from '../subscriptions/handler'
 import * as storage from '../storage/indexed-db'
 
@@ -91,6 +92,12 @@ export async function mutateOptimistic<TData, TVariables>(
     }
     onSuccess?.(result.data, variables)
     schedulePersistCache(cache)
+    // Reload the mutated entity from the server so server-computed fields are
+    // reflected after our optimistic write. Fire-and-forget: the optimistic UI
+    // is already in place and the row dims via the refreshing gate meanwhile.
+    if (typeof vars?.['id'] === 'string') {
+      void reloadEntityAfterMutation(client, entityType, vars['id'])
+    }
     return result.data
   } catch (error) {
     for (const patch of patches) {

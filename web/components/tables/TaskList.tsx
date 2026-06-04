@@ -1091,23 +1091,25 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
                 ))}
               </div>
             )}
-            {!embedded && (
+            {!embedded && effectiveHasMore && (
               <>
                 <InfiniteScrollSentinel
                   onLoadMore={handleLoadMore}
                   hasMore={effectiveHasMore}
                   isFetchingMore={isFetchingMore}
                 />
-                {isFetchingMore && (
-                  <div className="flex justify-center py-2 print:hidden" aria-busy>
-                    <Loader2 className="size-5 animate-spin text-description" />
-                  </div>
-                )}
-                {effectiveHasMore && !isFetchingMore && (
-                  <Button color="neutral" className="mt-2 w-full sm:w-auto self-center print:hidden" onClick={handleLoadMore}>
-                    {translation('loadMore')}
-                  </Button>
-                )}
+                {/* Always render the manual loader at the bottom: infinite-scroll
+                    auto-loading is unreliable on mobile, so the button is the
+                    dependable fallback for loading the next page by hand. */}
+                <Button
+                  color="neutral"
+                  className="mt-2 w-full sm:w-auto self-center print:hidden"
+                  onClick={handleLoadMore}
+                  disabled={isFetchingMore}
+                >
+                  {isFetchingMore && <Loader2 className="size-5 animate-spin" />}
+                  {translation(isFetchingMore ? 'loading' : 'loadMore')}
+                </Button>
               </>
             )}
           </div>
