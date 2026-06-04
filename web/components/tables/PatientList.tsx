@@ -348,9 +348,22 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
         : []
     if (raw.length === 0) return allPatientStates
     const allowed = new Set(allPatientStates as unknown as string[])
-    const filtered = raw.filter(s => allowed.has(s))
-    return filtered.length > 0 ? (filtered as PatientState[]) : allPatientStates
-  }, [apiFilters, allPatientStates])
+    const selected = raw.filter(s => allowed.has(s))
+    if (selected.length === 0) return allPatientStates
+    // The dedicated `states` query argument narrows which states are fetched, so
+    // it must honour the filter operator. For "does not contain"/"not equals"
+    // the selected states are the ones to exclude, not the ones to keep.
+    const operator = (filters.find(f => f.id === 'state')?.value as { operator?: string } | undefined)?.operator
+    const isNegated = operator === 'notContains' || operator === 'notEquals'
+    if (isNegated) {
+      const excluded = new Set(selected)
+      const remaining = (allPatientStates as unknown as string[]).filter(s => !excluded.has(s))
+      // If every state is excluded the API-level filter clause will still drop
+      // all rows; fall back to the full set so the `states` argument stays valid.
+      return remaining.length > 0 ? (remaining as PatientState[]) : allPatientStates
+    }
+    return selected as PatientState[]
+  }, [apiFilters, allPatientStates, filters])
 
   const searchInput = useMemo(
     () => (searchQuery
