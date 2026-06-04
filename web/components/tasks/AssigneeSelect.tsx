@@ -19,6 +19,8 @@ interface AssigneeSelectProps {
   onMultiUserIdsSelected?: (userIds: string[]) => void,
   id?: string,
   className?: string,
+  /** Controls the height of the trigger. Use 'sm' for inline/in-table usage to keep row height compact. */
+  size?: 'md' | 'sm',
   [key: string]: unknown,
 }
 
@@ -33,6 +35,7 @@ export const  AssigneeSelect = ({
   onMultiUserIdsSelected,
   id,
   className,
+  size = 'md',
 }: AssigneeSelectProps) => {
   const translation = useTasksTranslation()
   const [isOpen, setIsOpen] = useState(false)
@@ -88,9 +91,15 @@ export const  AssigneeSelect = ({
 
   return (
     <>
+      {/* When printing we only want the selected value, not the interactive selection UI. */}
+      <span className="hidden print:inline truncate">{selectedItem?.name ?? ''}</span>
       <div
         id={id}
-        className={clsx('flex-row-4 justify-between items-center input-element h-12 px-2 py-2 rounded-md w-full hover:cursor-pointer', className)}
+        className={clsx(
+          'flex-row-4 justify-between items-center input-element px-2 rounded-md w-full hover:cursor-pointer print:hidden',
+          size === 'sm' ? 'h-9 py-1' : 'h-12 py-2',
+          className
+        )}
 
         role="button"
         tabIndex={0}
@@ -135,7 +144,7 @@ export const  AssigneeSelect = ({
                     <Info className="size-4" />
                   </button>
                 )}
-                <ChevronDown className={clsx('size-6 ml-2 flex-shrink-0 transition-transform duration-200 text-description', isOpen && 'rotate-180')} />
+                <ChevronDown className={clsx('ml-2 flex-shrink-0 transition-transform duration-200 text-description', size === 'sm' ? 'size-5' : 'size-6', isOpen && 'rotate-180')} />
               </div>
             </>
           )}

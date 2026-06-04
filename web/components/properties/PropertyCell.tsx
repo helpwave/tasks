@@ -27,6 +27,7 @@ export const PropertyCell = ({
   case FieldType.FieldTypeCheckbox:
     return (
       <Chip
+        size="sm"
         className="coloring-tonal"
         color={property.booleanValue ? 'positive' : 'negative'}
       >
@@ -71,7 +72,7 @@ export const PropertyCell = ({
       : property.selectValue
     return (
       <div className="flex flex-wrap gap-1">
-        <Chip className="primary coloring-tonal">
+        <Chip size="sm" className="primary coloring-tonal">
           {selectOptionName}
         </Chip>
       </div>
@@ -89,7 +90,7 @@ export const PropertyCell = ({
             ? property.definition.options[parseInt(multiSelectOptionIndex, 10)]
             : val
           return (
-            <Chip key={val} className="primary coloring-tonal">
+            <Chip key={val} size="sm" className="primary coloring-tonal">
               {multiSelectOptionName}
             </Chip>
           )

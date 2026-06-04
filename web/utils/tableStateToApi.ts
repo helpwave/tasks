@@ -60,7 +60,7 @@ const TABLE_OPERATOR_TO_QUERY: Record<DataType, Partial<Record<HightideFilterOpe
     equals: QueryOperator.Eq,
     notEquals: QueryOperator.Neq,
     contains: QueryOperator.In,
-    notContains: QueryOperator.Neq,
+    notContains: QueryOperator.NotIn,
     isNotUndefined: QueryOperator.IsNotNull,
     isUndefined: QueryOperator.IsNull,
   },

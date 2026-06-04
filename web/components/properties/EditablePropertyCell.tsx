@@ -19,7 +19,7 @@ export type EditablePropertyCellProps = {
 }
 
 const editableTriggerButtonProps = {
-  className: 'justify-between group gap-x-2 w-full min-w-32 max-w-full h-auto max-h-none p-2 font-normal text-left',
+  className: 'justify-between group gap-x-2 w-full min-w-32 max-w-full h-auto max-h-none px-2 py-1 font-normal text-left',
 } as const
 
 function stopRowActivation(e: React.SyntheticEvent) {
@@ -208,6 +208,7 @@ export function EditablePropertyCell({
           value={assigneeValue}
           allowTeams={true}
           allowUnassigned={true}
+          size="sm"
           onValueChanged={(next) => {
             const prev = assigneeValue
             if (next === prev) {

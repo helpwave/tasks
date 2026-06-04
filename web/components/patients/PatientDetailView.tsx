@@ -96,7 +96,6 @@ export const PatientDetailView = ({
     const currentProperties = patientData.properties || []
     const propertyInputs: PropertyValueInput[] = []
 
-    // Add all existing properties except the one being changed
     for (const prop of currentProperties) {
       if (prop.definition.id !== definitionId) {
         propertyInputs.push({
@@ -113,7 +112,6 @@ export const PatientDetailView = ({
       }
     }
 
-    // Add the changed property if it's not null
     if (value !== null) {
       const newPropertyInput = convertPropertyValueToInput(definitionId, value)
       if (newPropertyInput) {

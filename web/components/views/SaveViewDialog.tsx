@@ -19,13 +19,11 @@ import { appendSavedViewToMySavedViewsCache } from '@/utils/savedViewsCache'
 type SaveViewDialogProps = {
   isOpen: boolean,
   onClose: () => void,
-  /** Entity this view is saved from */
   baseEntityType: SavedViewEntityType,
   filterDefinition: string,
   sortDefinition: string,
   parameters: string,
   presentation?: 'default' | 'fromSystemList',
-  /** Optional: navigate or toast after save */
   onCreated?: (id: string) => void,
 }
 

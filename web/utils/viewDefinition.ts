@@ -109,7 +109,6 @@ export function stringifyViewParameters(p: ViewParameters): string {
   return JSON.stringify(p)
 }
 
-/** Wire format for `filterDefinition` on saved views (JSON string). */
 export function serializeColumnFiltersForView(filters: ColumnFiltersState): string {
   const mappedColumnFilter = filters.map((filter) => {
     const tableFilterValue = filter.value as FilterValue

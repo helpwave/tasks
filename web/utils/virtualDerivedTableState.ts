@@ -159,14 +159,28 @@ function matchesBooleanOperator(done: boolean, operator: FilterOperator): boolea
   return true
 }
 
+// Selected tags of a singleTag/multiTag filter can be stored under several
+// parameter fields depending on how the filter UI serialized them. Mirror the
+// extraction used when building API filter clauses (see tableStateToApi.ts) so
+// the in-memory matcher considers the same values.
+function extractSelectedTags(parameter: FilterValue['parameter']): string[] {
+  const p = parameter as Record<string, unknown>
+  for (const field of ['uuidValues', 'searchTags', 'searchTagsContains']) {
+    const v = p[field]
+    if (Array.isArray(v) && v.length > 0) return v.map(String)
+  }
+  if (p['searchTag'] != null) return [String(p['searchTag'])]
+  if (parameter.stringValue) return [String(parameter.stringValue)]
+  return []
+}
+
 function matchesSingleTagOperator(
   value: string | undefined,
   operator: FilterOperator,
   fv: FilterValue
 ): boolean {
-  const p = fv.parameter
-  const tags = (p as { uuidValues?: unknown[], stringValue?: string }).uuidValues as string[] | undefined
-  const single = p.stringValue ?? (tags?.length === 1 ? tags[0] : undefined)
+  const tags = extractSelectedTags(fv.parameter)
+  const single = fv.parameter.stringValue ?? (tags.length === 1 ? tags[0] : undefined)
   const v = value ?? ''
   switch (operator) {
   case 'equals':
@@ -174,9 +188,9 @@ function matchesSingleTagOperator(
   case 'notEquals':
     return v !== single
   case 'contains':
-    return tags != null && tags.includes(v)
+    return tags.includes(v)
   case 'notContains':
-    return tags == null || !tags.includes(v)
+    return !tags.includes(v)
   case 'isUndefined':
     return v === ''
   case 'isNotUndefined':
@@ -245,11 +259,24 @@ function patientMatchesColumnFilter(patient: PatientViewModel, filter: ColumnFil
     return matchesTextOperator(patient.name, op, fv.parameter.stringValue ?? '')
   }
   if (id === 'state') {
-    const p = fv.parameter
-    const raw = p.uuidValues?.length ? p.uuidValues : p.stringValue ? [p.stringValue] : []
-    const tags = raw.map(String)
-    if (tags.length === 0) return true
-    return tags.includes(patient.state)
+    const tags = extractSelectedTags(fv.parameter)
+    const state = String(patient.state ?? '')
+    switch (op) {
+    case 'contains':
+      return tags.length === 0 || tags.includes(state)
+    case 'notContains':
+      return tags.length === 0 || !tags.includes(state)
+    case 'equals':
+      return tags.length === 0 || (tags.length === 1 && tags[0] === state)
+    case 'notEquals':
+      return tags.length === 0 || tags[0] !== state
+    case 'isUndefined':
+      return state === ''
+    case 'isNotUndefined':
+      return state !== ''
+    default:
+      return true
+    }
   }
   if (id === 'sex') {
     return matchesSingleTagOperator(patient.sex, op, fv)

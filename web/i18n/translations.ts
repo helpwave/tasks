@@ -160,6 +160,7 @@ export type TasksTranslationEntries = {
   'nTask': (values: { count: number }) => string,
   'nYears': (values: { years: number }) => string,
   'occupancy': string,
+  'onboardingSurvey': string,
   'ok': string,
   'openSurvey': string,
   'openTasks': string,
@@ -224,6 +225,9 @@ export type TasksTranslationEntries = {
   'selectRootLocation': string,
   'selectRootLocationDescription': string,
   'selectTeams': string,
+  'logInAgain': string,
+  'sessionExpired': string,
+  'sessionExpiredDescription': string,
   'settings': string,
   'settingsDescription': string,
   'sex': string,
@@ -298,6 +302,7 @@ export type TasksTranslationEntries = {
   'waitingForPatient': string,
   'waitPatient': string,
   'wards': string,
+  'weeklySurvey': string,
   'yes': string,
 }
 
@@ -523,6 +528,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
       })
     },
     'occupancy': `Belegung`,
+    'onboardingSurvey': `Onboarding-Umfrage`,
     'ok': `OK`,
     'openSurvey': `Umfrage öffnen`,
     'openTasks': `Offene Aufgaben`,
@@ -614,6 +620,9 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'selectRootLocation': `Stammstandort auswählen`,
     'selectRootLocationDescription': `Wählen Sie die Stammstandorte aus, die Ihren zugänglichen Bereich definieren. Es können nur Krankenhäuser, Praxen, Kliniken und Teams ausgewählt werden. Die Auswahl eines übergeordneten Standorts umfasst alle untergeordneten Standorte.`,
     'selectTeams': `Teams auswählen`,
+    'logInAgain': `Erneut anmelden`,
+    'sessionExpired': `Sitzung abgelaufen`,
+    'sessionExpiredDescription': `Du wurdest aufgrund von Inaktivität abgemeldet. Bitte melde dich erneut an, um fortzufahren. Nicht gespeicherte Änderungen können verloren gehen.`,
     'settings': `Einstellungen`,
     'settingsDescription': `Hier kannst du die App Konfiguration ändern.`,
     'sex': `Geschlecht`,
@@ -715,6 +724,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'waitingForPatient': `Warten auf Patient`,
     'waitPatient': `Patient auf Warteliste setzen`,
     'wards': `Stationen`,
+    'weeklySurvey': `Wöchentliche Umfrage`,
     'yes': `Ja`
   },
   'en-US': {
@@ -939,6 +949,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
       })
     },
     'occupancy': `Occupancy`,
+    'onboardingSurvey': `Onboarding Survey`,
     'ok': `OK`,
     'openSurvey': `Open Survey`,
     'openTasks': `Open Tasks`,
@@ -1030,6 +1041,9 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'selectRootLocation': `Select Root Location`,
     'selectRootLocationDescription': `Select the root locations that define your accessible scope. Only hospitals, practices, clinics, and teams can be selected. Selecting a parent location includes all its children.`,
     'selectTeams': `Select Teams`,
+    'logInAgain': `Log in again`,
+    'sessionExpired': `Session expired`,
+    'sessionExpiredDescription': `You have been logged out due to inactivity. Please log in again to continue. Any unsaved changes may be lost.`,
     'settings': `Settings`,
     'settingsDescription': `Here you can change the app configuration.`,
     'sex': `Sex`,
@@ -1131,6 +1145,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'waitingForPatient': `Waiting for patient`,
     'waitPatient': `Set Patient to Waiting`,
     'wards': `Wards`,
+    'weeklySurvey': `Weekly Survey`,
     'yes': `Yes`
   },
   'es-ES': {
@@ -1355,6 +1370,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
       })
     },
     'occupancy': `Ocupación`,
+    'onboardingSurvey': `Encuesta de incorporación`,
     'ok': `OK`,
     'openSurvey': `Abrir encuesta`,
     'openTasks': `Tareas abiertas`,
@@ -1445,6 +1461,9 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'selectRootLocation': `Seleccionar ubicación raíz`,
     'selectRootLocationDescription': `Seleccione las ubicaciones raíz que definen su ámbito. Solo se pueden seleccionar hospitales, consultas, clínicas y equipos. Al seleccionar una ubicación padre se incluyen todas las hijas.`,
     'selectTeams': `Seleccionar equipos`,
+    'logInAgain': `Iniciar sesión de nuevo`,
+    'sessionExpired': `Sesión expirada`,
+    'sessionExpiredDescription': `Se ha cerrado su sesión por inactividad. Vuelva a iniciar sesión para continuar. Los cambios no guardados pueden perderse.`,
     'settings': `Ajustes`,
     'settingsDescription': `Aquí puede cambiar la configuración de la aplicación.`,
     'sex': `Sexo`,
@@ -1546,6 +1565,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'waitingForPatient': `En espera de paciente`,
     'waitPatient': `Poner paciente en espera`,
     'wards': `Plantas`,
+    'weeklySurvey': `Encuesta semanal`,
     'yes': `Sí`
   },
   'fr-FR': {
@@ -1770,6 +1790,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
       })
     },
     'occupancy': `Occupation`,
+    'onboardingSurvey': `Enquête d'intégration`,
     'ok': `OK`,
     'openSurvey': `Ouvrir l'enquête`,
     'openTasks': `Tâches ouvertes`,
@@ -1860,6 +1881,9 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'selectRootLocation': `Sélectionner l'emplacement racine`,
     'selectRootLocationDescription': `Sélectionnez les emplacements racine qui définissent votre périmètre. Seuls les hôpitaux, cabinets, cliniques et équipes peuvent être sélectionnés. La sélection d'un emplacement parent inclut tous ses enfants.`,
     'selectTeams': `Sélectionner les équipes`,
+    'logInAgain': `Se reconnecter`,
+    'sessionExpired': `Session expirée`,
+    'sessionExpiredDescription': `Vous avez été déconnecté pour cause d'inactivité. Veuillez vous reconnecter pour continuer. Les modifications non enregistrées peuvent être perdues.`,
     'settings': `Paramètres`,
     'settingsDescription': `Ici vous pouvez modifier la configuration de l'application.`,
     'sex': `Sexe`,
@@ -1961,6 +1985,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'waitingForPatient': `En attente du patient`,
     'waitPatient': `Mettre le patient en attente`,
     'wards': `Services`,
+    'weeklySurvey': `Enquête hebdomadaire`,
     'yes': `Oui`
   },
   'nl-NL': {
@@ -2185,6 +2210,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
       })
     },
     'occupancy': `Bezetting`,
+    'onboardingSurvey': `Onboarding-enquête`,
     'ok': `OK`,
     'openSurvey': `Enquête openen`,
     'openTasks': `Open taken`,
@@ -2278,6 +2304,9 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'selectRootLocation': `Hooflocatie selecteren`,
     'selectRootLocationDescription': `Selecteer de hoofdlocaties die uw bereik bepalen. Alleen ziekenhuizen, praktijken, klinieken en teams kunnen worden geselecteerd. Het selecteren van een bovenliggende locatie omvat alle onderliggende.`,
     'selectTeams': `Teams selecteren`,
+    'logInAgain': `Opnieuw inloggen`,
+    'sessionExpired': `Sessie verlopen`,
+    'sessionExpiredDescription': `U bent uitgelogd wegens inactiviteit. Log opnieuw in om door te gaan. Niet-opgeslagen wijzigingen kunnen verloren gaan.`,
     'settings': `Instellingen`,
     'settingsDescription': `Hier kunt u de app-configuratie wijzigen.`,
     'sex': `Geslacht`,
@@ -2379,6 +2408,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'waitingForPatient': `Wachten op patiënt`,
     'waitPatient': `Patiënt in wachtrij zetten`,
     'wards': `Afdelingen`,
+    'weeklySurvey': `Wekelijkse enquête`,
     'yes': `Ja`
   },
   'pt-BR': {
@@ -2603,6 +2633,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
       })
     },
     'occupancy': `Ocupação`,
+    'onboardingSurvey': `Pesquisa de integração`,
     'ok': `OK`,
     'openSurvey': `Abrir pesquisa`,
     'openTasks': `Tarefas abertas`,
@@ -2693,6 +2724,9 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'selectRootLocation': `Selecionar localização raiz`,
     'selectRootLocationDescription': `Selecione as localizações raiz que definem seu escopo. Apenas hospitais, consultórios, clínicas e equipes podem ser selecionados. Selecionar uma localização pai inclui todas as filhas.`,
     'selectTeams': `Selecionar equipes`,
+    'logInAgain': `Entrar novamente`,
+    'sessionExpired': `Sessão expirada`,
+    'sessionExpiredDescription': `Você foi desconectado devido à inatividade. Faça login novamente para continuar. Alterações não salvas podem ser perdidas.`,
     'settings': `Configurações`,
     'settingsDescription': `Aqui você pode alterar a configuração do aplicativo.`,
     'sex': `Sexo`,
@@ -2794,6 +2828,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'waitingForPatient': `Aguardando paciente`,
     'waitPatient': `Colocar paciente em espera`,
     'wards': `Enfermarias`,
+    'weeklySurvey': `Pesquisa semanal`,
     'yes': `Sim`
   }
 }

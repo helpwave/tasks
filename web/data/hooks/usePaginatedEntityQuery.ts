@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useRef } from 'react'
-import { useQueryWhenReady } from './queryHelpers'
+import { useQueryWhenReady, getParsedDocument } from './queryHelpers'
+import { useApolloClientOptional } from '@/providers/ApolloProviderWithData'
 import type { QueryFilterClauseInput, QuerySearchInput, QuerySortClauseInput } from '@/api/gql/generated'
 
 export type UsePaginatedEntityQueryOptions<TQueryData> = {
@@ -17,6 +18,9 @@ export type UsePaginatedEntityQueryResult<TItem> = {
   error: Error | undefined,
   totalCount: number | undefined,
   refetch: () => void,
+  prefetchPage: (pageIndex: number) => void,
+  readCachedPage: (pageIndex: number) => TItem[] | undefined,
+  watchCachedPage: (pageIndex: number, onChange: () => void) => () => void,
 }
 
 type VariablesWithPagination = {
@@ -38,13 +42,16 @@ export function usePaginatedEntityQuery<
   extractTotal: (data: TQueryData | undefined) => number | undefined
 ): UsePaginatedEntityQueryResult<TItem> {
   const { pagination, sorts, filters, search, skip: skipQuery } = options
-  const variablesWithPagination = useMemo(() => ({
+  const baseVariables = useMemo(() => ({
     ...(variables ?? {}),
-    pagination: { pageIndex: pagination.pageIndex, pageSize: pagination.pageSize },
     ...(sorts != null && sorts.length > 0 ? { sorts } : {}),
     ...(filters != null && filters.length > 0 ? { filters } : {}),
     ...(search != null && search.searchText ? { search } : {}),
-  }), [variables, pagination.pageIndex, pagination.pageSize, sorts, filters, search])
+  }), [variables, sorts, filters, search])
+  const variablesWithPagination = useMemo(() => ({
+    ...baseVariables,
+    pagination: { pageIndex: pagination.pageIndex, pageSize: pagination.pageSize },
+  }), [baseVariables, pagination.pageIndex, pagination.pageSize])
   const variablesTyped = variablesWithPagination as TVariables & VariablesWithPagination
   const result = useQueryWhenReady<TQueryData, TVariables & VariablesWithPagination>(
     document,
@@ -64,11 +71,50 @@ export function usePaginatedEntityQuery<
     result.refetch()
   }, [result])
 
+  const client = useApolloClientOptional()
+  const pageSize = pagination.pageSize
+  const prefetchPage = useCallback((pageIndex: number) => {
+    if (!client || skipQuery === true || pageIndex < 0) return
+    void client.query({
+      query: getParsedDocument(document),
+      variables: { ...baseVariables, pagination: { pageIndex, pageSize } },
+      fetchPolicy: 'cache-first',
+    }).catch(() => {})
+  }, [client, skipQuery, document, baseVariables, pageSize])
+
+  const readCachedPage = useCallback((pageIndex: number): TItem[] | undefined => {
+    if (!client || skipQuery === true || pageIndex < 0) return undefined
+    try {
+      const cached = client.cache.readQuery<TQueryData>({
+        query: getParsedDocument(document),
+        variables: { ...baseVariables, pagination: { pageIndex, pageSize } },
+        optimistic: true,
+      })
+      if (cached == null) return undefined
+      return extractItemsRef.current(cached)
+    } catch {
+      return undefined
+    }
+  }, [client, skipQuery, document, baseVariables, pageSize])
+
+  const watchCachedPage = useCallback((pageIndex: number, onChange: () => void): (() => void) => {
+    if (!client || skipQuery === true || pageIndex < 0) return () => {}
+    return client.cache.watch({
+      query: getParsedDocument(document),
+      variables: { ...baseVariables, pagination: { pageIndex, pageSize } },
+      optimistic: true,
+      callback: () => { onChange() },
+    })
+  }, [client, skipQuery, document, baseVariables, pageSize])
+
   return {
     data,
     loading: result.loading,
     error: result.error,
     totalCount,
     refetch,
+    prefetchPage,
+    readCachedPage,
+    watchCachedPage,
   }
 }

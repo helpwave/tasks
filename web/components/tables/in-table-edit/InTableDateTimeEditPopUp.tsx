@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { useState, type ComponentProps } from 'react'
 import type { ButtonProps } from '@helpwave/hightide'
-import { Button, DateTimeInput, PopUp, PopUpContext, PopUpOpener, PopUpRoot } from '@helpwave/hightide'
+import { Button, DateTimeInput, FlexibleDateTimeInput, PopUp, PopUpContext, PopUpOpener, PopUpRoot } from '@helpwave/hightide'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import clsx from 'clsx'
 
@@ -21,6 +21,12 @@ type InTableDateTimeEditPopUpProps = {
   buttonProps?: ButtonProps,
   children: ReactNode,
   mode?: 'date' | 'dateTime',
+  /**
+   * When true, lets the user choose between a date-only and a date+time value via the
+   * input's built in toggle. A date-only selection is stored at the end of the day so it
+   * carries no meaningful time. `mode` is used as the initial mode.
+   */
+  flexible?: boolean,
   dateTimeInputProps?: Omit<
     ComponentProps<typeof DateTimeInput>,
     'value' | 'onValueChange' | 'onEditComplete' | 'mode'
@@ -33,6 +39,7 @@ export function InTableDateTimeEditPopUp({
   buttonProps,
   children,
   mode = 'dateTime',
+  flexible = false,
   dateTimeInputProps,
   options = { horizontalAlignment: 'afterStart', verticalAlignment: 'afterEnd' },
   className = 'p-2',
@@ -68,17 +75,31 @@ export function InTableDateTimeEditPopUp({
         }}
       </PopUpOpener>
       <PopUp options={options} className={clsx(className, 'flex-col-2 items-end')} onClick={e => e.stopPropagation()}>
-        <DateTimeInput
-          mode={mode}
-          {...dateTimeInputProps}
-          value={draft}
-          onValueChange={next => {
-            setDraft(next)
-          }}
-          onEditComplete={v => {
-            setDraft(v)
-          }}
-        />
+        {flexible ? (
+          <FlexibleDateTimeInput
+            defaultMode={mode === 'dateTime' ? 'dateTime' : 'date'}
+            {...dateTimeInputProps}
+            value={draft}
+            onValueChange={next => {
+              setDraft(next)
+            }}
+            onEditComplete={v => {
+              setDraft(v)
+            }}
+          />
+        ) : (
+          <DateTimeInput
+            mode={mode}
+            {...dateTimeInputProps}
+            value={draft}
+            onValueChange={next => {
+              setDraft(next)
+            }}
+            onEditComplete={v => {
+              setDraft(v)
+            }}
+          />
+        )}
         <PopUpContext.Consumer>
           {({ setIsOpen }) => (
             <div className="flex-row-2 justify-end items-center gap-x-2">

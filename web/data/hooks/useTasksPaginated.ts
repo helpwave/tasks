@@ -19,6 +19,9 @@ export type UseTasksPaginatedResult = {
   error: Error | undefined,
   totalCount: number | undefined,
   refetch: () => void,
+  prefetchPage: (pageIndex: number) => void,
+  readCachedPage: (pageIndex: number) => GetTasksQuery['tasks'] | undefined,
+  watchCachedPage: (pageIndex: number, onChange: () => void) => () => void,
 }
 
 export function useTasksPaginated(
