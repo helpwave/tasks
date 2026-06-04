@@ -49,9 +49,6 @@ function isLikelyEcho(
   const recent = recentMutationsByEntity.get(key)
   if (!recent) return false
   if (payloadClientMutationId) {
-    // An explicit mutation id is authoritative: it is an echo only when it
-    // matches our own in-flight mutation. A different id is a concurrent change
-    // from another client and must never be suppressed.
     return payloadClientMutationId === recent.clientMutationId
   }
   if (Date.now() - recent.at < ECHO_WINDOW_MS) {
@@ -188,20 +185,6 @@ export function mergeSubscriptionIntoCache(
   return Promise.resolve()
 }
 
-/**
- * Reload an entity from the server after we mutated it ourselves.
- *
- * Our optimistic update only writes the fields we know about, and the
- * subscription echo for our own change is intentionally suppressed (see
- * `isLikelyEcho`), so without this the row would keep showing the optimistic
- * value and never pick up server-computed fields (e.g. the derived full `name`,
- * `updateDate`, or normalized property values). Refetching the active queries
- * for the entity reconciles the visible list/detail with the server while the
- * row is dimmed by the refreshing gate, mirroring the realtime update path.
- *
- * Must be called *after* `clearEntityMutated`, otherwise the echo guard inside
- * the merge helpers would short-circuit the reload.
- */
 export async function reloadEntityAfterMutation(
   client: ApolloClient,
   entityType: 'Task' | 'Patient',
@@ -209,39 +192,30 @@ export async function reloadEntityAfterMutation(
 ): Promise<void> {
   if (entityType === 'Task') {
     addRefreshingTask(entityId)
-    try {
-      await mergeTaskUpdatedIntoCache(
-        client,
-        entityId,
-        { taskId: entityId },
-        { conflictStrategy: 'server-wins' }
-      )
-      await client.refetchQueries({
+    await mergeTaskUpdatedIntoCache(
+      client,
+      entityId,
+      { taskId: entityId },
+      { conflictStrategy: 'server-wins' }
+    )
+      .then(() => client.refetchQueries({
         include: [getParsedDocument(GetTasksDocument), getParsedDocument(GetPatientsDocument)],
-      })
-    } catch {
-      // A failed reload must never surface as a mutation failure; the optimistic
-      // value stays until the next refetch or subscription event.
-    } finally {
-      removeRefreshingTask(entityId)
-    }
+      }))
+      .catch(() => {})
+      .finally(() => removeRefreshingTask(entityId))
     return
   }
 
   addRefreshingPatient(entityId)
-  try {
-    await mergePatientUpdatedIntoCache(
-      client,
-      entityId,
-      { patientId: entityId },
-      { conflictStrategy: 'server-wins' }
-    )
-    await client.refetchQueries({
+  await mergePatientUpdatedIntoCache(
+    client,
+    entityId,
+    { patientId: entityId },
+    { conflictStrategy: 'server-wins' }
+  )
+    .then(() => client.refetchQueries({
       include: [getParsedDocument(GetPatientsDocument), getParsedDocument(GetTasksDocument)],
-    })
-  } catch {
-    // See above: keep the optimistic value rather than failing the mutation.
-  } finally {
-    removeRefreshingPatient(entityId)
-  }
+    }))
+    .catch(() => {})
+    .finally(() => removeRefreshingPatient(entityId))
 }

@@ -87,14 +87,12 @@ const SettingsPage: NextPage = () => {
   const handleOpenOnboardingSurvey = async () => {
     if (!user?.id || !config.onboardingSurveyUrl) return
     await openSurvey(config.onboardingSurveyUrl, user.id)
-    // Mark as handled so the popup does not show again after taking it from the settings.
     setOnboardingSurveyCompleted(new Date().getTime())
   }
 
   const handleOpenWeeklySurvey = async () => {
     if (!user?.id || !config.weeklySurveyUrl) return
     await openSurvey(config.weeklySurveyUrl, user.id)
-    // Mark as handled so the weekly popup does not show again until the next week.
     setWeeklySurveyLastCompleted(new Date().getTime())
   }
 

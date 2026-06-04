@@ -129,8 +129,6 @@ export const SurveyModal = () => {
     const setupSurvey = async () => {
       const now = new Date().getTime()
 
-      // Onboarding survey: shown once at the very beginning. Once the user has interacted
-      // with it (opened or dismissed) it is never shown again.
       if (config.onboardingSurveyUrl && onboardingSurveyCompleted === 0) {
         setSurveyType('onboarding')
         setSurveyUrl(await buildSurveyUrl(config.onboardingSurveyUrl, user.id))
@@ -138,8 +136,6 @@ export const SurveyModal = () => {
         return
       }
 
-      // Weekly survey: shown once the onboarding survey has been handled (or is not
-      // configured), then again at most once per week.
       const onboardingHandled = onboardingSurveyCompleted > 0 || !config.onboardingSurveyUrl
       if (config.weeklySurveyUrl && onboardingHandled && (weeklySurveyLastCompleted === 0 || now - weeklySurveyLastCompleted >= ONE_WEEK_MS)) {
         setSurveyType('weekly')
@@ -152,8 +148,6 @@ export const SurveyModal = () => {
     setupSurvey().catch(() => { })
   }, [config.onboardingSurveyUrl, config.weeklySurveyUrl, user?.id, onboardingSurveyCompleted, weeklySurveyLastCompleted, isSurveyOpen])
 
-  // Persist that the user interacted with the survey dialog so it does not annoy them
-  // again (onboarding: ever, weekly: until the next week).
   const persistInteraction = () => {
     const now = new Date().getTime()
     if (surveyType === 'onboarding') {

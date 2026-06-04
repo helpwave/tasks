@@ -15,14 +15,6 @@
 }
 
 @layer utilities {
-  /*
-   * Enables momentum scrolling for overflow containers (e.g. horizontally
-   * scrollable tables) without constraining `touch-action`. We intentionally
-   * avoid Tailwind's `touch-pan-x` utility here: that sets
-   * `touch-action: pan-x`, which makes the browser treat the element as
-   * horizontal-only and swallows vertical scroll gestures, breaking vertical
-   * touch scrolling of the surrounding page on phones and tablets.
-   */
   .hw-touch-scroll {
     -webkit-overflow-scrolling: touch;
   }

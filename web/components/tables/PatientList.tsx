@@ -114,16 +114,13 @@ type PatientListProps = {
   viewDefaultColumnOrder?: ColumnOrderState,
   readOnly?: boolean,
   hideSaveView?: boolean,
-  /** When set (e.g. on `/view/:id`), overwrite updates this saved view. */
   savedViewId?: string,
   onSavedViewCreated?: (id: string) => void,
   onPatientUpdated?: () => void,
   embedded?: boolean,
   embeddedPatients?: PatientViewModel[],
   embeddedOnRefetch?: () => void,
-  /** When set with embeddedPatients: client-side filter/sort/search on derived rows; show full toolbar. */
   derivedVirtualMode?: boolean,
-  /** Persist overwrite targets base view triple or related triple (opposite tab). */
   savedViewScope?: 'base' | 'related',
 }
 
@@ -1177,9 +1174,6 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
                 hasMore={hasMore}
                 isFetchingMore={isFetchingMore}
               />
-              {/* Always render the manual loader at the bottom: infinite-scroll
-                  auto-loading is unreliable on mobile, so the button is the
-                  dependable fallback for loading the next page by hand. */}
               <Button
                 color="neutral"
                 className="mt-2 w-full sm:w-auto self-center print:hidden"

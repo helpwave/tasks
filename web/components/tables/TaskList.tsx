@@ -62,7 +62,6 @@ export type TaskViewModel = {
   },
   assignee?: { id: string, name: string, avatarURL?: string | null, isOnline?: boolean | null },
   assigneeTeam?: { id: string, title: string },
-  /** Additional user assignees beyond the first (omit when team assignment). */
   additionalAssigneeCount?: number,
   done: boolean,
   sourceTaskPresetId?: string | null,
@@ -107,7 +106,6 @@ type TaskListProps = {
   hasMore?: boolean,
   isFetchingMore?: boolean,
   embedded?: boolean,
-  /** Row order and search already applied in parent (e.g. saved view derived task list). */
   virtualDerivedOrder?: boolean,
 }
 
@@ -1098,9 +1096,6 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
                   hasMore={effectiveHasMore}
                   isFetchingMore={isFetchingMore}
                 />
-                {/* Always render the manual loader at the bottom: infinite-scroll
-                    auto-loading is unreliable on mobile, so the button is the
-                    dependable fallback for loading the next page by hand. */}
                 <Button
                   color="neutral"
                   className="mt-2 w-full sm:w-auto self-center print:hidden"

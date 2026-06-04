@@ -2,14 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 const DEFAULT_PREFETCH_PAGES = 2
 
-/**
- * Pure derivation of the pagination boundaries. Kept separate so the
- * "stop at the end" logic can be unit-tested without rendering the hook.
- *
- * `lastAvailablePage` is the highest page index that still maps onto real data;
- * fetching beyond it only yields empty pages (offset past the total), which is
- * what previously kept the infinite-scroll sentinel looping forever.
- */
 export function computePaginationBounds(options: {
   totalCount: number | undefined,
   pageSize: number,
@@ -30,8 +22,6 @@ export function computePaginationBounds(options: {
 }
 
 function reconcileFirstPage<T extends { id: string }>(prev: T[], incoming: T[]): T[] {
-  // When more pages were already accumulated, keep the tail and only refresh the
-  // leading page so a page-0 background refetch never shrinks the visible list.
   if (incoming.length === 0) return prev
   if (prev.length <= incoming.length) return incoming
   const incomingIds = new Set(incoming.map(x => x.id))
@@ -47,9 +37,7 @@ export function useAccumulatedPagination<T extends { id: string }>(options: {
   totalCount: number | undefined,
   loading: boolean,
   pageSize: number,
-  /** Warms the cache for upcoming pages so scrolling stays instant. */
   prefetchPage?: (pageIndex: number) => void,
-  /** How many pages ahead to keep ready. Defaults to 2. */
   prefetchPages?: number,
 }): {
   accumulated: T[],
@@ -75,16 +63,10 @@ export function useAccumulatedPagination<T extends { id: string }>(options: {
   useEffect(() => {
     if (pageData === undefined || loading) return
     if (pageIndex === 0) {
-      // Reconcile the first page in place so unchanged rows keep their position
-      // and the table is not remounted on every background refetch.
       setAccumulated(prev => reconcileFirstPage(prev, pageData))
       return
     }
     setAccumulated(prev => {
-      // Refresh already-accumulated rows in place with the freshly fetched copy
-      // (so a row reloaded after an edit reflects the server value instead of the
-      // stale object captured when the page was first appended), then append any
-      // rows we have not seen yet.
       const incomingById = new Map(pageData.map(item => [item.id, item]))
       const existingIds = new Set(prev.map(item => item.id))
       const next = prev.map(item => incomingById.get(item.id) ?? item)
@@ -95,11 +77,6 @@ export function useAccumulatedPagination<T extends { id: string }>(options: {
     })
   }, [pageData, pageIndex, loading])
 
-  // `lastAvailablePage` is the highest page index that still maps onto real data;
-  // `hasMore` is true only when more rows are expected *and* a further page
-  // exists to fetch. Gating on the page index keeps us from offering "Load more"
-  // (or auto-loading) when the visible list is empty but a stale total still
-  // claims rows exist.
   const { lastAvailablePage, hasMore } = useMemo(
     () => computePaginationBounds({
       totalCount,
@@ -110,11 +87,6 @@ export function useAccumulatedPagination<T extends { id: string }>(options: {
     [totalCount, pageSize, pageIndex, accumulated.length]
   )
 
-  // Recover from an out-of-range page index. When the result set shrinks while a
-  // later page is selected (e.g. switching to a custom view with fewer rows),
-  // the active query would otherwise keep requesting empty pages past the end,
-  // never growing `accumulated`, leaving `hasMore` permanently true and spinning
-  // the infinite-scroll sentinel in a loading loop.
   useEffect(() => {
     if (lastAvailablePage == null) return
     if (pageIndex > lastAvailablePage) {

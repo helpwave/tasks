@@ -43,9 +43,6 @@ describe('computePaginationBounds', () => {
   })
 
   it('does not loop when the page index is past the end of a shrunken result set', () => {
-    // Reproduces the reported bug: total dropped to 20 (one page) while the
-    // view was paged far ahead, so every fetch returned an empty page and the
-    // sentinel kept asking for the next one.
     const { lastAvailablePage, hasMore } = computePaginationBounds({
       totalCount: 20,
       pageSize: PAGE_SIZE,

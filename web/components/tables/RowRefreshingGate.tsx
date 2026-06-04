@@ -7,10 +7,6 @@ type RowRefreshingGateProps = HTMLAttributes<HTMLDivElement> & {
   children: ReactNode,
 }
 
-/**
- * Keeps the cell content visible while an entity is being refreshed, dimming it
- * and overlaying a spinner instead of replacing it with a loading placeholder.
- */
 export function RowRefreshingGate({ refreshing, children, className, ...restProps }: RowRefreshingGateProps) {
   return (
     <div className={clsx('relative min-h-8 min-w-0', className)} {...restProps}>

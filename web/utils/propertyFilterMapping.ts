@@ -1,14 +1,6 @@
 import { FieldType } from '@/api/gql/generated'
 import type { DataType } from '@helpwave/hightide'
 
-/**
- * Maps a FieldType to the appropriate filter function name for TanStack Table.
- * This ensures consistent filter behavior across all property columns.
- *
- * Differentiates between:
- * - date vs datetime (for proper date/time filtering)
- * - tags (multi-select) vs tags_single (single select)
- */
 export function getPropertyFilterFn(fieldType: FieldType): DataType {
   switch (fieldType) {
   case FieldType.FieldTypeCheckbox:

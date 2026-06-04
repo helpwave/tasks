@@ -18,7 +18,6 @@ export type UsePaginatedEntityQueryResult<TItem> = {
   error: Error | undefined,
   totalCount: number | undefined,
   refetch: () => void,
-  /** Warm the Apollo cache for an arbitrary page without affecting the active query. */
   prefetchPage: (pageIndex: number) => void,
 }
 

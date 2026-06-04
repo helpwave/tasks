@@ -88,7 +88,6 @@ describe('reloadEntityAfterMutation', () => {
         writeQuery: vi.fn(),
       },
       refetchQueries: vi.fn().mockImplementation(() => {
-        // Capture the gate state while the reload is still in flight.
         gatedDuringRefetch = getRefreshingPatientIds().has('patient-1')
         return Promise.resolve([])
       }),
@@ -99,7 +98,6 @@ describe('reloadEntityAfterMutation', () => {
     expect(client.query).toHaveBeenCalled()
     expect(client.refetchQueries).toHaveBeenCalled()
     expect(gatedDuringRefetch).toBe(true)
-    // The gate is released once the reload settles.
     expect(getRefreshingPatientIds().has('patient-1')).toBe(false)
   })
 
