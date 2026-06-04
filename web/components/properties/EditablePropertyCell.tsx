@@ -208,6 +208,7 @@ export function EditablePropertyCell({
           value={assigneeValue}
           allowTeams={true}
           allowUnassigned={true}
+          size="sm"
           onValueChanged={(next) => {
             const prev = assigneeValue
             if (next === prev) {
