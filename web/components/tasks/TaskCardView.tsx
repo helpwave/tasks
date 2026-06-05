@@ -179,7 +179,7 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
       onClick={onClick ? () => onClick(task) : undefined}
       className={clsx(
         'border-2 p-4 rounded-lg text-left transition-colors',
-        'relative bg-surface-variant bg-on-surface-variant w-full',
+        'relative bg-surface-variant bg-on-surface-variant w-full h-full',
         isClickable ? 'cursor-pointer hover:border-primary' : 'cursor-default',
         borderColorClass,
         priorityBorderClass,
@@ -218,7 +218,7 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
                   )}
                   <div
                     className={clsx(
-                      'font-semibold text-lg min-w-0 flex-1 whitespace-normal break-words',
+                      'font-semibold text-base min-w-0 flex-1 whitespace-normal break-words',
                       { 'line-through text-description': task.done }
                     )}
                   >
@@ -226,7 +226,7 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
                   </div>
                 </div>
                 {task.assigneeTeam && (
-                  <div className="flex items-center gap-1.5 text-base text-description min-w-0 w-full sm:w-auto sm:shrink-0 sm:justify-end">
+                  <div className="flex items-center gap-1.5 text-sm text-description min-w-0 w-full sm:w-auto sm:shrink-0 sm:justify-end">
                     <Users className="size-5 text-description shrink-0" />
                     <span className="min-w-0 break-words sm:truncate sm:max-w-40">{task.assigneeTeam.title}</span>
                   </div>
@@ -238,7 +238,7 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
                       e.stopPropagation()
                       setSelectedUserId(task.assignee!.id)
                     }}
-                    className="flex items-center gap-1.5 text-base text-description min-w-0 w-full sm:w-auto sm:shrink-0 sm:justify-end hover:opacity-75 transition-opacity text-left"
+                    className="flex items-center gap-1.5 text-sm text-description min-w-0 w-full sm:w-auto sm:shrink-0 sm:justify-end hover:opacity-75 transition-opacity text-left"
                   >
                     <AvatarStatusComponent
                       size="sm"
@@ -250,7 +250,7 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
                 )}
               </div>
               {descriptionPreview && (
-                <ExpandableTextBlock className="text-base text-description">
+                <ExpandableTextBlock className="text-sm text-description">
                   {descriptionPreview}
                 </ExpandableTextBlock>
               )}

@@ -1079,7 +1079,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
               <TableDisplay className="print-content hw-autosize-table w-full overflow-x-auto hw-touch-scroll"/>
             </div>
             {listLayout === 'card' && (
-              <div className="flex flex-col gap-3 w-full print:hidden">
+              <div className="grid gap-3 w-full print:hidden [grid-template-columns:repeat(auto-fill,minmax(min(100%,24rem),1fr))]">
                 {displayedTasks.map((task) => (
                   <TaskCardView
                     key={task.id}
