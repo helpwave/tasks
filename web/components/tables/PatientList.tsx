@@ -1171,7 +1171,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
             <TableDisplay className="print-content hw-autosize-table overflow-x-auto hw-touch-scroll"/>
           </div>
           {listLayout === 'card' && (
-            <div className="flex flex-col gap-3 w-full print:hidden">
+            <div className="grid gap-3 w-full print:hidden [grid-template-columns:repeat(auto-fill,minmax(min(100%,22rem),1fr))]">
               {patients.map((patient) => (
                 <PatientCardView
                   key={patient.id}
