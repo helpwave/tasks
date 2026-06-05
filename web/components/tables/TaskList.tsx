@@ -38,6 +38,8 @@ import { AssigneeSelect } from '../tasks/AssigneeSelect'
 import { PropertyColumnHeader } from '@/components/properties/PropertyColumnHeader'
 import { ClearPropertyColumnDialog } from '@/components/properties/ClearPropertyColumnDialog'
 import { useTaskPropertyClearDialog } from '@/hooks/useTaskPropertyClearDialog'
+import { buildListLayoutStorageKey, resolveListRouteId, useListLayoutPreference } from '@/hooks/useListLayoutPreference'
+import { useRouter } from 'next/router'
 
 function taskListDataSyncKey(tasks: TaskViewModel[]): string {
   return tasks.map(t => `${t.id}:${t.done}:${t.updateDate.getTime()}`).join('\0')
@@ -131,9 +133,15 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
   )
 
   const [clientVisibleCount, setClientVisibleCount] = useState(LIST_PAGE_SIZE)
-  const [listLayout, setListLayout] = useState<'table' | 'card'>(() => (
-    typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches ? 'card' : 'table'
-  ))
+  const router = useRouter()
+  const layoutStorageKey = useMemo(() => buildListLayoutStorageKey({
+    entity: 'tasks',
+    // Embedded lists (dashboard, related panels) force their layout.
+    disabled: embedded,
+    pathname: router.pathname,
+    routeId: resolveListRouteId(router.query),
+  }), [embedded, router.pathname, router.query])
+  const [listLayout, setListLayout] = useListLayoutPreference(layoutStorageKey)
   const [internalSorting, setInternalSorting] = useState<SortingState>(() => [
     { id: 'done', desc: false },
     { id: 'dueDate', desc: false },
@@ -215,7 +223,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
     if (embedded) {
       setListLayout('table')
     }
-  }, [embedded])
+  }, [embedded, setListLayout])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -1079,7 +1087,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
               <TableDisplay className="print-content hw-autosize-table w-full overflow-x-auto hw-touch-scroll"/>
             </div>
             {listLayout === 'card' && (
-              <div className="flex flex-col gap-3 w-full print:hidden">
+              <div className="grid gap-3 w-full print:hidden [grid-template-columns:repeat(auto-fill,minmax(min(100%,24rem),1fr))]">
                 {displayedTasks.map((task) => (
                   <TaskCardView
                     key={task.id}

@@ -14,6 +14,8 @@ import { PatientStateChip } from '@/components/patients/PatientStateChip'
 import { getLocationNodesByKind, type LocationKindColumn } from '@/utils/location'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { useTasksContext } from '@/hooks/useTasksContext'
+import { buildListLayoutStorageKey, resolveListRouteId, useListLayoutPreference } from '@/hooks/useListLayoutPreference'
+import { useRouter } from 'next/router'
 import type { ColumnDef, ColumnFiltersState, ColumnOrderState, PaginationState, Row, SortingState, TableState, VisibilityState } from '@tanstack/table-core'
 import { getPropertyColumnsForEntity, type PropertyColumnValueChangedPayload } from '@/utils/propertyColumn'
 import { getPropertyColumnIds, useColumnVisibilityWithPropertyDefaults } from '@/hooks/usePropertyColumnVisibility'
@@ -159,15 +161,21 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
   const [isShowSorting, setIsShowSorting] = useState(false)
 
   const [fetchPageIndex, setFetchPageIndex] = useState(0)
-  const [listLayout, setListLayout] = useState<'table' | 'card'>(() => (
-    typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches ? 'card' : 'table'
-  ))
+  const router = useRouter()
+  const layoutStorageKey = useMemo(() => buildListLayoutStorageKey({
+    entity: 'patients',
+    // Embedded lists force their layout, so they should not read/write a preference.
+    disabled: embedded && !derivedVirtualMode,
+    pathname: router.pathname,
+    routeId: resolveListRouteId(router.query, savedViewId),
+  }), [embedded, derivedVirtualMode, savedViewId, router.pathname, router.query])
+  const [listLayout, setListLayout] = useListLayoutPreference(layoutStorageKey)
 
   useEffect(() => {
     if (embedded && !derivedVirtualMode) {
       setListLayout('table')
     }
-  }, [embedded, derivedVirtualMode])
+  }, [embedded, derivedVirtualMode, setListLayout])
 
   const showFullToolbar = !embedded || derivedVirtualMode
   const useEmbeddedNoop = embedded && !derivedVirtualMode
@@ -1171,7 +1179,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
             <TableDisplay className="print-content hw-autosize-table overflow-x-auto hw-touch-scroll"/>
           </div>
           {listLayout === 'card' && (
-            <div className="flex flex-col gap-3 w-full print:hidden">
+            <div className="grid gap-3 w-full print:hidden [grid-template-columns:repeat(auto-fill,minmax(min(100%,22rem),1fr))]">
               {patients.map((patient) => (
                 <PatientCardView
                   key={patient.id}
