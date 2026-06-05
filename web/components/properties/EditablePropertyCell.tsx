@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import clsx from 'clsx'
 import { Edit2 } from 'lucide-react'
 import { FieldType, type PropertyDefinitionType, type PropertyValueInput, type PropertyValueType } from '@/api/gql/generated'
 import { PropertyCell } from '@/components/properties/PropertyCell'
@@ -45,10 +46,19 @@ function wrapTrigger(node: ReactNode): ReactNode {
   )
 }
 
+function isChipFieldType(fieldType: FieldType): boolean {
+  return (
+    fieldType === FieldType.FieldTypeSelect ||
+    fieldType === FieldType.FieldTypeMultiSelect ||
+    fieldType === FieldType.FieldTypeCheckbox
+  )
+}
+
 function EditablePropertyTriggerDisplay({ property, fieldType }: { property: PropertyValueType | undefined, fieldType: FieldType }) {
+  const chipField = isChipFieldType(fieldType)
   return (
     <>
-      <div className="min-w-0 flex-1 overflow-hidden text-left">
+      <div className={clsx('text-left', chipField ? 'flex w-max max-w-none' : 'min-w-0 flex-1 overflow-hidden')}>
         <PropertyCell property={property} fieldType={fieldType} />
       </div>
       <Edit2 className="size-4 min-w-4 shrink-0 group-hover:block hidden print:hidden" />

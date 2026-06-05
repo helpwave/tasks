@@ -71,7 +71,7 @@ export const PropertyCell = ({
       ? property.definition.options[parseInt(selectOptionIndex, 10)]
       : property.selectValue
     return (
-      <div className="flex flex-wrap gap-1">
+      <div className="flex flex-nowrap gap-1 w-max max-w-none">
         <Chip size="sm" className="primary coloring-tonal">
           {selectOptionName}
         </Chip>
@@ -83,7 +83,7 @@ export const PropertyCell = ({
       return <FillerCell />
     }
     return (
-      <div className="flex flex-wrap gap-1">
+      <div className="flex flex-nowrap gap-1 w-max max-w-none">
         {property.multiSelectValues.map((val) => {
           const multiSelectOptionIndex = val.match(/-opt-(\d+)$/)?.[1]
           const multiSelectOptionName = multiSelectOptionIndex !== undefined && property.definition?.options

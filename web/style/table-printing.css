@@ -62,7 +62,7 @@
     margin: 0 !important;
     padding: 0 !important;
 
-    @apply !text-sm;
+    @apply !text-xs;
     page-break-inside: auto;
 
     table-layout: fixed !important;
@@ -86,7 +86,7 @@
     color: black !important;
     background-color: white !important;
     border-color: black !important;
-    @apply !text-sm;
+    @apply !text-xs;
     overflow: visible !important;
     white-space: pre-wrap !important;
     word-break: break-word !important;
@@ -103,7 +103,7 @@
     text-align: left;
     font-weight: bold;
 
-    padding: 0.25rem 0.3rem !important;
+    padding: 0.2rem 0.25rem !important;
     border: 1px solid black !important;
     border-radius: 0 !important;
 
@@ -120,14 +120,33 @@
   .print-content tbody tr td {
     max-width: 100% !important;
 
-    @apply !text-sm;
+    @apply !text-xs;
     text-align: left;
     hyphens: auto;
 
-    padding: 0.2rem 0.3rem !important;
+    padding: 0.15rem 0.25rem !important;
     border: 1px solid black !important;
     border-radius: 0 !important;
 
+    background: white !important;
+    color: black !important;
+  }
+
+  .print-content tbody tr td div:has([data-name="chip"]) {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    width: auto !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .print-content tbody tr td [data-name="chip"] {
+    display: inline-flex !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-width: 100% !important;
+    padding: 0 0.15rem !important;
+    white-space: normal !important;
     background: white !important;
     color: black !important;
   }
