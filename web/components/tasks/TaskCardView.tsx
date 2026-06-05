@@ -178,7 +178,7 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
     <div
       onClick={onClick ? () => onClick(task) : undefined}
       className={clsx(
-        'border-2 p-4 rounded-lg text-left transition-colors',
+        '@container border-2 p-4 rounded-lg text-left transition-colors',
         'relative bg-surface-variant bg-on-surface-variant w-full h-full',
         isClickable ? 'cursor-pointer hover:border-primary' : 'cursor-default',
         borderColorClass,
@@ -196,8 +196,8 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
       }}
     >
       <div className="flex flex-col gap-3 w-full min-w-0">
-        <div className="flex flex-col sm:flex-row sm:items-start gap-4 w-full min-w-0">
-          <div className="flex items-start gap-4 w-full min-w-0 sm:flex-1 sm:min-w-0">
+        <div className="flex flex-col @lg:flex-row @lg:items-start gap-4 w-full min-w-0">
+          <div className="flex items-start gap-4 w-full min-w-0 @lg:flex-1 @lg:min-w-0">
             <div onClick={(e) => e.stopPropagation()}>
               <Checkbox
                 value={displayDone}
@@ -206,8 +206,8 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
               />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-2 sm:flex-wrap min-w-0 mb-2">
-                <div className="flex items-center gap-2 min-w-0 w-full sm:flex-1 sm:w-auto">
+              <div className="flex flex-col gap-2 @lg:flex-row @lg:items-center @lg:justify-between @lg:gap-2 @lg:flex-wrap min-w-0 mb-2">
+                <div className="flex items-center gap-2 min-w-0 w-full @lg:flex-1 @lg:w-auto">
                   {(task as FlexibleTask).priority && (
                     <div
                       className={clsx(
@@ -226,9 +226,9 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
                   </div>
                 </div>
                 {task.assigneeTeam && (
-                  <div className="flex items-center gap-1.5 text-sm text-description min-w-0 w-full sm:w-auto sm:shrink-0 sm:justify-end">
+                  <div className="flex items-center gap-1.5 text-sm text-description min-w-0 w-full @lg:w-auto @lg:shrink-0 @lg:justify-end">
                     <Users className="size-5 text-description shrink-0" />
-                    <span className="min-w-0 break-words sm:truncate sm:max-w-40">{task.assigneeTeam.title}</span>
+                    <span className="min-w-0 break-words @lg:truncate @lg:max-w-40">{task.assigneeTeam.title}</span>
                   </div>
                 )}
                 {!task.assigneeTeam && task.assignee && (
@@ -238,14 +238,14 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
                       e.stopPropagation()
                       setSelectedUserId(task.assignee!.id)
                     }}
-                    className="flex items-center gap-1.5 text-sm text-description min-w-0 w-full sm:w-auto sm:shrink-0 sm:justify-end hover:opacity-75 transition-opacity text-left"
+                    className="flex items-center gap-1.5 text-sm text-description min-w-0 w-full @lg:w-auto @lg:shrink-0 @lg:justify-end hover:opacity-75 transition-opacity text-left"
                   >
                     <AvatarStatusComponent
                       size="sm"
                       isOnline={task.assignee?.isOnline ?? null}
                       image={assigneeImage}
                     />
-                    <span className="min-w-0 break-words sm:truncate sm:max-w-[150px]">{task.assignee.name}</span>
+                    <span className="min-w-0 break-words @lg:truncate @lg:max-w-[150px]">{task.assignee.name}</span>
                   </button>
                 )}
               </div>
@@ -256,8 +256,8 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
               )}
             </div>
           </div>
-          <div className="shrink-0 flex flex-col gap-2 text-sm text-description pt-0.5 w-full pl-14 sm:pl-0 sm:items-end sm:w-auto sm:max-w-[min(100%,11rem)]">
-            <div className="flex flex-col gap-2 items-stretch sm:flex-row sm:flex-wrap sm:items-center sm:justify-end gap-x-3 gap-y-2">
+          <div className="shrink-0 flex flex-col gap-2 text-sm text-description pt-0.5 w-full pl-14 @lg:pl-0 @lg:items-end @lg:w-auto @lg:max-w-[min(100%,11rem)]">
+            <div className="flex flex-col gap-2 items-stretch @lg:flex-row @lg:flex-wrap @lg:items-center @lg:justify-end gap-x-3 gap-y-2">
               {(task as FlexibleTask).sourceTaskPresetId && (
                 <Tooltip tooltip={translation('taskFromPresetTooltip')} alignment="top">
                   <button
