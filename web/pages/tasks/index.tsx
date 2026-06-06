@@ -107,10 +107,17 @@ const TasksPage: NextPage = () => {
     [apiFilters, apiSorting, searchInput, selectedRootLocationIds, user?.id]
   )
 
+  const tasksQueryVariables = useMemo(
+    () => (
+      !!selectedRootLocationIds && !!user
+        ? { rootLocationIds: selectedRootLocationIds, assigneeId: user?.id }
+        : undefined
+    ),
+    [selectedRootLocationIds, user]
+  )
+
   const { data: tasksData, refetch, totalCount, loading: tasksLoading, prefetchPage, readCachedPage, watchCachedPage } = useTasksPaginated(
-    !!selectedRootLocationIds && !!user
-      ? { rootLocationIds: selectedRootLocationIds, assigneeId: user?.id }
-      : undefined,
+    tasksQueryVariables,
     {
       pagination: apiPagination,
       sorts: apiSorting.length > 0 ? apiSorting : undefined,

@@ -398,14 +398,18 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
   )
 
   const lastTotalCountRef = useRef<number | undefined>(undefined)
-  const { data: patientsData, refetch, totalCount, loading: patientsLoading, prefetchPage, readCachedPage, watchCachedPage } = usePatientsPaginated(
-    {
+  const patientsQueryVariables = useMemo(
+    () => ({
       locationId: hasLocationFilter ? undefined : (locationId || undefined),
       rootLocationIds: hasLocationFilter || locationId
         ? undefined
         : (effectiveRootLocationIds && effectiveRootLocationIds.length > 0 ? effectiveRootLocationIds : undefined),
       states: patientStates,
-    },
+    }),
+    [hasLocationFilter, locationId, effectiveRootLocationIds, patientStates]
+  )
+  const { data: patientsData, refetch, totalCount, loading: patientsLoading, prefetchPage, readCachedPage, watchCachedPage } = usePatientsPaginated(
+    patientsQueryVariables,
     {
       pagination: apiPagination,
       sorts: apiSorting.length > 0 ? apiSorting : undefined,

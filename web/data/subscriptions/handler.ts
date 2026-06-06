@@ -1,5 +1,5 @@
 import type { ApolloClient } from '@apollo/client/core'
-import { GetTaskDocument, GetPatientDocument, GetTasksDocument, GetPatientsDocument } from '@/api/gql/generated'
+import { GetTaskDocument, GetPatientDocument, GetTasksDocument, GetPatientsDocument, GetGlobalDataDocument } from '@/api/gql/generated'
 import { getParsedDocument } from '../hooks/queryHelpers'
 import { hasPendingMutationForEntity } from '../mutations/queue'
 import {
@@ -199,7 +199,11 @@ export async function reloadEntityAfterMutation(
       { conflictStrategy: 'server-wins' }
     )
       .then(() => client.refetchQueries({
-        include: [getParsedDocument(GetTasksDocument), getParsedDocument(GetPatientsDocument)],
+        include: [
+          getParsedDocument(GetTasksDocument),
+          getParsedDocument(GetPatientsDocument),
+          getParsedDocument(GetGlobalDataDocument),
+        ],
       }))
       .catch(() => {})
       .finally(() => removeRefreshingTask(entityId))
@@ -214,7 +218,11 @@ export async function reloadEntityAfterMutation(
     { conflictStrategy: 'server-wins' }
   )
     .then(() => client.refetchQueries({
-      include: [getParsedDocument(GetPatientsDocument), getParsedDocument(GetTasksDocument)],
+      include: [
+        getParsedDocument(GetPatientsDocument),
+        getParsedDocument(GetTasksDocument),
+        getParsedDocument(GetGlobalDataDocument),
+      ],
     }))
     .catch(() => {})
     .finally(() => removeRefreshingPatient(entityId))
