@@ -101,6 +101,30 @@ describe('reloadEntityAfterMutation', () => {
     expect(getRefreshingPatientIds().has('patient-1')).toBe(false)
   })
 
+  it('refetches the global data query so sidebar counts stay in sync', async () => {
+    const includedOperationNames: string[] = []
+    const client = {
+      query: vi.fn().mockResolvedValue({
+        data: { task: { __typename: 'TaskType', id: 'task-1', updateDate: '2026-01-02T00:00:00Z' } },
+      }),
+      cache: {
+        readQuery: vi.fn().mockReturnValue({ task: { updateDate: '2026-01-01T00:00:00Z' } }),
+        writeQuery: vi.fn(),
+      },
+      refetchQueries: vi.fn().mockImplementation((options: { include?: Array<{ definitions?: Array<{ name?: { value?: string } }> }> }) => {
+        for (const doc of options.include ?? []) {
+          const name = doc.definitions?.[0]?.name?.value
+          if (name) includedOperationNames.push(name)
+        }
+        return Promise.resolve([])
+      }),
+    } as unknown as ApolloClient
+
+    await reloadEntityAfterMutation(client, 'Task', 'task-1')
+
+    expect(includedOperationNames).toContain('GetGlobalData')
+  })
+
   it('releases the refreshing gate even when the reload fails', async () => {
     const client = {
       query: vi.fn().mockRejectedValue(new Error('network down')),

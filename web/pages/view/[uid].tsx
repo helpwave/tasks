@@ -268,10 +268,17 @@ function SavedTaskViewTab({
     [apiFilters, apiSorting, searchInput, rootIds, assigneeId]
   )
 
+  const tasksQueryVariables = useMemo(
+    () => (
+      rootIds && assigneeId
+        ? { rootLocationIds: rootIds, assigneeId }
+        : undefined
+    ),
+    [rootIds, assigneeId]
+  )
+
   const { data: tasksData, refetch, totalCount, loading: tasksLoading, prefetchPage, readCachedPage, watchCachedPage } = useTasksPaginated(
-    rootIds && assigneeId
-      ? { rootLocationIds: rootIds, assigneeId }
-      : undefined,
+    tasksQueryVariables,
     {
       pagination: apiPagination,
       sorts: apiSorting.length > 0 ? apiSorting : undefined,

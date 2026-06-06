@@ -54,6 +54,33 @@ export function mergePagesById<T extends { id: string }>(
   return out
 }
 
+/**
+ * Merges the per-page reads into a single accumulated list while remembering the
+ * last non-empty result for each page in `lastPages`. A page that reads as
+ * `undefined` (momentarily unreadable, e.g. while a refetch is in flight) falls
+ * back to its previously known items instead of disappearing — this keeps
+ * infinite scroll as one continuous list rather than collapsing to the latest
+ * page. A defined-but-empty read is authoritative and clears the remembered
+ * page so genuine removals still propagate.
+ */
+export function materializePages<T extends { id: string }>(
+  rawReads: ReadonlyArray<readonly T[] | undefined>,
+  lastPages: Map<number, T[]>
+): T[] {
+  const pages: Array<readonly T[] | undefined> = rawReads.map((read, page) => {
+    if (read === undefined) {
+      return lastPages.get(page)
+    }
+    if (read.length > 0) {
+      lastPages.set(page, read as T[])
+    } else {
+      lastPages.delete(page)
+    }
+    return read
+  })
+  return mergePagesById(pages)
+}
+
 export function useAccumulatedPagination<T extends { id: string }>(options: {
   resetKey: string,
   pageData: T[] | undefined,
@@ -84,9 +111,17 @@ export function useAccumulatedPagination<T extends { id: string }>(options: {
   const pageDataRef = useRef(pageData)
   pageDataRef.current = pageData
 
+  // Remembers the last non-empty items materialized for each loaded page so that a
+  // transient cache miss (e.g. a page that is momentarily unreadable while a
+  // refetch is in flight) never drops already-loaded rows. Without this the
+  // accumulated list could collapse to just the current page, making infinite
+  // scroll look like it "turned the page" instead of appending to one list.
+  const lastPagesRef = useRef<Map<number, T[]>>(new Map())
+
   useEffect(() => {
     if (prevResetKeyRef.current !== resetKey) {
       prevResetKeyRef.current = resetKey
+      lastPagesRef.current.clear()
       setPageIndex(0)
       setAccumulated([])
     }
@@ -95,11 +130,11 @@ export function useAccumulatedPagination<T extends { id: string }>(options: {
   useEffect(() => {
     if (!cacheBacked || !readCachedPage || !watchCachedPage) return
     const materialize = () => {
-      const pages: Array<T[] | undefined> = []
+      const rawReads: Array<T[] | undefined> = []
       for (let p = 0; p <= pageIndex; p++) {
-        pages.push(readCachedPage(p) ?? (p === pageIndex ? pageDataRef.current : undefined))
+        rawReads.push(readCachedPage(p) ?? (p === pageIndex ? pageDataRef.current : undefined))
       }
-      const next = mergePagesById(pages)
+      const next = materializePages(rawReads, lastPagesRef.current)
       setAccumulated(prev => (sameItems(prev, next) ? prev : next))
     }
     materialize()
