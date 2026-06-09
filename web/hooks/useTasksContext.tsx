@@ -100,6 +100,8 @@ export type TasksContextState = {
 export type TasksContextType = TasksContextState & {
   route: string,
   update: Dispatch<SetStateAction<TasksContextState>>,
+  isRootLocationPickerOpen: boolean,
+  setRootLocationPickerOpen: Dispatch<SetStateAction<boolean>>,
 }
 
 const TasksContext = createContext<TasksContextType | null>(null)
@@ -158,16 +160,38 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
   const prevConnectionStatusRef = useRef(connectionStatus)
 
   const prevRootLocationIdsRef = useRef<string>('')
-  const prevSelectedRootLocationIdsRef = useRef<string>('')
+  // Seed with the initial selection so the very first mount is not mistaken for a
+  // change. Otherwise returning users (who have a stored selection) would flash
+  // the full-screen reinitializing overlay on every page load even though their
+  // selected locations never actually changed.
+  const prevSelectedRootLocationIdsRef = useRef<string>(
+    (state.selectedRootLocationIds || []).slice().sort().join(',')
+  )
 
   useEffect(() => {
-    const currentSelectedIds = (state.selectedRootLocationIds || []).sort().join(',')
+    const currentSelectedIds = (state.selectedRootLocationIds || []).slice().sort().join(',')
     if (prevSelectedRootLocationIdsRef.current !== currentSelectedIds) {
       prevSelectedRootLocationIdsRef.current = currentSelectedIds
       setState(prev => ({ ...prev, isRootLocationReinitializing: true }))
       queryClient.invalidateQueries()
     }
   }, [state.selectedRootLocationIds, queryClient])
+
+  // A single, shared "root location picker" open-state. The selector button is
+  // rendered in several places (desktop header + mobile sidebar) but they must
+  // all drive one dialog instance — otherwise the mandatory first-load location
+  // prompt opens once per mounted selector and the user sees stacked dialogs.
+  const [isRootLocationPickerOpen, setRootLocationPickerOpen] = useState(false)
+  const hasAutoOpenedPickerRef = useRef(false)
+
+  useEffect(() => {
+    const hasRootLocations = (state.rootLocations?.length ?? 0) > 0
+    const hasSelection = (state.selectedRootLocationIds?.length ?? 0) > 0
+    if (!hasAutoOpenedPickerRef.current && hasRootLocations && !hasSelection) {
+      hasAutoOpenedPickerRef.current = true
+      setRootLocationPickerOpen(true)
+    }
+  }, [state.rootLocations, state.selectedRootLocationIds])
 
   useEffect(() => {
     if (data?.me?.rootLocations) {
@@ -365,6 +389,8 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
       value={{
         route: pathName,
         update: updateState,
+        isRootLocationPickerOpen,
+        setRootLocationPickerOpen,
         ...state
       }}
     >
