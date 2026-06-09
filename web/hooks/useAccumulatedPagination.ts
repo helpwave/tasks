@@ -182,6 +182,20 @@ export function useAccumulatedPagination<T extends { id: string }>(options: {
     }
   }, [lastAvailablePage, pageIndex, setPageIndex])
 
+  // The accumulated list is populated from effects (cache materialization or the
+  // non-cache merge), which run after paint. That leaves a one-frame gap where
+  // the query already has data but `accumulated` is still empty — the list would
+  // briefly render as "empty, not loading". Fall back to the current page's data
+  // for that gap so the UI only ever shows a loading state or actual data, never
+  // a spurious empty state. A genuinely empty result (pageData === []) keeps the
+  // empty list, so real "no results" still renders correctly.
+  const accumulatedResolved = useMemo(() => {
+    if (accumulated.length === 0 && pageData && pageData.length > 0) {
+      return pageData
+    }
+    return accumulated
+  }, [accumulated, pageData])
+
   const isFetchingMore = loading && pageIndex > 0
 
   const loadMore = useCallback(() => {
@@ -202,5 +216,5 @@ export function useAccumulatedPagination<T extends { id: string }>(options: {
     }
   }, [prefetchPage, prefetchPages, lastLoadedPage, lastAvailablePage, loading])
 
-  return { accumulated, loadMore, hasMore, isFetchingMore }
+  return { accumulated: accumulatedResolved, loadMore, hasMore, isFetchingMore }
 }
