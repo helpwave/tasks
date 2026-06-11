@@ -35,6 +35,7 @@ import { useCreateDraftDirty } from '@/hooks/useCreateDraftDirty'
 import { serializeTaskCreateDraft } from '@/utils/createDraftSnapshots'
 import clsx from 'clsx'
 import { PriorityUtils } from '@/utils/priority'
+import type { DialogState } from '@/types/DialogState'
 
 type TaskFormValues = CreateTaskInput & {
   done: boolean,
@@ -63,8 +64,10 @@ interface TaskDataEditorProps {
   initialPatientId?: string,
   initialPatientName?: string,
   onListSync?: () => void,
-  onClose?: () => void,
-  onCreateSuccessClose?: () => void,
+  onPresetRowCreate?: () => void,
+  onCreate?: (taskId: string) => void,
+  onUpdate?: () => void,
+  onDelete?: () => void,
   onCreateDraftDirtyChange?: (dirty: boolean) => void,
   presetRowEditor?: PresetRowEditorConfig | null,
 }
@@ -74,14 +77,16 @@ export const TaskDataEditor = ({
   initialPatientId,
   initialPatientName,
   onListSync,
-  onClose,
-  onCreateSuccessClose,
+  onPresetRowCreate,
+  onCreate,
+  onUpdate,
+  onDelete,
   onCreateDraftDirtyChange,
   presetRowEditor,
 }: TaskDataEditorProps) => {
   const translation = useTasksTranslation()
   const { selectedRootLocationIds } = useTasksContext()
-  const [errorDialog, setErrorDialog] = useState<{ isOpen: boolean, message?: string }>({ isOpen: false })
+  const [errorDialog, setErrorDialog] = useState<DialogState<{ message?: string }>>({ isOpen: false, data: { message: undefined } })
   const [isShowingPatientDialog, setIsShowingPatientDialog] = useState<boolean>(false)
   const [assigneeUserPopupId, setAssigneeUserPopupId] = useState<string | null>(null)
 
@@ -111,10 +116,13 @@ export const TaskDataEditor = ({
   const updateTask = (vars: { id: string, data: UpdateTaskInput }) => {
     updateTaskMutate({
       variables: vars,
+      onCompleted: () => {
+        onUpdate?.()
+      },
       onError: (err) => {
         setErrorDialog({
           isOpen: true,
-          message: err instanceof Error ? err.message : 'Update failed',
+          data: { message: err instanceof Error ? err.message : 'Update failed' },
         })
       },
     }).catch(() => { })
@@ -142,7 +150,7 @@ export const TaskDataEditor = ({
           priority: (values.priority as TaskPriority | null) || null,
           estimatedTime: values.estimatedTime ?? null,
         })
-        onClose?.()
+        onPresetRowCreate?.()
         return
       }
       createTask({
@@ -159,17 +167,17 @@ export const TaskDataEditor = ({
             properties: values.properties
           } as CreateTaskInput & { priority?: TaskPriority | null, estimatedTime?: number | null }
         },
-        onCompleted: () => {
+        onCompleted: (data) => {
           onCreateDraftDirtyChange?.(false)
           onListSync?.()
-          if (onCreateSuccessClose) {
-            onCreateSuccessClose()
+          if(data?.createTask?.id) {
+            onCreate?.(data?.createTask?.id)
           } else {
-            onClose?.()
+            console.error('createTask onCompleted: no task id', data)
           }
         },
         onError: (error) => {
-          setErrorDialog({ isOpen: true, message: error instanceof Error ? error.message : 'Failed to create task' })
+          setErrorDialog({ isOpen: true, data: { message: error instanceof Error ? error.message : 'Failed to create task' } })
         },
       })
     },
@@ -610,7 +618,7 @@ export const TaskDataEditor = ({
                         variables: { id: taskId },
                         onCompleted: () => {
                           onListSync?.()
-                          onClose?.()
+                          onDelete?.()
                         },
                       })
                     }
@@ -646,8 +654,8 @@ export const TaskDataEditor = ({
 
           <ErrorDialog
             isOpen={errorDialog.isOpen}
-            onClose={() => setErrorDialog({ isOpen: false })}
-            message={errorDialog.message}
+            onClose={() => setErrorDialog(prev => ({ ...prev, isOpen: false }))}
+            message={errorDialog.data.message}
           />
         </form>
         <Drawer

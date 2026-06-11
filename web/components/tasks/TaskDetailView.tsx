@@ -13,15 +13,27 @@ import { useUpdateTask } from '@/data'
 
 interface TaskDetailViewProps {
   taskId: string | null,
-  onClose: () => void,
-  onCreateSuccessClose?: () => void,
+  onCreate?: (taskId: string) => void,
+  onPresetRowCreate?: () => void,
+  onUpdate?: () => void,
+  onDelete?: () => void,
   onListSync?: () => void,
   initialPatientId?: string,
   initialPatientName?: string,
   onCreateDraftDirtyChange?: (dirty: boolean) => void,
 }
 
-export const TaskDetailView = ({ taskId, onClose, onCreateSuccessClose, onListSync, initialPatientId, initialPatientName, onCreateDraftDirtyChange }: TaskDetailViewProps) => {
+export const TaskDetailView = ({
+  taskId,
+  onCreate,
+  onPresetRowCreate,
+  onUpdate,
+  onDelete,
+  onListSync,
+  initialPatientId,
+  initialPatientName,
+  onCreateDraftDirtyChange,
+}: TaskDetailViewProps) => {
   const translation = useTasksTranslation()
 
   const isEditMode = !!taskId
@@ -98,8 +110,10 @@ export const TaskDetailView = ({ taskId, onClose, onCreateSuccessClose, onListSy
             initialPatientId={initialPatientId}
             initialPatientName={initialPatientName}
             onListSync={onListSync}
-            onClose={onClose}
-            onCreateSuccessClose={onCreateSuccessClose}
+            onPresetRowCreate={onPresetRowCreate}
+            onCreate={onCreate}
+            onDelete={onDelete}
+            onUpdate={onUpdate}
             onCreateDraftDirtyChange={isEditMode ? undefined : onCreateDraftDirtyChange}
           />
         </TabPanel>

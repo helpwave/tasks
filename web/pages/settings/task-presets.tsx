@@ -546,7 +546,9 @@ const TaskPresetsPage: NextPage = () => {
                   setPresetRowDrawer(null)
                 },
               }}
-              onClose={() => setPresetRowDrawer(null)}
+              onPresetRowCreate={() => setPresetRowDrawer(null)}
+              onCreate={() => setPresetRowDrawer(null)}
+              onDelete={() => setPresetRowDrawer(null)}
             />
           )
         })()}

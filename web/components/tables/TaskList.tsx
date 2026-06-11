@@ -40,6 +40,7 @@ import { ClearPropertyColumnDialog } from '@/components/properties/ClearProperty
 import { useTaskPropertyClearDialog } from '@/hooks/useTaskPropertyClearDialog'
 import { buildListLayoutStorageKey, resolveListRouteId, useListLayoutPreference } from '@/hooks/useListLayoutPreference'
 import { useRouter } from 'next/router'
+import type { DialogState } from '@/types/DialogState'
 
 function taskListDataSyncKey(tasks: TaskViewModel[]): string {
   return tasks.map(t => `${t.id}:${t.done}:${t.updateDate.getTime()}`).join('\0')
@@ -175,7 +176,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
   const [assignTaskToTeam] = useAssignTaskToTeam()
   const [updateTaskMutate] = useUpdateTask()
 
-  const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null)
+  const [patientDialogState, setPatientDialogState] = useState<DialogState<{ patientId: string | null }>>({ isOpen: false, data: { patientId: null } })
   const [selectedUserPopupId, setSelectedUserPopupId] = useState<string | null>(null)
   const [taskDialogState, setTaskDialogState] = useState<TaskDialogState>({ isOpen: false })
   const [internalSearchQuery, setInternalSearchQuery] = useState('')
@@ -732,7 +733,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
                   size="sm"
                   onClick={event => {
                     event.stopPropagation()
-                    setSelectedPatientId(data.patient?.id ?? null)
+                    setPatientDialogState({ isOpen: true, data: { patientId: data.patient?.id ?? null } })
                   }}
                   className="flex-row-2 justify-between min-w-40 w-fit print:hidden group"
                 >
@@ -895,7 +896,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
 
   const deferSetColumnOrder = useDeferredColumnOrderChange(setColumnOrder)
   const embeddedTableStateNoop = useCallback(() => {}, [])
-  const hasOpenDrawer = taskDialogState.isOpen || selectedPatientId != null
+  const hasOpenDrawer = taskDialogState.isOpen || patientDialogState != null
   const hasFilterPanelOpen = isShowFilters || isShowSorting
 
   const closeTaskDrawer = useCallback(() => {
@@ -1127,8 +1128,11 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
           >
             <TaskDetailView
               taskId={taskDialogState.taskId ?? null}
-              onClose={closeTaskDrawerFromSubmit}
-              onCreateSuccessClose={closeTaskDrawerFromSubmit}
+              onCreate={(taskId) => {
+                setTaskDialogState({ isOpen: true, taskId })
+              }}
+              onPresetRowCreate={closeTaskDrawerFromSubmit}
+              onDelete={closeTaskDrawerFromSubmit}
               onListSync={onRefetch}
               onCreateDraftDirtyChange={taskDialogState.isOpen && !taskDialogState.taskId ? setIsCreateTaskDraftDirty : undefined}
             />
@@ -1170,13 +1174,13 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
             alignment="right"
             titleElement={translation('editPatient')}
             description={undefined}
-            isOpen={!!selectedPatientId}
-            onClose={() => setSelectedPatientId(null)}
+            isOpen={patientDialogState.isOpen}
+            onClose={() => setPatientDialogState(prev => ({ ...prev, isOpen: false }))}
           >
-            {!!selectedPatientId && (
+            {!!patientDialogState.data.patientId && (
               <PatientDetailView
-                patientId={selectedPatientId}
-                onClose={() => setSelectedPatientId(null)}
+                patientId={patientDialogState.data.patientId}
+                onClose={() => setPatientDialogState(prev => ({ ...prev, isOpen: false }))}
                 onSuccess={() => {
                   onRefetch?.()
                 }}

@@ -32,7 +32,7 @@ const PatientsPage: NextPage = () => {
       >
         <PatientList
           initialPatientId={patientId}
-          onInitialPatientOpened={() => router.replace('/patients', undefined, { shallow: true })}
+          onInitialPatientIdUsed={() => router.replace('/patients', undefined, { shallow: true })}
         />
       </ContentPanel>
     </Page>
