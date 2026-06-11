@@ -145,6 +145,14 @@ enum PatientState {
   DEAD
 }
 
+type ScopedPatientCounts {
+  scopedPatientsTotal: Int!
+  scopedPatientsWaiting: Int!
+  scopedPatientsAdmitted: Int!
+  scopedPatientsDischarged: Int!
+  scopedPatientsDeceased: Int!
+}
+
 type PatientType {
   id: ID!
   firstname: String!
@@ -214,6 +222,7 @@ type Query {
   patient(id: ID!): PatientType
   patients(locationNodeId: ID = null, rootLocationIds: [ID!] = null, states: [PatientState!] = null, filters: [QueryFilterClauseInput!] = null, sorts: [QuerySortClauseInput!] = null, pagination: PaginationInput = null, search: QuerySearchInput = null): [PatientType!]!
   patientsTotal(locationNodeId: ID = null, rootLocationIds: [ID!] = null, states: [PatientState!] = null, filters: [QueryFilterClauseInput!] = null, sorts: [QuerySortClauseInput!] = null, search: QuerySearchInput = null): Int!
+  scopedPatientCounts(rootLocationIds: [ID!] = null): ScopedPatientCounts!
   recentPatients(rootLocationIds: [ID!] = null, filters: [QueryFilterClauseInput!] = null, sorts: [QuerySortClauseInput!] = null, pagination: PaginationInput = null, search: QuerySearchInput = null): [PatientType!]!
   recentPatientsTotal(rootLocationIds: [ID!] = null, filters: [QueryFilterClauseInput!] = null, sorts: [QuerySortClauseInput!] = null, search: QuerySearchInput = null): Int!
   task(id: ID!): TaskType

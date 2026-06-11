@@ -727,7 +727,6 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
           return (
             <TaskRowRefreshingGate taskId={row.original.id}>
               <>
-                <span className="print:block hidden">{data.patient?.name}</span>
                 <Button
                   color="neutral"
                   size="sm"

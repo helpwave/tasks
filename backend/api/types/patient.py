@@ -16,6 +16,25 @@ if TYPE_CHECKING:
 
 
 @strawberry.type
+class ScopedPatientCountsType:
+    scoped_patients_total: int
+    scoped_patients_waiting: int
+    scoped_patients_admitted: int
+    scoped_patients_discharged: int
+    scoped_patients_deceased: int
+
+    @staticmethod
+    def empty() -> "ScopedPatientCountsType":
+        return ScopedPatientCountsType(
+            scoped_patients_total=0,
+            scoped_patients_waiting=0,
+            scoped_patients_admitted=0,
+            scoped_patients_discharged=0,
+            scoped_patients_deceased=0,
+        )
+
+
+@strawberry.type
 class PatientType:
     id: strawberry.ID
     firstname: str

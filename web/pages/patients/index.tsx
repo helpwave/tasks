@@ -5,19 +5,30 @@ import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { PatientList } from '@/components/tables/PatientList'
+import { PatientScopeCountChips } from '@/components/patients/PatientScopeCountChips'
 import { useRouter } from 'next/router'
 
 const PatientsPage: NextPage = () => {
   const translation = useTasksTranslation()
   const router = useRouter()
-  const { totalPatientsCount } = useTasksContext()
+  const {
+    scopedPatientsTotal,
+    scopedPatientsAdmitted,
+    scopedPatientsWaiting,
+  } = useTasksContext()
   const patientId = router.isReady ? (router.query['patientId'] as string | undefined) : undefined
 
   return (
     <Page pageTitle={titleWrapper(translation('patients'))}>
       <ContentPanel
         titleElement={translation('patients')}
-        description={totalPatientsCount !== undefined ? translation('nPatient', { count: totalPatientsCount }) : undefined}
+        description={(
+          <PatientScopeCountChips
+            total={scopedPatientsTotal}
+            admitted={scopedPatientsAdmitted}
+            waiting={scopedPatientsWaiting}
+          />
+        )}
       >
         <PatientList
           initialPatientId={patientId}

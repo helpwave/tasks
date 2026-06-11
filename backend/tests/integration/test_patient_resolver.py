@@ -30,6 +30,48 @@ async def test_patient_query_patients(db_session, sample_patient, sample_user_wi
 
 
 @pytest.mark.asyncio
+async def test_scoped_patient_counts(
+    db_session, sample_location, sample_user_with_location_access
+):
+    from datetime import date
+
+    from database.models.patient import Patient
+
+    patients_by_state = [
+        ("patient-wait", PatientState.WAIT),
+        ("patient-admitted", PatientState.ADMITTED),
+        ("patient-discharged", PatientState.DISCHARGED),
+        ("patient-dead", PatientState.DEAD),
+    ]
+    for patient_id, state in patients_by_state:
+        db_session.add(
+            Patient(
+                id=patient_id,
+                firstname="Test",
+                lastname=patient_id,
+                birthdate=date(1990, 1, 1),
+                sex=Sex.MALE.value,
+                state=state.value,
+                clinic_id=sample_location.id,
+            )
+        )
+    await db_session.commit()
+
+    info = MockInfo(db_session, sample_user_with_location_access)
+    query = PatientQuery()
+    counts = await query.scoped_patient_counts(
+        info,
+        root_location_ids=[sample_location.id],
+    )
+
+    assert counts.scoped_patients_total == 4
+    assert counts.scoped_patients_waiting == 1
+    assert counts.scoped_patients_admitted == 1
+    assert counts.scoped_patients_discharged == 1
+    assert counts.scoped_patients_deceased == 1
+
+
+@pytest.mark.asyncio
 async def test_patient_mutation_create_patient(db_session, sample_location, sample_user_with_location_access):
     from api.inputs import CreatePatientInput
     from datetime import date

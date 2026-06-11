@@ -119,6 +119,7 @@ enum LocationType {
 type Mutation {
   createPatient(data: CreatePatientInput!): PatientType!
   updatePatient(id: ID!, data: UpdatePatientInput!): PatientType!
+  clearPatientProperty(propertyDefinitionId: ID!, patientIds: [ID!]!): Int!
   deletePatient(id: ID!): Boolean!
   admitPatient(id: ID!): PatientType!
   dischargePatient(id: ID!): PatientType!
@@ -126,6 +127,7 @@ type Mutation {
   waitPatient(id: ID!): PatientType!
   createTask(data: CreateTaskInput!): TaskType!
   updateTask(id: ID!, data: UpdateTaskInput!): TaskType!
+  clearTaskProperty(propertyDefinitionId: ID!, taskIds: [ID!]!): Int!
   addTaskAssignee(id: ID!, userId: ID!): TaskType!
   removeTaskAssignee(id: ID!, userId: ID!): TaskType!
   assignTaskToTeam(id: ID!, teamId: ID!): TaskType!
@@ -160,6 +162,14 @@ enum PatientState {
   ADMITTED
   DISCHARGED
   DEAD
+}
+
+type ScopedPatientCounts {
+  scopedPatientsTotal: Int!
+  scopedPatientsWaiting: Int!
+  scopedPatientsAdmitted: Int!
+  scopedPatientsDischarged: Int!
+  scopedPatientsDeceased: Int!
 }
 
 type PatientType {
@@ -231,6 +241,7 @@ type Query {
   patient(id: ID!): PatientType
   patients(locationNodeId: ID = null, rootLocationIds: [ID!] = null, states: [PatientState!] = null, filters: [QueryFilterClauseInput!] = null, sorts: [QuerySortClauseInput!] = null, pagination: PaginationInput = null, search: QuerySearchInput = null): [PatientType!]!
   patientsTotal(locationNodeId: ID = null, rootLocationIds: [ID!] = null, states: [PatientState!] = null, filters: [QueryFilterClauseInput!] = null, sorts: [QuerySortClauseInput!] = null, search: QuerySearchInput = null): Int!
+  scopedPatientCounts(rootLocationIds: [ID!] = null): ScopedPatientCounts!
   recentPatients(rootLocationIds: [ID!] = null, filters: [QueryFilterClauseInput!] = null, sorts: [QuerySortClauseInput!] = null, pagination: PaginationInput = null, search: QuerySearchInput = null): [PatientType!]!
   recentPatientsTotal(rootLocationIds: [ID!] = null, filters: [QueryFilterClauseInput!] = null, sorts: [QuerySortClauseInput!] = null, search: QuerySearchInput = null): Int!
   task(id: ID!): TaskType

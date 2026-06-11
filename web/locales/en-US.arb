@@ -177,6 +177,30 @@
       }
     }
   },
+  "patientsCountChipTotal": "Total {count}",
+  "@patientsCountChipTotal": {
+    "placeholders": {
+      "count": {
+        "type": "string"
+      }
+    }
+  },
+  "patientsCountChipAdmitted": "Admitted {count}",
+  "@patientsCountChipAdmitted": {
+    "placeholders": {
+      "count": {
+        "type": "string"
+      }
+    }
+  },
+  "patientsCountChipWaiting": "Waiting {count}",
+  "@patientsCountChipWaiting": {
+    "placeholders": {
+      "count": {
+        "type": "string"
+      }
+    }
+  },
   "nTask": "{count, plural, =1{# Task} other{# Tasks}}",
   "@nTask": {
     "placeholders": {

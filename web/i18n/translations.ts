@@ -177,6 +177,9 @@ export type TasksTranslationEntries = {
   'patientActions': string,
   'patientData': string,
   'patients': string,
+  'patientsCountChipAdmitted': (values: { count: string }) => string,
+  'patientsCountChipTotal': (values: { count: string }) => string,
+  'patientsCountChipWaiting': (values: { count: string }) => string,
   'patientState': (values: { state: string }) => string,
   'patientsUpdatedRecently': string,
   'pickClinic': string,
@@ -545,6 +548,15 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'patientActions': `Patientenaktionen`,
     'patientData': `Daten`,
     'patients': `Patienten`,
+    'patientsCountChipAdmitted': ({ count }): string => {
+      return `Aufgenommen ${count}`
+    },
+    'patientsCountChipTotal': ({ count }): string => {
+      return `Gesamt ${count}`
+    },
+    'patientsCountChipWaiting': ({ count }): string => {
+      return `Wartend ${count}`
+    },
     'patientState': ({ state }): string => {
       return TranslationGen.resolveSelect(state, {
         'WAIT': `Wartend`,
@@ -966,6 +978,15 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'patientActions': `Patient Actions`,
     'patientData': `Data`,
     'patients': `Patients`,
+    'patientsCountChipAdmitted': ({ count }): string => {
+      return `Admitted ${count}`
+    },
+    'patientsCountChipTotal': ({ count }): string => {
+      return `Total ${count}`
+    },
+    'patientsCountChipWaiting': ({ count }): string => {
+      return `Waiting ${count}`
+    },
     'patientState': ({ state }): string => {
       return TranslationGen.resolveSelect(state, {
         'WAIT': `Waiting`,
@@ -1386,6 +1407,15 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'patientActions': `Acciones del paciente`,
     'patientData': `Datos`,
     'patients': `Pacientes`,
+    'patientsCountChipAdmitted': ({ count }): string => {
+      return `Ingresado ${count}`
+    },
+    'patientsCountChipTotal': ({ count }): string => {
+      return `Total ${count}`
+    },
+    'patientsCountChipWaiting': ({ count }): string => {
+      return `En espera ${count}`
+    },
     'patientState': ({ state }): string => {
       return TranslationGen.resolveSelect(state, {
         'WAIT': `En espera`,
@@ -1806,6 +1836,15 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'patientActions': `Actions patient`,
     'patientData': `Données`,
     'patients': `Patients`,
+    'patientsCountChipAdmitted': ({ count }): string => {
+      return `Admis ${count}`
+    },
+    'patientsCountChipTotal': ({ count }): string => {
+      return `Total ${count}`
+    },
+    'patientsCountChipWaiting': ({ count }): string => {
+      return `En attente ${count}`
+    },
     'patientState': ({ state }): string => {
       return TranslationGen.resolveSelect(state, {
         'WAIT': `En attente`,
@@ -2226,6 +2265,15 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'patientActions': `Patiëntacties`,
     'patientData': `Gegevens`,
     'patients': `Patiënten`,
+    'patientsCountChipAdmitted': ({ count }): string => {
+      return `Opgenomen ${count}`
+    },
+    'patientsCountChipTotal': ({ count }): string => {
+      return `Totaal ${count}`
+    },
+    'patientsCountChipWaiting': ({ count }): string => {
+      return `Wachtend ${count}`
+    },
     'patientState': ({ state }): string => {
       return TranslationGen.resolveSelect(state, {
         'WAIT': `Wachtend`,
@@ -2649,6 +2697,15 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'patientActions': `Ações do paciente`,
     'patientData': `Dados`,
     'patients': `Pacientes`,
+    'patientsCountChipAdmitted': ({ count }): string => {
+      return `Internado ${count}`
+    },
+    'patientsCountChipTotal': ({ count }): string => {
+      return `Total ${count}`
+    },
+    'patientsCountChipWaiting': ({ count }): string => {
+      return `Aguardando ${count}`
+    },
     'patientState': ({ state }): string => {
       return TranslationGen.resolveSelect(state, {
         'WAIT': `Aguardando`,
