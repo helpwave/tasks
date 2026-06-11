@@ -34,8 +34,9 @@ type PatientFormValues = Omit<CreatePatientInput, 'clinicId' | 'teamIds' | 'posi
 interface PatientDataEditorProps {
   id: null | string,
   initialCreateData?: Partial<CreatePatientInput>,
-  onSuccess?: () => void,
-  onClose?: () => void,
+  onCreate?: (patientId: string) => void,
+  onDelete?: () => void,
+  onUpdate?: () => void,
   onCreateDraftDirtyChange?: (dirty: boolean) => void,
 }
 
@@ -60,8 +61,9 @@ const normalizeBirthdateValue = (value: Date | string | null | undefined): strin
 export const PatientDataEditor = ({
   id,
   initialCreateData = {},
-  onSuccess,
-  onClose,
+  onUpdate,
+  onCreate,
+  onDelete,
   onCreateDraftDirtyChange,
 }: PatientDataEditorProps) => {
   const translation = useTasksTranslation()
@@ -134,10 +136,13 @@ export const PatientDataEditor = ({
       }
       createPatient({
         variables: { data },
-        onCompleted: () => {
+        onCompleted: (data) => {
           onCreateDraftDirtyChange?.(false)
-          onSuccess?.()
-          onClose?.()
+          if(data?.createPatient?.id) {
+            onCreate?.(data?.createPatient?.id)
+          } else {
+            console.error('createPatient onCompleted: no patient id', data)
+          }
         },
         onError: (error) => {
           setErrorDialog({ isOpen: true, message: error instanceof Error ? error.message : 'Failed to create patient' })
@@ -205,7 +210,7 @@ export const PatientDataEditor = ({
       if (sameFirstname && sameLastname && sameBirthdate && sameSex && sameAssignedIds && sameClinic && sameTeamIds && samePosition && sameDescription) return
       updatePatient({
         variables: { id: patientId, data },
-        onCompleted: () => onSuccess?.(),
+        onCompleted: () => onUpdate?.(),
       })
     }
   })
@@ -412,7 +417,7 @@ export const PatientDataEditor = ({
                 <div className="flex gap-4 flex-wrap">
                   <Button
                     disabled={value === PatientState.Admitted}
-                    onClick={() => admitPatient({ variables: { id: patientId! }, onCompleted: () => onSuccess?.() })}
+                    onClick={() => admitPatient({ variables: { id: patientId! }, onCompleted: () => onUpdate?.() })}
                     color={value === PatientState.Admitted ? 'positive' : 'neutral'}
                   >
                     <Visibility isVisible={value === PatientState.Admitted}>
@@ -432,7 +437,7 @@ export const PatientDataEditor = ({
                   </Button>
                   <Button
                     disabled={value === PatientState.Wait}
-                    onClick={() => waitPatient({ variables: { id: patientId! }, onCompleted: () => onSuccess?.() })}
+                    onClick={() => waitPatient({ variables: { id: patientId! }, onCompleted: () => onUpdate?.() })}
                     color={value === PatientState.Wait ? 'warning' : 'neutral'}
                   >
                     <Visibility isVisible={value === PatientState.Admitted}>
@@ -605,7 +610,7 @@ export const PatientDataEditor = ({
           onCancel={() => setIsMarkDeadDialogOpen(false)}
           onConfirm={() => {
             if (patientId && markPatientDead) {
-              markPatientDead({ variables: { id: patientId }, onCompleted: () => onSuccess?.() })
+              markPatientDead({ variables: { id: patientId }, onCompleted: () => onUpdate?.() })
             }
             setIsMarkDeadDialogOpen(false)
           }}
@@ -619,7 +624,7 @@ export const PatientDataEditor = ({
           onCancel={() => setIsDischargeDialogOpen(false)}
           onConfirm={() => {
             if (patientId && dischargePatient) {
-              dischargePatient({ variables: { id: patientId }, onCompleted: () => onSuccess?.() })
+              dischargePatient({ variables: { id: patientId }, onCompleted: () => onUpdate?.() })
             }
             setIsDischargeDialogOpen(false)
           }}
@@ -636,8 +641,7 @@ export const PatientDataEditor = ({
               deletePatient({
                 variables: { id: patientId },
                 onCompleted: () => {
-                  onSuccess?.()
-                  onClose?.()
+                  onDelete?.()
                 },
               })
             }

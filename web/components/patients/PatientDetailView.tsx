@@ -50,6 +50,7 @@ export const localToUTCWithSameTime = (d: Date | null | undefined): Date | null 
 interface PatientDetailViewProps {
   patientId?: string,
   onClose: () => void,
+  onCreate?: (patientId: string) => void,
   onSuccess: () => void,
   initialCreateData?: Partial<CreatePatientInput>,
   onOpenSystemSuggestion?: (suggestion: SystemSuggestion, patientName: string) => void,
@@ -60,6 +61,7 @@ export const PatientDetailView = ({
   patientId,
   onClose,
   onSuccess,
+  onCreate,
   initialCreateData = {},
   onOpenSystemSuggestion,
   onCreateDraftDirtyChange,
@@ -238,8 +240,15 @@ export const PatientDetailView = ({
           <PatientDataEditor
             id={patientId || null}
             initialCreateData={initialCreateData}
-            onSuccess={onSuccess}
-            onClose={onClose}
+            onUpdate={onSuccess}
+            onDelete={() => {
+              onClose()
+              onSuccess()
+            }}
+            onCreate={(id) =>{
+              onCreate?.(id)
+              onSuccess()
+            }}
             onCreateDraftDirtyChange={isEditMode ? undefined : onCreateDraftDirtyChange}
           />
         </TabPanel>

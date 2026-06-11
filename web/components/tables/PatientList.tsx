@@ -1222,6 +1222,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
         >
           <PatientDetailView
             patientId={selectedPatient?.id ?? openedPatientId ?? undefined}
+            onCreate={(id) => setOpenedPatientId(id)}
             onClose={closePatientDrawer}
             onSuccess={() => {
               embeddedOnRefetch?.()
