@@ -340,7 +340,7 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
       }
     })
     hasCompletedFirstSyncRef.current = true
-  }, [effectInputKey, data, storedSelectedRootLocationIds, allLocationsData, setStoredSelectedRootLocationIds])
+  }, [effectInputKey, data, storedSelectedRootLocationIds, allLocationsData, setStoredSelectedRootLocationIds, scopedPatientCounts])
 
   const lastWrittenLocationIdsRef = useRef<string[] | undefined>(undefined)
 
