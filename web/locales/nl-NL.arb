@@ -65,6 +65,15 @@
   "editTask": "Taak bewerken",
   "errorOccurred": "Er is een fout opgetreden",
   "estimatedTime": "Geschatte tijd (minuten)",
+  "timeEstimate": "Geschatte tijd",
+  "nMinutesShort": "{minCount} min",
+  "@nMinutesShort": {
+    "placeholders": {
+      "minCount": {
+        "type": "number"
+      }
+    }
+  },
   "feedback": "Feedback",
   "female": "Vrouw",
   "filter": "Filter",
@@ -144,8 +153,9 @@
   "pThemes": "{count, plural, =1{Thema} other{Thema''s}}",
   "@pThemes": { "placeholders": { "count": { "type": "number" } } },
   "preferences": "Voorkeuren",
-  "priority": "{priority, select, P1{Normaal} P2{Medium} P3{Hoog} P4{Kritiek} other{-}}",
-  "@priority": { "placeholders": { "priority": {} } },
+  "priority": "Prioriteit",
+  "sPriority": "{priority, select, P1{Normaal} P2{Medium} P3{Hoog} P4{Kritiek} other{-}}",
+  "@sPriority": { "placeholders": { "priority": {} } },
   "priorityLabel": "Prioriteit",
   "priorityNone": "Geen",
   "privacy": "Privacy",
@@ -345,6 +355,7 @@
   "taskPresetNoTasks": "This preset has no tasks.",
   "taskPresetSelectPlaceholder": "Select a preset",
   "taskPresetEditDetails": "Edit details",
+  "editPresetTask": "Presettaak bewerken",
   "taskPresetApplyToRow": "Apply to preset row",
   "taskPresetNoEstimate": "No estimate",
   "tasksCreatedFromPreset": "Tasks created",

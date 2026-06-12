@@ -90,6 +90,7 @@ export type TasksTranslationEntries = {
   'duplicate': string,
   'edit': string,
   'editPatient': string,
+  'editPresetTask': string,
   'editTask': string,
   'enterFeedback': string,
   'error': string,
@@ -145,6 +146,7 @@ export type TasksTranslationEntries = {
   'myTasks': string,
   'name': string,
   'nFilter': (values: { count: number }) => string,
+  'nMinutesShort': (values: { minCount: number }) => string,
   'no': string,
   'noClosedTasks': string,
   'noLocationsFound': string,
@@ -190,7 +192,7 @@ export type TasksTranslationEntries = {
   'pickTeamsDescription': string,
   'position': string,
   'preferences': string,
-  'priority': (values: { priority: string }) => string,
+  'priority': string,
   'priorityLabel': string,
   'priorityNone': string,
   'privacy': string,
@@ -239,6 +241,7 @@ export type TasksTranslationEntries = {
   'showAllTasks': string,
   'showTeamTasks': string,
   'sorting': string,
+  'sPriority': (values: { priority: string }) => string,
   'sPropertySubjectType': (values: { subject: string }) => string,
   'sPropertyType': (values: { type: string }) => string,
   'stagingModalDisclaimerMarkdown': string,
@@ -285,6 +288,7 @@ export type TasksTranslationEntries = {
   'taskTitlePlaceholder': string,
   'teams': string,
   'themeMode': (values: { theme: string }) => string,
+  'timeEstimate': string,
   'title': string,
   'totalPatients': string,
   'type': string,
@@ -419,6 +423,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'duplicate': `Duplizieren`,
     'edit': `Bearbeiten`,
     'editPatient': `Patient bearbeiten`,
+    'editPresetTask': `Vorlagenaufgabe bearbeiten`,
     'editTask': `Aufgabe bearbeiten`,
     'enterFeedback': `Geben Sie hier Ihr Feedback ein...`,
     'error': `Fehler`,
@@ -495,6 +500,9 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
         '=1': `${count} Filter`,
         'other': `${count} Filter`,
       })
+    },
+    'nMinutesShort': ({ minCount }): string => {
+      return `${minCount} Min.`
     },
     'no': `Nein`,
     'noClosedTasks': `Keine erledigten Aufgaben`,
@@ -576,15 +584,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'pickTeamsDescription': `Wählen Sie ein oder mehrere Teams für diesen Patienten aus. Sie können Klinik-, Team-, Praxis- oder Krankenhaus-Standorte auswählen.`,
     'position': `Standort`,
     'preferences': `Präferenzen`,
-    'priority': ({ priority }): string => {
-      return TranslationGen.resolveSelect(priority, {
-        'P1': `Normal`,
-        'P2': `Mittel`,
-        'P3': `Hoch`,
-        'P4': `Kritisch`,
-        'other': `-`,
-      })
-    },
+    'priority': `Priorität`,
     'priorityLabel': `Priorität`,
     'priorityNone': `Keine`,
     'privacy': `Datenschutz`,
@@ -646,6 +646,15 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'showAllTasks': `Alle Aufgaben anzeigen`,
     'showTeamTasks': `Team-Aufgaben anzeigen`,
     'sorting': `Sortierung`,
+    'sPriority': ({ priority }): string => {
+      return TranslationGen.resolveSelect(priority, {
+        'P1': `Normal`,
+        'P2': `Mittel`,
+        'P3': `Hoch`,
+        'P4': `Kritisch`,
+        'other': `-`,
+      })
+    },
     'sPropertySubjectType': ({ subject }): string => {
       return TranslationGen.resolveSelect(subject, {
         'patient': `Patient`,
@@ -719,6 +728,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
         'other': `System`,
       })
     },
+    'timeEstimate': `Zeitschätzung`,
     'title': `Titel`,
     'totalPatients': `Gesamtpatienten`,
     'type': `Typ`,
@@ -851,6 +861,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'duplicate': `Duplicate`,
     'edit': `Edit`,
     'editPatient': `Edit Patient`,
+    'editPresetTask': `Edit Preset Task`,
     'editTask': `Edit Task`,
     'enterFeedback': `Enter your feedback here...`,
     'error': `Error`,
@@ -928,6 +939,9 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
         '=1': `${count} filter`,
         'other': `${count} filters`,
       })
+    },
+    'nMinutesShort': ({ minCount }): string => {
+      return `${minCount} min`
     },
     'no': `No`,
     'noClosedTasks': `No closed tasks`,
@@ -1009,15 +1023,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'pickTeamsDescription': `Select one or more teams for this patient. You can select clinic, team, practice, or hospital locations.`,
     'position': `Location`,
     'preferences': `Preferences`,
-    'priority': ({ priority }): string => {
-      return TranslationGen.resolveSelect(priority, {
-        'P1': `Normal`,
-        'P2': `Medium`,
-        'P3': `High`,
-        'P4': `Critical`,
-        'other': `-`,
-      })
-    },
+    'priority': `Priority`,
     'priorityLabel': `Priority`,
     'priorityNone': `None`,
     'privacy': `Privacy`,
@@ -1079,6 +1085,15 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'showAllTasks': `Show All Tasks`,
     'showTeamTasks': `Show Team Tasks`,
     'sorting': `Sorting`,
+    'sPriority': ({ priority }): string => {
+      return TranslationGen.resolveSelect(priority, {
+        'P1': `Normal`,
+        'P2': `Medium`,
+        'P3': `High`,
+        'P4': `Critical`,
+        'other': `-`,
+      })
+    },
     'sPropertySubjectType': ({ subject }): string => {
       return TranslationGen.resolveSelect(subject, {
         'patient': `Patient`,
@@ -1119,7 +1134,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'taskPresetCreate': `Create preset`,
     'taskPresetDelete': `Delete`,
     'taskPresetDeleteConfirm': `Delete this task preset?`,
-    'taskPresetEdit': `Edit preset`,
+    'taskPresetEdit': `Edit Preset`,
     'taskPresetEditDetails': `Edit details`,
     'taskPresetEmptyList': `No task presets yet.`,
     'taskPresetKey': `Key`,
@@ -1152,6 +1167,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
         'other': `System`,
       })
     },
+    'timeEstimate': `Time Estimate`,
     'title': `Title`,
     'totalPatients': `Total Patients`,
     'type': `Type`,
@@ -1284,6 +1300,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'duplicate': `Duplicate`,
     'edit': `Editar`,
     'editPatient': `Editar paciente`,
+    'editPresetTask': `Editar tarea de plantilla`,
     'editTask': `Editar tarea`,
     'enterFeedback': `Escriba aquí sus comentarios...`,
     'error': `Error`,
@@ -1361,6 +1378,9 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
         '=1': `${count} filtro`,
         'other': `${count} filtros`,
       })
+    },
+    'nMinutesShort': ({ minCount }): string => {
+      return `${minCount} min`
     },
     'no': `No`,
     'noClosedTasks': `No hay tareas cerradas`,
@@ -1441,15 +1461,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'pickTeamsDescription': `Seleccione uno o más equipos para este paciente. Puede elegir clínica, equipo, consulta u hospital.`,
     'position': `Ubicación`,
     'preferences': `Preferencias`,
-    'priority': ({ priority }): string => {
-      return TranslationGen.resolveSelect(priority, {
-        'P1': `Normal`,
-        'P2': `Media`,
-        'P3': `Alta`,
-        'P4': `Crítica`,
-        'other': `-`,
-      })
-    },
+    'priority': `Prioridad`,
     'priorityLabel': `Prioridad`,
     'priorityNone': `Ninguna`,
     'privacy': `Privacidad`,
@@ -1511,6 +1523,15 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'showAllTasks': `Mostrar todas las tareas`,
     'showTeamTasks': `Mostrar tareas del equipo`,
     'sorting': `Ordenación`,
+    'sPriority': ({ priority }): string => {
+      return TranslationGen.resolveSelect(priority, {
+        'P1': `Normal`,
+        'P2': `Media`,
+        'P3': `Alta`,
+        'P4': `Crítica`,
+        'other': `-`,
+      })
+    },
     'sPropertySubjectType': ({ subject }): string => {
       return TranslationGen.resolveSelect(subject, {
         'patient': `Paciente`,
@@ -1584,6 +1605,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
         'other': `Sistema`,
       })
     },
+    'timeEstimate': `Tiempo estimado`,
     'title': `Título`,
     'totalPatients': `Total de pacientes`,
     'type': `Tipo`,
@@ -1716,6 +1738,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'duplicate': `Duplicate`,
     'edit': `Modifier`,
     'editPatient': `Modifier le patient`,
+    'editPresetTask': `Modifier la tâche du préréglage`,
     'editTask': `Modifier la tâche`,
     'enterFeedback': `Entrez vos commentaires ici...`,
     'error': `Erreur`,
@@ -1793,6 +1816,9 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
         '=1': `${count} filtre`,
         'other': `${count} filtres`,
       })
+    },
+    'nMinutesShort': ({ minCount }): string => {
+      return `${minCount} min`
     },
     'no': `Non`,
     'noClosedTasks': `Aucune tâche terminée`,
@@ -1873,15 +1899,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'pickTeamsDescription': `Sélectionnez une ou plusieurs équipes pour ce patient. Vous pouvez choisir clinique, équipe, cabinet ou hôpital.`,
     'position': `Emplacement`,
     'preferences': `Préférences`,
-    'priority': ({ priority }): string => {
-      return TranslationGen.resolveSelect(priority, {
-        'P1': `Normal`,
-        'P2': `Moyenne`,
-        'P3': `Haute`,
-        'P4': `Critique`,
-        'other': `-`,
-      })
-    },
+    'priority': `Priorité`,
     'priorityLabel': `Priorité`,
     'priorityNone': `Aucune`,
     'privacy': `Confidentialité`,
@@ -1943,6 +1961,15 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'showAllTasks': `Afficher toutes les tâches`,
     'showTeamTasks': `Afficher les tâches d'équipe`,
     'sorting': `Tri`,
+    'sPriority': ({ priority }): string => {
+      return TranslationGen.resolveSelect(priority, {
+        'P1': `Normal`,
+        'P2': `Moyenne`,
+        'P3': `Haute`,
+        'P4': `Critique`,
+        'other': `-`,
+      })
+    },
     'sPropertySubjectType': ({ subject }): string => {
       return TranslationGen.resolveSelect(subject, {
         'patient': `Patient`,
@@ -2016,6 +2043,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
         'other': `Système`,
       })
     },
+    'timeEstimate': `Temps estimé`,
     'title': `Titre`,
     'totalPatients': `Total des patients`,
     'type': `Type`,
@@ -2148,6 +2176,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'duplicate': `Duplicate`,
     'edit': `Bewerken`,
     'editPatient': `Patiënt bewerken`,
+    'editPresetTask': `Presettaak bewerken`,
     'editTask': `Taak bewerken`,
     'enterFeedback': `Voer hier uw feedback in...`,
     'error': `Fout`,
@@ -2225,6 +2254,9 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
         '=1': `${count} filter`,
         'other': `${count} filters`,
       })
+    },
+    'nMinutesShort': ({ minCount }): string => {
+      return `${minCount} min`
     },
     'no': `Nee`,
     'noClosedTasks': `Geen afgeronde taken`,
@@ -2305,15 +2337,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'pickTeamsDescription': `Selecteer een of meer teams voor deze patiënt. U kunt kliniek, team, praktijk of ziekenhuis selecteren.`,
     'position': `Locatie`,
     'preferences': `Voorkeuren`,
-    'priority': ({ priority }): string => {
-      return TranslationGen.resolveSelect(priority, {
-        'P1': `Normaal`,
-        'P2': `Medium`,
-        'P3': `Hoog`,
-        'P4': `Kritiek`,
-        'other': `-`,
-      })
-    },
+    'priority': `Prioriteit`,
     'priorityLabel': `Prioriteit`,
     'priorityNone': `Geen`,
     'privacy': `Privacy`,
@@ -2378,6 +2402,15 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'showAllTasks': `Alle taken tonen`,
     'showTeamTasks': `Teamtaken tonen`,
     'sorting': `Sorteren`,
+    'sPriority': ({ priority }): string => {
+      return TranslationGen.resolveSelect(priority, {
+        'P1': `Normaal`,
+        'P2': `Medium`,
+        'P3': `Hoog`,
+        'P4': `Kritiek`,
+        'other': `-`,
+      })
+    },
     'sPropertySubjectType': ({ subject }): string => {
       return TranslationGen.resolveSelect(subject, {
         'patient': `Patiënt`,
@@ -2451,6 +2484,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
         'other': `Systeem`,
       })
     },
+    'timeEstimate': `Geschatte tijd`,
     'title': `Titel`,
     'totalPatients': `Totaal patiënten`,
     'type': `Type`,
@@ -2583,6 +2617,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'duplicate': `Duplicate`,
     'edit': `Editar`,
     'editPatient': `Editar paciente`,
+    'editPresetTask': `Editar tarefa do Preset`,
     'editTask': `Editar tarefa`,
     'enterFeedback': `Digite seu feedback aqui...`,
     'error': `Erro`,
@@ -2660,6 +2695,9 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
         '=1': `${count} filtro`,
         'other': `${count} filtros`,
       })
+    },
+    'nMinutesShort': ({ minCount }): string => {
+      return `${minCount} min`
     },
     'no': `Não`,
     'noClosedTasks': `Nenhuma tarefa concluída`,
@@ -2740,15 +2778,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'pickTeamsDescription': `Selecione uma ou mais equipes para este paciente. Você pode escolher clínica, equipe, consultório ou hospital.`,
     'position': `Localização`,
     'preferences': `Preferências`,
-    'priority': ({ priority }): string => {
-      return TranslationGen.resolveSelect(priority, {
-        'P1': `Normal`,
-        'P2': `Média`,
-        'P3': `Alta`,
-        'P4': `Crítica`,
-        'other': `-`,
-      })
-    },
+    'priority': `Prioridade`,
     'priorityLabel': `Prioridade`,
     'priorityNone': `Nenhuma`,
     'privacy': `Privacidade`,
@@ -2810,6 +2840,15 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'showAllTasks': `Mostrar todas as tarefas`,
     'showTeamTasks': `Mostrar tarefas da equipe`,
     'sorting': `Ordenação`,
+    'sPriority': ({ priority }): string => {
+      return TranslationGen.resolveSelect(priority, {
+        'P1': `Normal`,
+        'P2': `Média`,
+        'P3': `Alta`,
+        'P4': `Crítica`,
+        'other': `-`,
+      })
+    },
     'sPropertySubjectType': ({ subject }): string => {
       return TranslationGen.resolveSelect(subject, {
         'patient': `Paciente`,
@@ -2850,7 +2889,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'taskPresetCreate': `Create preset`,
     'taskPresetDelete': `Delete`,
     'taskPresetDeleteConfirm': `Delete this task preset?`,
-    'taskPresetEdit': `Editar preset`,
+    'taskPresetEdit': `Editar Preset`,
     'taskPresetEditDetails': `Edit details`,
     'taskPresetEmptyList': `No task presets yet.`,
     'taskPresetKey': `Key`,
@@ -2883,6 +2922,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
         'other': `Sistema`,
       })
     },
+    'timeEstimate': `Tempo estimado`,
     'title': `Título`,
     'totalPatients': `Total de pacientes`,
     'type': `Tipo`,

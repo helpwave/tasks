@@ -7,16 +7,12 @@ import {
   Dialog,
   Drawer,
   FillerCell,
-  FocusTrapWrapper,
   IconButton,
-  Input,
   LoadingContainer,
-  Select,
-  SelectOption,
   Table
 } from '@helpwave/hightide'
 import type { ColumnDef } from '@tanstack/table-core'
-import { ArrowLeft, EditIcon, Pencil, PlusIcon, Save, Trash2, X } from 'lucide-react'
+import { ArrowLeft, EditIcon, PlusIcon, Trash2 } from 'lucide-react'
 import { Page } from '@/components/layout/Page'
 import { ContentPanel } from '@/components/layout/ContentPanel'
 import titleWrapper from '@/utils/titleWrapper'
@@ -29,22 +25,15 @@ import {
 } from '@/data'
 import { TaskPresetScope } from '@/api/gql/generated'
 import { TaskDataEditor } from '@/components/tasks/TaskDataEditor'
-import type { TaskPresetListRow } from '@/utils/taskGraph'
-import { graphNodesToListRows, listRowsToTaskGraphInput } from '@/utils/taskGraph'
-import clsx from 'clsx'
-import { PriorityUtils } from '@/utils/priority'
+import { TaskPresetDataEditor } from '@/components/tasks/TaskPresetDataEditor'
+import {
+  defaultTaskPresetListRow,
+  graphNodesToListRows,
+  listRowsToTaskGraphInput,
+  type TaskPresetListRow
+} from '@/utils/taskGraph'
 
 const isGlobalScope = (scope: string): boolean => scope === TaskPresetScope.Global
-
-const defaultRow = (): TaskPresetListRow => ({
-  title: '',
-  description: '',
-  priority: null,
-  estimatedTime: null,
-})
-
-const hasEmptyTaskTitle = (rows: TaskPresetListRow[]): boolean =>
-  rows.some(r => r.title.trim() === '')
 
 type PresetRowDrawerTarget = null | {
   section: 'create' | 'edit',
@@ -77,13 +66,13 @@ const TaskPresetsPage: NextPage = () => {
 
   const [name, setName] = useState('')
   const [scope, setScope] = useState<TaskPresetScope>(TaskPresetScope.Personal)
-  const [rows, setRows] = useState<TaskPresetListRow[]>([defaultRow()])
+  const [rows, setRows] = useState<TaskPresetListRow[]>([defaultTaskPresetListRow()])
   const [saving, setSaving] = useState(false)
 
   const [editOpen, setEditOpen] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
   const [editName, setEditName] = useState('')
-  const [editRows, setEditRows] = useState<TaskPresetListRow[]>([defaultRow()])
+  const [editRows, setEditRows] = useState<TaskPresetListRow[]>([defaultTaskPresetListRow()])
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [presetRowDrawer, setPresetRowDrawer] = useState<PresetRowDrawerTarget>(null)
@@ -120,7 +109,7 @@ const TaskPresetsPage: NextPage = () => {
   const resetCreateForm = useCallback(() => {
     setName('')
     setScope(TaskPresetScope.Personal)
-    setRows([defaultRow()])
+    setRows([defaultTaskPresetListRow()])
   }, [])
 
   const openCreateDrawer = useCallback(() => {
@@ -165,7 +154,7 @@ const TaskPresetsPage: NextPage = () => {
     [presets]
   )
 
-  const closeEditDialog = useCallback(() => {
+  const closeEditDrawer = useCallback(() => {
     setEditOpen(false)
     setEditId(null)
     stripPresetQueryParam()
@@ -211,11 +200,11 @@ const TaskPresetsPage: NextPage = () => {
           },
         },
       })
-      closeEditDialog()
+      closeEditDrawer()
     } finally {
       setSaving(false)
     }
-  }, [editId, editName, editRows, updatePreset, closeEditDialog])
+  }, [editId, editName, editRows, updatePreset, closeEditDrawer])
 
   const confirmDelete = useCallback(async () => {
     if (!deleteId) return
@@ -358,148 +347,48 @@ const TaskPresetsPage: NextPage = () => {
         titleElement={translation('taskPresetCreate')}
         description={undefined}
       >
-        <div className="flex flex-col gap-8 pb-6 overflow-y-auto max-h-[min(85dvh,calc(100dvh-5rem))] px-1">
-          <div className="grid grid-cols-1 gap-6">
-            <div className="flex flex-col gap-3">
-              <span className="typography-label-lg">{translation('taskPresetName')}</span>
-              <Input value={name} onChange={e => setName(e.target.value)} className="w-full" />
-            </div>
-            <div className="flex flex-col gap-3">
-              <span className="typography-label-lg">{translation('taskPresetScope')}</span>
-              <Select
-                value={scope}
-                onValueChange={v => setScope(v as TaskPresetScope)}
-                buttonProps={{ className: 'w-full' }}
-              >
-                <SelectOption
-                  value={TaskPresetScope.Personal}
-                  label={translation('taskPresetScopePersonal')}
-                >
-                  {translation('taskPresetScopePersonal')}
-                </SelectOption>
-                <SelectOption
-                  value={TaskPresetScope.Global}
-                  label={translation('taskPresetScopeGlobal')}
-                >
-                  {translation('taskPresetScopeGlobal')}
-                </SelectOption>
-              </Select>
-            </div>
-          </div>
-          <div className="flex flex-col gap-5 mt-2 pt-2 border-t border-divider">
-            <span className="typography-label-lg">{translation('addTask')}</span>
-            {rows.map((row, index) => (
-              <div
-                key={index}
-                className="flex flex-col gap-4 p-5 md:p-6 rounded-xl border border-border bg-background"
-              >
-                <div className="flex flex-col xl:flex-row xl:items-start gap-5 xl:gap-10 justify-between">
-                  <div className="flex-1 flex flex-col gap-4 min-w-0 w-full">
-                    <Input
-                      placeholder={translation('taskTitlePlaceholder')}
-                      value={row.title}
-                      onChange={e => {
-                        const next = [...rows]
-                        const cur = next[index] ?? defaultRow()
-                        next[index] = { ...cur, title: e.target.value }
-                        setRows(next)
-                      }}
-                      className="w-full"
-                    />
-                    <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
-                      <span className="inline-flex items-center gap-2 text-description">
-                        <span
-                          className={clsx(
-                            'size-2.5 rounded-full shrink-0',
-                            PriorityUtils.toBackgroundColor(row.priority)
-                          )}
-                        />
-                        {row.priority
-                          ? translation('priority', { priority: row.priority })
-                          : translation('priorityNone')}
-                      </span>
-                      <span className="text-description">
-                        {row.estimatedTime != null && row.estimatedTime > 0
-                          ? `${translation('estimatedTime')}: ${row.estimatedTime}`
-                          : translation('taskPresetNoEstimate')}
-                      </span>
-                    </div>
-                    {row.description.trim() !== '' && (
-                      <p className="text-sm text-description leading-relaxed line-clamp-3 whitespace-pre-wrap">
-                        {row.description}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex flex-wrap items-center gap-0.5 shrink-0">
-                    <IconButton
-                      type="button"
-                      tooltip={translation('taskPresetEditDetails')}
-                      coloringStyle="text"
-                      color="neutral"
-                      className="shrink-0"
-                      onClick={() => openPresetRowDrawer('create', index)}
-                    >
-                      <Pencil className="size-4" />
-                    </IconButton>
-                    <IconButton
-                      type="button"
-                      tooltip={translation('taskPresetRemoveRow')}
-                      coloringStyle="text"
-                      color="negative"
-                      className="shrink-0"
-                      onClick={() => setRows(rows.filter((_, i) => i !== index))}
-                      disabled={rows.length <= 1}
-                    >
-                      <Trash2 className="size-4" />
-                    </IconButton>
-                  </div>
-                </div>
-              </div>
-            ))}
-            <Button
-              type="button"
-              color="neutral"
-              coloringStyle="outline"
-              className="w-fit"
-              onClick={() => setRows([...rows, defaultRow()])}
-            >
-              <PlusIcon className="size-4" />
-              {translation('taskPresetAddRow')}
-            </Button>
-          </div>
-          <div className="flex flex-wrap gap-3 justify-end pt-4 border-t border-divider sticky bottom-0 bg-surface-1 -mx-1 px-1 pb-1">
-            <Button
-              color="neutral"
-              coloringStyle="outline"
-              className="gap-2"
-              onClick={() => setCreateDrawerOpen(false)}
-            >
-              <X className="size-4 shrink-0" />
-              {translation('cancel')}
-            </Button>
-            <Button
-              color="primary"
-              className="gap-2"
-              onClick={() => void handleCreate()}
-              disabled={
-                saving
-                || !name.trim()
-                || listRowsToTaskGraphInput(rows).nodes.length === 0
-                || hasEmptyTaskTitle(rows)
-              }
-            >
-              <Save className="size-4 shrink-0" />
-              {translation('taskPresetSave')}
-            </Button>
-          </div>
-        </div>
+        <TaskPresetDataEditor
+          name={name}
+          onNameChange={setName}
+          rows={rows}
+          onRowsChange={setRows}
+          onEditRow={index => openPresetRowDrawer('create', index)}
+          onSave={() => void handleCreate()}
+          onCancel={() => setCreateDrawerOpen(false)}
+          saving={saving}
+          scope={scope}
+          onScopeChange={setScope}
+        />
+      </Drawer>
+
+      <Drawer
+        isOpen={editOpen}
+        onClose={closeEditDrawer}
+        alignment="right"
+        titleElement={translation('taskPresetEdit')}
+        description={undefined}
+      >
+        <TaskPresetDataEditor
+          name={editName}
+          onNameChange={setEditName}
+          rows={editRows}
+          onRowsChange={setEditRows}
+          onEditRow={index => openPresetRowDrawer('edit', index)}
+          onSave={() => void handleUpdate()}
+          onCancel={closeEditDrawer}
+          saving={saving}
+        />
       </Drawer>
 
       <Drawer
         isOpen={presetRowDrawer != null}
         onClose={() => setPresetRowDrawer(null)}
         alignment="right"
-        titleElement={translation('createTask')}
+        titleElement={
+          presetRowDrawer?.section === 'edit'
+            ? translation('editPresetTask')
+            : translation('createTask')
+        }
         description={undefined}
       >
         {presetRowDrawer != null && (() => {
@@ -553,135 +442,6 @@ const TaskPresetsPage: NextPage = () => {
           )
         })()}
       </Drawer>
-
-      <Dialog
-        isOpen={editOpen}
-        onClose={closeEditDialog}
-        titleElement={translation('taskPresetEdit')}
-        description={null}
-        position="center"
-        isModal={true}
-        className="max-w-4xl w-full max-h-[90vh] flex flex-col"
-      >
-        <FocusTrapWrapper active={editOpen}>
-          <div className="flex flex-col gap-8 py-3 overflow-y-auto max-h-[72vh] px-1">
-            <div className="flex flex-col gap-3 max-w-2xl">
-              <span className="typography-label-lg">{translation('taskPresetName')}</span>
-              <Input value={editName} onChange={e => setEditName(e.target.value)} className="w-full" />
-            </div>
-            <div className="flex flex-col gap-5 mt-2 pt-2 border-t border-divider">
-              <span className="typography-label-lg">{translation('addTask')}</span>
-              {editRows.map((row, index) => (
-                <div
-                  key={index}
-                  className={clsx(
-                    'flex flex-col gap-4 p-5 md:p-6 rounded-xl border bg-background',
-                    row.title.trim() === '' ? 'border-negative bg-negative/10' : 'border-border'
-                  )}
-                >
-                  <div className="flex flex-col xl:flex-row xl:items-start gap-5 xl:gap-10 justify-between">
-                    <div className="flex-1 flex flex-col gap-4 min-w-0 w-full">
-                      <Input
-                        placeholder={translation('taskTitlePlaceholder')}
-                        value={row.title}
-                        onChange={e => {
-                          const next = [...editRows]
-                          const cur = next[index] ?? defaultRow()
-                          next[index] = { ...cur, title: e.target.value }
-                          setEditRows(next)
-                        }}
-                        className="w-full"
-                      />
-                      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
-                        <span className="inline-flex items-center gap-2 text-description">
-                          <span
-                            className={clsx(
-                              'size-2.5 rounded-full shrink-0',
-                              PriorityUtils.toBackgroundColor(row.priority)
-                            )}
-                          />
-                          {row.priority
-                            ? translation('priority', { priority: row.priority })
-                            : translation('priorityNone')}
-                        </span>
-                        <span className="text-description">
-                          {row.estimatedTime != null && row.estimatedTime > 0
-                            ? `${translation('estimatedTime')}: ${row.estimatedTime}`
-                            : translation('taskPresetNoEstimate')}
-                        </span>
-                      </div>
-                      {row.description.trim() !== '' && (
-                        <p className="text-sm text-description leading-relaxed line-clamp-3 whitespace-pre-wrap">
-                          {row.description}
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex flex-wrap items-center gap-0.5 shrink-0">
-                      <IconButton
-                        type="button"
-                        tooltip={translation('taskPresetEditDetails')}
-                        coloringStyle="text"
-                        color="neutral"
-                        className="shrink-0"
-                        onClick={() => openPresetRowDrawer('edit', index)}
-                      >
-                        <Pencil className="size-4" />
-                      </IconButton>
-                      <IconButton
-                        type="button"
-                        tooltip={translation('taskPresetRemoveRow')}
-                        coloringStyle="text"
-                        color="negative"
-                        className="shrink-0"
-                        onClick={() => setEditRows(editRows.filter((_, i) => i !== index))}
-                        disabled={editRows.length <= 1}
-                      >
-                        <Trash2 className="size-4" />
-                      </IconButton>
-                    </div>
-                  </div>
-                </div>
-              ))}
-              <Button
-                type="button"
-                color="neutral"
-                coloringStyle="outline"
-                className="w-fit"
-                onClick={() => setEditRows([...editRows, defaultRow()])}
-              >
-                <PlusIcon className="size-4" />
-                {translation('taskPresetAddRow')}
-              </Button>
-            </div>
-            <div className="flex flex-wrap gap-3 justify-end pt-6 border-t border-divider">
-              <Button
-                color="neutral"
-                coloringStyle="outline"
-                className="gap-2"
-                onClick={closeEditDialog}
-              >
-                <X className="size-4 shrink-0" />
-                {translation('cancel')}
-              </Button>
-              <Button
-                color="primary"
-                className="gap-2"
-                onClick={handleUpdate}
-                disabled={
-                  saving
-                  || !editName.trim()
-                  || !editId
-                  || listRowsToTaskGraphInput(editRows).nodes.length === 0
-                  || hasEmptyTaskTitle(editRows)
-                }
-              >
-                <Save className="size-4 shrink-0" />
-                {translation('taskPresetSave')}
-              </Button>
-            </div>
-          </div>
-        </FocusTrapWrapper>
-      </Dialog>
 
       <Dialog
         isOpen={deleteOpen}

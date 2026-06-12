@@ -336,10 +336,10 @@ export const TaskDataEditor = ({
   }
 
   const priorities = [
-    { value: 'P1', label: translation('priority', { priority: 'P1' }) },
-    { value: 'P2', label: translation('priority', { priority: 'P2' }) },
-    { value: 'P3', label: translation('priority', { priority: 'P3' }) },
-    { value: 'P4', label: translation('priority', { priority: 'P4' }) },
+    { value: 'P1', label: translation('sPriority', { priority: 'P1' }) },
+    { value: 'P2', label: translation('sPriority', { priority: 'P2' }) },
+    { value: 'P3', label: translation('sPriority', { priority: 'P3' }) },
+    { value: 'P4', label: translation('sPriority', { priority: 'P4' }) },
   ]
 
   const isRefreshing = isEditMode && taskId != null && refreshingTaskIds.has(taskId)

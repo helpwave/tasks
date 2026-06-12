@@ -522,7 +522,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
 
   const resolveTaskChoiceTagLabel = useCallback<QueryableChoiceTagLabelResolver>((field, optionKey, backendLabel) => {
     if (field.propertyDefinitionId) return backendLabel
-    if (field.key === 'priority') return translation('priority', { priority: optionKey })
+    if (field.key === 'priority') return translation('sPriority', { priority: optionKey })
     return backendLabel
   }, [translation])
 
@@ -544,7 +544,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
         id: 'priority',
         label: translation('priorityLabel'),
         dataType: 'singleTag',
-        tags: ['P1', 'P2', 'P3', 'P4'].map(p => ({ label: translation('priority', { priority: p }), tag: p })),
+        tags: ['P1', 'P2', 'P3', 'P4'].map(p => ({ label: translation('sPriority', { priority: p }), tag: p })),
       },
       { id: 'patient', label: translation('patient'), dataType: 'text', tags: [] },
       { id: 'assignee', label: translation('assignedTo'), dataType: 'text', tags: [] },

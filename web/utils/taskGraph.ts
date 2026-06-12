@@ -8,6 +8,16 @@ export type TaskPresetListRow = {
   estimatedTime: number | null,
 }
 
+export const defaultTaskPresetListRow = (): TaskPresetListRow => ({
+  title: '',
+  description: '',
+  priority: null,
+  estimatedTime: null,
+})
+
+export const hasEmptyTaskPresetRowTitle = (rows: TaskPresetListRow[]): boolean =>
+  rows.some(r => r.title.trim() === '')
+
 export function listRowsToTaskGraphInput(rows: TaskPresetListRow[]): TaskGraphInput {
   const trimmed = rows.map(r => ({
     title: r.title.trim(),

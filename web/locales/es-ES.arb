@@ -65,6 +65,15 @@
   "editTask": "Editar tarea",
   "errorOccurred": "Se ha producido un error",
   "estimatedTime": "Tiempo estimado (minutos)",
+  "timeEstimate": "Tiempo estimado",
+  "nMinutesShort": "{minCount} min",
+  "@nMinutesShort": {
+    "placeholders": {
+      "minCount": {
+        "type": "number"
+      }
+    }
+  },
   "feedback": "Comentarios",
   "female": "Femenino",
   "filter": "Filtro",
@@ -144,8 +153,9 @@
   "pThemes": "{count, plural, =1{Tema} other{Temas}}",
   "@pThemes": { "placeholders": { "count": { "type": "number" } } },
   "preferences": "Preferencias",
-  "priority": "{priority, select, P1{Normal} P2{Media} P3{Alta} P4{Crítica} other{-}}",
-  "@priority": { "placeholders": { "priority": {} } },
+  "priority": "Prioridad",
+  "sPriority": "{priority, select, P1{Normal} P2{Media} P3{Alta} P4{Crítica} other{-}}",
+  "@sPriority": { "placeholders": { "priority": {} } },
   "priorityLabel": "Prioridad",
   "priorityNone": "Ninguna",
   "privacy": "Privacidad",
@@ -345,6 +355,7 @@
   "taskPresetNoTasks": "This preset has no tasks.",
   "taskPresetSelectPlaceholder": "Select a preset",
   "taskPresetEditDetails": "Edit details",
+  "editPresetTask": "Editar tarea de plantilla",
   "taskPresetApplyToRow": "Apply to preset row",
   "taskPresetNoEstimate": "No estimate",
   "tasksCreatedFromPreset": "Tasks created",

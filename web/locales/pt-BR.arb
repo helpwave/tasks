@@ -65,6 +65,15 @@
   "editTask": "Editar tarefa",
   "errorOccurred": "Ocorreu um erro",
   "estimatedTime": "Tempo estimado (minutos)",
+  "timeEstimate": "Tempo estimado",
+  "nMinutesShort": "{minCount} min",
+  "@nMinutesShort": {
+    "placeholders": {
+      "minCount": {
+        "type": "number"
+      }
+    }
+  },
   "feedback": "Feedback",
   "female": "Feminino",
   "filter": "Filtro",
@@ -144,8 +153,9 @@
   "pThemes": "{count, plural, =1{Tema} other{Temas}}",
   "@pThemes": { "placeholders": { "count": { "type": "number" } } },
   "preferences": "Preferências",
-  "priority": "{priority, select, P1{Normal} P2{Média} P3{Alta} P4{Crítica} other{-}}",
-  "@priority": { "placeholders": { "priority": {} } },
+  "priority": "Prioridade",
+  "sPriority": "{priority, select, P1{Normal} P2{Média} P3{Alta} P4{Crítica} other{-}}",
+  "@sPriority": { "placeholders": { "priority": {} } },
   "priorityLabel": "Prioridade",
   "priorityNone": "Nenhuma",
   "privacy": "Privacidade",
@@ -324,7 +334,7 @@
   "taskPresetRemoveRow": "Remove",
   "taskPresetSave": "Save preset",
   "taskPresetCreate": "Create preset",
-  "taskPresetEdit": "Editar preset",
+  "taskPresetEdit": "Editar Preset",
   "taskPresetDelete": "Delete",
   "taskPresetDeleteConfirm": "Delete this task preset?",
   "taskPresetEmptyList": "No task presets yet.",
@@ -345,6 +355,7 @@
   "taskPresetNoTasks": "This preset has no tasks.",
   "taskPresetSelectPlaceholder": "Select a preset",
   "taskPresetEditDetails": "Edit details",
+  "editPresetTask": "Editar tarefa do Preset",
   "taskPresetApplyToRow": "Apply to preset row",
   "taskPresetNoEstimate": "No estimate",
   "tasksCreatedFromPreset": "Tasks created",
