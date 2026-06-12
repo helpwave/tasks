@@ -212,6 +212,8 @@
   "copyShareLinkEnableSharingFirst": "Schakel delen via link in zodat anderen met de link deze snelle toegang kunnen openen.",
   "rShow": "{name} tonen",
   "@rShow": { "placeholders": { "name": { "type": "string" } } },
+  "rChipTotal": "Totaal {value}",
+  "@rChipTotal": { "placeholders": { "value": { "type": "string" } } },
   "search": "Zoeken",
   "searchUserOrTeam": "Zoek gebruiker (of team)...",
   "searchUsersOrTeams": "Zoek gebruikers of teams...",

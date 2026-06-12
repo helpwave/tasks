@@ -350,6 +350,14 @@
       }
     }
   },
+  "rChipTotal": "Total {value}",
+  "@rChipTotal": {
+    "placeholders": {
+      "value": {
+        "type": "string"
+      }
+    }
+  },
   "search": "Search",
   "searchUserOrTeam": "Search for user (or team)...",
   "searchUsersOrTeams": "Search users or teams...",

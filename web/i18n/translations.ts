@@ -199,6 +199,7 @@ export type TasksTranslationEntries = {
   'property': string,
   'pThemes': (values: { count: number }) => string,
   'rAdd': (values: { name: string }) => string,
+  'rChipTotal': (values: { value: string }) => string,
   'readOnlyView': string,
   'recentPatients': string,
   'recentTasks': string,
@@ -598,6 +599,9 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     },
     'rAdd': ({ name }): string => {
       return `${name} hinzufügen`
+    },
+    'rChipTotal': ({ value }): string => {
+      return `Gesamt ${value}`
     },
     'readOnlyView': `Nur lesen`,
     'recentPatients': `Deine kürzlichen Patienten`,
@@ -1029,6 +1033,9 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'rAdd': ({ name }): string => {
       return `Add ${name}`
     },
+    'rChipTotal': ({ value }): string => {
+      return `Total ${value}`
+    },
     'readOnlyView': `Read-only`,
     'recentPatients': `Your Recent Patients`,
     'recentTasks': `Your Recent Tasks`,
@@ -1458,6 +1465,9 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'rAdd': ({ name }): string => {
       return `Añadir ${name}`
     },
+    'rChipTotal': ({ value }): string => {
+      return `Total ${value}`
+    },
     'readOnlyView': `Solo lectura`,
     'recentPatients': `Tus pacientes recientes`,
     'recentTasks': `Tus tareas recientes`,
@@ -1886,6 +1896,9 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     },
     'rAdd': ({ name }): string => {
       return `Ajouter ${name}`
+    },
+    'rChipTotal': ({ value }): string => {
+      return `Total ${value}`
     },
     'readOnlyView': `Lecture seule`,
     'recentPatients': `Vos patients récents`,
@@ -2319,6 +2332,9 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'rAdd': ({ name }): string => {
       return `${name} toevoegen`
     },
+    'rChipTotal': ({ value }): string => {
+      return `Totaal ${value}`
+    },
     'readOnlyView': `Alleen-lezen`,
     'recentPatients': `Uw recente patiënten`,
     'recentTasks': `Uw recente taken`,
@@ -2747,6 +2763,9 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     },
     'rAdd': ({ name }): string => {
       return `Adicionar ${name}`
+    },
+    'rChipTotal': ({ value }): string => {
+      return `Total ${value}`
     },
     'readOnlyView': `Somente leitura`,
     'recentPatients': `Seus pacientes recentes`,

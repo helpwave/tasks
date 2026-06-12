@@ -14,7 +14,7 @@ import { PropertyEntity } from '@/api/gql/generated'
 import { columnFiltersToQueryFilterClauses, sortingStateToQuerySortClauses } from '@/utils/tableStateToApi'
 import { LIST_PAGE_SIZE } from '@/utils/listPaging'
 import { useAccumulatedPagination } from '@/hooks/useAccumulatedPagination'
-import { Visibility } from '@helpwave/hightide'
+import { Chip, Visibility } from '@helpwave/hightide'
 import { SaveViewDialog } from '@/components/views/SaveViewDialog'
 import { SaveViewActionsMenu } from '@/components/views/SaveViewActionsMenu'
 import { SavedViewEntityType } from '@/api/gql/generated'
@@ -29,7 +29,7 @@ import type { ColumnFiltersState, ColumnOrderState, SortingState, VisibilityStat
 const TasksPage: NextPage = () => {
   const translation = useTasksTranslation()
   const router = useRouter()
-  const { selectedRootLocationIds, user, myTasksCount } = useTasksContext()
+  const { selectedRootLocationIds, user } = useTasksContext()
   const { data: propertyDefinitionsData } = usePropertyDefinitions()
   const propertyColumnIds = useMemo(
     () => getPropertyColumnIds(propertyDefinitionsData, PropertyEntity.Task),
@@ -177,7 +177,11 @@ const TasksPage: NextPage = () => {
     <Page pageTitle={titleWrapper(translation('myTasks'))}>
       <ContentPanel
         titleElement={translation('myTasks')}
-        description={myTasksCount !== undefined ? translation('nTask', { count: myTasksCount }) : undefined}
+        description={(
+          <Chip color="neutral" coloringStyle="tonal" size="sm">
+            {translation('rChipTotal', { value: String(totalCount ?? '-') })}
+          </Chip>
+        )}
       >
         <SaveViewDialog
           isOpen={isSaveViewOpen}

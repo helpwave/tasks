@@ -33,6 +33,10 @@
     visibility: hidden;
   }
 
+  table[data-name="table"].hw-autosize-table [data-name="table-body-cell"] {
+    vertical-align: top;
+  }
+
   .print-content,
   .print-content * {
     visibility: visible;

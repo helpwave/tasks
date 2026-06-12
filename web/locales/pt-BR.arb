@@ -212,6 +212,8 @@
   "copyShareLinkEnableSharingFirst": "Ative o compartilhamento por link para que outras pessoas com o link possam abrir este acesso rápido.",
   "rShow": "Mostrar {name}",
   "@rShow": { "placeholders": { "name": { "type": "string" } } },
+  "rChipTotal": "Total {value}",
+  "@rChipTotal": { "placeholders": { "value": { "type": "string" } } },
   "search": "Pesquisar",
   "searchUserOrTeam": "Pesquisar usuário (ou equipe)...",
   "searchUsersOrTeams": "Pesquisar usuários ou equipes...",
