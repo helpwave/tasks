@@ -12,7 +12,7 @@ import {
   Table
 } from '@helpwave/hightide'
 import type { ColumnDef } from '@tanstack/table-core'
-import { ArrowLeft, EditIcon, PlusIcon, Trash2 } from 'lucide-react'
+import { EditIcon, PlusIcon, Trash2 } from 'lucide-react'
 import { Page } from '@/components/layout/Page'
 import { ContentPanel } from '@/components/layout/ContentPanel'
 import titleWrapper from '@/utils/titleWrapper'
@@ -24,13 +24,13 @@ import {
   useUpdateTaskPreset
 } from '@/data'
 import { TaskPresetScope } from '@/api/gql/generated'
-import { TaskDataEditor } from '@/components/tasks/TaskDataEditor'
 import { TaskPresetDataEditor } from '@/components/tasks/TaskPresetDataEditor'
+import { TaskPresetTaskDataEditor } from '@/components/tasks/TaskPresetTaskDataEditor'
 import {
-  defaultTaskPresetListRow,
+  defaultTaskPresetTask,
   graphNodesToListRows,
   listRowsToTaskGraphInput,
-  type TaskPresetListRow
+  type TaskPresetTask
 } from '@/utils/taskGraph'
 
 const isGlobalScope = (scope: string): boolean => scope === TaskPresetScope.Global
@@ -66,13 +66,13 @@ const TaskPresetsPage: NextPage = () => {
 
   const [name, setName] = useState('')
   const [scope, setScope] = useState<TaskPresetScope>(TaskPresetScope.Personal)
-  const [rows, setRows] = useState<TaskPresetListRow[]>([defaultTaskPresetListRow()])
+  const [rows, setRows] = useState<TaskPresetTask[]>([defaultTaskPresetTask()])
   const [saving, setSaving] = useState(false)
 
   const [editOpen, setEditOpen] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
   const [editName, setEditName] = useState('')
-  const [editRows, setEditRows] = useState<TaskPresetListRow[]>([defaultTaskPresetListRow()])
+  const [editRows, setEditRows] = useState<TaskPresetTask[]>([defaultTaskPresetTask()])
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [presetRowDrawer, setPresetRowDrawer] = useState<PresetRowDrawerTarget>(null)
@@ -109,7 +109,7 @@ const TaskPresetsPage: NextPage = () => {
   const resetCreateForm = useCallback(() => {
     setName('')
     setScope(TaskPresetScope.Personal)
-    setRows([defaultTaskPresetListRow()])
+    setRows([defaultTaskPresetTask()])
   }, [])
 
   const openCreateDrawer = useCallback(() => {
@@ -289,52 +289,35 @@ const TaskPresetsPage: NextPage = () => {
       <ContentPanel
         titleElement={translation('taskPresets')}
         description={translation('taskPresetsDescription')}
-      >
-        <div className="flex flex-col gap-12">
+        actionElement={(
           <Button
-            color="neutral"
-            coloringStyle="outline"
-            className="w-fit"
-            onClick={() => router.push('/settings')}
+            color="primary"
+            className="w-fit shrink-0"
+            onClick={openCreateDrawer}
           >
-            <ArrowLeft className="size-4" />
-            {translation('settings')}
+            <PlusIcon className="size-4" />
+            {translation('taskPresetCreate')}
           </Button>
-
-          <section className="flex flex-col gap-5">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-divider pb-3">
-              <h2 className="typography-title-md font-semibold">
-                {translation('taskPresets')}
-              </h2>
-              <Button
-                color="primary"
-                className="w-fit shrink-0"
-                onClick={openCreateDrawer}
-              >
-                <PlusIcon className="size-4" />
-                {translation('taskPresetCreate')}
-              </Button>
-            </div>
-            {loading ? (
-              <LoadingContainer className="w-full min-h-48" />
-            ) : presetTableRows.length === 0 ? (
-              <div className="text-description italic">{translation('taskPresetEmptyList')}</div>
-            ) : (
-              <div className="overflow-x-auto -mx-4 px-4 lg:mx-0 lg:px-0 scroll-mt-24">
-                <Table
-                  className="w-full h-full min-w-150"
-                  table={{
-                    data: presetTableRows,
-                    columns: presetColumns,
-                    isUsingFillerRows: true,
-                    fillerRowCell,
-                    initialState: { pagination: { pageSize: 10 } },
-                  }}
-                />
-              </div>
-            )}
-          </section>
-        </div>
+        )}
+      >
+        {loading ? (
+          <LoadingContainer className="w-full min-h-48" />
+        ) : presetTableRows.length === 0 ? (
+          <div className="text-description italic">{translation('taskPresetEmptyList')}</div>
+        ) : (
+          <div className="overflow-x-auto -mx-4 px-4 lg:mx-0 lg:px-0 scroll-mt-24">
+            <Table
+              className="w-full h-full min-w-150"
+              table={{
+                data: presetTableRows,
+                columns: presetColumns,
+                isUsingFillerRows: true,
+                fillerRowCell,
+                initialState: { pagination: { pageSize: 10 } },
+              }}
+            />
+          </div>
+        )}
       </ContentPanel>
 
       <Drawer
@@ -400,44 +383,28 @@ const TaskPresetsPage: NextPage = () => {
           }
           const target = presetRowDrawer
           return (
-            <TaskDataEditor
+            <TaskPresetTaskDataEditor
               key={`${target.section}-${target.index}-${target.session}`}
-              id={null}
-              presetRowEditor={{
-                formKey: `${target.section}-${target.index}-${target.session}`,
-                title: row.title,
-                description: row.description,
-                priority: row.priority,
-                estimatedTime: row.estimatedTime,
-                onSave: (data) => {
-                  const apply = (r: TaskPresetListRow): TaskPresetListRow => ({
-                    ...r,
-                    title: data.title,
-                    description: data.description,
-                    priority: data.priority,
-                    estimatedTime: data.estimatedTime,
+              formKey={`${target.section}-${target.index}-${target.session}`}
+              initialTaskPresetTask={row}
+              onSave={(task) => {
+                if (target.section === 'create') {
+                  setRows(prev => {
+                    const next = [...prev]
+                    const cur = next[target.index]
+                    if (cur) next[target.index] = { ...cur, ...task }
+                    return next
                   })
-                  if (target.section === 'create') {
-                    setRows(prev => {
-                      const next = [...prev]
-                      const cur = next[target.index]
-                      if (cur) next[target.index] = apply(cur)
-                      return next
-                    })
-                  } else {
-                    setEditRows(prev => {
-                      const next = [...prev]
-                      const cur = next[target.index]
-                      if (cur) next[target.index] = apply(cur)
-                      return next
-                    })
-                  }
-                  setPresetRowDrawer(null)
-                },
+                } else {
+                  setEditRows(prev => {
+                    const next = [...prev]
+                    const cur = next[target.index]
+                    if (cur) next[target.index] = { ...cur, ...task }
+                    return next
+                  })
+                }
+                setPresetRowDrawer(null)
               }}
-              onPresetRowCreate={() => setPresetRowDrawer(null)}
-              onCreate={() => setPresetRowDrawer(null)}
-              onDelete={() => setPresetRowDrawer(null)}
             />
           )
         })()}

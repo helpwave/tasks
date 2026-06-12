@@ -1108,7 +1108,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
       <div className="flex flex-col h-full gap-4">
         {showFullToolbar && (
           <div className="flex-col-2 w-full">
-            <div className="flex flex-col-reverse gap-3 sm:flex-row sm:flex-row-8 sm:justify-between sm:gap-0 w-full">
+            <div className="flex flex-col-reverse items-start gap-3 md:flex-row md:flex-row-8 md:justify-between w-full">
               <div className="flex flex-wrap gap-2 items-center">
                 <SearchBar
                   placeholder={translation('search')}

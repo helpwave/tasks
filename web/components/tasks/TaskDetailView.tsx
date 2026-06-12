@@ -14,7 +14,6 @@ import { useUpdateTask } from '@/data'
 interface TaskDetailViewProps {
   taskId: string | null,
   onCreate?: (taskId: string) => void,
-  onPresetRowCreate?: () => void,
   onUpdate?: () => void,
   onDelete?: () => void,
   onListSync?: () => void,
@@ -25,7 +24,6 @@ interface TaskDetailViewProps {
 export const TaskDetailView = ({
   taskId,
   onCreate,
-  onPresetRowCreate,
   onUpdate,
   onDelete,
   onListSync,
@@ -107,7 +105,6 @@ export const TaskDetailView = ({
             id={taskId}
             initialCreationData={initialCreationData}
             onListSync={onListSync}
-            onPresetRowCreate={onPresetRowCreate}
             onCreate={onCreate}
             onDelete={onDelete}
             onUpdate={onUpdate}

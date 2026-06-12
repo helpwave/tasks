@@ -12,18 +12,18 @@ import clsx from 'clsx'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { TaskPresetScope } from '@/api/gql/generated'
 import {
-  defaultTaskPresetListRow,
-  hasEmptyTaskPresetRowTitle,
+  defaultTaskPresetTask,
+  hasEmptyTaskPresetTaskTitle,
   listRowsToTaskGraphInput,
-  type TaskPresetListRow
+  type TaskPresetTask
 } from '@/utils/taskGraph'
 import { PriorityUtils } from '@/utils/priority'
 
 type TaskPresetDataEditorProps = {
   name: string,
   onNameChange: (name: string) => void,
-  rows: TaskPresetListRow[],
-  onRowsChange: (rows: TaskPresetListRow[]) => void,
+  rows: TaskPresetTask[],
+  onRowsChange: (rows: TaskPresetTask[]) => void,
   onEditRow: (index: number) => void,
   onSave: () => void,
   onCancel: () => void,
@@ -51,13 +51,13 @@ export function TaskPresetDataEditor({
     () =>
       name.trim().length > 0
       && listRowsToTaskGraphInput(rows).nodes.length > 0
-      && !hasEmptyTaskPresetRowTitle(rows),
+      && !hasEmptyTaskPresetTaskTitle(rows),
     [name, rows]
   )
 
   const updateRowTitle = (index: number, title: string) => {
     const next = [...rows]
-    const cur = next[index] ?? defaultTaskPresetListRow()
+    const cur = next[index] ?? defaultTaskPresetTask()
     next[index] = { ...cur, title }
     onRowsChange(next)
   }
@@ -67,7 +67,7 @@ export function TaskPresetDataEditor({
   }
 
   const addRow = () => {
-    onRowsChange([...rows, defaultTaskPresetListRow()])
+    onRowsChange([...rows, defaultTaskPresetTask()])
   }
 
   return (
