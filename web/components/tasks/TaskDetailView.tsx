@@ -8,7 +8,7 @@ import {
   TabSwitcher
 } from '@helpwave/hightide'
 import { PropertyList, type PropertyValue } from '@/components/tables/PropertyList'
-import { TaskDataEditor } from './TaskDataEditor'
+import { TaskDataEditor, type TaskCreationInitialData } from './TaskDataEditor'
 import { useUpdateTask } from '@/data'
 
 interface TaskDetailViewProps {
@@ -18,8 +18,7 @@ interface TaskDetailViewProps {
   onUpdate?: () => void,
   onDelete?: () => void,
   onListSync?: () => void,
-  initialPatientId?: string,
-  initialPatientName?: string,
+  initialCreationData?: TaskCreationInitialData,
   onCreateDraftDirtyChange?: (dirty: boolean) => void,
 }
 
@@ -30,8 +29,7 @@ export const TaskDetailView = ({
   onUpdate,
   onDelete,
   onListSync,
-  initialPatientId,
-  initialPatientName,
+  initialCreationData,
   onCreateDraftDirtyChange,
 }: TaskDetailViewProps) => {
   const translation = useTasksTranslation()
@@ -107,8 +105,7 @@ export const TaskDetailView = ({
         <TabPanel label={translation('overview')} className="overflow-hidden h-full" initiallyActive={true}>
           <TaskDataEditor
             id={taskId}
-            initialPatientId={initialPatientId}
-            initialPatientName={initialPatientName}
+            initialCreationData={initialCreationData}
             onListSync={onListSync}
             onPresetRowCreate={onPresetRowCreate}
             onCreate={onCreate}

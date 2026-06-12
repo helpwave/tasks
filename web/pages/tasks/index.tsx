@@ -173,6 +173,10 @@ const TasksPage: NextPage = () => {
     }))
   }, [accumulatedTasksRaw])
 
+  const taskInitialCreationData = useMemo(() => {
+    return user?.id ? { assigneeIds: [user.id] } : undefined
+  }, [user?.id])
+
   return (
     <Page pageTitle={titleWrapper(translation('myTasks'))}>
       <ContentPanel
@@ -202,6 +206,7 @@ const TasksPage: NextPage = () => {
           tasks={tasks}
           onRefetch={refetch}
           showAssignee={true}
+          taskInitialCreationData={taskInitialCreationData}
           initialTaskId={taskId}
           onInitialTaskOpened={() => router.replace('/tasks', undefined, { shallow: true })}
           totalCount={totalCount}

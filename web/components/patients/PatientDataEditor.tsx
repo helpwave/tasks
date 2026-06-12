@@ -24,6 +24,7 @@ import { useTasksContext } from '@/hooks/useTasksContext'
 import { ErrorDialog } from '@/components/ErrorDialog'
 import { useCreateDraftDirty } from '@/hooks/useCreateDraftDirty'
 import { serializePatientCreateDraft } from '@/utils/createDraftSnapshots'
+import { applyDefinedOverrides } from '@/utils/applyDefinedOverrides'
 
 type PatientFormValues = Omit<CreatePatientInput, 'clinicId' | 'teamIds' | 'positionId'> & {
   clinic: NonNullable<GetPatientQuery['patient']>['clinic'] | null,
@@ -60,7 +61,7 @@ const normalizeBirthdateValue = (value: Date | string | null | undefined): strin
 
 export const PatientDataEditor = ({
   id,
-  initialCreateData = {},
+  initialCreateData: initialCreationData = {},
   onUpdate,
   onCreate,
   onDelete,
@@ -107,20 +108,25 @@ export const PatientDataEditor = ({
   const [updatePatient] = useUpdatePatient()
 
 
+  const defaultPatientFormValues = useMemo((): PatientFormValues => ({
+    firstname: '',
+    lastname: '',
+    sex: Sex.Female,
+    assignedLocationIds: selectedLocationId ? [selectedLocationId] : [],
+    birthdate: getDefaultBirthdate(),
+    state: PatientState.Wait,
+    description: null,
+    clinic: null,
+    teams: null,
+    position: null,
+  }), [selectedLocationId])
+
+  const createFormInitialValues = useMemo(() =>
+    applyDefinedOverrides(defaultPatientFormValues, initialCreationData)
+  , [defaultPatientFormValues, initialCreationData])
+
   const form = useCreateForm<PatientFormValues>({
-    initialValues: {
-      firstname: '',
-      lastname: '',
-      sex: Sex.Female,
-      assignedLocationIds: selectedLocationId ? [selectedLocationId] : [],
-      birthdate: getDefaultBirthdate(),
-      state: PatientState.Wait,
-      description: null,
-      clinic: null,
-      teams: null,
-      position: null,
-      ...initialCreateData,
-    },
+    initialValues: createFormInitialValues,
     onFormSubmit: (values) => {
       const data: CreatePatientInput = {
         firstname: values.firstname,
@@ -228,6 +234,11 @@ export const PatientDataEditor = ({
     serialize: serializePatientDraft,
     onDirtyChange: onCreateDraftDirtyChange,
   })
+
+  useEffect(() => {
+    if (isEditMode) return
+    updateForm(prev => applyDefinedOverrides(prev, initialCreationData))
+  }, [isEditMode, initialCreationData, updateForm])
 
   useEffect(() => {
     if (patientData) {

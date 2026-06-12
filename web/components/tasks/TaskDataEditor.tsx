@@ -36,11 +36,16 @@ import { serializeTaskCreateDraft } from '@/utils/createDraftSnapshots'
 import clsx from 'clsx'
 import { PriorityUtils } from '@/utils/priority'
 import type { DialogState } from '@/types/DialogState'
+import { applyDefinedOverrides } from '@/utils/applyDefinedOverrides'
 
 type TaskFormValues = CreateTaskInput & {
   done: boolean,
   assigneeIds?: string[] | null,
   assigneeTeamId?: string | null,
+}
+
+export type TaskCreationInitialData = Partial<TaskFormValues> & {
+  patientNameFallback?: string,
 }
 
 export type PresetRowSavedData = {
@@ -59,10 +64,21 @@ export type PresetRowEditorConfig = {
   onSave: (data: PresetRowSavedData) => void,
 }
 
+const defaultTaskFormValues: TaskFormValues = {
+  title: '',
+  description: '',
+  patientId: '',
+  assigneeIds: [],
+  assigneeTeamId: null,
+  dueDate: null,
+  priority: null,
+  estimatedTime: null,
+  done: false,
+}
+
 interface TaskDataEditorProps {
   id: null | string,
-  initialPatientId?: string,
-  initialPatientName?: string,
+  initialCreationData?: TaskCreationInitialData,
   onListSync?: () => void,
   onPresetRowCreate?: () => void,
   onCreate?: (taskId: string) => void,
@@ -74,8 +90,7 @@ interface TaskDataEditorProps {
 
 export const TaskDataEditor = ({
   id,
-  initialPatientId,
-  initialPatientName,
+  initialCreationData,
   onListSync,
   onPresetRowCreate,
   onCreate,
@@ -130,18 +145,23 @@ export const TaskDataEditor = ({
 
   const [deleteTask, { loading: isDeleting }] = useDeleteTask()
 
+  const presetFormValues = useMemo((): Partial<TaskFormValues> | null => {
+    if (!presetRowEditor) return null
+    return {
+      title: presetRowEditor.title,
+      description: presetRowEditor.description,
+      priority: presetRowEditor.priority,
+      estimatedTime: presetRowEditor.estimatedTime,
+    }
+  }, [presetRowEditor])
+
+  const createFormInitialValues = useMemo((): TaskFormValues => {
+    const withCreationData = applyDefinedOverrides(defaultTaskFormValues, initialCreationData)
+    return applyDefinedOverrides(withCreationData, presetFormValues)
+  }, [initialCreationData, presetFormValues])
+
   const form = useCreateForm<TaskFormValues>({
-    initialValues: {
-      title: presetRowEditor?.title ?? '',
-      description: presetRowEditor?.description ?? '',
-      patientId: initialPatientId || '',
-      assigneeIds: [],
-      assigneeTeamId: null,
-      dueDate: null,
-      priority: presetRowEditor?.priority ?? null,
-      estimatedTime: presetRowEditor?.estimatedTime ?? null,
-      done: false,
-    },
+    initialValues: createFormInitialValues,
     onFormSubmit: (values) => {
       if (presetRowEditor) {
         presetRowEditor.onSave({
@@ -235,15 +255,9 @@ export const TaskDataEditor = ({
   })
 
   useEffect(() => {
-    if (!isPresetRowMode || !presetRowEditor) return
-    updateForm(prev => ({
-      ...prev,
-      title: presetRowEditor.title,
-      description: presetRowEditor.description,
-      priority: presetRowEditor.priority,
-      estimatedTime: presetRowEditor.estimatedTime,
-    }))
-  }, [isPresetRowMode, presetRowEditor, updateForm])
+    if (!isPresetRowMode || !presetFormValues) return
+    updateForm(prev => applyDefinedOverrides(prev, presetFormValues))
+  }, [isPresetRowMode, presetFormValues, updateForm])
 
   useEffect(() => {
     if (isPresetRowMode) return
@@ -261,38 +275,38 @@ export const TaskDataEditor = ({
         estimatedTime: task.estimatedTime ?? null,
         done: task.done || false,
       }))
-    } else if (initialPatientId && !taskId) {
-      updateForm(prev => ({ ...prev, patientId: initialPatientId }))
+    } else if (!taskId) {
+      updateForm(prev => applyDefinedOverrides(prev, initialCreationData))
     }
-  }, [taskData, isEditMode, initialPatientId, taskId, updateForm, isPresetRowMode])
+  }, [taskData, isEditMode, taskId, updateForm, isPresetRowMode, initialCreationData])
 
   useEffect(() => {
     hasRetriedMissingInitialPatientRef.current = false
-  }, [initialPatientId])
+  }, [initialCreationData?.patientId])
 
   const patients = useMemo(() => {
     const list = patientsData?.patients ?? []
-    if (!initialPatientId || list.some(patient => patient.id === initialPatientId)) {
+    if (!initialCreationData?.patientId || list.some(patient => patient.id === initialCreationData?.patientId)) {
       return list
     }
-    const fallbackName = initialPatientName?.trim()
+    const fallbackName = initialCreationData?.patientNameFallback?.trim()
     if (!fallbackName) return list
     return [
       {
-        id: initialPatientId,
+        id: initialCreationData?.patientId,
         name: fallbackName,
       },
       ...list,
     ]
-  }, [patientsData?.patients, initialPatientId, initialPatientName])
+  }, [patientsData?.patients, initialCreationData?.patientId, initialCreationData?.patientNameFallback])
 
   useEffect(() => {
-    if (isEditMode || !initialPatientId || hasRetriedMissingInitialPatientRef.current) return
-    const hasInitialPatient = (patientsData?.patients ?? []).some(patient => patient.id === initialPatientId)
+    if (isEditMode || !initialCreationData?.patientId || hasRetriedMissingInitialPatientRef.current) return
+    const hasInitialPatient = (patientsData?.patients ?? []).some(patient => patient.id === initialCreationData?.patientId)
     if (hasInitialPatient) return
     hasRetriedMissingInitialPatientRef.current = true
     refetchPatients()
-  }, [isEditMode, initialPatientId, patientsData?.patients, refetchPatients])
+  }, [isEditMode, initialCreationData?.patientId, patientsData?.patients, refetchPatients])
 
   const dueDate = useFormObserverKey({ formStore: form.store, formKey: 'dueDate' })?.value ?? null
   const estimatedTime = useFormObserverKey({ formStore: form.store, formKey: 'estimatedTime' })?.value ?? null

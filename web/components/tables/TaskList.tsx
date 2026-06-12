@@ -12,6 +12,7 @@ import { AssigneeSelectDialog } from '@/components/tasks/AssigneeSelectDialog'
 import { DateDisplay } from '@/components/Date/DateDisplay'
 import { Drawer } from '@helpwave/hightide'
 import { TaskDetailView } from '@/components/tasks/TaskDetailView'
+import type { TaskCreationInitialData } from '@/components/tasks/TaskDataEditor'
 import { localToUTCWithSameTime, PatientDetailView } from '@/components/patients/PatientDetailView'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { useTasksContext } from '@/hooks/useTasksContext'
@@ -110,9 +111,10 @@ type TaskListProps = {
   isFetchingMore?: boolean,
   embedded?: boolean,
   virtualDerivedOrder?: boolean,
+  taskInitialCreationData?: TaskCreationInitialData,
 }
 
-export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initialTasks, onRefetch, showAssignee = false, initialTaskId, onInitialTaskOpened, headerActions, saveViewSlot, totalCount, loading = false, tableState: controlledTableState, searchQuery: searchQueryProp, onSearchQueryChange, loadMore: loadMoreProp, hasMore: hasMoreProp, isFetchingMore = false, embedded = false, virtualDerivedOrder = false }, ref) => {
+export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initialTasks, onRefetch, showAssignee = false, initialTaskId, onInitialTaskOpened, headerActions, saveViewSlot, totalCount, loading = false, tableState: controlledTableState, searchQuery: searchQueryProp, onSearchQueryChange, loadMore: loadMoreProp, hasMore: hasMoreProp, isFetchingMore = false, embedded = false, virtualDerivedOrder = false, taskInitialCreationData }, ref) => {
   const translation = useTasksTranslation()
   const { data: propertyDefinitionsData } = usePropertyDefinitions()
   const { data: queryableFieldsData } = useQueryableFields('Task')
@@ -1128,6 +1130,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
           >
             <TaskDetailView
               taskId={taskDialogState.taskId ?? null}
+              initialCreationData={taskInitialCreationData}
               onCreate={(taskId) => {
                 setTaskDialogState({ isOpen: true, taskId })
               }}

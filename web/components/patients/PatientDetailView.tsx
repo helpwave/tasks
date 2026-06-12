@@ -52,7 +52,7 @@ interface PatientDetailViewProps {
   onClose: () => void,
   onCreate?: (patientId: string) => void,
   onSuccess: () => void,
-  initialCreateData?: Partial<CreatePatientInput>,
+  initialCreationData?: Partial<CreatePatientInput>,
   onOpenSystemSuggestion?: (suggestion: SystemSuggestion, patientName: string) => void,
   onCreateDraftDirtyChange?: (dirty: boolean) => void,
 }
@@ -62,7 +62,7 @@ export const PatientDetailView = ({
   onClose,
   onSuccess,
   onCreate,
-  initialCreateData = {},
+  initialCreationData = {},
   onOpenSystemSuggestion,
   onCreateDraftDirtyChange,
 }: PatientDetailViewProps) => {
@@ -239,7 +239,7 @@ export const PatientDetailView = ({
         <TabPanel label={translation('patientData')} className="flex-col-0" initiallyActive={true}>
           <PatientDataEditor
             id={patientId || null}
-            initialCreateData={initialCreateData}
+            initialCreateData={initialCreationData}
             onUpdate={onSuccess}
             onDelete={() => {
               onClose()
