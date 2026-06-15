@@ -199,6 +199,8 @@ export const PatientTasksView = ({
             setIsCreatingTask(false)
           }}
           onCreate={() => {
+            setTaskId(null)
+            setIsCreatingTask(false)
             onSuccess?.()
           }}
           onUpdate={() => {
