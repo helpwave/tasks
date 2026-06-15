@@ -3,7 +3,7 @@ import { Page } from '@/components/layout/Page'
 import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
-import { Button, Chip, FillerCell, IconButton, LoadingContainer, Table } from '@helpwave/hightide'
+import { Button, Chip, FillerCell, IconButton, Table } from '@helpwave/hightide'
 import { useCallback, useMemo, useState } from 'react'
 import type { ColumnDef } from '@tanstack/table-core'
 import { EditIcon, PlusIcon } from 'lucide-react'
@@ -163,7 +163,11 @@ const PropertiesPage: NextPage = () => {
     <Page pageTitle={titleWrapper(translation('properties'))}>
       <ContentPanel
         titleElement={translation('properties')}
-        description={data ?  translation('nPatient', { count: data.length }) : (<LoadingContainer/>) }
+        description={(
+          <Chip color="neutral" coloringStyle="tonal" size="sm">
+            {translation('rChipTotal', { value: String(data?.length ?? '-') })}
+          </Chip>
+        )}
         actionElement={(
           <Button onClick={handleAdd}>
             <PlusIcon/>

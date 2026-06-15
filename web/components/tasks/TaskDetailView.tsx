@@ -8,20 +8,28 @@ import {
   TabSwitcher
 } from '@helpwave/hightide'
 import { PropertyList, type PropertyValue } from '@/components/tables/PropertyList'
-import { TaskDataEditor } from './TaskDataEditor'
+import { TaskDataEditor, type TaskCreationInitialData } from './TaskDataEditor'
 import { useUpdateTask } from '@/data'
 
 interface TaskDetailViewProps {
   taskId: string | null,
-  onClose: () => void,
-  onCreateSuccessClose?: () => void,
+  onCreate?: (taskId: string) => void,
+  onUpdate?: () => void,
+  onDelete?: () => void,
   onListSync?: () => void,
-  initialPatientId?: string,
-  initialPatientName?: string,
+  initialCreationData?: TaskCreationInitialData,
   onCreateDraftDirtyChange?: (dirty: boolean) => void,
 }
 
-export const TaskDetailView = ({ taskId, onClose, onCreateSuccessClose, onListSync, initialPatientId, initialPatientName, onCreateDraftDirtyChange }: TaskDetailViewProps) => {
+export const TaskDetailView = ({
+  taskId,
+  onCreate,
+  onUpdate,
+  onDelete,
+  onListSync,
+  initialCreationData,
+  onCreateDraftDirtyChange,
+}: TaskDetailViewProps) => {
   const translation = useTasksTranslation()
 
   const isEditMode = !!taskId
@@ -95,11 +103,11 @@ export const TaskDetailView = ({ taskId, onClose, onCreateSuccessClose, onListSy
         <TabPanel label={translation('overview')} className="overflow-hidden h-full" initiallyActive={true}>
           <TaskDataEditor
             id={taskId}
-            initialPatientId={initialPatientId}
-            initialPatientName={initialPatientName}
+            initialCreationData={initialCreationData}
             onListSync={onListSync}
-            onClose={onClose}
-            onCreateSuccessClose={onCreateSuccessClose}
+            onCreate={onCreate}
+            onDelete={onDelete}
+            onUpdate={onUpdate}
             onCreateDraftDirtyChange={isEditMode ? undefined : onCreateDraftDirtyChange}
           />
         </TabPanel>

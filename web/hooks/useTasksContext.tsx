@@ -83,9 +83,11 @@ type SidebarContextType = {
 
 export type TasksContextState = {
   myTasksCount?: number,
-  totalPatientsCount?: number,
-  locationPatientsCount?: number,
-  waitingPatientsCount?: number,
+  scopedPatientsTotal?: number,
+  scopedPatientsWaiting?: number,
+  scopedPatientsAdmitted?: number,
+  scopedPatientsDischarged?: number,
+  scopedPatientsDeceased?: number,
   teams?: LocationNode[],
   wards?: LocationNode[],
   clinics?: LocationNode[],
@@ -212,14 +214,17 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
   }, [connectionStatus, refetchGlobalData])
 
   const myTasksCount = data?.me?.tasks?.filter(t => !t.done).length ?? 0
-  const waitingPatientsCountForKey = data?.waitingPatients?.filter(p => p.state === 'WAIT').length ?? data?.waitingPatients?.length ?? 0
+  const scopedPatientCounts = data?.scopedPatientCounts
   const effectInputKey = [
     data?.me?.id ?? '',
     (data?.me?.rootLocations ?? []).map(l => l.id).sort().join(','),
-    (data?.patients ?? []).length,
+    scopedPatientCounts?.scopedPatientsTotal ?? '',
+    scopedPatientCounts?.scopedPatientsWaiting ?? '',
+    scopedPatientCounts?.scopedPatientsAdmitted ?? '',
+    scopedPatientCounts?.scopedPatientsDischarged ?? '',
+    scopedPatientCounts?.scopedPatientsDeceased ?? '',
     (data?.me?.tasks ?? []).length,
     myTasksCount,
-    waitingPatientsCountForKey,
     (allLocationsData?.locationNodes ?? []).map(n => n.id).sort().join(','),
     (storedSelectedRootLocationIds ?? []).slice().sort().join(','),
   ].join('|')
@@ -231,8 +236,6 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
     if (skipped) return
     prevEffectKeyRef.current = effectInputKey
 
-    const totalPatientsCount = data?.patients?.length ?? 0
-    const waitingPatientsCount = data?.waitingPatients?.length ?? 0
     const backendRootLocations = data?.me?.rootLocations?.map(loc => ({ id: loc.id, title: loc.title, kind: loc.kind })) ?? []
     const backendRootIds = new Set(backendRootLocations.map(loc => loc.id))
 
@@ -308,11 +311,11 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
           isOnline: data.me.isOnline ?? null
         } : prevState.user,
         myTasksCount: data?.me?.tasks?.filter(t => !t.done).length ?? 0,
-        totalPatientsCount,
-        waitingPatientsCount,
-        locationPatientsCount: prevState.selectedLocationId
-          ? data?.patients?.filter(p => p.assignedLocation?.id === prevState.selectedLocationId).length ?? 0
-          : totalPatientsCount,
+        scopedPatientsTotal: scopedPatientCounts?.scopedPatientsTotal,
+        scopedPatientsWaiting: scopedPatientCounts?.scopedPatientsWaiting,
+        scopedPatientsAdmitted: scopedPatientCounts?.scopedPatientsAdmitted,
+        scopedPatientsDischarged: scopedPatientCounts?.scopedPatientsDischarged,
+        scopedPatientsDeceased: scopedPatientCounts?.scopedPatientsDeceased,
         teams: filterLocationsByRootSubtree(
           data?.teams || [],
           selectedRootLocationIds,
@@ -337,7 +340,7 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
       }
     })
     hasCompletedFirstSyncRef.current = true
-  }, [effectInputKey, data, storedSelectedRootLocationIds, allLocationsData, setStoredSelectedRootLocationIds])
+  }, [effectInputKey, data, storedSelectedRootLocationIds, allLocationsData, setStoredSelectedRootLocationIds, scopedPatientCounts])
 
   const lastWrittenLocationIdsRef = useRef<string[] | undefined>(undefined)
 

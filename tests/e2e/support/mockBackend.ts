@@ -199,10 +199,14 @@ export async function mockBackend(page: Page, options: MockOptions): Promise<Moc
           wards: [],
           teams: [],
           clinics: rootLocations.map(l => ({ __typename: 'LocationNodeType', id: l.id, title: l.title, parentId: null })),
-          patients: patientList.map(p => ({ __typename: 'PatientType', id: p.id, state: p.state, assignedLocation: null })),
-          waitingPatients: patientList
-            .filter(p => p.state === 'WAIT')
-            .map(p => ({ __typename: 'PatientType', id: p.id, state: p.state })),
+          scopedPatientCounts: {
+            __typename: 'ScopedPatientCounts',
+            scopedPatientsTotal: patientList.length,
+            scopedPatientsWaiting: patientList.filter(p => p.state === 'WAIT').length,
+            scopedPatientsAdmitted: patientList.filter(p => p.state === 'ADMITTED').length,
+            scopedPatientsDischarged: patientList.filter(p => p.state === 'DISCHARGED').length,
+            scopedPatientsDeceased: patientList.filter(p => p.state === 'DEAD').length,
+          },
         },
       })
 

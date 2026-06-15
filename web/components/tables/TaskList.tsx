@@ -12,6 +12,7 @@ import { AssigneeSelectDialog } from '@/components/tasks/AssigneeSelectDialog'
 import { DateDisplay } from '@/components/Date/DateDisplay'
 import { Drawer } from '@helpwave/hightide'
 import { TaskDetailView } from '@/components/tasks/TaskDetailView'
+import type { TaskCreationInitialData } from '@/components/tasks/TaskDataEditor'
 import { localToUTCWithSameTime, PatientDetailView } from '@/components/patients/PatientDetailView'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { useTasksContext } from '@/hooks/useTasksContext'
@@ -40,6 +41,7 @@ import { ClearPropertyColumnDialog } from '@/components/properties/ClearProperty
 import { useTaskPropertyClearDialog } from '@/hooks/useTaskPropertyClearDialog'
 import { buildListLayoutStorageKey, resolveListRouteId, useListLayoutPreference } from '@/hooks/useListLayoutPreference'
 import { useRouter } from 'next/router'
+import type { DialogState } from '@/types/DialogState'
 
 function taskListDataSyncKey(tasks: TaskViewModel[]): string {
   return tasks.map(t => `${t.id}:${t.done}:${t.updateDate.getTime()}`).join('\0')
@@ -109,9 +111,10 @@ type TaskListProps = {
   isFetchingMore?: boolean,
   embedded?: boolean,
   virtualDerivedOrder?: boolean,
+  taskInitialCreationData?: TaskCreationInitialData,
 }
 
-export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initialTasks, onRefetch, showAssignee = false, initialTaskId, onInitialTaskOpened, headerActions, saveViewSlot, totalCount, loading = false, tableState: controlledTableState, searchQuery: searchQueryProp, onSearchQueryChange, loadMore: loadMoreProp, hasMore: hasMoreProp, isFetchingMore = false, embedded = false, virtualDerivedOrder = false }, ref) => {
+export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initialTasks, onRefetch, showAssignee = false, initialTaskId, onInitialTaskOpened, headerActions, saveViewSlot, totalCount, loading = false, tableState: controlledTableState, searchQuery: searchQueryProp, onSearchQueryChange, loadMore: loadMoreProp, hasMore: hasMoreProp, isFetchingMore = false, embedded = false, virtualDerivedOrder = false, taskInitialCreationData }, ref) => {
   const translation = useTasksTranslation()
   const { data: propertyDefinitionsData } = usePropertyDefinitions()
   const { data: queryableFieldsData } = useQueryableFields('Task')
@@ -175,7 +178,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
   const [assignTaskToTeam] = useAssignTaskToTeam()
   const [updateTaskMutate] = useUpdateTask()
 
-  const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null)
+  const [patientDialogState, setPatientDialogState] = useState<DialogState<{ patientId: string | null }>>({ isOpen: false, data: { patientId: null } })
   const [selectedUserPopupId, setSelectedUserPopupId] = useState<string | null>(null)
   const [taskDialogState, setTaskDialogState] = useState<TaskDialogState>({ isOpen: false })
   const [internalSearchQuery, setInternalSearchQuery] = useState('')
@@ -519,7 +522,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
 
   const resolveTaskChoiceTagLabel = useCallback<QueryableChoiceTagLabelResolver>((field, optionKey, backendLabel) => {
     if (field.propertyDefinitionId) return backendLabel
-    if (field.key === 'priority') return translation('priority', { priority: optionKey })
+    if (field.key === 'priority') return translation('sPriority', { priority: optionKey })
     return backendLabel
   }, [translation])
 
@@ -541,7 +544,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
         id: 'priority',
         label: translation('priorityLabel'),
         dataType: 'singleTag',
-        tags: ['P1', 'P2', 'P3', 'P4'].map(p => ({ label: translation('priority', { priority: p }), tag: p })),
+        tags: ['P1', 'P2', 'P3', 'P4'].map(p => ({ label: translation('sPriority', { priority: p }), tag: p })),
       },
       { id: 'patient', label: translation('patient'), dataType: 'text', tags: [] },
       { id: 'assignee', label: translation('assignedTo'), dataType: 'text', tags: [] },
@@ -727,13 +730,12 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
           return (
             <TaskRowRefreshingGate taskId={row.original.id}>
               <>
-                <span className="print:block hidden">{data.patient?.name}</span>
                 <Button
                   color="neutral"
                   size="sm"
                   onClick={event => {
                     event.stopPropagation()
-                    setSelectedPatientId(data.patient?.id ?? null)
+                    setPatientDialogState({ isOpen: true, data: { patientId: data.patient?.id ?? null } })
                   }}
                   className="flex-row-2 justify-between min-w-40 w-fit print:hidden group"
                 >
@@ -896,7 +898,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
 
   const deferSetColumnOrder = useDeferredColumnOrderChange(setColumnOrder)
   const embeddedTableStateNoop = useCallback(() => {}, [])
-  const hasOpenDrawer = taskDialogState.isOpen || selectedPatientId != null
+  const hasOpenDrawer = taskDialogState.isOpen || patientDialogState != null
   const hasFilterPanelOpen = isShowFilters || isShowSorting
 
   const closeTaskDrawer = useCallback(() => {
@@ -977,7 +979,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
         <div className="flex flex-col h-full gap-4">
           {!embedded && (
             <div className="flex-col-2 w-full">
-              <div className="flex flex-col-reverse gap-3 sm:flex-row sm:flex-row-8 sm:justify-between sm:gap-0 w-full">
+              <div className="flex flex-col-reverse items-start gap-3 md:flex-row md:flex-row-8 md:justify-between w-full">
                 <div className="flex flex-wrap gap-2 items-center">
                   <SearchBar
                     placeholder={translation('search')}
@@ -1010,7 +1012,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
                   </div>
                   {saveViewSlot}
                 </div>
-                <div className="flex flex-wrap gap-2 items-center justify-end shrink-0">
+                <div className="flex flex-wrap gap-2 items-top justify-end shrink-0">
                   {headerActions}
                   {canHandover && (
                     <Button
@@ -1128,8 +1130,11 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
           >
             <TaskDetailView
               taskId={taskDialogState.taskId ?? null}
-              onClose={closeTaskDrawerFromSubmit}
-              onCreateSuccessClose={closeTaskDrawerFromSubmit}
+              initialCreationData={taskInitialCreationData}
+              onCreate={(taskId) => {
+                setTaskDialogState({ isOpen: true, taskId })
+              }}
+              onDelete={closeTaskDrawerFromSubmit}
               onListSync={onRefetch}
               onCreateDraftDirtyChange={taskDialogState.isOpen && !taskDialogState.taskId ? setIsCreateTaskDraftDirty : undefined}
             />
@@ -1171,13 +1176,13 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
             alignment="right"
             titleElement={translation('editPatient')}
             description={undefined}
-            isOpen={!!selectedPatientId}
-            onClose={() => setSelectedPatientId(null)}
+            isOpen={patientDialogState.isOpen}
+            onClose={() => setPatientDialogState(prev => ({ ...prev, isOpen: false }))}
           >
-            {!!selectedPatientId && (
+            {!!patientDialogState.data.patientId && (
               <PatientDetailView
-                patientId={selectedPatientId}
-                onClose={() => setSelectedPatientId(null)}
+                patientId={patientDialogState.data.patientId}
+                onClose={() => setPatientDialogState(prev => ({ ...prev, isOpen: false }))}
                 onSuccess={() => {
                   onRefetch?.()
                 }}

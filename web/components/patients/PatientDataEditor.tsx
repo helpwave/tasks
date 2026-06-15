@@ -24,6 +24,7 @@ import { useTasksContext } from '@/hooks/useTasksContext'
 import { ErrorDialog } from '@/components/ErrorDialog'
 import { useCreateDraftDirty } from '@/hooks/useCreateDraftDirty'
 import { serializePatientCreateDraft } from '@/utils/createDraftSnapshots'
+import { applyDefinedOverrides } from '@/utils/applyDefinedOverrides'
 
 type PatientFormValues = Omit<CreatePatientInput, 'clinicId' | 'teamIds' | 'positionId'> & {
   clinic: NonNullable<GetPatientQuery['patient']>['clinic'] | null,
@@ -34,8 +35,9 @@ type PatientFormValues = Omit<CreatePatientInput, 'clinicId' | 'teamIds' | 'posi
 interface PatientDataEditorProps {
   id: null | string,
   initialCreateData?: Partial<CreatePatientInput>,
-  onSuccess?: () => void,
-  onClose?: () => void,
+  onCreate?: (patientId: string) => void,
+  onDelete?: () => void,
+  onUpdate?: () => void,
   onCreateDraftDirtyChange?: (dirty: boolean) => void,
 }
 
@@ -59,9 +61,10 @@ const normalizeBirthdateValue = (value: Date | string | null | undefined): strin
 
 export const PatientDataEditor = ({
   id,
-  initialCreateData = {},
-  onSuccess,
-  onClose,
+  initialCreateData: initialCreationData = {},
+  onUpdate,
+  onCreate,
+  onDelete,
   onCreateDraftDirtyChange,
 }: PatientDataEditorProps) => {
   const translation = useTasksTranslation()
@@ -105,20 +108,25 @@ export const PatientDataEditor = ({
   const [updatePatient] = useUpdatePatient()
 
 
+  const defaultPatientFormValues = useMemo((): PatientFormValues => ({
+    firstname: '',
+    lastname: '',
+    sex: Sex.Female,
+    assignedLocationIds: selectedLocationId ? [selectedLocationId] : [],
+    birthdate: getDefaultBirthdate(),
+    state: PatientState.Wait,
+    description: null,
+    clinic: null,
+    teams: null,
+    position: null,
+  }), [selectedLocationId])
+
+  const createFormInitialValues = useMemo(() =>
+    applyDefinedOverrides(defaultPatientFormValues, initialCreationData)
+  , [defaultPatientFormValues, initialCreationData])
+
   const form = useCreateForm<PatientFormValues>({
-    initialValues: {
-      firstname: '',
-      lastname: '',
-      sex: Sex.Female,
-      assignedLocationIds: selectedLocationId ? [selectedLocationId] : [],
-      birthdate: getDefaultBirthdate(),
-      state: PatientState.Wait,
-      description: null,
-      clinic: null,
-      teams: null,
-      position: null,
-      ...initialCreateData,
-    },
+    initialValues: createFormInitialValues,
     onFormSubmit: (values) => {
       const data: CreatePatientInput = {
         firstname: values.firstname,
@@ -134,10 +142,13 @@ export const PatientDataEditor = ({
       }
       createPatient({
         variables: { data },
-        onCompleted: () => {
+        onCompleted: (data) => {
           onCreateDraftDirtyChange?.(false)
-          onSuccess?.()
-          onClose?.()
+          if(data?.createPatient?.id) {
+            onCreate?.(data?.createPatient?.id)
+          } else {
+            console.error('createPatient onCompleted: no patient id', data)
+          }
         },
         onError: (error) => {
           setErrorDialog({ isOpen: true, message: error instanceof Error ? error.message : 'Failed to create patient' })
@@ -205,7 +216,7 @@ export const PatientDataEditor = ({
       if (sameFirstname && sameLastname && sameBirthdate && sameSex && sameAssignedIds && sameClinic && sameTeamIds && samePosition && sameDescription) return
       updatePatient({
         variables: { id: patientId, data },
-        onCompleted: () => onSuccess?.(),
+        onCompleted: () => onUpdate?.(),
       })
     }
   })
@@ -223,6 +234,11 @@ export const PatientDataEditor = ({
     serialize: serializePatientDraft,
     onDirtyChange: onCreateDraftDirtyChange,
   })
+
+  useEffect(() => {
+    if (isEditMode) return
+    updateForm(prev => applyDefinedOverrides(prev, initialCreationData))
+  }, [isEditMode, initialCreationData, updateForm])
 
   useEffect(() => {
     if (patientData) {
@@ -412,7 +428,7 @@ export const PatientDataEditor = ({
                 <div className="flex gap-4 flex-wrap">
                   <Button
                     disabled={value === PatientState.Admitted}
-                    onClick={() => admitPatient({ variables: { id: patientId! }, onCompleted: () => onSuccess?.() })}
+                    onClick={() => admitPatient({ variables: { id: patientId! }, onCompleted: () => onUpdate?.() })}
                     color={value === PatientState.Admitted ? 'positive' : 'neutral'}
                   >
                     <Visibility isVisible={value === PatientState.Admitted}>
@@ -432,7 +448,7 @@ export const PatientDataEditor = ({
                   </Button>
                   <Button
                     disabled={value === PatientState.Wait}
-                    onClick={() => waitPatient({ variables: { id: patientId! }, onCompleted: () => onSuccess?.() })}
+                    onClick={() => waitPatient({ variables: { id: patientId! }, onCompleted: () => onUpdate?.() })}
                     color={value === PatientState.Wait ? 'warning' : 'neutral'}
                   >
                     <Visibility isVisible={value === PatientState.Admitted}>
@@ -605,7 +621,7 @@ export const PatientDataEditor = ({
           onCancel={() => setIsMarkDeadDialogOpen(false)}
           onConfirm={() => {
             if (patientId && markPatientDead) {
-              markPatientDead({ variables: { id: patientId }, onCompleted: () => onSuccess?.() })
+              markPatientDead({ variables: { id: patientId }, onCompleted: () => onUpdate?.() })
             }
             setIsMarkDeadDialogOpen(false)
           }}
@@ -619,7 +635,7 @@ export const PatientDataEditor = ({
           onCancel={() => setIsDischargeDialogOpen(false)}
           onConfirm={() => {
             if (patientId && dischargePatient) {
-              dischargePatient({ variables: { id: patientId }, onCompleted: () => onSuccess?.() })
+              dischargePatient({ variables: { id: patientId }, onCompleted: () => onUpdate?.() })
             }
             setIsDischargeDialogOpen(false)
           }}
@@ -636,8 +652,7 @@ export const PatientDataEditor = ({
               deletePatient({
                 variables: { id: patientId },
                 onCompleted: () => {
-                  onSuccess?.()
-                  onClose?.()
+                  onDelete?.()
                 },
               })
             }

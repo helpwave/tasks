@@ -65,6 +65,15 @@
   "editTask": "Taak bewerken",
   "errorOccurred": "Er is een fout opgetreden",
   "estimatedTime": "Geschatte tijd (minuten)",
+  "timeEstimate": "Geschatte tijd",
+  "nMinutesShort": "{minCount} min",
+  "@nMinutesShort": {
+    "placeholders": {
+      "minCount": {
+        "type": "number"
+      }
+    }
+  },
   "feedback": "Feedback",
   "female": "Vrouw",
   "filter": "Filter",
@@ -113,6 +122,12 @@
   "@nSorting": { "placeholders": { "count": { "type": "number" } } },
   "nPatient": "{count, plural, =1{# Patiënt} other{# Patiënten}}",
   "@nPatient": { "placeholders": { "count": { "type": "number" } } },
+  "patientsCountChipTotal": "Totaal {count}",
+  "@patientsCountChipTotal": { "placeholders": { "count": { "type": "string" } } },
+  "patientsCountChipAdmitted": "Opgenomen {count}",
+  "@patientsCountChipAdmitted": { "placeholders": { "count": { "type": "string" } } },
+  "patientsCountChipWaiting": "Wachtend {count}",
+  "@patientsCountChipWaiting": { "placeholders": { "count": { "type": "string" } } },
   "nTask": "{count, plural, =1{# Taak} other{# Taken}}",
   "@nTask": { "placeholders": { "count": { "type": "number" } } },
   "nYears": "{years, plural, =0{0 jaar} =1{1 jaar} other{# jaar}}",
@@ -138,8 +153,9 @@
   "pThemes": "{count, plural, =1{Thema} other{Thema''s}}",
   "@pThemes": { "placeholders": { "count": { "type": "number" } } },
   "preferences": "Voorkeuren",
-  "priority": "{priority, select, P1{Normaal} P2{Medium} P3{Hoog} P4{Kritiek} other{-}}",
-  "@priority": { "placeholders": { "priority": {} } },
+  "priority": "Prioriteit",
+  "sPriority": "{priority, select, P1{Normaal} P2{Medium} P3{Hoog} P4{Kritiek} other{-}}",
+  "@sPriority": { "placeholders": { "priority": {} } },
   "priorityLabel": "Prioriteit",
   "priorityNone": "Geen",
   "privacy": "Privacy",
@@ -206,6 +222,8 @@
   "copyShareLinkEnableSharingFirst": "Schakel delen via link in zodat anderen met de link deze snelle toegang kunnen openen.",
   "rShow": "{name} tonen",
   "@rShow": { "placeholders": { "name": { "type": "string" } } },
+  "rChipTotal": "Totaal {value}",
+  "@rChipTotal": { "placeholders": { "value": { "type": "string" } } },
   "search": "Zoeken",
   "searchUserOrTeam": "Zoek gebruiker (of team)...",
   "searchUsersOrTeams": "Zoek gebruikers of teams...",
@@ -337,6 +355,7 @@
   "taskPresetNoTasks": "This preset has no tasks.",
   "taskPresetSelectPlaceholder": "Select a preset",
   "taskPresetEditDetails": "Edit details",
+  "editPresetTask": "Presettaak bewerken",
   "taskPresetApplyToRow": "Apply to preset row",
   "taskPresetNoEstimate": "No estimate",
   "tasksCreatedFromPreset": "Tasks created",

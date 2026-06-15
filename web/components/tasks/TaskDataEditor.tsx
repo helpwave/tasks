@@ -35,6 +35,8 @@ import { useCreateDraftDirty } from '@/hooks/useCreateDraftDirty'
 import { serializeTaskCreateDraft } from '@/utils/createDraftSnapshots'
 import clsx from 'clsx'
 import { PriorityUtils } from '@/utils/priority'
+import type { DialogState } from '@/types/DialogState'
+import { applyDefinedOverrides } from '@/utils/applyDefinedOverrides'
 
 type TaskFormValues = CreateTaskInput & {
   done: boolean,
@@ -42,50 +44,47 @@ type TaskFormValues = CreateTaskInput & {
   assigneeTeamId?: string | null,
 }
 
-export type PresetRowSavedData = {
-  title: string,
-  description: string,
-  priority: TaskPriority | null,
-  estimatedTime: number | null,
+export type TaskCreationInitialData = Partial<TaskFormValues> & {
+  patientNameFallback?: string,
 }
 
-export type PresetRowEditorConfig = {
-  formKey: string,
-  title: string,
-  description: string,
-  priority: TaskPriority | null,
-  estimatedTime: number | null,
-  onSave: (data: PresetRowSavedData) => void,
+const defaultTaskFormValues: TaskFormValues = {
+  title: '',
+  description: '',
+  patientId: '',
+  assigneeIds: [],
+  assigneeTeamId: null,
+  dueDate: null,
+  priority: null,
+  estimatedTime: null,
+  done: false,
 }
 
 interface TaskDataEditorProps {
   id: null | string,
-  initialPatientId?: string,
-  initialPatientName?: string,
+  initialCreationData?: TaskCreationInitialData,
   onListSync?: () => void,
-  onClose?: () => void,
-  onCreateSuccessClose?: () => void,
+  onCreate?: (taskId: string) => void,
+  onUpdate?: () => void,
+  onDelete?: () => void,
   onCreateDraftDirtyChange?: (dirty: boolean) => void,
-  presetRowEditor?: PresetRowEditorConfig | null,
 }
 
 export const TaskDataEditor = ({
   id,
-  initialPatientId,
-  initialPatientName,
+  initialCreationData,
   onListSync,
-  onClose,
-  onCreateSuccessClose,
+  onCreate,
+  onUpdate,
+  onDelete,
   onCreateDraftDirtyChange,
-  presetRowEditor,
 }: TaskDataEditorProps) => {
   const translation = useTasksTranslation()
   const { selectedRootLocationIds } = useTasksContext()
-  const [errorDialog, setErrorDialog] = useState<{ isOpen: boolean, message?: string }>({ isOpen: false })
+  const [errorDialog, setErrorDialog] = useState<DialogState<{ message?: string }>>({ isOpen: false, data: { message: undefined } })
   const [isShowingPatientDialog, setIsShowingPatientDialog] = useState<boolean>(false)
   const [assigneeUserPopupId, setAssigneeUserPopupId] = useState<string | null>(null)
 
-  const isPresetRowMode = presetRowEditor != null
   const isEditMode = id !== null
   const taskId = id
   const { refreshingTaskIds } = useRefreshingEntityIds()
@@ -100,7 +99,7 @@ export const TaskDataEditor = ({
       rootLocationIds: selectedRootLocationIds && selectedRootLocationIds.length > 0 ? selectedRootLocationIds : undefined,
       states: [PatientState.Admitted, PatientState.Wait],
     },
-    { skip: isEditMode || isPresetRowMode }
+    { skip: isEditMode }
   )
   const hasRetriedMissingInitialPatientRef = useRef(false)
 
@@ -111,10 +110,13 @@ export const TaskDataEditor = ({
   const updateTask = (vars: { id: string, data: UpdateTaskInput }) => {
     updateTaskMutate({
       variables: vars,
+      onCompleted: () => {
+        onUpdate?.()
+      },
       onError: (err) => {
         setErrorDialog({
           isOpen: true,
-          message: err instanceof Error ? err.message : 'Update failed',
+          data: { message: err instanceof Error ? err.message : 'Update failed' },
         })
       },
     }).catch(() => { })
@@ -122,29 +124,13 @@ export const TaskDataEditor = ({
 
   const [deleteTask, { loading: isDeleting }] = useDeleteTask()
 
+  const createFormInitialValues = useMemo((): TaskFormValues => {
+    return applyDefinedOverrides(defaultTaskFormValues, initialCreationData)
+  }, [initialCreationData])
+
   const form = useCreateForm<TaskFormValues>({
-    initialValues: {
-      title: presetRowEditor?.title ?? '',
-      description: presetRowEditor?.description ?? '',
-      patientId: initialPatientId || '',
-      assigneeIds: [],
-      assigneeTeamId: null,
-      dueDate: null,
-      priority: presetRowEditor?.priority ?? null,
-      estimatedTime: presetRowEditor?.estimatedTime ?? null,
-      done: false,
-    },
+    initialValues: createFormInitialValues,
     onFormSubmit: (values) => {
-      if (presetRowEditor) {
-        presetRowEditor.onSave({
-          title: values.title.trim(),
-          description: (values.description ?? '').trim(),
-          priority: (values.priority as TaskPriority | null) || null,
-          estimatedTime: values.estimatedTime ?? null,
-        })
-        onClose?.()
-        return
-      }
       createTask({
         variables: {
           data: {
@@ -159,17 +145,17 @@ export const TaskDataEditor = ({
             properties: values.properties
           } as CreateTaskInput & { priority?: TaskPriority | null, estimatedTime?: number | null }
         },
-        onCompleted: () => {
+        onCompleted: (data) => {
           onCreateDraftDirtyChange?.(false)
           onListSync?.()
-          if (onCreateSuccessClose) {
-            onCreateSuccessClose()
+          if(data?.createTask?.id) {
+            onCreate?.(data?.createTask?.id)
           } else {
-            onClose?.()
+            console.error('createTask onCompleted: no task id', data)
           }
         },
         onError: (error) => {
-          setErrorDialog({ isOpen: true, message: error instanceof Error ? error.message : 'Failed to create task' })
+          setErrorDialog({ isOpen: true, data: { message: error instanceof Error ? error.message : 'Failed to create task' } })
         },
       })
     },
@@ -220,25 +206,13 @@ export const TaskDataEditor = ({
   )
 
   useCreateDraftDirty({
-    enabled: !isEditMode && !isPresetRowMode && onCreateDraftDirtyChange != null,
+    enabled: !isEditMode && onCreateDraftDirtyChange != null,
     store: form.store,
     serialize: serializeTaskDraft,
     onDirtyChange: onCreateDraftDirtyChange,
   })
 
   useEffect(() => {
-    if (!isPresetRowMode || !presetRowEditor) return
-    updateForm(prev => ({
-      ...prev,
-      title: presetRowEditor.title,
-      description: presetRowEditor.description,
-      priority: presetRowEditor.priority,
-      estimatedTime: presetRowEditor.estimatedTime,
-    }))
-  }, [isPresetRowMode, presetRowEditor, updateForm])
-
-  useEffect(() => {
-    if (isPresetRowMode) return
     if (taskData && isEditMode) {
       const task = taskData
       updateForm(prev => ({
@@ -253,38 +227,38 @@ export const TaskDataEditor = ({
         estimatedTime: task.estimatedTime ?? null,
         done: task.done || false,
       }))
-    } else if (initialPatientId && !taskId) {
-      updateForm(prev => ({ ...prev, patientId: initialPatientId }))
+    } else if (!taskId) {
+      updateForm(prev => applyDefinedOverrides(prev, initialCreationData))
     }
-  }, [taskData, isEditMode, initialPatientId, taskId, updateForm, isPresetRowMode])
+  }, [taskData, isEditMode, taskId, updateForm, initialCreationData])
 
   useEffect(() => {
     hasRetriedMissingInitialPatientRef.current = false
-  }, [initialPatientId])
+  }, [initialCreationData?.patientId])
 
   const patients = useMemo(() => {
     const list = patientsData?.patients ?? []
-    if (!initialPatientId || list.some(patient => patient.id === initialPatientId)) {
+    if (!initialCreationData?.patientId || list.some(patient => patient.id === initialCreationData?.patientId)) {
       return list
     }
-    const fallbackName = initialPatientName?.trim()
+    const fallbackName = initialCreationData?.patientNameFallback?.trim()
     if (!fallbackName) return list
     return [
       {
-        id: initialPatientId,
+        id: initialCreationData?.patientId,
         name: fallbackName,
       },
       ...list,
     ]
-  }, [patientsData?.patients, initialPatientId, initialPatientName])
+  }, [patientsData?.patients, initialCreationData?.patientId, initialCreationData?.patientNameFallback])
 
   useEffect(() => {
-    if (isEditMode || !initialPatientId || hasRetriedMissingInitialPatientRef.current) return
-    const hasInitialPatient = (patientsData?.patients ?? []).some(patient => patient.id === initialPatientId)
+    if (isEditMode || !initialCreationData?.patientId || hasRetriedMissingInitialPatientRef.current) return
+    const hasInitialPatient = (patientsData?.patients ?? []).some(patient => patient.id === initialCreationData?.patientId)
     if (hasInitialPatient) return
     hasRetriedMissingInitialPatientRef.current = true
     refetchPatients()
-  }, [isEditMode, initialPatientId, patientsData?.patients, refetchPatients])
+  }, [isEditMode, initialCreationData?.patientId, patientsData?.patients, refetchPatients])
 
   const dueDate = useFormObserverKey({ formStore: form.store, formKey: 'dueDate' })?.value ?? null
   const estimatedTime = useFormObserverKey({ formStore: form.store, formKey: 'estimatedTime' })?.value ?? null
@@ -314,10 +288,10 @@ export const TaskDataEditor = ({
   }
 
   const priorities = [
-    { value: 'P1', label: translation('priority', { priority: 'P1' }) },
-    { value: 'P2', label: translation('priority', { priority: 'P2' }) },
-    { value: 'P3', label: translation('priority', { priority: 'P3' }) },
-    { value: 'P4', label: translation('priority', { priority: 'P4' }) },
+    { value: 'P1', label: translation('sPriority', { priority: 'P1' }) },
+    { value: 'P2', label: translation('sPriority', { priority: 'P2' }) },
+    { value: 'P3', label: translation('sPriority', { priority: 'P3' }) },
+    { value: 'P4', label: translation('sPriority', { priority: 'P4' }) },
   ]
 
   const isRefreshing = isEditMode && taskId != null && refreshingTaskIds.has(taskId)
@@ -334,9 +308,8 @@ export const TaskDataEditor = ({
         <form
           onSubmit={event => { event.preventDefault(); form.submit() }}
           className="flex-col-0 overflow-hidden"
-          noValidate={isPresetRowMode}
         >
-          <div className={clsx('flex flex-col gap-6 pt-4 overflow-y-auto px-2', isPresetRowMode ? 'pb-28' : 'pb-24')}>
+          <div className="flex flex-col gap-6 pt-4 overflow-y-auto px-2 pb-24">
             <div className="flex items-center gap-3">
               <Visibility isVisible={isEditMode}>
                 <FormObserver>
@@ -371,161 +344,155 @@ export const TaskDataEditor = ({
               </div>
             </div>
 
-            {!isPresetRowMode && (
-              <FormField<TaskFormValues, 'patientId'>
-                name="patientId"
-                label={translation('patient')}
-              >
-                {({ dataProps: { value, onValueChange, onEditComplete }, focusableElementProps, interactionStates }) => {
-                  return (!isEditMode) ? (
-                    <Select
-                      {...focusableElementProps} {...interactionStates}
-                      value={value || ''}
-                      onValueChange={(nextValue) => {
-                        onValueChange?.(nextValue)
-                        onEditComplete?.(nextValue)
-                      }}
+            <FormField<TaskFormValues, 'patientId'>
+              name="patientId"
+              label={translation('patient')}
+            >
+              {({ dataProps: { value, onValueChange, onEditComplete }, focusableElementProps, interactionStates }) => {
+                return (!isEditMode) ? (
+                  <Select
+                    {...focusableElementProps} {...interactionStates}
+                    value={value || ''}
+                    onValueChange={(nextValue) => {
+                      onValueChange?.(nextValue)
+                      onEditComplete?.(nextValue)
+                    }}
+                  >
+                    <SelectOption value="" label={translation('none') || 'None'} />
+                    {patients.map(patient => {
+                      return (
+                        <SelectOption key={patient.id} value={patient.id} label={patient.name} />
+                      )
+                    })}
+                  </Select>
+                ) : (
+                  <div id={focusableElementProps.id}>
+                    <Button
+                      color="neutral"
+                      onClick={() => setIsShowingPatientDialog(true)}
+                      className="w-fit"
                     >
-                      <SelectOption value="" label={translation('none') || 'None'} />
-                      {patients.map(patient => {
-                        return (
-                          <SelectOption key={patient.id} value={patient.id} label={patient.name} />
-                        )
-                      })}
-                    </Select>
-                  ) : (
-                    <div id={focusableElementProps.id}>
-                      <Button
-                        color="neutral"
-                        onClick={() => setIsShowingPatientDialog(true)}
-                        className="w-fit"
-                      >
-                        <User className="size-4" />
-                        {taskData?.patient?.name || translation('none') || 'None'}
-                      </Button>
-                    </div>
-                  )
-                }}
-              </FormField>
-            )}
-
-            {!isPresetRowMode && (
-              <FormField<TaskFormValues, 'assigneeIds'>
-                name="assigneeIds"
-                label={translation('assignedTo')}
-              >
-                {() => (
-                  <div className="flex flex-col gap-2">
-                    <AssigneeSelect
-                      value={assigneeTeamId ? `team:${assigneeTeamId}` : ''}
-                      onValueChanged={(value) => {
-                        updateForm(prev => {
-                          if (!value) {
-                            return { ...prev, assigneeIds: [], assigneeTeamId: null }
-                          }
-                          if (value.startsWith('team:')) {
-                            return { ...prev, assigneeIds: [], assigneeTeamId: value.replace('team:', '') }
-                          }
-                          const currentAssigneeIds = prev.assigneeIds ?? []
-                          if (currentAssigneeIds.includes(value)) {
-                            return prev
-                          }
-                          return { ...prev, assigneeIds: [...currentAssigneeIds, value], assigneeTeamId: null }
-                        }, isEditMode)
-                      }}
-                      multiUserSelect={true}
-                      onMultiUserIdsSelected={(ids) => {
-                        if (ids.length === 0) return
-                        updateForm(prev => ({
-                          ...prev,
-                          assigneeIds: [...new Set([...(prev.assigneeIds ?? []), ...ids])],
-                          assigneeTeamId: null,
-                        }), isEditMode)
-                      }}
-                      allowTeams={true}
-                      allowUnassigned={true}
-                      excludeUserIds={assigneeIds ?? []}
-                    />
-                    {(selectedAssignees.length > 0 || assigneeTeamId) && (
-                      <div className="flex flex-wrap gap-2">
-                        {selectedAssignees.map((assignee) => (
-                          <div
-                            key={assignee.id}
-                            className="inline-flex items-center gap-1.5 rounded-md border border-divider bg-surface px-2.5 py-2 max-w-full"
-                          >
-                            <div className="flex-row-2 items-center min-w-0 gap-2 flex-1">
-                              <AvatarStatusComponent
-                                isOnline={assignee.isOnline ?? null}
-                                image={{
-                                  avatarUrl: assignee.avatarUrl ?? 'https://cdn.helpwave.de/boringavatar.svg',
-                                  alt: assignee.name
-                                }}
-                              />
-                              <span className="truncate text-sm">{assignee.name}</span>
-                            </div>
-                            <IconButton
-                              tooltip={translation('userInformation')}
-                              coloringStyle="text"
-                              color="neutral"
-                              onClick={() => setAssigneeUserPopupId(assignee.id)}
-                            >
-                              <Info className="size-4" />
-                            </IconButton>
-                            <IconButton
-                              tooltip={translation('clear')}
-                              coloringStyle="text"
-                              color="neutral"
-                              onClick={() => {
-                                updateForm(prev => ({
-                                  ...prev,
-                                  assigneeIds: (prev.assigneeIds ?? []).filter((id) => id !== assignee.id),
-                                }), isEditMode)
-                              }}
-                            >
-                              <XIcon className="size-4" />
-                            </IconButton>
-                          </div>
-                        ))}
-                        {assigneeTeamId && (
-                          <div className="inline-flex items-center gap-1.5 rounded-md border border-divider bg-surface px-2.5 py-2 max-w-full">
-                            <div className="flex-row-2 items-center min-w-0 gap-2 flex-1 px-0.5">
-                              <Users className="size-5 text-description shrink-0" />
-                              <span className="truncate text-sm">{selectedTeamTitle ?? translation('locationType', { type: 'TEAM' })}</span>
-                            </div>
-                            <IconButton
-                              tooltip={translation('clear')}
-                              coloringStyle="text"
-                              color="neutral"
-                              onClick={() => {
-                                updateForm(prev => ({ ...prev, assigneeTeamId: null }), isEditMode)
-                              }}
-                            >
-                              <XIcon className="size-4" />
-                            </IconButton>
-                          </div>
-                        )}
-                      </div>
-                    )}
+                      <User className="size-4" />
+                      {taskData?.patient?.name || translation('none') || 'None'}
+                    </Button>
                   </div>
-                )}
-              </FormField>
-            )}
+                )
+              }}
+            </FormField>
 
-            {!isPresetRowMode && (
-              <FormField<TaskFormValues, 'dueDate'>
-                name="dueDate"
-                label={translation('dueDate')}
-              >
-                {({ dataProps, focusableElementProps, interactionStates }) => (
-                  <FlexibleDateTimeInput
-                    key={isEditMode ? `${taskId}-${dueDate?.getTime() ?? 'pending'}` : 'create'}
-                    {...dataProps} {...focusableElementProps} {...interactionStates}
-                    value={dataProps.value ?? null}
-                    defaultMode="date"
+            <FormField<TaskFormValues, 'assigneeIds'>
+              name="assigneeIds"
+              label={translation('assignedTo')}
+            >
+              {() => (
+                <div className="flex flex-col gap-2">
+                  <AssigneeSelect
+                    value={assigneeTeamId ? `team:${assigneeTeamId}` : ''}
+                    onValueChanged={(value) => {
+                      updateForm(prev => {
+                        if (!value) {
+                          return { ...prev, assigneeIds: [], assigneeTeamId: null }
+                        }
+                        if (value.startsWith('team:')) {
+                          return { ...prev, assigneeIds: [], assigneeTeamId: value.replace('team:', '') }
+                        }
+                        const currentAssigneeIds = prev.assigneeIds ?? []
+                        if (currentAssigneeIds.includes(value)) {
+                          return prev
+                        }
+                        return { ...prev, assigneeIds: [...currentAssigneeIds, value], assigneeTeamId: null }
+                      }, isEditMode)
+                    }}
+                    multiUserSelect={true}
+                    onMultiUserIdsSelected={(ids) => {
+                      if (ids.length === 0) return
+                      updateForm(prev => ({
+                        ...prev,
+                        assigneeIds: [...new Set([...(prev.assigneeIds ?? []), ...ids])],
+                        assigneeTeamId: null,
+                      }), isEditMode)
+                    }}
+                    allowTeams={true}
+                    allowUnassigned={true}
+                    excludeUserIds={assigneeIds ?? []}
                   />
-                )}
-              </FormField>
-            )}
+                  {(selectedAssignees.length > 0 || assigneeTeamId) && (
+                    <div className="flex flex-wrap gap-2">
+                      {selectedAssignees.map((assignee) => (
+                        <div
+                          key={assignee.id}
+                          className="inline-flex items-center gap-1.5 rounded-md border border-divider bg-surface px-2.5 py-2 max-w-full"
+                        >
+                          <div className="flex-row-2 items-center min-w-0 gap-2 flex-1">
+                            <AvatarStatusComponent
+                              isOnline={assignee.isOnline ?? null}
+                              image={{
+                                avatarUrl: assignee.avatarUrl ?? 'https://cdn.helpwave.de/boringavatar.svg',
+                                alt: assignee.name
+                              }}
+                            />
+                            <span className="truncate text-sm">{assignee.name}</span>
+                          </div>
+                          <IconButton
+                            tooltip={translation('userInformation')}
+                            coloringStyle="text"
+                            color="neutral"
+                            onClick={() => setAssigneeUserPopupId(assignee.id)}
+                          >
+                            <Info className="size-4" />
+                          </IconButton>
+                          <IconButton
+                            tooltip={translation('clear')}
+                            coloringStyle="text"
+                            color="neutral"
+                            onClick={() => {
+                              updateForm(prev => ({
+                                ...prev,
+                                assigneeIds: (prev.assigneeIds ?? []).filter((id) => id !== assignee.id),
+                              }), isEditMode)
+                            }}
+                          >
+                            <XIcon className="size-4" />
+                          </IconButton>
+                        </div>
+                      ))}
+                      {assigneeTeamId && (
+                        <div className="inline-flex items-center gap-1.5 rounded-md border border-divider bg-surface px-2.5 py-2 max-w-full">
+                          <div className="flex-row-2 items-center min-w-0 gap-2 flex-1 px-0.5">
+                            <Users className="size-5 text-description shrink-0" />
+                            <span className="truncate text-sm">{selectedTeamTitle ?? translation('locationType', { type: 'TEAM' })}</span>
+                          </div>
+                          <IconButton
+                            tooltip={translation('clear')}
+                            coloringStyle="text"
+                            color="neutral"
+                            onClick={() => {
+                              updateForm(prev => ({ ...prev, assigneeTeamId: null }), isEditMode)
+                            }}
+                          >
+                            <XIcon className="size-4" />
+                          </IconButton>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </FormField>
+
+            <FormField<TaskFormValues, 'dueDate'>
+              name="dueDate"
+              label={translation('dueDate')}
+            >
+              {({ dataProps, focusableElementProps, interactionStates }) => (
+                <FlexibleDateTimeInput
+                  key={isEditMode ? `${taskId}-${dueDate?.getTime() ?? 'pending'}` : 'create'}
+                  {...dataProps} {...focusableElementProps} {...interactionStates}
+                  value={dataProps.value ?? null}
+                  defaultMode="date"
+                />
+              )}
+            </FormField>
 
             <FormField<TaskFormValues, 'priority'>
               name="priority"
@@ -596,7 +563,7 @@ export const TaskDataEditor = ({
                   {...dataProps} {...focusableElementProps} {...interactionStates}
                   value={dataProps.value || ''}
                   placeholder={translation('descriptionPlaceholder')}
-                  minLength={isPresetRowMode ? undefined : 4}
+                  minLength={4}
                 />
               )}
             </FormField>
@@ -610,7 +577,7 @@ export const TaskDataEditor = ({
                         variables: { id: taskId },
                         onCompleted: () => {
                           onListSync?.()
-                          onClose?.()
+                          onDelete?.()
                         },
                       })
                     }
@@ -625,7 +592,7 @@ export const TaskDataEditor = ({
             )}
           </div>
 
-          {!isEditMode && !isPresetRowMode && (
+          {!isEditMode && (
             <div className="flex-none pt-4 mt-auto border-t border-divider flex justify-end gap-2">
               <Button
                 onClick={form.submit}
@@ -636,18 +603,11 @@ export const TaskDataEditor = ({
               </Button>
             </div>
           )}
-          {isPresetRowMode && (
-            <div className="flex-none pt-4 mt-auto border-t border-divider flex justify-end gap-2">
-              <Button onClick={form.submit} color="primary">
-                {translation('taskPresetApplyToRow')}
-              </Button>
-            </div>
-          )}
 
           <ErrorDialog
             isOpen={errorDialog.isOpen}
-            onClose={() => setErrorDialog({ isOpen: false })}
-            message={errorDialog.message}
+            onClose={() => setErrorDialog(prev => ({ ...prev, isOpen: false }))}
+            message={errorDialog.data.message}
           />
         </form>
         <Drawer

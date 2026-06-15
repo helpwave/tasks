@@ -105,6 +105,15 @@
   "editTask": "Aufgabe bearbeiten",
   "errorOccurred": "Ein Fehler ist aufgetreten",
   "estimatedTime": "Geschätzte Zeit (Minuten)",
+  "timeEstimate": "Zeitschätzung",
+  "nMinutesShort": "{minCount} Min.",
+  "@nMinutesShort": {
+    "placeholders": {
+      "minCount": {
+        "type": "number"
+      }
+    }
+  },
   "feedback": "Feedback",
   "female": "Weiblich",
   "filter": "Filter",
@@ -177,6 +186,30 @@
       }
     }
   },
+  "patientsCountChipTotal": "Gesamt {count}",
+  "@patientsCountChipTotal": {
+    "placeholders": {
+      "count": {
+        "type": "string"
+      }
+    }
+  },
+  "patientsCountChipAdmitted": "Aufgenommen {count}",
+  "@patientsCountChipAdmitted": {
+    "placeholders": {
+      "count": {
+        "type": "string"
+      }
+    }
+  },
+  "patientsCountChipWaiting": "Wartend {count}",
+  "@patientsCountChipWaiting": {
+    "placeholders": {
+      "count": {
+        "type": "string"
+      }
+    }
+  },
   "nTask": "{count, plural, =1{# Aufgabe} other{# Aufgaben}}",
   "@nTask": {
     "placeholders": {
@@ -226,8 +259,9 @@
     }
   },
   "preferences": "Präferenzen",
-  "priority": "{priority, select, P1{Normal} P2{Mittel} P3{Hoch} P4{Kritisch} other{-}}",
-  "@priority": {
+  "priority": "Priorität",
+  "sPriority": "{priority, select, P1{Normal} P2{Mittel} P3{Hoch} P4{Kritisch} other{-}}",
+  "@sPriority": {
     "placeholders": {
       "priority": {}
     }
@@ -322,6 +356,14 @@
   "@rShow": {
     "placeholders": {
       "name": {
+        "type": "string"
+      }
+    }
+  },
+  "rChipTotal": "Gesamt {value}",
+  "@rChipTotal": {
+    "placeholders": {
+      "value": {
         "type": "string"
       }
     }
@@ -481,6 +523,7 @@
   "taskPresetNoTasks": "Diese Vorlage enthält keine Aufgaben.",
   "taskPresetSelectPlaceholder": "Vorlage wählen",
   "taskPresetEditDetails": "Details bearbeiten",
+  "editPresetTask": "Vorlagenaufgabe bearbeiten",
   "taskPresetApplyToRow": "In Vorlagenzeile übernehmen",
   "taskPresetNoEstimate": "Keine Schätzung",
   "tasksCreatedFromPreset": "Aufgaben erstellt",
