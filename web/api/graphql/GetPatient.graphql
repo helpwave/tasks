@@ -1,6 +1,7 @@
 query GetPatient($id: ID!) {
   patient(id: $id) {
     id
+    name
     firstname
     lastname
     birthdate
