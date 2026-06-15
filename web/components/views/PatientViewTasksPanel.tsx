@@ -15,6 +15,7 @@ import {
   type UpdateSavedViewMutation,
   type UpdateSavedViewMutationVariables
 } from '@/api/gql/generated'
+import { DueDateUtils } from '@/utils/dueDate'
 import { columnFiltersToQueryFilterClauses, sortingStateToQuerySortClauses } from '@/utils/tableStateToApi'
 import {
   deserializeColumnFiltersFromView,
@@ -121,7 +122,7 @@ export function PatientViewTasksPanel({
         name: task.title,
         description: task.description || undefined,
         updateDate: task.updateDate ? new Date(task.updateDate) : new Date(task.creationDate),
-        dueDate: task.dueDate ? new Date(task.dueDate) : undefined,
+        dueDate: DueDateUtils.parseFromApi(task.dueDate),
         priority: task.priority || null,
         estimatedTime: task.estimatedTime ?? null,
         done: task.done,

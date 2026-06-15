@@ -13,7 +13,7 @@ import { DateDisplay } from '@/components/Date/DateDisplay'
 import { Drawer } from '@helpwave/hightide'
 import { TaskDetailView } from '@/components/tasks/TaskDetailView'
 import type { TaskCreationInitialData } from '@/components/tasks/TaskDataEditor'
-import { localToUTCWithSameTime, PatientDetailView } from '@/components/patients/PatientDetailView'
+import { PatientDetailView } from '@/components/patients/PatientDetailView'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { UserInfoPopup } from '@/components/UserInfoPopup'
@@ -688,7 +688,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
                     return map
                   })
                   updateTaskMutate({
-                    variables: { id: row.original.id, data: { dueDate: next ? localToUTCWithSameTime(next)?.toISOString() : null } },
+                    variables: { id: row.original.id, data: { dueDate: DueDateUtils.serializeForApi(next) } },
                   })
                 }}
                 buttonProps={{

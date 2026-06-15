@@ -29,7 +29,8 @@ import { DateDisplay } from '@/components/Date/DateDisplay'
 import { AssigneeSelect } from './AssigneeSelect'
 import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
 import { UserInfoPopup } from '@/components/UserInfoPopup'
-import { localToUTCWithSameTime, PatientDetailView } from '@/components/patients/PatientDetailView'
+import { DueDateUtils, getTaskDueDateFlexibleInputProps } from '@/utils/dueDate'
+import { PatientDetailView } from '@/components/patients/PatientDetailView'
 import { ErrorDialog } from '@/components/ErrorDialog'
 import { useCreateDraftDirty } from '@/hooks/useCreateDraftDirty'
 import { serializeTaskCreateDraft } from '@/utils/createDraftSnapshots'
@@ -139,7 +140,7 @@ export const TaskDataEditor = ({
             description: values.description,
             assigneeIds: values.assigneeIds ?? [],
             assigneeTeamId: values.assigneeTeamId,
-            dueDate: values.dueDate ? localToUTCWithSameTime(values.dueDate)?.toISOString() : null,
+            dueDate: DueDateUtils.serializeForApi(values.dueDate),
             priority: (values.priority as TaskPriority | null) || undefined,
             estimatedTime: values.estimatedTime,
             properties: values.properties
@@ -169,11 +170,14 @@ export const TaskDataEditor = ({
     },
     onValidUpdate: (_, updates) => {
       if (!isEditMode || !taskId || !taskData) return
+      const nextDueDate = updates?.dueDate !== undefined
+        ? DueDateUtils.serializeForApi(updates.dueDate)
+        : undefined
       const data: UpdateTaskInput = {
         title: updates?.title,
         patientId: updates?.patientId === undefined ? undefined : (updates.patientId || null),
         description: updates?.description,
-        dueDate: updates?.dueDate ? localToUTCWithSameTime(updates.dueDate)?.toISOString() : undefined,
+        dueDate: nextDueDate,
         priority: updates?.priority as TaskPriority | null | undefined,
         estimatedTime: updates?.estimatedTime,
         done: updates?.done,
@@ -183,7 +187,7 @@ export const TaskDataEditor = ({
       const current = taskData
       const sameTitle = (data.title ?? current.title) === current.title
       const sameDescription = (data.description ?? current.description ?? '') === (current.description ?? '')
-      const sameDueDate = (data.dueDate ?? current.dueDate ?? null) === (current.dueDate ?? null)
+      const sameDueDate = (nextDueDate !== undefined ? nextDueDate : (current.dueDate ?? null)) === (current.dueDate ?? null)
       const samePriority = (data.priority ?? current.priority ?? null) === (current.priority ?? null)
       const sameEstimatedTime = (data.estimatedTime ?? current.estimatedTime ?? null) === (current.estimatedTime ?? null)
       const sameDone = (data.done ?? current.done) === current.done
@@ -222,7 +226,7 @@ export const TaskDataEditor = ({
         patientId: task.patient?.id || '',
         assigneeIds: task.assignees?.map((assignee) => assignee.id) ?? [],
         assigneeTeamId: task.assigneeTeam?.id || null,
-        dueDate: task.dueDate ? new Date(task.dueDate) : null,
+        dueDate: DueDateUtils.parseFromApi(task.dueDate) ?? null,
         priority: (task.priority as TaskPriority | null) || null,
         estimatedTime: task.estimatedTime ?? null,
         done: task.done || false,
@@ -484,14 +488,22 @@ export const TaskDataEditor = ({
               name="dueDate"
               label={translation('dueDate')}
             >
-              {({ dataProps, focusableElementProps, interactionStates }) => (
-                <FlexibleDateTimeInput
-                  key={isEditMode ? `${taskId}-${dueDate?.getTime() ?? 'pending'}` : 'create'}
-                  {...dataProps} {...focusableElementProps} {...interactionStates}
-                  value={dataProps.value ?? null}
-                  defaultMode="date"
-                />
-              )}
+              {({ dataProps: { value }, focusableElementProps, interactionStates, other: { updateValue } }) => {
+                const commitDueDate = (next: Date | null) => {
+                  updateValue(next)
+                }
+                return (
+                  <FlexibleDateTimeInput
+                    key={isEditMode ? `${taskId}-${dueDate?.getTime() ?? 'pending'}` : 'create'}
+                    {...getTaskDueDateFlexibleInputProps()}
+                    {...focusableElementProps}
+                    {...interactionStates}
+                    value={value ?? null}
+                    onValueChange={commitDueDate}
+                    onEditComplete={commitDueDate}
+                  />
+                )
+              }}
             </FormField>
 
             <FormField<TaskFormValues, 'priority'>

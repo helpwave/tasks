@@ -3,6 +3,7 @@ import { useState, type ComponentProps } from 'react'
 import type { ButtonProps } from '@helpwave/hightide'
 import { Button, DateTimeInput, FlexibleDateTimeInput, PopUp, PopUpContext, PopUpOpener, PopUpRoot } from '@helpwave/hightide'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
+import { getTaskDueDateFlexibleInputProps, TASK_DUE_DATE_DATE_TIME_INPUT_PROPS } from '@/utils/dueDate'
 import clsx from 'clsx'
 
 function sameMoment(a: Date | null, b: Date | null): boolean {
@@ -47,13 +48,18 @@ export function InTableDateTimeEditPopUp({
   const [draft, setDraft] = useState<Date | null>(value)
   const translation = useTasksTranslation()
 
+  const commitDraft = (next: Date | null) => {
+    setDraft(next)
+    if (!sameMoment(next, value)) {
+      onUpdate(next)
+    }
+  }
+
   return (
     <PopUpRoot
       onIsOpenChange={open => {
         if (open) {
           setDraft(value)
-        } else if (!sameMoment(draft, value)) {
-          onUpdate(draft)
         }
       }}
     >
@@ -77,27 +83,20 @@ export function InTableDateTimeEditPopUp({
       <PopUp options={options} className={clsx(className, 'flex-col-2 items-end')} onClick={e => e.stopPropagation()}>
         {flexible ? (
           <FlexibleDateTimeInput
-            defaultMode={mode === 'dateTime' ? 'dateTime' : 'date'}
+            {...getTaskDueDateFlexibleInputProps(mode === 'dateTime' ? 'dateTime' : 'date')}
             {...dateTimeInputProps}
             value={draft}
-            onValueChange={next => {
-              setDraft(next)
-            }}
-            onEditComplete={v => {
-              setDraft(v)
-            }}
+            onValueChange={commitDraft}
+            onEditComplete={commitDraft}
           />
         ) : (
           <DateTimeInput
             mode={mode}
+            {...TASK_DUE_DATE_DATE_TIME_INPUT_PROPS}
             {...dateTimeInputProps}
             value={draft}
-            onValueChange={next => {
-              setDraft(next)
-            }}
-            onEditComplete={v => {
-              setDraft(v)
-            }}
+            onValueChange={commitDraft}
+            onEditComplete={commitDraft}
           />
         )}
         <PopUpContext.Consumer>
