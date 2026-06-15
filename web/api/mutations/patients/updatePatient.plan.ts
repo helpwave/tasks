@@ -34,38 +34,46 @@ export const updatePatientOptimisticPlan: OptimisticPlan<UpdatePatientVariables>
           })
           snapshotRef.current = existing ?? null
           const id = cache.identify({ __typename: 'PatientType', id: patientId })
-          // Read the current properties from the normalized entity (populated by
-          // the list query) so real property uuids are preserved even when the
-          // patient detail query was never run.
-          const existingProps = readEntityProperties(cache, 'PatientType', patientId)
-          const mergeProperties = () => buildOptimisticProperties(existingProps, data.properties, patientId)
-          cache.modify({
-            id,
-            fields: {
-              firstname: (prev: string) =>
-                data.firstname !== undefined ? data.firstname ?? '' : prev,
-              lastname: (prev: string) =>
-                data.lastname !== undefined ? data.lastname ?? '' : prev,
-              // `name` is a server-computed field (`${firstname} ${lastname}`) that
-              // the patient list/card render. Keep it in sync optimistically so the
-              // rename shows immediately instead of waiting for a full list refetch.
-              name: (prev: string, { readField }) => {
-                if (data.firstname === undefined && data.lastname === undefined) return prev
-                const firstname = data.firstname !== undefined
-                  ? data.firstname ?? ''
-                  : ((readField('firstname') as string | undefined) ?? '')
-                const lastname = data.lastname !== undefined
-                  ? data.lastname ?? ''
-                  : ((readField('lastname') as string | undefined) ?? '')
-                return `${firstname} ${lastname}`
-              },
-              birthdate: (prev: unknown) =>
-                data.birthdate !== undefined ? data.birthdate : prev,
-              sex: (prev: string | null) =>
-                (data.sex !== undefined ? data.sex : prev) ?? '',
-              properties: mergeProperties,
+          const fields: Record<string, (prev: unknown, details: { readField: (field: string) => unknown }) => unknown> = {
+            firstname: (prev) =>
+              data.firstname !== undefined ? data.firstname ?? '' : prev,
+            lastname: (prev) =>
+              data.lastname !== undefined ? data.lastname ?? '' : prev,
+            // `name` is a server-computed field (`${firstname} ${lastname}`) that
+            // the patient list/card render. Keep it in sync optimistically so the
+            // rename shows immediately instead of waiting for a full list refetch.
+            name: (prev, { readField }) => {
+              if (data.firstname === undefined && data.lastname === undefined) return prev
+              const firstname = data.firstname !== undefined
+                ? data.firstname ?? ''
+                : ((readField('firstname') as string | undefined) ?? '')
+              const lastname = data.lastname !== undefined
+                ? data.lastname ?? ''
+                : ((readField('lastname') as string | undefined) ?? '')
+              return `${firstname} ${lastname}`
             },
-          })
+            // `birthdate` is non-nullable; the editor sends `null` to mean "unchanged",
+            // so only overwrite when an actual value is provided.
+            birthdate: (prev) =>
+              data.birthdate != null ? data.birthdate : prev,
+            sex: (prev) =>
+              (data.sex !== undefined ? data.sex : prev) ?? '',
+          }
+          // Only touch `properties` when the mutation actually changes them. Rewriting
+          // the field for an unrelated edit (e.g. a rename) re-serialises the cached
+          // property objects and would drop the normalized `definition`/`user`/`team`
+          // sub-fields, leaving the entity read *incomplete*. An incomplete read makes
+          // the active cache-first/cache-and-network queries revalidate over the network
+          // before this mutation commits, and those stale responses then overwrite the
+          // optimistic update — so the UI never reflects the change until a full reload.
+          if (data.properties !== undefined) {
+            // Read the current properties from the normalized entity (populated by
+            // the list query) so real property uuids are preserved even when the
+            // patient detail query was never run.
+            const existingProps = readEntityProperties(cache, 'PatientType', patientId)
+            fields['properties'] = () => buildOptimisticProperties(existingProps, data.properties, patientId)
+          }
+          cache.modify({ id, fields })
           cache.modify({
             id: 'ROOT_QUERY',
             fields: {
