@@ -1250,6 +1250,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
             onClose={closePatientDrawer}
             onSuccess={() => {
               embeddedOnRefetch?.()
+              void refetch()
               onPatientUpdated?.()
             }}
             onOpenSystemSuggestion={openSuggestionModal}
