@@ -38,7 +38,7 @@ export const PatientCardView = ({ patient, onClick, extraContent }: PatientCardV
     <button
       type="button"
       onClick={onClick ? () => onClick(patient) : undefined}
-      className={`border-2 p-4 rounded-lg text-left w-full h-full transition-colors relative bg-[rgba(255,255,255,1)] dark:bg-[rgba(55,65,81,1)] ${isClickable ? 'cursor-pointer hover:border-primary' : 'cursor-default'}`}
+      className={`border-2 p-4 rounded-lg text-left w-full min-w-0 h-full transition-colors relative bg-[rgba(255,255,255,1)] dark:bg-[rgba(55,65,81,1)] ${isClickable ? 'cursor-pointer hover:border-primary' : 'cursor-default'}`}
     >
       <div className="flex flex-col gap-2.5">
         <div className="flex items-start justify-between gap-2">
