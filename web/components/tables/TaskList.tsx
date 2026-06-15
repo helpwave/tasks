@@ -858,9 +858,9 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
         ? task.properties?.find(property => property.definition.id === propertyId)?.textValue
         : null
       rows.push(
-        <div key={id} className="flex flex-col gap-0.5 sm:flex-row sm:gap-3 sm:items-start text-left">
+        <div key={id} className="flex flex-col gap-0.5 sm:flex-row sm:gap-3 sm:items-start text-left min-w-0">
           <span className="text-description shrink-0 min-w-[7rem]">{headerLabel}</span>
-          <div className="min-w-0 break-words">
+          <div className="min-w-0 flex-1 break-words">
             {isExpandableTextProperty ? (
               <ExpandableTextBlock>{propertyTextValue ?? ''}</ExpandableTextBlock>
             ) : cell}

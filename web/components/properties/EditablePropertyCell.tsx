@@ -58,7 +58,7 @@ function EditablePropertyTriggerDisplay({ property, fieldType }: { property: Pro
   const chipField = isChipFieldType(fieldType)
   return (
     <>
-      <div className={clsx('text-left', chipField ? 'flex w-max max-w-none' : 'min-w-0 flex-1 overflow-hidden')}>
+      <div className={clsx('text-left', chipField ? 'flex flex-wrap w-full max-w-full' : 'min-w-0 flex-1 overflow-hidden')}>
         <PropertyCell property={property} fieldType={fieldType} />
       </div>
       <Edit2 className="size-4 min-w-4 shrink-0 group-hover:block hidden print:hidden" />

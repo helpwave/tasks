@@ -179,7 +179,7 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
       onClick={onClick ? () => onClick(task) : undefined}
       className={clsx(
         '@container border-2 p-4 rounded-lg text-left transition-colors',
-        'relative bg-surface-variant bg-on-surface-variant w-full h-full',
+        'relative bg-surface-variant bg-on-surface-variant w-full min-w-0 h-full',
         isClickable ? 'cursor-pointer hover:border-primary' : 'cursor-default',
         borderColorClass,
         priorityBorderClass,

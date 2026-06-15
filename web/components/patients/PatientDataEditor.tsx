@@ -82,6 +82,7 @@ export const PatientDataEditor = ({
   const isEditMode = id !== null
   const patientId = id
   const { refreshingPatientIds } = useRefreshingEntityIds()
+  const isRefreshing = isEditMode && patientId != null && refreshingPatientIds.has(patientId)
 
   const { data: patientData, loading: isLoadingPatient } = usePatient(
     patientId ?? '',
@@ -241,7 +242,7 @@ export const PatientDataEditor = ({
   }, [isEditMode, initialCreationData, updateForm])
 
   useEffect(() => {
-    if (patientData) {
+    if (patientData && !isRefreshing) {
       const patient = patientData
       const { firstname, lastname, sex, birthdate, assignedLocations, clinic, position, teams, description, state } = patient
       const value: PatientFormValues = {
@@ -261,7 +262,7 @@ export const PatientDataEditor = ({
         ...value,
       }))
     }
-  }, [updateForm, patientData])
+  }, [updateForm, patientData, isRefreshing])
 
   const clinic = useFormObserverKey({ formStore: form.store, formKey: 'clinic' })?.value ?? null
   const position = useFormObserverKey({ formStore: form.store, formKey: 'position' })?.value ?? null
@@ -299,8 +300,6 @@ export const PatientDataEditor = ({
     { label: translation('female'), value: Sex.Female },
     { label: translation('diverse'), value: Sex.Unknown }
   ]
-
-  const isRefreshing = isEditMode && patientId != null && refreshingPatientIds.has(patientId)
 
   return (
     <>

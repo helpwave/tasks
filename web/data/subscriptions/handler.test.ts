@@ -78,16 +78,9 @@ describe('echo detection', () => {
 })
 
 describe('reloadEntityAfterMutation', () => {
-  it('reloads the entity, refetches active lists, and toggles the refreshing gate', async () => {
+  it('refetches active lists and toggles the refreshing gate', async () => {
     let gatedDuringRefetch = false
     const client = {
-      query: vi.fn().mockResolvedValue({
-        data: { patient: { __typename: 'PatientType', id: 'patient-1', updateDate: '2026-01-02T00:00:00Z' } },
-      }),
-      cache: {
-        readQuery: vi.fn().mockReturnValue({ patient: { updateDate: '2026-01-01T00:00:00Z' } }),
-        writeQuery: vi.fn(),
-      },
       refetchQueries: vi.fn().mockImplementation(() => {
         gatedDuringRefetch = getRefreshingPatientIds().has('patient-1')
         return Promise.resolve([])
@@ -96,32 +89,41 @@ describe('reloadEntityAfterMutation', () => {
 
     await reloadEntityAfterMutation(client, 'Patient', 'patient-1')
 
-    expect(client.query).toHaveBeenCalled()
     expect(client.refetchQueries).toHaveBeenCalled()
     expect(gatedDuringRefetch).toBe(true)
     expect(getRefreshingPatientIds().has('patient-1')).toBe(false)
   })
 
-  it('ignores echo markers while reloading after a local mutation', async () => {
-    markEntityMutated('Patient', 'patient-1', 'mut-1')
+  it('refetches the global data query so sidebar counts stay in sync', async () => {
+    const includedOperationNames: string[] = []
     const client = {
-      query: vi.fn().mockResolvedValue({
-        data: { patient: { __typename: 'PatientType', id: 'patient-1', updateDate: '2026-01-02T00:00:00Z' } },
+      refetchQueries: vi.fn().mockImplementation((options: { include?: Array<{ definitions?: Array<{ name?: { value?: string } }> }> }) => {
+        for (const doc of options.include ?? []) {
+          const name = doc.definitions?.[0]?.name?.value
+          if (name) includedOperationNames.push(name)
+        }
+        return Promise.resolve([])
       }),
-      cache: {
-        readQuery: vi.fn().mockReturnValue({ patient: { updateDate: '2026-01-02T00:00:00Z' } }),
-        writeQuery: vi.fn(),
-      },
-      refetchQueries: vi.fn().mockResolvedValue([]),
+    } as unknown as ApolloClient
+
+    await reloadEntityAfterMutation(client, 'Task', 'task-1')
+
+    expect(includedOperationNames).toContain('GetGlobalData')
+  })
+
+  it('releases the refreshing gate even when the reload fails', async () => {
+    const client = {
+      refetchQueries: vi.fn().mockRejectedValue(new Error('network down')),
     } as unknown as ApolloClient
 
     await reloadEntityAfterMutation(client, 'Patient', 'patient-1')
 
-    expect(client.query).toHaveBeenCalled()
-    expect(client.cache.writeQuery).toHaveBeenCalled()
+    expect(getRefreshingPatientIds().has('patient-1')).toBe(false)
   })
+})
 
-  it('writes server data even when updateDate matches the cached value during reload', async () => {
+describe('mergePatientUpdatedIntoCache', () => {
+  it('writes server data when force is enabled', async () => {
     const client = {
       query: vi.fn().mockResolvedValue({
         data: {
@@ -148,42 +150,6 @@ describe('reloadEntityAfterMutation', () => {
     )
 
     expect(client.cache.writeQuery).toHaveBeenCalled()
-  })
-
-  it('refetches the global data query so sidebar counts stay in sync', async () => {
-    const includedOperationNames: string[] = []
-    const client = {
-      query: vi.fn().mockResolvedValue({
-        data: { task: { __typename: 'TaskType', id: 'task-1', updateDate: '2026-01-02T00:00:00Z' } },
-      }),
-      cache: {
-        readQuery: vi.fn().mockReturnValue({ task: { updateDate: '2026-01-01T00:00:00Z' } }),
-        writeQuery: vi.fn(),
-      },
-      refetchQueries: vi.fn().mockImplementation((options: { include?: Array<{ definitions?: Array<{ name?: { value?: string } }> }> }) => {
-        for (const doc of options.include ?? []) {
-          const name = doc.definitions?.[0]?.name?.value
-          if (name) includedOperationNames.push(name)
-        }
-        return Promise.resolve([])
-      }),
-    } as unknown as ApolloClient
-
-    await reloadEntityAfterMutation(client, 'Task', 'task-1')
-
-    expect(includedOperationNames).toContain('GetGlobalData')
-  })
-
-  it('releases the refreshing gate even when the reload fails', async () => {
-    const client = {
-      query: vi.fn().mockRejectedValue(new Error('network down')),
-      cache: { readQuery: vi.fn(), writeQuery: vi.fn() },
-      refetchQueries: vi.fn(),
-    } as unknown as ApolloClient
-
-    await reloadEntityAfterMutation(client, 'Patient', 'patient-1')
-
-    expect(getRefreshingPatientIds().has('patient-1')).toBe(false)
   })
 })
 
