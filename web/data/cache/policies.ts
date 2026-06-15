@@ -1,9 +1,4 @@
 import type { InMemoryCacheConfig, Reference } from '@apollo/client/cache'
-import {
-  PATIENT_CONFIRMED_FIELDS,
-  TASK_CONFIRMED_FIELDS,
-  buildConfirmedFieldPolicies
-} from './confirmedEntitySnapshots'
 
 const propertyValueKeyFields = (object: Readonly<Record<string, unknown>>): readonly ['id'] | false => {
   const id = object?.['id']
@@ -76,14 +71,6 @@ export function buildCacheConfig(): InMemoryCacheConfig {
         keyFields: ['id'],
         fields: {
           properties: { merge: mergeReferencesByIdentity },
-          ...buildConfirmedFieldPolicies('Patient', PATIENT_CONFIRMED_FIELDS),
-        },
-      },
-      TaskType: {
-        keyFields: ['id'],
-        fields: {
-          properties: { merge: mergeReferencesByIdentity },
-          ...buildConfirmedFieldPolicies('Task', TASK_CONFIRMED_FIELDS),
         },
       },
       User: { keyFields: ['id'] },

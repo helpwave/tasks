@@ -1091,14 +1091,15 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
             {listLayout === 'card' && (
               <div className="grid gap-3 w-full print:hidden [grid-template-columns:repeat(auto-fill,minmax(min(100%,24rem),1fr))]">
                 {displayedTasks.map((task) => (
-                  <TaskCardView
-                    key={task.id}
-                    task={task}
-                    showAssignee={showAssignee}
-                    showPatient={true}
-                    onClick={() => setTaskDialogState({ isOpen: true, taskId: task.id })}
-                    extraContent={renderTaskCardExtras(task)}
-                  />
+                  <TaskRowRefreshingGate key={task.id} taskId={task.id} className="h-full">
+                    <TaskCardView
+                      task={task}
+                      showAssignee={showAssignee}
+                      showPatient={true}
+                      onClick={() => setTaskDialogState({ isOpen: true, taskId: task.id })}
+                      extraContent={renderTaskCardExtras(task)}
+                    />
+                  </TaskRowRefreshingGate>
                 ))}
               </div>
             )}

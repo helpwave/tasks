@@ -1209,12 +1209,17 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
           {listLayout === 'card' && (
             <div className="grid gap-3 w-full print:hidden [grid-template-columns:repeat(auto-fill,minmax(min(100%,22rem),1fr))]">
               {patients.map((patient) => (
-                <PatientCardView
+                <RowRefreshingGate
                   key={patient.id}
-                  patient={patient}
-                  onClick={handleEdit}
-                  extraContent={renderPatientCardExtras(patient)}
-                />
+                  refreshing={refreshingPatientIds.has(patient.id)}
+                  className="h-full"
+                >
+                  <PatientCardView
+                    patient={patient}
+                    onClick={handleEdit}
+                    extraContent={renderPatientCardExtras(patient)}
+                  />
+                </RowRefreshingGate>
               ))}
             </div>
           )}
