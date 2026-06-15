@@ -2,8 +2,3 @@ table[data-name="table"].hw-autosize-table {
   table-layout: auto;
   width: 100% !important;
 }
-
-table[data-name="table"].hw-autosize-table [data-name="table-body-cell"],
-table[data-name="table"].hw-autosize-table [data-name="table-header-cell"] {
-  vertical-align: top;
-}

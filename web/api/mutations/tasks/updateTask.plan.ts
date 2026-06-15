@@ -1,5 +1,4 @@
 import type { ApolloCache } from '@apollo/client/cache'
-import type { Reference } from '@apollo/client/utilities'
 import {
   GetTaskDocument,
   LocationType,
@@ -9,6 +8,7 @@ import {
 import { getParsedDocument } from '@/data/hooks/queryHelpers'
 import { registerOptimisticPlan } from '@/data/mutations/registry'
 import type { OptimisticPlan, OptimisticPatch } from '@/data/mutations/types'
+import { buildOptimisticProperties, readEntityProperties } from '@/api/mutations/shared/optimisticProperties'
 
 type UpdateTaskVariables = {
   id: string,
@@ -75,42 +75,11 @@ export const updateTaskOptimisticPlan: OptimisticPlan<UpdateTaskVariables> = {
 
           const id = cache.identify({ __typename: 'TaskType', id: taskId })
           const existingTask = existing?.task
-          const existingProps = existingTask?.properties ?? []
-          const mergeProperties = (_prev: Reference | readonly unknown[]) => {
-            if (!data.properties) return existingProps
-            return data.properties.map((inp) => {
-              const existingProp = existingProps.find(
-                (p) => (p as { definition: { id: string } }).definition.id === inp.definitionId
-              )
-              if (existingProp) {
-                const cur = existingProp as Record<string, unknown>
-                return {
-                  ...cur,
-                  textValue: inp.textValue ?? cur['textValue'] ?? null,
-                  numberValue: inp.numberValue ?? cur['numberValue'] ?? null,
-                  booleanValue: inp.booleanValue ?? cur['booleanValue'] ?? null,
-                  dateValue: inp.dateValue ?? cur['dateValue'] ?? null,
-                  dateTimeValue: inp.dateTimeValue ?? cur['dateTimeValue'] ?? null,
-                  selectValue: inp.selectValue ?? cur['selectValue'] ?? null,
-                  multiSelectValues: inp.multiSelectValues ?? cur['multiSelectValues'] ?? null,
-                  userValue: inp.userValue ?? cur['userValue'] ?? null,
-                }
-              }
-              return {
-                __typename: 'PropertyValueType',
-                id: `attachment-${taskId}-${inp.definitionId}`,
-                definition: { __ref: `PropertyDefinitionType:${inp.definitionId}` },
-                textValue: inp.textValue ?? null,
-                numberValue: inp.numberValue ?? null,
-                booleanValue: inp.booleanValue ?? null,
-                dateValue: inp.dateValue ?? null,
-                dateTimeValue: inp.dateTimeValue ?? null,
-                selectValue: inp.selectValue ?? null,
-                multiSelectValues: inp.multiSelectValues ?? null,
-                userValue: inp.userValue ?? null,
-              }
-            })
-          }
+          // Read the current properties from the normalized entity (populated by
+          // the list query) so real property uuids are preserved even when the
+          // task detail query was never run.
+          const existingProps = readEntityProperties(cache, 'TaskType', taskId)
+          const mergeProperties = () => buildOptimisticProperties(existingProps, data.properties, taskId)
           cache.modify({
             id,
             fields: {

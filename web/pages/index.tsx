@@ -71,7 +71,7 @@ const StatCard = ({ label, value, icon, iconWrapperClassName, className }: StatC
 
 const Dashboard: NextPage = () => {
   const translation = useTasksTranslation()
-  const { user, myTasksCount, totalPatientsCount, selectedRootLocationIds } = useTasksContext()
+  const { user, myTasksCount, scopedPatientsTotal, selectedRootLocationIds } = useTasksContext()
   const overviewVariables = useMemo(() => ({
     rootLocationIds: selectedRootLocationIds ?? undefined,
     recentTasksPagination: { pageSize: 5, pageIndex: 0 },
@@ -107,7 +107,7 @@ const Dashboard: NextPage = () => {
           <Link href="/patients" className="min-w-60 min-h-20 flex-1 w-full sm:w-auto rounded-lg">
             <StatCard
               label={translation('totalPatients')}
-              value={totalPatientsCount}
+              value={scopedPatientsTotal}
               icon={<UsersIcon className="size-force-5"/>}
               iconWrapperClassName="bg-positive/10 text-positive"
             />

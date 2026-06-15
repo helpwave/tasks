@@ -18,7 +18,7 @@ from api.services.checksum import validate_checksum
 from api.services.location import LocationService
 from api.services.notifications import notify_entity_deleted, notify_entity_update
 from api.services.property import PropertyService
-from api.types.patient import PatientType
+from api.types.patient import PatientType, ScopedPatientCountsType
 from api.errors import raise_forbidden
 from api.query.dedupe_select import dedupe_orm_select_by_root_id
 from api.query.patient_location_scope import (
@@ -162,6 +162,48 @@ class PatientQuery:
             sorts=sorts if sorts is not None and not is_unset(sorts) else None,
             search=search if search is not None and not is_unset(search) else None,
             info=info,
+        )
+
+    @strawberry.field
+    async def scoped_patient_counts(
+        self,
+        info: Info,
+        root_location_ids: list[strawberry.ID] | None = None,
+    ) -> ScopedPatientCountsType:
+        all_states = list(PatientState)
+        query, accessible_location_ids = await PatientQuery._build_patients_base_query(
+            info, None, root_location_ids, all_states
+        )
+
+        if not accessible_location_ids:
+            return ScopedPatientCountsType.empty()
+
+        query_flat = query.order_by(None).limit(None).offset(None)
+        patient_subq = (
+            query_flat.with_only_columns(
+                models.Patient.id,
+                models.Patient.state,
+            )
+            .distinct()
+            .subquery()
+        )
+
+        count_query = select(
+            patient_subq.c.state,
+            func.count(),
+        ).group_by(patient_subq.c.state)
+
+        result = await info.context.db.execute(count_query)
+        counts_by_state = {row[0]: row[1] for row in result.all()}
+
+        return ScopedPatientCountsType(
+            scoped_patients_total=sum(counts_by_state.values()),
+            scoped_patients_waiting=counts_by_state.get(PatientState.WAIT.value, 0),
+            scoped_patients_admitted=counts_by_state.get(PatientState.ADMITTED.value, 0),
+            scoped_patients_discharged=counts_by_state.get(
+                PatientState.DISCHARGED.value, 0
+            ),
+            scoped_patients_deceased=counts_by_state.get(PatientState.DEAD.value, 0),
         )
 
     @strawberry.field

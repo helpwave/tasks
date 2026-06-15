@@ -1,14 +1,34 @@
 import type { TaskGraphInput, TaskGraphNodeInput, TaskPriority } from '@/api/gql/generated'
 import type { SuggestedTaskItem } from '@/types/systemSuggestion'
 
-export type TaskPresetListRow = {
+export type TaskPresetTask = {
   title: string,
   description: string,
   priority: TaskPriority | null,
   estimatedTime: number | null,
 }
 
-export function listRowsToTaskGraphInput(rows: TaskPresetListRow[]): TaskGraphInput {
+export const defaultTaskPresetTask = (): TaskPresetTask => ({
+  title: '',
+  description: '',
+  priority: null,
+  estimatedTime: null,
+})
+
+export const mergeTaskPresetTask = (partial?: Partial<TaskPresetTask>): TaskPresetTask => {
+  const defaults = defaultTaskPresetTask()
+  return {
+    title: partial?.title ?? defaults.title,
+    description: partial?.description ?? defaults.description,
+    priority: partial?.priority ?? defaults.priority,
+    estimatedTime: partial?.estimatedTime ?? defaults.estimatedTime,
+  }
+}
+
+export const hasEmptyTaskPresetTaskTitle = (rows: TaskPresetTask[]): boolean =>
+  rows.some(r => r.title.trim() === '')
+
+export function listRowsToTaskGraphInput(rows: TaskPresetTask[]): TaskGraphInput {
   const trimmed = rows.map(r => ({
     title: r.title.trim(),
     description: r.description.trim(),
@@ -43,7 +63,7 @@ export function graphNodesToListRows(graph: {
     priority?: string | null,
     estimatedTime?: number | null,
   }>,
-}): TaskPresetListRow[] {
+}): TaskPresetTask[] {
   return graph.nodes.map(n => ({
     title: n.title,
     description: n.description ?? '',

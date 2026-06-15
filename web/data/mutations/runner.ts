@@ -87,14 +87,13 @@ export async function mutateOptimistic<TData, TVariables>(
     if (typeof window !== 'undefined') {
       storage.removePendingMutation(resolvedId).catch(() => {})
     }
-    if (typeof vars?.['id'] === 'string') {
-      clearEntityMutated(entityType, vars['id'])
+    const entityId = typeof vars?.['id'] === 'string' ? vars['id'] : undefined
+    if (entityId) {
+      await reloadEntityAfterMutation(client, entityType, entityId)
+      clearEntityMutated(entityType, entityId)
     }
     onSuccess?.(result.data, variables)
     schedulePersistCache(cache)
-    if (typeof vars?.['id'] === 'string') {
-      void reloadEntityAfterMutation(client, entityType, vars['id'])
-    }
     return result.data
   } catch (error) {
     for (const patch of patches) {

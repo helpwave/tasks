@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { computePaginationBounds, mergePagesById } from './useAccumulatedPagination'
+import { computePaginationBounds, materializePages, mergePagesById } from './useAccumulatedPagination'
 
 const PAGE_SIZE = 25
 
@@ -92,5 +92,41 @@ describe('mergePagesById', () => {
     const fresh = { id: 'a', name: 'new' }
     expect(mergePagesById([[stale]])[0]).toBe(stale)
     expect(mergePagesById([[fresh]])[0]).toBe(fresh)
+  })
+})
+
+describe('materializePages', () => {
+  it('keeps earlier pages when a later page is added (one continuous list)', () => {
+    const lastPages = new Map<number, Array<{ id: string }>>()
+    materializePages([[{ id: 'a' }, { id: 'b' }]], lastPages)
+    const merged = materializePages(
+      [[{ id: 'a' }, { id: 'b' }], [{ id: 'c' }]],
+      lastPages
+    )
+    expect(merged.map(x => x.id)).toEqual(['a', 'b', 'c'])
+  })
+
+  it('does not drop an earlier page that momentarily reads as undefined', () => {
+    const lastPages = new Map<number, Array<{ id: string }>>()
+    // First materialization: both pages readable.
+    materializePages([[{ id: 'a' }, { id: 'b' }], [{ id: 'c' }]], lastPages)
+    // Page 0 is briefly unreadable (e.g. a refetch in flight) -> falls back.
+    const merged = materializePages([undefined, [{ id: 'c' }]], lastPages)
+    expect(merged.map(x => x.id)).toEqual(['a', 'b', 'c'])
+  })
+
+  it('propagates genuine removals (a defined empty page is authoritative)', () => {
+    const lastPages = new Map<number, Array<{ id: string }>>()
+    materializePages([[{ id: 'a' }], [{ id: 'b' }]], lastPages)
+    // Page 1 is now genuinely empty -> drop it, and a later undefined read stays empty.
+    expect(materializePages([[{ id: 'a' }], []], lastPages).map(x => x.id)).toEqual(['a'])
+    expect(materializePages([[{ id: 'a' }], undefined], lastPages).map(x => x.id)).toEqual(['a'])
+  })
+
+  it('reflects updated items on an already-known page', () => {
+    const lastPages = new Map<number, Array<{ id: string, v: number }>>()
+    materializePages([[{ id: 'a', v: 1 }]], lastPages)
+    const merged = materializePages([[{ id: 'a', v: 2 }]], lastPages)
+    expect(merged).toEqual([{ id: 'a', v: 2 }])
   })
 })

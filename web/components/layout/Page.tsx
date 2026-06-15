@@ -199,12 +199,16 @@ export const SurveyModal = () => {
 type RootLocationSelectorProps = {
   className?: string,
   onSelect?: () => void,
+  // Only the instance that "owns" the dialog renders it. The selector button is
+  // mounted in several places (desktop header + mobile sidebar) but they all
+  // share a single open-state via the context, so the dialog must be rendered
+  // exactly once to avoid stacking duplicate modals on first load.
+  ownsDialog?: boolean,
 }
 
-const RootLocationSelector = ({ className, onSelect }: RootLocationSelectorProps) => {
-  const { rootLocations, selectedRootLocationIds, update } = useTasksContext()
+const RootLocationSelector = ({ className, onSelect, ownsDialog = false }: RootLocationSelectorProps) => {
+  const { rootLocations, selectedRootLocationIds, update, isRootLocationPickerOpen, setRootLocationPickerOpen } = useTasksContext()
   const translation = useTasksTranslation()
-  const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false)
   const [selectedLocationsCache, setSelectedLocationsCache] = useState<Array<{ id: string, title: string, kind?: string }>>([])
   const {
     value: storedSelectedRootLocationsRaw,
@@ -261,12 +265,6 @@ const RootLocationSelector = ({ className, onSelect }: RootLocationSelectorProps
       setSelectedLocationsCache([])
     }
   }, [rootLocations, selectedRootLocationIds, locationsData])
-
-  useEffect(() => {
-    if (rootLocations && rootLocations.length > 0 && (!selectedRootLocationIds || selectedRootLocationIds.length === 0)) {
-      setIsLocationPickerOpen(true)
-    }
-  }, [rootLocations, selectedRootLocationIds])
 
   const resolvedFromRoot = rootLocations?.filter(loc => selectedRootLocationIds?.includes(loc.id)) || []
   const resolvedFromLocationsData = useMemo(() => {
@@ -334,7 +332,7 @@ const RootLocationSelector = ({ className, onSelect }: RootLocationSelectorProps
         selectedRootLocationIds: locationIds,
       }
     })
-    setIsLocationPickerOpen(false)
+    setRootLocationPickerOpen(false)
     onSelect?.()
   }
 
@@ -348,7 +346,7 @@ const RootLocationSelector = ({ className, onSelect }: RootLocationSelectorProps
   return (
     <div className={clsx('flex-row-1 items-center gap-x-1', className)}>
       <Button
-        onClick={() => setIsLocationPickerOpen(true)}
+        onClick={() => setRootLocationPickerOpen(true)}
         color={hasNoLocationSelected ? 'negative' : 'neutral'}
         coloringStyle="outline"
         className="min-w-40 w-full"
@@ -363,14 +361,16 @@ const RootLocationSelector = ({ className, onSelect }: RootLocationSelectorProps
             ? (translation('loading') ?? 'Loading...')
             : (translation('selectLocation') || 'Select Location')}
       </Button>
-      <LocationSelectionDialog
-        isOpen={isLocationPickerOpen}
-        onClose={() => setIsLocationPickerOpen(false)}
-        onSelect={handleRootLocationSelect}
-        initialSelectedIds={selectedRootLocationIds || []}
-        multiSelect={true}
-        useCase="root"
-      />
+      {ownsDialog && (
+        <LocationSelectionDialog
+          isOpen={isRootLocationPickerOpen}
+          onClose={() => setRootLocationPickerOpen(false)}
+          onSelect={handleRootLocationSelect}
+          initialSelectedIds={selectedRootLocationIds || []}
+          multiSelect={true}
+          useCase="root"
+        />
+      )}
     </div>
   )
 }
@@ -412,7 +412,7 @@ export const Header = ({ onMenuClick, isMenuOpen, ...props }: HeaderProps) => {
           </IconButton>
         </div>
         <div className="flex-row-2 justify-end items-center gap-x-2">
-          <RootLocationSelector className="hidden sm:flex" />
+          <RootLocationSelector className="hidden sm:flex" ownsDialog />
           <IconButton
             tooltip={translation('feedback')}
             coloringStyle="text" color="neutral"
@@ -549,7 +549,7 @@ export const Sidebar = ({ isOpen, onClose, ...props }: SidebarProps) => {
           <SidebarLink href="/patients" onClick={onClose}>
             <User className="size-5" />
             <span className="flex grow">{translation('patients')}</span>
-            {context?.totalPatientsCount !== undefined && (<span className="text-description">{context.totalPatientsCount}</span>)}
+            {context?.scopedPatientsTotal !== undefined && (<span className="text-description">{context.scopedPatientsTotal}</span>)}
           </SidebarLink>
           <div ref={quickAccessNavRef}>
             <ExpandableRoot

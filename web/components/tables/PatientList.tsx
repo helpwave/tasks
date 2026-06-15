@@ -63,6 +63,7 @@ import type { SystemSuggestion } from '@/types/systemSuggestion'
 import { PropertyColumnHeader } from '@/components/properties/PropertyColumnHeader'
 import { ClearPropertyColumnDialog } from '@/components/properties/ClearPropertyColumnDialog'
 import { usePatientPropertyClearDialog } from '@/hooks/usePatientPropertyClearDialog'
+import type { DialogState } from '@/types/DialogState'
 
 export type PatientViewModel = {
   id: string,
@@ -103,9 +104,14 @@ export type PatientListRef = {
   openPatient: (patientId: string) => void,
 }
 
+export type PatientDialogStateData = {
+  patientId: string | null,
+  patient?: PatientViewModel,
+}
+
 type PatientListProps = {
   initialPatientId?: string,
-  onInitialPatientOpened?: () => void,
+  onInitialPatientIdUsed?: () => void,
   acceptedStates?: PatientState[],
   rootLocationIds?: string[],
   locationId?: string,
@@ -126,7 +132,28 @@ type PatientListProps = {
   savedViewScope?: 'base' | 'related',
 }
 
-export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initialPatientId, onInitialPatientOpened, acceptedStates: _acceptedStates, rootLocationIds, locationId, viewDefaultFilters, viewDefaultSorting, viewDefaultSearchQuery, viewDefaultColumnVisibility, viewDefaultColumnOrder, readOnly = false, hideSaveView, savedViewId, onSavedViewCreated, onPatientUpdated, embedded = false, embeddedPatients, embeddedOnRefetch, derivedVirtualMode = false, savedViewScope = 'base' }, ref) => {
+export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
+  initialPatientId,
+  onInitialPatientIdUsed,
+  acceptedStates: _acceptedStates,
+  rootLocationIds,
+  locationId,
+  viewDefaultFilters,
+  viewDefaultSorting,
+  viewDefaultSearchQuery,
+  viewDefaultColumnVisibility,
+  viewDefaultColumnOrder,
+  readOnly = false,
+  hideSaveView,
+  savedViewId,
+  onSavedViewCreated,
+  onPatientUpdated,
+  embedded = false,
+  embeddedPatients,
+  embeddedOnRefetch,
+  derivedVirtualMode = false,
+  savedViewScope = 'base'
+}, ref) => {
   const translation = useTasksTranslation()
   const { locale } = useLocale()
   const { selectedRootLocationIds } = useTasksContext()
@@ -151,10 +178,23 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
     })
   )
   const effectiveRootLocationIds = rootLocationIds ?? selectedRootLocationIds
-  const [isPanelOpen, setIsPanelOpen] = useState(false)
-  const [selectedPatient, setSelectedPatient] = useState<PatientViewModel | undefined>(undefined)
+  const [patientDialogState, setPatientDialogState] = useState<DialogState<PatientDialogStateData>>({
+    isOpen: !!initialPatientId,
+    data: {
+      patientId: initialPatientId ?? null
+    }
+  })
+
+  const [usedInitialPatientId, setUsedInitialPatientId] = useState(false)
+  useEffect(() => {
+    if (initialPatientId && !usedInitialPatientId) {
+      setPatientDialogState({ isOpen: true, data: { patientId: initialPatientId } })
+      setUsedInitialPatientId(true)
+      onInitialPatientIdUsed?.()
+    }
+  }, [initialPatientId, usedInitialPatientId, onInitialPatientIdUsed])
+
   const [searchQuery, setSearchQuery] = useState(viewDefaultSearchQuery ?? '')
-  const [openedPatientId, setOpenedPatientId] = useState<string | null>(null)
   const [isCreatePatientDraftDirty, setIsCreatePatientDraftDirty] = useState(false)
   const [isDiscardPatientCreateOpen, setIsDiscardPatientCreateOpen] = useState(false)
   const [isShowFilters, setIsShowFilters] = useState(false)
@@ -398,14 +438,18 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
   )
 
   const lastTotalCountRef = useRef<number | undefined>(undefined)
-  const { data: patientsData, refetch, totalCount, loading: patientsLoading, prefetchPage, readCachedPage, watchCachedPage } = usePatientsPaginated(
-    {
+  const patientsQueryVariables = useMemo(
+    () => ({
       locationId: hasLocationFilter ? undefined : (locationId || undefined),
       rootLocationIds: hasLocationFilter || locationId
         ? undefined
         : (effectiveRootLocationIds && effectiveRootLocationIds.length > 0 ? effectiveRootLocationIds : undefined),
       states: patientStates,
-    },
+    }),
+    [hasLocationFilter, locationId, effectiveRootLocationIds, patientStates]
+  )
+  const { data: patientsData, refetch, totalCount, loading: patientsLoading, prefetchPage, readCachedPage, watchCachedPage } = usePatientsPaginated(
+    patientsQueryVariables,
     {
       pagination: apiPagination,
       sorts: apiSorting.length > 0 ? apiSorting : undefined,
@@ -486,52 +530,37 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
 
   useImperativeHandle(ref, () => ({
     openCreate: () => {
-      setSelectedPatient(undefined)
-      setIsPanelOpen(true)
+      setPatientDialogState({ isOpen: true, data: { patientId: null } })
     },
     openPatient: (patientId: string) => {
       const patient = patients.find(p => p.id === patientId)
       if (patient) {
-        setSelectedPatient(patient)
-        setIsPanelOpen(true)
+        setPatientDialogState({ isOpen: true, data: { patientId: patientId, patient } })
+      } else {
+        setPatientDialogState({ isOpen: true, data: { patientId: patientId } })
       }
     }
   }), [patients])
 
-  useEffect(() => {
-    if (initialPatientId && openedPatientId !== initialPatientId) {
-      const patient = patients.find(p => p.id === initialPatientId)
-      if (patient) {
-        setSelectedPatient(patient)
-      }
-      setIsPanelOpen(true)
-      setOpenedPatientId(initialPatientId)
-      onInitialPatientOpened?.()
-    }
-  }, [initialPatientId, patients, openedPatientId, onInitialPatientOpened])
-
   const handleEdit = useCallback((patient: PatientViewModel) => {
-    setSelectedPatient(patient)
-    setIsPanelOpen(true)
+    setPatientDialogState({ isOpen: true, data: { patientId: patient.id, patient } })
   }, [])
 
-  const isPatientCreateMode = !selectedPatient && !openedPatientId
+  const isPatientCreateMode = !patientDialogState.data.patientId
 
   const closePatientDrawer = useCallback(() => {
-    setIsPanelOpen(false)
-    setSelectedPatient(undefined)
-    setOpenedPatientId(null)
+    setPatientDialogState(prev => ({ ...prev, isOpen: false }))
     setIsCreatePatientDraftDirty(false)
     setIsDiscardPatientCreateOpen(false)
   }, [])
 
   const handleClose = useCallback(() => {
-    if (isPanelOpen && isPatientCreateMode && isCreatePatientDraftDirty) {
+    if (patientDialogState && isPatientCreateMode && isCreatePatientDraftDirty) {
       setIsDiscardPatientCreateOpen(true)
       return
     }
     closePatientDrawer()
-  }, [isPanelOpen, isPatientCreateMode, isCreatePatientDraftDirty, closePatientDrawer])
+  }, [patientDialogState, isPatientCreateMode, isCreatePatientDraftDirty, closePatientDrawer])
 
   const handlePatientPropertyValueChanged = useCallback(
     (payload: PropertyColumnValueChangedPayload<PatientViewModel>) => {
@@ -847,9 +876,9 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
         ? patient.properties?.find(property => property.definition.id === propertyId)?.textValue
         : null
       rows.push(
-        <div key={id} className="flex flex-col gap-0.5 sm:flex-row sm:gap-3 sm:items-start text-left">
+        <div key={id} className="flex flex-col gap-0.5 sm:flex-row sm:gap-3 sm:items-start text-left min-w-0">
           <span className="text-description shrink-0 min-w-[7rem]">{headerLabel}</span>
-          <div className="min-w-0 break-words">
+          <div className="min-w-0 flex-1 break-words">
             {isExpandableTextProperty ? (
               <ExpandableTextBlock>{propertyTextValue ?? ''}</ExpandableTextBlock>
             ) : cell}
@@ -1079,7 +1108,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
       <div className="flex flex-col h-full gap-4">
         {showFullToolbar && (
           <div className="flex-col-2 w-full">
-            <div className="flex flex-col-reverse gap-3 sm:flex-row sm:flex-row-8 sm:justify-between sm:gap-0 w-full">
+            <div className="flex flex-col-reverse items-start gap-3 md:flex-row md:flex-row-8 md:justify-between w-full">
               <div className="flex flex-wrap gap-2 items-center">
                 <SearchBar
                   placeholder={translation('search')}
@@ -1143,8 +1172,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
                     tooltip={translation('addPatient')}
                     className="min-h-11 min-w-11"
                     onClick={() => {
-                      setSelectedPatient(undefined)
-                      setIsPanelOpen(true)
+                      setPatientDialogState({ isOpen: true, data: { patientId: null } })
                     }}
                     color="primary"
                   >
@@ -1181,12 +1209,17 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
           {listLayout === 'card' && (
             <div className="grid gap-3 w-full print:hidden [grid-template-columns:repeat(auto-fill,minmax(min(100%,22rem),1fr))]">
               {patients.map((patient) => (
-                <PatientCardView
+                <RowRefreshingGate
                   key={patient.id}
-                  patient={patient}
-                  onClick={handleEdit}
-                  extraContent={renderPatientCardExtras(patient)}
-                />
+                  refreshing={refreshingPatientIds.has(patient.id)}
+                  className="h-full"
+                >
+                  <PatientCardView
+                    patient={patient}
+                    onClick={handleEdit}
+                    extraContent={renderPatientCardExtras(patient)}
+                  />
+                </RowRefreshingGate>
               ))}
             </div>
           )}
@@ -1210,18 +1243,18 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({ initi
           )}
         </div>
         <Drawer
-          isOpen={isPanelOpen}
+          isOpen={patientDialogState.isOpen}
           onClose={handleClose}
           alignment="right"
-          titleElement={!selectedPatient && !openedPatientId ? translation('addPatient') : translation('editPatient')}
+          titleElement={!patientDialogState.data.patientId ? translation('addPatient') : translation('editPatient')}
           description={undefined}
         >
           <PatientDetailView
-            patientId={selectedPatient?.id ?? openedPatientId ?? undefined}
+            patientId={patientDialogState.data.patientId ?? undefined}
+            onCreate={(id) => setPatientDialogState({ isOpen: true, data: { patientId: id } })}
             onClose={closePatientDrawer}
             onSuccess={() => {
               embeddedOnRefetch?.()
-              void refetch()
               onPatientUpdated?.()
             }}
             onOpenSystemSuggestion={openSuggestionModal}

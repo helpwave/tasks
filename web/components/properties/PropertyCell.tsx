@@ -71,9 +71,9 @@ export const PropertyCell = ({
       ? property.definition.options[parseInt(selectOptionIndex, 10)]
       : property.selectValue
     return (
-      <div className="flex flex-nowrap gap-1 w-max max-w-none">
-        <Chip size="sm" className="primary coloring-tonal">
-          {selectOptionName}
+      <div className="flex flex-wrap gap-1 w-full max-w-full min-w-0">
+        <Chip size="sm" className="primary coloring-tonal max-w-full min-w-0">
+          <span className="truncate min-w-0">{selectOptionName}</span>
         </Chip>
       </div>
     )
@@ -83,15 +83,15 @@ export const PropertyCell = ({
       return <FillerCell />
     }
     return (
-      <div className="flex flex-nowrap gap-1 w-max max-w-none">
+      <div className="flex flex-wrap gap-1 w-full max-w-full min-w-0">
         {property.multiSelectValues.map((val) => {
           const multiSelectOptionIndex = val.match(/-opt-(\d+)$/)?.[1]
           const multiSelectOptionName = multiSelectOptionIndex !== undefined && property.definition?.options
             ? property.definition.options[parseInt(multiSelectOptionIndex, 10)]
             : val
           return (
-            <Chip key={val} size="sm" className="primary coloring-tonal">
-              {multiSelectOptionName}
+            <Chip key={val} size="sm" className="primary coloring-tonal max-w-full min-w-0">
+              <span className="truncate min-w-0">{multiSelectOptionName}</span>
             </Chip>
           )
         })}
@@ -122,7 +122,7 @@ export const PropertyCell = ({
               alt: property.user.name,
             } : undefined}
           />
-          <span className="truncate">{property.user.name}</span>
+          <span className="truncate min-w-0">{property.user.name}</span>
         </div>
       )
     }
@@ -130,7 +130,7 @@ export const PropertyCell = ({
       return (
         <div className="flex items-center gap-2 min-w-0">
           <Users className="size-4 text-description flex-shrink-0" />
-          <span className="truncate">{property.team.title}</span>
+          <span className="truncate min-w-0">{property.team.title}</span>
         </div>
       )
     }

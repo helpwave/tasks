@@ -1,5 +1,5 @@
 import type { ApolloClient } from '@apollo/client/core'
-import { GetTaskDocument, GetPatientDocument, GetTasksDocument, GetPatientsDocument } from '@/api/gql/generated'
+import { GetTaskDocument, GetPatientDocument, GetTasksDocument, GetPatientsDocument, GetGlobalDataDocument } from '@/api/gql/generated'
 import { getParsedDocument } from '../hooks/queryHelpers'
 import { hasPendingMutationForEntity } from '../mutations/queue'
 import {
@@ -22,6 +22,14 @@ export type ConflictStrategy = 'defer' | 'server-wins'
 export type MergeSubscriptionOptions = {
   conflictStrategy: ConflictStrategy,
   getPendingForEntity?: (entityType: 'Task' | 'Patient', entityId: string) => boolean,
+  ignoreEcho?: boolean,
+  force?: boolean,
+}
+
+const reloadAfterMutationOptions: MergeSubscriptionOptions = {
+  conflictStrategy: 'server-wins',
+  ignoreEcho: true,
+  force: true,
 }
 
 const ECHO_WINDOW_MS = 5000
@@ -92,7 +100,7 @@ export async function mergeTaskUpdatedIntoCache(
   if (getPending('Task', taskId)) {
     if (options.conflictStrategy === 'defer') return
   }
-  if (isLikelyEcho('Task', taskId, payload.clientMutationId)) return
+  if (!options.ignoreEcho && isLikelyEcho('Task', taskId, payload.clientMutationId)) return
 
   const doc = getParsedDocument(GetTaskDocument)
   const result = await client.query<{ task?: unknown }>({
@@ -112,6 +120,7 @@ export async function mergeTaskUpdatedIntoCache(
   const existingUpdateDate = existing?.task?.updateDate
   const incomingUpdateDate = (incoming as { updateDate?: string }).updateDate
   if (
+    !options.force &&
     existingUpdateDate &&
     incomingUpdateDate &&
     new Date(incomingUpdateDate) <= new Date(existingUpdateDate)
@@ -137,7 +146,7 @@ export async function mergePatientUpdatedIntoCache(
   if (getPending('Patient', patientId)) {
     if (options.conflictStrategy === 'defer') return
   }
-  if (isLikelyEcho('Patient', patientId, payload.clientMutationId)) return
+  if (!options.ignoreEcho && isLikelyEcho('Patient', patientId, payload.clientMutationId)) return
 
   const doc = getParsedDocument(GetPatientDocument)
   const result = await client.query<{ patient?: unknown }>({
@@ -157,6 +166,7 @@ export async function mergePatientUpdatedIntoCache(
   const existingUpdateDate = existing?.patient?.updateDate
   const incomingUpdateDate = (incoming as { updateDate?: string }).updateDate
   if (
+    !options.force &&
     existingUpdateDate &&
     incomingUpdateDate &&
     new Date(incomingUpdateDate) <= new Date(existingUpdateDate)
@@ -196,10 +206,14 @@ export async function reloadEntityAfterMutation(
       client,
       entityId,
       { taskId: entityId },
-      { conflictStrategy: 'server-wins' }
+      reloadAfterMutationOptions
     )
       .then(() => client.refetchQueries({
-        include: [getParsedDocument(GetTasksDocument), getParsedDocument(GetPatientsDocument)],
+        include: [
+          getParsedDocument(GetTasksDocument),
+          getParsedDocument(GetPatientsDocument),
+          getParsedDocument(GetGlobalDataDocument),
+        ],
       }))
       .catch(() => {})
       .finally(() => removeRefreshingTask(entityId))
@@ -211,10 +225,14 @@ export async function reloadEntityAfterMutation(
     client,
     entityId,
     { patientId: entityId },
-    { conflictStrategy: 'server-wins' }
+    reloadAfterMutationOptions
   )
     .then(() => client.refetchQueries({
-      include: [getParsedDocument(GetPatientsDocument), getParsedDocument(GetTasksDocument)],
+      include: [
+        getParsedDocument(GetPatientsDocument),
+        getParsedDocument(GetTasksDocument),
+        getParsedDocument(GetGlobalDataDocument),
+      ],
     }))
     .catch(() => {})
     .finally(() => removeRefreshingPatient(entityId))

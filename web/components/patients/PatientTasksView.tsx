@@ -187,18 +187,24 @@ export const PatientTasksView = ({
       >
         <TaskDetailView
           taskId={taskId}
-          initialPatientId={isCreatingTask ? patientId : undefined}
-          initialPatientName={isCreatingTask ? initialPatientName : undefined}
+          initialCreationData={isCreatingTask ?
+            { patientId, patientNameFallback: initialPatientName }
+            : undefined
+          }
           onListSync={() => {
             onSuccess?.()
           }}
-          onClose={() => {
+          onDelete={() => {
             setTaskId(null)
             setIsCreatingTask(false)
           }}
-          onCreateSuccessClose={() => {
+          onCreate={() => {
             setTaskId(null)
             setIsCreatingTask(false)
+            onSuccess?.()
+          }}
+          onUpdate={() => {
+            onSuccess?.()
           }}
         />
       </Drawer>

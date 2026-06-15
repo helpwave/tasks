@@ -65,6 +65,15 @@
   "editTask": "Modifier la tâche",
   "errorOccurred": "Une erreur s''est produite",
   "estimatedTime": "Temps estimé (minutes)",
+  "timeEstimate": "Temps estimé",
+  "nMinutesShort": "{minCount} min",
+  "@nMinutesShort": {
+    "placeholders": {
+      "minCount": {
+        "type": "number"
+      }
+    }
+  },
   "feedback": "Commentaires",
   "female": "Féminin",
   "filter": "Filtre",
@@ -113,6 +122,12 @@
   "@nSorting": { "placeholders": { "count": { "type": "number" } } },
   "nPatient": "{count, plural, =1{# Patient} other{# Patients}}",
   "@nPatient": { "placeholders": { "count": { "type": "number" } } },
+  "patientsCountChipTotal": "Total {count}",
+  "@patientsCountChipTotal": { "placeholders": { "count": { "type": "string" } } },
+  "patientsCountChipAdmitted": "Admis {count}",
+  "@patientsCountChipAdmitted": { "placeholders": { "count": { "type": "string" } } },
+  "patientsCountChipWaiting": "En attente {count}",
+  "@patientsCountChipWaiting": { "placeholders": { "count": { "type": "string" } } },
   "nTask": "{count, plural, =1{# Tâche} other{# Tâches}}",
   "@nTask": { "placeholders": { "count": { "type": "number" } } },
   "nYears": "{years, plural, =0{0 an} =1{1 an} other{# ans}}",
@@ -138,8 +153,9 @@
   "pThemes": "{count, plural, =1{Thème} other{Thèmes}}",
   "@pThemes": { "placeholders": { "count": { "type": "number" } } },
   "preferences": "Préférences",
-  "priority": "{priority, select, P1{Normal} P2{Moyenne} P3{Haute} P4{Critique} other{-}}",
-  "@priority": { "placeholders": { "priority": {} } },
+  "priority": "Priorité",
+  "sPriority": "{priority, select, P1{Normal} P2{Moyenne} P3{Haute} P4{Critique} other{-}}",
+  "@sPriority": { "placeholders": { "priority": {} } },
   "priorityLabel": "Priorité",
   "priorityNone": "Aucune",
   "privacy": "Confidentialité",
@@ -206,6 +222,8 @@
   "copyShareLinkEnableSharingFirst": "Activez le partage par lien pour que d''autres personnes avec le lien puissent ouvrir cet accès rapide.",
   "rShow": "Afficher {name}",
   "@rShow": { "placeholders": { "name": { "type": "string" } } },
+  "rChipTotal": "Total {value}",
+  "@rChipTotal": { "placeholders": { "value": { "type": "string" } } },
   "search": "Rechercher",
   "searchUserOrTeam": "Rechercher un utilisateur (ou une équipe)...",
   "searchUsersOrTeams": "Rechercher des utilisateurs ou des équipes...",
@@ -337,6 +355,7 @@
   "taskPresetNoTasks": "This preset has no tasks.",
   "taskPresetSelectPlaceholder": "Select a preset",
   "taskPresetEditDetails": "Edit details",
+  "editPresetTask": "Modifier la tâche du préréglage",
   "taskPresetApplyToRow": "Apply to preset row",
   "taskPresetNoEstimate": "No estimate",
   "tasksCreatedFromPreset": "Tasks created",
