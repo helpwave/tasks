@@ -40,7 +40,6 @@ import { useRouter } from 'next/router'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { useLocations, useMySavedViews } from '@/data'
 import type { MySavedViewsQuery } from '@/api/gql/generated'
-import { buildSurveyUrl, ONE_WEEK_MS, surveyStorageKeys, type SurveyType } from '@/utils/survey'
 import { useSwipeGesture } from '@/hooks/useSwipeGesture'
 import { LocationSelectionDialog } from '@/components/locations/LocationSelectionDialog'
 import { FeedbackDialog } from '@/components/FeedbackDialog'
@@ -88,108 +87,6 @@ export const StagingDisclaimerDialog = () => {
       <div className="flex-row-0 justify-end">
         <Button color="positive" onClick={dismissStagingDisclaimer}>
           {translation('confirm')}
-        </Button>
-      </div>
-    </Dialog>
-  )
-}
-
-export const SurveyModal = () => {
-  const config = getConfig()
-  const translation = useTasksTranslation()
-  const { user } = useTasksContext()
-
-  const [isSurveyOpen, setSurveyOpen] = useState(false)
-  const [surveyType, setSurveyType] = useState<SurveyType | null>(null)
-  const [surveyUrl, setSurveyUrl] = useState<string | null>(null)
-
-  const {
-    value: onboardingSurveyCompleted,
-    setValue: setOnboardingSurveyCompleted
-  } = useStorage({ key: surveyStorageKeys.onboardingCompleted, defaultValue: 0 })
-
-  const {
-    value: weeklySurveyLastCompleted,
-    setValue: setWeeklySurveyLastCompleted
-  } = useStorage({ key: surveyStorageKeys.weeklyLastCompleted, defaultValue: 0 })
-
-  useEffect(() => {
-    if (!config.onboardingSurveyUrl && !config.weeklySurveyUrl) {
-      return
-    }
-
-    if (!user?.id) {
-      return
-    }
-
-    if (isSurveyOpen) {
-      return
-    }
-
-    const setupSurvey = async () => {
-      const now = new Date().getTime()
-
-      if (config.onboardingSurveyUrl && onboardingSurveyCompleted === 0) {
-        setSurveyType('onboarding')
-        setSurveyUrl(await buildSurveyUrl(config.onboardingSurveyUrl, user.id))
-        setSurveyOpen(true)
-        return
-      }
-
-      const onboardingHandled = onboardingSurveyCompleted > 0 || !config.onboardingSurveyUrl
-      if (config.weeklySurveyUrl && onboardingHandled && (weeklySurveyLastCompleted === 0 || now - weeklySurveyLastCompleted >= ONE_WEEK_MS)) {
-        setSurveyType('weekly')
-        setSurveyUrl(await buildSurveyUrl(config.weeklySurveyUrl, user.id))
-        setSurveyOpen(true)
-        return
-      }
-    }
-
-    setupSurvey().catch(() => { })
-  }, [config.onboardingSurveyUrl, config.weeklySurveyUrl, user?.id, onboardingSurveyCompleted, weeklySurveyLastCompleted, isSurveyOpen])
-
-  const persistInteraction = () => {
-    const now = new Date().getTime()
-    if (surveyType === 'onboarding') {
-      setOnboardingSurveyCompleted(now)
-    } else if (surveyType === 'weekly') {
-      setWeeklySurveyLastCompleted(now)
-    }
-  }
-
-  const handleDismiss = () => {
-    persistInteraction()
-    setSurveyOpen(false)
-  }
-
-  const handleOpenSurvey = () => {
-    if (surveyUrl) {
-      window.open(surveyUrl, '_blank', 'noopener,noreferrer')
-      persistInteraction()
-      setSurveyOpen(false)
-    }
-  }
-
-  if (!surveyUrl || !surveyType) {
-    return null
-  }
-
-  return (
-    <Dialog
-      isModal={false}
-      isOpen={isSurveyOpen}
-      onClose={handleDismiss}
-      titleElement={translation('surveyTitle')}
-      description={translation('surveyDescription')}
-      className={clsx('z-20 w-200')}
-      backgroundClassName="z-10"
-    >
-      <div className="flex-row-0 justify-end gap-2">
-        <Button color="neutral" coloringStyle="outline" onClick={handleDismiss}>
-          {translation('dismiss')}
-        </Button>
-        <Button color="positive" onClick={handleOpenSurvey}>
-          {translation('openSurvey')}
         </Button>
       </div>
     </Dialog>
@@ -707,7 +604,6 @@ export const Page = ({
         <title>{titleWrapper(pageTitle)}</title>
       </Head>
       <StagingDisclaimerDialog />
-      <SurveyModal />
       <Sidebar
         className="my-4 ml-4"
         isOpen={isSidebarOpen}
