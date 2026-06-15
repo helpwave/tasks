@@ -27,11 +27,7 @@ function stopRowActivation(e: React.SyntheticEvent) {
   e.stopPropagation()
 }
 
-function parseAsDate(raw: unknown): Date | null {
-  if (raw == null || raw === '') return null
-  const d = raw instanceof Date ? raw : new Date(raw as string)
-  return Number.isNaN(d.getTime()) ? null : d
-}
+import { formatLocalCalendarDate, parseApiDateTime, parseLocalCalendarDate, serializeDateTimeForApi } from '@/utils/calendarDate'
 
 function wrapTrigger(node: ReactNode): ReactNode {
   return (
@@ -136,7 +132,7 @@ export function EditablePropertyCell({
     )
   }
   case FieldType.FieldTypeDate: {
-    const d = parseAsDate(property?.dateValue)
+    const d = parseLocalCalendarDate(property?.dateValue ?? null) ?? null
     return wrapTrigger(
       <InTableDateTimeEditPopUp
         mode="date"
@@ -146,7 +142,7 @@ export function EditablePropertyCell({
           onValueChanged(
             next == null
               ? null
-              : { definitionId, dateValue: next.toISOString().split('T')[0] }
+              : { definitionId, dateValue: formatLocalCalendarDate(next) }
           )
         }}
       >
@@ -155,7 +151,7 @@ export function EditablePropertyCell({
     )
   }
   case FieldType.FieldTypeDateTime: {
-    const d = parseAsDate(property?.dateTimeValue)
+    const d = parseApiDateTime(property?.dateTimeValue ?? null) ?? null
     return wrapTrigger(
       <InTableDateTimeEditPopUp
         mode="dateTime"
@@ -163,7 +159,7 @@ export function EditablePropertyCell({
         buttonProps={editableTriggerButtonProps}
         onUpdate={(next) => {
           onValueChanged(
-            next == null ? null : { definitionId, dateTimeValue: next.toISOString() }
+            next == null ? null : { definitionId, dateTimeValue: serializeDateTimeForApi(next) }
           )
         }}
       >

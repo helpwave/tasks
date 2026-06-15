@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { samePaginatedListItems } from '@/utils/paginatedListItemKey'
 
 const DEFAULT_PREFETCH_PAGES = 2
 
@@ -27,14 +28,6 @@ function reconcileFirstPage<T extends { id: string }>(prev: T[], incoming: T[]):
   const incomingIds = new Set(incoming.map(x => x.id))
   const tail = prev.filter(item => !incomingIds.has(item.id))
   return [...incoming, ...tail]
-}
-
-function sameItems<T extends { id: string }>(a: T[], b: T[]): boolean {
-  if (a.length !== b.length) return false
-  for (let i = 0; i < a.length; i++) {
-    if (a[i] !== b[i]) return false
-  }
-  return true
 }
 
 export function mergePagesById<T extends { id: string }>(
@@ -135,7 +128,7 @@ export function useAccumulatedPagination<T extends { id: string }>(options: {
         rawReads.push(readCachedPage(p) ?? (p === pageIndex ? pageDataRef.current : undefined))
       }
       const next = materializePages(rawReads, lastPagesRef.current)
-      setAccumulated(prev => (sameItems(prev, next) ? prev : next))
+      setAccumulated(prev => (samePaginatedListItems(prev, next) ? prev : next))
     }
     materialize()
     const unsubscribes: Array<() => void> = []

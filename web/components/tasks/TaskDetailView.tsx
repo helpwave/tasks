@@ -10,6 +10,7 @@ import {
 import { PropertyList, type PropertyValue } from '@/components/tables/PropertyList'
 import { TaskDataEditor, type TaskCreationInitialData } from './TaskDataEditor'
 import { useUpdateTask } from '@/data'
+import { propertyValueToInput } from '@/utils/propertyValueInput'
 
 interface TaskDetailViewProps {
   taskId: string | null,
@@ -43,17 +44,7 @@ export const TaskDetailView = ({
 
   const convertPropertyValueToInput = useCallback((definitionId: string, value: PropertyValue | null): PropertyValueInput | null => {
     if (!value) return null
-    return {
-      definitionId,
-      textValue: value.textValue ?? undefined,
-      numberValue: value.numberValue ?? undefined,
-      booleanValue: value.boolValue ?? undefined,
-      dateValue: value.dateValue?.toISOString().split('T')[0] ?? undefined,
-      dateTimeValue: value.dateTimeValue?.toISOString() ?? undefined,
-      selectValue: value.singleSelectValue ?? undefined,
-      multiSelectValues: value.multiSelectValue ?? undefined,
-      userValue: value.userValue ?? undefined,
-    }
+    return propertyValueToInput(definitionId, value)
   }, [])
 
   const handlePropertyValueChange = useCallback((definitionId: string, value: PropertyValue | null) => {

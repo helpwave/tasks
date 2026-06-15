@@ -8,6 +8,7 @@ query GetPatient($id: ID!) {
     sex
     state
     description
+    updateDate
     checksum
     assignedLocation {
       id

@@ -55,7 +55,12 @@ function MyApp({
   }, [])
 
   return (
-    <HightideProvider>
+    <HightideProvider
+      locale={{
+        timeZone: config.timezone,
+        is24HourFormat: true,
+      }}
+    >
       <QueryClientProvider client={queryClient}>
         <Head>
           <title>{titleWrapper()}</title>

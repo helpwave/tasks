@@ -1,7 +1,7 @@
 import { useMemo, useState, forwardRef, useImperativeHandle, useEffect, useCallback, useRef, type ReactNode } from 'react'
 import { useMutation } from '@apollo/client/react'
 import type { IdentifierFilterValue, FilterListItem, FilterListPopUpBuilderProps } from '@helpwave/hightide'
-import { Chip, FillerCell, HelpwaveLogo, SearchBar, ProgressIndicator, Tooltip, Drawer, TableProvider, TableDisplay, TableColumnSwitcher, IconButton, useLocale, FilterList, SortingList, Button, ExpansionIcon, Visibility, ConfirmDialog } from '@helpwave/hightide'
+import { Chip, DateUtils, FillerCell, HelpwaveLogo, SearchBar, ProgressIndicator, Tooltip, Drawer, TableProvider, TableDisplay, TableColumnSwitcher, IconButton, useLocale, FilterList, SortingList, Button, ExpansionIcon, Visibility, ConfirmDialog } from '@helpwave/hightide'
 import clsx from 'clsx'
 import { LayoutGrid, Loader2, PlusIcon, Table2 } from 'lucide-react'
 import type { LocationType } from '@/api/gql/generated'
@@ -77,6 +77,7 @@ export type PatientViewModel = {
   birthdate: Date,
   sex: Sex,
   state: PatientState,
+  updateDate?: Date,
   tasks: TaskType[],
   properties?: GetPatientsQuery['patients'][0]['properties'],
 }
@@ -488,6 +489,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
       position: p.position,
       openTasksCount: countForAggregate ? (p.tasks?.filter(t => !t.done).length ?? 0) : 0,
       closedTasksCount: countForAggregate ? (p.tasks?.filter(t => t.done).length ?? 0) : 0,
+      updateDate: p.updateDate ? new Date(p.updateDate) : undefined,
       tasks: [],
       properties: p.properties ?? [],
     }
@@ -634,11 +636,11 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
     })
   ), [patientPropertyColumns, translation, handleOpenClearProperty])
 
-  const dateFormat = useMemo(() => Intl.DateTimeFormat(locale, {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit'
-  }), [locale])
+  const { timeZone, is24HourFormat } = useLocale()
+  const formatBirthdate = useCallback(
+    (birthdate: Date) => DateUtils.formatAbsolute(birthdate, locale, 'date', { timeZone, is24HourFormat }),
+    [locale, timeZone, is24HourFormat]
+  )
 
   const gateCell = useCallback(
     (patientId: string, content: ReactNode) => (
@@ -780,7 +782,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
 
         return gateCell(row.original.id, (
           <span>
-            {dateFormat.format(row.original.birthdate) + ' (' + translation('nYears', { years }) + ')'}
+            {formatBirthdate(row.original.birthdate) + ' (' + translation('nYears', { years }) + ')'}
           </span>
         ))
       },
@@ -823,21 +825,9 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
     {
       id: 'updateDate',
       header: translation('updated'),
-      accessorFn: (row) => {
-        const taskList = row.tasks || []
-        const updateDates = taskList
-          .map(t => t.updateDate ? new Date(t.updateDate) : null)
-          .filter((d): d is Date => d !== null)
-          .sort((a, b) => b.getTime() - a.getTime())
-        return updateDates[0]
-      },
+      accessorFn: (row) => row.updateDate,
       cell: ({ row }) => {
-        const taskList = row.original.tasks || []
-        const updateDates = taskList
-          .map(t => t.updateDate ? new Date(t.updateDate) : null)
-          .filter((d): d is Date => d !== null)
-          .sort((a, b) => b.getTime() - a.getTime())
-        const d = updateDates[0]
+        const d = row.original.updateDate
         return gateCell(row.original.id, d ? <DateDisplay date={d} mode="absolute" /> : <FillerCell />)
       },
       minSize: 220,
@@ -852,7 +842,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
           gateCell(params.row.original.id, (col.cell as (p: unknown) => React.ReactNode)(params))
         : undefined,
     })),
-  ], [translation, patientPropertyColumnsWithActions, gateCell, dateFormat])
+  ], [translation, patientPropertyColumnsWithActions, gateCell, formatBirthdate])
 
   const propertyFieldTypeByDefId = useMemo(
     () => new Map(propertyDefinitionsData?.propertyDefinitions.map(d => [d.id, d.fieldType]) ?? []),
@@ -1255,6 +1245,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
             onClose={closePatientDrawer}
             onSuccess={() => {
               embeddedOnRefetch?.()
+              void refetch()
               onPatientUpdated?.()
             }}
             onOpenSystemSuggestion={openSuggestionModal}

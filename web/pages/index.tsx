@@ -13,11 +13,12 @@ import { TaskList } from '@/components/tables/TaskList'
 import { PatientList } from '@/components/tables/PatientList'
 import { overviewRecentTaskToTaskViewModel } from '@/utils/overviewRecentTaskToTaskViewModel'
 import { overviewRecentPatientToPatientViewModel } from '@/utils/overviewRecentPatientToPatientViewModel'
+import { DateUtils, useLocale } from '@helpwave/hightide'
 import clsx from 'clsx'
 
 
-const getGreetingKey = () => {
-  const hour = new Date().getHours()
+const getGreetingKey = (timeZone: string) => {
+  const hour = DateUtils.zonedParts(new Date(), timeZone).hour
   if (hour >= 6 && hour < 12) return 'dashboardWelcomeMorning'
   if (hour >= 12 && hour < 14) return 'dashboardWelcomeNoon'
   if (hour >= 14 && hour < 18) return 'dashboardWelcomeAfternoon'
@@ -32,6 +33,8 @@ interface GreetingSectionProps {
 
 const GreetingSection = ({ userName, userAvatarUrl }: GreetingSectionProps) => {
   const translation = useTasksTranslation()
+  const { timeZone } = useLocale()
+  const greetingKey = getGreetingKey(timeZone ?? 'Europe/Berlin')
 
   return (
     <div className="flex-row-4 items-center">
@@ -40,7 +43,7 @@ const GreetingSection = ({ userName, userAvatarUrl }: GreetingSectionProps) => {
         image={userAvatarUrl ? { avatarUrl: userAvatarUrl, alt: userName ?? '' } : undefined}
       />
       <div className="flex-col-1">
-        <h1 className="typography-title-lg">{translation(getGreetingKey(), { name: userName ?? '' })}</h1>
+        <h1 className="typography-title-lg">{translation(greetingKey, { name: userName ?? '' })}</h1>
         <p className="typography-body text-description">{translation('dashboardWelcomeDescription')}</p>
       </div>
     </div>
