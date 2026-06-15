@@ -46,6 +46,19 @@ export const updatePatientOptimisticPlan: OptimisticPlan<UpdatePatientVariables>
                 data.firstname !== undefined ? data.firstname ?? '' : prev,
               lastname: (prev: string) =>
                 data.lastname !== undefined ? data.lastname ?? '' : prev,
+              // `name` is a server-computed field (`${firstname} ${lastname}`) that
+              // the patient list/card render. Keep it in sync optimistically so the
+              // rename shows immediately instead of waiting for a full list refetch.
+              name: (prev: string, { readField }) => {
+                if (data.firstname === undefined && data.lastname === undefined) return prev
+                const firstname = data.firstname !== undefined
+                  ? data.firstname ?? ''
+                  : ((readField('firstname') as string | undefined) ?? '')
+                const lastname = data.lastname !== undefined
+                  ? data.lastname ?? ''
+                  : ((readField('lastname') as string | undefined) ?? '')
+                return `${firstname} ${lastname}`
+              },
               birthdate: (prev: unknown) =>
                 data.birthdate !== undefined ? data.birthdate : prev,
               sex: (prev: string | null) =>
