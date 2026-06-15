@@ -1131,8 +1131,8 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
             <TaskDetailView
               taskId={taskDialogState.taskId ?? null}
               initialCreationData={taskInitialCreationData}
-              onCreate={(taskId) => {
-                setTaskDialogState({ isOpen: true, taskId })
+              onCreate={() => {
+                closeTaskDrawerFromSubmit()
               }}
               onDelete={closeTaskDrawerFromSubmit}
               onListSync={onRefetch}
