@@ -1,4 +1,6 @@
 import pytest
+from datetime import datetime, timezone
+
 from api.inputs import PropertyValueInput
 from api.services.property import PropertyService
 
@@ -92,3 +94,33 @@ async def test_process_properties_multi_select(db_session, sample_patient):
     prop_values = result.scalars().all()
     assert len(prop_values) == 1
     assert prop_values[0].multi_select_values == "option1,option2,option3"
+
+
+@pytest.mark.asyncio
+async def test_process_properties_stores_date_time_value_as_naive_utc(
+    db_session, sample_patient
+):
+    service = PropertyService(db_session)
+    aware = datetime(2002, 1, 1, 2, 0, tzinfo=timezone.utc)
+    props = [
+        PropertyValueInput(
+            definition_id="def-1",
+            date_time_value=aware,
+        ),
+    ]
+    await service.process_properties(sample_patient, props, "patient")
+    await db_session.commit()
+
+    from database.models.property import PropertyValue
+    from sqlalchemy import select
+
+    result = await db_session.execute(
+        select(PropertyValue).where(
+            PropertyValue.patient_id == sample_patient.id
+        )
+    )
+    prop_values = result.scalars().all()
+    assert len(prop_values) == 1
+    stored = prop_values[0].date_time_value
+    assert stored == datetime(2002, 1, 1, 2, 0)
+    assert stored.tzinfo is None

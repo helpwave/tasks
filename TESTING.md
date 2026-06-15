@@ -77,10 +77,9 @@ act
 # Run specific workflow file
 act -W .github/workflows/tests.yml
 
-# Run specific job
-act -j backend-tests
-act -j frontend-tests
-act -j e2e-tests
+# Run one job
+act -j frontend -W .github/workflows/tests.yml
+act -j e2e-tests -W .github/workflows/tests.yml
 
 # Run on specific event
 act push
@@ -99,13 +98,18 @@ See [.github/workflows/README.md](.github/workflows/README.md) for more details.
 
 The GitHub Actions workflow (`.github/workflows/tests.yml`) runs:
 
-1. **Backend Tests** - Unit and integration tests across Python 3.11, 3.12, 3.13
-2. **Frontend Tests** - TypeScript type checking and ESLint
-3. **E2E Tests** - Playwright end-to-end tests
+1. **Lint** — Ruff (backend, simulator), ESLint + typecheck (frontend)
+2. **Frontend checks** — translation keys, Vitest unit tests
+3. **Backend tests** — unit and integration tests across Python 3.11, 3.12, 3.13
+4. **E2E tests** — Playwright end-to-end tests
 
-All tests run automatically on:
-- Push to `main` or `develop` branches
-- Pull requests to `main` or `develop` branches
+All checks run automatically on push and pull requests to `main` or `develop`. Use the `ci` job as the required status check for branch protection.
+
+Path-filtered workflows also run separately:
+
+- `build-web.yml` — Next.js production build when `web/**` changes
+- `lint-dockerfiles.yml` — Dockerfile lint when Dockerfiles change
+- `docker-build.yml` — GHCR image builds on `main` and relevant PRs
 
 ## Test Structure
 

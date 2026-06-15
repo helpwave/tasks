@@ -1,20 +1,11 @@
 import type { ReactNode } from 'react'
-import { useState, type ComponentProps } from 'react'
+import { useEffect, useState, type ComponentProps } from 'react'
 import type { ButtonProps } from '@helpwave/hightide'
-import { Button, DateTimeInput, FlexibleDateTimeInput, PopUp, PopUpContext, PopUpOpener, PopUpRoot } from '@helpwave/hightide'
+import { Button, DateTimeInput, FlexibleDateTimeInput, PopUp, PopUpContext, PopUpOpener, PopUpRoot, useLocale } from '@helpwave/hightide'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { getTaskDueDateFlexibleInputProps, TASK_DUE_DATE_DATE_TIME_INPUT_PROPS } from '@/utils/dueDate'
+import { samePropertyDateInputValue } from '@/utils/calendarDate'
 import clsx from 'clsx'
-
-function sameMoment(a: Date | null, b: Date | null): boolean {
-  if (a == null && b == null) {
-    return true
-  }
-  if (a == null || b == null) {
-    return false
-  }
-  return a.getTime() === b.getTime()
-}
 
 type InTableDateTimeEditPopUpProps = {
   value: Date | null,
@@ -45,12 +36,17 @@ export function InTableDateTimeEditPopUp({
   options = { horizontalAlignment: 'afterStart', verticalAlignment: 'afterEnd' },
   className = 'p-2',
 }: InTableDateTimeEditPopUpProps) {
+  const { timeZone } = useLocale()
   const [draft, setDraft] = useState<Date | null>(value)
   const translation = useTasksTranslation()
 
+  useEffect(() => {
+    setDraft(value)
+  }, [value])
+
   const commitDraft = (next: Date | null) => {
     setDraft(next)
-    if (!sameMoment(next, value)) {
+    if (!samePropertyDateInputValue(next, value, mode, timeZone)) {
       onUpdate(next)
     }
   }

@@ -9,6 +9,7 @@ import type { TaskPriority, GetTasksQuery, QueryableField } from '@/api/gql/gene
 import { FieldType, PropertyEntity } from '@/api/gql/generated'
 import { useAssignTask, useAssignTaskToTeam, useCompleteTask, useReopenTask, useUsers, useLocations, usePropertyDefinitions, useQueryableFields, useRefreshingEntityIds, useUpdateTask } from '@/data'
 import { AssigneeSelectDialog } from '@/components/tasks/AssigneeSelectDialog'
+import { DueDateDisplay } from '@/components/Date/DueDateDisplay'
 import { DateDisplay } from '@/components/Date/DateDisplay'
 import { Drawer } from '@helpwave/hightide'
 import { TaskDetailView } from '@/components/tasks/TaskDetailView'
@@ -695,10 +696,9 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
                   className: 'justify-between group gap-x-2 w-full',
                 }}
               >
-                <DateDisplay
-                  date={row.original.dueDate}
+                <DueDateDisplay
+                  value={row.original.dueDate}
                   mode="absolute"
-                  showTime={!DueDateUtils.isDateOnly(row.original.dueDate)}
                   className={clsx(colorClass, 'truncate')}
                 />
                 <Edit2 className="size-4 min-w-4 group-hover:block hidden"/>

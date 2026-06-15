@@ -7,7 +7,7 @@ import {
 import { getParsedDocument } from '@/data/hooks/queryHelpers'
 import { registerOptimisticPlan } from '@/data/mutations/registry'
 import type { OptimisticPlan, OptimisticPatch } from '@/data/mutations/types'
-import { buildOptimisticProperties, readEntityProperties } from '@/api/mutations/shared/optimisticProperties'
+import { buildOptimisticProperties, readEntityProperties, applyOptimisticPropertyScalars, getNewOptimisticProperties } from '@/api/mutations/shared/optimisticProperties'
 
 type UpdatePatientVariables = {
   id: string,
@@ -67,11 +67,16 @@ export const updatePatientOptimisticPlan: OptimisticPlan<UpdatePatientVariables>
           // before this mutation commits, and those stale responses then overwrite the
           // optimistic update — so the UI never reflects the change until a full reload.
           if (data.properties !== undefined) {
-            // Read the current properties from the normalized entity (populated by
-            // the list query) so real property uuids are preserved even when the
-            // patient detail query was never run.
             const existingProps = readEntityProperties(cache, 'PatientType', patientId)
-            fields['properties'] = () => buildOptimisticProperties(existingProps, data.properties, patientId)
+            const optimisticProperties = buildOptimisticProperties(existingProps, data.properties, patientId)
+            applyOptimisticPropertyScalars(cache, optimisticProperties)
+            const newProperties = getNewOptimisticProperties(optimisticProperties)
+            if (newProperties.length > 0) {
+              fields['properties'] = (existing) => {
+                const current = Array.isArray(existing) ? existing : []
+                return [...current, ...newProperties]
+              }
+            }
           }
           cache.modify({ id, fields })
           cache.modify({

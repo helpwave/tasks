@@ -70,26 +70,40 @@ export const PropertyEntry = ({
         onEditComplete={numberValue => onEditComplete({ ...value, numberValue })}
       />
     )
-  case 'date':
+  case 'date': {
+    const commitDateValue = (dateValue: Date | null | undefined) => {
+      onChange({ ...value, dateValue: dateValue ?? undefined })
+    }
+    const completeDateValue = (dateValue: Date | null | undefined) => {
+      onEditComplete({ ...value, dateValue: dateValue ?? undefined })
+    }
     return (
       <DateProperty
         {...commonProps}
         type="date"
         value={value.dateValue}
-        onValueChange={dateValue => onChange({ ...value, dateValue })}
-        onEditComplete={dateValue => onEditComplete({ ...value, dateValue })}
+        onValueChange={commitDateValue}
+        onEditComplete={completeDateValue}
       />
     )
-  case 'dateTime':
+  }
+  case 'dateTime': {
+    const commitDateTimeValue = (dateTimeValue: Date | null | undefined) => {
+      onChange({ ...value, dateTimeValue: dateTimeValue ?? undefined })
+    }
+    const completeDateTimeValue = (dateTimeValue: Date | null | undefined) => {
+      onEditComplete({ ...value, dateTimeValue: dateTimeValue ?? undefined })
+    }
     return (
       <DateProperty
         {...commonProps}
         type="dateTime"
         value={value.dateTimeValue}
-        onValueChange={dateTimeValue => onChange({ ...value, dateTimeValue })}
-        onEditComplete={dateTimeValue => onEditComplete({ ...value, dateTimeValue })}
+        onValueChange={commitDateTimeValue}
+        onEditComplete={completeDateTimeValue}
       />
     )
+  }
   case 'checkbox':
     return (
       <CheckboxProperty

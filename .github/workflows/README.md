@@ -1,101 +1,86 @@
-# Running GitHub Actions Locally
+# GitHub Actions
 
-This project uses GitHub Actions for CI/CD. You can run these workflows locally using [act](https://github.com/nektos/act), which simulates GitHub Actions in a Docker environment.
+## Workflow map
 
-## Workflow Overview
+```mermaid
+flowchart TD
+  subgraph quality["Quality gate — tests.yml (main/develop PRs)"]
+    BL[backend-lint]
+    SL[simulator-lint]
+    FE[frontend]
+    BT[backend-tests]
+    E2E[e2e-tests]
+    CI[ci]
 
-### Main Workflow: `tests.yml` ⭐ **RECOMMENDED**
-**Primary workflow for all tests and linting**
-- Runs on: `push` and `pull_request` to `main` and `develop`
-- Jobs:
-  - `backend-lint` - Lints Python backend code
-  - `simulator-lint` - Lints Python simulator code
-  - `frontend-lint` - Lints TypeScript/JavaScript frontend code
-  - `backend-tests` - Runs backend unit and integration tests (Python 3.11, 3.12, 3.13)
-  - `frontend-tests` - Runs frontend type checking
-  - `e2e-tests` - Runs end-to-end tests with Playwright (includes proper dependency installation)
-  - `build` - Builds the frontend application
+    BL --> BT
+    FE --> E2E
+    BT --> CI
+    SL --> CI
+    FE --> CI
+    E2E --> CI
+  end
 
-**Use this workflow for:**
-- ✅ Full CI/CD pipeline
-- ✅ Comprehensive testing
-- ✅ Pull request validation
-- ✅ **E2E tests (properly configured with dependencies)**
+  subgraph compile["Compile checks — path-filtered"]
+    BW[build-web.yml]
+    LD[lint-dockerfiles.yml]
+  end
 
-### Secondary Workflow: `e2e-tests.yml`
-**Standalone E2E test workflow (legacy/alternative)**
-- Runs on: `push`, `pull_request` to `main` and `develop`, and `workflow_dispatch`
-- Single job: `e2e` - Runs only E2E tests
-
-**Use this workflow for:**
-- Quick E2E test runs
-- Manual E2E testing via workflow_dispatch
-- Focused E2E test debugging
-
-**Note:** The main `tests.yml` workflow is **recommended** for most use cases as it includes all tests, linting, and properly configured E2E tests with dependency installation.
-
-## Prerequisites
-
-1. **Docker**: Ensure Docker is installed and running
-   ```bash
-   docker --version
-   ```
-
-2. **Install act**:
-   - **macOS**: `brew install act`
-   - **Linux**: Download from [act releases](https://github.com/nektos/act/releases)
-   - **Windows**: Use WSL or download from releases
-
-## Usage
-
-### List all workflows
-```bash
-act -l
+  subgraph release["Container images — main + relevant PRs"]
+    DB[docker-build.yml]
+  end
 ```
 
-### Run all workflows
+## When each workflow runs
+
+| Workflow | Trigger | Purpose |
+|----------|---------|---------|
+| `tests.yml` | Push/PR to `main` or `develop`, manual dispatch | Primary quality gate: lint, unit/integration tests, E2E |
+| `build-web.yml` | Push/PR when `web/**` changes | Next.js production build on Node 22 |
+| `lint-dockerfiles.yml` | Push/PR when Dockerfiles change | Hadolint |
+| `docker-build.yml` | Push to `main`; PR when app/Docker paths change | Build and push GHCR images |
+
+## `tests.yml` job graph
+
+Lint and frontend checks start immediately in parallel:
+
+- `backend-lint` → `backend-tests` (Python 3.11 / 3.12 / 3.13)
+- `simulator-lint`
+- `frontend` (ESLint, typecheck, translation keys, Vitest)
+
+`e2e-tests` depends only on `frontend`, not on the backend test matrix. E2E boots its own backend and most data-loading specs mock GraphQL anyway, so waiting for three Python versions added minutes without improving signal.
+
+`ci` is the single aggregation job for branch protection. It succeeds only when `backend-tests`, `simulator-lint`, `frontend`, and `e2e-tests` all pass.
+
+Re-run the full suite manually:
+
 ```bash
-act
+gh workflow run tests.yml
 ```
 
-### Run a specific workflow
+## Running locally with act
+
 ```bash
+# List jobs
+act -l -W .github/workflows/tests.yml
+
+# Run the full quality gate
 act -W .github/workflows/tests.yml
-act -W .github/workflows/e2e-tests.yml
+
+# Run one job
+act -W .github/workflows/tests.yml -j frontend
+act -W .github/workflows/tests.yml -j e2e-tests
 ```
 
-### Run a specific job
-```bash
-act -j backend-tests
-act -j frontend-tests
-act -j e2e-tests
-```
+Prerequisites: Docker running, [act](https://github.com/nektos/act) installed.
 
-### Run on specific event
-```bash
-act push
-act pull_request
-```
+E2E and service-backed jobs need a medium or large act image. Service containers (Postgres, Redis) are started automatically.
 
-### Use secrets (if needed)
-Create a `.secrets` file in the repository root:
-```
-SECRET_NAME=secret_value
-```
+## Removed workflows
 
-Then run:
-```bash
-act --secret-file .secrets
-```
+These duplicated `tests.yml` and ran the same checks twice on every PR:
 
-## Limitations
-
-- Services (PostgreSQL, Redis) are automatically set up by act
-- Some actions may behave differently locally vs. on GitHub
-- Large workflows may take longer locally
-
-## Troubleshooting
-
-- If Docker images fail to pull, use `act --pull=false`
-- For verbose output: `act -v`
-- To use a specific platform: `act --container-architecture linux/amd64`
+- `e2e-tests.yml`
+- `backend-tests.yml`
+- `frontend-tests.yml`
+- `lint-python.yml` (flake8; the repo uses ruff in `tests.yml`)
+- `build-docker-*.yml` (four files → `docker-build.yml` matrix)

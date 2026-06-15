@@ -5,6 +5,7 @@ import { FieldType } from '@/api/gql/generated'
 import type { PropertyValueType } from '@/api/gql/generated'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
+import { parseApiDateTime, parseLocalCalendarDate } from '@/utils/calendarDate'
 
 export interface PropertyCellProps {
   property?: PropertyValueType | undefined,
@@ -35,13 +36,8 @@ export const PropertyCell = ({
       </Chip>
     )
   case FieldType.FieldTypeDate: {
-    if (!property.dateValue) {
-      return <FillerCell />
-    }
-    const date = property.dateValue instanceof Date
-      ? property.dateValue
-      : new Date(property.dateValue)
-    if (isNaN(date.getTime())) {
+    const date = parseLocalCalendarDate(property.dateValue ?? undefined)
+    if (!date) {
       return <FillerCell />
     }
     return (
@@ -49,13 +45,8 @@ export const PropertyCell = ({
     )
   }
   case FieldType.FieldTypeDateTime: {
-    if (!property.dateTimeValue) {
-      return <FillerCell />
-    }
-    const date = property.dateTimeValue instanceof Date
-      ? property.dateTimeValue
-      : new Date(property.dateTimeValue)
-    if (isNaN(date.getTime())) {
+    const date = parseApiDateTime(property.dateTimeValue ?? undefined)
+    if (!date) {
       return <FillerCell />
     }
     return (

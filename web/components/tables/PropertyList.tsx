@@ -5,6 +5,7 @@ import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { PropertyEntry } from '@/components/properties/PropertyEntry'
 import { FieldType, PropertyEntity } from '@/api/gql/generated'
 import { usePropertyDefinitions } from '@/data'
+import { parseApiDateTime, parseLocalCalendarDate } from '@/utils/calendarDate'
 
 
 
@@ -201,14 +202,8 @@ export const PropertyList = ({
         textValue: pv.textValue ?? undefined,
         numberValue: pv.numberValue ?? undefined,
         boolValue: pv.booleanValue ?? undefined,
-        dateValue: pv.dateValue ? (() => {
-          const date = new Date(pv.dateValue)
-          return !isNaN(date.getTime()) ? date : undefined
-        })() : undefined,
-        dateTimeValue: pv.dateTimeValue ? (() => {
-          const date = new Date(pv.dateTimeValue)
-          return !isNaN(date.getTime()) ? date : undefined
-        })() : undefined,
+        dateValue: parseLocalCalendarDate(pv.dateValue ?? undefined),
+        dateTimeValue: parseApiDateTime(pv.dateTimeValue ?? undefined),
         singleSelectValue: pv.selectValue ?? undefined,
         multiSelectValue: pv.multiSelectValues || undefined,
         userValue: pv.userValue ?? undefined,
@@ -226,6 +221,27 @@ export const PropertyList = ({
     if (!propertyValues?.length) return ''
     return [...new Set(propertyValues.map(pv => pv.definition.id))].sort().join(',')
   }, [propertyValues])
+
+  const serverPropertyValuesKey = useMemo(() => {
+    if (!propertyValues?.length) return ''
+    return JSON.stringify(
+      propertyValues.map((pv) => ({
+        id: pv.definition.id,
+        textValue: pv.textValue,
+        numberValue: pv.numberValue,
+        booleanValue: pv.booleanValue,
+        dateValue: pv.dateValue,
+        dateTimeValue: pv.dateTimeValue,
+        selectValue: pv.selectValue,
+        multiSelectValues: pv.multiSelectValues,
+        userValue: pv.userValue,
+      }))
+    )
+  }, [propertyValues])
+
+  useEffect(() => {
+    setLocalPropertyValues((prev) => (prev.size === 0 ? prev : new Map()))
+  }, [serverPropertyValuesKey])
 
   useEffect(() => {
     const currentPropertyIds = new Set(
@@ -259,7 +275,7 @@ export const PropertyList = ({
         const localValue = localPropertyValues.get(ap.property.id)
         return {
           ...ap,
-          value: localValue || ap.value,
+          value: localValue ?? ap.value,
         }
       })
 
@@ -268,7 +284,7 @@ export const PropertyList = ({
       .map(pa => ({
         property: pa.property,
         subjectId,
-        value: localPropertyValues.get(pa.property.id) || pa.value,
+        value: localPropertyValues.get(pa.property.id) ?? pa.value,
       }))
 
     const allProperties = [...attached, ...pending]

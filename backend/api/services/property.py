@@ -1,4 +1,5 @@
 from api.inputs import PropertyValueInput
+from api.services.datetime import normalize_datetime_to_utc
 from database import models
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -50,12 +51,14 @@ class PropertyService:
                 None,
             )
 
+            date_time_value = normalize_datetime_to_utc(prop_input.date_time_value)
+
             if existing_prop:
                 existing_prop.text_value = prop_input.text_value
                 existing_prop.number_value = prop_input.number_value
                 existing_prop.boolean_value = prop_input.boolean_value
                 existing_prop.date_value = prop_input.date_value
-                existing_prop.date_time_value = prop_input.date_time_value
+                existing_prop.date_time_value = date_time_value
                 existing_prop.select_value = prop_input.select_value
                 existing_prop.multi_select_values = multi_select_value
                 existing_prop.user_value = prop_input.user_value
@@ -66,7 +69,7 @@ class PropertyService:
                     number_value=prop_input.number_value,
                     boolean_value=prop_input.boolean_value,
                     date_value=prop_input.date_value,
-                    date_time_value=prop_input.date_time_value,
+                    date_time_value=date_time_value,
                     select_value=prop_input.select_value,
                     multi_select_values=multi_select_value,
                     user_value=prop_input.user_value,
