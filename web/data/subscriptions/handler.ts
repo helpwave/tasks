@@ -26,6 +26,12 @@ export type MergeSubscriptionOptions = {
   force?: boolean,
 }
 
+const reloadAfterMutationOptions: MergeSubscriptionOptions = {
+  conflictStrategy: 'server-wins',
+  ignoreEcho: true,
+  force: true,
+}
+
 const ECHO_WINDOW_MS = 5000
 const recentMutationsByEntity = new Map<string, { clientMutationId: string, at: number }>()
 
@@ -194,20 +200,40 @@ export async function reloadEntityAfterMutation(
   entityType: 'Task' | 'Patient',
   entityId: string
 ): Promise<void> {
-  const addRefreshing = entityType === 'Task' ? addRefreshingTask : addRefreshingPatient
-  const removeRefreshing = entityType === 'Task' ? removeRefreshingTask : removeRefreshingPatient
-  const listDocuments = entityType === 'Task'
-    ? [GetTasksDocument, GetPatientsDocument, GetGlobalDataDocument]
-    : [GetPatientsDocument, GetTasksDocument, GetGlobalDataDocument]
-
-  addRefreshing(entityId)
-  try {
-    await client.refetchQueries({
-      include: listDocuments.map(getParsedDocument),
-    })
-  } catch {
-    void 0
-  } finally {
-    removeRefreshing(entityId)
+  if (entityType === 'Task') {
+    addRefreshingTask(entityId)
+    await mergeTaskUpdatedIntoCache(
+      client,
+      entityId,
+      { taskId: entityId },
+      reloadAfterMutationOptions
+    )
+      .then(() => client.refetchQueries({
+        include: [
+          getParsedDocument(GetTasksDocument),
+          getParsedDocument(GetPatientsDocument),
+          getParsedDocument(GetGlobalDataDocument),
+        ],
+      }))
+      .catch(() => {})
+      .finally(() => removeRefreshingTask(entityId))
+    return
   }
+
+  addRefreshingPatient(entityId)
+  await mergePatientUpdatedIntoCache(
+    client,
+    entityId,
+    { patientId: entityId },
+    reloadAfterMutationOptions
+  )
+    .then(() => client.refetchQueries({
+      include: [
+        getParsedDocument(GetPatientsDocument),
+        getParsedDocument(GetTasksDocument),
+        getParsedDocument(GetGlobalDataDocument),
+      ],
+    }))
+    .catch(() => {})
+    .finally(() => removeRefreshingPatient(entityId))
 }

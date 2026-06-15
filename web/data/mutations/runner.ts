@@ -7,20 +7,6 @@ import type { PendingMutationRecord } from './types'
 import type { MutateOptimisticOptions, OptimisticPatch } from './types'
 import { schedulePersistCache } from '../cache/persist'
 import {
-  applyMutationEntityToCache,
-  findEntityInMutationResult
-} from '../cache/applyMutationEntity'
-import {
-  clearConfirmedEntitySnapshot,
-  setConfirmedEntitySnapshot
-} from '../cache/confirmedEntitySnapshots'
-import {
-  addRefreshingPatient,
-  addRefreshingTask,
-  removeRefreshingPatient,
-  removeRefreshingTask
-} from '../subscriptions/refreshingEntities'
-import {
   clearEntityMutated,
   markEntityMutated,
   reloadEntityAfterMutation
@@ -70,11 +56,8 @@ export async function mutateOptimistic<TData, TVariables>(
 
   const vars = variables as Record<string, unknown>
   const entityType = options.entityType ?? 'Task'
-  const entityId = typeof vars?.['id'] === 'string' ? vars['id'] : undefined
-  if (entityId) {
-    markEntityMutated(entityType, entityId, resolvedId)
-    if (entityType === 'Patient') addRefreshingPatient(entityId)
-    else addRefreshingTask(entityId)
+  if (typeof vars?.['id'] === 'string') {
+    markEntityMutated(entityType, vars['id'], resolvedId)
   }
 
   const cache = client.cache
@@ -88,10 +71,6 @@ export async function mutateOptimistic<TData, TVariables>(
     removePendingMutation(resolvedId)
     if (typeof window !== 'undefined') {
       storage.removePendingMutation(resolvedId).catch(() => {})
-    }
-    if (entityId) {
-      if (entityType === 'Patient') removeRefreshingPatient(entityId)
-      else removeRefreshingTask(entityId)
     }
     throw applyError
   }
@@ -108,23 +87,12 @@ export async function mutateOptimistic<TData, TVariables>(
     if (typeof window !== 'undefined') {
       storage.removePendingMutation(resolvedId).catch(() => {})
     }
+    const entityId = typeof vars?.['id'] === 'string' ? vars['id'] : undefined
     if (entityId) {
-      const mutationEntity = findEntityInMutationResult(
-        entityType,
-        entityId,
-        result.data as Record<string, unknown>
-      )
-      if (mutationEntity) {
-        setConfirmedEntitySnapshot(entityType, entityId, mutationEntity)
-        applyMutationEntityToCache(client, entityType, entityId, mutationEntity)
-      }
       await reloadEntityAfterMutation(client, entityType, entityId)
       clearEntityMutated(entityType, entityId)
     }
     onSuccess?.(result.data, variables)
-    if (entityId) {
-      clearConfirmedEntitySnapshot(entityType, entityId)
-    }
     schedulePersistCache(cache)
     return result.data
   } catch (error) {
@@ -139,11 +107,8 @@ export async function mutateOptimistic<TData, TVariables>(
     if (typeof window !== 'undefined') {
       storage.removePendingMutation(resolvedId).catch(() => {})
     }
-    if (entityId) {
-      clearEntityMutated(entityType, entityId)
-      clearConfirmedEntitySnapshot(entityType, entityId)
-      if (entityType === 'Patient') removeRefreshingPatient(entityId)
-      else removeRefreshingTask(entityId)
+    if (typeof vars?.['id'] === 'string') {
+      clearEntityMutated(entityType, vars['id'])
     }
 
     const err = error instanceof Error ? error : new Error(String(error))
