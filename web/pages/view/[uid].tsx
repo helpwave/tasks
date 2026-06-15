@@ -12,6 +12,7 @@ import { Button, Chip, IconButton, LoadingContainer, TabList, TabPanel, TabSwitc
 import { CenteredLoadingLogo } from '@/components/CenteredLoadingLogo'
 import { PatientList } from '@/components/tables/PatientList'
 import { TaskList, type TaskViewModel } from '@/components/tables/TaskList'
+import { DueDateUtils } from '@/utils/dueDate'
 import { PatientViewTasksPanel } from '@/components/views/PatientViewTasksPanel'
 import { TaskViewPatientsPanel } from '@/components/views/TaskViewPatientsPanel'
 import { usePropertyDefinitions, useSavedView, useTasksPaginated } from '@/data'
@@ -307,7 +308,7 @@ function SavedTaskViewTab({
       name: task.title,
       description: task.description || undefined,
       updateDate: task.updateDate ? new Date(task.updateDate) : new Date(task.creationDate),
-      dueDate: task.dueDate ? new Date(task.dueDate) : undefined,
+      dueDate: DueDateUtils.parseFromApi(task.dueDate),
       priority: task.priority || null,
       estimatedTime: task.estimatedTime ?? null,
       done: task.done,

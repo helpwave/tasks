@@ -16,6 +16,7 @@ import type { ColumnFiltersState } from '@tanstack/react-table'
 import type { FilterValue } from '@helpwave/hightide'
 import { LocationChips } from '@/components/locations/LocationChips'
 import { LOCATION_PATH_SEPARATOR } from '@/utils/location'
+import { DueDateUtils } from '@/utils/dueDate'
 
 const getKindStyles = (kind: string) => {
   const k = kind.toUpperCase()
@@ -77,7 +78,7 @@ const LocationPage: NextPage = () => {
         name: task.title,
         description: task.description || undefined,
         updateDate: task.updateDate ? new Date(task.updateDate) : new Date(task.creationDate),
-        dueDate: task.dueDate ? new Date(task.dueDate) : undefined,
+        dueDate: DueDateUtils.parseFromApi(task.dueDate),
         priority: task.priority || null,
         estimatedTime: task.estimatedTime ?? null,
         done: task.done,
@@ -117,7 +118,7 @@ const LocationPage: NextPage = () => {
         name: task.title,
         description: task.description || undefined,
         updateDate: task.updateDate ? new Date(task.updateDate) : new Date(task.creationDate),
-        dueDate: task.dueDate ? new Date(task.dueDate) : undefined,
+        dueDate: DueDateUtils.parseFromApi(task.dueDate),
         priority: task.priority || null,
         estimatedTime: task.estimatedTime ?? null,
         done: task.done,

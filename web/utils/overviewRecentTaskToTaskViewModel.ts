@@ -1,5 +1,6 @@
 import type { TaskViewModel } from '@/components/tables/TaskList'
 import type { GetOverviewDataQuery } from '@/api/gql/generated'
+import { DueDateUtils } from '@/utils/dueDate'
 
 type OverviewRecentTask = GetOverviewDataQuery['recentTasks'][0]
 
@@ -9,7 +10,7 @@ export function overviewRecentTaskToTaskViewModel(task: OverviewRecentTask): Tas
     name: task.title,
     description: task.description ?? undefined,
     updateDate: task.updateDate ? new Date(task.updateDate) : new Date(task.creationDate),
-    dueDate: task.dueDate ? new Date(task.dueDate) : undefined,
+    dueDate: DueDateUtils.parseFromApi(task.dueDate),
     priority: task.priority ?? null,
     estimatedTime: task.estimatedTime ?? null,
     done: task.done,

@@ -13,6 +13,7 @@ import { getPropertyColumnIds } from '@/hooks/usePropertyColumnVisibility'
 import { PropertyEntity } from '@/api/gql/generated'
 import { columnFiltersToQueryFilterClauses, sortingStateToQuerySortClauses } from '@/utils/tableStateToApi'
 import { LIST_PAGE_SIZE } from '@/utils/listPaging'
+import { DueDateUtils } from '@/utils/dueDate'
 import { useAccumulatedPagination } from '@/hooks/useAccumulatedPagination'
 import { Chip, Visibility } from '@helpwave/hightide'
 import { SaveViewDialog } from '@/components/views/SaveViewDialog'
@@ -149,7 +150,7 @@ const TasksPage: NextPage = () => {
       name: task.title,
       description: task.description || undefined,
       updateDate: task.updateDate ? new Date(task.updateDate) : new Date(task.creationDate),
-      dueDate: task.dueDate ? new Date(task.dueDate) : undefined,
+      dueDate: DueDateUtils.parseFromApi(task.dueDate),
       priority: task.priority || null,
       estimatedTime: task.estimatedTime ?? null,
       done: task.done,
