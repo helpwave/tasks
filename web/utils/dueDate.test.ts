@@ -58,6 +58,22 @@ describe('DueDateUtils.parseFromApi', () => {
   })
 })
 
+describe('DueDateUtils.resolveForDisplay', () => {
+  it('formats the same wall clock as FlexibleDateTimeInput for a zoned due datetime', () => {
+    const apiValue = '2002-02-02T23:00:00.000Z'
+    const zoned = DueDateUtils.parseFromApi(apiValue, 'Europe/Berlin')
+    const resolved = DueDateUtils.resolveForDisplay(apiValue, 'Europe/Berlin')
+
+    expect(zoned).toBeDefined()
+    expect(resolved?.zoned.getFullYear()).toBe(2002)
+    expect(resolved?.zoned.getMonth()).toBe(1)
+    expect(resolved?.zoned.getDate()).toBe(3)
+    expect(resolved?.zoned.getHours()).toBe(0)
+    expect(resolved?.zoned.getMinutes()).toBe(0)
+    expect(resolved?.instant.toISOString()).toBe(apiValue)
+  })
+})
+
 describe('DueDateUtils.serializeForApi', () => {
   it('returns null for nullish values', () => {
     expect(DueDateUtils.serializeForApi(null)).toBeNull()

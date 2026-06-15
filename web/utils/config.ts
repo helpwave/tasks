@@ -13,6 +13,7 @@ export const publicEnvSchema = z.object({
   RUNTIME_POST_LOGOUT_REDIRECT_URI: z.string().min(1).default('http://localhost:3000/'),
   RUNTIME_ONBOARDING_SURVEY_URL: z.string().url().optional(),
   RUNTIME_WEEKLY_SURVEY_URL: z.string().url().optional(),
+  RUNTIME_TIMEZONE: z.string().min(1).default('Europe/Berlin'),
 })
 
 const configSchema = publicEnvSchema.transform(obj => ({
@@ -24,6 +25,7 @@ const configSchema = publicEnvSchema.transform(obj => ({
   graphqlEndpoint: obj.RUNTIME_GRAPHQL_ENDPOINT,
   onboardingSurveyUrl: obj.RUNTIME_ONBOARDING_SURVEY_URL,
   weeklySurveyUrl: obj.RUNTIME_WEEKLY_SURVEY_URL,
+  timezone: obj.RUNTIME_TIMEZONE,
   auth: {
     issuer: obj.RUNTIME_ISSUER_URI,
     clientId: obj.RUNTIME_CLIENT_ID,

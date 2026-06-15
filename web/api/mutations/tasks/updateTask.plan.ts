@@ -8,7 +8,7 @@ import {
 import { getParsedDocument } from '@/data/hooks/queryHelpers'
 import { registerOptimisticPlan } from '@/data/mutations/registry'
 import type { OptimisticPlan, OptimisticPatch } from '@/data/mutations/types'
-import { buildOptimisticProperties, readEntityProperties } from '@/api/mutations/shared/optimisticProperties'
+import { buildOptimisticProperties, readEntityProperties, applyOptimisticPropertyScalars } from '@/api/mutations/shared/optimisticProperties'
 
 type UpdateTaskVariables = {
   id: string,
@@ -79,7 +79,12 @@ export const updateTaskOptimisticPlan: OptimisticPlan<UpdateTaskVariables> = {
           // the list query) so real property uuids are preserved even when the
           // task detail query was never run.
           const existingProps = readEntityProperties(cache, 'TaskType', taskId)
-          const mergeProperties = () => buildOptimisticProperties(existingProps, data.properties, taskId)
+          const mergeProperties = () => {
+            if (data.properties === undefined) return existingProps
+            const optimisticProperties = buildOptimisticProperties(existingProps, data.properties, taskId)
+            applyOptimisticPropertyScalars(cache, optimisticProperties)
+            return optimisticProperties
+          }
           cache.modify({
             id,
             fields: {

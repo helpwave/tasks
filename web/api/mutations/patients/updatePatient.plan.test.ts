@@ -114,6 +114,7 @@ function seedPatientDetailWithProperty(cache: InMemoryCache) {
         state: 'ADMITTED',
         description: null,
         checksum: 'c1',
+        updateDate: null,
         assignedLocation: null,
         assignedLocations: [],
         clinic: null,

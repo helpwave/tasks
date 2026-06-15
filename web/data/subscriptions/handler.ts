@@ -212,6 +212,7 @@ export async function reloadEntityAfterMutation(
         include: [
           getParsedDocument(GetTasksDocument),
           getParsedDocument(GetPatientsDocument),
+          getParsedDocument(GetPatientDocument),
           getParsedDocument(GetGlobalDataDocument),
         ],
       }))

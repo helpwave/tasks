@@ -1,10 +1,12 @@
+import { parseApiDateTime, serializeDateTimeForApi } from '@/utils/calendarDate'
+import { DateUtils } from '@helpwave/hightide'
+
 const DATE_ONLY_HOURS = 23
 const DATE_ONLY_MINUTES = 59
 const DATE_ONLY_SECONDS = 59
 const DATE_ONLY_MILLISECONDS = 999
 
 export const TASK_DUE_DATE_DATE_TIME_INPUT_PROPS = {
-  is24HourFormat: true,
   millisecondIncrement: '100ms' as const,
   minuteIncrement: '5min' as const,
   precision: 'minute' as const,
@@ -53,10 +55,9 @@ export const DueDateUtils = {
       && date.getMilliseconds() === DATE_ONLY_MILLISECONDS
   },
 
-  parseFromApi: (value: string | Date | null | undefined): Date | undefined => {
-    if (value == null) return undefined
-    const parsed = typeof value === 'string' ? new Date(value) : new Date(value.getTime())
-    if (Number.isNaN(parsed.getTime())) return undefined
+  parseFromApi: (value: string | Date | null | undefined, timeZone?: string): Date | undefined => {
+    const parsed = parseApiDateTime(value, timeZone)
+    if (!parsed) return undefined
     if (DueDateUtils.isDateOnly(parsed)) {
       return parsed
     }
@@ -66,9 +67,29 @@ export const DueDateUtils = {
     return parsed
   },
 
-  serializeForApi: (dueDate: Date | null | undefined): string | null => {
+  toDisplayInstant: (zonedDueDate: Date, timeZone: string): Date => {
+    return DateUtils.fromZonedDate(zonedDueDate, timeZone)
+  },
+
+  resolveForDisplay: (
+    value: string | Date | null | undefined,
+    timeZone: string
+  ): { zoned: Date, instant: Date, isDateOnly: boolean } | undefined => {
+    const zoned = typeof value === 'string' || value == null
+      ? DueDateUtils.parseFromApi(value, timeZone)
+      : value
+    if (!zoned) return undefined
+    const isDateOnly = DueDateUtils.isDateOnly(zoned)
+    return {
+      zoned,
+      instant: DueDateUtils.toDisplayInstant(zoned, timeZone),
+      isDateOnly,
+    }
+  },
+
+  serializeForApi: (dueDate: Date | null | undefined, timeZone?: string): string | null => {
     if (!dueDate) return null
-    return dueDate.toISOString()
+    return serializeDateTimeForApi(dueDate, timeZone)
   },
 
   isOverdue: (dueDate: Date | undefined | null, done: boolean): boolean => {
