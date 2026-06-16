@@ -4,7 +4,7 @@ import {
   getContiguousLoadedThrough,
   materializePages,
   mergePagesById,
-  mergePagesContiguousById,
+  mergePagesContiguousById
 } from './useAccumulatedPagination'
 
 const PAGE_SIZE = 25
