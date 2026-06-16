@@ -4,7 +4,8 @@ import {
   getContiguousLoadedThrough,
   materializePages,
   mergePagesById,
-  mergePagesContiguousById
+  mergePagesContiguousById,
+  resolveAccumulatedList
 } from './useAccumulatedPagination'
 
 const PAGE_SIZE = 25
@@ -51,13 +52,24 @@ describe('computePaginationBounds', () => {
     expect(hasMore).toBe(false)
   })
 
-  it('keeps hasMore true when accumulated is short but page index reached the end', () => {
+  it('hides hasMore until page 0 is established even when total is known', () => {
     const { hasMore } = computePaginationBounds({
       totalCount: 53,
       pageSize: PAGE_SIZE,
-      pageIndex: 2,
-      accumulatedLength: 28,
+      pageIndex: 0,
+      accumulatedLength: 0,
       contiguousLoadedThrough: -1,
+    })
+    expect(hasMore).toBe(false)
+  })
+
+  it('keeps hasMore true when accumulated is short but more pages remain', () => {
+    const { hasMore } = computePaginationBounds({
+      totalCount: 53,
+      pageSize: PAGE_SIZE,
+      pageIndex: 1,
+      accumulatedLength: 25,
+      contiguousLoadedThrough: 1,
     })
     expect(hasMore).toBe(true)
   })
@@ -67,8 +79,8 @@ describe('computePaginationBounds', () => {
       totalCount: 53,
       pageSize: PAGE_SIZE,
       pageIndex: 2,
-      accumulatedLength: 0,
-      contiguousLoadedThrough: -1,
+      accumulatedLength: 25,
+      contiguousLoadedThrough: 0,
     })
     expect(hasMore).toBe(true)
   })
@@ -220,5 +232,44 @@ describe('materializePages', () => {
     materializePages([[{ id: 'a', v: 1 }]], lastPages)
     const merged = materializePages([[{ id: 'a', v: 2 }]], lastPages)
     expect(merged).toEqual([{ id: 'a', v: 2 }])
+  })
+})
+
+describe('resolveAccumulatedList', () => {
+  const page0 = [{ id: 'a' }, { id: 'b' }]
+
+  it('returns accumulated when it already has items', () => {
+    const accumulated = [{ id: 'x' }]
+    expect(resolveAccumulatedList({
+      accumulated,
+      pageIndex: 1,
+      pageData: page0,
+      readCachedPage0: () => page0,
+    })).toBe(accumulated)
+  })
+
+  it('falls back to pageData on page index 0 when accumulated is empty', () => {
+    expect(resolveAccumulatedList({
+      accumulated: [],
+      pageIndex: 0,
+      pageData: page0,
+    })).toEqual(page0)
+  })
+
+  it('falls back to cached page 0 when page index is advanced but accumulated is empty', () => {
+    expect(resolveAccumulatedList({
+      accumulated: [],
+      pageIndex: 1,
+      pageData: [{ id: 'c' }],
+      readCachedPage0: () => page0,
+    })).toEqual(page0)
+  })
+
+  it('does not fall back to pageData on page index greater than 0', () => {
+    expect(resolveAccumulatedList({
+      accumulated: [],
+      pageIndex: 1,
+      pageData: [{ id: 'c' }],
+    })).toEqual([])
   })
 })

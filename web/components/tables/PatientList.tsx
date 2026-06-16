@@ -439,6 +439,16 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
   )
 
   const lastTotalCountRef = useRef<number | undefined>(undefined)
+  useEffect(() => {
+    lastTotalCountRef.current = undefined
+  }, [accumulationResetKey])
+
+  const needsRootLocationScope = !locationId && !hasLocationFilter
+  const waitingForLocationScope = !derivedVirtualMode
+    && !(embedded && embeddedPatients !== undefined)
+    && needsRootLocationScope
+    && (!effectiveRootLocationIds || effectiveRootLocationIds.length === 0)
+
   const patientsQueryVariables = useMemo(
     () => ({
       locationId: hasLocationFilter ? undefined : (locationId || undefined),
@@ -456,7 +466,9 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
       sorts: apiSorting.length > 0 ? apiSorting : undefined,
       filters: apiFilters.length > 0 ? apiFilters : undefined,
       search: searchInput,
-      skip: derivedVirtualMode || (embedded && embeddedPatients !== undefined),
+      skip: derivedVirtualMode
+        || (embedded && embeddedPatients !== undefined)
+        || waitingForLocationScope,
     }
   )
   if (totalCount != null) lastTotalCountRef.current = totalCount
@@ -520,7 +532,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
     searchQuery,
   ])
 
-  const showBlockingLoadingOverlay = patientsLoading && patients.length === 0 && !derivedVirtualMode
+  const showBlockingLoadingOverlay = (patientsLoading || waitingForLocationScope) && patients.length === 0 && !derivedVirtualMode
 
   const tablePagination = useMemo(
     (): PaginationState => ({
@@ -1213,7 +1225,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
               ))}
             </div>
           )}
-          {!embedded && !derivedVirtualMode && stableTotalCount != null && hasMore && (
+          {!embedded && !derivedVirtualMode && stableTotalCount != null && hasMore && accumulatedPatientsRaw.length > 0 && (
             <>
               <InfiniteScrollSentinel
                 onLoadMore={loadMore}

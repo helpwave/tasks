@@ -17,11 +17,27 @@ export function computePaginationBounds(options: {
     : Math.max(0, Math.ceil(totalCount / pageSize) - 1)
   const hasGap = contiguousLoadedThrough != null && contiguousLoadedThrough < pageIndex
   const withinBounds = lastAvailablePage == null || pageIndex <= lastAvailablePage
+  const initialPageReady = contiguousLoadedThrough == null || contiguousLoadedThrough >= 0
   const hasMore = totalCount != null
     && accumulatedLength < totalCount
     && withinBounds
+    && initialPageReady
     && (hasGap || lastAvailablePage == null || pageIndex < lastAvailablePage)
   return { lastAvailablePage, hasMore }
+}
+
+export function resolveAccumulatedList<T extends { id: string }>(options: {
+  accumulated: T[],
+  pageIndex: number,
+  pageData: T[] | undefined,
+  readCachedPage0?: () => T[] | undefined,
+}): T[] {
+  const { accumulated, pageIndex, pageData, readCachedPage0 } = options
+  if (accumulated.length > 0) return accumulated
+  if (pageIndex === 0 && pageData && pageData.length > 0) return pageData
+  const cachedPage0 = readCachedPage0?.()
+  if (cachedPage0 && cachedPage0.length > 0) return cachedPage0
+  return accumulated
 }
 
 function reconcileFirstPage<T extends { id: string }>(prev: T[], incoming: T[]): T[] {
@@ -121,6 +137,7 @@ export function useAccumulatedPagination<T extends { id: string }>(options: {
   loadMore: () => void,
   hasMore: boolean,
   isFetchingMore: boolean,
+  isInitialPageReady: boolean,
 } {
   const {
     resetKey, pageData, pageIndex, setPageIndex, totalCount, loading,
@@ -164,7 +181,7 @@ export function useAccumulatedPagination<T extends { id: string }>(options: {
     const materialize = () => {
       const rawReads: Array<T[] | undefined> = []
       for (let p = 0; p <= pageIndex; p++) {
-        rawReads.push(readCachedPage(p) ?? (p === pageIndex ? pageDataRef.current : undefined))
+        rawReads.push(resolvePageRead(p))
       }
       const next = materializePages(rawReads, lastPagesRef.current)
       const through = getContiguousLoadedThrough(pageIndex, resolvePageRead)
@@ -220,17 +237,17 @@ export function useAccumulatedPagination<T extends { id: string }>(options: {
     }
   }, [lastAvailablePage, pageIndex, setPageIndex])
 
-  const accumulatedResolved = useMemo(() => {
-    if (
-      pageIndex === 0
-      && accumulated.length === 0
-      && pageData
-      && pageData.length > 0
-    ) {
-      return pageData
-    }
-    return accumulated
-  }, [accumulated, pageData, pageIndex])
+  const accumulatedResolved = useMemo(
+    () => resolveAccumulatedList({
+      accumulated,
+      pageIndex,
+      pageData,
+      readCachedPage0: readCachedPage ? () => readCachedPage(0) : undefined,
+    }),
+    [accumulated, pageData, pageIndex, readCachedPage]
+  )
+
+  const isInitialPageReady = contiguousLoadedThrough >= 0
 
   const isFetchingMore = loading && pageIndex > 0
 
@@ -256,5 +273,5 @@ export function useAccumulatedPagination<T extends { id: string }>(options: {
     prefetchPage(nextPage)
   }, [prefetchPage, contiguousLoadedThrough, lastAvailablePage, loading])
 
-  return { accumulated: accumulatedResolved, loadMore, hasMore, isFetchingMore }
+  return { accumulated: accumulatedResolved, loadMore, hasMore, isFetchingMore, isInitialPageReady }
 }

@@ -223,13 +223,26 @@ export async function mockBackend(page: Page, options: MockOptions): Promise<Moc
       })
     }
 
-    case 'GetPatients':
+    case 'GetPatients': {
       if (options.patientsDelayMs) {
         await new Promise(r => setTimeout(r, options.patientsDelayMs))
       }
+      // Honour the `pagination` argument so infinite scroll behaves like the real
+      // backend: each page returns only its own slice while `patientsTotal`
+      // reports the full count. Omitting pagination (or a non-positive pageSize)
+      // returns the whole list, preserving the previous single-page behaviour.
+      const pagination = variables['pagination'] as { pageIndex?: number, pageSize?: number } | undefined
+      const total = patientList.length
+      let pageItems = patientList
+      if (pagination && typeof pagination.pageSize === 'number' && pagination.pageSize > 0) {
+        const pageIndex = typeof pagination.pageIndex === 'number' ? pagination.pageIndex : 0
+        const start = pageIndex * pagination.pageSize
+        pageItems = patientList.slice(start, start + pagination.pageSize)
+      }
       return respond(route, {
-        data: { patients: patientList, patientsTotal: patientList.length },
+        data: { patients: pageItems, patientsTotal: total },
       })
+    }
 
     case 'GetPatient': {
       const id = variables['id'] as string
