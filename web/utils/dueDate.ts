@@ -40,6 +40,20 @@ const fromUtcWallClock = (date: Date): Date => {
   )
 }
 
+const parseRawApiInstant = (value: string | Date): Date | undefined => {
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? undefined : value
+  }
+
+  const trimmed = value.trim()
+  if (!trimmed || /^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return undefined
+
+  const hasTimezone = /Z$|[+-]\d{2}:\d{2}$/.test(trimmed)
+  const normalized = hasTimezone ? trimmed : `${trimmed}Z`
+  const parsed = new Date(normalized)
+  return Number.isNaN(parsed.getTime()) ? undefined : parsed
+}
+
 export const DueDateUtils = {
   fixedTimeTemplate: (): Date => {
     return getTaskDueDateFlexibleInputProps().fixedTime
@@ -56,15 +70,14 @@ export const DueDateUtils = {
   },
 
   parseFromApi: (value: string | Date | null | undefined, timeZone?: string): Date | undefined => {
-    const parsed = parseApiDateTime(value, timeZone)
-    if (!parsed) return undefined
-    if (DueDateUtils.isDateOnly(parsed)) {
-      return parsed
+    if (value != null) {
+      const rawInstant = parseRawApiInstant(value)
+      if (rawInstant && isUtcDateOnlySentinel(rawInstant)) {
+        return fromUtcWallClock(rawInstant)
+      }
     }
-    if (isUtcDateOnlySentinel(parsed)) {
-      return fromUtcWallClock(parsed)
-    }
-    return parsed
+
+    return parseApiDateTime(value, timeZone)
   },
 
   toDisplayInstant: (zonedDueDate: Date, timeZone: string): Date => {
