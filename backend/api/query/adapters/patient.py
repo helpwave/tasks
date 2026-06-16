@@ -1,6 +1,6 @@
 from typing import Any
 
-from sqlalchemy import Select, and_, case, func, or_
+from sqlalchemy import Select, and_, case, func, or_, select
 from sqlalchemy.orm import aliased
 
 from api.context import Info
@@ -55,6 +55,43 @@ def _ensure_clinic_join(query: Select[Any], ctx: dict[str, Any]) -> tuple[Select
     ctx["clinic_node"] = ln
     query = query.outerjoin(ln, models.Patient.clinic_id == ln.id)
     return query, ln
+
+
+def _ensure_max_task_update_join(
+    query: Select[Any], ctx: dict[str, Any]
+) -> tuple[Select[Any], Any]:
+    if "max_task_update_date" in ctx:
+        return query, ctx["max_task_update_date"]
+    max_task_update_date = (
+        select(
+            func.max(models.Task.update_date).label("max_update_date"),
+            models.Task.patient_id.label("patient_id"),
+        )
+        .group_by(models.Task.patient_id)
+        .subquery()
+    )
+    ctx["max_task_update_date"] = max_task_update_date
+    query = query.outerjoin(
+        max_task_update_date,
+        models.Patient.id == max_task_update_date.c.patient_id,
+    )
+    return query, max_task_update_date
+
+
+def _patient_update_date_expr(max_task_update_date: Any) -> Any:
+    task_date = max_task_update_date.c.max_update_date
+    patient_date = models.Patient.updated_at
+    return func.coalesce(
+        case(
+            (
+                and_(patient_date.isnot(None), task_date.isnot(None)),
+                func.greatest(patient_date, task_date),
+            ),
+            else_=None,
+        ),
+        patient_date,
+        task_date,
+    )
 
 
 def _parse_property_key(field_key: str) -> str | None:
@@ -175,6 +212,13 @@ def apply_patient_filter_clause(
         return query
     if key == "description":
         c = apply_ops_to_column(models.Patient.description, op, val)
+        if c is not None:
+            query = query.where(c)
+        return query
+    if key == "updateDate":
+        query, max_task_update_date = _ensure_max_task_update_join(query, ctx)
+        expr = _patient_update_date_expr(max_task_update_date)
+        c = apply_ops_to_column(expr, op, val, as_datetime=True)
         if c is not None:
             query = query.where(c)
         return query
@@ -318,6 +362,12 @@ def apply_patient_sorts(
                 if desc_order
                 else models.Patient.description.asc().nulls_first()
             )
+        elif key == "updateDate":
+            query, max_task_update_date = _ensure_max_task_update_join(query, ctx)
+            col = _patient_update_date_expr(max_task_update_date)
+            order_parts.append(
+                col.desc().nulls_last() if desc_order else col.asc().nulls_first()
+            )
         elif key == "position":
             query, ln = _ensure_position_join(query, ctx)
             t = location_title_expr(ln)
@@ -395,6 +445,7 @@ def build_patient_queryable_fields_static() -> list[QueryableField]:
         QueryOperator.IS_NULL,
         QueryOperator.IS_NOT_NULL,
     ]
+    dt_ops = date_ops
     choice_ops = [
         QueryOperator.EQ,
         QueryOperator.NEQ,
@@ -480,6 +531,16 @@ def build_patient_queryable_fields_static() -> list[QueryableField]:
             kind=QueryableFieldKind.SCALAR,
             value_type=QueryableValueType.DATE,
             allowed_operators=date_ops,
+            sortable=True,
+            sort_directions=sort_directions_for(True),
+            searchable=False,
+        ),
+        QueryableField(
+            key="updateDate",
+            label="Update date",
+            kind=QueryableFieldKind.SCALAR,
+            value_type=QueryableValueType.DATETIME,
+            allowed_operators=dt_ops,
             sortable=True,
             sort_directions=sort_directions_for(True),
             searchable=False,

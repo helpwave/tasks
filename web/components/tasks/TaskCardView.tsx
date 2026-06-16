@@ -1,7 +1,8 @@
-import { Button, Checkbox, Tooltip } from '@helpwave/hightide'
+import { Button, Checkbox, Tooltip, useLocale } from '@helpwave/hightide'
 import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
 import { Clock, Combine, User, Users, Flag } from 'lucide-react'
 import clsx from 'clsx'
+import { DueDateDisplay } from '@/components/Date/DueDateDisplay'
 import { DateDisplay } from '@/components/Date/DateDisplay'
 import { DueDateUtils } from '@/utils/dueDate'
 import { LocationChipsBySetting } from '@/components/patients/LocationChipsBySetting'
@@ -73,14 +74,9 @@ const isCloseToDueDate = (dueDate: Date | undefined, done: boolean): boolean => 
   return dueTime > now && dueTime - now <= oneHour
 }
 
-const toDate = (date: Date | string | null | undefined): Date | undefined => {
-  if (!date) return undefined
-  if (date instanceof Date) return date
-  return new Date(date)
-}
-
 export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showAssignee: _showAssignee = false, showPatient = true, className, fullWidth: _fullWidth = false, extraContent }: TaskCardViewProps) => {
   const translation = useTasksTranslation()
+  const { timeZone } = useLocale()
   const router = useRouter()
   const [presetDialogId, setPresetDialogId] = useState<string | null>(null)
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
@@ -94,19 +90,23 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
   const [completeTask] = useCompleteTask()
   const [reopenTask] = useReopenTask()
 
-  const dueDate = toDate(task.dueDate)
-  const overdue = dueDate ? isOverdue(dueDate, task.done) : false
-  const closeToDue = dueDate ? isCloseToDueDate(dueDate, task.done) : false
+  const dueDateResolved = useMemo(
+    () => (timeZone ? DueDateUtils.resolveForDisplay(task.dueDate, timeZone) : undefined),
+    [task.dueDate, timeZone]
+  )
+  const dueDateInstant = dueDateResolved?.instant
+  const overdue = dueDateInstant ? isOverdue(dueDateInstant, task.done) : false
+  const closeToDue = dueDateInstant ? isCloseToDueDate(dueDateInstant, task.done) : false
   const dueDateColorClass = overdue ? '!text-red-500' : closeToDue ? '!text-orange-500' : ''
   const assigneeAvatarUrl = task.assignee?.avatarURL || (flexibleTask.assignee?.avatarUrl)
   const isClickable = Boolean(onClick)
 
   const expectedFinishDate = useMemo(() => {
-    if (!dueDate || !flexibleTask.estimatedTime) return null
-    const finishDate = new Date(dueDate)
+    if (!dueDateInstant || !flexibleTask.estimatedTime) return null
+    const finishDate = new Date(dueDateInstant)
     finishDate.setMinutes(finishDate.getMinutes() + flexibleTask.estimatedTime)
     return finishDate
-  }, [dueDate, flexibleTask.estimatedTime])
+  }, [dueDateInstant, flexibleTask.estimatedTime])
 
   const handlePatientClick = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -283,10 +283,10 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
                   </span>
                 </div>
               )}
-              {dueDate && (
+              {dueDateResolved && (
                 <div className={clsx('flex items-center gap-2 min-w-0', dueDateColorClass)}>
                   <Clock className="size-4 shrink-0" />
-                  <DateDisplay date={dueDate} mode="absolute" showTime={!DueDateUtils.isDateOnly(dueDate)} />
+                  <DueDateDisplay value={task.dueDate} mode="absolute" />
                 </div>
               )}
             </div>

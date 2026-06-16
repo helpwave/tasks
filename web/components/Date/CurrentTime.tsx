@@ -1,13 +1,13 @@
-import { Tooltip, useLocale } from '@helpwave/hightide'
+import { DateUtils, Tooltip, useLocale } from '@helpwave/hightide'
 import clsx from 'clsx'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 type CurrentTimeProps = {
-    className?: string,
+  className?: string,
 }
 
 export const CurrentTime = ({ className }: CurrentTimeProps) => {
-  const { locale } = useLocale()
+  const { locale, timeZone, is24HourFormat } = useLocale()
   const [date, setDate] = useState(new Date())
 
   useEffect(() => {
@@ -16,26 +16,17 @@ export const CurrentTime = ({ className }: CurrentTimeProps) => {
     }, 500)
 
     return () => clearInterval(intervalId)
-  })
+  }, [])
 
-  const dateFormatFull = Intl.DateTimeFormat(locale, {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit'
-  })
+  const fullDate = useMemo(
+    () => DateUtils.formatAbsolute(date, locale, 'dateTime', { timeZone, is24HourFormat }),
+    [date, locale, timeZone, is24HourFormat]
+  )
 
-  const fullDate = dateFormatFull.format(date)
-
-  const timeFormat = Intl.DateTimeFormat(locale, {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit'
-  })
-
-  const time = timeFormat.format(date)
+  const time = useMemo(
+    () => DateUtils.formatAbsolute(date, locale, 'time', { timeZone, is24HourFormat }),
+    [date, locale, timeZone, is24HourFormat]
+  )
 
   return (
     <Tooltip tooltip={fullDate} alignment="top">

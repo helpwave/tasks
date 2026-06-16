@@ -173,6 +173,7 @@ type PatientType {
   teams: [LocationNodeType!]!
   tasks(done: Boolean = null): [TaskType!]!
   properties: [PropertyValueType!]!
+  updateDate: DateTime
   checksum: String!
 }
 

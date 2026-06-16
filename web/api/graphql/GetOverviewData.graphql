@@ -7,6 +7,7 @@ query GetOverviewData($rootLocationIds: [ID!], $recentPatientsFilters: [QueryFil
     sex
     birthdate
     state
+    updateDate
     position {
       id
       title

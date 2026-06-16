@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from typing import TYPE_CHECKING, Annotated
 
 import strawberry
@@ -7,7 +7,7 @@ from api.inputs import PatientState, Sex
 from api.types.base import calculate_checksum_for_instance
 from api.types.property import PropertyValueType
 from database import models
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import selectinload
 
 if TYPE_CHECKING:
@@ -154,6 +154,19 @@ class PatientType:
     ]:
         await info.context.db.refresh(self, ["teams"])
         return self.teams or []
+
+    @strawberry.field
+    async def update_date(self, info: Info) -> datetime | None:
+        result = await info.context.db.execute(
+            select(func.max(models.Task.update_date)).where(
+                models.Task.patient_id == self.id
+            )
+        )
+        task_max = result.scalar()
+        patient_updated = self.updated_at
+        if task_max is not None and patient_updated is not None:
+            return max(task_max, patient_updated)
+        return task_max or patient_updated
 
     @strawberry.field
     async def tasks(

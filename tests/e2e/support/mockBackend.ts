@@ -35,6 +35,7 @@ export type PatientFixture = {
   state?: string,
   sex?: string,
   birthdate?: string,
+  updateDate?: string | null,
   properties?: Array<{ id: string, definitionId: string, textValue?: string | null }>,
 }
 
@@ -131,6 +132,7 @@ function fullPatient(p: PatientFixture, defs: PropertyDefinition[]) {
     birthdate: p.birthdate ?? '1990-01-01',
     sex: p.sex ?? 'FEMALE',
     state: p.state ?? 'ADMITTED',
+    updateDate: p.updateDate ?? null,
     description: '',
     checksum: 'chk-1',
     assignedLocation: null,

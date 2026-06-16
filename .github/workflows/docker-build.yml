@@ -1,22 +1,43 @@
-name: Docker Build Web
+name: Docker Build
 
 on:
   push:
-    branches:
-      - 'main'
+    branches: [main]
   pull_request:
+    paths:
+      - "backend/**"
+      - "web/**"
+      - "proxy/**"
+      - "simulator/**"
+      - "**/Dockerfile"
+      - ".github/workflows/docker-build.yml"
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}-web
 
 jobs:
   build:
-    name: Build docker image
+    name: Build ${{ matrix.component }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - component: backend
+            context: backend
+            image: ${{ github.repository }}-backend
+          - component: web
+            context: web
+            image: ${{ github.repository }}-web
+          - component: proxy
+            context: proxy
+            image: ${{ github.repository }}-proxy
+          - component: simulator
+            context: simulator
+            image: ${{ github.repository }}-simulator
 
     steps:
       - name: Checkout repository
@@ -33,7 +54,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v6
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.REGISTRY }}/${{ matrix.image }}
           tags: |
             type=ref,event=pr
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
@@ -41,7 +62,7 @@ jobs:
       - name: Build and push docker image
         uses: docker/build-push-action@v7
         with:
-          context: web
+          context: ${{ matrix.context }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

@@ -1,23 +1,26 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-
-const DEFAULT_PREFETCH_PAGES = 2
+import { samePaginatedListItems } from '@/utils/paginatedListItemKey'
 
 export function computePaginationBounds(options: {
   totalCount: number | undefined,
   pageSize: number,
   pageIndex: number,
   accumulatedLength: number,
+  contiguousLoadedThrough?: number,
 }): {
   lastAvailablePage: number | undefined,
   hasMore: boolean,
 } {
-  const { totalCount, pageSize, pageIndex, accumulatedLength } = options
+  const { totalCount, pageSize, pageIndex, accumulatedLength, contiguousLoadedThrough } = options
   const lastAvailablePage = (totalCount == null || pageSize <= 0)
     ? undefined
     : Math.max(0, Math.ceil(totalCount / pageSize) - 1)
+  const hasGap = contiguousLoadedThrough != null && contiguousLoadedThrough < pageIndex
+  const withinBounds = lastAvailablePage == null || pageIndex <= lastAvailablePage
   const hasMore = totalCount != null
     && accumulatedLength < totalCount
-    && (lastAvailablePage == null || pageIndex < lastAvailablePage)
+    && withinBounds
+    && (hasGap || lastAvailablePage == null || pageIndex < lastAvailablePage)
   return { lastAvailablePage, hasMore }
 }
 
@@ -27,14 +30,6 @@ function reconcileFirstPage<T extends { id: string }>(prev: T[], incoming: T[]):
   const incomingIds = new Set(incoming.map(x => x.id))
   const tail = prev.filter(item => !incomingIds.has(item.id))
   return [...incoming, ...tail]
-}
-
-function sameItems<T extends { id: string }>(a: T[], b: T[]): boolean {
-  if (a.length !== b.length) return false
-  for (let i = 0; i < a.length; i++) {
-    if (a[i] !== b[i]) return false
-  }
-  return true
 }
 
 export function mergePagesById<T extends { id: string }>(
@@ -52,6 +47,35 @@ export function mergePagesById<T extends { id: string }>(
     }
   }
   return out
+}
+
+export function mergePagesContiguousById<T extends { id: string }>(
+  pages: ReadonlyArray<readonly T[] | undefined>
+): T[] {
+  const out: T[] = []
+  const seen = new Set<string>()
+  for (const page of pages) {
+    if (!page) break
+    for (const item of page) {
+      if (!seen.has(item.id)) {
+        seen.add(item.id)
+        out.push(item)
+      }
+    }
+  }
+  return out
+}
+
+export function getContiguousLoadedThrough<T>(
+  upTo: number,
+  readPage: (pageIndex: number) => T[] | undefined
+): number {
+  let through = -1
+  for (let p = 0; p <= upTo; p++) {
+    if (readPage(p) === undefined) break
+    through = p
+  }
+  return through
 }
 
 /**
@@ -78,7 +102,7 @@ export function materializePages<T extends { id: string }>(
     }
     return read
   })
-  return mergePagesById(pages)
+  return mergePagesContiguousById(pages)
 }
 
 export function useAccumulatedPagination<T extends { id: string }>(options: {
@@ -90,7 +114,6 @@ export function useAccumulatedPagination<T extends { id: string }>(options: {
   loading: boolean,
   pageSize: number,
   prefetchPage?: (pageIndex: number) => void,
-  prefetchPages?: number,
   readCachedPage?: (pageIndex: number) => T[] | undefined,
   watchCachedPage?: (pageIndex: number, onChange: () => void) => () => void,
 }): {
@@ -101,27 +124,36 @@ export function useAccumulatedPagination<T extends { id: string }>(options: {
 } {
   const {
     resetKey, pageData, pageIndex, setPageIndex, totalCount, loading,
-    pageSize, prefetchPage, prefetchPages = DEFAULT_PREFETCH_PAGES,
-    readCachedPage, watchCachedPage,
+    pageSize, prefetchPage, readCachedPage, watchCachedPage,
   } = options
   const [accumulated, setAccumulated] = useState<T[]>([])
+  const [contiguousLoadedThrough, setContiguousLoadedThrough] = useState(-1)
   const prevResetKeyRef = useRef(resetKey)
   const cacheBacked = !!readCachedPage && !!watchCachedPage
 
   const pageDataRef = useRef(pageData)
   pageDataRef.current = pageData
 
-  // Remembers the last non-empty items materialized for each loaded page so that a
-  // transient cache miss (e.g. a page that is momentarily unreadable while a
-  // refetch is in flight) never drops already-loaded rows. Without this the
-  // accumulated list could collapse to just the current page, making infinite
-  // scroll look like it "turned the page" instead of appending to one list.
   const lastPagesRef = useRef<Map<number, T[]>>(new Map())
+
+  const resolvePageRead = useCallback((page: number): T[] | undefined => {
+    const read = readCachedPage?.(page) ?? (page === pageIndex ? pageDataRef.current : undefined)
+    if (read !== undefined) {
+      if (read.length > 0) {
+        lastPagesRef.current.set(page, read)
+      } else {
+        lastPagesRef.current.delete(page)
+      }
+      return read
+    }
+    return lastPagesRef.current.get(page)
+  }, [readCachedPage, pageIndex])
 
   useEffect(() => {
     if (prevResetKeyRef.current !== resetKey) {
       prevResetKeyRef.current = resetKey
       lastPagesRef.current.clear()
+      setContiguousLoadedThrough(-1)
       setPageIndex(0)
       setAccumulated([])
     }
@@ -135,7 +167,9 @@ export function useAccumulatedPagination<T extends { id: string }>(options: {
         rawReads.push(readCachedPage(p) ?? (p === pageIndex ? pageDataRef.current : undefined))
       }
       const next = materializePages(rawReads, lastPagesRef.current)
-      setAccumulated(prev => (sameItems(prev, next) ? prev : next))
+      const through = getContiguousLoadedThrough(pageIndex, resolvePageRead)
+      setContiguousLoadedThrough(through)
+      setAccumulated(prev => (samePaginatedListItems(prev, next) ? prev : next))
     }
     materialize()
     const unsubscribes: Array<() => void> = []
@@ -145,16 +179,18 @@ export function useAccumulatedPagination<T extends { id: string }>(options: {
     return () => {
       for (const unsubscribe of unsubscribes) unsubscribe()
     }
-  }, [cacheBacked, readCachedPage, watchCachedPage, pageIndex])
+  }, [cacheBacked, readCachedPage, watchCachedPage, pageIndex, resolvePageRead])
 
   useEffect(() => {
     if (cacheBacked) return
     if (pageData === undefined || loading) return
     if (pageIndex === 0) {
+      setContiguousLoadedThrough(0)
       setAccumulated(prev => reconcileFirstPage(prev, pageData))
       return
     }
     setAccumulated(prev => {
+      if (prev.length === 0) return prev
       const incomingById = new Map(pageData.map(item => [item.id, item]))
       const existingIds = new Set(prev.map(item => item.id))
       const next = prev.map(item => incomingById.get(item.id) ?? item)
@@ -163,6 +199,7 @@ export function useAccumulatedPagination<T extends { id: string }>(options: {
       }
       return next
     })
+    setContiguousLoadedThrough(pageIndex)
   }, [cacheBacked, pageData, pageIndex, loading])
 
   const { lastAvailablePage, hasMore } = useMemo(
@@ -171,8 +208,9 @@ export function useAccumulatedPagination<T extends { id: string }>(options: {
       pageSize,
       pageIndex,
       accumulatedLength: accumulated.length,
+      contiguousLoadedThrough,
     }),
-    [totalCount, pageSize, pageIndex, accumulated.length]
+    [totalCount, pageSize, pageIndex, accumulated.length, contiguousLoadedThrough]
   )
 
   useEffect(() => {
@@ -182,39 +220,41 @@ export function useAccumulatedPagination<T extends { id: string }>(options: {
     }
   }, [lastAvailablePage, pageIndex, setPageIndex])
 
-  // The accumulated list is populated from effects (cache materialization or the
-  // non-cache merge), which run after paint. That leaves a one-frame gap where
-  // the query already has data but `accumulated` is still empty — the list would
-  // briefly render as "empty, not loading". Fall back to the current page's data
-  // for that gap so the UI only ever shows a loading state or actual data, never
-  // a spurious empty state. A genuinely empty result (pageData === []) keeps the
-  // empty list, so real "no results" still renders correctly.
   const accumulatedResolved = useMemo(() => {
-    if (accumulated.length === 0 && pageData && pageData.length > 0) {
+    if (
+      pageIndex === 0
+      && accumulated.length === 0
+      && pageData
+      && pageData.length > 0
+    ) {
       return pageData
     }
     return accumulated
-  }, [accumulated, pageData])
+  }, [accumulated, pageData, pageIndex])
 
   const isFetchingMore = loading && pageIndex > 0
 
   const loadMore = useCallback(() => {
-    setPageIndex(i => (lastAvailablePage != null && i >= lastAvailablePage ? i : i + 1))
-  }, [setPageIndex, lastAvailablePage])
+    setPageIndex(i => {
+      if (lastAvailablePage != null && i >= lastAvailablePage) return i
+      if (contiguousLoadedThrough < i) return i
+      return i + 1
+    })
+  }, [setPageIndex, lastAvailablePage, contiguousLoadedThrough])
 
-  const lastLoadedPage = useMemo(() => {
-    if (pageSize <= 0) return pageIndex
-    return Math.max(pageIndex, Math.ceil(accumulated.length / pageSize) - 1)
-  }, [pageIndex, accumulated.length, pageSize])
+  useEffect(() => {
+    if (!prefetchPage || totalCount == null || totalCount <= 0) return
+    if (contiguousLoadedThrough >= 0) return
+    prefetchPage(0)
+  }, [prefetchPage, totalCount, contiguousLoadedThrough])
 
   useEffect(() => {
     if (!prefetchPage || loading || lastAvailablePage == null) return
-    for (let i = 1; i <= prefetchPages; i++) {
-      const target = lastLoadedPage + i
-      if (target > lastAvailablePage) break
-      prefetchPage(target)
-    }
-  }, [prefetchPage, prefetchPages, lastLoadedPage, lastAvailablePage, loading])
+    if (contiguousLoadedThrough < 0) return
+    const nextPage = contiguousLoadedThrough + 1
+    if (nextPage > lastAvailablePage) return
+    prefetchPage(nextPage)
+  }, [prefetchPage, contiguousLoadedThrough, lastAvailablePage, loading])
 
   return { accumulated: accumulatedResolved, loadMore, hasMore, isFetchingMore }
 }

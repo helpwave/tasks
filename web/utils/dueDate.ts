@@ -1,10 +1,12 @@
+import { parseApiDateTime, serializeDateTimeForApi } from '@/utils/calendarDate'
+import { DateUtils } from '@helpwave/hightide'
+
 const DATE_ONLY_HOURS = 23
 const DATE_ONLY_MINUTES = 59
 const DATE_ONLY_SECONDS = 59
 const DATE_ONLY_MILLISECONDS = 999
 
 export const TASK_DUE_DATE_DATE_TIME_INPUT_PROPS = {
-  is24HourFormat: true,
   millisecondIncrement: '100ms' as const,
   minuteIncrement: '5min' as const,
   precision: 'minute' as const,
@@ -38,6 +40,20 @@ const fromUtcWallClock = (date: Date): Date => {
   )
 }
 
+const parseRawApiInstant = (value: string | Date): Date | undefined => {
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? undefined : value
+  }
+
+  const trimmed = value.trim()
+  if (!trimmed || /^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return undefined
+
+  const hasTimezone = /Z$|[+-]\d{2}:\d{2}$/.test(trimmed)
+  const normalized = hasTimezone ? trimmed : `${trimmed}Z`
+  const parsed = new Date(normalized)
+  return Number.isNaN(parsed.getTime()) ? undefined : parsed
+}
+
 export const DueDateUtils = {
   fixedTimeTemplate: (): Date => {
     return getTaskDueDateFlexibleInputProps().fixedTime
@@ -53,22 +69,40 @@ export const DueDateUtils = {
       && date.getMilliseconds() === DATE_ONLY_MILLISECONDS
   },
 
-  parseFromApi: (value: string | Date | null | undefined): Date | undefined => {
-    if (value == null) return undefined
-    const parsed = typeof value === 'string' ? new Date(value) : new Date(value.getTime())
-    if (Number.isNaN(parsed.getTime())) return undefined
-    if (DueDateUtils.isDateOnly(parsed)) {
-      return parsed
+  parseFromApi: (value: string | Date | null | undefined, timeZone?: string): Date | undefined => {
+    if (value != null) {
+      const rawInstant = parseRawApiInstant(value)
+      if (rawInstant && isUtcDateOnlySentinel(rawInstant)) {
+        return fromUtcWallClock(rawInstant)
+      }
     }
-    if (isUtcDateOnlySentinel(parsed)) {
-      return fromUtcWallClock(parsed)
-    }
-    return parsed
+
+    return parseApiDateTime(value, timeZone)
   },
 
-  serializeForApi: (dueDate: Date | null | undefined): string | null => {
+  toDisplayInstant: (zonedDueDate: Date, timeZone: string): Date => {
+    return DateUtils.fromZonedDate(zonedDueDate, timeZone)
+  },
+
+  resolveForDisplay: (
+    value: string | Date | null | undefined,
+    timeZone: string
+  ): { zoned: Date, instant: Date, isDateOnly: boolean } | undefined => {
+    const zoned = typeof value === 'string' || value == null
+      ? DueDateUtils.parseFromApi(value, timeZone)
+      : value
+    if (!zoned) return undefined
+    const isDateOnly = DueDateUtils.isDateOnly(zoned)
+    return {
+      zoned,
+      instant: DueDateUtils.toDisplayInstant(zoned, timeZone),
+      isDateOnly,
+    }
+  },
+
+  serializeForApi: (dueDate: Date | null | undefined, timeZone?: string): string | null => {
     if (!dueDate) return null
-    return dueDate.toISOString()
+    return serializeDateTimeForApi(dueDate, timeZone)
   },
 
   isOverdue: (dueDate: Date | undefined | null, done: boolean): boolean => {

@@ -62,7 +62,7 @@ export const Notifications = () => {
 
     const recentPatients = data?.recentPatients?.slice(0, 5) || []
     recentPatients.forEach((patient) => {
-      const updateDate = patient.tasks?.[0]?.updateDate
+      const updateDate = patient.updateDate ?? patient.tasks?.[0]?.updateDate
       const id = `patient-${patient.id}`
       if (!dismissedNotifications.has(id)) {
         items.push({

@@ -24,3 +24,4 @@ tsconfig.tsbuildinfo
 
 # local env files
 .env*.local
+test-results/

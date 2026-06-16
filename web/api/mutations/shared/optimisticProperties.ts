@@ -139,3 +139,40 @@ export function buildOptimisticProperties(
     }
   })
 }
+
+function isPersistedPropertyId(id: string | undefined): id is string {
+  return id != null && id !== '' && !id.startsWith('attachment-')
+}
+
+export function getNewOptimisticProperties(
+  properties: OptimisticPropertyValue[]
+): OptimisticPropertyValue[] {
+  return properties.filter((property) => !isPersistedPropertyId(property.id))
+}
+
+export function applyOptimisticPropertyScalars(
+  cache: ApolloCache,
+  properties: OptimisticPropertyValue[]
+): void {
+  for (const property of properties) {
+    if (!isPersistedPropertyId(property.id)) continue
+    const propertyId = cache.identify({
+      __typename: 'PropertyValueType',
+      id: property.id,
+    })
+    if (!propertyId) continue
+    cache.modify({
+      id: propertyId,
+      fields: {
+        textValue: () => property.textValue ?? null,
+        numberValue: () => property.numberValue ?? null,
+        booleanValue: () => property.booleanValue ?? null,
+        dateValue: () => property.dateValue ?? null,
+        dateTimeValue: () => property.dateTimeValue ?? null,
+        selectValue: () => property.selectValue ?? null,
+        multiSelectValues: () => property.multiSelectValues ?? null,
+        userValue: () => property.userValue ?? null,
+      },
+    })
+  }
+}

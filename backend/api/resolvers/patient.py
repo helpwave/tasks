@@ -1,4 +1,5 @@
 from collections.abc import AsyncGenerator
+from datetime import datetime
 
 import strawberry
 from api.audit import audit_log
@@ -526,6 +527,8 @@ class PatientMutation(BaseMutationResolver[models.Patient]):
                 new_patient, data.properties, "patient"
             )
 
+        new_patient.updated_at = datetime.now()
+
         repo = BaseMutationResolver.get_repository(db, models.Patient)
         await repo.create(new_patient)
         await db.refresh(new_patient, ["assigned_locations", "teams"])
@@ -635,6 +638,8 @@ class PatientMutation(BaseMutationResolver[models.Patient]):
                 patient, data.properties, "patient"
             )
 
+        patient.updated_at = datetime.now()
+
         await BaseMutationResolver.update_and_notify(
             info, patient, models.Patient, "patient"
         )
@@ -698,6 +703,7 @@ class PatientMutation(BaseMutationResolver[models.Patient]):
             raise_forbidden()
 
         patient.state = state.value
+        patient.updated_at = datetime.now()
         await BaseMutationResolver.update_and_notify(
             info, patient, models.Patient, "patient"
         )

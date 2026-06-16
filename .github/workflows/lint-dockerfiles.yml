@@ -2,15 +2,14 @@ name: Lint Dockerfiles
 
 on:
   push:
-    branches:
-      - '*'
+    branches: ["*"]
     paths:
-      - '**/Dockerfile'
-      - '.github/workflows/lint-dockerfiles.yml'
+      - "**/Dockerfile"
+      - ".github/workflows/lint-dockerfiles.yml"
   pull_request:
     paths:
-      - '**/Dockerfile'
-      - '.github/workflows/lint-dockerfiles.yml'
+      - "**/Dockerfile"
+      - ".github/workflows/lint-dockerfiles.yml"
 
 jobs:
   hadolint:
@@ -43,4 +42,3 @@ jobs:
         with:
           dockerfile: web/Dockerfile
           failure-threshold: warning
-

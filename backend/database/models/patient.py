@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import uuid
-from datetime import date
+from datetime import date, datetime
 from typing import TYPE_CHECKING
 
 from database.models.base import Base
-from sqlalchemy import Boolean, Column, ForeignKey, String, Table
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, String, Table
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 if TYPE_CHECKING:
@@ -55,6 +55,12 @@ class Patient(Base):
         nullable=True,
     )
     description: Mapped[str | None] = mapped_column(String, nullable=True)
+    updated_at: Mapped[datetime | None] = mapped_column(
+        DateTime,
+        nullable=True,
+        default=datetime.now,
+        onupdate=datetime.now,
+    )
 
     assigned_locations: Mapped[list[LocationNode]] = relationship(
         "LocationNode",
