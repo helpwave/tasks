@@ -84,9 +84,11 @@ export const updateTaskOptimisticPlan: OptimisticPlan<UpdateTaskVariables> = {
             const optimisticProperties = buildOptimisticProperties(existingProps, data.properties, taskId)
             applyOptimisticPropertyScalars(cache, optimisticProperties)
             const newProperties = getNewOptimisticProperties(optimisticProperties)
-            if (newProperties.length === 0) return existing
             const current = Array.isArray(existing) ? existing : []
-            return [...current, ...newProperties]
+            if (newProperties.length > 0) {
+              return [...current, ...newProperties]
+            }
+            return [...current]
           }
           cache.modify({
             id,
