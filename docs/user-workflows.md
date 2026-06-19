@@ -48,7 +48,9 @@ Hier legen Administratoren **Felder** fest: Name, Typ (Text, Zahl, Datum, Auswah
 
 **Wo:** Patientenliste → Patient öffnen → Reiter **Eigenschaften**.
 
-Dort werden die definierten Felder als **Werte** befüllt oder geändert. Änderungen werden mit dem Patienten gespeichert (über „Patient aktualisieren“ im Hintergrund).
+Dort werden die definierten Felder als **Werte** befüllt oder geändert. Änderungen werden **automatisch** gespeichert (im Hintergrund über „Patient aktualisieren“); Sie müssen also nicht zusätzlich auf „Speichern“ klicken.
+
+> **Hinweis:** Aktuell müssen jedem Patienten die **Eigenschaften** noch einzeln zugefügt werden. Künftig wird es – je nach Wunsch Ihrer Institution – standardmäßig voreingestellte **Eigenschaften** geben, die beim Anlegen eines Patienten bereits automatisch mit angelegt werden.
 
 **Kurz:** Definitionen unter **Einstellungen → Eigenschaften**; Ausfüllen unter **Patient → Reiter Eigenschaften**.
 
@@ -61,7 +63,7 @@ Dort werden die definierten Felder als **Werte** befüllt oder geändert. Änder
 | **Patienten** (`/patients`) | Zentrale Patientenliste für Ihren **Root-Standort-Kontext**. |
 | **Dashboard** (`/`) | Kurzliste **Zuletzt bearbeitete Patienten**. |
 | **Standort-Seite** (`/location/…`) | Reiter **Patienten**: Patienten, die diesem Knoten (Station, Team, …) zugeordnet sind bzw. der Filterung entsprechen. |
-| **Gespeicherte Ansicht** (`/view/…`) | Wenn die Ansicht auf **Patienten** basiert: gefilterte Patientenliste nach den gespeicherten Kriterien. |
+| **Gespeicherte Ansicht / Schnellzugriff** (`/view/…`) | Von Ihnen individuell erstellte und ggf. innerhalb Ihrer Institution geteilte Listen. Sie basieren auf den **Patienten** und wurden nach Ihren Vorstellungen und Wünschen sortiert und gefiltert. |
 
 Die sichtbaren Datensätze hängen von **Berechtigungen** und **gewähltem Standort** ab.
 
@@ -136,9 +138,7 @@ Auf **Meine Aufgaben** und in Listen mit voller Aufgaben-Werkzeugleiste:
 
 ## 11. Drucken (inkl. Microsoft Edge und Seitenverhältnis)
 
-Die Anwendung bringt **Druck-Styles** für **Patienten- und Aufgaben-Tabellen** mit:
-
-@00100200345 bitte prüfen ob das so korrekt ist.
+Die Anwendung bringt eigene **Druck-Styles** für **Patienten- und Aufgaben-Tabellen** mit, sodass die Tabellen beim Drucken sauber im Querformat aufbereitet werden.
 
 ### Empfohlene Schritte (allgemein)
 
@@ -161,6 +161,40 @@ Hinweis: Die genaue Benennung von Optionen („Skalierung“, „Seitenanpassung
 
 ---
 
+## 12. Aufgaben bearbeiten und abschließen
+
+1. Öffnen Sie eine Aufgabe per Klick in einer Aufgabenliste oder über den Reiter **Aufgaben** eines Patienten – die Aufgabe öffnet sich im rechten Panel.
+2. Sie können Titel, Beschreibung, Fälligkeit, Priorität und Zuweisung jederzeit anpassen. Änderungen werden **automatisch** gespeichert.
+3. **Erledigt markieren:** Setzen Sie das **Häkchen** an der Aufgabe (in der Detailansicht oder direkt in der Spalte **Erledigt** der Tabellenansicht). Erledigte Aufgaben werden entsprechend gekennzeichnet und können über Filter ein- oder ausgeblendet werden.
+
+---
+
+## 13. Einstellungen: Sprache, Design und Profil
+
+**Wo:** **Einstellungen** (Zahnrad im Seitenmenü, Seite `/settings`).
+
+- **Sprache:** Die Oberfläche ist u. a. in **Deutsch, Englisch, Spanisch, Französisch, Niederländisch und Portugiesisch** verfügbar. Wählen Sie Ihre bevorzugte Sprache; die Umstellung erfolgt sofort.
+- **Design (Theme):** Wählen Sie zwischen **Hell**, **Dunkel** oder **System** (folgt der Einstellung Ihres Betriebssystems).
+- **Profilbild:** Laden Sie ein Profilbild hoch oder entfernen Sie es. Das Bild erscheint u. a. bei Zuweisungen und Avataren.
+- **Cache leeren:** Falls Daten veraltet erscheinen, können Sie den lokalen Zwischenspeicher leeren und sich neu anmelden.
+
+---
+
+## 14. Abmelden (Logout)
+
+1. Öffnen Sie die **Einstellungen** (Zahnrad).
+2. Wählen Sie **Abmelden**. Sie werden vom Identity Provider abgemeldet und zur Anmeldeseite zurückgeleitet.
+
+Hinweis: An gemeinsam genutzten Geräten sollten Sie sich nach der Nutzung immer abmelden.
+
+---
+
+## 15. Feedback geben
+
+Über **Einstellungen → Feedback** können Sie direkt aus der Anwendung Rückmeldungen, Wünsche oder Fehlermeldungen an das helpwave-Team senden. Beschreiben Sie Ihr Anliegen möglichst konkret (z. B. betroffene Seite und Schritte zur Reproduktion), damit es schnell bearbeitet werden kann.
+
+---
+
 ## Kurzüberblick Navigation
 
 | Bereich | Menü / URL |
@@ -172,3 +206,4 @@ Hinweis: Die genaue Benennung von Optionen („Skalierung“, „Seitenanpassung
 | Eigenschaften (Definitionen) | Einstellungen → Eigenschaften → `/properties` |
 | Ansichten verwalten | Einstellungen → Ansichten → `/settings/views` |
 | Gespeicherte Ansicht öffnen | Seitenleiste **Gespeicherte Ansichten** → `/view/<id>` |
+| Einstellungen (Sprache, Design, Profil, Feedback, Abmelden) | Seitenleiste → Zahnrad → `/settings` |
