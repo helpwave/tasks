@@ -440,7 +440,7 @@ export const LocationSelectionDialog = ({
     position: translation('pickPosition'),
     teams: translation('pickTeams'),
     root: translation('selectRootLocation'),
-    default:  translation('selectLocation')
+    default: translation('selectLocation')
   }
 
   const descriptionTranslationMap: Record<LocationPickerUseCase, string> = {
@@ -448,7 +448,7 @@ export const LocationSelectionDialog = ({
     position: translation('pickPositionDescription'),
     teams: translation('pickTeamsDescription'),
     root: translation('selectRootLocationDescription'),
-    default:  translation('selectLocationDescription')
+    default: translation('selectLocationDescription')
   }
 
   return (
@@ -462,7 +462,7 @@ export const LocationSelectionDialog = ({
         </div>
       )}
       description={descriptionTranslationMap[useCase]}
-      className="w-150 max-w-[calc(100vw-2rem)] h-[80vh] max-h-[calc(100vh-2rem)] flex flex-col"
+      className="w-150 max-w-[calc(100vw-2rem)] h-[80vh] max-h-[calc(100vh-2rem)] flex flex-col !inset-0 !m-auto !translate-none"
     >
       <div className="flex flex-col gap-4 mt-4 h-full overflow-hidden">
         <div className="flex flex-wrap items-center gap-2 flex-none">
