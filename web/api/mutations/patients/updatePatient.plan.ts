@@ -71,12 +71,11 @@ export const updatePatientOptimisticPlan: OptimisticPlan<UpdatePatientVariables>
             const optimisticProperties = buildOptimisticProperties(existingProps, data.properties, patientId)
             applyOptimisticPropertyScalars(cache, optimisticProperties)
             const newProperties = getNewOptimisticProperties(optimisticProperties)
-            fields['properties'] = (existing) => {
-              const current = Array.isArray(existing) ? existing : []
-              if (newProperties.length > 0) {
+            if (newProperties.length > 0) {
+              fields['properties'] = (existing) => {
+                const current = Array.isArray(existing) ? existing : []
                 return [...current, ...newProperties]
               }
-              return [...current]
             }
           }
           cache.modify({ id, fields })

@@ -67,10 +67,10 @@ function seedListPatient(cache: InMemoryCache) {
   })
 }
 
-function readListPatients(cache: InMemoryCache) {
+function readListPatients(cache: InMemoryCache, variables: typeof LIST_VARIABLES = LIST_VARIABLES) {
   return cache.readQuery<GetPatientsQuery>({
     query: getParsedDocument(GetPatientsDocument),
-    variables: LIST_VARIABLES,
+    variables,
     optimistic: true,
   })?.patients
 }
@@ -121,5 +121,101 @@ describe('updatePatientOptimisticPlan list integration', () => {
 
     const after = readListPatients(cache)!
     expect(paginatedListItemKey(before[0]!)).not.toBe(paginatedListItemKey(after[0]!))
+  })
+
+  it('keeps multi-page list reads complete after an inline property edit', () => {
+    const filters = [{
+      fieldKey: 'sex',
+      operator: 'IN',
+      value: { uuidValues: ['MALE', 'FEMALE', 'UNKNOWN'] },
+    }]
+    const listVarsPage0 = {
+      rootLocationIds: ['root-1'],
+      states: ['ADMITTED', 'WAIT', 'DISCHARGED', 'DEAD'],
+      filters,
+      pagination: { pageIndex: 0, pageSize: 25 },
+    }
+    const listVarsPage1 = { ...listVarsPage0, pagination: { pageIndex: 1, pageSize: 25 } }
+
+    function makePatient(index: number) {
+      return {
+        __typename: 'PatientType' as const,
+        id: `p-${index}`,
+        name: `Patient ${index}`,
+        firstname: 'Patient',
+        lastname: String(index),
+        birthdate: '1990-01-01',
+        sex: 'MALE' as const,
+        state: 'ADMITTED' as const,
+        updateDate: null,
+        assignedLocation: null,
+        assignedLocations: [],
+        clinic: null,
+        position: null,
+        teams: [],
+        tasks: [],
+        properties: index === 5 ? [{
+          __typename: 'PropertyValueType' as const,
+          id: `prop-${index}`,
+          definition: {
+            __typename: 'PropertyDefinitionType' as const,
+            id: 'def-living-will',
+            name: 'Living Will',
+            description: null,
+            fieldType: 'FIELD_TYPE_TEXT',
+            isActive: true,
+            allowedEntities: ['PATIENT'],
+            options: [],
+          },
+          textValue: 'old',
+          numberValue: null,
+          booleanValue: null,
+          dateValue: null,
+          dateTimeValue: null,
+          selectValue: null,
+          multiSelectValues: null,
+          userValue: null,
+          user: null,
+          team: null,
+        }] : [],
+      }
+    }
+
+    const page0 = Array.from({ length: 25 }, (_, i) => makePatient(i))
+    const page1 = Array.from({ length: 3 }, (_, i) => makePatient(25 + i))
+
+    const cache = new InMemoryCache(buildCacheConfig())
+    cache.writeQuery<GetPatientsQuery>({
+      query: GetPatientsDocument,
+      variables: listVarsPage0,
+      data: ({ patients: page0, patientsTotal: 28 } as unknown) as GetPatientsQuery,
+    })
+    cache.writeQuery<GetPatientsQuery>({
+      query: GetPatientsDocument,
+      variables: listVarsPage1,
+      data: ({ patients: page1, patientsTotal: 28 } as unknown) as GetPatientsQuery,
+    })
+
+    const variables = {
+      id: 'p-5',
+      data: { properties: [{ definitionId: 'def-living-will', textValue: 'updated' }] },
+    }
+    const [patch] = updatePatientOptimisticPlan.getPatches(variables)
+    patch!.apply(cache, variables)
+
+    for (const vars of [listVarsPage0, listVarsPage1]) {
+      const diff = cache.diff<GetPatientsQuery>({
+        query: getParsedDocument(GetPatientsDocument),
+        variables: vars,
+        optimistic: true,
+        returnPartialData: true,
+      })
+      expect(diff.complete).toBe(true)
+      expect(diff.result?.patients?.length).toBeGreaterThan(0)
+    }
+
+    const edited = readListPatients(cache, listVarsPage0)?.find((patient) => patient.id === 'p-5')
+    expect(edited?.properties?.[0]?.textValue).toBe('updated')
+    expect(edited?.properties?.[0]?.definition?.name).toBe('Living Will')
   })
 })
