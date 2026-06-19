@@ -12,6 +12,9 @@ export interface PropertyCellProps {
   fieldType: FieldType,
 }
 
+/** Maximum number of characters shown for text properties in table views before truncating with an ellipsis. */
+const textCellMaxLength = 32
+
 
 export const PropertyCell = ({
   property,
@@ -94,10 +97,13 @@ export const PropertyCell = ({
       <span className="truncate block">{property.numberValue}</span>
     )
   case FieldType.FieldTypeText: {
-    const textValue = property.textValue ?? property.numberValue ?? ''
+    const textValue = String(property.textValue ?? property.numberValue ?? '')
+    const displayValue = textValue.length > textCellMaxLength
+      ? `${textValue.slice(0, textCellMaxLength)}...`
+      : textValue
     return (
       <Tooltip tooltip={textValue}>
-        <span className="truncate block max-w-full overflow-hidden text-ellipsis">{textValue}</span>
+        <span className="truncate block max-w-full overflow-hidden text-ellipsis">{displayValue}</span>
       </Tooltip>
     )
   }
