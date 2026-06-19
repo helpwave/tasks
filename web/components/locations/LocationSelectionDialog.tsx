@@ -451,6 +451,13 @@ export const LocationSelectionDialog = ({
     default:  translation('selectLocationDescription')
   }
 
+  // hightide centers the dialog with the standalone `translate: -50% -50%` CSS
+  // property on a `position: fixed` box. On iOS Safari that combination
+  // misanchors (the translate offset is dropped), so the dialog renders shifted
+  // off the left edge. We override it with transform-free centering:
+  // `!inset-0 !m-auto` plus a definite width/height centers the box reliably
+  // on all browsers without relying on `translate` (the `scale` pop-in
+  // animation is unaffected since it uses the separate `scale` property).
   return (
     <Dialog
       isOpen={isOpen}
@@ -462,7 +469,7 @@ export const LocationSelectionDialog = ({
         </div>
       )}
       description={descriptionTranslationMap[useCase]}
-      className="w-150 max-w-[calc(100vw-2rem)] h-[80vh] max-h-[calc(100vh-2rem)] flex flex-col"
+      className="w-150 max-w-[calc(100vw-2rem)] h-[80vh] max-h-[calc(100vh-2rem)] flex flex-col !inset-0 !m-auto !translate-none"
     >
       <div className="flex flex-col gap-4 mt-4 h-full overflow-hidden">
         <div className="flex flex-wrap items-center gap-2 flex-none">
