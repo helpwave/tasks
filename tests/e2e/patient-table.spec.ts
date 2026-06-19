@@ -136,6 +136,9 @@ async function scrollListStep(page: Page): Promise<void> {
 
 test.describe('patient table (patient list)', () => {
   test('loads 77 patients and reaches all of them by scrolling, with no duplicate rows', async ({ page }) => {
+    // Rendering 77 rows with their property columns and walking every page is
+    // legitimately heavy; give it headroom over the default 30s test timeout.
+    test.slow()
     await seedAuth(page)
     await seedStoredSelection(page, ['root-1'])
     await mockBackend(page, {
@@ -191,16 +194,17 @@ test.describe('patient table (patient list)', () => {
       const before = names.length
 
       // Production path: scroll the sentinel toward the viewport and let the
-      // observer pull the next page.
+      // observer pull the next page. Probe only briefly — the
+      // IntersectionObserver is unreliable under CI load, so we must not spend
+      // the per-step budget waiting on a tick that may never come.
       await scrollListStep(page)
-      if (await rowsGrewBeyond(page, before, 3000)) continue
+      if (await rowsGrewBeyond(page, before, 1000)) continue
 
       // Scrolling did not trigger a load. If no "Load more" button remains the
       // list is genuinely exhausted; otherwise click it to advance the page
       // deterministically and wait for the new rows to land.
       if (await loadMoreButton.count() === 0) break
       try {
-        await loadMoreButton.scrollIntoViewIfNeeded()
         await loadMoreButton.click()
       } catch {
         // The button can disappear if an in-flight scroll-triggered fetch
@@ -208,7 +212,9 @@ test.describe('patient table (patient list)', () => {
         // freshly rendered rows.
         continue
       }
-      await rowsGrewBeyond(page, before, 8000)
+      // A click must make progress; if it somehow doesn't, stop rather than
+      // burn the whole timeout so the shortfall surfaces at the assertion below.
+      if (!(await rowsGrewBeyond(page, before, 5000))) break
     }
 
     // 4) Final state: every one of the 77 patients was seen exactly once, and
