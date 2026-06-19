@@ -2,6 +2,7 @@ from datetime import datetime, timezone, timedelta
 from typing import TYPE_CHECKING, Annotated
 
 import strawberry
+from api.context import Info
 from api.inputs import PatientState
 from database import models
 from sqlalchemy import select
@@ -36,14 +37,14 @@ class UserType:
         return self.last_online >= threshold
 
     @strawberry.field
-    def organizations(self, info) -> str | None:
+    def organizations(self, info: Info) -> str | None:
         """Get organizations from the context"""
         return info.context.organizations
 
     @strawberry.field
     async def tasks(
         self,
-        info,
+        info: Info,
         root_location_ids: list[strawberry.ID] | None = None,
     ) -> list[Annotated["TaskType", strawberry.lazy("api.types.task")]]:
         from api.services.authorization import AuthorizationService
@@ -151,7 +152,7 @@ class UserType:
     @strawberry.field
     async def root_locations(
         self,
-        info,
+        info: Info,
     ) -> list[
         Annotated["LocationNodeType", strawberry.lazy("api.types.location")]
     ]:
