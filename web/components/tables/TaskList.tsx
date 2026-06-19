@@ -764,11 +764,6 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
             <AssigneeSelect
               value={row.original.assigneeTeam ? `team:${row.original.assigneeTeam.id}` : row.original.assignee?.id ?? ''}
               onValueChanged={(value) => {
-                setOptimisticUpdates(prev => {
-                  const map = new Map(prev)
-                  map.set(row.original.id, true)
-                  return map
-                })
                 let data: { assigneeIds: string[], assigneeTeamId: string | null } = { assigneeIds: [], assigneeTeamId: null }
                 if (!value) {
                   data = { assigneeIds: [], assigneeTeamId: null }
@@ -780,13 +775,6 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
                 }
                 updateTaskMutate({
                   variables: { id: row.original.id, data },
-                })
-              }}
-              onDialogClose={() => {
-                setOptimisticUpdates(prev => {
-                  const map = new Map(prev)
-                  map.set(row.original.id, true)
-                  return map
                 })
               }}
               allowTeams={true}
