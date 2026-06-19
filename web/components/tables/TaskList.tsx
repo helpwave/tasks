@@ -429,11 +429,6 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
           data: { properties: merged },
         },
       })
-      setOptimisticUpdates(prev => {
-        const next = new Map(prev)
-        next.set(payload.row.id, true)
-        return next
-      })
     },
     [updateTaskMutate]
   )
