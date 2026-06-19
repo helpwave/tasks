@@ -102,7 +102,7 @@ export const PropertyCell = ({
       ? `${textValue.slice(0, textCellMaxLength)}...`
       : textValue
     return (
-      <Tooltip tooltip={textValue}>
+      <Tooltip tooltip={displayValue}>
         <span className="truncate block max-w-full overflow-hidden text-ellipsis">{displayValue}</span>
       </Tooltip>
     )
