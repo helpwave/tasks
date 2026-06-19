@@ -156,6 +156,50 @@ test.describe('frontend data loading', () => {
     expect(errors).toEqual([])
   })
 
+  test('inline property edit on a paginated patient list keeps all loaded rows visible', async ({ page }) => {
+    const errors = collectErrors(page)
+    await seedAuth(page)
+    await seedStoredSelection(page, ['root-1'])
+
+    const PAGINATED_PATIENTS: PatientFixture[] = Array.from({ length: 30 }, (_, i) => {
+      const index = String(i + 1).padStart(2, '0')
+      return {
+        id: `patient-${index}`,
+        firstname: 'Patient',
+        lastname: `Row_${index}`,
+        properties: i === 0
+          ? [{ id: 'prop-01', definitionId: 'def-allergy', textValue: 'Penicillin' }]
+          : undefined,
+      }
+    })
+
+    await mockBackend(page, {
+      patients: PAGINATED_PATIENTS,
+      propertyDefinitions: [ALLERGY_DEF],
+      rootLocations: ROOT_LOCATIONS,
+    })
+
+    await page.goto(`${BASE}/patients`)
+    const rowSelector = 'tr[data-name="table-body-row"]'
+    await expect(page.locator(rowSelector).first()).toBeVisible({ timeout: 20000 })
+    await expect.poll(() => page.locator(rowSelector).count(), { timeout: 20000 })
+      .toBeGreaterThanOrEqual(25)
+
+    const cell = page.getByText('Penicillin').first()
+    await expect(cell).toBeVisible()
+    await cell.click()
+    const input = page.getByRole('textbox').last()
+    await expect(input).toBeVisible()
+    await input.fill('Latex')
+    await page.getByRole('button', { name: 'Done' }).click()
+
+    await expect(page.getByText('Latex').first()).toBeVisible({ timeout: 10000 })
+    await expect.poll(() => page.locator(rowSelector).count(), { timeout: 10000 })
+      .toBeGreaterThanOrEqual(25)
+    await expect(page.getByText('Row_01, Patient')).toBeVisible()
+    expect(errors).toEqual([])
+  })
+
   test('random interaction across views does not crash the app', async ({ page }) => {
     // Light fuzz: click around the shell and core routes and assert nothing
     // throws and the app keeps rendering content.

@@ -101,11 +101,14 @@ export function getContiguousLoadedThrough<T>(
  * back to its previously known items instead of disappearing — this keeps
  * infinite scroll as one continuous list rather than collapsing to the latest
  * page. A defined-but-empty read is authoritative and clears the remembered
- * page so genuine removals still propagate.
+ * page so genuine removals still propagate, unless totalCount indicates rows
+ * should still exist and the page was previously populated (transient incomplete
+ * cache read).
  */
 export function materializePages<T extends { id: string }>(
   rawReads: ReadonlyArray<readonly T[] | undefined>,
-  lastPages: Map<number, T[]>
+  lastPages: Map<number, T[]>,
+  totalCount?: number
 ): T[] {
   const pages: Array<readonly T[] | undefined> = rawReads.map((read, page) => {
     if (read === undefined) {
@@ -113,9 +116,13 @@ export function materializePages<T extends { id: string }>(
     }
     if (read.length > 0) {
       lastPages.set(page, read as T[])
-    } else {
-      lastPages.delete(page)
+      return read
     }
+    const previous = lastPages.get(page)
+    if (previous && previous.length > 0 && totalCount != null && totalCount > 0) {
+      return previous
+    }
+    lastPages.delete(page)
     return read
   })
   return mergePagesContiguousById(pages)
@@ -152,15 +159,22 @@ export function useAccumulatedPagination<T extends { id: string }>(options: {
   pageDataRef.current = pageData
 
   const lastPagesRef = useRef<Map<number, T[]>>(new Map())
+  const totalCountRef = useRef(totalCount)
+  totalCountRef.current = totalCount
 
   const resolvePageRead = useCallback((page: number): T[] | undefined => {
     const read = readCachedPage?.(page) ?? (page === pageIndex ? pageDataRef.current : undefined)
     if (read !== undefined) {
       if (read.length > 0) {
         lastPagesRef.current.set(page, read)
-      } else {
-        lastPagesRef.current.delete(page)
+        return read
       }
+      const previous = lastPagesRef.current.get(page)
+      const knownTotal = totalCountRef.current
+      if (previous && previous.length > 0 && knownTotal != null && knownTotal > 0) {
+        return previous
+      }
+      lastPagesRef.current.delete(page)
       return read
     }
     return lastPagesRef.current.get(page)
@@ -183,7 +197,7 @@ export function useAccumulatedPagination<T extends { id: string }>(options: {
       for (let p = 0; p <= pageIndex; p++) {
         rawReads.push(resolvePageRead(p))
       }
-      const next = materializePages(rawReads, lastPagesRef.current)
+      const next = materializePages(rawReads, lastPagesRef.current, totalCountRef.current)
       const through = getContiguousLoadedThrough(pageIndex, resolvePageRead)
       setContiguousLoadedThrough(through)
       setAccumulated(prev => (samePaginatedListItems(prev, next) ? prev : next))

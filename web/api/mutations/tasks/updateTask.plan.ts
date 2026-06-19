@@ -78,46 +78,46 @@ export const updateTaskOptimisticPlan: OptimisticPlan<UpdateTaskVariables> = {
           // Read the current properties from the normalized entity (populated by
           // the list query) so real property uuids are preserved even when the
           // task detail query was never run.
-          const existingProps = readEntityProperties(cache, 'TaskType', taskId)
-          const mergeProperties = (existing: unknown) => {
-            if (data.properties === undefined) return existing
+          const fields: Record<string, (prev: unknown, details: { readField: (field: string) => unknown }) => unknown> = {
+            title: (prev) =>
+              data.title !== undefined ? data.title ?? '' : (prev as string),
+            description: (prev) =>
+              data.description !== undefined ? data.description : (prev as string | null),
+            done: (prev) =>
+              data.done !== undefined ? data.done ?? false : (prev as boolean),
+            dueDate: (prev) =>
+              data.dueDate !== undefined ? data.dueDate ?? null : (prev as string | null),
+            priority: (prev) =>
+              data.priority !== undefined ? data.priority : (prev as string | null),
+            estimatedTime: (prev) =>
+              data.estimatedTime !== undefined ? data.estimatedTime : (prev as number | null),
+            assignees: (prev) => {
+              const next = optimisticAssignees(data.assigneeIds, existingTask?.assignees)
+              return next !== undefined ? next : prev
+            },
+            assigneeTeam: (prev) => {
+              const next = optimisticAssigneeTeam(
+                data.assigneeTeamId,
+                existingTask?.assigneeTeam
+              )
+              return next !== undefined ? next : prev
+            },
+          }
+          if (data.properties !== undefined) {
+            const existingProps = readEntityProperties(cache, 'TaskType', taskId)
             const optimisticProperties = buildOptimisticProperties(existingProps, data.properties, taskId)
             applyOptimisticPropertyScalars(cache, optimisticProperties)
             const newProperties = getNewOptimisticProperties(optimisticProperties)
-            const current = Array.isArray(existing) ? existing : []
             if (newProperties.length > 0) {
-              return [...current, ...newProperties]
+              fields['properties'] = (existing) => {
+                const current = Array.isArray(existing) ? existing : []
+                return [...current, ...newProperties]
+              }
             }
-            return [...current]
           }
           cache.modify({
             id,
-            fields: {
-              title: (prev: string) =>
-                data.title !== undefined ? data.title ?? '' : prev,
-              description: (prev: string | null) =>
-                data.description !== undefined ? data.description : prev,
-              done: (prev: boolean) =>
-                data.done !== undefined ? data.done ?? false : prev,
-              dueDate: (prev: string | null) =>
-                data.dueDate !== undefined ? data.dueDate ?? null : prev,
-              priority: (prev: string | null) =>
-                data.priority !== undefined ? data.priority : prev,
-              estimatedTime: (prev: number | null) =>
-                data.estimatedTime !== undefined ? data.estimatedTime : prev,
-              properties: mergeProperties,
-              assignees: (prev) => {
-                const next = optimisticAssignees(data.assigneeIds, existingTask?.assignees)
-                return next !== undefined ? next : prev
-              },
-              assigneeTeam: (prev) => {
-                const next = optimisticAssigneeTeam(
-                  data.assigneeTeamId,
-                  existingTask?.assigneeTeam
-                )
-                return next !== undefined ? next : prev
-              },
-            },
+            fields,
           })
           cache.modify({
             id: 'ROOT_QUERY',
