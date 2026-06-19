@@ -233,6 +233,15 @@ describe('materializePages', () => {
     const merged = materializePages([[{ id: 'a', v: 2 }]], lastPages)
     expect(merged).toEqual([{ id: 'a', v: 2 }])
   })
+
+  it('does not collapse when a populated page momentarily reads as empty but totalCount remains', () => {
+    const lastPages = new Map<number, Array<{ id: string }>>()
+    const page0 = Array.from({ length: 25 }, (_, i) => ({ id: `p0-${i}` }))
+    materializePages([page0], lastPages)
+    const merged = materializePages([[]], lastPages, 28)
+    expect(merged.map(x => x.id)).toHaveLength(25)
+    expect(lastPages.has(0)).toBe(true)
+  })
 })
 
 describe('resolveAccumulatedList', () => {

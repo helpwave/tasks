@@ -462,11 +462,11 @@ export const LocationSelectionDialog = ({
         </div>
       )}
       description={descriptionTranslationMap[useCase]}
-      className="w-150 h-[80vh] flex flex-col max-w-full"
+      className="w-150 max-w-[calc(100vw-2rem)] h-[80vh] max-h-[calc(100vh-2rem)] flex flex-col"
     >
       <div className="flex flex-col gap-4 mt-4 h-full overflow-hidden">
-        <div className="flex items-center gap-2 flex-none">
-          <div className="flex-grow">
+        <div className="flex flex-wrap items-center gap-2 flex-none">
+          <div className="flex-grow min-w-[12rem]">
             <SearchBar
               placeholder={translation('searchLocations')}
               value={searchQuery}

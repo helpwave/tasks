@@ -429,11 +429,6 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
           data: { properties: merged },
         },
       })
-      setOptimisticUpdates(prev => {
-        const next = new Map(prev)
-        next.set(payload.row.id, true)
-        return next
-      })
     },
     [updateTaskMutate]
   )
@@ -628,11 +623,6 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
                   if (title === row.original.name) {
                     return
                   }
-                  setOptimisticUpdates(prev => {
-                    const map = new Map(prev)
-                    map.set(row.original.id, true)
-                    return map
-                  })
                   updateTaskMutate({
                     variables: { id: row.original.id, data: { title } },
                   })
@@ -644,7 +634,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
                 <span className="truncate">
                   {row.original.name}
                 </span>
-                <Edit2 className="size-4 min-w-4 group-hover:block hidden"/>
+                <Edit2 className="size-4 min-w-4 group-hover:block hidden" />
               </InTableTextEditPopUp>
             </div>
           </TaskRowRefreshingGate>
@@ -683,11 +673,6 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
                   if (next === row.original.dueDate) {
                     return
                   }
-                  setOptimisticUpdates(prev => {
-                    const map = new Map(prev)
-                    map.set(row.original.id, true)
-                    return map
-                  })
                   updateTaskMutate({
                     variables: { id: row.original.id, data: { dueDate: DueDateUtils.serializeForApi(next) } },
                   })
@@ -701,7 +686,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
                   mode="absolute"
                   className={clsx(colorClass, 'truncate')}
                 />
-                <Edit2 className="size-4 min-w-4 group-hover:block hidden"/>
+                <Edit2 className="size-4 min-w-4 group-hover:block hidden" />
               </InTableDateTimeEditPopUp>
             </TaskRowRefreshingGate>
           )
@@ -740,7 +725,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
                   className="flex-row-2 justify-between min-w-40 w-fit print:hidden group"
                 >
                   <span className="truncate">{data.patient?.name}</span>
-                  <ExternalLink className="size-4 min-w-4 group-hover:block hidden"/>
+                  <ExternalLink className="size-4 min-w-4 group-hover:block hidden" />
                 </Button>
               </>
             </TaskRowRefreshingGate>
@@ -760,15 +745,10 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
         header: translation('assignedTo'),
         accessorFn: ({ assignee, assigneeTeam }) => assignee?.name || assigneeTeam?.title,
         cell: ({ row }) => (
-          <TaskRowRefreshingGate taskId={row.original.id} onClick={(e) => {e.stopPropagation()}}>
+          <TaskRowRefreshingGate taskId={row.original.id} onClick={(e) => { e.stopPropagation() }}>
             <AssigneeSelect
               value={row.original.assigneeTeam ? `team:${row.original.assigneeTeam.id}` : row.original.assignee?.id ?? ''}
               onValueChanged={(value) => {
-                setOptimisticUpdates(prev => {
-                  const map = new Map(prev)
-                  map.set(row.original.id, true)
-                  return map
-                })
                 let data: { assigneeIds: string[], assigneeTeamId: string | null } = { assigneeIds: [], assigneeTeamId: null }
                 if (!value) {
                   data = { assigneeIds: [], assigneeTeamId: null }
@@ -780,13 +760,6 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
                 }
                 updateTaskMutate({
                   variables: { id: row.original.id, data },
-                })
-              }}
-              onDialogClose={() => {
-                setOptimisticUpdates(prev => {
-                  const map = new Map(prev)
-                  map.set(row.original.id, true)
-                  return map
                 })
               }}
               allowTeams={true}
@@ -833,7 +806,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
     ]
     return colsWithRefreshing
   },
-  [embedded, translation, showAssignee, taskPropertyColumnsWithActions, completeTask, reopenTask, updateTaskMutate])
+    [embedded, translation, showAssignee, taskPropertyColumnsWithActions, completeTask, reopenTask, updateTaskMutate])
 
   const taskCardPrimaryColumnIds = useMemo(() => {
     const s = new Set<string>(['done', 'title', 'dueDate', 'patient'])
@@ -897,7 +870,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
   )
 
   const deferSetColumnOrder = useDeferredColumnOrderChange(setColumnOrder)
-  const embeddedTableStateNoop = useCallback(() => {}, [])
+  const embeddedTableStateNoop = useCallback(() => { }, [])
   const hasOpenDrawer = taskDialogState.isOpen || patientDialogState != null
   const hasFilterPanelOpen = isShowFilters || isShowSorting
 
@@ -962,7 +935,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
         } as Partial<TableState> as TableState}
         onColumnVisibilityChange={embedded ? embeddedTableStateNoop : setColumnVisibilityMerged}
         onColumnOrderChange={embedded ? embeddedTableStateNoop : deferSetColumnOrder}
-        onPaginationChange={() => {}}
+        onPaginationChange={() => { }}
         onSortingChange={embedded ? embeddedTableStateNoop : setSorting}
         onColumnFiltersChange={embedded ? embeddedTableStateNoop : setFilters}
         enableMultiSort={true}
@@ -1086,7 +1059,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
           `}</style>
             )}
             <div className={clsx('w-full', listLayout === 'table' ? 'block' : 'hidden print:block')}>
-              <TableDisplay className="print-content hw-autosize-table w-full overflow-x-auto hw-touch-scroll"/>
+              <TableDisplay className="print-content hw-autosize-table w-full overflow-x-auto hw-touch-scroll" />
             </div>
             {listLayout === 'card' && (
               <div className="grid gap-3 w-full print:hidden [grid-template-columns:repeat(auto-fill,minmax(min(100%,24rem),1fr))]">

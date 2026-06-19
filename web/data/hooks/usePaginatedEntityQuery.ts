@@ -85,13 +85,16 @@ export function usePaginatedEntityQuery<
   const readCachedPage = useCallback((pageIndex: number): TItem[] | undefined => {
     if (!client || skipQuery === true || pageIndex < 0) return undefined
     try {
-      const cached = client.cache.readQuery<TQueryData>({
-        query: getParsedDocument(document),
-        variables: { ...baseVariables, pagination: { pageIndex, pageSize } },
+      const query = getParsedDocument(document)
+      const variables = { ...baseVariables, pagination: { pageIndex, pageSize } }
+      const diff = client.cache.diff<TQueryData>({
+        query,
+        variables,
         optimistic: true,
+        returnPartialData: false,
       })
-      if (cached == null) return undefined
-      return extractItemsRef.current(cached)
+      if (!diff.complete || diff.result == null) return undefined
+      return extractItemsRef.current(diff.result)
     } catch {
       return undefined
     }
