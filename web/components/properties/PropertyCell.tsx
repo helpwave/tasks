@@ -12,7 +12,6 @@ export interface PropertyCellProps {
   fieldType: FieldType,
 }
 
-/** Maximum number of characters shown for text properties in table views before truncating with an ellipsis. */
 const textCellMaxLength = 32
 
 
@@ -28,117 +27,120 @@ export const PropertyCell = ({
   }
 
   switch (fieldType) {
-  case FieldType.FieldTypeCheckbox:
-    return (
-      <Chip
-        size="sm"
-        className="coloring-tonal"
-        color={property.booleanValue ? 'positive' : 'negative'}
-      >
-        {property.booleanValue ? translation('yes') : translation('no')}
-      </Chip>
-    )
-  case FieldType.FieldTypeDate: {
-    const date = parseLocalCalendarDate(property.dateValue ?? undefined)
-    if (!date) {
-      return <FillerCell />
-    }
-    return (
-      <DateDisplay date={date} showTime={false} mode="absolute" />
-    )
-  }
-  case FieldType.FieldTypeDateTime: {
-    const date = parseApiDateTime(property.dateTimeValue ?? undefined)
-    if (!date) {
-      return <FillerCell />
-    }
-    return (
-      <DateDisplay date={date} mode="absolute" />
-    )
-  }
-  case FieldType.FieldTypeSelect: {
-    if (!property.selectValue) {
-      return <FillerCell />
-    }
-    const selectOptionIndex = property.selectValue.match(/-opt-(\d+)$/)?.[1]
-    const selectOptionName = selectOptionIndex !== undefined && property.definition?.options
-      ? property.definition.options[parseInt(selectOptionIndex, 10)]
-      : property.selectValue
-    return (
-      <div className="flex flex-wrap gap-1 w-full max-w-full min-w-0">
-        <Chip size="sm" className="primary coloring-tonal max-w-full min-w-0">
-          <span className="truncate min-w-0">{selectOptionName}</span>
+    case FieldType.FieldTypeCheckbox:
+      return (
+        <Chip
+          size="sm"
+          className="coloring-tonal"
+          color={property.booleanValue ? 'positive' : 'negative'}
+        >
+          {property.booleanValue ? translation('yes') : translation('no')}
         </Chip>
-      </div>
-    )
-  }
-  case FieldType.FieldTypeMultiSelect: {
-    if (!property.multiSelectValues || property.multiSelectValues.length === 0) {
+      )
+    case FieldType.FieldTypeDate: {
+      const date = parseLocalCalendarDate(property.dateValue ?? undefined)
+      if (!date) {
+        return <FillerCell />
+      }
+      return (
+        <DateDisplay date={date} showTime={false} mode="absolute" />
+      )
+    }
+    case FieldType.FieldTypeDateTime: {
+      const date = parseApiDateTime(property.dateTimeValue ?? undefined)
+      if (!date) {
+        return <FillerCell />
+      }
+      return (
+        <DateDisplay date={date} mode="absolute" />
+      )
+    }
+    case FieldType.FieldTypeSelect: {
+      if (!property.selectValue) {
+        return <FillerCell />
+      }
+      const selectOptionIndex = property.selectValue.match(/-opt-(\d+)$/)?.[1]
+      const selectOptionName = selectOptionIndex !== undefined && property.definition?.options
+        ? property.definition.options[parseInt(selectOptionIndex, 10)]
+        : property.selectValue
+      return (
+        <div className="flex flex-wrap gap-1 w-full max-w-full min-w-0">
+          <Chip size="sm" className="primary coloring-tonal max-w-full min-w-0">
+            <span className="truncate min-w-0">{selectOptionName}</span>
+          </Chip>
+        </div>
+      )
+    }
+    case FieldType.FieldTypeMultiSelect: {
+      if (!property.multiSelectValues || property.multiSelectValues.length === 0) {
+        return <FillerCell />
+      }
+      return (
+        <div className="flex flex-wrap gap-1 w-full max-w-full min-w-0">
+          {property.multiSelectValues.map((val) => {
+            const multiSelectOptionIndex = val.match(/-opt-(\d+)$/)?.[1]
+            const multiSelectOptionName = multiSelectOptionIndex !== undefined && property.definition?.options
+              ? property.definition.options[parseInt(multiSelectOptionIndex, 10)]
+              : val
+            return (
+              <Chip key={val} size="sm" className="primary coloring-tonal max-w-full min-w-0">
+                <span className="truncate min-w-0">{multiSelectOptionName}</span>
+              </Chip>
+            )
+          })}
+        </div>
+      )
+    }
+    case FieldType.FieldTypeNumber:
+      return (
+        <span className="truncate block">{property.numberValue}</span>
+      )
+    case FieldType.FieldTypeText: {
+      const textValue = String(property.textValue ?? property.numberValue ?? '')
+      const displayValue = textValue.length > textCellMaxLength
+        ? `${textValue.slice(0, textCellMaxLength)}...`
+        : textValue
+      return (
+        <>
+          <Tooltip tooltip={textValue} containerClassName="print:hidden">
+            <span className="truncate block max-w-full overflow-hidden text-ellipsis">{displayValue}</span>
+          </Tooltip>
+          <span className="hidden print:block whitespace-pre-wrap break-words">{textValue}</span>
+        </>
+      )
+    }
+    case FieldType.FieldTypeUser: {
+      if (property.user) {
+        return (
+          <div className="flex items-center gap-2 min-w-0">
+            <AvatarStatusComponent
+              size="sm"
+              isOnline={property.user.isOnline ?? null}
+              image={property.user.avatarUrl ? {
+                avatarUrl: property.user.avatarUrl,
+                alt: property.user.name,
+              } : undefined}
+            />
+            <span className="truncate min-w-0">{property.user.name}</span>
+          </div>
+        )
+      }
+      if (property.team) {
+        return (
+          <div className="flex items-center gap-2 min-w-0">
+            <Users className="size-4 text-description flex-shrink-0" />
+            <span className="truncate min-w-0">{property.team.title}</span>
+          </div>
+        )
+      }
+      if (property.userValue) {
+        return (
+          <span className="truncate block">{property.userValue}</span>
+        )
+      }
       return <FillerCell />
     }
-    return (
-      <div className="flex flex-wrap gap-1 w-full max-w-full min-w-0">
-        {property.multiSelectValues.map((val) => {
-          const multiSelectOptionIndex = val.match(/-opt-(\d+)$/)?.[1]
-          const multiSelectOptionName = multiSelectOptionIndex !== undefined && property.definition?.options
-            ? property.definition.options[parseInt(multiSelectOptionIndex, 10)]
-            : val
-          return (
-            <Chip key={val} size="sm" className="primary coloring-tonal max-w-full min-w-0">
-              <span className="truncate min-w-0">{multiSelectOptionName}</span>
-            </Chip>
-          )
-        })}
-      </div>
-    )
-  }
-  case FieldType.FieldTypeNumber:
-    return (
-      <span className="truncate block">{property.numberValue}</span>
-    )
-  case FieldType.FieldTypeText: {
-    const textValue = String(property.textValue ?? property.numberValue ?? '')
-    const displayValue = textValue.length > textCellMaxLength
-      ? `${textValue.slice(0, textCellMaxLength)}...`
-      : textValue
-    return (
-      <Tooltip tooltip={displayValue}>
-        <span className="truncate block max-w-full overflow-hidden text-ellipsis">{displayValue}</span>
-      </Tooltip>
-    )
-  }
-  case FieldType.FieldTypeUser: {
-    if (property.user) {
-      return (
-        <div className="flex items-center gap-2 min-w-0">
-          <AvatarStatusComponent
-            size="sm"
-            isOnline={property.user.isOnline ?? null}
-            image={property.user.avatarUrl ? {
-              avatarUrl: property.user.avatarUrl,
-              alt: property.user.name,
-            } : undefined}
-          />
-          <span className="truncate min-w-0">{property.user.name}</span>
-        </div>
-      )
-    }
-    if (property.team) {
-      return (
-        <div className="flex items-center gap-2 min-w-0">
-          <Users className="size-4 text-description flex-shrink-0" />
-          <span className="truncate min-w-0">{property.team.title}</span>
-        </div>
-      )
-    }
-    if (property.userValue) {
-      return (
-        <span className="truncate block">{property.userValue}</span>
-      )
-    }
-    return <FillerCell />
-  }
-  default:
-    return <FillerCell />
+    default:
+      return <FillerCell />
   }
 }
