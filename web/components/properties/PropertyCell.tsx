@@ -102,9 +102,14 @@ export const PropertyCell = ({
       ? `${textValue.slice(0, textCellMaxLength)}...`
       : textValue
     return (
-      <Tooltip tooltip={displayValue}>
-        <span className="truncate block max-w-full overflow-hidden text-ellipsis">{displayValue}</span>
-      </Tooltip>
+      <>
+        {/* Screen: truncate to keep the table compact, full text available on hover. */}
+        <Tooltip tooltip={textValue} containerClassName="print:hidden">
+          <span className="truncate block max-w-full overflow-hidden text-ellipsis">{displayValue}</span>
+        </Tooltip>
+        {/* Print (Ctrl+P): show the full, untruncated text. */}
+        <span className="hidden print:block whitespace-pre-wrap break-words">{textValue}</span>
+      </>
     )
   }
   case FieldType.FieldTypeUser: {
