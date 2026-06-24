@@ -1,9 +1,9 @@
 import { useMemo, useState, forwardRef, useImperativeHandle, useEffect, useCallback, useRef, type ReactNode } from 'react'
 import { useMutation } from '@apollo/client/react'
 import type { IdentifierFilterValue, FilterListItem, FilterListPopUpBuilderProps } from '@helpwave/hightide'
-import { Chip, DateUtils, FillerCell, HelpwaveLogo, SearchBar, ProgressIndicator, Tooltip, Drawer, TableProvider, TableDisplay, TableColumnSwitcher, IconButton, useLocale, FilterList, SortingList, Button, ExpansionIcon, Visibility, ConfirmDialog } from '@helpwave/hightide'
+import { Chip, DateUtils, FillerCell, SearchBar, ProgressIndicator, Tooltip, Drawer, TableProvider, TableDisplay, TableColumnSwitcher, IconButton, useLocale, FilterList, SortingList, Button, ExpansionIcon, Visibility, ConfirmDialog } from '@helpwave/hightide'
 import clsx from 'clsx'
-import { LayoutGrid, Loader2, PlusIcon, Table2 } from 'lucide-react'
+import { LayoutGrid, PlusIcon, Table2 } from 'lucide-react'
 import type { LocationType } from '@/api/gql/generated'
 import { Sex, PatientState, type GetPatientsQuery, type TaskType, PropertyEntity, FieldType, type QueryableField } from '@/api/gql/generated'
 import { usePropertyDefinitions, usePatientsPaginated, useQueryableFields, useRefreshingEntityIds, useUpdatePatient } from '@/data'
@@ -23,7 +23,10 @@ import { columnFiltersToQueryFilterClauses, sortingStateToQuerySortClauses } fro
 import { LIST_PAGE_SIZE } from '@/utils/listPaging'
 import { useAccumulatedPagination } from '@/hooks/useAccumulatedPagination'
 import { RowRefreshingGate } from '@/components/tables/RowRefreshingGate'
-import { InfiniteScrollSentinel } from '@/components/common/InfiniteScrollSentinel'
+import { VirtualizedCardGrid } from '@/components/common/VirtualizedCardGrid'
+import { ListLoadingHint } from '@/components/common/ListLoadingHint'
+import { useIsPrinting } from '@/hooks/useIsPrinting'
+import { isNearBottom } from '@/utils/nearBottom'
 import { DateDisplay } from '@/components/Date/DateDisplay'
 import { PatientCardView } from '@/components/patients/PatientCardView'
 import { queryableFieldsToFilterListItems, queryableFieldsToSortingListItems, type QueryableChoiceTagLabelResolver } from '@/utils/queryableFilterList'
@@ -156,6 +159,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
   savedViewScope = 'base'
 }, ref) => {
   const translation = useTasksTranslation()
+  const isPrinting = useIsPrinting()
   const { locale } = useLocale()
   const { selectedRootLocationIds } = useTasksContext()
   const { refreshingPatientIds } = useRefreshingEntityIds()
@@ -533,6 +537,12 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
   ])
 
   const showBlockingLoadingOverlay = (patientsLoading || waitingForLocationScope) && patients.length === 0 && !derivedVirtualMode
+  const isListLoading = showBlockingLoadingOverlay || isFetchingMore
+  const useBoxScroll = !isPrinting && !embedded
+  const handleListScroll = useCallback((element: HTMLElement) => {
+    if (embedded || derivedVirtualMode || isFetchingMore || !hasMore) return
+    if (isNearBottom(element, 600)) loadMore()
+  }, [embedded, derivedVirtualMode, isFetchingMore, hasMore, loadMore])
 
   const tablePagination = useMemo(
     (): PaginationState => ({
@@ -1107,7 +1117,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
       enableSorting={false}
       enableColumnPinning={false}
     >
-      <div className="flex flex-col h-full gap-4">
+      <div className={clsx('flex flex-col gap-4', useBoxScroll ? 'flex-1 min-h-0' : 'h-full')}>
         {showFullToolbar && (
           <div className="flex-col-2 w-full">
             <div className="flex flex-col-reverse items-start gap-3 md:flex-row md:flex-row-8 md:justify-between w-full">
@@ -1199,50 +1209,46 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
             )}
           </div>
         )}
-        <div className="relative print:static">
-          {showBlockingLoadingOverlay && (
-            <div className="absolute inset-0 z-10 flex items-center justify-center bg-surface/80 rounded-lg min-h-48">
-              <HelpwaveLogo animate="loading" color="currentColor" height={64} width={64} />
-            </div>
-          )}
-          <div className={clsx(listLayout === 'table' ? 'block' : 'hidden print:block')}>
-            <TableDisplay className="print-content hw-autosize-table overflow-x-auto hw-touch-scroll"/>
-          </div>
-          {listLayout === 'card' && (
-            <div className="grid gap-3 w-full print:hidden [grid-template-columns:repeat(auto-fill,minmax(min(100%,22rem),1fr))]">
-              {patients.map((patient) => (
-                <RowRefreshingGate
-                  key={patient.id}
-                  refreshing={refreshingPatientIds.has(patient.id)}
-                  className="h-full"
-                >
-                  <PatientCardView
-                    patient={patient}
-                    onClick={handleEdit}
-                    extraContent={renderPatientCardExtras(patient)}
-                  />
-                </RowRefreshingGate>
-              ))}
-            </div>
-          )}
-          {!embedded && !derivedVirtualMode && stableTotalCount != null && hasMore && accumulatedPatientsRaw.length > 0 && (
-            <>
-              <InfiniteScrollSentinel
-                onLoadMore={loadMore}
-                hasMore={hasMore}
-                isFetchingMore={isFetchingMore}
+        <div className={clsx('relative print:static', useBoxScroll && 'flex-1 min-h-0 flex flex-col')}>
+          <div
+            aria-busy={isListLoading}
+            className={clsx('transition-opacity', useBoxScroll && 'flex-1 min-h-0 flex flex-col', isListLoading && 'opacity-60 print:opacity-100')}
+          >
+            <div className={clsx(listLayout === 'table' ? clsx('block', useBoxScroll && 'flex-1 min-h-0 flex flex-col') : 'hidden print:block')}>
+              <TableDisplay
+                virtualized={useBoxScroll ? { scroll: 'container', estimateRowHeight: 56 } : false}
+                tableHeaderProps={useBoxScroll ? { isSticky: true } : undefined}
+                containerProps={{
+                  className: clsx(useBoxScroll && 'flex-1 min-h-0 max-h-[calc(100dvh-12rem)] overflow-y-auto', 'print:max-h-none print:overflow-visible'),
+                  onScroll: useBoxScroll ? (event) => handleListScroll(event.currentTarget) : undefined,
+                }}
+                className="print-content hw-autosize-table overflow-x-auto hw-touch-scroll"
               />
-              <Button
-                color="neutral"
-                className="mt-2 w-full sm:w-auto self-center print:hidden"
-                onClick={loadMore}
-                disabled={isFetchingMore}
-              >
-                {isFetchingMore && <Loader2 className="size-5 animate-spin" />}
-                {translation(isFetchingMore ? 'loading' : 'loadMore')}
-              </Button>
-            </>
-          )}
+            </div>
+            {listLayout === 'card' && (
+              <VirtualizedCardGrid
+                items={patients}
+                getItemKey={(patient) => patient.id}
+                minCardWidthPx={352}
+                containerClassName={useBoxScroll ? 'flex-1 min-h-0 max-h-[calc(100dvh-12rem)] overflow-y-auto' : undefined}
+                onReachBottom={useBoxScroll ? loadMore : undefined}
+                renderItem={(patient) => (
+                  <RowRefreshingGate
+                    key={patient.id}
+                    refreshing={refreshingPatientIds.has(patient.id)}
+                    className="h-full"
+                  >
+                    <PatientCardView
+                      patient={patient}
+                      onClick={handleEdit}
+                      extraContent={renderPatientCardExtras(patient)}
+                    />
+                  </RowRefreshingGate>
+                )}
+              />
+            )}
+          </div>
+          <ListLoadingHint active={isListLoading}/>
         </div>
         <Drawer
           isOpen={patientDialogState.isOpen}

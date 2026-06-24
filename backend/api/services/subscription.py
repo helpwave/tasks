@@ -1,6 +1,8 @@
+import asyncio
 import logging
 from collections.abc import AsyncGenerator, Awaitable, Callable
 
+from redis import exceptions as redis_exceptions
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -10,43 +12,50 @@ from database.session import redis_client
 
 logger = logging.getLogger(__name__)
 
+_SUBSCRIPTION_READ_TIMEOUT_SECONDS = 30.0
+_SUBSCRIPTION_RECONNECT_DELAY_SECONDS = 0.5
+
 
 async def create_redis_subscription(
     channel: str,
     filter_id: str | None = None,
 ) -> AsyncGenerator[str, None]:
-    logger.debug(
-        f"[SUBSCRIPTION] Subscribing to Redis channel: channel={channel}, filter_id={filter_id}"
-    )
-    pubsub = redis_client.pubsub()
-    await pubsub.subscribe(channel)
-    logger.debug(
-        f"[SUBSCRIPTION] Successfully subscribed to Redis channel: channel={channel}"
-    )
-    try:
-        async for message in pubsub.listen():
-            if message["type"] == "message":
+    """Yield message ids published to ``channel``, surviving idle gaps.
+
+    A long-lived blocking read returns empty whenever the channel is idle; that
+    is normal and must not tear the subscription down (the previous
+    ``pubsub.listen()`` propagated such read timeouts and crashed the
+    subscription). Read timeouts are therefore treated as "no message yet" and a
+    dropped connection reconnects instead of ending the stream. Cancellation
+    (the client going away) propagates out and closes the pubsub.
+    """
+    while True:
+        pubsub = redis_client.pubsub()
+        try:
+            await pubsub.subscribe(channel)
+            while True:
+                try:
+                    message = await pubsub.get_message(
+                        ignore_subscribe_messages=True,
+                        timeout=_SUBSCRIPTION_READ_TIMEOUT_SECONDS,
+                    )
+                except (redis_exceptions.TimeoutError, asyncio.TimeoutError):
+                    continue
+                if message is None or message.get("type") != "message":
+                    continue
                 message_id = message["data"]
-                logger.debug(
-                    f"[SUBSCRIPTION] Received message from Redis channel: "
-                    f"channel={channel}, message_id={message_id}, filter_id={filter_id}"
-                )
                 if filter_id is None or message_id == filter_id:
-                    logger.debug(
-                        f"[SUBSCRIPTION] Dispatching message to resolver: "
-                        f"channel={channel}, message_id={message_id}"
-                    )
                     yield message_id
-                else:
-                    logger.debug(
-                        f"[SUBSCRIPTION] Filtered out message (filter mismatch): "
-                        f"channel={channel}, message_id={message_id}, filter_id={filter_id}"
-                    )
-    finally:
-        logger.debug(
-            f"[SUBSCRIPTION] Unsubscribing from Redis channel: channel={channel}"
-        )
-        await pubsub.close()
+        except (redis_exceptions.ConnectionError, redis_exceptions.TimeoutError) as error:
+            logger.warning(
+                f"[SUBSCRIPTION] Redis connection lost on channel={channel}, reconnecting: {error}"
+            )
+            await asyncio.sleep(_SUBSCRIPTION_RECONNECT_DELAY_SECONDS)
+        finally:
+            try:
+                await pubsub.close()
+            except Exception:
+                pass
 
 
 async def patient_belongs_to_root_locations(

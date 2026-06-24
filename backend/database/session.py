@@ -15,7 +15,12 @@ logger = logging.getLogger(LOGGER)
 engine = create_async_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
 async_session = async_sessionmaker(engine, expire_on_commit=False)
 
-redis_client = redis.from_url(REDIS_URL, decode_responses=True)
+redis_client = redis.from_url(
+    REDIS_URL,
+    decode_responses=True,
+    health_check_interval=30,
+    socket_keepalive=True,
+)
 
 
 async def publish_to_redis(channel: str, message: str) -> None:
