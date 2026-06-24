@@ -83,16 +83,16 @@ class TaskManager:
         ).isoformat()
 
         mutation = """
-            mutation CreateTask($title: String!, $patientId: ID!, $assigneeId: ID, $dueDate: DateTime) {
+            mutation CreateTask($title: String!, $patientId: ID!, $assigneeIds: [ID!], $dueDate: DateTime) {
                 createTask(data: {
                     title: $title,
                     patientId: $patientId,
-                    assigneeId: $assigneeId,
+                    assigneeIds: $assigneeIds,
                     dueDate: $dueDate
                 }) {
                     id
                     title
-                    assignee {
+                    assignees {
                         id
                         username
                     }
@@ -103,7 +103,7 @@ class TaskManager:
         variables = {
             "title": title,
             "patientId": patient_id,
-            "assigneeId": assignee_id,
+            "assigneeIds": [assignee_id] if assignee_id else None,
             "dueDate": due_date,
         }
 
@@ -115,11 +115,11 @@ class TaskManager:
             tid = task["id"]
             self.task_ids.append(tid)
 
-            assignee_info = task.get("assignee")
+            assignees_info = task.get("assignees") or []
             assignee_msg = ""
-            if assignee_info:
+            if assignees_info:
                 assignee_msg = (
-                    f" assigned to {assignee_info.get('username', 'user')}"
+                    f" assigned to {assignees_info[0].get('username', 'user')}"
                 )
             else:
                 assignee_msg = " (unassigned)"
