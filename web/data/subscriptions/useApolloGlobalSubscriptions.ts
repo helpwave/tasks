@@ -1,13 +1,13 @@
 import { useEffect, useRef } from 'react'
 import { parse } from 'graphql'
 import type { ApolloClient } from '@apollo/client/core'
-import { GetGlobalDataDocument, GetPatientsDocument, GetTasksDocument } from '@/api/gql/generated'
-import { getParsedDocument } from '@/data/hooks/queryHelpers'
 import {
   mergeTaskUpdatedIntoCache,
   mergePatientUpdatedIntoCache,
   shouldSkipMergeTask,
   shouldSkipMergePatient,
+  taskListRefetchDocuments,
+  patientListRefetchDocuments,
   type MergeSubscriptionOptions
 } from './handler'
 import {
@@ -103,9 +103,7 @@ export function useApolloGlobalSubscriptions(
             await mergeTaskUpdatedIntoCache(client, taskId, payloadObj, optionsRef.current).catch(
               () => {}
             )
-            await client.refetchQueries({
-              include: [getParsedDocument(GetPatientsDocument), getParsedDocument(GetGlobalDataDocument)],
-            })
+            await client.refetchQueries({ include: taskListRefetchDocuments() })
           } finally {
             removeRefreshingTask(taskId)
           }
@@ -136,9 +134,7 @@ export function useApolloGlobalSubscriptions(
             await mergePatientUpdatedIntoCache(client, patientId, payloadObj, optionsRef.current).catch(
               () => {}
             )
-            await client.refetchQueries({
-              include: [getParsedDocument(GetTasksDocument), getParsedDocument(GetGlobalDataDocument)],
-            })
+            await client.refetchQueries({ include: patientListRefetchDocuments() })
           } finally {
             removeRefreshingPatient(patientId)
           }
@@ -169,9 +165,7 @@ export function useApolloGlobalSubscriptions(
             await mergePatientUpdatedIntoCache(client, patientId, payloadObj, optionsRef.current).catch(
               () => {}
             )
-            await client.refetchQueries({
-              include: [getParsedDocument(GetTasksDocument), getParsedDocument(GetGlobalDataDocument)],
-            })
+            await client.refetchQueries({ include: patientListRefetchDocuments() })
           } finally {
             removeRefreshingPatient(patientId)
           }

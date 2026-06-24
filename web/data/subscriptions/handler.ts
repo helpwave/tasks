@@ -195,6 +195,24 @@ export function mergeSubscriptionIntoCache(
   return Promise.resolve()
 }
 
+export function taskListRefetchDocuments() {
+  return [
+    getParsedDocument(GetTasksDocument),
+    getParsedDocument(GetPatientsDocument),
+    getParsedDocument(GetPatientDocument),
+    getParsedDocument(GetGlobalDataDocument),
+  ]
+}
+
+export function patientListRefetchDocuments() {
+  return [
+    getParsedDocument(GetPatientsDocument),
+    getParsedDocument(GetTasksDocument),
+    getParsedDocument(GetPatientDocument),
+    getParsedDocument(GetGlobalDataDocument),
+  ]
+}
+
 export async function reloadEntityAfterMutation(
   client: ApolloClient,
   entityType: 'Task' | 'Patient',
@@ -202,39 +220,46 @@ export async function reloadEntityAfterMutation(
 ): Promise<void> {
   if (entityType === 'Task') {
     addRefreshingTask(entityId)
-    await mergeTaskUpdatedIntoCache(
-      client,
-      entityId,
-      { taskId: entityId },
-      reloadAfterMutationOptions
-    )
-      .then(() => client.refetchQueries({
-        include: [
-          getParsedDocument(GetTasksDocument),
-          getParsedDocument(GetPatientsDocument),
-          getParsedDocument(GetPatientDocument),
-          getParsedDocument(GetGlobalDataDocument),
-        ],
-      }))
-      .catch(() => {})
-      .finally(() => removeRefreshingTask(entityId))
+    try {
+      try {
+        await mergeTaskUpdatedIntoCache(
+          client,
+          entityId,
+          { taskId: entityId },
+          reloadAfterMutationOptions
+        )
+      } catch {
+        void 0
+      }
+      try {
+        await client.refetchQueries({ include: taskListRefetchDocuments() })
+      } catch {
+        void 0
+      }
+    } finally {
+      removeRefreshingTask(entityId)
+    }
     return
   }
 
   addRefreshingPatient(entityId)
-  await mergePatientUpdatedIntoCache(
-    client,
-    entityId,
-    { patientId: entityId },
-    reloadAfterMutationOptions
-  )
-    .then(() => client.refetchQueries({
-      include: [
-        getParsedDocument(GetPatientsDocument),
-        getParsedDocument(GetTasksDocument),
-        getParsedDocument(GetGlobalDataDocument),
-      ],
-    }))
-    .catch(() => {})
-    .finally(() => removeRefreshingPatient(entityId))
+  try {
+    try {
+      await mergePatientUpdatedIntoCache(
+        client,
+        entityId,
+        { patientId: entityId },
+        reloadAfterMutationOptions
+      )
+    } catch {
+      void 0
+    }
+    try {
+      await client.refetchQueries({ include: patientListRefetchDocuments() })
+    } catch {
+      void 0
+    }
+  } finally {
+    removeRefreshingPatient(entityId)
+  }
 }
