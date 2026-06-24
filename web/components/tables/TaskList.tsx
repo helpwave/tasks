@@ -33,6 +33,7 @@ import { LIST_PAGE_SIZE } from '@/utils/listPaging'
 import { TaskCardView } from '@/components/tasks/TaskCardView'
 import { RefreshingTaskIdsContext, TaskRowRefreshingGate } from '@/components/tables/TaskRowRefreshingGate'
 import { InfiniteScrollSentinel } from '@/components/common/InfiniteScrollSentinel'
+import { VirtualizedCardGrid } from '@/components/common/VirtualizedCardGrid'
 import { ExpandableTextBlock } from '@/components/common/ExpandableTextBlock'
 import { InTableTextEditPopUp } from '@/components/tables/in-table-edit/InTableTextEditPopUp'
 import { InTableDateTimeEditPopUp } from './in-table-edit/InTableDateTimeEditPopUp'
@@ -1062,8 +1063,11 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
               <TableDisplay className="print-content hw-autosize-table w-full overflow-x-auto hw-touch-scroll" />
             </div>
             {listLayout === 'card' && (
-              <div className="grid gap-3 w-full print:hidden [grid-template-columns:repeat(auto-fill,minmax(min(100%,24rem),1fr))]">
-                {displayedTasks.map((task) => (
+              <VirtualizedCardGrid
+                items={displayedTasks}
+                getItemKey={(task) => task.id}
+                minCardWidthPx={384}
+                renderItem={(task) => (
                   <TaskRowRefreshingGate key={task.id} taskId={task.id} className="h-full">
                     <TaskCardView
                       task={task}
@@ -1073,8 +1077,8 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
                       extraContent={renderTaskCardExtras(task)}
                     />
                   </TaskRowRefreshingGate>
-                ))}
-              </div>
+                )}
+              />
             )}
             {!embedded && effectiveHasMore && (
               <>

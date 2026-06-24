@@ -24,6 +24,7 @@ import { LIST_PAGE_SIZE } from '@/utils/listPaging'
 import { useAccumulatedPagination } from '@/hooks/useAccumulatedPagination'
 import { RowRefreshingGate } from '@/components/tables/RowRefreshingGate'
 import { InfiniteScrollSentinel } from '@/components/common/InfiniteScrollSentinel'
+import { VirtualizedCardGrid } from '@/components/common/VirtualizedCardGrid'
 import { DateDisplay } from '@/components/Date/DateDisplay'
 import { PatientCardView } from '@/components/patients/PatientCardView'
 import { queryableFieldsToFilterListItems, queryableFieldsToSortingListItems, type QueryableChoiceTagLabelResolver } from '@/utils/queryableFilterList'
@@ -1209,8 +1210,11 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
             <TableDisplay className="print-content hw-autosize-table overflow-x-auto hw-touch-scroll"/>
           </div>
           {listLayout === 'card' && (
-            <div className="grid gap-3 w-full print:hidden [grid-template-columns:repeat(auto-fill,minmax(min(100%,22rem),1fr))]">
-              {patients.map((patient) => (
+            <VirtualizedCardGrid
+              items={patients}
+              getItemKey={(patient) => patient.id}
+              minCardWidthPx={352}
+              renderItem={(patient) => (
                 <RowRefreshingGate
                   key={patient.id}
                   refreshing={refreshingPatientIds.has(patient.id)}
@@ -1222,8 +1226,8 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
                     extraContent={renderPatientCardExtras(patient)}
                   />
                 </RowRefreshingGate>
-              ))}
-            </div>
+              )}
+            />
           )}
           {!embedded && !derivedVirtualMode && stableTotalCount != null && hasMore && accumulatedPatientsRaw.length > 0 && (
             <>
