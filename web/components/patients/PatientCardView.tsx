@@ -37,6 +37,7 @@ export const PatientCardView = ({ patient, onClick, extraContent }: PatientCardV
   return (
     <button
       type="button"
+      data-name="patient-card"
       onClick={onClick ? () => onClick(patient) : undefined}
       className={`border-2 p-4 rounded-lg text-left w-full min-w-0 h-full transition-colors relative bg-[rgba(255,255,255,1)] dark:bg-[rgba(55,65,81,1)] ${isClickable ? 'cursor-pointer hover:border-primary' : 'cursor-default'}`}
     >

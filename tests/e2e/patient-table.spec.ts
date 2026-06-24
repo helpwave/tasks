@@ -117,8 +117,10 @@ async function scrollListStep(page: Page): Promise<void> {
       const oy = getComputedStyle(el).overflowY
       return oy === 'auto' || oy === 'scroll' || oy === 'overlay'
     }
-    const table = document.querySelector('table[data-name="table"]')
-    let current: Element | null = table?.parentElement ?? null
+    const anchor =
+      document.querySelector('table[data-name="table"]') ??
+      document.querySelector('[data-name="patient-card"]')
+    let current: Element | null = anchor?.parentElement ?? null
     let container: HTMLElement | null = null
     while (current && current !== document.body && current !== document.documentElement) {
       if (isScrollable(current) && current.scrollHeight > current.clientHeight) {
@@ -166,20 +168,14 @@ test.describe('patient table (patient list)', () => {
     expect(initialCount).toBeLessThan(PATIENT_COUNT)
     expect(initialCount % PAGE_SIZE).toBe(0)
 
-    // 3) Walk through every page, accumulating the unique patient names we see
-    //    and asserting that at no point does the DOM contain a duplicate row.
-    //
-    //    Each step first drives the infinite-scroll sentinel (the production
-    //    path) by scrolling it into range. The IntersectionObserver behind that
-    //    sentinel fires asynchronously, though, and a single missed tick under
-    //    CI load used to strand the test one (partial) page short of the total.
-    //    So when a scroll step fails to pull the next page we fall back to the
-    //    app's explicit "Load more" control, which is rendered for exactly as
-    //    long as more pages remain. That keeps the test deterministic while
-    //    still exercising the real scroll-driven loading when it works.
+    // 3) Walk through every page by scrolling. The infinite-scroll sentinel
+    //    (an IntersectionObserver with an 800px prefetch margin) loads the next
+    //    page as the bottom approaches — there is no "Load more" button anymore.
+    //    Each scroll step moves the container, which re-arms the observer, so a
+    //    single missed tick is recovered by the next step.
     const seen = new Set<string>()
-    const loadMoreButton = page.getByRole('button', { name: /load more/i })
-    const MAX_STEPS = 40
+    const MAX_STEPS = 80
+    let stagnant = 0
 
     for (let step = 0; step < MAX_STEPS; step++) {
       const names = await visibleRowNames(page)
@@ -188,44 +184,81 @@ test.describe('patient table (patient list)', () => {
       expect(new Set(names).size).toBe(names.length)
 
       for (const name of names) seen.add(name)
-
       if (seen.size >= PATIENT_COUNT) break
 
-      const before = names.length
-
-      // Production path: scroll the sentinel toward the viewport and let the
-      // observer pull the next page. Probe only briefly — the
-      // IntersectionObserver is unreliable under CI load, so we must not spend
-      // the per-step budget waiting on a tick that may never come.
+      const before = await page.locator(ROW_SELECTOR).count()
       await scrollListStep(page)
-      if (await rowsGrewBeyond(page, before, 1000)) continue
-
-      // Scrolling did not trigger a load. If no "Load more" button remains the
-      // list is genuinely exhausted; otherwise click it to advance the page
-      // deterministically and wait for the new rows to land.
-      if (await loadMoreButton.count() === 0) break
-      try {
-        await loadMoreButton.click()
-      } catch {
-        // The button can disappear if an in-flight scroll-triggered fetch
-        // resolved the final page first — the next iteration will pick up the
-        // freshly rendered rows.
-        continue
+      if (await rowsGrewBeyond(page, before, 1500)) {
+        stagnant = 0
+      } else {
+        stagnant += 1
+        // Many consecutive scrolls with no growth: the list is exhausted (or
+        // genuinely stuck, which the assertion below surfaces).
+        if (stagnant >= 8) break
       }
-      // A click must make progress; if it somehow doesn't, stop rather than
-      // burn the whole timeout so the shortfall surfaces at the assertion below.
-      if (!(await rowsGrewBeyond(page, before, 5000))) break
     }
 
-    // 4) Final state: every one of the 77 patients was seen exactly once, and
-    //    the fully-loaded table holds exactly 77 unique rows.
+    // 4) Final state: every one of the 77 patients was seen, and the fully
+    //    loaded table holds exactly 77 unique rows.
     expect(seen.size).toBe(PATIENT_COUNT)
 
     const finalNames = await visibleRowNames(page)
     expect(finalNames.length).toBe(PATIENT_COUNT)
     expect(new Set(finalNames).size).toBe(PATIENT_COUNT)
+  })
 
-    // The "load more" affordance is gone once the last page is reached.
-    await expect(page.getByRole('button', { name: /load more/i })).toHaveCount(0)
+  test('card view windows the DOM: only a slice of cards is rendered while scrolling reaches every patient', async ({ page }) => {
+    test.slow()
+    await seedAuth(page)
+    await seedStoredSelection(page, ['root-1'])
+    // Start directly in the card layout (the toggle persists this key).
+    await page.addInitScript(() => {
+      window.localStorage.setItem('helpwave.tasks.listLayout:patients:/patients:root', 'card')
+    })
+    await mockBackend(page, {
+      patients: PATIENTS,
+      propertyDefinitions: [ALLERGY_DEF],
+      rootLocations: ROOT_LOCATIONS,
+    })
+
+    await page.goto(`${BASE}/`)
+    await expect(page.locator('body')).toBeVisible()
+    await page.goto(`${BASE}/patients`)
+
+    const CARD = '[data-name="patient-card"]'
+    await expect(page.locator(CARD).first()).toBeVisible({ timeout: 20000 })
+
+    // The last fixture patient (unique, zero-padded surname) proves the window
+    // reached the bottom after loading every page.
+    const lastPatient = page.locator(`${CARD}:has-text("Patient_${PATIENT_COUNT}")`)
+
+    let maxRendered = 0
+    const MAX_STEPS = 80
+    let stagnant = 0
+    for (let step = 0; step < MAX_STEPS; step++) {
+      const rendered = await page.locator(CARD).count()
+      maxRendered = Math.max(maxRendered, rendered)
+      if (await lastPatient.count() > 0) break
+
+      const before = await page.locator(CARD).count()
+      await scrollListStep(page)
+      await page.waitForTimeout(400)
+      const after = await page.locator(CARD).count()
+      // Progress = either new cards loaded (count changed) or the window moved.
+      if (after !== before) {
+        stagnant = 0
+      } else {
+        stagnant += 1
+        if (stagnant >= 10) break
+      }
+    }
+
+    // Reached the very last patient purely by scrolling (infinite scroll, no button).
+    await expect(lastPatient).toBeVisible({ timeout: 5000 })
+
+    // Windowing: the DOM never held anywhere near all patients at once. With 77
+    // patients across a 1280x720 viewport only a viewport-sized slice (plus
+    // overscan) is ever mounted, far below the full count.
+    expect(maxRendered).toBeLessThan(PATIENT_COUNT - PAGE_SIZE)
   })
 })

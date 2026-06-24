@@ -1,12 +1,13 @@
 'use client'
 
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { useWindowVirtualizer } from '@tanstack/react-virtual'
+import { useVirtualizer } from '@tanstack/react-virtual'
 import { chunkIntoRows, columnsForWidth } from '@/utils/virtualGrid'
+import { findScrollableAncestor } from '@/utils/scrollableAncestor'
 
 const DEFAULT_GAP_PX = 12
 const DEFAULT_ESTIMATE_ROW_HEIGHT_PX = 220
-const DEFAULT_OVERSCAN_ROWS = 4
+const DEFAULT_OVERSCAN_ROWS = 3
 const DEFAULT_VIRTUALIZE_THRESHOLD = 40
 
 type VirtualizedCardGridProps<T> = {
@@ -31,28 +32,31 @@ export function VirtualizedCardGrid<T>({
   virtualizeThreshold = DEFAULT_VIRTUALIZE_THRESHOLD,
 }: VirtualizedCardGridProps<T>) {
   const containerRef = useRef<HTMLDivElement | null>(null)
-  const [isMounted, setIsMounted] = useState(false)
+  const [scrollElement, setScrollElement] = useState<HTMLElement | null>(null)
   const [columns, setColumns] = useState(1)
   const [scrollMargin, setScrollMargin] = useState(0)
-
-  useEffect(() => {
-    setIsMounted(true)
-  }, [])
 
   useEffect(() => {
     const element = containerRef.current
     if (!element || typeof window === 'undefined') return
 
+    const scroller = findScrollableAncestor(element)
+    setScrollElement(scroller)
+
     const measure = () => {
       const nextColumns = columnsForWidth(element.clientWidth, minCardWidthPx, gapPx)
       setColumns((prev) => (prev === nextColumns ? prev : nextColumns))
-      const nextScrollMargin = element.getBoundingClientRect().top + window.scrollY
-      setScrollMargin((prev) => (Math.abs(prev - nextScrollMargin) < 1 ? prev : nextScrollMargin))
+      const elementTop = element.getBoundingClientRect().top
+      const scrollerTop = scroller ? scroller.getBoundingClientRect().top : 0
+      const scrollerScroll = scroller ? scroller.scrollTop : window.scrollY
+      const nextMargin = elementTop - scrollerTop + scrollerScroll
+      setScrollMargin((prev) => (Math.abs(prev - nextMargin) < 1 ? prev : nextMargin))
     }
 
     measure()
     const resizeObserver = new ResizeObserver(measure)
     resizeObserver.observe(element)
+    if (scroller) resizeObserver.observe(scroller)
     window.addEventListener('resize', measure)
     return () => {
       resizeObserver.disconnect()
@@ -61,10 +65,11 @@ export function VirtualizedCardGrid<T>({
   }, [minCardWidthPx, gapPx, items.length])
 
   const rows = chunkIntoRows(items, columns)
-  const virtualizer = useWindowVirtualizer({
+  const virtualizer = useVirtualizer({
     count: rows.length,
     estimateSize: () => estimateRowHeightPx,
     overscan: overscanRows,
+    getScrollElement: () => scrollElement,
     scrollMargin,
     getItemKey: (index) => {
       const first = rows[index]?.[0]
@@ -73,7 +78,7 @@ export function VirtualizedCardGrid<T>({
   })
 
   const autoFillTemplate = `repeat(auto-fill, minmax(min(100%, ${minCardWidthPx}px), 1fr))`
-  const shouldVirtualize = isMounted && items.length > virtualizeThreshold
+  const shouldVirtualize = scrollElement !== null && items.length > virtualizeThreshold
 
   if (!shouldVirtualize) {
     return (

@@ -1230,22 +1230,16 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
             />
           )}
           {!embedded && !derivedVirtualMode && stableTotalCount != null && hasMore && accumulatedPatientsRaw.length > 0 && (
-            <>
-              <InfiniteScrollSentinel
-                onLoadMore={loadMore}
-                hasMore={hasMore}
-                isFetchingMore={isFetchingMore}
-              />
-              <Button
-                color="neutral"
-                className="mt-2 w-full sm:w-auto self-center print:hidden"
-                onClick={loadMore}
-                disabled={isFetchingMore}
-              >
-                {isFetchingMore && <Loader2 className="size-5 animate-spin" />}
-                {translation(isFetchingMore ? 'loading' : 'loadMore')}
-              </Button>
-            </>
+            <InfiniteScrollSentinel
+              onLoadMore={loadMore}
+              hasMore={hasMore}
+              isFetchingMore={isFetchingMore}
+            />
+          )}
+          {!embedded && isFetchingMore && (
+            <div className="flex justify-center py-3 print:hidden">
+              <Loader2 className="size-5 animate-spin text-description" />
+            </div>
           )}
         </div>
         <Drawer

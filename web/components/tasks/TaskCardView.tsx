@@ -177,6 +177,7 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
   return (
     <div
       onClick={onClick ? () => onClick(task) : undefined}
+      data-name="task-card"
       className={clsx(
         '@container border-2 p-4 rounded-lg text-left transition-colors',
         'relative bg-surface-variant bg-on-surface-variant w-full min-w-0 h-full',
