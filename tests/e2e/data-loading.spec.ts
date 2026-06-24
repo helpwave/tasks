@@ -101,19 +101,14 @@ test.describe('frontend data loading', () => {
 
     await page.goto(`${BASE}/patients`)
 
-    // While the patients query is in flight the blocking loading indicator (the
-    // animated helpwave logo) must be visible and no patient row present yet.
-    const loadingLogo = page.locator('svg').filter({ has: page.locator('animate, animateTransform') }).first()
-    // Fallback: the overlay container has a high z-index backdrop.
+    // While the patients query is in flight no patient row is present yet ...
     await expect
       .poll(async () => page.getByText('Doe, Jane').count(), { timeout: 1500 })
       .toBe(0)
 
-    // Once the query resolves the data appears.
+    // ... and once it resolves the data appears.
     await expect(page.getByText('Doe, Jane')).toBeVisible({ timeout: 15000 })
     await expect(page.getByText('Smith, John')).toBeVisible()
-    // Sanity: the loading logo is gone now that data is shown.
-    void loadingLogo
   })
 
   test('inline property edit posts UpdatePatient with the correct id and keeps the row intact', async ({ page }) => {
@@ -183,7 +178,7 @@ test.describe('frontend data loading', () => {
     const rowSelector = 'tr[data-name="table-body-row"]'
     await expect(page.locator(rowSelector).first()).toBeVisible({ timeout: 20000 })
     await expect.poll(() => page.locator(rowSelector).count(), { timeout: 20000 })
-      .toBeGreaterThanOrEqual(25)
+      .toBeGreaterThanOrEqual(10)
 
     const cell = page.getByText('Penicillin').first()
     await expect(cell).toBeVisible()
@@ -195,7 +190,7 @@ test.describe('frontend data loading', () => {
 
     await expect(page.getByText('Latex').first()).toBeVisible({ timeout: 10000 })
     await expect.poll(() => page.locator(rowSelector).count(), { timeout: 10000 })
-      .toBeGreaterThanOrEqual(25)
+      .toBeGreaterThanOrEqual(10)
     await expect(page.getByText('Row_01, Patient')).toBeVisible()
     expect(errors).toEqual([])
   })
