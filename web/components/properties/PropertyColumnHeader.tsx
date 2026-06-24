@@ -16,9 +16,11 @@ export function PropertyColumnHeader({
     <div className="flex items-center gap-1 min-w-0">
       <span className="truncate">{title}</span>
       <Menu
+        aria-label={clearActionLabel}
         trigger={({ toggleOpen }, ref) => (
           <div ref={ref} className="shrink-0">
             <IconButton
+              aria-label={clearActionLabel}
               color="neutral"
               coloringStyle="text"
               className="min-h-6 min-w-6"
