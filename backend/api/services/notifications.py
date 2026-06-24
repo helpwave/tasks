@@ -1,6 +1,5 @@
 import logging
 
-from api.services.cache import invalidate_scope_for_entity
 from database.session import publish_to_redis
 
 logger = logging.getLogger(__name__)
@@ -13,8 +12,6 @@ async def notify_entity_update(
     related_entity_id: str | None = None,
     location_ids: list[str] | None = None,
 ) -> None:
-    await invalidate_scope_for_entity(entity_type)
-    await invalidate_scope_for_entity(related_entity_type)
     channel = f"{entity_type}_updated"
     logger.info(
         f"[SUBSCRIPTION] Publishing entity update: entity_type={entity_type}, "
@@ -46,7 +43,6 @@ async def notify_entity_created(
     entity_id: str,
     location_ids: list[str] | None = None,
 ) -> None:
-    await invalidate_scope_for_entity(entity_type)
     channel = f"{entity_type}_created"
     logger.info(
         f"[SUBSCRIPTION] Publishing entity creation: entity_type={entity_type}, "
@@ -66,8 +62,6 @@ async def notify_entity_deleted(
     related_entity_id: str | None = None,
     location_ids: list[str] | None = None,
 ) -> None:
-    await invalidate_scope_for_entity(entity_type)
-    await invalidate_scope_for_entity(related_entity_type)
     channel = f"{entity_type}_deleted"
     logger.info(
         f"[SUBSCRIPTION] Publishing entity deletion: entity_type={entity_type}, "

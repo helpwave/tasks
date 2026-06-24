@@ -34,10 +34,6 @@ else:
 
 REDIS_URL = os.getenv("REDIS_URL", REDIS_URL)
 
-ACCESSIBLE_LOCATIONS_CACHE_TTL_SECONDS = int(
-    os.getenv("ACCESSIBLE_LOCATIONS_CACHE_TTL_SECONDS", 30)
-)
-
 ENV = os.getenv("ENV", "production")
 IS_DEV = ENV == "development"
 
