@@ -37,6 +37,8 @@ const PATIENT_CREATED = `
   }
 `
 
+const REFETCH_DEBOUNCE_MS = 800
+
 function isFetchOrNetworkError(error: unknown): boolean {
   if (error instanceof Error) {
     const msg = error.message.toLowerCase()
@@ -81,6 +83,23 @@ export function useApolloGlobalSubscriptions(
   useEffect(() => {
     if (!client) return
 
+    let taskRefetchTimer: ReturnType<typeof setTimeout> | null = null
+    let patientRefetchTimer: ReturnType<typeof setTimeout> | null = null
+    const scheduleTaskRefetch = () => {
+      if (taskRefetchTimer) return
+      taskRefetchTimer = setTimeout(() => {
+        taskRefetchTimer = null
+        void refetchActiveDocuments(client, taskListRefetchDocuments())
+      }, REFETCH_DEBOUNCE_MS)
+    }
+    const schedulePatientRefetch = () => {
+      if (patientRefetchTimer) return
+      patientRefetchTimer = setTimeout(() => {
+        patientRefetchTimer = null
+        void refetchActiveDocuments(client, patientListRefetchDocuments())
+      }, REFETCH_DEBOUNCE_MS)
+    }
+
     const taskUpdatedDoc = parse(TASK_UPDATED)
     const taskSub = client
       .subscribe({
@@ -107,7 +126,7 @@ export function useApolloGlobalSubscriptions(
           } finally {
             removeRefreshingTask(taskId)
           }
-          void refetchActiveDocuments(client, taskListRefetchDocuments())
+          scheduleTaskRefetch()
         },
         error: (err) => handleSubscriptionError(err),
       })
@@ -138,7 +157,7 @@ export function useApolloGlobalSubscriptions(
           } finally {
             removeRefreshingPatient(patientId)
           }
-          void refetchActiveDocuments(client, patientListRefetchDocuments())
+          schedulePatientRefetch()
         },
         error: (err) => handleSubscriptionError(err),
       })
@@ -169,12 +188,14 @@ export function useApolloGlobalSubscriptions(
           } finally {
             removeRefreshingPatient(patientId)
           }
-          void refetchActiveDocuments(client, patientListRefetchDocuments())
+          schedulePatientRefetch()
         },
         error: (err) => handleSubscriptionError(err),
       })
 
     return () => {
+      if (taskRefetchTimer) clearTimeout(taskRefetchTimer)
+      if (patientRefetchTimer) clearTimeout(patientRefetchTimer)
       taskSub.unsubscribe()
       patientSub.unsubscribe()
       patientCreatedSub.unsubscribe()
