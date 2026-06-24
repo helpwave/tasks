@@ -8,6 +8,7 @@ import {
   shouldSkipMergePatient,
   taskListRefetchDocuments,
   patientListRefetchDocuments,
+  refetchActiveDocuments,
   type MergeSubscriptionOptions
 } from './handler'
 import {
@@ -103,10 +104,10 @@ export function useApolloGlobalSubscriptions(
             await mergeTaskUpdatedIntoCache(client, taskId, payloadObj, optionsRef.current).catch(
               () => {}
             )
-            await client.refetchQueries({ include: taskListRefetchDocuments() })
           } finally {
             removeRefreshingTask(taskId)
           }
+          void refetchActiveDocuments(client, taskListRefetchDocuments())
         },
         error: (err) => handleSubscriptionError(err),
       })
@@ -134,10 +135,10 @@ export function useApolloGlobalSubscriptions(
             await mergePatientUpdatedIntoCache(client, patientId, payloadObj, optionsRef.current).catch(
               () => {}
             )
-            await client.refetchQueries({ include: patientListRefetchDocuments() })
           } finally {
             removeRefreshingPatient(patientId)
           }
+          void refetchActiveDocuments(client, patientListRefetchDocuments())
         },
         error: (err) => handleSubscriptionError(err),
       })
@@ -165,10 +166,10 @@ export function useApolloGlobalSubscriptions(
             await mergePatientUpdatedIntoCache(client, patientId, payloadObj, optionsRef.current).catch(
               () => {}
             )
-            await client.refetchQueries({ include: patientListRefetchDocuments() })
           } finally {
             removeRefreshingPatient(patientId)
           }
+          void refetchActiveDocuments(client, patientListRefetchDocuments())
         },
         error: (err) => handleSubscriptionError(err),
       })

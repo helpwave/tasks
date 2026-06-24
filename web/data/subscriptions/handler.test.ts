@@ -5,6 +5,7 @@ import {
   markEntityMutated,
   mergePatientUpdatedIntoCache,
   patientListRefetchDocuments,
+  refetchActiveDocuments,
   reloadEntityAfterMutation,
   shouldSkipMergePatient,
   shouldSkipMergeTask,
@@ -93,27 +94,27 @@ describe('echo detection', () => {
 })
 
 describe('reloadEntityAfterMutation', () => {
-  it('reloads the entity, refetches active lists, and toggles the refreshing gate', async () => {
-    let gatedDuringRefetch = false
+  it('holds the gate during the single-entity refetch, then refetches lists and clears it', async () => {
+    let gatedDuringEntityFetch = false
     const client = {
-      query: vi.fn().mockResolvedValue({
-        data: { patient: { __typename: 'PatientType', id: 'patient-1', updateDate: '2026-01-02T00:00:00Z' } },
+      query: vi.fn().mockImplementation(() => {
+        gatedDuringEntityFetch = getRefreshingPatientIds().has('patient-1')
+        return Promise.resolve({
+          data: { patient: { __typename: 'PatientType', id: 'patient-1', updateDate: '2026-01-02T00:00:00Z' } },
+        })
       }),
       cache: {
         readQuery: vi.fn().mockReturnValue({ patient: { updateDate: '2026-01-01T00:00:00Z' } }),
         writeQuery: vi.fn(),
       },
-      refetchQueries: vi.fn().mockImplementation(() => {
-        gatedDuringRefetch = getRefreshingPatientIds().has('patient-1')
-        return Promise.resolve([])
-      }),
+      refetchQueries: vi.fn().mockResolvedValue([]),
     } as unknown as ApolloClient
 
     await reloadEntityAfterMutation(client, 'Patient', 'patient-1')
 
     expect(client.query).toHaveBeenCalled()
     expect(client.refetchQueries).toHaveBeenCalled()
-    expect(gatedDuringRefetch).toBe(true)
+    expect(gatedDuringEntityFetch).toBe(true)
     expect(getRefreshingPatientIds().has('patient-1')).toBe(false)
   })
 
@@ -228,6 +229,44 @@ describe('list refetch documents', () => {
     const patientDocs = operationNames(patientListRefetchDocuments())
     expect(taskDocs).toEqual(expect.arrayContaining(['GetTasks', 'GetPatients', 'GetGlobalData']))
     expect(patientDocs).toEqual(expect.arrayContaining(['GetPatients', 'GetTasks', 'GetGlobalData']))
+  })
+})
+
+describe('refetchActiveDocuments', () => {
+  it('only refetches documents whose query is currently active', async () => {
+    let included: string[] = []
+    const client = {
+      getObservableQueries: () => new Set([{ queryName: 'GetPatients' }]),
+      refetchQueries: vi.fn().mockImplementation((options: { include?: DocumentNode[] }) => {
+        included = operationNames(options.include ?? [])
+        return Promise.resolve([])
+      }),
+    } as unknown as ApolloClient
+
+    await refetchActiveDocuments(client, patientListRefetchDocuments())
+
+    expect(included).toEqual(['GetPatients'])
+  })
+
+  it('does not call refetchQueries when none of the target queries are active', async () => {
+    const client = {
+      getObservableQueries: () => new Set([{ queryName: 'GetUsers' }]),
+      refetchQueries: vi.fn(),
+    } as unknown as ApolloClient
+
+    await refetchActiveDocuments(client, patientListRefetchDocuments())
+
+    expect(client.refetchQueries).not.toHaveBeenCalled()
+  })
+
+  it('refetches all documents when the client cannot report active queries', async () => {
+    const client = {
+      refetchQueries: vi.fn().mockResolvedValue([]),
+    } as unknown as ApolloClient
+
+    await refetchActiveDocuments(client, patientListRefetchDocuments())
+
+    expect(client.refetchQueries).toHaveBeenCalled()
   })
 })
 

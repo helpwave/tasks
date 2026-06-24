@@ -1,4 +1,5 @@
 import type { ApolloClient } from '@apollo/client/core'
+import type { DocumentNode } from 'graphql'
 import { GetTaskDocument, GetPatientDocument, GetTasksDocument, GetPatientsDocument, GetGlobalDataDocument } from '@/api/gql/generated'
 import { getParsedDocument } from '../hooks/queryHelpers'
 import { hasPendingMutationForEntity } from '../mutations/queue'
@@ -213,6 +214,44 @@ export function patientListRefetchDocuments() {
   ]
 }
 
+function getDocumentOperationName(document: DocumentNode): string | null {
+  for (const definition of document.definitions) {
+    if (definition.kind === 'OperationDefinition' && definition.name?.value) {
+      return definition.name.value
+    }
+  }
+  return null
+}
+
+function activeQueryNames(client: ApolloClient): Set<string> | null {
+  const getter = (client as { getObservableQueries?: unknown }).getObservableQueries
+  if (typeof getter !== 'function') return null
+  const names = new Set<string>()
+  for (const observable of client.getObservableQueries('active')) {
+    if (observable.queryName) names.add(observable.queryName)
+  }
+  return names
+}
+
+export function refetchActiveDocuments(
+  client: ApolloClient,
+  documents: DocumentNode[]
+): Promise<unknown> {
+  const active = activeQueryNames(client)
+  const include = active === null
+    ? documents
+    : documents.filter((document) => {
+      const name = getDocumentOperationName(document)
+      return name !== null && active.has(name)
+    })
+  if (include.length === 0) return Promise.resolve()
+  try {
+    return Promise.resolve(client.refetchQueries({ include }))
+  } catch {
+    return Promise.resolve()
+  }
+}
+
 export async function reloadEntityAfterMutation(
   client: ApolloClient,
   entityType: 'Task' | 'Patient',
@@ -221,45 +260,33 @@ export async function reloadEntityAfterMutation(
   if (entityType === 'Task') {
     addRefreshingTask(entityId)
     try {
-      try {
-        await mergeTaskUpdatedIntoCache(
-          client,
-          entityId,
-          { taskId: entityId },
-          reloadAfterMutationOptions
-        )
-      } catch {
-        void 0
-      }
-      try {
-        await client.refetchQueries({ include: taskListRefetchDocuments() })
-      } catch {
-        void 0
-      }
+      await mergeTaskUpdatedIntoCache(
+        client,
+        entityId,
+        { taskId: entityId },
+        reloadAfterMutationOptions
+      )
+    } catch {
+      void 0
     } finally {
       removeRefreshingTask(entityId)
     }
+    void refetchActiveDocuments(client, taskListRefetchDocuments())
     return
   }
 
   addRefreshingPatient(entityId)
   try {
-    try {
-      await mergePatientUpdatedIntoCache(
-        client,
-        entityId,
-        { patientId: entityId },
-        reloadAfterMutationOptions
-      )
-    } catch {
-      void 0
-    }
-    try {
-      await client.refetchQueries({ include: patientListRefetchDocuments() })
-    } catch {
-      void 0
-    }
+    await mergePatientUpdatedIntoCache(
+      client,
+      entityId,
+      { patientId: entityId },
+      reloadAfterMutationOptions
+    )
+  } catch {
+    void 0
   } finally {
     removeRefreshingPatient(entityId)
   }
+  void refetchActiveDocuments(client, patientListRefetchDocuments())
 }

@@ -76,7 +76,7 @@ export function InTableDateTimeEditPopUp({
           )
         }}
       </PopUpOpener>
-      <PopUp options={options} className={clsx(className, 'flex-col-2 items-end')} onClick={e => e.stopPropagation()}>
+      <PopUp options={options} aria-label={translation('edit')} className={clsx(className, 'flex-col-2 items-end')} onClick={e => e.stopPropagation()}>
         {flexible ? (
           <FlexibleDateTimeInput
             {...getTaskDueDateFlexibleInputProps(mode === 'dateTime' ? 'dateTime' : 'date')}

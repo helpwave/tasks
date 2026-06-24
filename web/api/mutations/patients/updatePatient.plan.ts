@@ -72,9 +72,16 @@ export const updatePatientOptimisticPlan: OptimisticPlan<UpdatePatientVariables>
             applyOptimisticPropertyScalars(cache, optimisticProperties)
             const newProperties = getNewOptimisticProperties(optimisticProperties)
             if (newProperties.length > 0) {
-              fields['properties'] = (existing) => {
+              fields['properties'] = (existing, details) => {
+                const { toReference } = details as unknown as {
+                  toReference: (obj: unknown, mergeIntoStore?: boolean) => unknown,
+                }
                 const current = Array.isArray(existing) ? existing : []
-                return [...current, ...newProperties]
+                const newRefs = newProperties.flatMap((property) => {
+                  const ref = toReference(property, true)
+                  return ref ? [ref] : []
+                })
+                return [...current, ...newRefs]
               }
             }
           }

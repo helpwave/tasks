@@ -63,7 +63,7 @@ export function InTableNumberEditPopUp({
           )
         }}
       </PopUpOpener>
-      <PopUp options={options} className={clsx(className, 'flex-col-2 items-end min-w-48')} onClick={e => e.stopPropagation()}>
+      <PopUp options={options} aria-label={translation('edit')} className={clsx(className, 'flex-col-2 items-end min-w-48')} onClick={e => e.stopPropagation()}>
         <Input
           type="number"
           value={draft}
