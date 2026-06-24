@@ -959,7 +959,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
         enableSorting={false}
         enableColumnPinning={false}
       >
-        <div className="flex flex-col h-full gap-4">
+        <div className={clsx('flex flex-col gap-4', useBoxScroll ? 'flex-1 min-h-0' : 'h-full')}>
           {!embedded && (
             <div className="flex-col-2 w-full">
               <div className="flex flex-col-reverse items-start gap-3 md:flex-row md:flex-row-8 md:justify-between w-full">
@@ -1052,7 +1052,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
               )}
             </div>
           )}
-          <div className={clsx('flex-col-3 w-full relative print:static', isMobileIOS && hasFilterPanelOpen && 'pointer-events-none')}>
+          <div className={clsx('flex-col-3 w-full relative print:static', useBoxScroll && 'flex-1 min-h-0', isMobileIOS && hasFilterPanelOpen && 'pointer-events-none')}>
             {!embedded && (
               <style>{`
             table th[data-column-id="done"],

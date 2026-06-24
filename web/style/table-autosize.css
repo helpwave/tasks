@@ -2,3 +2,13 @@ table[data-name="table"].hw-autosize-table {
   table-layout: auto;
   width: 100% !important;
 }
+
+/*
+ * The sticky table header sets a solid background but no stacking order, so the
+ * (later-in-DOM) body rows paint over it while scrolling and it looks transparent.
+ * Lift it above the body and reassert the opaque header background.
+ */
+[data-name="table-header-cell"][data-sticky] {
+  z-index: 10;
+  background-color: var(--color-table-header-background);
+}

@@ -1117,7 +1117,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
       enableSorting={false}
       enableColumnPinning={false}
     >
-      <div className="flex flex-col h-full gap-4">
+      <div className={clsx('flex flex-col gap-4', useBoxScroll ? 'flex-1 min-h-0' : 'h-full')}>
         {showFullToolbar && (
           <div className="flex-col-2 w-full">
             <div className="flex flex-col-reverse items-start gap-3 md:flex-row md:flex-row-8 md:justify-between w-full">
