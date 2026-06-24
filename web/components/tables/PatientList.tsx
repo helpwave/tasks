@@ -23,10 +23,10 @@ import { columnFiltersToQueryFilterClauses, sortingStateToQuerySortClauses } fro
 import { LIST_PAGE_SIZE } from '@/utils/listPaging'
 import { useAccumulatedPagination } from '@/hooks/useAccumulatedPagination'
 import { RowRefreshingGate } from '@/components/tables/RowRefreshingGate'
-import { InfiniteScrollSentinel } from '@/components/common/InfiniteScrollSentinel'
 import { VirtualizedCardGrid } from '@/components/common/VirtualizedCardGrid'
 import { ListLoadingHint } from '@/components/common/ListLoadingHint'
 import { useIsPrinting } from '@/hooks/useIsPrinting'
+import { isNearBottom } from '@/utils/nearBottom'
 import { DateDisplay } from '@/components/Date/DateDisplay'
 import { PatientCardView } from '@/components/patients/PatientCardView'
 import { queryableFieldsToFilterListItems, queryableFieldsToSortingListItems, type QueryableChoiceTagLabelResolver } from '@/utils/queryableFilterList'
@@ -538,6 +538,11 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
 
   const showBlockingLoadingOverlay = (patientsLoading || waitingForLocationScope) && patients.length === 0 && !derivedVirtualMode
   const isListLoading = showBlockingLoadingOverlay || isFetchingMore
+  const useBoxScroll = !isPrinting && !embedded
+  const handleListScroll = useCallback((element: HTMLElement) => {
+    if (embedded || derivedVirtualMode || isFetchingMore || !hasMore) return
+    if (isNearBottom(element, 600)) loadMore()
+  }, [embedded, derivedVirtualMode, isFetchingMore, hasMore, loadMore])
 
   const tablePagination = useMemo(
     (): PaginationState => ({
@@ -1204,19 +1209,29 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
             )}
           </div>
         )}
-        <div className="relative print:static">
+        <div className={clsx('relative print:static', useBoxScroll && 'flex-1 min-h-0 flex flex-col')}>
           <div
             aria-busy={isListLoading}
-            className={clsx('transition-opacity', isListLoading && 'opacity-60 print:opacity-100')}
+            className={clsx('transition-opacity', useBoxScroll && 'flex-1 min-h-0 flex flex-col', isListLoading && 'opacity-60 print:opacity-100')}
           >
-            <div className={clsx(listLayout === 'table' ? 'block' : 'hidden print:block')}>
-              <TableDisplay virtualized={!isPrinting && !embedded} className="print-content hw-autosize-table overflow-x-auto hw-touch-scroll"/>
+            <div className={clsx(listLayout === 'table' ? clsx('block', useBoxScroll && 'flex-1 min-h-0 flex flex-col') : 'hidden print:block')}>
+              <TableDisplay
+                virtualized={useBoxScroll ? { scroll: 'container', estimateRowHeight: 56 } : false}
+                tableHeaderProps={useBoxScroll ? { isSticky: true } : undefined}
+                containerProps={{
+                  className: clsx(useBoxScroll && 'flex-1 min-h-0 max-h-[calc(100dvh-12rem)] overflow-y-auto', 'print:max-h-none print:overflow-visible'),
+                  onScroll: useBoxScroll ? (event) => handleListScroll(event.currentTarget) : undefined,
+                }}
+                className="print-content hw-autosize-table overflow-x-auto hw-touch-scroll"
+              />
             </div>
             {listLayout === 'card' && (
               <VirtualizedCardGrid
                 items={patients}
                 getItemKey={(patient) => patient.id}
                 minCardWidthPx={352}
+                containerClassName={useBoxScroll ? 'flex-1 min-h-0 max-h-[calc(100dvh-12rem)] overflow-y-auto' : undefined}
+                onReachBottom={useBoxScroll ? loadMore : undefined}
                 renderItem={(patient) => (
                   <RowRefreshingGate
                     key={patient.id}
@@ -1233,13 +1248,6 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
               />
             )}
           </div>
-          {!embedded && !derivedVirtualMode && stableTotalCount != null && hasMore && accumulatedPatientsRaw.length > 0 && (
-            <InfiniteScrollSentinel
-              onLoadMore={loadMore}
-              hasMore={hasMore}
-              isFetchingMore={isFetchingMore}
-            />
-          )}
           <ListLoadingHint active={isListLoading}/>
         </div>
         <Drawer

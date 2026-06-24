@@ -32,10 +32,10 @@ import { queryableFieldsToFilterListItems, queryableFieldsToSortingListItems, ty
 import { LIST_PAGE_SIZE } from '@/utils/listPaging'
 import { TaskCardView } from '@/components/tasks/TaskCardView'
 import { RefreshingTaskIdsContext, TaskRowRefreshingGate } from '@/components/tables/TaskRowRefreshingGate'
-import { InfiniteScrollSentinel } from '@/components/common/InfiniteScrollSentinel'
 import { VirtualizedCardGrid } from '@/components/common/VirtualizedCardGrid'
 import { ListLoadingHint } from '@/components/common/ListLoadingHint'
 import { useIsPrinting } from '@/hooks/useIsPrinting'
+import { isNearBottom } from '@/utils/nearBottom'
 import { ExpandableTextBlock } from '@/components/common/ExpandableTextBlock'
 import { InTableTextEditPopUp } from '@/components/tables/in-table-edit/InTableTextEditPopUp'
 import { InTableDateTimeEditPopUp } from './in-table-edit/InTableDateTimeEditPopUp'
@@ -330,6 +330,11 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
 
   const showBlockingLoadingOverlay = loading && displayedTasks.length === 0
   const isListLoading = showBlockingLoadingOverlay || isFetchingMore
+  const useBoxScroll = !isPrinting && !embedded
+  const handleListScroll = useCallback((element: HTMLElement) => {
+    if (embedded || isFetchingMore || !effectiveHasMore) return
+    if (isNearBottom(element, 600)) handleLoadMore()
+  }, [embedded, isFetchingMore, effectiveHasMore, handleLoadMore])
 
   const openTasks = useMemo(() => {
     const tasksWithOptimistic = initialTasks.map(task => {
@@ -1060,16 +1065,26 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
             )}
             <div
               aria-busy={isListLoading}
-              className={clsx('flex-col-3 w-full transition-opacity', isListLoading && 'opacity-60 print:opacity-100')}
+              className={clsx('flex-col-3 w-full transition-opacity', useBoxScroll && 'flex-1 min-h-0', isListLoading && 'opacity-60 print:opacity-100')}
             >
-              <div className={clsx('w-full', listLayout === 'table' ? 'block' : 'hidden print:block')}>
-                <TableDisplay virtualized={!isPrinting && !embedded} className="print-content hw-autosize-table w-full overflow-x-auto hw-touch-scroll" />
+              <div className={clsx('w-full', listLayout === 'table' ? clsx('block', useBoxScroll && 'flex-1 min-h-0 flex flex-col') : 'hidden print:block')}>
+                <TableDisplay
+                  virtualized={useBoxScroll ? { scroll: 'container', estimateRowHeight: 56 } : false}
+                  tableHeaderProps={useBoxScroll ? { isSticky: true } : undefined}
+                  containerProps={{
+                    className: clsx(useBoxScroll && 'flex-1 min-h-0 max-h-[calc(100dvh-12rem)] overflow-y-auto', 'print:max-h-none print:overflow-visible'),
+                    onScroll: useBoxScroll ? (event) => handleListScroll(event.currentTarget) : undefined,
+                  }}
+                  className="print-content hw-autosize-table w-full overflow-x-auto hw-touch-scroll"
+                />
               </div>
               {listLayout === 'card' && (
                 <VirtualizedCardGrid
                   items={displayedTasks}
                   getItemKey={(task) => task.id}
                   minCardWidthPx={384}
+                  containerClassName={useBoxScroll ? 'flex-1 min-h-0 max-h-[calc(100dvh-12rem)] overflow-y-auto' : undefined}
+                  onReachBottom={useBoxScroll ? handleLoadMore : undefined}
                   renderItem={(task) => (
                     <TaskRowRefreshingGate key={task.id} taskId={task.id} className="h-full">
                       <TaskCardView
@@ -1084,13 +1099,6 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
                 />
               )}
             </div>
-            {!embedded && effectiveHasMore && (
-              <InfiniteScrollSentinel
-                onLoadMore={handleLoadMore}
-                hasMore={effectiveHasMore}
-                isFetchingMore={isFetchingMore}
-              />
-            )}
             <ListLoadingHint active={isListLoading}/>
           </div>
           <Drawer
