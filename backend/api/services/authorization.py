@@ -2,6 +2,10 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased, selectinload
 
+from api.services.cache import (
+    get_cached_accessible_location_ids,
+    set_cached_accessible_location_ids,
+)
 from database import models
 
 
@@ -16,12 +20,29 @@ class AuthorizationService:
             return context._accessible_location_ids
 
         if not context or not hasattr(context, '_accessible_location_ids_lock'):
-            return await self._compute_accessible_location_ids(user, context)
+            return await self._resolve_accessible_location_ids(user, context)
 
         async with context._accessible_location_ids_lock:
             if context._accessible_location_ids is not None:
                 return context._accessible_location_ids
-            return await self._compute_accessible_location_ids(user, context)
+            return await self._resolve_accessible_location_ids(user, context)
+
+    async def _resolve_accessible_location_ids(
+        self, user: models.User | None, context=None
+    ) -> set[str]:
+        if user is not None:
+            cached = await get_cached_accessible_location_ids(user.id)
+            if cached is not None:
+                if context is not None:
+                    context._accessible_location_ids = cached
+                return cached
+
+        accessible_ids = await self._compute_accessible_location_ids(user, context)
+
+        if user is not None:
+            await set_cached_accessible_location_ids(user.id, accessible_ids)
+
+        return accessible_ids
 
     async def _compute_accessible_location_ids(
         self, user: models.User | None, context=None
