@@ -1,9 +1,9 @@
 import { useMemo, useState, forwardRef, useImperativeHandle, useEffect, useCallback, useRef, type ReactNode } from 'react'
 import { useMutation } from '@apollo/client/react'
 import type { IdentifierFilterValue, FilterListItem, FilterListPopUpBuilderProps } from '@helpwave/hightide'
-import { Chip, DateUtils, FillerCell, HelpwaveLogo, SearchBar, ProgressIndicator, Tooltip, Drawer, TableProvider, TableDisplay, TableColumnSwitcher, IconButton, useLocale, FilterList, SortingList, Button, ExpansionIcon, Visibility, ConfirmDialog } from '@helpwave/hightide'
+import { Chip, DateUtils, FillerCell, SearchBar, ProgressIndicator, Tooltip, Drawer, TableProvider, TableDisplay, TableColumnSwitcher, IconButton, useLocale, FilterList, SortingList, Button, ExpansionIcon, Visibility, ConfirmDialog } from '@helpwave/hightide'
 import clsx from 'clsx'
-import { LayoutGrid, Loader2, PlusIcon, Table2 } from 'lucide-react'
+import { LayoutGrid, PlusIcon, Table2 } from 'lucide-react'
 import type { LocationType } from '@/api/gql/generated'
 import { Sex, PatientState, type GetPatientsQuery, type TaskType, PropertyEntity, FieldType, type QueryableField } from '@/api/gql/generated'
 import { usePropertyDefinitions, usePatientsPaginated, useQueryableFields, useRefreshingEntityIds, useUpdatePatient } from '@/data'
@@ -25,6 +25,8 @@ import { useAccumulatedPagination } from '@/hooks/useAccumulatedPagination'
 import { RowRefreshingGate } from '@/components/tables/RowRefreshingGate'
 import { InfiniteScrollSentinel } from '@/components/common/InfiniteScrollSentinel'
 import { VirtualizedCardGrid } from '@/components/common/VirtualizedCardGrid'
+import { ListLoadingHint } from '@/components/common/ListLoadingHint'
+import { useIsPrinting } from '@/hooks/useIsPrinting'
 import { DateDisplay } from '@/components/Date/DateDisplay'
 import { PatientCardView } from '@/components/patients/PatientCardView'
 import { queryableFieldsToFilterListItems, queryableFieldsToSortingListItems, type QueryableChoiceTagLabelResolver } from '@/utils/queryableFilterList'
@@ -157,6 +159,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
   savedViewScope = 'base'
 }, ref) => {
   const translation = useTasksTranslation()
+  const isPrinting = useIsPrinting()
   const { locale } = useLocale()
   const { selectedRootLocationIds } = useTasksContext()
   const { refreshingPatientIds } = useRefreshingEntityIds()
@@ -534,6 +537,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
   ])
 
   const showBlockingLoadingOverlay = (patientsLoading || waitingForLocationScope) && patients.length === 0 && !derivedVirtualMode
+  const isListLoading = showBlockingLoadingOverlay || isFetchingMore
 
   const tablePagination = useMemo(
     (): PaginationState => ({
@@ -1201,52 +1205,42 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
           </div>
         )}
         <div className="relative print:static">
-          {showBlockingLoadingOverlay && (
-            <div className="absolute inset-0 z-10 flex items-center justify-center bg-surface/80 rounded-lg min-h-48">
-              <HelpwaveLogo animate="loading" color="currentColor" height={64} width={64} />
+          <div
+            aria-busy={isListLoading}
+            className={clsx('transition-opacity', isListLoading && 'opacity-60 print:opacity-100')}
+          >
+            <div className={clsx(listLayout === 'table' ? 'block' : 'hidden print:block')}>
+              <TableDisplay virtualized={!isPrinting && !embedded} className="print-content hw-autosize-table overflow-x-auto hw-touch-scroll"/>
             </div>
-          )}
-          <div className={clsx(listLayout === 'table' ? 'block' : 'hidden print:block')}>
-            <TableDisplay className="print-content hw-autosize-table overflow-x-auto hw-touch-scroll"/>
+            {listLayout === 'card' && (
+              <VirtualizedCardGrid
+                items={patients}
+                getItemKey={(patient) => patient.id}
+                minCardWidthPx={352}
+                renderItem={(patient) => (
+                  <RowRefreshingGate
+                    key={patient.id}
+                    refreshing={refreshingPatientIds.has(patient.id)}
+                    className="h-full"
+                  >
+                    <PatientCardView
+                      patient={patient}
+                      onClick={handleEdit}
+                      extraContent={renderPatientCardExtras(patient)}
+                    />
+                  </RowRefreshingGate>
+                )}
+              />
+            )}
           </div>
-          {listLayout === 'card' && (
-            <VirtualizedCardGrid
-              items={patients}
-              getItemKey={(patient) => patient.id}
-              minCardWidthPx={352}
-              renderItem={(patient) => (
-                <RowRefreshingGate
-                  key={patient.id}
-                  refreshing={refreshingPatientIds.has(patient.id)}
-                  className="h-full"
-                >
-                  <PatientCardView
-                    patient={patient}
-                    onClick={handleEdit}
-                    extraContent={renderPatientCardExtras(patient)}
-                  />
-                </RowRefreshingGate>
-              )}
+          {!embedded && !derivedVirtualMode && stableTotalCount != null && hasMore && accumulatedPatientsRaw.length > 0 && (
+            <InfiniteScrollSentinel
+              onLoadMore={loadMore}
+              hasMore={hasMore}
+              isFetchingMore={isFetchingMore}
             />
           )}
-          {!embedded && !derivedVirtualMode && stableTotalCount != null && hasMore && accumulatedPatientsRaw.length > 0 && (
-            <>
-              <InfiniteScrollSentinel
-                onLoadMore={loadMore}
-                hasMore={hasMore}
-                isFetchingMore={isFetchingMore}
-              />
-              <Button
-                color="neutral"
-                className="mt-2 w-full sm:w-auto self-center print:hidden"
-                onClick={loadMore}
-                disabled={isFetchingMore}
-              >
-                {isFetchingMore && <Loader2 className="size-5 animate-spin" />}
-                {translation(isFetchingMore ? 'loading' : 'loadMore')}
-              </Button>
-            </>
-          )}
+          <ListLoadingHint active={isListLoading}/>
         </div>
         <Drawer
           isOpen={patientDialogState.isOpen}

@@ -1,9 +1,9 @@
 import { useMemo, useState, forwardRef, useImperativeHandle, useEffect, useRef, useCallback, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import type { FilterListItem } from '@helpwave/hightide'
-import { Button, Checkbox, ConfirmDialog, FilterList, FillerCell, HelpwaveLogo, IconButton, SearchBar, TableColumnSwitcher, TableDisplay, TableProvider, SortingList, ExpansionIcon } from '@helpwave/hightide'
+import { Button, Checkbox, ConfirmDialog, FilterList, FillerCell, IconButton, SearchBar, TableColumnSwitcher, TableDisplay, TableProvider, SortingList, ExpansionIcon } from '@helpwave/hightide'
 import clsx from 'clsx'
-import { Edit2, ExternalLink, LayoutGrid, Loader2, PlusIcon, Table2, UserCheck } from 'lucide-react'
+import { Edit2, ExternalLink, LayoutGrid, PlusIcon, Table2, UserCheck } from 'lucide-react'
 import type { IdentifierFilterValue } from '@helpwave/hightide'
 import type { TaskPriority, GetTasksQuery, QueryableField } from '@/api/gql/generated'
 import { FieldType, PropertyEntity } from '@/api/gql/generated'
@@ -34,6 +34,8 @@ import { TaskCardView } from '@/components/tasks/TaskCardView'
 import { RefreshingTaskIdsContext, TaskRowRefreshingGate } from '@/components/tables/TaskRowRefreshingGate'
 import { InfiniteScrollSentinel } from '@/components/common/InfiniteScrollSentinel'
 import { VirtualizedCardGrid } from '@/components/common/VirtualizedCardGrid'
+import { ListLoadingHint } from '@/components/common/ListLoadingHint'
+import { useIsPrinting } from '@/hooks/useIsPrinting'
 import { ExpandableTextBlock } from '@/components/common/ExpandableTextBlock'
 import { InTableTextEditPopUp } from '@/components/tables/in-table-edit/InTableTextEditPopUp'
 import { InTableDateTimeEditPopUp } from './in-table-edit/InTableDateTimeEditPopUp'
@@ -118,6 +120,7 @@ type TaskListProps = {
 
 export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initialTasks, onRefetch, showAssignee = false, initialTaskId, onInitialTaskOpened, headerActions, saveViewSlot, totalCount, loading = false, tableState: controlledTableState, searchQuery: searchQueryProp, onSearchQueryChange, loadMore: loadMoreProp, hasMore: hasMoreProp, isFetchingMore = false, embedded = false, virtualDerivedOrder = false, taskInitialCreationData }, ref) => {
   const translation = useTasksTranslation()
+  const isPrinting = useIsPrinting()
   const { data: propertyDefinitionsData } = usePropertyDefinitions()
   const { data: queryableFieldsData } = useQueryableFields('Task')
   const queryableFieldsStable = useStableSerializedList(
@@ -326,6 +329,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
   }, [isServerDriven, loadMoreProp])
 
   const showBlockingLoadingOverlay = loading && displayedTasks.length === 0
+  const isListLoading = showBlockingLoadingOverlay || isFetchingMore
 
   const openTasks = useMemo(() => {
     const tasksWithOptimistic = initialTasks.map(task => {
@@ -1044,11 +1048,6 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
             </div>
           )}
           <div className={clsx('flex-col-3 w-full relative print:static', isMobileIOS && hasFilterPanelOpen && 'pointer-events-none')}>
-            {showBlockingLoadingOverlay && (
-              <div className="absolute inset-0 z-10 flex items-center justify-center bg-surface/80 rounded-lg min-h-48">
-                <HelpwaveLogo animate="loading" color="currentColor" height={64} width={64} />
-              </div>
-            )}
             {!embedded && (
               <style>{`
             table th[data-column-id="done"],
@@ -1059,45 +1058,40 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
             }
           `}</style>
             )}
-            <div className={clsx('w-full', listLayout === 'table' ? 'block' : 'hidden print:block')}>
-              <TableDisplay className="print-content hw-autosize-table w-full overflow-x-auto hw-touch-scroll" />
+            <div
+              aria-busy={isListLoading}
+              className={clsx('flex-col-3 w-full transition-opacity', isListLoading && 'opacity-60 print:opacity-100')}
+            >
+              <div className={clsx('w-full', listLayout === 'table' ? 'block' : 'hidden print:block')}>
+                <TableDisplay virtualized={!isPrinting && !embedded} className="print-content hw-autosize-table w-full overflow-x-auto hw-touch-scroll" />
+              </div>
+              {listLayout === 'card' && (
+                <VirtualizedCardGrid
+                  items={displayedTasks}
+                  getItemKey={(task) => task.id}
+                  minCardWidthPx={384}
+                  renderItem={(task) => (
+                    <TaskRowRefreshingGate key={task.id} taskId={task.id} className="h-full">
+                      <TaskCardView
+                        task={task}
+                        showAssignee={showAssignee}
+                        showPatient={true}
+                        onClick={() => setTaskDialogState({ isOpen: true, taskId: task.id })}
+                        extraContent={renderTaskCardExtras(task)}
+                      />
+                    </TaskRowRefreshingGate>
+                  )}
+                />
+              )}
             </div>
-            {listLayout === 'card' && (
-              <VirtualizedCardGrid
-                items={displayedTasks}
-                getItemKey={(task) => task.id}
-                minCardWidthPx={384}
-                renderItem={(task) => (
-                  <TaskRowRefreshingGate key={task.id} taskId={task.id} className="h-full">
-                    <TaskCardView
-                      task={task}
-                      showAssignee={showAssignee}
-                      showPatient={true}
-                      onClick={() => setTaskDialogState({ isOpen: true, taskId: task.id })}
-                      extraContent={renderTaskCardExtras(task)}
-                    />
-                  </TaskRowRefreshingGate>
-                )}
+            {!embedded && effectiveHasMore && (
+              <InfiniteScrollSentinel
+                onLoadMore={handleLoadMore}
+                hasMore={effectiveHasMore}
+                isFetchingMore={isFetchingMore}
               />
             )}
-            {!embedded && effectiveHasMore && (
-              <>
-                <InfiniteScrollSentinel
-                  onLoadMore={handleLoadMore}
-                  hasMore={effectiveHasMore}
-                  isFetchingMore={isFetchingMore}
-                />
-                <Button
-                  color="neutral"
-                  className="mt-2 w-full sm:w-auto self-center print:hidden"
-                  onClick={handleLoadMore}
-                  disabled={isFetchingMore}
-                >
-                  {isFetchingMore && <Loader2 className="size-5 animate-spin" />}
-                  {translation(isFetchingMore ? 'loading' : 'loadMore')}
-                </Button>
-              </>
-            )}
+            <ListLoadingHint active={isListLoading}/>
           </div>
           <Drawer
             alignment="right"
