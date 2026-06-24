@@ -3,12 +3,14 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import clsx from 'clsx'
 import { useVirtualizer } from '@tanstack/react-virtual'
-import { chunkIntoRows, columnsForWidth } from '@/utils/virtualGrid'
+import { chunkIntoRows, columnsForWidth, overscanRowsForBuffer } from '@/utils/virtualGrid'
 import { isNearBottom } from '@/utils/nearBottom'
 
 const DEFAULT_GAP_PX = 12
 const DEFAULT_ESTIMATE_ROW_HEIGHT_PX = 220
-const DEFAULT_OVERSCAN_ROWS = 4
+// Render roughly a screenful of extra rows in each direction so a fast mobile
+// momentum scroll cannot outrun the render and reveal a blank list.
+const DEFAULT_OVERSCAN_ROWS = overscanRowsForBuffer(800, DEFAULT_ESTIMATE_ROW_HEIGHT_PX)
 const DEFAULT_VIRTUALIZE_THRESHOLD = 40
 const REACH_BOTTOM_THRESHOLD_PX = 600
 

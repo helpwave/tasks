@@ -9,6 +9,23 @@ export function columnsForWidth(
   return Math.max(1, columns)
 }
 
+/**
+ * Number of rows to render outside the visible window so that a fast (e.g. mobile
+ * momentum) scroll does not outrun React's render and reveal blank space. Derives
+ * the row count from a target pixel buffer and the (estimated) row height, never
+ * dropping below `minRows`.
+ */
+export function overscanRowsForBuffer(
+  bufferPx: number,
+  rowHeightPx: number,
+  minRows = 6
+): number {
+  const floor = Math.max(1, Math.floor(minRows))
+  if (!Number.isFinite(bufferPx) || bufferPx <= 0) return floor
+  if (!Number.isFinite(rowHeightPx) || rowHeightPx <= 0) return floor
+  return Math.max(floor, Math.ceil(bufferPx / rowHeightPx))
+}
+
 export function chunkIntoRows<T>(items: readonly T[], columns: number): T[][] {
   const safeColumns = Math.max(1, Math.floor(columns) || 1)
   const rows: T[][] = []

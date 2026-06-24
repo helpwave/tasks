@@ -24,6 +24,7 @@ import { LIST_PAGE_SIZE } from '@/utils/listPaging'
 import { useAccumulatedPagination } from '@/hooks/useAccumulatedPagination'
 import { RowRefreshingGate } from '@/components/tables/RowRefreshingGate'
 import { VirtualizedCardGrid } from '@/components/common/VirtualizedCardGrid'
+import { overscanRowsForBuffer } from '@/utils/virtualGrid'
 import { ListLoadingHint } from '@/components/common/ListLoadingHint'
 import { useIsPrinting } from '@/hooks/useIsPrinting'
 import { isNearBottom } from '@/utils/nearBottom'
@@ -93,6 +94,11 @@ const LOCATION_KIND_HEADERS: Record<LocationKindColumn, string> = {
 }
 
 const ADMITTED_OR_WAITING_STATES: PatientState[] = [PatientState.Admitted, PatientState.Wait]
+
+const TABLE_ROW_ESTIMATE_PX = 56
+// Render about a screenful of extra rows so fast mobile scrolling does not
+// outrun the virtualizer and flash an empty table.
+const TABLE_OVERSCAN_ROWS = overscanRowsForBuffer(800, TABLE_ROW_ESTIMATE_PX)
 
 const PATIENT_CARD_PRIMARY_COLUMN_IDS = new Set([
   'name',
@@ -1216,7 +1222,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
           >
             <div className={clsx(listLayout === 'table' ? clsx('block', useBoxScroll && 'flex-1 min-h-0 flex flex-col') : 'hidden print:block')}>
               <TableDisplay
-                virtualized={useBoxScroll ? { scroll: 'container', estimateRowHeight: 56 } : false}
+                virtualized={useBoxScroll ? { scroll: 'container', estimateRowHeight: TABLE_ROW_ESTIMATE_PX, overscan: TABLE_OVERSCAN_ROWS } : false}
                 tableHeaderProps={useBoxScroll ? { isSticky: true } : undefined}
                 containerProps={{
                   className: clsx(useBoxScroll && 'flex-1 min-h-0 max-h-[calc(100dvh-12rem)] overflow-y-auto', 'print:max-h-none print:overflow-visible'),

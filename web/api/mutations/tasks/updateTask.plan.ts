@@ -8,7 +8,7 @@ import {
 import { getParsedDocument } from '@/data/hooks/queryHelpers'
 import { registerOptimisticPlan } from '@/data/mutations/registry'
 import type { OptimisticPlan, OptimisticPatch } from '@/data/mutations/types'
-import { buildOptimisticProperties, readEntityProperties, applyOptimisticPropertyScalars, getNewOptimisticProperties } from '@/api/mutations/shared/optimisticProperties'
+import { buildOptimisticProperties, readEntityProperties, applyOptimisticPropertyScalars, buildOptimisticPropertyRefs } from '@/api/mutations/shared/optimisticProperties'
 
 type UpdateTaskVariables = {
   id: string,
@@ -107,19 +107,14 @@ export const updateTaskOptimisticPlan: OptimisticPlan<UpdateTaskVariables> = {
             const existingProps = readEntityProperties(cache, 'TaskType', taskId)
             const optimisticProperties = buildOptimisticProperties(existingProps, data.properties, taskId)
             applyOptimisticPropertyScalars(cache, optimisticProperties)
-            const newProperties = getNewOptimisticProperties(optimisticProperties)
-            if (newProperties.length > 0) {
-              fields['properties'] = (existing, details) => {
-                const { toReference } = details as unknown as {
-                  toReference: (obj: unknown, mergeIntoStore?: boolean) => unknown,
-                }
-                const current = Array.isArray(existing) ? existing : []
-                const newRefs = newProperties.flatMap((property) => {
-                  const ref = toReference(property, true)
-                  return ref ? [ref] : []
-                })
-                return [...current, ...newRefs]
+            // Replace the whole `properties` list with the optimistic set so an
+            // edit that removes a property (e.g. clearing a select) is reflected
+            // immediately instead of lingering until the server refetch.
+            fields['properties'] = (_existing, details) => {
+              const { toReference } = details as unknown as {
+                toReference: (obj: unknown, mergeIntoStore?: boolean) => unknown,
               }
+              return buildOptimisticPropertyRefs(optimisticProperties, toReference)
             }
           }
           cache.modify({

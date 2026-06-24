@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { chunkIntoRows, columnsForWidth } from './virtualGrid'
+import { chunkIntoRows, columnsForWidth, overscanRowsForBuffer } from './virtualGrid'
 
 describe('columnsForWidth', () => {
   it('returns at least one column for any positive width', () => {
@@ -35,5 +35,23 @@ describe('chunkIntoRows', () => {
 
   it('treats non-positive column counts as a single column', () => {
     expect(chunkIntoRows([1, 2, 3], 0)).toEqual([[1], [2], [3]])
+  })
+})
+
+describe('overscanRowsForBuffer', () => {
+  it('renders enough rows to cover the pixel buffer ahead of the viewport', () => {
+    expect(overscanRowsForBuffer(600, 56)).toBe(11)
+    expect(overscanRowsForBuffer(600, 220)).toBe(6)
+  })
+
+  it('never drops below the minimum overscan', () => {
+    expect(overscanRowsForBuffer(50, 56)).toBe(6)
+    expect(overscanRowsForBuffer(600, 56, 20)).toBe(20)
+  })
+
+  it('falls back to the minimum for invalid inputs', () => {
+    expect(overscanRowsForBuffer(0, 56)).toBe(6)
+    expect(overscanRowsForBuffer(600, 0)).toBe(6)
+    expect(overscanRowsForBuffer(Number.NaN, 56)).toBe(6)
   })
 })

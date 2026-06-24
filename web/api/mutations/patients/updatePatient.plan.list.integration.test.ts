@@ -105,6 +105,29 @@ describe('updatePatientOptimisticPlan list integration', () => {
     expect(allergy?.definition?.name).toBe('Allergy')
   })
 
+  it('optimistically removes a list patient property when its value is cleared', () => {
+    const cache = new InMemoryCache(buildCacheConfig())
+    seedListPatient(cache)
+
+    // Clearing the only property sends an empty input set (see
+    // mergePropertyChangeIntoInputs), which must drop the property from the
+    // cached list immediately rather than re-adding it.
+    const variables = { id: 'p-1', data: { properties: [] } }
+    const [patch] = updatePatientOptimisticPlan.getPatches(variables)
+    patch!.apply(cache, variables)
+
+    const diff = cache.diff({
+      query: getParsedDocument(GetPatientsDocument),
+      variables: LIST_VARIABLES,
+      optimistic: true,
+      returnPartialData: true,
+    })
+    expect(diff.complete).toBe(true)
+
+    const patients = readListPatients(cache)
+    expect(patients?.[0]?.properties ?? []).toHaveLength(0)
+  })
+
   it('changes the paginated list item key so accumulated pagination detects the update', () => {
     const cache = new InMemoryCache(buildCacheConfig())
     seedListPatient(cache)

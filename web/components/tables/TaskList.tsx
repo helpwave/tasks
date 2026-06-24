@@ -33,6 +33,7 @@ import { LIST_PAGE_SIZE } from '@/utils/listPaging'
 import { TaskCardView } from '@/components/tasks/TaskCardView'
 import { RefreshingTaskIdsContext, TaskRowRefreshingGate } from '@/components/tables/TaskRowRefreshingGate'
 import { VirtualizedCardGrid } from '@/components/common/VirtualizedCardGrid'
+import { overscanRowsForBuffer } from '@/utils/virtualGrid'
 import { ListLoadingHint } from '@/components/common/ListLoadingHint'
 import { useIsPrinting } from '@/hooks/useIsPrinting'
 import { isNearBottom } from '@/utils/nearBottom'
@@ -50,6 +51,11 @@ import type { DialogState } from '@/types/DialogState'
 function taskListDataSyncKey(tasks: TaskViewModel[]): string {
   return tasks.map(t => `${t.id}:${t.done}:${t.updateDate.getTime()}`).join('\0')
 }
+
+const TABLE_ROW_ESTIMATE_PX = 56
+// Render about a screenful of extra rows so fast mobile scrolling does not
+// outrun the virtualizer and flash an empty table.
+const TABLE_OVERSCAN_ROWS = overscanRowsForBuffer(800, TABLE_ROW_ESTIMATE_PX)
 
 export type TaskViewModel = {
   id: string,
@@ -1069,7 +1075,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
             >
               <div className={clsx('w-full', listLayout === 'table' ? clsx('block', useBoxScroll && 'flex-1 min-h-0 flex flex-col') : 'hidden print:block')}>
                 <TableDisplay
-                  virtualized={useBoxScroll ? { scroll: 'container', estimateRowHeight: 56 } : false}
+                  virtualized={useBoxScroll ? { scroll: 'container', estimateRowHeight: TABLE_ROW_ESTIMATE_PX, overscan: TABLE_OVERSCAN_ROWS } : false}
                   tableHeaderProps={useBoxScroll ? { isSticky: true } : undefined}
                   containerProps={{
                     className: clsx(useBoxScroll && 'flex-1 min-h-0 max-h-[calc(100dvh-12rem)] overflow-y-auto', 'print:max-h-none print:overflow-visible'),
