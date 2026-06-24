@@ -39,10 +39,6 @@ export function VirtualizedCardGrid<T>({
     setIsMounted(true)
   }, [])
 
-  // Column count and scroll-margin depend on the container geometry/position, not on how many items
-  // are loaded. Keeping `items.length` out of the dependency list avoids tearing down and recreating
-  // the observer (and a forced synchronous layout read) on every infinite-scroll page append — the
-  // ResizeObserver already fires when the grid grows, so margin/columns stay correct.
   useEffect(() => {
     const element = containerRef.current
     if (!element || typeof window === 'undefined') return
@@ -64,10 +60,6 @@ export function VirtualizedCardGrid<T>({
     }
   }, [minCardWidthPx, gapPx])
 
-  // Chunk once per items/columns change rather than on every render. The virtualizer re-renders this
-  // component on every scroll frame; without memoization the whole list was re-chunked into a fresh
-  // nested array each frame, which was the dominant source of allocation/GC pressure (the "memory
-  // keeps climbing while scrolling fast" symptom) on large lists.
   const rows = useMemo(() => chunkIntoRows(items, columns), [items, columns])
 
   const virtualizer = useWindowVirtualizer({
@@ -81,14 +73,9 @@ export function VirtualizedCardGrid<T>({
     },
   })
 
-  // When the column count changes the rows are recomposed (a different set of cards per row), so the
-  // measured per-row heights cached by the virtualizer no longer apply. Reset them so each row
-  // re-measures under the new layout instead of reusing a stale height (which showed up as rows
-  // overlapping or jumping right after a viewport resize).
   useEffect(() => {
     virtualizer.measure()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [columns])
+  }, [columns, virtualizer])
 
   const autoFillTemplate = `repeat(auto-fill, minmax(min(100%, ${minCardWidthPx}px), 1fr))`
   const shouldVirtualize = isMounted && items.length > virtualizeThreshold

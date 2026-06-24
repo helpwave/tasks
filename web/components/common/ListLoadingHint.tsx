@@ -12,13 +12,6 @@ type ListLoadingHintProps = {
   className?: string,
 }
 
-/**
- * Small, unobtrusive loading hint rendered *underneath* a list while rows are being fetched.
- *
- * Replaces the full-screen logo overlay and the "Load more" button: the caller greys out the list
- * itself, and this just shows a short, reassuring message below it. The phrase rotates on each new
- * loading episode so successive fetches don't look stuck on a single sentence. Hidden in print.
- */
 export function ListLoadingHint({ active, className }: ListLoadingHintProps) {
   const translation = useTasksTranslation()
   const [messageIndex, setMessageIndex] = useState(0)
