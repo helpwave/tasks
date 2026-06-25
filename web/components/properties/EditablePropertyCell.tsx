@@ -29,10 +29,12 @@ function stopRowActivation(e: React.SyntheticEvent) {
 
 import { formatLocalCalendarDate, parseApiDateTime, parseLocalCalendarDate, serializeDateTimeForApi } from '@/utils/calendarDate'
 
-function wrapTrigger(node: ReactNode): ReactNode {
+function wrapTrigger(node: ReactNode, definitionId: string): ReactNode {
   return (
     <div
       className="flex min-w-32 w-full max-w-full"
+      data-testid="editable-property-cell"
+      data-property-definition-id={definitionId}
       onPointerDown={stopRowActivation}
       onClick={stopRowActivation}
       onMouseDown={stopRowActivation}
@@ -100,7 +102,8 @@ export function EditablePropertyCell({
         }}
       >
         <EditablePropertyTriggerDisplay property={property as PropertyValueType | undefined} fieldType={fieldType} />
-      </InTableTextEditPopUp>
+      </InTableTextEditPopUp>,
+      definitionId
     )
   }
   case FieldType.FieldTypeNumber: {
@@ -114,7 +117,8 @@ export function EditablePropertyCell({
         }}
       >
         <EditablePropertyTriggerDisplay property={property as PropertyValueType | undefined} fieldType={fieldType} />
-      </InTableNumberEditPopUp>
+      </InTableNumberEditPopUp>,
+      definitionId
     )
   }
   case FieldType.FieldTypeCheckbox: {
@@ -128,7 +132,8 @@ export function EditablePropertyCell({
         }}
       >
         <EditablePropertyTriggerDisplay property={property as PropertyValueType | undefined} fieldType={fieldType} />
-      </InTableCheckboxEditPopUp>
+      </InTableCheckboxEditPopUp>,
+      definitionId
     )
   }
   case FieldType.FieldTypeDate: {
@@ -147,7 +152,8 @@ export function EditablePropertyCell({
         }}
       >
         <EditablePropertyTriggerDisplay property={property as PropertyValueType | undefined} fieldType={fieldType} />
-      </InTableDateTimeEditPopUp>
+      </InTableDateTimeEditPopUp>,
+      definitionId
     )
   }
   case FieldType.FieldTypeDateTime: {
@@ -164,7 +170,8 @@ export function EditablePropertyCell({
         }}
       >
         <EditablePropertyTriggerDisplay property={property as PropertyValueType | undefined} fieldType={fieldType} />
-      </InTableDateTimeEditPopUp>
+      </InTableDateTimeEditPopUp>,
+      definitionId
     )
   }
   case FieldType.FieldTypeSelect: {
@@ -180,7 +187,8 @@ export function EditablePropertyCell({
         }}
       >
         <EditablePropertyTriggerDisplay property={property as PropertyValueType | undefined} fieldType={fieldType} />
-      </InTableSingleSelectEditPopUp>
+      </InTableSingleSelectEditPopUp>,
+      definitionId
     )
   }
   case FieldType.FieldTypeMultiSelect: {
@@ -198,7 +206,8 @@ export function EditablePropertyCell({
         }}
       >
         <EditablePropertyTriggerDisplay property={property as PropertyValueType | undefined} fieldType={fieldType} />
-      </InTableMultiSelectEditPopUp>
+      </InTableMultiSelectEditPopUp>,
+      definitionId
     )
   }
   case FieldType.FieldTypeUser: {

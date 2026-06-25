@@ -165,4 +165,52 @@ test.describe('patient table (patient list)', () => {
     expect(seen.size).toBe(PATIENT_COUNT)
     expect(maxRenderedRows).toBeLessThan(PATIENT_COUNT)
   })
+
+  test('scrolls inside the list container only — the page must not grow a second scrollbar', async ({ page }) => {
+    // Fixed 1280x720 viewport so the height maths is deterministic: 77 rows far
+    // exceed the viewport, so the list must scroll *inside* its own container.
+    await page.setViewportSize({ width: 1280, height: 720 })
+    await seedAuth(page)
+    await seedStoredSelection(page, ['root-1'])
+    await mockBackend(page, {
+      patients: PATIENTS,
+      propertyDefinitions: [ALLERGY_DEF],
+      rootLocations: ROOT_LOCATIONS,
+    })
+
+    await page.goto(`${BASE}/patients`)
+    await expect(page.locator(ROW_SELECTOR).first()).toBeVisible({ timeout: 20000 })
+    await expect.poll(() => page.locator(ROW_SELECTOR).count(), { timeout: 20000 })
+      .toBeGreaterThan(5)
+
+    const metrics = await page.evaluate(() => {
+      const isScrollable = (el: Element) => {
+        const oy = getComputedStyle(el).overflowY
+        return oy === 'auto' || oy === 'scroll' || oy === 'overlay'
+      }
+      const table = document.querySelector('table[data-name="table"]')
+      let current: Element | null = table?.parentElement ?? null
+      let inner: HTMLElement | null = null
+      while (current && current !== document.body) {
+        if (isScrollable(current) && current.scrollHeight > current.clientHeight) {
+          inner = current as HTMLElement
+          break
+        }
+        current = current.parentElement
+      }
+      const main = document.querySelector('main')
+      const outer = main?.parentElement ?? null
+      return {
+        innerScrolls: !!inner,
+        outerOverflow: outer ? outer.scrollHeight - outer.clientHeight : -1,
+      }
+    })
+
+    // The virtualized list has its own scroll container ...
+    expect(metrics.innerScrolls).toBe(true)
+    // ... and the surrounding page does not also overflow (no double scrollbar).
+    // Before the fix the list fell back to a fixed max-height and pushed the
+    // outer content area past the viewport, producing the second scrollbar.
+    expect(metrics.outerOverflow).toBeLessThan(32)
+  })
 })
