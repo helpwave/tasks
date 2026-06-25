@@ -5,6 +5,7 @@ import {
   materializePages,
   mergePagesById,
   mergePagesContiguousById,
+  preferNonEmptyAccumulation,
   resolveAccumulatedList
 } from './useAccumulatedPagination'
 
@@ -241,6 +242,32 @@ describe('materializePages', () => {
     const merged = materializePages([[]], lastPages, 28)
     expect(merged.map(x => x.id)).toHaveLength(25)
     expect(lastPages.has(0)).toBe(true)
+  })
+})
+
+describe('preferNonEmptyAccumulation', () => {
+  it('keeps the previous rows when a refetch momentarily reads empty but the server still has data', () => {
+    const prev = [{ id: 'a' }, { id: 'b' }]
+    expect(preferNonEmptyAccumulation(prev, [], 390)).toBe(prev)
+  })
+
+  it('allows emptying when the dataset is genuinely empty (totalCount 0)', () => {
+    const prev = [{ id: 'a' }]
+    expect(preferNonEmptyAccumulation(prev, [], 0)).toEqual([])
+  })
+
+  it('allows emptying when the total is unknown', () => {
+    const prev = [{ id: 'a' }]
+    expect(preferNonEmptyAccumulation(prev, [], undefined)).toEqual([])
+  })
+
+  it('passes through a non-empty next result unchanged', () => {
+    const next = [{ id: 'a' }, { id: 'c' }]
+    expect(preferNonEmptyAccumulation([{ id: 'a' }], next, 390)).toBe(next)
+  })
+
+  it('does not keep previous when there was nothing to preserve', () => {
+    expect(preferNonEmptyAccumulation([], [], 390)).toEqual([])
   })
 })
 

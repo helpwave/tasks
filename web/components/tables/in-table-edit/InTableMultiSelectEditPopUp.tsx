@@ -63,7 +63,7 @@ export function InTableMultiSelectEditPopUp({
           )
         }}
       </PopUpOpener>
-      <PopUp options={options} className={clsx(className, 'flex-col-2 items-stretch max-h-72 overflow-y-auto min-w-56')} onClick={e => e.stopPropagation()}>
+      <PopUp options={options} aria-label={translation('edit')} className={clsx(className, 'flex-col-2 items-stretch max-h-72 overflow-y-auto min-w-56')} onClick={e => e.stopPropagation()}>
         <div className="flex flex-col gap-2">
           {optionLabels.map((label, idx) => {
             const tag = tags[idx]

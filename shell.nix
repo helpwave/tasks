@@ -107,7 +107,17 @@ pkgs.mkShell {
           echo "$current_hash" > "$req_hash_file"
         fi
       fi
-      (cd "$PROJECT_ROOT/simulator" && exec python main.py)
+      (
+        cd "$PROJECT_ROOT/simulator"
+        export KEYCLOAK_URL="http://localhost:8080"
+        export API_URL="http://localhost:8000/graphql"
+        export REALM="tasks"
+        export USE_DIRECT_GRANT="true"
+        export CLIENT_ID="tasks-web"
+        export USERNAME="test"
+        export PASSWORD="test"
+        exec python main.py "$@"
+      )
     }
 
     start-docker() {
@@ -205,5 +215,6 @@ pkgs.mkShell {
 
     echo ">>> Environment ready."
     echo "Commands: run-dev-backend, run-dev-web, run-dev-all, run-alembic, psql-dev, redis-cli-dev, clean-dev, start-docker, stop-docker, run-simulator, lint-dockerfiles, run-act"
+    echo "Tip: 'run-simulator --extreme' creates 500 patients at once to stress test the instance."
   '';
 }

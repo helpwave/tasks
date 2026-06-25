@@ -48,24 +48,44 @@ class ClinicSimulator:
         self.task_manager.load_tasks()
         self.task_manager.load_users()
 
-    def run(self) -> None:
+    def run(self, extreme: bool = False, extreme_count: int = 500) -> None:
         self.client.query("{ __typename }")
         self.fetch_current_user()
         self.load_state()
         self.location_manager.ensure_hospital_structure()
         self.location_manager.print_structure()
 
-        logger.info("Creating initial patients...")
-        while len(self.patient_manager.patient_ids) < 5:
+        if extreme:
+            self._create_patient_burst(extreme_count)
+        else:
+            logger.info("Creating initial patients...")
+            while len(self.patient_manager.patient_ids) < 5:
+                admit_directly = random.random() < 0.4
+                patient_id, diagnosis = self.patient_manager.create_patient(
+                    admit_directly=admit_directly
+                )
+
+                if patient_id and diagnosis:
+                    self.task_manager.create_treatment_tasks(patient_id, diagnosis)
+
+        logger.info("Starting continuous simulation loop...")
+
+    def _create_patient_burst(self, count: int) -> None:
+        logger.info(f"EXTREME mode: creating {count} patients at once...")
+        created = 0
+        for _ in range(count):
             admit_directly = random.random() < 0.4
             patient_id, diagnosis = self.patient_manager.create_patient(
                 admit_directly=admit_directly
             )
-
-            if patient_id and diagnosis:
+            if not patient_id:
+                continue
+            created += 1
+            if diagnosis:
                 self.task_manager.create_treatment_tasks(patient_id, diagnosis)
-
-        logger.info("Starting continuous simulation loop...")
+            if created % 50 == 0:
+                logger.info(f"EXTREME mode: created {created}/{count} patients")
+        logger.info(f"EXTREME mode: finished creating {created}/{count} patients")
 
         actions = [
             (self._action_create_task, 0.25),

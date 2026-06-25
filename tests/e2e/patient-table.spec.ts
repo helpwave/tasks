@@ -11,11 +11,6 @@ const ALLERGY_DEF = { id: 'def-allergy', name: 'Allergy', fieldType: 'FIELD_TYPE
 
 const PATIENT_COUNT = 77
 
-// LIST_PAGE_SIZE in web/utils/listPaging.ts. The list fetches one page at a
-// time and accumulates pages as the user scrolls, so 77 patients span four
-// pages (25 + 25 + 25 + 2).
-const PAGE_SIZE = 25
-
 const STATES = ['ADMITTED', 'DISCHARGED', 'DEAD', 'WAIT'] as const
 const SEXES = ['MALE', 'FEMALE', 'UNKNOWN'] as const
 const ALLERGIES = ['Penicillin', 'Latex', 'Peanuts', 'Pollen', 'None', 'Aspirin', 'Iodine']
@@ -90,22 +85,6 @@ async function visibleRowNames(page: Page): Promise<string[]> {
 }
 
 /**
- * Wait until the table holds more than `count` rows, returning whether it grew
- * within the budget instead of throwing — lets the caller decide how to react
- * (e.g. fall back to the explicit "Load more" control).
- */
-async function rowsGrewBeyond(page: Page, count: number, timeout: number): Promise<boolean> {
-  try {
-    await expect
-      .poll(() => page.locator(ROW_SELECTOR).count(), { timeout, intervals: [100] })
-      .toBeGreaterThan(count)
-    return true
-  } catch {
-    return false
-  }
-}
-
-/**
  * Scroll the list's scrollable container down by roughly one viewport. The
  * patient list lives inside the main content area (`overflow-y-auto`), so we
  * walk up from the table to the same scrollable ancestor the app's infinite
@@ -155,77 +134,83 @@ test.describe('patient table (patient list)', () => {
     // 2) Navigate to the patient list.
     await page.goto(`${BASE}/patients`)
 
-    // The list renders paged (a multiple of the page size), not all 77 at once —
-    // proving the table genuinely loads incrementally rather than dumping the
-    // whole dataset. (The sentinel may have already pulled a page or two by the
-    // time we measure, so we only assert it is below the full total.)
+    // The table is virtualized: only the rows near the viewport are mounted, so
+    // the DOM never holds the whole dataset at once.
     await expect(page.locator(ROW_SELECTOR).first()).toBeVisible({ timeout: 20000 })
     await expect.poll(() => page.locator(ROW_SELECTOR).count(), { timeout: 20000 })
       .toBeGreaterThanOrEqual(1)
-    const initialCount = await page.locator(ROW_SELECTOR).count()
-    expect(initialCount).toBeLessThan(PATIENT_COUNT)
-    expect(initialCount % PAGE_SIZE).toBe(0)
+    expect(await page.locator(ROW_SELECTOR).count()).toBeLessThan(PATIENT_COUNT)
 
-    // 3) Walk through every page, accumulating the unique patient names we see
-    //    and asserting that at no point does the DOM contain a duplicate row.
-    //
-    //    Each step first drives the infinite-scroll sentinel (the production
-    //    path) by scrolling it into range. The IntersectionObserver behind that
-    //    sentinel fires asynchronously, though, and a single missed tick under
-    //    CI load used to strand the test one (partial) page short of the total.
-    //    So when a scroll step fails to pull the next page we fall back to the
-    //    app's explicit "Load more" control, which is rendered for exactly as
-    //    long as more pages remain. That keeps the test deterministic while
-    //    still exercising the real scroll-driven loading when it works.
+    // Scroll the list's own container to the bottom. Every patient must window
+    // into view at some point (with no duplicates while rendered), which proves
+    // both that scroll-driven loading reaches the whole dataset and that the
+    // table is genuinely virtualized (the DOM never holds all 77 rows together).
     const seen = new Set<string>()
-    const loadMoreButton = page.getByRole('button', { name: /load more/i })
-    const MAX_STEPS = 40
+    let maxRenderedRows = 0
+    let stalls = 0
+    const deadline = Date.now() + 45000
 
-    for (let step = 0; step < MAX_STEPS; step++) {
+    while (seen.size < PATIENT_COUNT && stalls < 6 && Date.now() < deadline) {
       const names = await visibleRowNames(page)
-
-      // No duplicates among the currently-rendered rows.
       expect(new Set(names).size).toBe(names.length)
-
+      maxRenderedRows = Math.max(maxRenderedRows, names.length)
+      const sizeBefore = seen.size
       for (const name of names) seen.add(name)
-
       if (seen.size >= PATIENT_COUNT) break
-
-      const before = names.length
-
-      // Production path: scroll the sentinel toward the viewport and let the
-      // observer pull the next page. Probe only briefly — the
-      // IntersectionObserver is unreliable under CI load, so we must not spend
-      // the per-step budget waiting on a tick that may never come.
       await scrollListStep(page)
-      if (await rowsGrewBeyond(page, before, 1000)) continue
-
-      // Scrolling did not trigger a load. If no "Load more" button remains the
-      // list is genuinely exhausted; otherwise click it to advance the page
-      // deterministically and wait for the new rows to land.
-      if (await loadMoreButton.count() === 0) break
-      try {
-        await loadMoreButton.click()
-      } catch {
-        // The button can disappear if an in-flight scroll-triggered fetch
-        // resolved the final page first — the next iteration will pick up the
-        // freshly rendered rows.
-        continue
-      }
-      // A click must make progress; if it somehow doesn't, stop rather than
-      // burn the whole timeout so the shortfall surfaces at the assertion below.
-      if (!(await rowsGrewBeyond(page, before, 5000))) break
+      await page.waitForTimeout(350)
+      stalls = seen.size === sizeBefore ? stalls + 1 : 0
     }
 
-    // 4) Final state: every one of the 77 patients was seen exactly once, and
-    //    the fully-loaded table holds exactly 77 unique rows.
     expect(seen.size).toBe(PATIENT_COUNT)
+    expect(maxRenderedRows).toBeLessThan(PATIENT_COUNT)
+  })
 
-    const finalNames = await visibleRowNames(page)
-    expect(finalNames.length).toBe(PATIENT_COUNT)
-    expect(new Set(finalNames).size).toBe(PATIENT_COUNT)
+  test('scrolls inside the list container only — the page must not grow a second scrollbar', async ({ page }) => {
+    // Fixed 1280x720 viewport so the height maths is deterministic: 77 rows far
+    // exceed the viewport, so the list must scroll *inside* its own container.
+    await page.setViewportSize({ width: 1280, height: 720 })
+    await seedAuth(page)
+    await seedStoredSelection(page, ['root-1'])
+    await mockBackend(page, {
+      patients: PATIENTS,
+      propertyDefinitions: [ALLERGY_DEF],
+      rootLocations: ROOT_LOCATIONS,
+    })
 
-    // The "load more" affordance is gone once the last page is reached.
-    await expect(page.getByRole('button', { name: /load more/i })).toHaveCount(0)
+    await page.goto(`${BASE}/patients`)
+    await expect(page.locator(ROW_SELECTOR).first()).toBeVisible({ timeout: 20000 })
+    await expect.poll(() => page.locator(ROW_SELECTOR).count(), { timeout: 20000 })
+      .toBeGreaterThan(5)
+
+    const metrics = await page.evaluate(() => {
+      const isScrollable = (el: Element) => {
+        const oy = getComputedStyle(el).overflowY
+        return oy === 'auto' || oy === 'scroll' || oy === 'overlay'
+      }
+      const table = document.querySelector('table[data-name="table"]')
+      let current: Element | null = table?.parentElement ?? null
+      let inner: HTMLElement | null = null
+      while (current && current !== document.body) {
+        if (isScrollable(current) && current.scrollHeight > current.clientHeight) {
+          inner = current as HTMLElement
+          break
+        }
+        current = current.parentElement
+      }
+      const main = document.querySelector('main')
+      const outer = main?.parentElement ?? null
+      return {
+        innerScrolls: !!inner,
+        outerOverflow: outer ? outer.scrollHeight - outer.clientHeight : -1,
+      }
+    })
+
+    // The virtualized list has its own scroll container ...
+    expect(metrics.innerScrolls).toBe(true)
+    // ... and the surrounding page does not also overflow (no double scrollbar).
+    // Before the fix the list fell back to a fixed max-height and pushed the
+    // outer content area past the viewport, producing the second scrollbar.
+    expect(metrics.outerOverflow).toBeLessThan(32)
   })
 })

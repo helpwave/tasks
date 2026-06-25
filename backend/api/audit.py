@@ -1,3 +1,4 @@
+import asyncio
 import hashlib
 import inspect
 import json
@@ -99,6 +100,33 @@ class AuditLogger:
         else:
             sorted_data = json.dumps(data, sort_keys=True, default=str)
         return hashlib.sha256(sorted_data.encode()).hexdigest()
+
+
+_pending_audit_tasks: set[asyncio.Task] = set()
+
+
+def _schedule_audit_log(
+    case_id: str,
+    activity_name: str,
+    user_id: str | None,
+    context: dict[str, Any] | None,
+) -> None:
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        AuditLogger.log_activity(case_id, activity_name, user_id, context)
+        return
+    task = loop.create_task(
+        asyncio.to_thread(
+            AuditLogger.log_activity,
+            case_id,
+            activity_name,
+            user_id,
+            context,
+        )
+    )
+    _pending_audit_tasks.add(task)
+    task.add_done_callback(_pending_audit_tasks.discard)
 
 
 def audit_log(activity_name: str | None = None):
@@ -286,7 +314,7 @@ def audit_log(activity_name: str | None = None):
                 logger.info(
                     f"Audit decorator: Logging activity {activity} for case_id {case_id} (user: {user_id}), payload included: {len(payload) > 0}"
                 )
-                AuditLogger.log_activity(
+                _schedule_audit_log(
                     case_id=case_id,
                     activity_name=activity,
                     user_id=user_id,

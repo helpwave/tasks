@@ -34,7 +34,11 @@ export type OptimisticPropertyValue = {
   selectValue?: string | null,
   multiSelectValues?: string[] | null,
   userValue?: string | null,
+  user?: unknown,
+  team?: unknown,
 }
+
+type ToReference = (object: unknown, mergeIntoStore?: boolean) => unknown
 
 const fragmentCache = new Map<string, { document: DocumentNode, name: string }>()
 
@@ -136,6 +140,13 @@ export function buildOptimisticProperties(
       id: `attachment-${entityId}-${inp.definitionId}`,
       definition: { __ref: `PropertyDefinitionType:${inp.definitionId}` },
       ...scalars,
+      // Include the nullable `user`/`team` selections so the optimistic entity
+      // is a *complete* read for the list/detail queries. An incomplete read
+      // makes the active cache-and-network queries revalidate over the network
+      // before the mutation commits, and that stale response overwrites the
+      // optimistic value — so the edit appears to vanish until a full reload.
+      user: null,
+      team: null,
     }
   })
 }
@@ -148,6 +159,29 @@ export function getNewOptimisticProperties(
   properties: OptimisticPropertyValue[]
 ): OptimisticPropertyValue[] {
   return properties.filter((property) => !isPersistedPropertyId(property.id))
+}
+
+/**
+ * Builds the complete ordered list of references for an entity's `properties`
+ * field from the optimistic property set. Persisted properties are referenced
+ * by identity without rewriting them (their scalar changes were already applied
+ * via `applyOptimisticPropertyScalars`); genuinely new properties are written
+ * into the store and referenced.
+ *
+ * Returning the full list — instead of appending to the existing one — lets an
+ * optimistic edit that *drops* a property (e.g. clearing a select value) take
+ * effect immediately, matching the canonical server state that the
+ * post-mutation refetch will write.
+ */
+export function buildOptimisticPropertyRefs(
+  properties: OptimisticPropertyValue[],
+  toReference: ToReference
+): unknown[] {
+  return properties.flatMap((property) => {
+    const isNew = !isPersistedPropertyId(property.id)
+    const ref = toReference(property, isNew)
+    return ref ? [ref] : []
+  })
 }
 
 export function applyOptimisticPropertyScalars(

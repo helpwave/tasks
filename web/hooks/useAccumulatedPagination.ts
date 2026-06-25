@@ -95,6 +95,25 @@ export function getContiguousLoadedThrough<T>(
 }
 
 /**
+ * Guards against blanking an already-populated list. When a fresh materialize
+ * reads as empty (e.g. a transient incomplete cache read during a
+ * scroll-triggered refetch) but we already have rows and the server still
+ * reports a non-empty dataset, keep the previous rows instead of flashing an
+ * empty list. Genuine emptying flows through the reset effect (filter/search
+ * change) or arrives with `totalCount === 0`.
+ */
+export function preferNonEmptyAccumulation<T>(
+  prev: T[],
+  next: T[],
+  totalCount: number | undefined
+): T[] {
+  if (next.length === 0 && prev.length > 0 && (totalCount ?? 0) > 0) {
+    return prev
+  }
+  return next
+}
+
+/**
  * Merges the per-page reads into a single accumulated list while remembering the
  * last non-empty result for each page in `lastPages`. A page that reads as
  * `undefined` (momentarily unreadable, e.g. while a refetch is in flight) falls
@@ -200,7 +219,10 @@ export function useAccumulatedPagination<T extends { id: string }>(options: {
       const next = materializePages(rawReads, lastPagesRef.current, totalCountRef.current)
       const through = getContiguousLoadedThrough(pageIndex, resolvePageRead)
       setContiguousLoadedThrough(through)
-      setAccumulated(prev => (samePaginatedListItems(prev, next) ? prev : next))
+      setAccumulated(prev => {
+        const resolved = preferNonEmptyAccumulation(prev, next, totalCountRef.current)
+        return samePaginatedListItems(prev, resolved) ? prev : resolved
+      })
     }
     materialize()
     const unsubscribes: Array<() => void> = []

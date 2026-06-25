@@ -1,13 +1,14 @@
 import { useEffect, useRef } from 'react'
 import { parse } from 'graphql'
 import type { ApolloClient } from '@apollo/client/core'
-import { GetGlobalDataDocument, GetPatientsDocument, GetTasksDocument } from '@/api/gql/generated'
-import { getParsedDocument } from '@/data/hooks/queryHelpers'
 import {
   mergeTaskUpdatedIntoCache,
   mergePatientUpdatedIntoCache,
   shouldSkipMergeTask,
   shouldSkipMergePatient,
+  taskListRefetchDocuments,
+  patientListRefetchDocuments,
+  refetchActiveDocuments,
   type MergeSubscriptionOptions
 } from './handler'
 import {
@@ -35,6 +36,8 @@ const PATIENT_CREATED = `
     patientCreated(rootLocationIds: $rootLocationIds)
   }
 `
+
+const REFETCH_DEBOUNCE_MS = 800
 
 function isFetchOrNetworkError(error: unknown): boolean {
   if (error instanceof Error) {
@@ -80,6 +83,23 @@ export function useApolloGlobalSubscriptions(
   useEffect(() => {
     if (!client) return
 
+    let taskRefetchTimer: ReturnType<typeof setTimeout> | null = null
+    let patientRefetchTimer: ReturnType<typeof setTimeout> | null = null
+    const scheduleTaskRefetch = () => {
+      if (taskRefetchTimer) return
+      taskRefetchTimer = setTimeout(() => {
+        taskRefetchTimer = null
+        void refetchActiveDocuments(client, taskListRefetchDocuments())
+      }, REFETCH_DEBOUNCE_MS)
+    }
+    const schedulePatientRefetch = () => {
+      if (patientRefetchTimer) return
+      patientRefetchTimer = setTimeout(() => {
+        patientRefetchTimer = null
+        void refetchActiveDocuments(client, patientListRefetchDocuments())
+      }, REFETCH_DEBOUNCE_MS)
+    }
+
     const taskUpdatedDoc = parse(TASK_UPDATED)
     const taskSub = client
       .subscribe({
@@ -103,12 +123,10 @@ export function useApolloGlobalSubscriptions(
             await mergeTaskUpdatedIntoCache(client, taskId, payloadObj, optionsRef.current).catch(
               () => {}
             )
-            await client.refetchQueries({
-              include: [getParsedDocument(GetPatientsDocument), getParsedDocument(GetGlobalDataDocument)],
-            })
           } finally {
             removeRefreshingTask(taskId)
           }
+          scheduleTaskRefetch()
         },
         error: (err) => handleSubscriptionError(err),
       })
@@ -136,12 +154,10 @@ export function useApolloGlobalSubscriptions(
             await mergePatientUpdatedIntoCache(client, patientId, payloadObj, optionsRef.current).catch(
               () => {}
             )
-            await client.refetchQueries({
-              include: [getParsedDocument(GetTasksDocument), getParsedDocument(GetGlobalDataDocument)],
-            })
           } finally {
             removeRefreshingPatient(patientId)
           }
+          schedulePatientRefetch()
         },
         error: (err) => handleSubscriptionError(err),
       })
@@ -169,17 +185,17 @@ export function useApolloGlobalSubscriptions(
             await mergePatientUpdatedIntoCache(client, patientId, payloadObj, optionsRef.current).catch(
               () => {}
             )
-            await client.refetchQueries({
-              include: [getParsedDocument(GetTasksDocument), getParsedDocument(GetGlobalDataDocument)],
-            })
           } finally {
             removeRefreshingPatient(patientId)
           }
+          schedulePatientRefetch()
         },
         error: (err) => handleSubscriptionError(err),
       })
 
     return () => {
+      if (taskRefetchTimer) clearTimeout(taskRefetchTimer)
+      if (patientRefetchTimer) clearTimeout(patientRefetchTimer)
       taskSub.unsubscribe()
       patientSub.unsubscribe()
       patientCreatedSub.unsubscribe()

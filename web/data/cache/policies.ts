@@ -5,33 +5,14 @@ const propertyValueKeyFields = (object: Readonly<Record<string, unknown>>): read
   return id != null && id !== '' ? ['id'] : false
 }
 
-type ReadFieldFromReference = (fieldName: string, from: Reference) => unknown
-
-const getReferenceIdentity = (readField: ReadFieldFromReference, reference: Reference): string => {
-  const id = readField('id', reference)
-  return typeof id === 'string' && id !== '' ? id : JSON.stringify(reference)
-}
-
-const mergeReferencesByIdentity = (
-  existing: readonly Reference[] = [],
-  incoming: readonly Reference[] = [],
-  { readField }: { readField: ReadFieldFromReference }
-): readonly Reference[] => {
-  const incomingIdentities = new Set<string>()
-  for (const reference of incoming) {
-    incomingIdentities.add(getReferenceIdentity(readField, reference))
-  }
-
-  const mergedReferences = [...incoming]
-  for (const reference of existing) {
-    const identity = getReferenceIdentity(readField, reference)
-    if (!incomingIdentities.has(identity)) {
-      mergedReferences.push(reference)
-    }
-  }
-
-  return mergedReferences
-}
+// An entity's `properties` array is always returned in full by every query that
+// selects it (GetPatients, GetPatient, GetTasks, GetTask, GetOverviewData), so
+// the canonical server response is authoritative. Replacing (rather than
+// unioning) the array lets an edit that removes a property — e.g. clearing a
+// select value — actually take effect; a union merge would re-add the removed
+// property from the previous cache value and the change would silently revert
+// after the post-mutation refetch.
+const replaceProperties = (_existing: readonly Reference[] | undefined, incoming: readonly Reference[]): readonly Reference[] => incoming
 
 export function buildCacheConfig(): InMemoryCacheConfig {
   return {
@@ -60,17 +41,28 @@ export function buildCacheConfig(): InMemoryCacheConfig {
           taskPreset: { keyArgs: ['id'] },
         },
       },
-      Task: { keyFields: ['id'] },
+      Task: {
+        keyFields: ['id'],
+        fields: {
+          properties: { merge: replaceProperties },
+        },
+      },
+      TaskType: {
+        keyFields: ['id'],
+        fields: {
+          properties: { merge: replaceProperties },
+        },
+      },
       Patient: {
         keyFields: ['id'],
         fields: {
-          properties: { merge: mergeReferencesByIdentity },
+          properties: { merge: replaceProperties },
         },
       },
       PatientType: {
         keyFields: ['id'],
         fields: {
-          properties: { merge: mergeReferencesByIdentity },
+          properties: { merge: replaceProperties },
         },
       },
       User: { keyFields: ['id'] },
