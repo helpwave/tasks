@@ -1,23 +1,18 @@
 'use client'
 
-import type { AnchorHTMLAttributes, ComponentProps, HTMLAttributes, PropsWithChildren } from 'react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import type { HTMLAttributes, PropsWithChildren } from 'react'
+import { useMemo, useState } from 'react'
 import Head from 'next/head'
 import titleWrapper from '@/utils/titleWrapper'
 import Link from 'next/link'
 import {
+  AppPage,
   Button,
-  Dialog,
-  ExpandableContent,
-  ExpandableHeader,
-  ExpandableRoot,
-  IconButton as HightideIconButton,
-  MarkdownInterpreter,
-  Tooltip
+  IconButton,
+  Tooltip,
+  type AppPageNavigationItem
 } from '@helpwave/hightide'
-import { useStorage } from '@/hooks/useStorage'
-import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
-import { getConfig } from '@/utils/config'
+import { AvatarWithStatus } from '@helpwave/hightide'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { UserInfoPopup } from '@/components/UserInfoPopup'
 import clsx from 'clsx'
@@ -29,259 +24,21 @@ import {
   SettingsIcon,
   User,
   Users,
-  Menu as MenuIcon,
-  X,
   MessageSquare,
   Rabbit
 } from 'lucide-react'
 import { TasksLogo } from '@/components/TasksLogo'
-import { usePathname } from 'next/navigation'
 import { useRouter } from 'next/router'
 import { useTasksContext } from '@/hooks/useTasksContext'
-import { useLocations, useMySavedViews } from '@/data'
+import { useMySavedViews } from '@/data'
 import type { MySavedViewsQuery } from '@/api/gql/generated'
-import { useSwipeGesture } from '@/hooks/useSwipeGesture'
-import { LocationSelectionDialog } from '@/components/locations/LocationSelectionDialog'
 import { FeedbackDialog } from '@/components/FeedbackDialog'
+import { StagingDisclaimerDialog } from '@/components/layout/StagingDisclaimerDialog'
+import { RootLocationSelector } from '@/components/layout/RootLocationSelector'
 
-export const StagingDisclaimerDialog = () => {
-  const config = getConfig()
-  const translation = useTasksTranslation()
+type HeaderProps = HTMLAttributes<HTMLDivElement>
 
-  const [isStagingDisclaimerOpen, setStagingDisclaimerOpen] = useState(false)
-  const {
-    value: lastTimeStagingDisclaimerDismissed,
-    setValue: setLastTimeStagingDisclaimerDismissed
-  } = useStorage({ key: 'staging-disclaimer-dismissed-time', defaultValue: 0 })
-
-  const dismissStagingDisclaimer = () => {
-    setLastTimeStagingDisclaimerDismissed(new Date().getTime())
-    setStagingDisclaimerOpen(false)
-  }
-
-  useEffect(() => {
-    const ONE_DAY = 1000 * 60 * 60 * 24
-    if (config.showStagingDisclaimerModal && new Date().getTime() - lastTimeStagingDisclaimerDismissed > ONE_DAY) {
-      setStagingDisclaimerOpen(true)
-    }
-  }, [lastTimeStagingDisclaimerDismissed, config.showStagingDisclaimerModal])
-
-  return (
-    <Dialog
-      isModal={false}
-      isOpen={isStagingDisclaimerOpen}
-      onClose={dismissStagingDisclaimer}
-      titleElement={translation('developmentAndPreviewInstance')}
-      description={(<MarkdownInterpreter text={translation('stagingModalDisclaimerMarkdown')} />)}
-      className={clsx('z-20 w-200')}
-      backgroundClassName="z-10"
-    >
-      <div className="flex-row-8">
-        <Link className="text-primary hover:brightness-75 font-bold" href={config.imprintUrl}>
-          {translation('imprint')}
-        </Link>
-        <Link className="text-primary hover:brightness-75 font-bold" href={config.privacyUrl}>
-          {translation('privacy')}
-        </Link>
-      </div>
-      <div className="flex-row-0 justify-end">
-        <Button color="positive" onClick={dismissStagingDisclaimer}>
-          {translation('confirm')}
-        </Button>
-      </div>
-    </Dialog>
-  )
-}
-
-type RootLocationSelectorProps = {
-  className?: string,
-  onSelect?: () => void,
-  // Only the instance that "owns" the dialog renders it. The selector button is
-  // mounted in several places (desktop header + mobile sidebar) but they all
-  // share a single open-state via the context, so the dialog must be rendered
-  // exactly once to avoid stacking duplicate modals on first load.
-  ownsDialog?: boolean,
-}
-
-const RootLocationSelector = ({ className, onSelect, ownsDialog = false }: RootLocationSelectorProps) => {
-  const { rootLocations, selectedRootLocationIds, update, isRootLocationPickerOpen, setRootLocationPickerOpen } = useTasksContext()
-  const translation = useTasksTranslation()
-  const [selectedLocationsCache, setSelectedLocationsCache] = useState<Array<{ id: string, title: string, kind?: string }>>([])
-  const {
-    value: storedSelectedRootLocationsRaw,
-    setValue: setStoredSelectedRootLocations
-  } = useStorage<Array<{ id: string, title: string, kind?: string }>>({
-    key: 'selected-root-location-nodes',
-    defaultValue: []
-  })
-
-  const storedSelectedRootLocations = useMemo(() =>
-    Array.isArray(storedSelectedRootLocationsRaw)
-      ? storedSelectedRootLocationsRaw.filter(
-        (loc): loc is { id: string, title: string, kind?: string } =>
-          Boolean(loc && typeof loc.id === 'string' && typeof loc.title === 'string')
-      )
-      : [],
-  [storedSelectedRootLocationsRaw])
-
-  const { data: locationsData } = useLocations(
-    { limit: 1000 },
-    {
-      skip: !selectedRootLocationIds || selectedRootLocationIds.length === 0,
-    }
-  )
-
-  useEffect(() => {
-    if (selectedRootLocationIds && selectedRootLocationIds.length > 0) {
-      const foundInRoot = rootLocations?.filter(loc => selectedRootLocationIds.includes(loc.id)) || []
-
-      if (foundInRoot.length === selectedRootLocationIds.length) {
-        setSelectedLocationsCache(foundInRoot.map(loc => ({ id: loc.id, title: loc.title, kind: loc.kind })))
-      } else if (locationsData?.locationNodes) {
-        const allLocations = locationsData.locationNodes
-        const foundLocations: Array<{ id: string, title: string, kind?: string }> = []
-        for (const id of selectedRootLocationIds) {
-          const inRoot = rootLocations?.find(loc => loc.id === id)
-          if (inRoot) {
-            foundLocations.push({ id: inRoot.id, title: inRoot.title, kind: inRoot.kind })
-          } else {
-            const inAll = allLocations.find(loc => loc.id === id)
-            if (inAll) {
-              foundLocations.push({ id: inAll.id, title: inAll.title, kind: inAll.kind })
-            }
-          }
-        }
-
-        if (foundLocations.length > 0) {
-          setSelectedLocationsCache(foundLocations)
-        }
-      } else if (foundInRoot.length > 0) {
-        setSelectedLocationsCache(foundInRoot.map(loc => ({ id: loc.id, title: loc.title, kind: loc.kind })))
-      }
-    } else {
-      setSelectedLocationsCache([])
-    }
-  }, [rootLocations, selectedRootLocationIds, locationsData])
-
-  const resolvedFromRoot = rootLocations?.filter(loc => selectedRootLocationIds?.includes(loc.id)) || []
-  const resolvedFromLocationsData = useMemo(() => {
-    if (
-      !selectedRootLocationIds?.length ||
-      resolvedFromRoot.length === selectedRootLocationIds.length ||
-      !locationsData?.locationNodes
-    ) {
-      return []
-    }
-    const allLocations = locationsData.locationNodes as Array<{ id: string, title: string, kind?: string }>
-    const out: Array<{ id: string, title: string, kind?: string }> = []
-    for (const id of selectedRootLocationIds) {
-      const inRoot = rootLocations?.find(loc => loc.id === id)
-      if (inRoot) {
-        out.push({ id: inRoot.id, title: inRoot.title, kind: inRoot.kind })
-      } else {
-        const inAll = allLocations.find(loc => loc.id === id)
-        if (inAll) {
-          out.push({ id: inAll.id, title: inAll.title, kind: inAll.kind })
-        }
-      }
-    }
-    return out
-  }, [selectedRootLocationIds, rootLocations, locationsData?.locationNodes, resolvedFromRoot.length])
-
-  const storedResolved = useMemo(
-    () =>
-      selectedRootLocationIds?.length
-        ? storedSelectedRootLocations.filter(loc => selectedRootLocationIds.includes(loc.id))
-        : [],
-    [selectedRootLocationIds, storedSelectedRootLocations]
-  )
-
-  const selectedRootLocations =
-    selectedLocationsCache.length > 0
-      ? selectedLocationsCache
-      : resolvedFromRoot.length > 0
-        ? resolvedFromRoot
-        : resolvedFromLocationsData.length > 0
-          ? resolvedFromLocationsData
-          : storedResolved
-  const firstSelectedRootLocation = selectedRootLocations[0]
-  const hasNoLocationSelected = !selectedRootLocationIds || selectedRootLocationIds.length === 0
-  const hasSelectionButNoNames =
-    !hasNoLocationSelected && selectedRootLocations.length === 0
-
-  useEffect(() => {
-    if (selectedRootLocations.length === 0) return
-    const storedIds = storedResolved.map(loc => loc.id).join(',')
-    const nextIds = selectedRootLocations.map(loc => loc.id).join(',')
-    if (storedIds !== nextIds) {
-      setStoredSelectedRootLocations(selectedRootLocations)
-    }
-  }, [selectedRootLocations, storedResolved, setStoredSelectedRootLocations])
-
-  const handleRootLocationSelect = (locations: Array<{ id: string, title: string, kind?: string }>) => {
-    if (locations.length === 0) return
-    const locationIds = locations.map(loc => loc.id)
-    setSelectedLocationsCache(locations)
-    setStoredSelectedRootLocations(locations)
-    update(prevState => {
-      return {
-        ...prevState,
-        selectedRootLocationIds: locationIds,
-      }
-    })
-    setRootLocationPickerOpen(false)
-    onSelect?.()
-  }
-
-  const canShowSelector =
-    (rootLocations && rootLocations.length > 0) ||
-    (selectedRootLocationIds && selectedRootLocationIds.length > 0)
-  if (!canShowSelector) {
-    return null
-  }
-
-  return (
-    <div className={clsx('flex-row-1 items-center gap-x-1', className)}>
-      <Button
-        onClick={() => setRootLocationPickerOpen(true)}
-        color={hasNoLocationSelected ? 'negative' : 'neutral'}
-        coloringStyle="outline"
-        className="min-w-40 w-full"
-      >
-        {selectedRootLocations.length > 0
-          ? selectedRootLocations.length === 1
-            ? firstSelectedRootLocation?.title
-            : selectedRootLocations.length === 2
-              ? `${selectedRootLocations[0]?.title ?? ''}, ${selectedRootLocations[1]?.title ?? ''}`
-              : `${selectedRootLocations[0]?.title ?? ''} +${selectedRootLocations.length - 1}`
-          : hasSelectionButNoNames
-            ? (translation('loading') ?? 'Loading...')
-            : (translation('selectLocation') || 'Select Location')}
-      </Button>
-      {ownsDialog && (
-        <LocationSelectionDialog
-          isOpen={isRootLocationPickerOpen}
-          onClose={() => setRootLocationPickerOpen(false)}
-          onSelect={handleRootLocationSelect}
-          initialSelectedIds={selectedRootLocationIds || []}
-          multiSelect={true}
-          useCase="root"
-        />
-      )}
-    </div>
-  )
-}
-
-type IconButtonProps = ComponentProps<typeof HightideIconButton>
-
-const IconButton = (props: IconButtonProps) => <HightideIconButton {...props} />
-
-type HeaderProps = HTMLAttributes<HTMLHeadElement> & {
-  onMenuClick?: () => void,
-  isMenuOpen?: boolean,
-}
-
-export const Header = ({ onMenuClick, isMenuOpen, ...props }: HeaderProps) => {
+export const Header = ({ ...props }: HeaderProps) => {
   const router = useRouter()
   const { user } = useTasksContext()
   const translation = useTasksTranslation()
@@ -290,295 +47,53 @@ export const Header = ({ onMenuClick, isMenuOpen, ...props }: HeaderProps) => {
 
   return (
     <>
-      <header
+      <div
         {...props}
         className={clsx(
-          'flex-row-8 items-center justify-between z-10',
+          'flex-row-2 w-full items-center justify-end',
           props.className
         )}
       >
-        <div className="flex-col-0 lg:pl-0">
-          <IconButton
-            tooltip={translation('menu')}
-            color="neutral"
+        <RootLocationSelector className="hidden sm:flex" ownsDialog />
+        <IconButton
+          tooltip={translation('feedback')}
+          coloringStyle="text" color="neutral"
+          onClick={() => setIsFeedbackOpen(true)}
+        >
+          <MessageSquare />
+        </IconButton>
+        <IconButton
+          tooltip={translation('settings')}
+          coloringStyle="text" color="neutral"
+          onClick={() => router.push('/settings')}
+        >
+          <SettingsIcon />
+        </IconButton>
+        <Tooltip tooltip={user?.isOnline ? 'Online' : 'Offline'}>
+          <Button
+            onClick={() => setIsUserInfoOpen(!!user?.id)}
             coloringStyle="text"
-            onClick={onMenuClick}
-            className="min-h-11 min-w-11 lg:hidden"
+            color="neutral"
+            className="min-w-auto"
           >
-            {isMenuOpen ? <X className="size-6" /> : <MenuIcon className="size-6" />}
-          </IconButton>
-        </div>
-        <div className="flex-row-2 justify-end items-center gap-x-2">
-          <RootLocationSelector className="hidden sm:flex" ownsDialog />
-          <IconButton
-            tooltip={translation('feedback')}
-            coloringStyle="text" color="neutral"
-            onClick={() => setIsFeedbackOpen(true)}
-          >
-            <MessageSquare />
-          </IconButton>
-          <IconButton
-            tooltip={translation('settings')}
-            coloringStyle="text" color="neutral"
-            onClick={() => router.push('/settings')}
-          >
-            <SettingsIcon />
-          </IconButton>
-          <Tooltip tooltip={user?.isOnline ? 'Online' : 'Offline'}>
-            <Button
-              onClick={() => setIsUserInfoOpen(!!user?.id)}
-              coloringStyle="text"
-              color="neutral"
-              className="min-w-auto"
-            >
-              <span className="hidden sm:inline typography-title-sm">{user?.name}</span>
-              <AvatarStatusComponent
-                size="sm"
-                isOnline={user?.isOnline ?? null}
-                image={user?.avatarUrl ? {
-                  avatarUrl: user.avatarUrl,
-                  alt: user.name
-                } : undefined}
-              />
-            </Button>
-          </Tooltip>
-        </div>
-      </header>
+            <span className="hidden sm:inline typography-title-sm">{user?.name}</span>
+            <AvatarWithStatus
+              size="sm"
+              isOnline={!!user?.isOnline}
+              image={user?.avatarUrl ? {
+                avatarUrl: user.avatarUrl,
+                alt: user.name
+              } : undefined}
+            />
+          </Button>
+        </Tooltip>
+      </div>
       <FeedbackDialog isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} />
       <UserInfoPopup
         userId={user?.id ?? null}
         isOpen={isUserInfoOpen}
         onClose={() => setIsUserInfoOpen(false)}
       />
-    </>
-  )
-}
-
-type SidebarLinkProps = AnchorHTMLAttributes<HTMLAnchorElement> & {
-  href: string,
-}
-
-const SidebarLink = ({ children, ...props }: SidebarLinkProps) => {
-  const { route } = useTasksContext()
-
-  return (
-    <Link
-      {...props}
-      className={clsx(
-        'flex-row-1.5 w-full px-2.5 py-1.5 items-center rounded-md hover:bg-surface-hover',
-        { 'text-primary font-bold': route === props.href },
-        props.className
-      )}
-    >
-      {children}
-    </Link>
-  )
-}
-
-type SidebarProps = HTMLAttributes<HTMLDivElement> & {
-  isOpen?: boolean,
-  onClose?: () => void,
-}
-
-export const Sidebar = ({ isOpen, onClose, ...props }: SidebarProps) => {
-  const translation = useTasksTranslation()
-  const locationRoute = '/location'
-  const context = useTasksContext()
-  const { data: savedViewsData, loading: savedViewsLoading } = useMySavedViews()
-  const savedViews = (savedViewsData?.mySavedViews ?? []) as MySavedViewsQuery['mySavedViews']
-  const pathname = usePathname() ?? ''
-  const quickAccessNavRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    quickAccessNavRef.current?.scrollIntoView({ block: 'nearest' })
-  }, [pathname])
-
-  return (
-    <>
-      {isOpen && (
-        <div
-          className="fixed inset-0 z-40 touch-manipulation bg-overlay-shadow lg:hidden"
-          onClick={onClose}
-          role="presentation"
-        />
-      )}
-      <aside
-        {...props}
-        className={clsx(
-          'flex-col-4 w-50 min-w-56 rounded-lg bg-surface text-on-surface overflow-hidden shadow-md',
-          'fixed lg:relative inset-y-0 z-50 lg:z-auto',
-          'pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]',
-          'w-screen max-w-sm lg:w-50 lg:min-w-56',
-          'transform transition-transform duration-300 ease-out',
-          isOpen
-            ? 'left-0 translate-x-0 lg:translate-x-0'
-            : '-left-full lg:left-0 translate-x-0 lg:translate-x-0',
-          !isOpen && 'pointer-events-none lg:pointer-events-auto',
-          'flex flex-col',
-          props.className
-        )}
-      >
-        <nav className="flex-col-2 overflow-auto flex-1 p-2.5">
-          <div className="flex items-center justify-between mb-8">
-            <Link href="/" className="flex-row-1 text-primary items-center rounded-lg p-2" onClick={onClose}>
-              <TasksLogo />
-              <span className="typography-title-md whitespace-nowrap">{'helpwave tasks'}</span>
-            </Link>
-            <IconButton
-              tooltip={translation('close')}
-              color="neutral"
-              coloringStyle="text"
-              onClick={onClose}
-              className="min-h-11 min-w-11 lg:hidden"
-            >
-              <X className="size-6" />
-            </IconButton>
-          </div>
-          <SidebarLink href="/" onClick={onClose}>
-            <Grid2X2PlusIcon className="-rotate-90 size-5" />
-            <span className="flex grow">{translation('dashboard')}</span>
-          </SidebarLink>
-          <SidebarLink href="/tasks" onClick={onClose}>
-            <CircleCheck className="size-5" />
-            <span className="flex grow">{translation('myTasks')}</span>
-            {context?.myTasksCount !== undefined && (<span className="text-description">{context.myTasksCount}</span>)}
-          </SidebarLink>
-          <SidebarLink href="/patients" onClick={onClose}>
-            <User className="size-5" />
-            <span className="flex grow">{translation('patients')}</span>
-            {context?.scopedPatientsTotal !== undefined && (<span className="text-description">{context.scopedPatientsTotal}</span>)}
-          </SidebarLink>
-          <div ref={quickAccessNavRef}>
-            <ExpandableRoot
-              className="shadow-none"
-              isExpanded={context.sidebar.isShowingSavedViews}
-              onExpandedChange={isExpanded => context.update(prevState => ({
-                ...prevState,
-                sidebar: {
-                  ...prevState.sidebar,
-                  isShowingSavedViews: isExpanded,
-                },
-              }))}
-            >
-              <ExpandableHeader className="px-2.5 py-1.5">
-                <div className="flex-row-2">
-                  <Rabbit className="size-5" />
-                  {translation('savedViews')}
-                </div>
-              </ExpandableHeader>
-              <ExpandableContent className="!max-h-none !h-auto !overflow-visible gap-y-0 pl-4 p-0">
-                {savedViews.length > 0
-                  ? savedViews.map((v: MySavedViewsQuery['mySavedViews'][number]) => (
-                    <SidebarLink key={v.id} href={`/view/${v.id}`} onClick={onClose}>
-                      {v.name}
-                    </SidebarLink>
-                  ))
-                  : savedViewsLoading
-                    ? (
-                      <div className="px-2.5 py-1.5 typography-body-sm text-description">
-                        {translation('loading')}
-                      </div>
-                    )
-                    : (
-                      <Link
-                        href="/settings/views"
-                        className="flex-row-1.5 w-full px-2.5 py-1.5 items-center rounded-md typography-body-sm text-description hover:bg-surface-hover"
-                        onClick={onClose}
-                      >
-                        {translation('viewSettings')}
-                      </Link>
-                    )}
-              </ExpandableContent>
-            </ExpandableRoot>
-          </div>
-          {(context?.teams?.length ?? 0) > 0 && (
-            <ExpandableRoot
-              className="shadow-none"
-              isExpanded={context?.sidebar?.isShowingTeams ?? false}
-              onExpandedChange={isExpanded => context?.update(prevState => ({
-                ...prevState,
-                sidebar: {
-                  ...prevState.sidebar,
-                  isShowingTeams: isExpanded,
-                }
-              }))}
-            >
-              <ExpandableHeader className="px-2.5 py-1.5">
-                <div className="flex-row-2">
-                  <Users className="size-5" />
-                  {translation('teams')}
-                </div>
-              </ExpandableHeader>
-              <ExpandableContent className="!max-h-none !h-auto !overflow-visible gap-y-0 pl-4 p-0">
-                {(context?.teams ?? []).map(team => (
-                  <SidebarLink key={team.id} href={`${locationRoute}/${team.id}`} onClick={onClose}>
-                    {team.title}
-                  </SidebarLink>
-                ))}
-              </ExpandableContent>
-            </ExpandableRoot>
-          )}
-
-          {(context?.wards?.length ?? 0) > 0 && (
-            <ExpandableRoot
-              className="shadow-none"
-              isExpanded={context?.sidebar?.isShowingWards ?? false}
-              onExpandedChange={isExpanded => context?.update(prevState => ({
-                ...prevState,
-                sidebar: {
-                  ...prevState.sidebar,
-                  isShowingWards: isExpanded,
-                }
-              }))}
-            >
-              <ExpandableHeader className="px-2.5 py-1.5">
-                <div className="flex-row-2">
-                  <Building2 className="size-5" />
-                  {translation('wards')}
-                </div>
-              </ExpandableHeader>
-              <ExpandableContent className="!max-h-none !h-auto !overflow-visible gap-y-0 pl-4 p-0">
-                {(context?.wards ?? []).map(ward => (
-                  <SidebarLink key={ward.id} href={`${locationRoute}/${ward.id}`} onClick={onClose}>
-                    {ward.title}
-                  </SidebarLink>
-                ))}
-              </ExpandableContent>
-            </ExpandableRoot>
-          )}
-
-          {(context?.clinics?.length ?? 0) > 0 && (
-            <ExpandableRoot
-              className="shadow-none"
-              isExpanded={context?.sidebar?.isShowingClinics ?? false}
-              onExpandedChange={isExpanded => context?.update(prevState => ({
-                ...prevState,
-                sidebar: {
-                  ...prevState.sidebar,
-                  isShowingClinics: isExpanded,
-                }
-              }))}
-            >
-              <ExpandableHeader className="px-2.5 py-1.5">
-                <div className="flex-row-2">
-                  <Hospital className="size-5" />
-                  {translation('clinics')}
-                </div>
-              </ExpandableHeader>
-              <ExpandableContent className="!max-h-none !h-auto !overflow-visible gap-y-0 pl-4 p-0">
-                {(context?.clinics ?? []).map(clinic => (
-                  <SidebarLink key={clinic.id} href={`${locationRoute}/${clinic.id}`} onClick={onClose}>
-                    {clinic.title}
-                  </SidebarLink>
-                ))}
-              </ExpandableContent>
-            </ExpandableRoot>
-          )}
-        </nav>
-        <div className="mt-auto pt-4 border-t border-on-surface/20 sm:hidden">
-          <RootLocationSelector onSelect={onClose} />
-        </div>
-      </aside>
     </>
   )
 }
@@ -591,38 +106,152 @@ export const Page = ({
   children,
   pageTitle,
 }: PageWithHeaderProps) => {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-  const mainContentRef = useSwipeGesture({
-    onSwipeRight: () => setIsSidebarOpen(true),
-    onSwipeLeft: () => setIsSidebarOpen(false),
-    threshold: 50,
-  })
+  const translation = useTasksTranslation()
+  const locationRoute = '/location'
+  const context = useTasksContext()
+  const { data: savedViewsData, loading: savedViewsLoading } = useMySavedViews()
+
+  const sidebarItems = useMemo((): AppPageNavigationItem[] => {
+    const savedViews = (savedViewsData?.mySavedViews ?? []) as MySavedViewsQuery['mySavedViews']
+    const items: AppPageNavigationItem[] = [
+      {
+        id: 'dashboard',
+        label: translation('dashboard'),
+        url: '/',
+        icon: <Grid2X2PlusIcon className="-rotate-90 size-5" />,
+        isActive: context.route === '/',
+      },
+      {
+        id: 'myTasks',
+        label: (
+          <span className="flex grow flex-row-1 w-full justify-between items-center gap-x-2">
+            {translation('myTasks')}
+            {context?.myTasksCount !== undefined && (
+              <span className="text-description">{context.myTasksCount}</span>
+            )}
+          </span>
+        ),
+        url: '/tasks',
+        icon: <CircleCheck className="size-5" />,
+        isActive: context.route === '/tasks',
+      },
+      {
+        id: 'patients',
+        label: (
+          <span className="flex grow flex-row-1 w-full justify-between items-center gap-x-2">
+            {translation('patients')}
+            {context?.scopedPatientsTotal !== undefined && (
+              <span className="text-description">{context.scopedPatientsTotal}</span>
+            )}
+          </span>
+        ),
+        url: '/patients',
+        icon: <User className="size-5" />,
+        isActive: context.route === '/patients',
+      },
+      {
+        id: 'savedViews',
+        label: translation('savedViews'),
+        icon: <Rabbit className="size-5" />,
+        items: savedViews.length > 0
+          ? savedViews.map((view: MySavedViewsQuery['mySavedViews'][number]) => ({
+            id: `saved-view-${view.id}`,
+            label: view.name,
+            url: `/view/${view.id}`,
+            isActive: context.route === `/view/${view.id}`,
+          }))
+          : savedViewsLoading
+            ? [{ id: 'saved-views-loading', label: translation('loading') }]
+            : [{
+              id: 'saved-views-settings',
+              label: translation('viewSettings'),
+              url: '/settings/views',
+              isActive: context.route === '/settings/views',
+            }],
+      },
+    ]
+
+    if ((context?.teams?.length ?? 0) > 0) {
+      items.push({
+        id: 'teams',
+        label: translation('teams'),
+        icon: <Users className="size-5" />,
+        items: (context?.teams ?? []).map(team => ({
+          id: `team-${team.id}`,
+          label: team.title,
+          url: `${locationRoute}/${team.id}`,
+          isActive: context.route === `${locationRoute}/${team.id}`,
+        })),
+      })
+    }
+
+    if ((context?.wards?.length ?? 0) > 0) {
+      items.push({
+        id: 'wards',
+        label: translation('wards'),
+        icon: <Building2 className="size-5" />,
+        items: (context?.wards ?? []).map(ward => ({
+          id: `ward-${ward.id}`,
+          label: ward.title,
+          url: `${locationRoute}/${ward.id}`,
+          isActive: context.route === `${locationRoute}/${ward.id}`,
+        })),
+      })
+    }
+
+    if ((context?.clinics?.length ?? 0) > 0) {
+      items.push({
+        id: 'clinics',
+        label: translation('clinics'),
+        icon: <Hospital className="size-5" />,
+        items: (context?.clinics ?? []).map(clinic => ({
+          id: `clinic-${clinic.id}`,
+          label: clinic.title,
+          url: `${locationRoute}/${clinic.id}`,
+          isActive: context.route === `${locationRoute}/${clinic.id}`,
+        })),
+      })
+    }
+
+    return items
+  }, [
+    translation,
+    context.route,
+    context?.myTasksCount,
+    context?.scopedPatientsTotal,
+    context?.teams,
+    context?.wards,
+    context?.clinics,
+    savedViewsData?.mySavedViews,
+    savedViewsLoading,
+    locationRoute,
+  ])
 
   return (
-    <div className="flex-row-0 h-dvh min-h-dvh max-h-dvh w-screen overflow-hidden overflow-x-hidden">
+    <AppPage
+      sidebarProps={{
+        header: (
+          <Link href="/" className="flex-row-1 text-primary items-center rounded-lg p-2">
+            <TasksLogo />
+            <span className="typography-title-md whitespace-nowrap">{'helpwave tasks'}</span>
+          </Link>
+        ),
+        items: sidebarItems,
+        footer: (
+          <div className="sm:hidden">
+            <RootLocationSelector />
+          </div>
+        ),
+      }}
+      headerActions={[
+        (<Header key="header" />)
+      ]}
+    >
       <Head>
         <title>{titleWrapper(pageTitle)}</title>
       </Head>
       <StagingDisclaimerDialog />
-      <Sidebar
-        className="my-4 ml-4"
-        isOpen={isSidebarOpen}
-        onClose={() => setIsSidebarOpen(false)}
-      />
-      <div
-        ref={mainContentRef as React.RefObject<HTMLDivElement>}
-        className="flex-col-4 lg:pl-8 grow overflow-y-auto overscroll-y-contain"
-      >
-        <Header
-          className="sticky top-0 right-0 z-20 p-4 bg-background text-on-background"
-          onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          isMenuOpen={isSidebarOpen}
-        />
-        <main className="flex-col-2 grow min-h-0 pr-4 px-4">
-          {children}
-          <div className="min-h-16" />
-        </main>
-      </div>
-    </div>
+      {children}
+    </AppPage>
   )
 }

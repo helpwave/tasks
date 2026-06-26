@@ -1,5 +1,4 @@
-import { Button, Checkbox, Tooltip, useLocale } from '@helpwave/hightide'
-import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
+import { AvatarWithStatus, Button, Checkbox, Tooltip, useLocale } from '@helpwave/hightide'
 import { Clock, Combine, User, Users, Flag } from 'lucide-react'
 import clsx from 'clsx'
 import { DueDateDisplay } from '@/components/Date/DueDateDisplay'
@@ -240,9 +239,9 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
                     }}
                     className="flex items-center gap-1.5 text-sm text-description min-w-0 w-full @lg:w-auto @lg:shrink-0 @lg:justify-end hover:opacity-75 transition-opacity text-left"
                   >
-                    <AvatarStatusComponent
+                    <AvatarWithStatus
                       size="sm"
-                      isOnline={task.assignee?.isOnline ?? null}
+                      isOnline={!!task.assignee?.isOnline}
                       image={assigneeImage}
                     />
                     <span className="min-w-0 break-words @lg:truncate @lg:max-w-[150px]">{task.assignee.name}</span>

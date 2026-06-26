@@ -4,8 +4,7 @@ import { DateDisplay } from '@/components/Date/DateDisplay'
 import clsx from 'clsx'
 import { fetcher } from '@/api/gql/fetcher'
 import { UserInfoPopup } from '@/components/UserInfoPopup'
-import { HelpwaveLogo } from '@helpwave/hightide'
-import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
+import { AvatarWithStatus, HelpwaveLogo } from '@helpwave/hightide'
 import { ChevronRight } from 'lucide-react'
 
 const GET_AUDIT_LOGS_QUERY = `
@@ -184,9 +183,9 @@ export const AuditLogTimeline: React.FC<AuditLogTimelineProps> = ({ caseId, clas
                     <div className="flex-row-2 items-center gap-2">
                       {entry.userId && userInfo && (
                         <>
-                          <AvatarStatusComponent
+                          <AvatarWithStatus
                             size="sm"
-                            isOnline={userInfo.isOnline}
+                            isOnline={!!userInfo.isOnline}
                             image={userInfo.avatarUrl ? {
                               avatarUrl: userInfo.avatarUrl,
                               alt: userInfo.name

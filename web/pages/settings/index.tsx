@@ -5,6 +5,7 @@ import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
 import {
+  AvatarWithStatus,
   Button,
   LocalizationUtil,
   Select,
@@ -25,7 +26,6 @@ import { useQueryClient } from '@tanstack/react-query'
 import { openSurvey, surveyStorageKeys } from '@/utils/survey'
 import { getConfig } from '@/utils/config'
 import { FeedbackDialog } from '@/components/FeedbackDialog'
-import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
 
 type ThemeIconProps = {
   theme: ThemeType,
@@ -172,10 +172,10 @@ const SettingsPage: NextPage = () => {
         <div className="flex flex-col gap-y-12">
           <section className="flex-row-4 items-center p-4 bg-surface-1 rounded-lg border border-divider">
             <div className="relative">
-              <AvatarStatusComponent
+              <AvatarWithStatus
                 size="lg"
                 image={previewUrl ? { avatarUrl: previewUrl, alt: user?.name || '' } : (user?.avatarUrl ? { avatarUrl: user.avatarUrl, alt: user?.name || '' } : undefined)}
-                isOnline={user?.isOnline ?? null}
+                isOnline={!!user?.isOnline}
               />
               {previewUrl && (
                 <button

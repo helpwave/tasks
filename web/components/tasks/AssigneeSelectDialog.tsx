@@ -1,6 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
-import { SearchBar, Dialog, Button, Checkbox } from '@helpwave/hightide'
-import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
+import { SearchBar, Dialog, Button, Checkbox, AvatarWithStatus } from '@helpwave/hightide'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { Users, Info } from 'lucide-react'
 import { useUsers, useLocations } from '@/data'
@@ -185,9 +184,9 @@ export const AssigneeSelectDialog = ({
                     onClick={() => (multiUserSelect ? togglePendingUser(u.id) : handleSelect(u.id))}
                     className="flex items-center gap-2 flex-1 min-w-0 text-left"
                   >
-                    <AvatarStatusComponent
+                    <AvatarWithStatus
                       size="sm"
-                      isOnline={u.isOnline ?? null}
+                      isOnline={!!u.isOnline}
                       image={u.avatarUrl ? {
                         avatarUrl: u.avatarUrl,
                         alt: u.name

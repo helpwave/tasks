@@ -52,10 +52,12 @@ export function InTableCheckboxEditPopUp({
         }}
       </PopUpOpener>
       <PopUp options={options} aria-label={translation('edit')} className={clsx(className, 'flex-col-2 items-end')} onClick={e => e.stopPropagation()}>
-        <Checkbox
-          value={draft}
-          onValueChange={setDraft}
-        />
+        <div className="felx-row-0 w-full items-start">
+          <Checkbox
+            value={draft}
+            onValueChange={setDraft}
+          />
+        </div>
         <PopUpContext.Consumer>
           {({ setIsOpen }) => (
             <div className="flex-row-2 justify-end items-center gap-x-2">

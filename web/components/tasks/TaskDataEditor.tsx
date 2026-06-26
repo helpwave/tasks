@@ -20,14 +20,14 @@ import {
   Visibility,
   FormObserver,
   FlexibleDateTimeInput,
-  IconButton
+  IconButton,
+  AvatarWithStatus
 } from '@helpwave/hightide'
 import { CenteredLoadingLogo } from '@/components/CenteredLoadingLogo'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { User, Flag, Info, PlusIcon, Users, XIcon } from 'lucide-react'
 import { DateDisplay } from '@/components/Date/DateDisplay'
 import { AssigneeSelect } from './AssigneeSelect'
-import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
 import { UserInfoPopup } from '@/components/UserInfoPopup'
 import { DueDateUtils, getTaskDueDateFlexibleInputProps } from '@/utils/dueDate'
 import { PatientDetailView } from '@/components/patients/PatientDetailView'
@@ -428,8 +428,8 @@ export const TaskDataEditor = ({
                           className="inline-flex items-center gap-1.5 rounded-md border border-divider bg-surface px-2.5 py-2 max-w-full"
                         >
                           <div className="flex-row-2 items-center min-w-0 gap-2 flex-1">
-                            <AvatarStatusComponent
-                              isOnline={assignee.isOnline ?? null}
+                            <AvatarWithStatus
+                              isOnline={!!assignee.isOnline}
                               image={{
                                 avatarUrl: assignee.avatarUrl ?? 'https://cdn.helpwave.de/boringavatar.svg',
                                 alt: assignee.name

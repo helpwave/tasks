@@ -1,6 +1,5 @@
 import { useState, useMemo, useRef } from 'react'
-import { PropsUtil, Visibility } from '@helpwave/hightide'
-import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
+import { AvatarWithStatus, PropsUtil, Visibility } from '@helpwave/hightide'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { Users, ChevronDown, Info, SearchIcon } from 'lucide-react'
 import { useUsers, useLocations } from '@/data'
@@ -116,9 +115,9 @@ export const  AssigneeSelect = ({
                 {selectedItem.type === 'team' ? (
                   <Users className="size-5 text-description flex-shrink-0" />
                 ) : (
-                  <AvatarStatusComponent
+                  <AvatarWithStatus
                     size="sm"
-                    isOnline={selectedItem.user.isOnline ?? null}
+                    isOnline={!!selectedItem.user.isOnline}
                     image={selectedItem.user.avatarUrl ? {
                       avatarUrl: selectedItem.user.avatarUrl,
                       alt: selectedItem.user.name

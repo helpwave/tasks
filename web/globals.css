@@ -1,4 +1,4 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 
 @import "./node_modules/@helpwave/hightide/dist/style/uncompiled/globals.css";
 @import "./style/index.css";
@@ -11,6 +11,18 @@
     padding-bottom: max(0px, env(safe-area-inset-bottom));
     padding-left: max(0px, env(safe-area-inset-left));
     padding-right: max(0px, env(safe-area-inset-right));
+  }
+
+  [data-name="app-sidebar-container"] {
+    @apply min-w-64;
+  }
+
+  .app-page-navigation-item-label {
+    @apply w-full justify-start;
+
+    &[data-acitve] {
+      @apply text-primary;
+    }
   }
 }
 
