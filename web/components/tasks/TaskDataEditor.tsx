@@ -429,7 +429,7 @@ export const TaskDataEditor = ({
                         >
                           <div className="flex-row-2 items-center min-w-0 gap-2 flex-1">
                             <AvatarWithStatus
-                              isOnline={!!assignee.isOnline}
+                              status={assignee?.isOnline === undefined ? 'unknown' : assignee.isOnline ? 'online' : 'offline'}
                               image={{
                                 avatarUrl: assignee.avatarUrl ?? 'https://cdn.helpwave.de/boringavatar.svg',
                                 alt: assignee.name

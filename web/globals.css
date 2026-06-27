@@ -14,15 +14,7 @@
   }
 
   [data-name="app-sidebar-container"] {
-    @apply min-w-64;
-  }
-
-  .app-page-navigation-item-label {
-    @apply w-full justify-start;
-
-    &[data-acitve] {
-      @apply text-primary;
-    }
+    @apply desktop:min-w-64;
   }
 }
 

@@ -8,6 +8,7 @@ import clsx from 'clsx'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { useLocations } from '@/data'
 import { LocationSelectionDialog } from '@/components/locations/LocationSelectionDialog'
+import { ArrowLeftRight } from 'lucide-react'
 
 type RootLocationSelectorProps = {
   className?: string,
@@ -169,6 +170,7 @@ export const RootLocationSelector = ({ className, onSelect, ownsDialog = false }
           : hasSelectionButNoNames
             ? (translation('loading') ?? 'Loading...')
             : (translation('selectLocation') || 'Select Location')}
+        <ArrowLeftRight className="size-5" />
       </Button>
       {ownsDialog && (
         <LocationSelectionDialog

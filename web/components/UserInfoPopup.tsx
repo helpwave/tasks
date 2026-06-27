@@ -73,7 +73,7 @@ export const UserInfoPopup: React.FC<UserInfoPopupProps> = ({ userId, isOpen, on
               <div className="flex items-center gap-3">
                 <AvatarWithStatus
                   size="lg"
-                  isOnline={!!user.isOnline}
+                  status={user?.isOnline === undefined ? 'unknown' : user.isOnline ? 'online' : 'offline'}
                   image={user.avatarUrl ? {
                     avatarUrl: user.avatarUrl,
                     alt: user.name

@@ -241,7 +241,7 @@ export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showA
                   >
                     <AvatarWithStatus
                       size="sm"
-                      isOnline={!!task.assignee?.isOnline}
+                      status={task.assignee?.isOnline === undefined ? 'unknown' : task.assignee.isOnline ? 'online' : 'offline'}
                       image={assigneeImage}
                     />
                     <span className="min-w-0 break-words @lg:truncate @lg:max-w-[150px]">{task.assignee.name}</span>

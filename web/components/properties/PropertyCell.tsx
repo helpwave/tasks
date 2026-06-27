@@ -114,7 +114,7 @@ export const PropertyCell = ({
         <div className="flex items-center gap-2 min-w-0">
           <AvatarWithStatus
             size="sm"
-            isOnline={!!property.user.isOnline}
+            status={property.user.isOnline === undefined ? 'unknown' : property.user.isOnline ? 'online' : 'offline'}
             image={property.user.avatarUrl ? {
               avatarUrl: property.user.avatarUrl,
               alt: property.user.name,

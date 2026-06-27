@@ -117,7 +117,7 @@ export const  AssigneeSelect = ({
                 ) : (
                   <AvatarWithStatus
                     size="sm"
-                    isOnline={!!selectedItem.user.isOnline}
+                    status={selectedItem.user.isOnline === undefined ? 'unknown' : selectedItem.user.isOnline ? 'online' : 'offline'}
                     image={selectedItem.user.avatarUrl ? {
                       avatarUrl: selectedItem.user.avatarUrl,
                       alt: selectedItem.user.name

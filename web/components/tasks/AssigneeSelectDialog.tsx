@@ -164,42 +164,42 @@ export const AssigneeSelectDialog = ({
           {filteredUsers.length > 0 && (
             <>
               <div className="px-3 py-2 text-xs font-semibold text-description bg-surface sticky top-0">{translation('users') ?? 'Users'}</div>
-              {filteredUsers.map(u => (
+              {filteredUsers.map(user => (
                 <div
-                  key={u.id}
+                  key={user.id}
                   className={clsx(
                     'w-full px-3 py-2 hover:bg-surface-hover transition-colors flex items-center gap-2 bg-surface',
-                    !multiUserSelect && value === u.id && 'bg-surface-selected',
-                    multiUserSelect && pendingUserIds.has(u.id) && 'bg-surface-selected'
+                    !multiUserSelect && value === user.id && 'bg-surface-selected',
+                    multiUserSelect && pendingUserIds.has(user.id) && 'bg-surface-selected'
                   )}
                 >
                   {multiUserSelect && (
                     <Checkbox
-                      value={pendingUserIds.has(u.id)}
-                      onValueChange={() => togglePendingUser(u.id)}
+                      value={pendingUserIds.has(user.id)}
+                      onValueChange={() => togglePendingUser(user.id)}
                     />
                   )}
                   <button
                     type="button"
-                    onClick={() => (multiUserSelect ? togglePendingUser(u.id) : handleSelect(u.id))}
+                    onClick={() => (multiUserSelect ? togglePendingUser(user.id) : handleSelect(user.id))}
                     className="flex items-center gap-2 flex-1 min-w-0 text-left"
                   >
                     <AvatarWithStatus
                       size="sm"
-                      isOnline={!!u.isOnline}
-                      image={u.avatarUrl ? {
-                        avatarUrl: u.avatarUrl,
-                        alt: u.name
+                      status={user?.isOnline === undefined ? 'unknown' : user.isOnline ? 'online' : 'offline'}
+                      image={user.avatarUrl ? {
+                        avatarUrl: user.avatarUrl,
+                        alt: user.name
                       } : undefined}
                     />
-                    <span className="truncate">{u.name}</span>
+                    <span className="truncate">{user.name}</span>
                   </button>
                   {onUserInfoClick && (
                     <button
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation()
-                        onUserInfoClick(u.id)
+                        onUserInfoClick(user.id)
                       }}
                       className="p-1 hover:bg-surface-hover rounded transition-colors text-description hover:text-on-surface flex-shrink-0"
                       aria-label="View user info"

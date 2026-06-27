@@ -79,7 +79,7 @@ export const Header = ({ ...props }: HeaderProps) => {
             <span className="hidden sm:inline typography-title-sm">{user?.name}</span>
             <AvatarWithStatus
               size="sm"
-              isOnline={!!user?.isOnline}
+              status={user?.isOnline === undefined ? 'unknown' : user.isOnline ? 'online' : 'offline'}
               image={user?.avatarUrl ? {
                 avatarUrl: user.avatarUrl,
                 alt: user.name
@@ -119,7 +119,6 @@ export const Page = ({
         label: translation('dashboard'),
         url: '/',
         icon: <Grid2X2PlusIcon className="-rotate-90 size-5" />,
-        isActive: context.route === '/',
       },
       {
         id: 'myTasks',
@@ -133,7 +132,6 @@ export const Page = ({
         ),
         url: '/tasks',
         icon: <CircleCheck className="size-5" />,
-        isActive: context.route === '/tasks',
       },
       {
         id: 'patients',
@@ -147,7 +145,6 @@ export const Page = ({
         ),
         url: '/patients',
         icon: <User className="size-5" />,
-        isActive: context.route === '/patients',
       },
       {
         id: 'savedViews',
@@ -158,7 +155,6 @@ export const Page = ({
             id: `saved-view-${view.id}`,
             label: view.name,
             url: `/view/${view.id}`,
-            isActive: context.route === `/view/${view.id}`,
           }))
           : savedViewsLoading
             ? [{ id: 'saved-views-loading', label: translation('loading') }]
@@ -166,7 +162,6 @@ export const Page = ({
               id: 'saved-views-settings',
               label: translation('viewSettings'),
               url: '/settings/views',
-              isActive: context.route === '/settings/views',
             }],
       },
     ]
@@ -180,7 +175,6 @@ export const Page = ({
           id: `team-${team.id}`,
           label: team.title,
           url: `${locationRoute}/${team.id}`,
-          isActive: context.route === `${locationRoute}/${team.id}`,
         })),
       })
     }
@@ -194,7 +188,6 @@ export const Page = ({
           id: `ward-${ward.id}`,
           label: ward.title,
           url: `${locationRoute}/${ward.id}`,
-          isActive: context.route === `${locationRoute}/${ward.id}`,
         })),
       })
     }
@@ -208,7 +201,6 @@ export const Page = ({
           id: `clinic-${clinic.id}`,
           label: clinic.title,
           url: `${locationRoute}/${clinic.id}`,
-          isActive: context.route === `${locationRoute}/${clinic.id}`,
         })),
       })
     }
@@ -216,7 +208,6 @@ export const Page = ({
     return items
   }, [
     translation,
-    context.route,
     context?.myTasksCount,
     context?.scopedPatientsTotal,
     context?.teams,
@@ -242,6 +233,7 @@ export const Page = ({
             <RootLocationSelector />
           </div>
         ),
+        activeUrl: context?.route
       }}
       headerActions={[
         (<Header key="header" />)

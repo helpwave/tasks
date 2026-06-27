@@ -45,13 +45,13 @@ export const LocationChips = ({ locations, disableLink = false, small = false, p
     <Chip
       size="sm"
       color="neutral"
-      className={clsx('cursor-pointer hover:opacity-80 transition-opacity max-w-full', { 'text-xs': small }, className)}
+      className={clsx('cursor-pointer hover:opacity-80 transition-opacity w-full', { 'text-xs max-w-48': small }, className)}
     >
       <div className="flex items-center gap-1 min-w-0">
-        <MapPin className="size-force-3 shrink-0" />
-        <span className="truncate">{displayTitle}</span>
+        <MapPin className="size-force-4 shrink-0" />
+        <span className="truncate w-full">{displayTitle}</span>
         {linkTarget?.kind && (
-          <LocationTypeChip type={linkTarget.kind} />
+          <LocationTypeChip type={linkTarget.kind} small={small} />
         )}
       </div>
     </Chip>
