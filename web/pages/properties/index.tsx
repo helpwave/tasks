@@ -166,8 +166,6 @@ const PropertiesPage: NextPage = () => {
 
   const fillerRowCell = useCallback(() => (<FillerCell className="min-h-12" />), [])
 
-  console.log(propertyDefinitionsData, data)
-
   return (
     <Page pageTitle={titleWrapper(translation('properties'))} noScrolling noSpacer>
       <ContentPanel

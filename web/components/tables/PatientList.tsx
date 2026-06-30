@@ -618,8 +618,6 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
     [propertyDefinitionsData, readOnly, handlePatientPropertyValueChanged]
   )
 
-  console.log(propertyDefinitionsData)
-
   const onPatientPropertyClearRefetch = useCallback(() => {
     embeddedOnRefetch?.()
     void refetch()
@@ -1138,7 +1136,6 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
       onSortingChange={useEmbeddedNoop ? embeddedTableStateNoop : setSorting}
       onColumnFiltersChange={useEmbeddedNoop ? embeddedTableStateNoop : setFilters}
       enableMultiSort={true}
-      enablePinning={false}
       pageCount={1}
 
       manualPagination={true}
