@@ -12,6 +12,7 @@ export interface PropertyCellProps {
 }
 
 const textCellMaxLength = 32
+const multiSelectVisibleChipCount = 3
 
 
 export const PropertyCell = ({
@@ -74,20 +75,45 @@ export const PropertyCell = ({
     if (!property.multiSelectValues || property.multiSelectValues.length === 0) {
       return <FillerCell />
     }
+
+    const multiSelectEntries = property.multiSelectValues.map((val) => {
+      const multiSelectOptionIndex = val.match(/-opt-(\d+)$/)?.[1]
+      const multiSelectOptionName = multiSelectOptionIndex !== undefined && property.definition?.options
+        ? property.definition.options[parseInt(multiSelectOptionIndex, 10)]
+        : val
+      return { id: val, name: multiSelectOptionName }
+    })
+    const visibleEntries = multiSelectEntries.slice(0, multiSelectVisibleChipCount)
+    const additionalCount = multiSelectEntries.length - visibleEntries.length
+
     return (
-      <div className="flex flex-wrap gap-1 w-full max-w-full min-w-0">
-        {property.multiSelectValues.map((val) => {
-          const multiSelectOptionIndex = val.match(/-opt-(\d+)$/)?.[1]
-          const multiSelectOptionName = multiSelectOptionIndex !== undefined && property.definition?.options
-            ? property.definition.options[parseInt(multiSelectOptionIndex, 10)]
-            : val
-          return (
-            <Chip key={val} size="sm" className="primary coloring-tonal max-w-full min-w-0">
-              <span className="truncate min-w-0">{multiSelectOptionName}</span>
+      <Tooltip
+        tooltip={(
+          <div className="flex flex-wrap gap-1 max-w-sm">
+            {multiSelectEntries.map(({ id, name }) => (
+              <Chip key={id} size="sm" className="primary coloring-tonal">
+                {name}
+              </Chip>
+            ))}
+          </div>
+        )}
+        alignment="top"
+        containerClassName="print:hidden w-full min-w-0"
+        displayProps={{ className: 'p-1' }}
+      >
+        <div className="flex flex-wrap gap-1 w-full max-w-full min-w-0">
+          {visibleEntries.map(({ id, name }) => (
+            <Chip key={id} size="sm" className="primary coloring-tonal max-w-20 min-w-0 shrink">
+              <span className="truncate min-w-0 block">{name}</span>
             </Chip>
-          )
-        })}
-      </div>
+          ))}
+          {additionalCount > 0 && (
+            <Chip size="sm" className="primary coloring-tonal shrink-0">
+              +{additionalCount}
+            </Chip>
+          )}
+        </div>
+      </Tooltip>
     )
   }
   case FieldType.FieldTypeNumber:

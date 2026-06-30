@@ -3,7 +3,7 @@ import { useMutation } from '@apollo/client/react'
 import type { IdentifierFilterValue, FilterListItem, FilterListPopUpBuilderProps } from '@helpwave/hightide'
 import { Chip, DateUtils, FillerCell, SearchBar, ProgressIndicator, Tooltip, Drawer, TableProvider, TableDisplay, TableColumnSwitcher, IconButton, useLocale, FilterList, SortingList, Button, ExpansionIcon, Visibility, ConfirmDialog } from '@helpwave/hightide'
 import clsx from 'clsx'
-import { LayoutGrid, PlusIcon, Table2 } from 'lucide-react'
+import { LayoutGrid, PlusIcon, Table2, ExternalLink } from 'lucide-react'
 import type { LocationType } from '@/api/gql/generated'
 import { Sex, PatientState, type GetPatientsQuery, type TaskType, PropertyEntity, FieldType, type QueryableField } from '@/api/gql/generated'
 import { usePropertyDefinitions, usePatientsPaginated, useQueryableFields, useRefreshingEntityIds, useUpdatePatient } from '@/data'
@@ -618,6 +618,8 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
     [propertyDefinitionsData, readOnly, handlePatientPropertyValueChanged]
   )
 
+  console.log(propertyDefinitionsData)
+
   const onPatientPropertyClearRefetch = useCallback(() => {
     embeddedOnRefetch?.()
     void refetch()
@@ -682,7 +684,31 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
       id: 'name',
       header: translation('name'),
       accessorKey: 'name',
-      cell: ({ row }) => gateCell(row.original.id, row.original.name),
+      cell: ({ row }) => {
+        const patient = row.original
+        return gateCell(patient.id, (
+          <>
+            <span className="print:block hidden">{patient.name}</span>
+            <Tooltip
+              tooltip={translation('showPatient', { name: patient.name })}
+              alignment="top"
+            >
+              <Button
+                color="neutral"
+                size="sm"
+                onClick={(event) => {
+                  event.stopPropagation()
+                  handleEdit(patient)
+                }}
+                className="flex-row-2 justify-between w-40 min-w-40 max-w-40 overflow-hidden group print:hidden"
+              >
+                <span className="truncate min-w-0">{patient.name}</span>
+                <ExternalLink className="size-4 min-w-4 shrink-0 group-hover:text-on-surface text-description" />
+              </Button>
+            </Tooltip>
+          </>
+        ))
+      },
       minSize: 200,
       size: 250,
       maxSize: 300,
@@ -694,10 +720,10 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
       cell: ({ row }) => gateCell(row.original.id, (
         <>
           <span className="print:block hidden">{translation('patientState', { state: row.original.state as string })}</span>
-          <PatientStateChip state={row.original.state} className="print:hidden" />
+          <PatientStateChip state={row.original.state} className="print:hidden max-w-36 w-full" />
         </>
       )),
-      minSize: 120,
+      minSize: 140,
       size: 144,
       maxSize: 180,
     },
@@ -726,7 +752,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
               color={undefined}
               coloringStyle="tonal"
               size="sm"
-              className={`${colorClass} uppercase font-semibold text-xs print:hidden`}
+              className={`${colorClass} uppercase font-semibold text-xs print:hidden w-full max-w-24`}
             >
               <span>{label}</span>
             </Chip>
@@ -870,7 +896,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
           gateCell(params.row.original.id, (col.cell as (p: unknown) => React.ReactNode)(params))
         : undefined,
     })),
-  ], [translation, patientPropertyColumnsWithActions, gateCell, formatBirthdate])
+  ], [translation, patientPropertyColumnsWithActions, gateCell, formatBirthdate, handleEdit])
 
   const propertyFieldTypeByDefId = useMemo(
     () => new Map(propertyDefinitionsData?.propertyDefinitions.map(d => [d.id, d.fieldType]) ?? []),
@@ -1215,17 +1241,20 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
             )}
           </div>
         )}
-        <div className={clsx('relative print:static', useBoxScroll && 'flex-1 min-h-0 flex flex-col')}>
+        <div className={clsx('relative print:static overflow-hidden', useBoxScroll && 'flex-1 min-h-0 flex flex-col')}>
           <div
             aria-busy={isListLoading}
-            className={clsx('transition-opacity', useBoxScroll && 'flex-1 min-h-0 flex flex-col', isListLoading && 'opacity-60 print:opacity-100')}
+            className={clsx('transition-opacity', {
+              'flex-1 min-h-0 flex flex-col': useBoxScroll,
+              'opacity-60 print:opacity-100': isListLoading,
+            })}
           >
             <div className={clsx(listLayout === 'table' ? clsx('block', useBoxScroll && 'flex-1 min-h-0 flex flex-col') : 'hidden print:block')}>
               <TableDisplay
                 virtualized={useBoxScroll ? { scroll: 'container', estimateRowHeight: TABLE_ROW_ESTIMATE_PX, overscan: TABLE_OVERSCAN_ROWS } : false}
                 tableHeaderProps={useBoxScroll ? { isSticky: true } : undefined}
                 containerProps={{
-                  className: clsx(useBoxScroll && 'flex-1 min-h-0 max-h-[calc(100dvh-12rem)] overflow-y-auto', 'print:max-h-none print:overflow-visible'),
+                  className: clsx(useBoxScroll && 'flex-1 min-h-0 overflow-y-auto', 'print:max-h-none print:overflow-visible'),
                   onScroll: useBoxScroll ? (event) => handleListScroll(event.currentTarget) : undefined,
                 }}
                 className="print-content hw-autosize-table overflow-x-auto hw-touch-scroll"
@@ -1236,7 +1265,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
                 items={patients}
                 getItemKey={(patient) => patient.id}
                 minCardWidthPx={352}
-                containerClassName={useBoxScroll ? 'flex-1 min-h-0 max-h-[calc(100dvh-12rem)] overflow-y-auto' : undefined}
+                containerClassName={useBoxScroll ? 'flex-1 min-h-0 overflow-y-auto' : undefined}
                 onReachBottom={useBoxScroll ? loadMore : undefined}
                 renderItem={(patient) => (
                   <RowRefreshingGate

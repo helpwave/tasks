@@ -181,7 +181,7 @@ export function EditablePropertyCell({
         definitionId={definitionId}
         optionLabels={definition.options}
         value={sel}
-        buttonProps={editableTriggerButtonProps}
+        buttonProps={{ ...editableTriggerButtonProps, className: clsx(editableTriggerButtonProps.className, { 'pl-1': !!sel }) }}
         onUpdate={(next) => {
           onValueChanged(next == null ? null : { definitionId, selectValue: next })
         }}
@@ -198,7 +198,7 @@ export function EditablePropertyCell({
         definitionId={definitionId}
         optionLabels={definition.options}
         value={multi}
-        buttonProps={editableTriggerButtonProps}
+        buttonProps={{ ...editableTriggerButtonProps, className: clsx(editableTriggerButtonProps.className, { 'pl-1': multi.length > 0 }) }}
         onUpdate={(next) => {
           onValueChanged(
             next == null || next.length === 0 ? null : { definitionId, multiSelectValues: next }
