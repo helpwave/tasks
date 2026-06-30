@@ -8,7 +8,7 @@ import { Page } from '@/components/layout/Page'
 import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
-import { Button, ConfirmDialog, Dialog, FillerCell, IconButton, Input, LoadingContainer, Table } from '@helpwave/hightide'
+import { Button, ConfirmDialog, Dialog, FillerCell, IconButton, Input, TableDisplay, TableProvider } from '@helpwave/hightide'
 import { DateDisplay } from '@/components/Date/DateDisplay'
 import { SavedViewEntityTypeChip } from '@/components/views/SavedViewEntityTypeChip'
 import { useMySavedViews } from '@/data'
@@ -33,6 +33,11 @@ import {
 import type { ColumnDef } from '@tanstack/table-core'
 import { EditIcon, ExternalLink, Trash2, Share2, CopyPlus } from 'lucide-react'
 import type { MySavedViewsQuery, SavedViewEntityType } from '@/api/gql/generated'
+import { overscanRowsForBuffer } from '@/utils/virtualGrid'
+import { ListLoadingHint } from '@/components/common/ListLoadingHint'
+
+const TABLE_ROW_ESTIMATE_PX = 48
+const TABLE_OVERSCAN_ROWS = overscanRowsForBuffer(800, TABLE_ROW_ESTIMATE_PX)
 
 type SavedViewRowGql = MySavedViewsQuery['mySavedViews'][number]
 
@@ -235,28 +240,41 @@ const ViewsSettingsPage: NextPage = () => {
     },
   ], [copyLink, router, translation])
 
+  const pageSize = Math.max(rows.length, 1)
+
   return (
-    <Page pageTitle={titleWrapper(translation('views'))}>
+    <Page pageTitle={titleWrapper(translation('views'))} noScrolling noSpacer>
       <ContentPanel
+        className="flex-1 min-h-0 pb-4"
         titleElement={translation('views')}
         description={translation('viewSettingsDescription')}
       >
-        {loading ? (
-          <LoadingContainer className="w-full min-h-48" />
-        ) : (
-          <div className="overflow-x-auto -mx-4 px-4 lg:mx-0 lg:px-0">
-            <Table
-              className="w-full h-full min-w-150"
-              table={{
-                data: rows,
-                columns,
-                isUsingFillerRows: true,
-                fillerRowCell,
-                initialState: { pagination: { pageSize: 10 } },
-              }}
-            />
+        <div className="relative flex-1 min-h-0 flex flex-col overflow-hidden">
+          <div
+            aria-busy={loading}
+            className="flex-1 min-h-0 flex flex-col"
+          >
+            <TableProvider
+              data={rows}
+              columns={columns}
+              isUsingFillerRows
+              fillerRowCell={fillerRowCell}
+              initialState={{ pagination: { pageSize } }}
+            >
+              <div className="flex-1 min-h-0 flex flex-col">
+                <TableDisplay
+                  virtualized={{ scroll: 'container', estimateRowHeight: TABLE_ROW_ESTIMATE_PX, overscan: TABLE_OVERSCAN_ROWS }}
+                  tableHeaderProps={{ isSticky: true }}
+                  containerProps={{
+                    className: 'flex-1 min-h-0 overflow-y-auto',
+                  }}
+                  className="w-full min-w-150 overflow-x-auto hw-touch-scroll"
+                />
+              </div>
+            </TableProvider>
           </div>
-        )}
+          <ListLoadingHint active={loading} />
+        </div>
 
         <Dialog
           isOpen={renameOpen}

@@ -19,31 +19,24 @@ const PatientsPage: NextPage = () => {
   const patientId = router.isReady ? (router.query['patientId'] as string | undefined) : undefined
 
   return (
-    <>
-      <style>{`
-        [data-name="app-page-main-spacer"] {
-          min-height: calc(var(--spacing) * 4);
-        }
-      `}</style>
-      <Page pageTitle={titleWrapper(translation('patients'))} noScrolling>
-        <ContentPanel
-          className="flex-1 min-h-0"
-          titleElement={translation('patients')}
-          description={(
-            <PatientScopeCountChips
-              total={scopedPatientsTotal}
-              admitted={scopedPatientsAdmitted}
-              waiting={scopedPatientsWaiting}
-            />
-          )}
-        >
-          <PatientList
-            initialPatientId={patientId}
-            onInitialPatientIdUsed={() => router.replace('/patients', undefined, { shallow: true })}
+    <Page pageTitle={titleWrapper(translation('patients'))} noScrolling noSpacer>
+      <ContentPanel
+        className="flex-1 min-h-0 pb-4"
+        titleElement={translation('patients')}
+        description={(
+          <PatientScopeCountChips
+            total={scopedPatientsTotal}
+            admitted={scopedPatientsAdmitted}
+            waiting={scopedPatientsWaiting}
           />
-        </ContentPanel>
-      </Page>
-    </>
+        )}
+      >
+        <PatientList
+          initialPatientId={patientId}
+          onInitialPatientIdUsed={() => router.replace('/patients', undefined, { shallow: true })}
+        />
+      </ContentPanel>
+    </Page>
   )
 }
 

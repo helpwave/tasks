@@ -544,7 +544,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
 
   const showBlockingLoadingOverlay = (patientsLoading || waitingForLocationScope) && patients.length === 0 && !derivedVirtualMode
   const isListLoading = showBlockingLoadingOverlay || isFetchingMore
-  const useBoxScroll = !isPrinting && !embedded
+  const useBoxScroll = !isPrinting && (!embedded || derivedVirtualMode)
   const handleListScroll = useCallback((element: HTMLElement) => {
     if (embedded || derivedVirtualMode || isFetchingMore || !hasMore) return
     if (isNearBottom(element, 600)) loadMore()
@@ -703,7 +703,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
                 className="flex-row-2 justify-between w-40 min-w-40 max-w-40 overflow-hidden group print:hidden"
               >
                 <span className="truncate min-w-0">{patient.name}</span>
-                <ExternalLink className="size-4 min-w-4 shrink-0 group-hover:text-on-surface text-description" />
+                <ExternalLink className="size-4 min-w-4 shrink-0 group-hover:text-on-surface text-faded" />
               </Button>
             </Tooltip>
           </>

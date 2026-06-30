@@ -10,9 +10,9 @@ import {
   parseViewParameters
 } from '@/utils/viewDefinition'
 import type { ViewParameters } from '@/utils/viewDefinition'
-import { LoadingContainer } from '@helpwave/hightide'
 import { PatientList } from '@/components/tables/PatientList'
 import type { PatientViewModel } from '@/components/tables/PatientList'
+import { ListLoadingHint } from '@/components/common/ListLoadingHint'
 
 const ADMITTED_OR_WAITING: PatientState[] = [PatientState.Admitted, PatientState.Wait]
 
@@ -109,27 +109,35 @@ export function TaskViewPatientsPanel({
 
   if (loading && embeddedPatients.length === 0) {
     return (
-      <div className="min-h-48 flex items-center justify-center w-full">
-        <LoadingContainer className="w-full min-h-48" />
+      <div className="relative flex-1 min-h-0 flex flex-col overflow-hidden">
+        <ListLoadingHint active />
       </div>
     )
   }
 
   return (
-    <PatientList
-      embedded
-      derivedVirtualMode
-      savedViewScope="related"
-      embeddedPatients={embeddedPatients}
-      rootLocationIds={parameters.rootLocationIds}
-      locationId={parameters.locationId}
-      viewDefaultFilters={defaultRelatedFilters}
-      viewDefaultSorting={defaultRelatedSorting}
-      viewDefaultSearchQuery={relatedParams.searchQuery}
-      viewDefaultColumnVisibility={relatedParams.columnVisibility}
-      viewDefaultColumnOrder={relatedParams.columnOrder}
-      hideSaveView={!isOwner}
-      savedViewId={isOwner ? savedViewId : undefined}
-    />
+    <div className="relative flex-1 min-h-0 flex flex-col overflow-hidden">
+      <div
+        aria-busy={loading}
+        className="flex-1 min-h-0 flex flex-col"
+      >
+        <PatientList
+          embedded
+          derivedVirtualMode
+          savedViewScope="related"
+          embeddedPatients={embeddedPatients}
+          rootLocationIds={parameters.rootLocationIds}
+          locationId={parameters.locationId}
+          viewDefaultFilters={defaultRelatedFilters}
+          viewDefaultSorting={defaultRelatedSorting}
+          viewDefaultSearchQuery={relatedParams.searchQuery}
+          viewDefaultColumnVisibility={relatedParams.columnVisibility}
+          viewDefaultColumnOrder={relatedParams.columnOrder}
+          hideSaveView={!isOwner}
+          savedViewId={isOwner ? savedViewId : undefined}
+        />
+      </div>
+      <ListLoadingHint active={loading} />
+    </div>
   )
 }

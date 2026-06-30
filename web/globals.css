@@ -14,7 +14,11 @@
   }
 
   [data-name="app-sidebar-container"] {
-    @apply desktop:min-w-64;
+    @apply desktop:min-w-68 desktop:max-w-68;
+  }
+
+  [data-name="tab-list"] {
+    @apply !mb-2; /* TODO remove this at some point*/
   }
 }
 

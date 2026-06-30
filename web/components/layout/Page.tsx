@@ -101,12 +101,14 @@ export const Header = ({ ...props }: HeaderProps) => {
 type PageWithHeaderProps = PropsWithChildren<{
   pageTitle?: string,
   noScrolling?: boolean,
+  noSpacer?:boolean,
 }>
 
 export const Page = ({
   children,
   pageTitle,
-  noScrolling
+  noScrolling,
+  noSpacer,
 }: PageWithHeaderProps) => {
   const translation = useTasksTranslation()
   const locationRoute = '/location'
@@ -241,6 +243,7 @@ export const Page = ({
         (<Header key="header" />)
       ]}
       noScrolling={noScrolling}
+      hasSpacer={!noSpacer}
     >
       <Head>
         <title>{titleWrapper(pageTitle)}</title>

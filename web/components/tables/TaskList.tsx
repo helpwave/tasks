@@ -1053,7 +1053,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
               )}
             </div>
           )}
-          <div className={clsx('flex-col-3 w-full relative print:static', useBoxScroll && 'flex-1 min-h-0', isMobileIOS && hasFilterPanelOpen && 'pointer-events-none')}>
+          <div className={clsx('relative print:static overflow-hidden w-full', useBoxScroll && 'flex-1 min-h-0 flex flex-col', isMobileIOS && hasFilterPanelOpen && 'pointer-events-none')}>
             {!embedded && (
               <style>{`
             table th[data-column-id="done"],
@@ -1066,14 +1066,14 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
             )}
             <div
               aria-busy={isListLoading}
-              className={clsx('flex-col-3 w-full transition-opacity', useBoxScroll && 'flex-1 min-h-0', isListLoading && 'opacity-60 print:opacity-100')}
+              className={clsx('w-full transition-opacity', useBoxScroll && 'flex-1 min-h-0 flex flex-col')}
             >
               <div className={clsx('w-full', listLayout === 'table' ? clsx('block', useBoxScroll && 'flex-1 min-h-0 flex flex-col') : 'hidden print:block')}>
                 <TableDisplay
                   virtualized={useBoxScroll ? { scroll: 'container', estimateRowHeight: TABLE_ROW_ESTIMATE_PX, overscan: TABLE_OVERSCAN_ROWS } : false}
                   tableHeaderProps={useBoxScroll ? { isSticky: true } : undefined}
                   containerProps={{
-                    className: clsx(useBoxScroll && 'flex-1 min-h-0 max-h-[calc(100dvh-12rem)] overflow-y-auto', 'print:max-h-none print:overflow-visible'),
+                    className: clsx(useBoxScroll && 'flex-1 min-h-0 overflow-y-auto', 'print:max-h-none print:overflow-visible'),
                     onScroll: useBoxScroll ? (event) => handleListScroll(event.currentTarget) : undefined,
                   }}
                   className="print-content hw-autosize-table w-full overflow-x-auto hw-touch-scroll"
@@ -1084,7 +1084,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
                   items={displayedTasks}
                   getItemKey={(task) => task.id}
                   minCardWidthPx={384}
-                  containerClassName={useBoxScroll ? 'flex-1 min-h-0 max-h-[calc(100dvh-12rem)] overflow-y-auto' : undefined}
+                  containerClassName={useBoxScroll ? 'flex-1 min-h-0 overflow-y-auto' : undefined}
                   onReachBottom={useBoxScroll ? handleLoadMore : undefined}
                   renderItem={(task) => (
                     <TaskRowRefreshingGate key={task.id} taskId={task.id} className="h-full">
