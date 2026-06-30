@@ -148,7 +148,7 @@ export const PatientDetailView = ({
   const adherenceTooltip = adherenceLabel
 
   return (
-    <div className="flex-col-0 overflow-hidden">
+    <div className="flex-col-0 h-full overflow-hidden">
       {isEditMode && patientName && (
         <div className="py-3 mb-4">
           <div className="flex items-center justify-between">

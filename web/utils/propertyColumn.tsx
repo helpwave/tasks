@@ -79,6 +79,16 @@ export function createPropertyColumn<T extends RowWithProperties>(
   const allowUpdates = !!options?.allowUpdates && !!options?.onValueChanged
   const onValueChanged = options?.onValueChanged
 
+  const sizeInformation = prop.fieldType === FieldType.FieldTypeMultiSelect ? {
+    minSize: 360,
+    size: 360,
+    maxSize: 360
+  } : {
+    minSize: 220,
+    size: 220,
+    maxSize: 300
+  }
+
   return {
     id: columnId,
     header: prop.name,
@@ -118,9 +128,7 @@ export function createPropertyColumn<T extends RowWithProperties>(
       fieldType: prop.fieldType,
       ...(filterData && { filterData }),
     },
-    minSize: 220,
-    size: 220,
-    maxSize: 300,
+    ...sizeInformation,
     filterFn: hasFilter ? filterFn : undefined,
   } as ColumnDef<T>
 }

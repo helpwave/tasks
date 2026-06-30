@@ -20,15 +20,15 @@ export function InTableCheckboxEditPopUp({
   options = { horizontalAlignment: 'afterStart', verticalAlignment: 'afterEnd' },
   className = 'p-2',
 }: InTableCheckboxEditPopUpProps) {
-  const baseline = value ?? false
-  const [draft, setDraft] = useState<boolean>(baseline)
+  const baseline = value ?? null
+  const [draft, setDraft] = useState<boolean | null>(baseline)
   const translation = useTasksTranslation()
 
   return (
     <PopUpRoot
       onIsOpenChange={open => {
         if (open) {
-          setDraft(value ?? false)
+          setDraft(value ?? null)
         } else if (draft !== baseline) {
           onUpdate(draft)
         }
@@ -52,10 +52,12 @@ export function InTableCheckboxEditPopUp({
         }}
       </PopUpOpener>
       <PopUp options={options} aria-label={translation('edit')} className={clsx(className, 'flex-col-2 items-end')} onClick={e => e.stopPropagation()}>
-        <Checkbox
-          value={draft}
-          onValueChange={setDraft}
-        />
+        <div className="felx-row-0 w-full items-start">
+          <Checkbox
+            value={draft ?? false}
+            onValueChange={setDraft}
+          />
+        </div>
         <PopUpContext.Consumer>
           {({ setIsOpen }) => (
             <div className="flex-row-2 justify-end items-center gap-x-2">

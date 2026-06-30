@@ -59,7 +59,7 @@ function EditablePropertyTriggerDisplay({ property, fieldType }: { property: Pro
       <div className={clsx('text-left', chipField ? 'flex flex-wrap w-full max-w-full' : 'min-w-0 flex-1 overflow-hidden')}>
         <PropertyCell property={property} fieldType={fieldType} />
       </div>
-      <Edit2 className="size-4 min-w-4 shrink-0 group-hover:block hidden print:hidden" />
+      <Edit2 className="size-4 min-w-4 shrink-0 group-hover:text-on-surface text-faded print:hidden" />
     </>
   )
 }
@@ -181,7 +181,7 @@ export function EditablePropertyCell({
         definitionId={definitionId}
         optionLabels={definition.options}
         value={sel}
-        buttonProps={editableTriggerButtonProps}
+        buttonProps={{ ...editableTriggerButtonProps, className: clsx(editableTriggerButtonProps.className, { 'pl-1': !!sel }) }}
         onUpdate={(next) => {
           onValueChanged(next == null ? null : { definitionId, selectValue: next })
         }}
@@ -198,7 +198,7 @@ export function EditablePropertyCell({
         definitionId={definitionId}
         optionLabels={definition.options}
         value={multi}
-        buttonProps={editableTriggerButtonProps}
+        buttonProps={{ ...editableTriggerButtonProps, className: clsx(editableTriggerButtonProps.className, { 'pl-1': multi.length > 0 }) }}
         onUpdate={(next) => {
           onValueChanged(
             next == null || next.length === 0 ? null : { definitionId, multiSelectValues: next }
@@ -223,7 +223,6 @@ export function EditablePropertyCell({
           value={assigneeValue}
           allowTeams={true}
           allowUnassigned={true}
-          size="sm"
           onValueChanged={(next) => {
             const prev = assigneeValue
             if (next === prev) {

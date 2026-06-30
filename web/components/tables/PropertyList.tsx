@@ -379,7 +379,7 @@ export const PropertyList = ({
       hasError={isError}
       className="min-h-48"
     >
-      <div className="flex-col-2 px-1 pt-2 pb-16">
+      <div className="flex-col-2 px-1 pt-2 pb-16 h-full overflow-auto">
         {displayedProperties.map((attachedProperty) => (
           <PropertyEntry
             key={attachedProperty.property.id}

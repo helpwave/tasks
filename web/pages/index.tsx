@@ -4,7 +4,7 @@ import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { Avatar } from '@helpwave/hightide'
 import { CurrentTime } from '@/components/Date/CurrentTime'
-import { ClockIcon, ListCheckIcon, UsersIcon } from 'lucide-react'
+import { ChevronRightIcon, ClockIcon, ListCheckIcon, UsersIcon } from 'lucide-react'
 import { useMemo, type ReactNode } from 'react'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import Link from 'next/link'
@@ -15,6 +15,7 @@ import { overviewRecentTaskToTaskViewModel } from '@/utils/overviewRecentTaskToT
 import { overviewRecentPatientToPatientViewModel } from '@/utils/overviewRecentPatientToPatientViewModel'
 import { DateUtils, useLocale } from '@helpwave/hightide'
 import clsx from 'clsx'
+import { useRouter } from 'next/dist/client/components/navigation'
 
 
 const getGreetingKey = (timeZone: string) => {
@@ -54,20 +55,40 @@ interface StatCardProps {
   label: string,
   value: ReactNode,
   icon: ReactNode,
+  url?: string,
   iconWrapperClassName?: string,
   className?: string,
 }
 
-const StatCard = ({ label, value, icon, iconWrapperClassName, className }: StatCardProps) => {
+const StatCard = ({ label, value, icon, url, iconWrapperClassName, className }: StatCardProps) => {
+  const router = useRouter()
+  const hasLink = !!url
+
   return (
-    <div className={clsx('bg-surface rounded-lg p-4 shadow-sm flex-row-4 items-center border border-border h-full', className)}>
+    <div
+      onClick={() => {
+        if (hasLink) {
+          void router.push(url)
+        }
+      }}
+      className={clsx(
+        'min-w-64 min-h-28 max-h-28 w-full desktop:w-auto rounded-lg bg-surface p-4 shadow-md flex-row-4 flex-1 items-center group/stat-card',
+        { 'hover:cursor-pointer hover:shadow-lg': hasLink },
+        className
+      )}
+    >
       <div className={clsx('p-3 rounded-full', iconWrapperClassName)}>
         {icon}
       </div>
-      <div className="flex-col-0">
-        <span className="typography-label-sm text-description">{label}</span>
+      <div className="flex-col-0 w-full">
+        <span className={clsx('typography-label-sm text-description', { 'group-hover/stat-card:text-on-surface': hasLink })}>{label}</span>
         <span className="typography-title-lg">{value}</span>
       </div>
+      {!!url && (
+        <Link href={url} className="flex-row-1 justify-end size-force-5">
+          <ChevronRightIcon className="w-full h-full text-description group-hover/stat-card:text-on-surface" />
+        </Link>
+      )}
     </div>
   )
 }
@@ -97,33 +118,29 @@ const Dashboard: NextPage = () => {
       <div className="flex-col-8">
         <GreetingSection userName={user?.name} userAvatarUrl={user?.avatarUrl} />
 
-        <div className="flex flex-wrap gap-4">
-          <Link href="/tasks" className="min-w-60 min-h-20 flex-1 w-full sm:w-auto rounded-lg">
-            <StatCard
-              label={translation('myOpenTasks')}
-              value={myTasksCount}
-              icon={<ListCheckIcon className="size-force-5"/>}
-              iconWrapperClassName="bg-primary/10 text-primary"
-            />
-          </Link>
+        <div className="flex flex-wrap w-full gap-4 min-h-0">
+          <StatCard
+            label={translation('myOpenTasks')}
+            value={myTasksCount}
+            icon={<ListCheckIcon className="size-force-5"/>}
+            iconWrapperClassName="bg-primary/10 text-primary"
+            url="/tasks"
+          />
 
-          <Link href="/patients" className="min-w-60 min-h-20 flex-1 w-full sm:w-auto rounded-lg">
-            <StatCard
-              label={translation('totalPatients')}
-              value={scopedPatientsTotal}
-              icon={<UsersIcon className="size-force-5"/>}
-              iconWrapperClassName="bg-positive/10 text-positive"
-            />
-          </Link>
+          <StatCard
+            label={translation('totalPatients')}
+            value={scopedPatientsTotal}
+            icon={<UsersIcon className="size-force-5"/>}
+            iconWrapperClassName="bg-positive/10 text-positive"
+            url="/patients"
+          />
 
-          <div className="min-w-60 min-h-20 flex-1 w-full sm:w-auto">
-            <StatCard
-              label={translation('currentTime')}
-              value={<CurrentTime/>}
-              icon={<ClockIcon className="size-force-5"/>}
-              iconWrapperClassName="bg-secondary/10 text-secondary"
-            />
-          </div>
+          <StatCard
+            label={translation('currentTime')}
+            value={<CurrentTime/>}
+            icon={<ClockIcon className="size-force-5"/>}
+            iconWrapperClassName="bg-secondary/10 text-secondary"
+          />
         </div>
 
         <div className="flex flex-col gap-4 w-full">

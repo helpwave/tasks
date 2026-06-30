@@ -605,7 +605,7 @@ export const PatientDataEditor = ({
         </form>
 
         {!isEditMode && (
-          <div className="flex-none pt-4 mt-auto border-t border-divider flex justify-end gap-2">
+          <div className="flex-none my-2 flex justify-end gap-2">
             <Button
               onClick={form.submit}
               disabled={isCreating}

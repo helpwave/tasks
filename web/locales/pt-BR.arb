@@ -242,6 +242,14 @@
   "sex": "Sexo",
   "shiftHandover": "Passagem de turno",
   "showAllTasks": "Mostrar todas as tarefas",
+  "showPatient": "Mostrar paciente {name}",
+  "@showPatient": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
   "showTeamTasks": "Mostrar tarefas da equipe",
   "sorting": "Ordenação",
   "stagingModalDisclaimerMarkdown": "Esta instância pública do helpwave tasks é para '\\b{desenvolvimento e pré-visualização}'. Certifique-se de '\\b{apenas}' inserir '\\b{dados de teste não confidenciais}'. Esta instância pode '\\negative{\\b{ser excluída a qualquer momento}}'",

@@ -19,9 +19,9 @@ const PatientsPage: NextPage = () => {
   const patientId = router.isReady ? (router.query['patientId'] as string | undefined) : undefined
 
   return (
-    <Page pageTitle={titleWrapper(translation('patients'))}>
+    <Page pageTitle={titleWrapper(translation('patients'))} noScrolling noSpacer>
       <ContentPanel
-        className="flex-1 min-h-0"
+        className="flex-1 min-h-0 pb-4"
         titleElement={translation('patients')}
         description={(
           <PatientScopeCountChips

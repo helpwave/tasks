@@ -32,7 +32,11 @@ export function ListLoadingHint({ active, className }: ListLoadingHintProps) {
     <div
       role="status"
       aria-live="polite"
-      className={clsx('flex items-center justify-center gap-2 py-3 text-sm text-description print:hidden', className)}
+      className={clsx(
+        'absolute inset-x-3 bottom-3 z-10 rounded-lg p-2 flex items-center justify-center gap-2 py-3 text-sm text-description pointer-events-none print:hidden',
+        'bg-linear-to-t from-background via-background/90 to-transparent',
+        className
+      )}
     >
       <Loader2 className="size-4 animate-spin"/>
       <span>{translation(messageKey)}</span>

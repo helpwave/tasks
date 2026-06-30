@@ -1,9 +1,8 @@
 import React from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Dialog, Button, LoadingContainer } from '@helpwave/hightide'
+import { Dialog, Button, LoadingContainer, AvatarWithStatus } from '@helpwave/hightide'
 import { fetcher } from '@/api/gql/fetcher'
 import clsx from 'clsx'
-import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { DateDisplay } from '@/components/Date/DateDisplay'
 
@@ -72,9 +71,9 @@ export const UserInfoPopup: React.FC<UserInfoPopupProps> = ({ userId, isOpen, on
           <>
             <div className="flex-col-4">
               <div className="flex items-center gap-3">
-                <AvatarStatusComponent
+                <AvatarWithStatus
                   size="lg"
-                  isOnline={user.isOnline}
+                  status={user?.isOnline === undefined ? 'unknown' : user.isOnline ? 'online' : 'offline'}
                   image={user.avatarUrl ? {
                     avatarUrl: user.avatarUrl,
                     alt: user.name

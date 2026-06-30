@@ -200,7 +200,7 @@ export const PropertyDetailView = ({
 
   return (
     <FormProvider state={form}>
-      <div className="flex-col-0 h-full min-h-0 overflow-hidden px-1 sm:px-0">
+      <div className="flex-col-0 h-full min-h-0 overflow-auto py-4">
         <form
           onSubmit={event => { event.preventDefault(); form.submit() }}
           className="flex flex-col flex-1 gap-6 overflow-y-auto sm:gap-6"
@@ -468,7 +468,6 @@ export const PropertyDetailView = ({
               )}
             </FormField>
           )}
-          <div className="min-h-16" />
         </form>
 
         {!isEditMode && (

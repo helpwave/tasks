@@ -386,6 +386,14 @@
   "sex": "Geschlecht",
   "shiftHandover": "Schichtübergabe",
   "showAllTasks": "Alle Aufgaben anzeigen",
+  "showPatient": "Patient {name} anzeigen",
+  "@showPatient": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
   "showTeamTasks": "Team-Aufgaben anzeigen",
   "sorting": "Sortierung",
   "stagingModalDisclaimerMarkdown": "Diese öffentliche Instanz von helpwave tasks ist für '\\b{Entwicklungs- und Vorschauzwecke}' gedacht. Bitte stellen Sie sicher, dass Sie '\\b{ausschließlich nicht-vertrauliche Testdaten}' eingeben. Diese Instanz kann '\\negative{\\b{jederzeit gelöscht}}' werden.",

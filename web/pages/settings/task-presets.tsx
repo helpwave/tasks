@@ -329,6 +329,7 @@ const TaskPresetsPage: NextPage = () => {
         alignment="right"
         titleElement={translation('taskPresetCreate')}
         description={undefined}
+        noScrolling
       >
         <TaskPresetDataEditor
           name={name}
@@ -350,6 +351,7 @@ const TaskPresetsPage: NextPage = () => {
         alignment="right"
         titleElement={translation('taskPresetEdit')}
         description={undefined}
+        noScrolling
       >
         <TaskPresetDataEditor
           name={editName}
@@ -373,6 +375,7 @@ const TaskPresetsPage: NextPage = () => {
             : translation('createTask')
         }
         description={undefined}
+        noScrolling
       >
         {presetRowDrawer != null && (() => {
           const row = presetRowDrawer.section === 'create'

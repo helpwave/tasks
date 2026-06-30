@@ -29,7 +29,7 @@ export function InTableMultiSelectEditPopUp({
   buttonProps,
   children,
   options = { horizontalAlignment: 'afterStart', verticalAlignment: 'afterEnd' },
-  className = 'p-2',
+  className,
 }: InTableMultiSelectEditPopUpProps) {
   const [draft, setDraft] = useState<string[]>(() => [...value])
   const translation = useTasksTranslation()
@@ -63,7 +63,12 @@ export function InTableMultiSelectEditPopUp({
           )
         }}
       </PopUpOpener>
-      <PopUp options={options} aria-label={translation('edit')} className={clsx(className, 'flex-col-2 items-stretch max-h-72 overflow-y-auto min-w-56')} onClick={e => e.stopPropagation()}>
+      <PopUp
+        options={options}
+        aria-label={translation('edit')}
+        className={clsx('flex-col-2 items-stretch p-2 max-h-72 overflow-y-auto min-w-56', className)}
+        onClick={e => e.stopPropagation()}
+      >
         <div className="flex flex-col gap-2">
           {optionLabels.map((label, idx) => {
             const tag = tags[idx]

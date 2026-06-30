@@ -647,10 +647,10 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
                   className: 'justify-between group gap-x-2 w-full',
                 }}
               >
-                <span className="truncate">
+                <span className="truncate max-w-56 print:flex print:flex-wrap">
                   {row.original.name}
                 </span>
-                <Edit2 className="size-4 min-w-4 group-hover:block hidden" />
+                <Edit2 className="size-4 min-w-4 group-hover:text-on-surface text-faded print:hidden" />
               </InTableTextEditPopUp>
             </div>
           </TaskRowRefreshingGate>
@@ -664,25 +664,18 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
         header: translation('dueDate'),
         accessorKey: 'dueDate',
         cell: ({ row }) => {
-          if (!row.original.dueDate) {
-            return (
-              <TaskRowRefreshingGate taskId={row.original.id}>
-                <span className="text-description">-</span>
-              </TaskRowRefreshingGate>
-            )
-          }
           const overdue = DueDateUtils.isOverdue(row.original.dueDate, row.original.done)
           const closeToDue = DueDateUtils.isCloseToDueDate(row.original.dueDate, row.original.done)
           let colorClass = ''
           if (overdue) {
-            colorClass = 'text-red-500'
+            colorClass = 'text-negative-500'
           } else if (closeToDue) {
-            colorClass = 'text-orange-500'
+            colorClass = 'text-warning-500'
           }
           return (
             <TaskRowRefreshingGate taskId={row.original.id}>
               <InTableDateTimeEditPopUp
-                value={row.original.dueDate}
+                value={row.original.dueDate ?? null}
                 flexible
                 mode={DueDateUtils.isDateOnly(row.original.dueDate) ? 'date' : 'dateTime'}
                 onUpdate={next => {
@@ -697,12 +690,16 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
                   className: 'justify-between group gap-x-2 w-full',
                 }}
               >
-                <DueDateDisplay
-                  value={row.original.dueDate}
-                  mode="absolute"
-                  className={clsx(colorClass, 'truncate')}
-                />
-                <Edit2 className="size-4 min-w-4 group-hover:block hidden" />
+                {row.original.dueDate ? (
+                  <DueDateDisplay
+                    value={row.original.dueDate}
+                    mode="absolute"
+                    className={clsx(colorClass, 'truncate')}
+                  />
+                ):(
+                  <span className="text-description">-</span>
+                )}
+                <Edit2 className="size-4 min-w-4 group-hover:text-on-surface text-faded print:hidden" />
               </InTableDateTimeEditPopUp>
             </TaskRowRefreshingGate>
           )
@@ -730,20 +727,18 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
           }
           return (
             <TaskRowRefreshingGate taskId={row.original.id}>
-              <>
-                <Button
-                  color="neutral"
-                  size="sm"
-                  onClick={event => {
-                    event.stopPropagation()
-                    setPatientDialogState({ isOpen: true, data: { patientId: data.patient?.id ?? null } })
-                  }}
-                  className="flex-row-2 justify-between min-w-40 w-fit print:hidden group"
-                >
-                  <span className="truncate">{data.patient?.name}</span>
-                  <ExternalLink className="size-4 min-w-4 group-hover:block hidden" />
-                </Button>
-              </>
+              <Button
+                color="neutral"
+                size="sm"
+                onClick={event => {
+                  event.stopPropagation()
+                  setPatientDialogState({ isOpen: true, data: { patientId: data.patient?.id ?? null } })
+                }}
+                className="flex-row-2 justify-between min-w-40 w-fit group"
+              >
+                <span className="truncate">{data.patient?.name}</span>
+                <ExternalLink className="size-4 min-w-4 group-hover:text-on-surface text-description print:hidden" />
+              </Button>
             </TaskRowRefreshingGate>
           )
         },
@@ -822,7 +817,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
     ]
     return colsWithRefreshing
   },
-    [embedded, translation, showAssignee, taskPropertyColumnsWithActions, completeTask, reopenTask, updateTaskMutate])
+  [embedded, translation, showAssignee, taskPropertyColumnsWithActions, completeTask, reopenTask, updateTaskMutate])
 
   const taskCardPrimaryColumnIds = useMemo(() => {
     const s = new Set<string>(['done', 'title', 'dueDate', 'patient'])
@@ -1058,7 +1053,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
               )}
             </div>
           )}
-          <div className={clsx('flex-col-3 w-full relative print:static', useBoxScroll && 'flex-1 min-h-0', isMobileIOS && hasFilterPanelOpen && 'pointer-events-none')}>
+          <div className={clsx('relative print:static overflow-hidden w-full', useBoxScroll && 'flex-1 min-h-0 flex flex-col', isMobileIOS && hasFilterPanelOpen && 'pointer-events-none')}>
             {!embedded && (
               <style>{`
             table th[data-column-id="done"],
@@ -1071,14 +1066,14 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
             )}
             <div
               aria-busy={isListLoading}
-              className={clsx('flex-col-3 w-full transition-opacity', useBoxScroll && 'flex-1 min-h-0', isListLoading && 'opacity-60 print:opacity-100')}
+              className={clsx('w-full transition-opacity', useBoxScroll && 'flex-1 min-h-0 flex flex-col')}
             >
               <div className={clsx('w-full', listLayout === 'table' ? clsx('block', useBoxScroll && 'flex-1 min-h-0 flex flex-col') : 'hidden print:block')}>
                 <TableDisplay
                   virtualized={useBoxScroll ? { scroll: 'container', estimateRowHeight: TABLE_ROW_ESTIMATE_PX, overscan: TABLE_OVERSCAN_ROWS } : false}
                   tableHeaderProps={useBoxScroll ? { isSticky: true } : undefined}
                   containerProps={{
-                    className: clsx(useBoxScroll && 'flex-1 min-h-0 max-h-[calc(100dvh-12rem)] overflow-y-auto', 'print:max-h-none print:overflow-visible'),
+                    className: clsx(useBoxScroll && 'flex-1 min-h-0 overflow-y-auto', 'print:max-h-none print:overflow-visible'),
                     onScroll: useBoxScroll ? (event) => handleListScroll(event.currentTarget) : undefined,
                   }}
                   className="print-content hw-autosize-table w-full overflow-x-auto hw-touch-scroll"
@@ -1089,7 +1084,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
                   items={displayedTasks}
                   getItemKey={(task) => task.id}
                   minCardWidthPx={384}
-                  containerClassName={useBoxScroll ? 'flex-1 min-h-0 max-h-[calc(100dvh-12rem)] overflow-y-auto' : undefined}
+                  containerClassName={useBoxScroll ? 'flex-1 min-h-0 overflow-y-auto' : undefined}
                   onReachBottom={useBoxScroll ? handleLoadMore : undefined}
                   renderItem={(task) => (
                     <TaskRowRefreshingGate key={task.id} taskId={task.id} className="h-full">
@@ -1113,6 +1108,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
             description={undefined}
             isOpen={taskDialogState.isOpen}
             onClose={requestCloseTaskDrawer}
+            noScrolling
           >
             <TaskDetailView
               taskId={taskDialogState.taskId ?? null}
@@ -1164,6 +1160,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
             description={undefined}
             isOpen={patientDialogState.isOpen}
             onClose={() => setPatientDialogState(prev => ({ ...prev, isOpen: false }))}
+            noScrolling
           >
             {!!patientDialogState.data.patientId && (
               <PatientDetailView

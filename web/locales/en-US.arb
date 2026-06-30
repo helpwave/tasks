@@ -386,6 +386,14 @@
   "sex": "Sex",
   "shiftHandover": "Shift Handover",
   "showAllTasks": "Show All Tasks",
+  "showPatient": "Show patient {name}",
+  "@showPatient": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
   "showTeamTasks": "Show Team Tasks",
   "sorting": "Sorting",
   "stagingModalDisclaimerMarkdown": "This public instance of helpwave tasks is for '\\b{development and preview purposes}'. Please make sure to '\\b{only}' enter '\\b{non-confidential testing data}'. This instance can be '\\negative{\\b{deleted at any time}}'",

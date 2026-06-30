@@ -5,8 +5,10 @@ import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
 import {
+  AvatarWithStatus,
   Button,
   LocalizationUtil,
+  NavigationCard,
   Select,
   SelectOption,
   ThemeUtil,
@@ -18,14 +20,12 @@ import type { HightideTranslationLocales, ThemeType } from '@helpwave/hightide'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { useAuth } from '@/hooks/useAuth'
 import { LogOut, MonitorCog, MoonIcon, SunIcon, Trash2, ClipboardList, Shield, TableProperties, Building2, MessageSquareText, Upload, X, Rabbit, Combine } from 'lucide-react'
-import { useRouter } from 'next/router'
 import clsx from 'clsx'
 import { removeUser } from '@/api/auth/authService'
 import { useQueryClient } from '@tanstack/react-query'
 import { openSurvey, surveyStorageKeys } from '@/utils/survey'
 import { getConfig } from '@/utils/config'
 import { FeedbackDialog } from '@/components/FeedbackDialog'
-import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
 
 type ThemeIconProps = {
   theme: ThemeType,
@@ -56,7 +56,6 @@ const SettingsPage: NextPage = () => {
   const { logout } = useAuth()
   const queryClient = useQueryClient()
   const config = getConfig()
-  const router = useRouter()
   const [isFeedbackDialogOpen, setIsFeedbackDialogOpen] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
@@ -170,12 +169,12 @@ const SettingsPage: NextPage = () => {
         description={translation('settingsDescription')}
       >
         <div className="flex flex-col gap-y-12">
-          <section className="flex-row-4 items-center p-4 bg-surface-1 rounded-lg border border-divider">
+          <section className="flex-row-4 items-center p-4 bg-surface rounded-lg border border-divider">
             <div className="relative">
-              <AvatarStatusComponent
+              <AvatarWithStatus
                 size="lg"
                 image={previewUrl ? { avatarUrl: previewUrl, alt: user?.name || '' } : (user?.avatarUrl ? { avatarUrl: user.avatarUrl, alt: user?.name || '' } : undefined)}
-                isOnline={user?.isOnline ?? null}
+                status={user?.isOnline === undefined ? 'unknown' : user.isOnline ? 'online' : 'offline'}
               />
               {previewUrl && (
                 <button
@@ -248,48 +247,27 @@ const SettingsPage: NextPage = () => {
           <div className="flex-col-6">
             <h2 className="typography-title-md border-b border-divider pb-2">{translation('system')}</h2>
             <div className="flex flex-col gap-6 max-w-200">
-              <Button
-                color="neutral"
-                coloringStyle="outline"
+              <NavigationCard
                 className="justify-start h-auto py-4 w-full"
-                onClick={() => router.push('/properties')}
-              >
-                <TableProperties className="mr-2 shrink-0" />
-                <div className="flex-col-1 items-start">
-                  <span className="typography-label-lg">{translation('properties')}</span>
-                  <span className="typography-body-sm text-description font-normal">
-                    {translation('propertiesSettingsDescription')}
-                  </span>
-                </div>
-              </Button>
-              <Button
-                color="neutral"
-                coloringStyle="outline"
+                href="/properties"
+                leading={<TableProperties className="mr-2 shrink-0" />}
+                title={translation('properties')}
+                description={translation('propertiesSettingsDescription')}
+              />
+              <NavigationCard
                 className="justify-start h-auto py-4 w-full"
-                onClick={() => router.push('/settings/views')}
-              >
-                <Rabbit className="mr-2 shrink-0 size-5" />
-                <div className="flex-col-1 items-start">
-                  <span className="typography-label-lg">{translation('views')}</span>
-                  <span className="typography-body-sm text-description font-normal">
-                    {translation('viewSettingsDescription')}
-                  </span>
-                </div>
-              </Button>
-              <Button
-                color="neutral"
-                coloringStyle="outline"
+                href="/settings/views"
+                leading={<Rabbit className="mr-2 shrink-0 size-5" />}
+                title={translation('views')}
+                description={translation('viewSettingsDescription')}
+              />
+              <NavigationCard
                 className="justify-start h-auto py-4 w-full"
-                onClick={() => router.push('/settings/task-presets')}
-              >
-                <Combine className="mr-2 shrink-0" />
-                <div className="flex-col-1 items-start">
-                  <span className="typography-label-lg">{translation('taskPresets')}</span>
-                  <span className="typography-body-sm text-description font-normal">
-                    {translation('taskPresetsDescription')}
-                  </span>
-                </div>
-              </Button>
+                href="/settings/task-presets"
+                leading={<Combine className="mr-2 shrink-0" />}
+                title={translation('taskPresets')}
+                description={translation('taskPresetsDescription')}
+              />
             </div>
           </div>
 

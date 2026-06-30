@@ -4,8 +4,7 @@ import { DateDisplay } from '@/components/Date/DateDisplay'
 import clsx from 'clsx'
 import { fetcher } from '@/api/gql/fetcher'
 import { UserInfoPopup } from '@/components/UserInfoPopup'
-import { HelpwaveLogo } from '@helpwave/hightide'
-import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
+import { AvatarWithStatus, HelpwaveLogo } from '@helpwave/hightide'
 import { ChevronRight } from 'lucide-react'
 
 const GET_AUDIT_LOGS_QUERY = `
@@ -151,14 +150,14 @@ export const AuditLogTimeline: React.FC<AuditLogTimelineProps> = ({ caseId, clas
   }
 
   return (
-    <div className={clsx('flex-col-2', className)}>
+    <div className={clsx('flex-col-2 h-full overflow-hidden', className)}>
       {isLoading && (
         <div className="flex items-center justify-center py-12">
           <HelpwaveLogo className="w-16 h-16" animate="loading" />
         </div>
       )}
       {!isLoading && (
-        <div className="flex-col-3">
+        <div className="flex-col-3 h-full overflow-auto">
           {auditLogs.map((entry: AuditLogEntry, index: number) => {
             const userInfo = getUserInfo(entry.userId)
             const isExpanded = expandedEntries.has(index)
@@ -184,9 +183,9 @@ export const AuditLogTimeline: React.FC<AuditLogTimelineProps> = ({ caseId, clas
                     <div className="flex-row-2 items-center gap-2">
                       {entry.userId && userInfo && (
                         <>
-                          <AvatarStatusComponent
+                          <AvatarWithStatus
                             size="sm"
-                            isOnline={userInfo.isOnline}
+                            status={userInfo.isOnline === undefined ? 'unknown' : userInfo.isOnline ? 'online' : 'offline'}
                             image={userInfo.avatarUrl ? {
                               avatarUrl: userInfo.avatarUrl,
                               alt: userInfo.name

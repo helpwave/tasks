@@ -460,136 +460,144 @@ const ViewPage: NextPage = () => {
   const defaultSorting = deserializeSortingFromView(view.sortDefinition)
 
   return (
-    <Page pageTitle={titleWrapper(view.name)}>
-      <ContentPanel
-        titleElement={(
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between w-full">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="typography-title-lg font-bold">{view.name}</span>
-              <SavedViewEntityTypeChip entityType={view.baseEntityType} />
-              {!view.isOwner && (
-                <Chip
-                  size="sm"
-                  color="neutral"
-                  coloringStyle="outline"
-                  className="inline-flex items-center gap-1.5 border-dashed border-description/40 bg-description/[0.07] text-description shadow-none py-0.5 pl-1.5 pr-2.5"
-                >
-                  <Eye className="size-3.5 shrink-0 text-description/90" strokeWidth={2.25} aria-hidden />
-                  <span className="text-xs font-medium leading-none text-description">
-                    {translation('readOnlyView')}
-                  </span>
-                </Chip>
-              )}
-            </div>
-            <div className="flex flex-wrap gap-1 items-center justify-end">
-              <IconButton
-                tooltip={translation('copyShareLink')}
-                coloringStyle="text"
-                color="neutral"
-                onClick={copyShareLink}
-              >
-                <Share2 className="size-5" />
-              </IconButton>
-              {!view.isOwner && (
+    <>
+      <style>{`
+        [data-name="app-page-main-spacer"] {
+          min-height: calc(var(--spacing) * 4);
+        }
+      `}</style>
+      <Page pageTitle={titleWrapper(view.name)} noScrolling noSpacer>
+        <ContentPanel
+          className="flex-1 min-h-0 pb-4"
+          titleElement={(
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between w-full">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="typography-title-lg font-bold">{view.name}</span>
+                <SavedViewEntityTypeChip entityType={view.baseEntityType} />
+                {!view.isOwner && (
+                  <Chip
+                    size="sm"
+                    color="neutral"
+                    coloringStyle="outline"
+                    className="inline-flex items-center gap-1.5 border-dashed border-description/40 bg-description/[0.07] text-description shadow-none py-0.5 pl-1.5 pr-2.5"
+                  >
+                    <Eye className="size-3.5 shrink-0 text-description/90" strokeWidth={2.25} aria-hidden />
+                    <span className="text-xs font-medium leading-none text-description">
+                      {translation('readOnlyView')}
+                    </span>
+                  </Chip>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-1 items-center justify-end">
                 <IconButton
-                  tooltip={translation('copyViewToMyViews')}
+                  tooltip={translation('copyShareLink')}
                   coloringStyle="text"
                   color="neutral"
-                  onClick={() => setDuplicateOpen(true)}
+                  onClick={copyShareLink}
                 >
-                  <CopyPlus className="size-5" />
+                  <Share2 className="size-5" />
                 </IconButton>
-              )}
-            </div>
-          </div>
-        )}
-      >
-        {duplicateOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay-shadow p-4">
-            <div className="bg-surface rounded-lg p-6 flex flex-col gap-4 max-w-md w-full shadow-lg">
-              <span className="typography-title-md font-bold">{translation('copyViewToMyViews')}</span>
-              <label className="flex flex-col gap-1">
-                <span>{translation('name')}</span>
-                <input
-                  className="border border-divider rounded px-2 py-1 bg-background"
-                  value={duplicateName}
-                  onChange={(e) => setDuplicateName(e.target.value)}
-                />
-              </label>
-              <div className="flex justify-end gap-2">
-                <Button color="neutral" onClick={() => setDuplicateOpen(false)}>{translation('cancel')}</Button>
-                <Button color="primary" disabled={duplicateName.trim().length < 2} onClick={() => void handleDuplicate()}>
-                  {translation('duplicate')}
-                </Button>
+                {!view.isOwner && (
+                  <IconButton
+                    tooltip={translation('copyViewToMyViews')}
+                    coloringStyle="text"
+                    color="neutral"
+                    onClick={() => setDuplicateOpen(true)}
+                  >
+                    <CopyPlus className="size-5" />
+                  </IconButton>
+                )}
               </div>
             </div>
-          </div>
-        )}
+          )}
+        >
+          {duplicateOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay-shadow p-4">
+              <div className="bg-surface rounded-lg p-6 flex flex-col gap-4 max-w-md w-full shadow-lg">
+                <span className="typography-title-md font-bold">{translation('copyViewToMyViews')}</span>
+                <label className="flex flex-col gap-1">
+                  <span>{translation('name')}</span>
+                  <input
+                    className="border border-divider rounded px-2 py-1 bg-background"
+                    value={duplicateName}
+                    onChange={(e) => setDuplicateName(e.target.value)}
+                  />
+                </label>
+                <div className="flex justify-end gap-2">
+                  <Button color="neutral" onClick={() => setDuplicateOpen(false)}>{translation('cancel')}</Button>
+                  <Button color="primary" disabled={duplicateName.trim().length < 2} onClick={() => void handleDuplicate()}>
+                    {translation('duplicate')}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
 
-        {view.baseEntityType === SavedViewEntityType.Patient && (
-          <TabSwitcher>
-            <TabList className="mb-6" />
-            <TabPanel label={translation('patients')} className="flex-col-0 min-h-48 overflow-auto">
-              <PatientList
-                key={view.id}
-                rootLocationIds={params.rootLocationIds}
-                locationId={params.locationId}
-                viewDefaultFilters={defaultFilters}
-                viewDefaultSorting={defaultSorting}
-                viewDefaultSearchQuery={params.searchQuery}
-                viewDefaultColumnVisibility={params.columnVisibility}
-                viewDefaultColumnOrder={params.columnOrder}
-                hideSaveView={!view.isOwner}
-                savedViewId={view.isOwner ? view.id : undefined}
-                onSavedViewCreated={(id) => router.push(`/view/${id}`)}
-                onPatientUpdated={() => setPatientViewRefreshVersion(v => v + 1)}
-              />
-            </TabPanel>
-            <TabPanel label={translation('tasks')} className="flex-col-0 min-h-48 overflow-auto">
-              <PatientViewTasksPanel
-                filterDefinitionJson={view.filterDefinition}
-                sortDefinitionJson={view.sortDefinition}
-                parameters={params}
-                relatedFilterDefinitionJson={view.relatedFilterDefinition}
-                relatedSortDefinitionJson={view.relatedSortDefinition}
-                relatedParametersJson={view.relatedParameters}
-                savedViewId={view.isOwner ? view.id : undefined}
-                isOwner={view.isOwner}
-                refreshVersion={patientViewRefreshVersion}
-              />
-            </TabPanel>
-          </TabSwitcher>
-        )}
+          {view.baseEntityType === SavedViewEntityType.Patient && (
+            <TabSwitcher>
+              <TabList className="mb-6 shrink-0" />
+              <TabPanel label={translation('patients')} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+                <PatientList
+                  key={view.id}
+                  rootLocationIds={params.rootLocationIds}
+                  locationId={params.locationId}
+                  viewDefaultFilters={defaultFilters}
+                  viewDefaultSorting={defaultSorting}
+                  viewDefaultSearchQuery={params.searchQuery}
+                  viewDefaultColumnVisibility={params.columnVisibility}
+                  viewDefaultColumnOrder={params.columnOrder}
+                  hideSaveView={!view.isOwner}
+                  savedViewId={view.isOwner ? view.id : undefined}
+                  onSavedViewCreated={(id) => router.push(`/view/${id}`)}
+                  onPatientUpdated={() => setPatientViewRefreshVersion(v => v + 1)}
+                />
+              </TabPanel>
+              <TabPanel label={translation('tasks')} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+                <PatientViewTasksPanel
+                  filterDefinitionJson={view.filterDefinition}
+                  sortDefinitionJson={view.sortDefinition}
+                  parameters={params}
+                  relatedFilterDefinitionJson={view.relatedFilterDefinition}
+                  relatedSortDefinitionJson={view.relatedSortDefinition}
+                  relatedParametersJson={view.relatedParameters}
+                  savedViewId={view.isOwner ? view.id : undefined}
+                  isOwner={view.isOwner}
+                  refreshVersion={patientViewRefreshVersion}
+                />
+              </TabPanel>
+            </TabSwitcher>
+          )}
 
-        {view.baseEntityType === SavedViewEntityType.Task && (
-          <TabSwitcher>
-            <TabList className="mb-6" />
-            <TabPanel label={translation('myTasks')} className="flex-col-0 min-h-48 overflow-auto">
-              <SavedTaskViewTab
-                key={view.id}
-                viewId={view.id}
-                filterDefinition={view.filterDefinition}
-                sortDefinition={view.sortDefinition}
-                parameters={params}
-                isOwner={view.isOwner}
-              />
-            </TabPanel>
-            <TabPanel label={translation('patients')} className="flex-col-0 min-h-48 overflow-auto">
-              <TaskViewPatientsPanel
-                filterDefinitionJson={view.filterDefinition}
-                sortDefinitionJson={view.sortDefinition}
-                parameters={params}
-                relatedFilterDefinitionJson={view.relatedFilterDefinition}
-                relatedSortDefinitionJson={view.relatedSortDefinition}
-                relatedParametersJson={view.relatedParameters}
-                savedViewId={view.isOwner ? view.id : undefined}
-                isOwner={view.isOwner}
-              />
-            </TabPanel>
-          </TabSwitcher>
-        )}
-      </ContentPanel>
-    </Page>
+          {view.baseEntityType === SavedViewEntityType.Task && (
+            <TabSwitcher>
+              <TabList className="mb-6 shrink-0" />
+              <TabPanel label={translation('myTasks')} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+                <SavedTaskViewTab
+                  key={view.id}
+                  viewId={view.id}
+                  filterDefinition={view.filterDefinition}
+                  sortDefinition={view.sortDefinition}
+                  parameters={params}
+                  isOwner={view.isOwner}
+                />
+              </TabPanel>
+              <TabPanel label={translation('patients')} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+                <TaskViewPatientsPanel
+                  filterDefinitionJson={view.filterDefinition}
+                  sortDefinitionJson={view.sortDefinition}
+                  parameters={params}
+                  relatedFilterDefinitionJson={view.relatedFilterDefinition}
+                  relatedSortDefinitionJson={view.relatedSortDefinition}
+                  relatedParametersJson={view.relatedParameters}
+                  savedViewId={view.isOwner ? view.id : undefined}
+                  isOwner={view.isOwner}
+                />
+              </TabPanel>
+            </TabSwitcher>
+          )}
+        </ContentPanel>
+      </Page>
+    </>
   )
 }
 

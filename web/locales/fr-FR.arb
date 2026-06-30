@@ -242,6 +242,14 @@
   "sex": "Sexe",
   "shiftHandover": "Passation",
   "showAllTasks": "Afficher toutes les tâches",
+  "showPatient": "Afficher le patient {name}",
+  "@showPatient": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
   "showTeamTasks": "Afficher les tâches d''équipe",
   "sorting": "Tri",
   "stagingModalDisclaimerMarkdown": "Cette instance publique de helpwave tasks est destinée au '\\b{développement et à l''aperçu}'. Veuillez '\\b{ne}' saisir '\\b{que des données de test non confidentielles}'. Cette instance peut '\\negative{\\b{être supprimée à tout moment}}'",

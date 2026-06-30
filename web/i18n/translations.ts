@@ -243,6 +243,7 @@ export type TasksTranslationEntries = {
   'sex': string,
   'shiftHandover': string,
   'showAllTasks': string,
+  'showPatient': (values: { name: string }) => string,
   'showTeamTasks': string,
   'sorting': string,
   'sPriority': (values: { priority: string }) => string,
@@ -652,6 +653,9 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'sex': `Geschlecht`,
     'shiftHandover': `Schichtübergabe`,
     'showAllTasks': `Alle Aufgaben anzeigen`,
+    'showPatient': ({ name }): string => {
+      return `Patient ${name} anzeigen`
+    },
     'showTeamTasks': `Team-Aufgaben anzeigen`,
     'sorting': `Sortierung`,
     'sPriority': ({ priority }): string => {
@@ -1095,6 +1099,9 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'sex': `Sex`,
     'shiftHandover': `Shift Handover`,
     'showAllTasks': `Show All Tasks`,
+    'showPatient': ({ name }): string => {
+      return `Show patient ${name}`
+    },
     'showTeamTasks': `Show Team Tasks`,
     'sorting': `Sorting`,
     'sPriority': ({ priority }): string => {
@@ -1537,6 +1544,9 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'sex': `Sexo`,
     'shiftHandover': `Traspaso de turno`,
     'showAllTasks': `Mostrar todas las tareas`,
+    'showPatient': ({ name }): string => {
+      return `Mostrar paciente ${name}`
+    },
     'showTeamTasks': `Mostrar tareas del equipo`,
     'sorting': `Ordenación`,
     'sPriority': ({ priority }): string => {
@@ -1979,6 +1989,9 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'sex': `Sexe`,
     'shiftHandover': `Passation`,
     'showAllTasks': `Afficher toutes les tâches`,
+    'showPatient': ({ name }): string => {
+      return `Afficher le patient ${name}`
+    },
     'showTeamTasks': `Afficher les tâches d'équipe`,
     'sorting': `Tri`,
     'sPriority': ({ priority }): string => {
@@ -2424,6 +2437,9 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'sex': `Geslacht`,
     'shiftHandover': `Dienstwissel`,
     'showAllTasks': `Alle taken tonen`,
+    'showPatient': ({ name }): string => {
+      return `Patiënt ${name} tonen`
+    },
     'showTeamTasks': `Teamtaken tonen`,
     'sorting': `Sorteren`,
     'sPriority': ({ priority }): string => {
@@ -2866,6 +2882,9 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'sex': `Sexo`,
     'shiftHandover': `Passagem de turno`,
     'showAllTasks': `Mostrar todas as tarefas`,
+    'showPatient': ({ name }): string => {
+      return `Mostrar paciente ${name}`
+    },
     'showTeamTasks': `Mostrar tarefas da equipe`,
     'sorting': `Ordenação`,
     'sPriority': ({ priority }): string => {

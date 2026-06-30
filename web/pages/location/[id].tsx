@@ -172,8 +172,9 @@ const LocationPage: NextPage = () => {
   }, [locationData])
 
   return (
-    <Page pageTitle={titleWrapper(locationTitle || translation('location'))}>
+    <Page pageTitle={titleWrapper(locationTitle || translation('location'))} noScrolling noSpacer>
       <ContentPanel
+        className="flex-1 min-h-0 pb-4"
         titleElement={
           isLoading ? (
             <LoadingContainer className="w-16 h-7" />
@@ -185,18 +186,18 @@ const LocationPage: NextPage = () => {
                   <Chip
                     size="sm"
                     color={undefined}
-                    className={`text-[0.625rem] font-bold px-1 py-0.5 rounded-md uppercase tracking-wider ${getKindStyles(locationKind)}`}
+                    className={`text-sm font-bold px-1 py-0.5 rounded-md ${getKindStyles(locationKind)}`}
                   >
                     {translation('locationType', { type: locationKind })}
                   </Chip>
                 )}
               </div>
               {parentChain.length > 0 && (
-                <div className="flex flex-wrap items-center -space-x-1 scale-75 origin-top-left">
+                <div className="flex flex-wrap items-center origin-top-left">
                   {parentChain.map((parent, index) => (
                     <div key={parent.id} className="flex items-center">
                       {index > 0 && <span className="text-description mx-3">{LOCATION_PATH_SEPARATOR}</span>}
-                      <LocationChips locations={[parent]} />
+                      <LocationChips locations={[parent]} small/>
                     </div>
                   ))}
                 </div>
@@ -208,8 +209,8 @@ const LocationPage: NextPage = () => {
         {!id && <CenteredLoadingLogo />}
         {id && (
           <TabSwitcher>
-            <TabList className="mb-8" />
-            <TabPanel label={translation('patients')} className="flex-col-0 min-h-48 overflow-auto">
+            <TabList className="mb-8 shrink-0" />
+            <TabPanel label={translation('patients')} className="flex flex-col flex-1 min-h-0 overflow-hidden">
               {isError ? (
                 <div className="bg-negative/20 flex-col-0 justify-center items-center p-4 rounded-md">
                   {translation('errorOccurred')}
@@ -218,7 +219,7 @@ const LocationPage: NextPage = () => {
                 <PatientList key={id} viewDefaultFilters={viewDefaultLocationFilters} />
               )}
             </TabPanel>
-            <TabPanel label={translation('tasks')} className="flex-col-0 min-h-48 overflow-auto">
+            <TabPanel label={translation('tasks')} className="flex flex-col flex-1 min-h-0 overflow-hidden">
               {isError ? (
                 <div className="bg-negative/20 flex-col-0 justify-center items-center p-4 rounded-md">
                   {translation('errorOccurred')}

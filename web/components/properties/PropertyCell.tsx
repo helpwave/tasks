@@ -1,10 +1,9 @@
-import { Chip, FillerCell, Tooltip } from '@helpwave/hightide'
+import { AvatarWithStatus, Chip, FillerCell, Tooltip } from '@helpwave/hightide'
 import { Users } from 'lucide-react'
 import { DateDisplay } from '@/components/Date/DateDisplay'
 import { FieldType } from '@/api/gql/generated'
 import type { PropertyValueType } from '@/api/gql/generated'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
-import { AvatarStatusComponent } from '@/components/AvatarStatusComponent'
 import { parseApiDateTime, parseLocalCalendarDate } from '@/utils/calendarDate'
 
 export interface PropertyCellProps {
@@ -13,6 +12,7 @@ export interface PropertyCellProps {
 }
 
 const textCellMaxLength = 32
+const multiSelectVisibleChipCount = 3
 
 
 export const PropertyCell = ({
@@ -27,120 +27,145 @@ export const PropertyCell = ({
   }
 
   switch (fieldType) {
-    case FieldType.FieldTypeCheckbox:
-      return (
-        <Chip
-          size="sm"
-          className="coloring-tonal"
-          color={property.booleanValue ? 'positive' : 'negative'}
-        >
-          {property.booleanValue ? translation('yes') : translation('no')}
+  case FieldType.FieldTypeCheckbox:
+    return (
+      <Chip
+        size="sm"
+        className="coloring-tonal"
+        color={property.booleanValue ? 'positive' : 'negative'}
+      >
+        {property.booleanValue ? translation('yes') : translation('no')}
+      </Chip>
+    )
+  case FieldType.FieldTypeDate: {
+    const date = parseLocalCalendarDate(property.dateValue ?? undefined)
+    if (!date) {
+      return <FillerCell />
+    }
+    return (
+      <DateDisplay date={date} showTime={false} mode="absolute" />
+    )
+  }
+  case FieldType.FieldTypeDateTime: {
+    const date = parseApiDateTime(property.dateTimeValue ?? undefined)
+    if (!date) {
+      return <FillerCell />
+    }
+    return (
+      <DateDisplay date={date} mode="absolute" />
+    )
+  }
+  case FieldType.FieldTypeSelect: {
+    if (!property.selectValue) {
+      return <FillerCell />
+    }
+    const selectOptionIndex = property.selectValue.match(/-opt-(\d+)$/)?.[1]
+    const selectOptionName = selectOptionIndex !== undefined && property.definition?.options
+      ? property.definition.options[parseInt(selectOptionIndex, 10)]
+      : property.selectValue
+    return (
+      <div className="flex flex-wrap gap-1 w-full max-w-full min-w-0">
+        <Chip size="sm" className="primary coloring-tonal max-w-full min-w-0">
+          <span className="truncate min-w-0">{selectOptionName}</span>
         </Chip>
-      )
-    case FieldType.FieldTypeDate: {
-      const date = parseLocalCalendarDate(property.dateValue ?? undefined)
-      if (!date) {
-        return <FillerCell />
-      }
-      return (
-        <DateDisplay date={date} showTime={false} mode="absolute" />
-      )
+      </div>
+    )
+  }
+  case FieldType.FieldTypeMultiSelect: {
+    if (!property.multiSelectValues || property.multiSelectValues.length === 0) {
+      return <FillerCell />
     }
-    case FieldType.FieldTypeDateTime: {
-      const date = parseApiDateTime(property.dateTimeValue ?? undefined)
-      if (!date) {
-        return <FillerCell />
-      }
-      return (
-        <DateDisplay date={date} mode="absolute" />
-      )
-    }
-    case FieldType.FieldTypeSelect: {
-      if (!property.selectValue) {
-        return <FillerCell />
-      }
-      const selectOptionIndex = property.selectValue.match(/-opt-(\d+)$/)?.[1]
-      const selectOptionName = selectOptionIndex !== undefined && property.definition?.options
-        ? property.definition.options[parseInt(selectOptionIndex, 10)]
-        : property.selectValue
-      return (
-        <div className="flex flex-wrap gap-1 w-full max-w-full min-w-0">
-          <Chip size="sm" className="primary coloring-tonal max-w-full min-w-0">
-            <span className="truncate min-w-0">{selectOptionName}</span>
-          </Chip>
-        </div>
-      )
-    }
-    case FieldType.FieldTypeMultiSelect: {
-      if (!property.multiSelectValues || property.multiSelectValues.length === 0) {
-        return <FillerCell />
-      }
-      return (
-        <div className="flex flex-wrap gap-1 w-full max-w-full min-w-0">
-          {property.multiSelectValues.map((val) => {
-            const multiSelectOptionIndex = val.match(/-opt-(\d+)$/)?.[1]
-            const multiSelectOptionName = multiSelectOptionIndex !== undefined && property.definition?.options
-              ? property.definition.options[parseInt(multiSelectOptionIndex, 10)]
-              : val
-            return (
-              <Chip key={val} size="sm" className="primary coloring-tonal max-w-full min-w-0">
-                <span className="truncate min-w-0">{multiSelectOptionName}</span>
+
+    const multiSelectEntries = property.multiSelectValues.map((val) => {
+      const multiSelectOptionIndex = val.match(/-opt-(\d+)$/)?.[1]
+      const multiSelectOptionName = multiSelectOptionIndex !== undefined && property.definition?.options
+        ? property.definition.options[parseInt(multiSelectOptionIndex, 10)]
+        : val
+      return { id: val, name: multiSelectOptionName }
+    })
+    const visibleEntries = multiSelectEntries.slice(0, multiSelectVisibleChipCount)
+    const additionalCount = multiSelectEntries.length - visibleEntries.length
+
+    return (
+      <Tooltip
+        tooltip={(
+          <div className="flex flex-wrap gap-1 max-w-sm">
+            {multiSelectEntries.map(({ id, name }) => (
+              <Chip key={id} size="sm" className="primary coloring-tonal">
+                {name}
               </Chip>
-            )
-          })}
+            ))}
+          </div>
+        )}
+        alignment="top"
+        containerClassName="print:hidden w-full min-w-0"
+        displayProps={{ className: 'p-1' }}
+      >
+        <div className="flex flex-wrap gap-1 w-full max-w-full min-w-0">
+          {visibleEntries.map(({ id, name }) => (
+            <Chip key={id} size="sm" className="primary coloring-tonal max-w-20 min-w-0 shrink">
+              <span className="truncate min-w-0 block">{name}</span>
+            </Chip>
+          ))}
+          {additionalCount > 0 && (
+            <Chip size="sm" className="primary coloring-tonal shrink-0">
+              +{additionalCount}
+            </Chip>
+          )}
+        </div>
+      </Tooltip>
+    )
+  }
+  case FieldType.FieldTypeNumber:
+    return (
+      <span className="truncate block">{property.numberValue}</span>
+    )
+  case FieldType.FieldTypeText: {
+    const textValue = String(property.textValue ?? property.numberValue ?? '')
+    const displayValue = textValue.length > textCellMaxLength
+      ? `${textValue.slice(0, textCellMaxLength)}...`
+      : textValue
+    return (
+      <>
+        <Tooltip tooltip={textValue} containerClassName="print:hidden">
+          <span className="truncate block max-w-full overflow-hidden text-ellipsis">{displayValue}</span>
+        </Tooltip>
+        <span className="hidden print:block whitespace-pre-wrap break-words">{textValue}</span>
+      </>
+    )
+  }
+  case FieldType.FieldTypeUser: {
+    if (property.user) {
+      return (
+        <div className="flex items-center gap-2 min-w-0">
+          <AvatarWithStatus
+            size="sm"
+            status={property.user.isOnline === undefined ? 'unknown' : property.user.isOnline ? 'online' : 'offline'}
+            image={property.user.avatarUrl ? {
+              avatarUrl: property.user.avatarUrl,
+              alt: property.user.name,
+            } : undefined}
+          />
+          <span className="truncate min-w-0">{property.user.name}</span>
         </div>
       )
     }
-    case FieldType.FieldTypeNumber:
+    if (property.team) {
       return (
-        <span className="truncate block">{property.numberValue}</span>
-      )
-    case FieldType.FieldTypeText: {
-      const textValue = String(property.textValue ?? property.numberValue ?? '')
-      const displayValue = textValue.length > textCellMaxLength
-        ? `${textValue.slice(0, textCellMaxLength)}...`
-        : textValue
-      return (
-        <>
-          <Tooltip tooltip={textValue} containerClassName="print:hidden">
-            <span className="truncate block max-w-full overflow-hidden text-ellipsis">{displayValue}</span>
-          </Tooltip>
-          <span className="hidden print:block whitespace-pre-wrap break-words">{textValue}</span>
-        </>
+        <div className="flex items-center gap-2 min-w-0">
+          <Users className="size-4 text-description flex-shrink-0" />
+          <span className="truncate min-w-0">{property.team.title}</span>
+        </div>
       )
     }
-    case FieldType.FieldTypeUser: {
-      if (property.user) {
-        return (
-          <div className="flex items-center gap-2 min-w-0">
-            <AvatarStatusComponent
-              size="sm"
-              isOnline={property.user.isOnline ?? null}
-              image={property.user.avatarUrl ? {
-                avatarUrl: property.user.avatarUrl,
-                alt: property.user.name,
-              } : undefined}
-            />
-            <span className="truncate min-w-0">{property.user.name}</span>
-          </div>
-        )
-      }
-      if (property.team) {
-        return (
-          <div className="flex items-center gap-2 min-w-0">
-            <Users className="size-4 text-description flex-shrink-0" />
-            <span className="truncate min-w-0">{property.team.title}</span>
-          </div>
-        )
-      }
-      if (property.userValue) {
-        return (
-          <span className="truncate block">{property.userValue}</span>
-        )
-      }
-      return <FillerCell />
+    if (property.userValue) {
+      return (
+        <span className="truncate block">{property.userValue}</span>
+      )
     }
-    default:
-      return <FillerCell />
+    return <FillerCell />
+  }
+  default:
+    return <FillerCell />
   }
 }

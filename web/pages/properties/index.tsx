@@ -3,7 +3,7 @@ import { Page } from '@/components/layout/Page'
 import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
-import { Button, Chip, FillerCell, IconButton, Table } from '@helpwave/hightide'
+import { Button, Chip, FillerCell, IconButton, TableDisplay, TableProvider } from '@helpwave/hightide'
 import { useCallback, useMemo, useState } from 'react'
 import type { ColumnDef } from '@tanstack/table-core'
 import { EditIcon, PlusIcon } from 'lucide-react'
@@ -12,6 +12,11 @@ import type { Property } from '@/components/tables/PropertyList'
 import { PropertyDetailView } from '@/components/properties/PropertyDetailView'
 import { FieldType, PropertyEntity } from '@/api/gql/generated'
 import { usePropertyDefinitions } from '@/data'
+import { overscanRowsForBuffer } from '@/utils/virtualGrid'
+import { ListLoadingHint } from '@/components/common/ListLoadingHint'
+
+const TABLE_ROW_ESTIMATE_PX = 48
+const TABLE_OVERSCAN_ROWS = overscanRowsForBuffer(800, TABLE_ROW_ESTIMATE_PX)
 
 const PropertiesPage: NextPage = () => {
   const translation = useTasksTranslation()
@@ -37,7 +42,7 @@ const PropertiesPage: NextPage = () => {
     return entity === PropertyEntity.Patient ? 'patient' : 'task'
   }
 
-  const { data: propertyDefinitionsData, refetch } = usePropertyDefinitions()
+  const { data: propertyDefinitionsData, loading, refetch } = usePropertyDefinitions()
 
   const data = propertyDefinitionsData?.propertyDefinitions?.map(def => ({
     id: def.id,
@@ -159,9 +164,12 @@ const PropertiesPage: NextPage = () => {
     }
   ], [translation])
 
+  const fillerRowCell = useCallback(() => (<FillerCell className="min-h-12" />), [])
+
   return (
-    <Page pageTitle={titleWrapper(translation('properties'))}>
+    <Page pageTitle={titleWrapper(translation('properties'))} noScrolling noSpacer>
       <ContentPanel
+        className="flex-1 min-h-0 pb-4"
         titleElement={translation('properties')}
         description={(
           <Chip color="neutral" coloringStyle="tonal" size="sm">
@@ -175,21 +183,30 @@ const PropertiesPage: NextPage = () => {
           </Button>
         )}
       >
-        <div className="overflow-x-auto -mx-4 px-4 lg:mx-0 lg:px-0">
-          <Table
-            className="w-full h-full min-w-150"
-            table={{
-              data: data ?? [],
-              columns,
-              isUsingFillerRows: true,
-              fillerRowCell: useCallback(() => (<FillerCell className="min-h-12"/>), []),
-              initialState: {
-                pagination: {
-                  pageSize: 10,
-                }
-              }
-            }}
-          />
+        <div className="relative flex-1 min-h-0 flex flex-col overflow-hidden">
+          <div
+            aria-busy={loading}
+            className="flex-1 min-h-0 flex flex-col"
+          >
+            <TableProvider
+              data={data}
+              columns={columns}
+              isUsingFillerRows
+              fillerRowCell={fillerRowCell}
+            >
+              <div className="flex-1 min-h-0 flex flex-col">
+                <TableDisplay
+                  virtualized={{ scroll: 'container', estimateRowHeight: TABLE_ROW_ESTIMATE_PX, overscan: TABLE_OVERSCAN_ROWS }}
+                  tableHeaderProps={{ isSticky: true }}
+                  containerProps={{
+                    className: 'flex-1 min-h-0 overflow-y-auto',
+                  }}
+                  className="w-full min-w-150 overflow-x-auto hw-touch-scroll"
+                />
+              </div>
+            </TableProvider>
+          </div>
+          <ListLoadingHint active={loading} />
         </div>
       </ContentPanel>
 
@@ -199,6 +216,7 @@ const PropertiesPage: NextPage = () => {
         description={undefined}
         isOpen={isPanelOpen}
         onClose={handleClose}
+        noScrolling
       >
         <PropertyDetailView
           id={selected?.id}

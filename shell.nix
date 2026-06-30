@@ -77,8 +77,10 @@ pkgs.mkShell {
       current_hash=$(sha256sum "$req_file" | cut -d " " -f1)
 
       if [ ! -f "$req_hash_file" ] || [ "$(cat "$req_hash_file")" != "$current_hash" ]; then
-        echo ">>> Requirements changed. Updating pip..."
+        echo ">>> Requirements changed."
+        echo ">>> Updating pip..."
         pip install --upgrade pip > /dev/null
+        echo ">>> Updating requirements..."
         pip install -r "$req_file"
         echo "$current_hash" > "$req_hash_file"
       fi
