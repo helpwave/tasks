@@ -3,7 +3,7 @@ import { useMutation } from '@apollo/client/react'
 import type { IdentifierFilterValue, FilterListItem, FilterListPopUpBuilderProps } from '@helpwave/hightide'
 import { Chip, DateUtils, FillerCell, SearchBar, ProgressIndicator, Tooltip, Drawer, TableProvider, TableDisplay, TableColumnSwitcher, IconButton, useLocale, FilterList, SortingList, Button, ExpansionIcon, Visibility, ConfirmDialog } from '@helpwave/hightide'
 import clsx from 'clsx'
-import { LayoutGrid, PlusIcon, Table2, ExternalLink } from 'lucide-react'
+import { LayoutGrid, PlusIcon, Table2 } from 'lucide-react'
 import type { LocationType } from '@/api/gql/generated'
 import { Sex, PatientState, type GetPatientsQuery, type TaskType, PropertyEntity, FieldType, type QueryableField } from '@/api/gql/generated'
 import { usePropertyDefinitions, usePatientsPaginated, useQueryableFields, useRefreshingEntityIds, useUpdatePatient } from '@/data'
@@ -684,28 +684,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
       accessorKey: 'name',
       cell: ({ row }) => {
         const patient = row.original
-        return gateCell(patient.id, (
-          <>
-            <span className="print:block hidden">{patient.name}</span>
-            <Tooltip
-              tooltip={translation('showPatient', { name: patient.name })}
-              alignment="top"
-            >
-              <Button
-                color="neutral"
-                size="sm"
-                onClick={(event) => {
-                  event.stopPropagation()
-                  handleEdit(patient)
-                }}
-                className="flex-row-2 justify-between w-40 min-w-40 max-w-40 overflow-hidden group print:hidden"
-              >
-                <span className="truncate min-w-0">{patient.name}</span>
-                <ExternalLink className="size-4 min-w-4 shrink-0 group-hover:text-on-surface text-description" />
-              </Button>
-            </Tooltip>
-          </>
-        ))
+        return gateCell(patient.id, (patient.name))
       },
       minSize: 200,
       size: 250,
