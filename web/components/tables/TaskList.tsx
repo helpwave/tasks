@@ -650,7 +650,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
                 <span className="truncate max-w-56 print:flex print:flex-wrap">
                   {row.original.name}
                 </span>
-                <Edit2 className="size-4 min-w-4 group-hover:text-on-surface text-description print:hidden" />
+                <Edit2 className="size-4 min-w-4 group-hover:text-on-surface text-faded print:hidden" />
               </InTableTextEditPopUp>
             </div>
           </TaskRowRefreshingGate>
@@ -699,7 +699,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
                 ):(
                   <span className="text-description">-</span>
                 )}
-                <Edit2 className="size-4 min-w-4 group-hover:text-on-surface text-description print:hidden" />
+                <Edit2 className="size-4 min-w-4 group-hover:text-on-surface text-faded print:hidden" />
               </InTableDateTimeEditPopUp>
             </TaskRowRefreshingGate>
           )
@@ -1108,6 +1108,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
             description={undefined}
             isOpen={taskDialogState.isOpen}
             onClose={requestCloseTaskDrawer}
+            noScrolling
           >
             <TaskDetailView
               taskId={taskDialogState.taskId ?? null}
@@ -1159,6 +1160,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
             description={undefined}
             isOpen={patientDialogState.isOpen}
             onClose={() => setPatientDialogState(prev => ({ ...prev, isOpen: false }))}
+            noScrolling
           >
             {!!patientDialogState.data.patientId && (
               <PatientDetailView

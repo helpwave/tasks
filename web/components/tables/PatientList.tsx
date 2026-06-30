@@ -703,7 +703,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
                 className="flex-row-2 justify-between w-40 min-w-40 max-w-40 overflow-hidden group print:hidden"
               >
                 <span className="truncate min-w-0">{patient.name}</span>
-                <ExternalLink className="size-4 min-w-4 shrink-0 group-hover:text-on-surface text-faded" />
+                <ExternalLink className="size-4 min-w-4 shrink-0 group-hover:text-on-surface text-description" />
               </Button>
             </Tooltip>
           </>
@@ -1291,6 +1291,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
           alignment="right"
           titleElement={!patientDialogState.data.patientId ? translation('addPatient') : translation('editPatient')}
           description={undefined}
+          noScrolling={true}
         >
           <PatientDetailView
             patientId={patientDialogState.data.patientId ?? undefined}

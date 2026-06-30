@@ -71,128 +71,130 @@ export function TaskPresetDataEditor({
   }
 
   return (
-    <div className="flex flex-col gap-8 pb-6 overflow-y-auto max-h-[min(85dvh,calc(100dvh-5rem))] px-1">
-      <div className="grid grid-cols-1 gap-6">
-        <div className="flex flex-col gap-3 max-w-2xl">
-          <span className="typography-label-lg">{translation('taskPresetName')}</span>
-          <Input value={name} onChange={e => onNameChange(e.target.value)} className="w-full" />
-        </div>
-        {showScope && (
-          <div className="flex flex-col gap-3">
-            <span className="typography-label-lg">{translation('taskPresetScope')}</span>
-            <Select
-              value={scope}
-              onValueChange={v => onScopeChange(v as TaskPresetScope)}
-              buttonProps={{ className: 'w-full' }}
-            >
-              <SelectOption
-                value={TaskPresetScope.Personal}
-                label={translation('taskPresetScopePersonal')}
-              >
-                {translation('taskPresetScopePersonal')}
-              </SelectOption>
-              <SelectOption
-                value={TaskPresetScope.Global}
-                label={translation('taskPresetScopeGlobal')}
-              >
-                {translation('taskPresetScopeGlobal')}
-              </SelectOption>
-            </Select>
+    <div className="flex-col-0 overflow-hidden h-full px-1">
+      <div className="flex-col-8 h-full overflow-x-auto">
+        <div className="grid grid-cols-1 gap-6">
+          <div className="flex flex-col gap-3 max-w-2xl">
+            <span className="typography-label-lg">{translation('taskPresetName')}</span>
+            <Input value={name} onChange={e => onNameChange(e.target.value)} className="w-full" />
           </div>
-        )}
-      </div>
-      <div className="flex flex-col gap-5 mt-2 pt-2 border-t border-divider">
-        <span className="typography-label-lg">{translation('addTask')}</span>
-        {rows.map((row, index) => (
-          <div
-            key={index}
-            className={clsx(
-              'flex flex-col gap-4 p-5 md:p-6 rounded-xl border bg-background',
-              row.title.trim() === '' ? 'border-negative bg-negative/10' : 'border-border'
-            )}
-          >
-            <div className="flex flex-col xl:flex-row xl:items-start gap-5 xl:gap-10 justify-between">
-              <div className="flex-1 flex flex-col gap-4 min-w-0 w-full">
-                <Input
-                  placeholder={translation('taskTitlePlaceholder')}
-                  value={row.title}
-                  onChange={e => updateRowTitle(index, e.target.value)}
-                  className="w-full"
-                />
-                <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
-                  <Chip color="neutral" className="inline-flex items-center gap-3">
-                    <span>
-                      {translation('priority')}
-                    </span>
-                    <span className="inline-flex items-center gap-1">
-                      <span
-                        className={clsx(
-                          'size-2.5 rounded-full shrink-0 bg-neutral-400',
-                          PriorityUtils.toBackgroundColor(row.priority)
-                        )}
-                      />
+          {showScope && (
+            <div className="flex flex-col gap-3">
+              <span className="typography-label-lg">{translation('taskPresetScope')}</span>
+              <Select
+                value={scope}
+                onValueChange={v => onScopeChange(v as TaskPresetScope)}
+                buttonProps={{ className: 'w-full' }}
+              >
+                <SelectOption
+                  value={TaskPresetScope.Personal}
+                  label={translation('taskPresetScopePersonal')}
+                >
+                  {translation('taskPresetScopePersonal')}
+                </SelectOption>
+                <SelectOption
+                  value={TaskPresetScope.Global}
+                  label={translation('taskPresetScopeGlobal')}
+                >
+                  {translation('taskPresetScopeGlobal')}
+                </SelectOption>
+              </Select>
+            </div>
+          )}
+        </div>
+        <div className="flex flex-col gap-5 mt-2 pt-2 border-t border-divider">
+          <span className="typography-label-lg">{translation('addTask')}</span>
+          {rows.map((row, index) => (
+            <div
+              key={index}
+              className={clsx(
+                'flex flex-col gap-4 p-5 md:p-6 rounded-xl border bg-background',
+                row.title.trim() === '' ? 'border-negative bg-negative/10' : 'border-border'
+              )}
+            >
+              <div className="flex flex-col xl:flex-row xl:items-start gap-5 xl:gap-10 justify-between">
+                <div className="flex-1 flex flex-col gap-4 min-w-0 w-full">
+                  <Input
+                    placeholder={translation('taskTitlePlaceholder')}
+                    value={row.title}
+                    onChange={e => updateRowTitle(index, e.target.value)}
+                    className="w-full"
+                  />
+                  <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
+                    <Chip color="neutral" className="inline-flex items-center gap-3">
+                      <span>
+                        {translation('priority')}
+                      </span>
+                      <span className="inline-flex items-center gap-1">
+                        <span
+                          className={clsx(
+                            'size-2.5 rounded-full shrink-0 bg-neutral-400',
+                            PriorityUtils.toBackgroundColor(row.priority)
+                          )}
+                        />
+                        <span className="text-description">
+                          {row.priority
+                            ? translation('sPriority', { priority: row.priority })
+                            : translation('priorityNone')}
+                        </span>
+                      </span>
+                    </Chip>
+                    <Chip color="neutral" className="inline-flex items-center gap-3">
+                      <span>
+                        {translation('timeEstimate')}
+                      </span>
                       <span className="text-description">
-                        {row.priority
-                          ? translation('sPriority', { priority: row.priority })
+                        {row.estimatedTime != null && row.estimatedTime > 0
+                          ? translation('nMinutesShort', { minCount: row.estimatedTime })
                           : translation('priorityNone')}
                       </span>
-                    </span>
-                  </Chip>
-                  <Chip color="neutral" className="inline-flex items-center gap-3">
-                    <span>
-                      {translation('timeEstimate')}
-                    </span>
-                    <span className="text-description">
-                      {row.estimatedTime != null && row.estimatedTime > 0
-                        ? translation('nMinutesShort', { minCount: row.estimatedTime })
-                        : translation('priorityNone')}
-                    </span>
-                  </Chip>
+                    </Chip>
+                  </div>
+                  {row.description.trim() !== '' && (
+                    <p className="text-sm text-description leading-relaxed line-clamp-3 whitespace-pre-wrap">
+                      {row.description}
+                    </p>
+                  )}
                 </div>
-                {row.description.trim() !== '' && (
-                  <p className="text-sm text-description leading-relaxed line-clamp-3 whitespace-pre-wrap">
-                    {row.description}
-                  </p>
-                )}
-              </div>
-              <div className="flex flex-wrap items-center gap-0.5 shrink-0">
-                <IconButton
-                  type="button"
-                  tooltip={translation('taskPresetEditDetails')}
-                  coloringStyle="text"
-                  color="neutral"
-                  className="shrink-0"
-                  onClick={() => onEditRow(index)}
-                >
-                  <Pencil className="size-4" />
-                </IconButton>
-                <IconButton
-                  type="button"
-                  tooltip={translation('taskPresetRemoveRow')}
-                  coloringStyle="text"
-                  color="negative"
-                  className="shrink-0"
-                  onClick={() => removeRow(index)}
-                  disabled={rows.length <= 1}
-                >
-                  <Trash2 className="size-4" />
-                </IconButton>
+                <div className="flex flex-wrap items-center gap-0.5 shrink-0">
+                  <IconButton
+                    type="button"
+                    tooltip={translation('taskPresetEditDetails')}
+                    coloringStyle="text"
+                    color="neutral"
+                    className="shrink-0"
+                    onClick={() => onEditRow(index)}
+                  >
+                    <Pencil className="size-4" />
+                  </IconButton>
+                  <IconButton
+                    type="button"
+                    tooltip={translation('taskPresetRemoveRow')}
+                    coloringStyle="text"
+                    color="negative"
+                    className="shrink-0"
+                    onClick={() => removeRow(index)}
+                    disabled={rows.length <= 1}
+                  >
+                    <Trash2 className="size-4" />
+                  </IconButton>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-        <Button
-          type="button"
-          color="neutral"
-          coloringStyle="outline"
-          className="w-fit"
-          onClick={addRow}
-        >
-          <PlusIcon className="size-4" />
-          {translation('taskPresetAddRow')}
-        </Button>
+          ))}
+          <Button
+            type="button"
+            color="neutral"
+            coloringStyle="outline"
+            className="w-fit"
+            onClick={addRow}
+          >
+            <PlusIcon className="size-4" />
+            {translation('taskPresetAddRow')}
+          </Button>
+        </div>
       </div>
-      <div className="flex flex-wrap gap-3 justify-end pt-4 border-t border-divider sticky bottom-0 bg-surface-1 -mx-1 px-1 pb-1">
+      <div className="flex flex-wrap gap-3 justify-end my-2 bg-surface-1 -mx-1 px-1 pb-1">
         <Button
           color="neutral"
           coloringStyle="outline"

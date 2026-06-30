@@ -628,6 +628,7 @@ export const TaskDataEditor = ({
           alignment="right"
           titleElement={translation('editPatient')}
           description={undefined}
+          noScrolling
         >
           <PatientDetailView
             patientId={taskData?.patient?.id}

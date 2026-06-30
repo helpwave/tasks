@@ -165,7 +165,8 @@ const PropertiesPage: NextPage = () => {
   ], [translation])
 
   const fillerRowCell = useCallback(() => (<FillerCell className="min-h-12" />), [])
-  const pageSize = Math.max(data.length, 1)
+
+  console.log(propertyDefinitionsData, data)
 
   return (
     <Page pageTitle={titleWrapper(translation('properties'))} noScrolling noSpacer>
@@ -194,11 +195,6 @@ const PropertiesPage: NextPage = () => {
               columns={columns}
               isUsingFillerRows
               fillerRowCell={fillerRowCell}
-              initialState={{
-                pagination: {
-                  pageSize,
-                },
-              }}
             >
               <div className="flex-1 min-h-0 flex flex-col">
                 <TableDisplay
@@ -222,6 +218,7 @@ const PropertiesPage: NextPage = () => {
         description={undefined}
         isOpen={isPanelOpen}
         onClose={handleClose}
+        noScrolling
       >
         <PropertyDetailView
           id={selected?.id}

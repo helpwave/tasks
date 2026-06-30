@@ -150,7 +150,7 @@ export const PatientTasksView = ({
             </ExpandableContent>
           </ExpandableRoot>
         </div>
-        <div className="flex-row-4 justify-end mt-2 flex-wrap gap-2">
+        <div className="flex-row-4 justify-end my-2 flex-wrap gap-2">
           <Button
             onClick={() => setLoadPresetOpen(true)}
             className="w-fit"
@@ -184,6 +184,7 @@ export const PatientTasksView = ({
         alignment="right"
         titleElement={taskId ? translation('editTask') : translation('createTask')}
         description={undefined}
+        noScrolling={true}
       >
         <TaskDetailView
           taskId={taskId}

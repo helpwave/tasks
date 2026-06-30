@@ -150,14 +150,14 @@ export const AuditLogTimeline: React.FC<AuditLogTimelineProps> = ({ caseId, clas
   }
 
   return (
-    <div className={clsx('flex-col-2', className)}>
+    <div className={clsx('flex-col-2 h-full overflow-hidden', className)}>
       {isLoading && (
         <div className="flex items-center justify-center py-12">
           <HelpwaveLogo className="w-16 h-16" animate="loading" />
         </div>
       )}
       {!isLoading && (
-        <div className="flex-col-3">
+        <div className="flex-col-3 h-full overflow-auto">
           {auditLogs.map((entry: AuditLogEntry, index: number) => {
             const userInfo = getUserInfo(entry.userId)
             const isExpanded = expandedEntries.has(index)
