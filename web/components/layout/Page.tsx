@@ -237,7 +237,8 @@ export const Page = ({
             <RootLocationSelector />
           </div>
         ),
-        activeUrl: context?.route
+        activeUrl: context?.route,
+        LinkComponent: Link
       }}
       headerActions={[
         (<Header key="header" />)

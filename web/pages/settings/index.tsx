@@ -26,6 +26,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { openSurvey, surveyStorageKeys } from '@/utils/survey'
 import { getConfig } from '@/utils/config'
 import { FeedbackDialog } from '@/components/FeedbackDialog'
+import Link from 'next/link'
 
 type ThemeIconProps = {
   theme: ThemeType,
@@ -253,6 +254,7 @@ const SettingsPage: NextPage = () => {
                 leading={<TableProperties className="mr-2 shrink-0" />}
                 title={translation('properties')}
                 description={translation('propertiesSettingsDescription')}
+                LinkComponent={Link}
               />
               <NavigationCard
                 className="justify-start h-auto py-4 w-full"
@@ -260,6 +262,7 @@ const SettingsPage: NextPage = () => {
                 leading={<Rabbit className="mr-2 shrink-0 size-5" />}
                 title={translation('views')}
                 description={translation('viewSettingsDescription')}
+                LinkComponent={Link}
               />
               <NavigationCard
                 className="justify-start h-auto py-4 w-full"
@@ -267,6 +270,7 @@ const SettingsPage: NextPage = () => {
                 leading={<Combine className="mr-2 shrink-0" />}
                 title={translation('taskPresets')}
                 description={translation('taskPresetsDescription')}
+                LinkComponent={Link}
               />
             </div>
           </div>
