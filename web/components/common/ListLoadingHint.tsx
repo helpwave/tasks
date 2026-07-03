@@ -33,7 +33,7 @@ export function ListLoadingHint({ active, className }: ListLoadingHintProps) {
       role="status"
       aria-live="polite"
       className={clsx(
-        'absolute inset-x-3 bottom-3 z-10 rounded-lg p-2 flex items-center justify-center gap-2 py-3 text-sm text-description pointer-events-none print:hidden',
+        'absolute inset-x-0 bottom-0 z-10 rounded-b-lg p-2 flex items-center justify-center gap-2 py-3 text-sm text-description pointer-events-none print:hidden',
         'bg-linear-to-t from-background via-background/90 to-transparent',
         className
       )}
