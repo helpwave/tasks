@@ -2,10 +2,10 @@ import type { NextPage } from 'next'
 import { Page } from '@/components/layout/Page'
 import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
-import { Avatar } from '@helpwave/hightide'
+import { Avatar, Card, NavigationCard } from '@helpwave/hightide'
 import { CurrentTime } from '@/components/Date/CurrentTime'
-import { ChevronRightIcon, ClockIcon, ListCheckIcon, UsersIcon } from 'lucide-react'
-import { useMemo, type ReactNode } from 'react'
+import { ClockIcon, ListCheckIcon, UsersIcon } from 'lucide-react'
+import { useMemo } from 'react'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import Link from 'next/link'
 import { useOverviewData } from '@/data'
@@ -14,8 +14,6 @@ import { PatientList } from '@/components/tables/PatientList'
 import { overviewRecentTaskToTaskViewModel } from '@/utils/overviewRecentTaskToTaskViewModel'
 import { overviewRecentPatientToPatientViewModel } from '@/utils/overviewRecentPatientToPatientViewModel'
 import { DateUtils, useLocale } from '@helpwave/hightide'
-import clsx from 'clsx'
-import { useRouter } from 'next/dist/client/components/navigation'
 
 
 const getGreetingKey = (timeZone: string) => {
@@ -51,48 +49,6 @@ const GreetingSection = ({ userName, userAvatarUrl }: GreetingSectionProps) => {
   )
 }
 
-interface StatCardProps {
-  label: string,
-  value: ReactNode,
-  icon: ReactNode,
-  url?: string,
-  iconWrapperClassName?: string,
-  className?: string,
-}
-
-const StatCard = ({ label, value, icon, url, iconWrapperClassName, className }: StatCardProps) => {
-  const router = useRouter()
-  const hasLink = !!url
-
-  return (
-    <div
-      onClick={() => {
-        if (hasLink) {
-          void router.push(url)
-        }
-      }}
-      className={clsx(
-        'min-w-64 min-h-28 max-h-28 w-full desktop:w-auto rounded-lg bg-surface p-4 shadow-md flex-row-4 flex-1 items-center group/stat-card',
-        { 'hover:cursor-pointer hover:shadow-lg': hasLink },
-        className
-      )}
-    >
-      <div className={clsx('p-3 rounded-full', iconWrapperClassName)}>
-        {icon}
-      </div>
-      <div className="flex-col-0 w-full">
-        <span className={clsx('typography-label-sm text-description', { 'group-hover/stat-card:text-on-surface': hasLink })}>{label}</span>
-        <span className="typography-title-lg">{value}</span>
-      </div>
-      {!!url && (
-        <Link href={url} className="flex-row-1 justify-end size-force-5">
-          <ChevronRightIcon className="w-full h-full text-description group-hover/stat-card:text-on-surface" />
-        </Link>
-      )}
-    </div>
-  )
-}
-
 const Dashboard: NextPage = () => {
   const translation = useTasksTranslation()
   const { user, myTasksCount, scopedPatientsTotal, selectedRootLocationIds } = useTasksContext()
@@ -119,27 +75,41 @@ const Dashboard: NextPage = () => {
         <GreetingSection userName={user?.name} userAvatarUrl={user?.avatarUrl} />
 
         <div className="flex flex-wrap w-full gap-4 min-h-0">
-          <StatCard
-            label={translation('myOpenTasks')}
-            value={myTasksCount}
-            icon={<ListCheckIcon className="size-force-5"/>}
-            iconWrapperClassName="bg-primary/10 text-primary"
-            url="/tasks"
+          <NavigationCard
+            className="flex-1 min-w-64 py-4"
+            href="/tasks"
+            leading={(
+              <div className="p-3 rounded-full bg-primary/10 text-primary">
+                <ListCheckIcon className="size-force-5"/>
+              </div>
+            )}
+            title={translation('myOpenTasks')}
+            description={myTasksCount?.toString()}
+            LinkComponent={Link}
           />
 
-          <StatCard
-            label={translation('totalPatients')}
-            value={scopedPatientsTotal}
-            icon={<UsersIcon className="size-force-5"/>}
-            iconWrapperClassName="bg-positive/10 text-positive"
-            url="/patients"
+          <NavigationCard
+            className="flex-1 min-w-64 py-4"
+            href="/patients"
+            leading={(
+              <div className="p-3 rounded-full bg-positive/10 text-positive">
+                <UsersIcon className="size-force-5"/>
+              </div>
+            )}
+            title={translation('totalPatients')}
+            description={scopedPatientsTotal?.toString()}
+            LinkComponent={Link}
           />
 
-          <StatCard
-            label={translation('currentTime')}
-            value={<CurrentTime/>}
-            icon={<ClockIcon className="size-force-5"/>}
-            iconWrapperClassName="bg-secondary/10 text-secondary"
+          <Card
+            className="flex-1 min-w-64 py-4"
+            leading={(
+              <div className="p-3 rounded-full bg-secondary/10 text-secondary">
+                <ClockIcon className="size-force-5"/>
+              </div>
+            )}
+            title={translation('currentTime')}
+            description={<CurrentTime/>}
           />
         </div>
 

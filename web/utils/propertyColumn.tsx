@@ -55,6 +55,20 @@ function getPropertyAccessorValue(
   )
 }
 
+function getPropertySizeInformation(fieldType: FieldType) {
+  switch (fieldType) {
+  case FieldType.FieldTypeMultiSelect:
+    return { minSize: 360, size: 360, maxSize: 360 }
+  case FieldType.FieldTypeNumber:
+  case FieldType.FieldTypeCheckbox:
+    return { minSize: 90, size: 110, maxSize: 200 }
+  case FieldType.FieldTypeSelect:
+    return { minSize: 120, size: 160, maxSize: 300 }
+  default:
+    return { minSize: 220, size: 220, maxSize: 300 }
+  }
+}
+
 function getFilterData(prop: PropertyDefinitionType) {
   const filterFn = getPropertyFilterFn(prop.fieldType)
   if (filterFn === 'multiTags' || filterFn === 'singleTag') {
@@ -79,15 +93,7 @@ export function createPropertyColumn<T extends RowWithProperties>(
   const allowUpdates = !!options?.allowUpdates && !!options?.onValueChanged
   const onValueChanged = options?.onValueChanged
 
-  const sizeInformation = prop.fieldType === FieldType.FieldTypeMultiSelect ? {
-    minSize: 360,
-    size: 360,
-    maxSize: 360
-  } : {
-    minSize: 220,
-    size: 220,
-    maxSize: 300
-  }
+  const sizeInformation = getPropertySizeInformation(prop.fieldType)
 
   return {
     id: columnId,

@@ -213,7 +213,7 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
     prevConnectionStatusRef.current = connectionStatus
   }, [connectionStatus, refetchGlobalData])
 
-  const myTasksCount = data?.me?.tasks?.filter(t => !t.done).length ?? 0
+  const myTasksCount = data?.me?.tasks?.filter(t => !t.done).length
   const scopedPatientCounts = data?.scopedPatientCounts
   const effectInputKey = [
     data?.me?.id ?? '',
@@ -310,7 +310,7 @@ export const TasksContextProvider = ({ children }: PropsWithChildren) => {
           organizations: data.me.organizations ?? null,
           isOnline: data.me.isOnline ?? null
         } : prevState.user,
-        myTasksCount: data?.me?.tasks?.filter(t => !t.done).length ?? 0,
+        myTasksCount: data?.me?.tasks?.filter(t => !t.done).length,
         scopedPatientsTotal: scopedPatientCounts?.scopedPatientsTotal,
         scopedPatientsWaiting: scopedPatientCounts?.scopedPatientsWaiting,
         scopedPatientsAdmitted: scopedPatientCounts?.scopedPatientsAdmitted,

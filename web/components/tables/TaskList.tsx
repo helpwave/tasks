@@ -1,7 +1,7 @@
 import { useMemo, useState, forwardRef, useImperativeHandle, useEffect, useRef, useCallback, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import type { FilterListItem } from '@helpwave/hightide'
-import { Button, Checkbox, ConfirmDialog, FilterList, FillerCell, IconButton, SearchBar, TableColumnSwitcher, TableDisplay, TableProvider, SortingList, ExpansionIcon } from '@helpwave/hightide'
+import { Button, Checkbox, ConfirmDialog, FilterList, FillerCell, IconButton, SearchBar, TableColumnSwitcher, TableDisplay, TableProvider, SortingList, ExpansionIcon, VirtualizedCardGrid } from '@helpwave/hightide'
 import clsx from 'clsx'
 import { Edit2, ExternalLink, LayoutGrid, PlusIcon, Table2, UserCheck } from 'lucide-react'
 import type { IdentifierFilterValue } from '@helpwave/hightide'
@@ -32,11 +32,10 @@ import { queryableFieldsToFilterListItems, queryableFieldsToSortingListItems, ty
 import { LIST_PAGE_SIZE } from '@/utils/listPaging'
 import { TaskCardView } from '@/components/tasks/TaskCardView'
 import { RefreshingTaskIdsContext, TaskRowRefreshingGate } from '@/components/tables/TaskRowRefreshingGate'
-import { VirtualizedCardGrid } from '@/components/common/VirtualizedCardGrid'
 import { overscanRowsForBuffer } from '@/utils/virtualGrid'
 import { ListLoadingHint } from '@/components/common/ListLoadingHint'
 import { useIsPrinting } from '@/hooks/useIsPrinting'
-import { isNearBottom } from '@/utils/nearBottom'
+import { ScrollToTopButton } from '@/components/common/ScrollToTopButton'
 import { ExpandableTextBlock } from '@/components/common/ExpandableTextBlock'
 import { InTableTextEditPopUp } from '@/components/tables/in-table-edit/InTableTextEditPopUp'
 import { InTableDateTimeEditPopUp } from './in-table-edit/InTableDateTimeEditPopUp'
@@ -336,10 +335,12 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
 
   const showBlockingLoadingOverlay = loading && displayedTasks.length === 0
   const isListLoading = showBlockingLoadingOverlay || isFetchingMore
-  const useBoxScroll = !isPrinting && !embedded
-  const handleListScroll = useCallback((element: HTMLElement) => {
+  // The list pages let the surrounding AppPage scroll the whole page (page scroll),
+  // so the table/cards expand to full height instead of scrolling inside a capped box.
+  const usePageScroll = !isPrinting && !embedded
+  const handleReachBottom = useCallback(() => {
     if (embedded || isFetchingMore || !effectiveHasMore) return
-    if (isNearBottom(element, 600)) handleLoadMore()
+    handleLoadMore()
   }, [embedded, isFetchingMore, effectiveHasMore, handleLoadMore])
 
   const openTasks = useMemo(() => {
@@ -933,6 +934,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
       <TableProvider
         data={displayedTasks}
         columns={columns}
+        columnSizingMode="natural"
         fillerRowCell={useCallback(() => (<FillerCell className="min-h-12" />), [])}
         initialState={{
           pagination: {
@@ -960,7 +962,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
         enableSorting={false}
         enableColumnPinning={false}
       >
-        <div className={clsx('flex flex-col gap-4', useBoxScroll ? 'flex-1 min-h-0' : 'h-full')}>
+        <div className={clsx('flex flex-col gap-4', usePageScroll ? 'w-full' : 'h-full')}>
           {!embedded && (
             <div className="flex-col-2 w-full">
               <div className="flex flex-col-reverse items-start gap-3 md:flex-row md:flex-row-8 md:justify-between w-full">
@@ -1053,7 +1055,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
               )}
             </div>
           )}
-          <div className={clsx('relative print:static overflow-hidden w-full', useBoxScroll && 'flex-1 min-h-0 flex flex-col', isMobileIOS && hasFilterPanelOpen && 'pointer-events-none')}>
+          <div className={clsx('relative print:static overflow-hidden w-full', isMobileIOS && hasFilterPanelOpen && 'pointer-events-none')}>
             {!embedded && (
               <style>{`
             table th[data-column-id="done"],
@@ -1066,17 +1068,16 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
             )}
             <div
               aria-busy={isListLoading}
-              className={clsx('w-full transition-opacity', useBoxScroll && 'flex-1 min-h-0 flex flex-col')}
+              className="w-full transition-opacity"
             >
-              <div className={clsx('w-full', listLayout === 'table' ? clsx('block', useBoxScroll && 'flex-1 min-h-0 flex flex-col') : 'hidden print:block')}>
+              <div className={clsx('w-full', listLayout === 'table' ? 'block' : 'hidden print:block')}>
                 <TableDisplay
-                  virtualized={useBoxScroll ? { scroll: 'container', estimateRowHeight: TABLE_ROW_ESTIMATE_PX, overscan: TABLE_OVERSCAN_ROWS } : false}
-                  tableHeaderProps={useBoxScroll ? { isSticky: true } : undefined}
+                  virtualized={usePageScroll ? { scroll: 'page', estimateRowHeight: TABLE_ROW_ESTIMATE_PX, overscan: TABLE_OVERSCAN_ROWS, onReachBottom: listLayout === 'table' ? handleReachBottom : undefined } : false}
+                  tableHeaderProps={usePageScroll ? { isSticky: true } : undefined}
                   containerProps={{
-                    className: clsx(useBoxScroll && 'flex-1 min-h-0 overflow-y-auto', 'print:max-h-none print:overflow-visible'),
-                    onScroll: useBoxScroll ? (event) => handleListScroll(event.currentTarget) : undefined,
+                    className: 'print:max-h-none print:overflow-visible',
                   }}
-                  className="print-content hw-autosize-table w-full overflow-x-auto hw-touch-scroll"
+                  className="print-content w-full overflow-x-auto hw-touch-scroll"
                 />
               </div>
               {listLayout === 'card' && (
@@ -1084,8 +1085,8 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
                   items={displayedTasks}
                   getItemKey={(task) => task.id}
                   minCardWidthPx={384}
-                  containerClassName={useBoxScroll ? 'flex-1 min-h-0 overflow-y-auto' : undefined}
-                  onReachBottom={useBoxScroll ? handleLoadMore : undefined}
+                  scroll={usePageScroll ? 'page' : 'container'}
+                  onReachBottom={usePageScroll ? handleReachBottom : undefined}
                   renderItem={(task) => (
                     <TaskRowRefreshingGate key={task.id} taskId={task.id} className="h-full">
                       <TaskCardView
@@ -1102,6 +1103,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
             </div>
             <ListLoadingHint active={isListLoading}/>
           </div>
+          {usePageScroll && (<ScrollToTopButton />)}
           <Drawer
             alignment="right"
             titleElement={taskDialogState.taskId ? translation('editTask') : translation('createTask')}

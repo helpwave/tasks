@@ -166,9 +166,10 @@ test.describe('patient table (patient list)', () => {
     expect(maxRenderedRows).toBeLessThan(PATIENT_COUNT)
   })
 
-  test('scrolls inside the list container only — the page must not grow a second scrollbar', async ({ page }) => {
+  test('scrolls the whole page as one — the list has no nested scrollbar', async ({ page }) => {
     // Fixed 1280x720 viewport so the height maths is deterministic: 77 rows far
-    // exceed the viewport, so the list must scroll *inside* its own container.
+    // exceed the viewport, so the AppPage content area must scroll the whole
+    // page (the list itself is not capped into its own scroll box).
     await page.setViewportSize({ width: 1280, height: 720 })
     await seedAuth(page)
     await seedStoredSelection(page, ['root-1'])
@@ -188,29 +189,125 @@ test.describe('patient table (patient list)', () => {
         const oy = getComputedStyle(el).overflowY
         return oy === 'auto' || oy === 'scroll' || oy === 'overlay'
       }
+      // The AppPage content area (main's parent) is the single scroll container.
+      const appPageContent = document.querySelector('[data-name="app-page-content"]')
+      // First scroll container walking up from the table: it must be the shared
+      // AppPage content area, i.e. the list has no capped inner scroll box
+      // between the table and the page — otherwise we'd have a nested scrollbar.
       const table = document.querySelector('table[data-name="table"]')
       let current: Element | null = table?.parentElement ?? null
-      let inner: HTMLElement | null = null
+      let firstScrollable: HTMLElement | null = null
       while (current && current !== document.body) {
         if (isScrollable(current) && current.scrollHeight > current.clientHeight) {
-          inner = current as HTMLElement
+          firstScrollable = current as HTMLElement
           break
         }
         current = current.parentElement
       }
-      const main = document.querySelector('main')
-      const outer = main?.parentElement ?? null
       return {
-        innerScrolls: !!inner,
-        outerOverflow: outer ? outer.scrollHeight - outer.clientHeight : -1,
+        firstScrollableIsAppPage: firstScrollable === appPageContent,
+        appPageOverflow: appPageContent
+          ? appPageContent.scrollHeight - appPageContent.clientHeight
+          : -1,
       }
     })
 
-    // The virtualized list has its own scroll container ...
-    expect(metrics.innerScrolls).toBe(true)
-    // ... and the surrounding page does not also overflow (no double scrollbar).
-    // Before the fix the list fell back to a fixed max-height and pushed the
-    // outer content area past the viewport, producing the second scrollbar.
-    expect(metrics.outerOverflow).toBeLessThan(32)
+    // The first (and only) scroll container above the table is the shared AppPage
+    // content area — the list does not add a second, nested scrollbar.
+    expect(metrics.firstScrollableIsAppPage).toBe(true)
+    // ... and that page-level container overflows, so the whole page scrolls to
+    // reveal the full-height table.
+    expect(metrics.appPageOverflow).toBeGreaterThan(200)
+  })
+
+  test('keeps the table header visible while the page scrolls', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 720 })
+    await seedAuth(page)
+    await seedStoredSelection(page, ['root-1'])
+    await mockBackend(page, {
+      patients: PATIENTS,
+      propertyDefinitions: [ALLERGY_DEF],
+      rootLocations: ROOT_LOCATIONS,
+    })
+
+    await page.goto(`${BASE}/patients`)
+    await expect(page.locator(ROW_SELECTOR).first()).toBeVisible({ timeout: 20000 })
+
+    for (let step = 0; step < 3; step++) {
+      await scrollListStep(page)
+      await page.waitForTimeout(250)
+    }
+
+    const headerCell = page.locator('th[data-name="table-header-cell"]').first()
+    await expect(headerCell).toBeVisible()
+    const headerCellBox = await headerCell.boundingBox()
+    const appHeaderBox = await page.locator('[data-name="app-page-header"]').boundingBox()
+    expect(headerCellBox).not.toBeNull()
+    expect(appHeaderBox).not.toBeNull()
+    expect(headerCellBox!.y).toBeGreaterThanOrEqual(appHeaderBox!.y + appHeaderBox!.height - 1)
+    expect(headerCellBox!.y).toBeLessThan(appHeaderBox!.y + appHeaderBox!.height + 64)
+  })
+
+  test('prints every loaded row, not just the virtualized window', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 720 })
+    await seedAuth(page)
+    await seedStoredSelection(page, ['root-1'])
+    await mockBackend(page, {
+      patients: PATIENTS,
+      propertyDefinitions: [ALLERGY_DEF],
+      rootLocations: ROOT_LOCATIONS,
+    })
+
+    await page.goto(`${BASE}/patients`)
+    await expect(page.locator(ROW_SELECTOR).first()).toBeVisible({ timeout: 20000 })
+
+    const deadline = Date.now() + 30000
+    while (Date.now() < deadline) {
+      await scrollListStep(page)
+      await page.waitForTimeout(250)
+      const atBottom = await page.evaluate(() => {
+        const el = document.querySelector('[data-name="app-page-content"]')
+        if (!el) return false
+        return el.scrollHeight - el.scrollTop - el.clientHeight < 4
+      })
+      if (atBottom) break
+    }
+
+    expect(await page.locator(ROW_SELECTOR).count()).toBeLessThan(PATIENT_COUNT)
+
+    await page.evaluate(() => window.dispatchEvent(new Event('beforeprint')))
+    await expect.poll(() => page.locator(ROW_SELECTOR).count(), { timeout: 15000 })
+      .toBe(PATIENT_COUNT)
+
+    await page.emulateMedia({ media: 'print' })
+    const names = await visibleRowNames(page)
+    expect(new Set(names).size).toBe(PATIENT_COUNT)
+    const rows = page.locator(ROW_SELECTOR)
+    const firstBox = await rows.first().boundingBox()
+    const lastBox = await rows.last().boundingBox()
+    expect(firstBox).not.toBeNull()
+    expect(lastBox).not.toBeNull()
+    expect(lastBox!.y).toBeGreaterThan(firstBox!.y + 500)
+
+    await page.emulateMedia({ media: 'screen' })
+    await page.evaluate(() => window.dispatchEvent(new Event('afterprint')))
+  })
+
+  test('columns size to their content instead of a fixed negotiated width', async ({ page }) => {
+    await seedAuth(page)
+    await seedStoredSelection(page, ['root-1'])
+    await mockBackend(page, {
+      patients: PATIENTS,
+      propertyDefinitions: [ALLERGY_DEF],
+      rootLocations: ROOT_LOCATIONS,
+    })
+
+    await page.goto(`${BASE}/patients`)
+    await expect(page.locator(ROW_SELECTOR).first()).toBeVisible({ timeout: 20000 })
+
+    const table = page.locator('table[data-name="table"]')
+    await expect(table).toHaveAttribute('data-column-sizing', 'natural')
+    expect(await table.evaluate((el) => (el as HTMLElement).style.width)).toBe('')
+    expect(await table.evaluate((el) => getComputedStyle(el).tableLayout)).toBe('auto')
   })
 })
