@@ -129,6 +129,7 @@
   "lastName": "Last Name",
   "listViewCard": "Card view",
   "listViewTable": "Table view",
+  "scrollToTop": "Scroll to top",
   "loadMore": "Load more",
   "loadingHangOn": "Hang on — fetching the latest data...",
   "loadingMoment": "Just a second, almost there...",

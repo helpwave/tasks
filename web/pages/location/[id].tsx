@@ -172,9 +172,9 @@ const LocationPage: NextPage = () => {
   }, [locationData])
 
   return (
-    <Page pageTitle={titleWrapper(locationTitle || translation('location'))} noScrolling noSpacer>
+    <Page pageTitle={titleWrapper(locationTitle || translation('location'))} noSpacer>
       <ContentPanel
-        className="flex-1 min-h-0 pb-4"
+        className="pb-4"
         titleElement={
           isLoading ? (
             <LoadingContainer className="w-16 h-7" />
@@ -210,7 +210,7 @@ const LocationPage: NextPage = () => {
         {id && (
           <TabSwitcher>
             <TabList className="mb-8 shrink-0" />
-            <TabPanel label={translation('patients')} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+            <TabPanel label={translation('patients')} className="flex flex-col">
               {isError ? (
                 <div className="bg-negative/20 flex-col-0 justify-center items-center p-4 rounded-md">
                   {translation('errorOccurred')}
@@ -219,7 +219,7 @@ const LocationPage: NextPage = () => {
                 <PatientList key={id} viewDefaultFilters={viewDefaultLocationFilters} />
               )}
             </TabPanel>
-            <TabPanel label={translation('tasks')} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+            <TabPanel label={translation('tasks')} className="flex flex-col">
               {isError ? (
                 <div className="bg-negative/20 flex-col-0 justify-center items-center p-4 rounded-md">
                   {translation('errorOccurred')}

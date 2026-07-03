@@ -89,6 +89,7 @@
   "lastName": "Nom de famille",
   "listViewCard": "Vue cartes",
   "listViewTable": "Vue tableau",
+  "scrollToTop": "Revenir en haut",
   "loadMore": "Charger plus",
   "loadingHangOn": "Un instant — nous récupérons les dernières données...",
   "loadingMoment": "Juste une seconde, presque terminé...",
