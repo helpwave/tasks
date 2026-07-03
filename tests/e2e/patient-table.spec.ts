@@ -166,9 +166,10 @@ test.describe('patient table (patient list)', () => {
     expect(maxRenderedRows).toBeLessThan(PATIENT_COUNT)
   })
 
-  test('scrolls inside the list container only — the page must not grow a second scrollbar', async ({ page }) => {
+  test('scrolls the whole page as one — the list has no nested scrollbar', async ({ page }) => {
     // Fixed 1280x720 viewport so the height maths is deterministic: 77 rows far
-    // exceed the viewport, so the list must scroll *inside* its own container.
+    // exceed the viewport, so the AppPage content area must scroll the whole
+    // page (the list itself is not capped into its own scroll box).
     await page.setViewportSize({ width: 1280, height: 720 })
     await seedAuth(page)
     await seedStoredSelection(page, ['root-1'])
@@ -188,29 +189,34 @@ test.describe('patient table (patient list)', () => {
         const oy = getComputedStyle(el).overflowY
         return oy === 'auto' || oy === 'scroll' || oy === 'overlay'
       }
+      // The AppPage content area (main's parent) is the single scroll container.
+      const appPageContent = document.querySelector('[data-name="app-page-content"]')
+      // First scroll container walking up from the table: it must be the shared
+      // AppPage content area, i.e. the list has no capped inner scroll box
+      // between the table and the page — otherwise we'd have a nested scrollbar.
       const table = document.querySelector('table[data-name="table"]')
       let current: Element | null = table?.parentElement ?? null
-      let inner: HTMLElement | null = null
+      let firstScrollable: HTMLElement | null = null
       while (current && current !== document.body) {
         if (isScrollable(current) && current.scrollHeight > current.clientHeight) {
-          inner = current as HTMLElement
+          firstScrollable = current as HTMLElement
           break
         }
         current = current.parentElement
       }
-      const main = document.querySelector('main')
-      const outer = main?.parentElement ?? null
       return {
-        innerScrolls: !!inner,
-        outerOverflow: outer ? outer.scrollHeight - outer.clientHeight : -1,
+        firstScrollableIsAppPage: firstScrollable === appPageContent,
+        appPageOverflow: appPageContent
+          ? appPageContent.scrollHeight - appPageContent.clientHeight
+          : -1,
       }
     })
 
-    // The virtualized list has its own scroll container ...
-    expect(metrics.innerScrolls).toBe(true)
-    // ... and the surrounding page does not also overflow (no double scrollbar).
-    // Before the fix the list fell back to a fixed max-height and pushed the
-    // outer content area past the viewport, producing the second scrollbar.
-    expect(metrics.outerOverflow).toBeLessThan(32)
+    // The first (and only) scroll container above the table is the shared AppPage
+    // content area — the list does not add a second, nested scrollbar.
+    expect(metrics.firstScrollableIsAppPage).toBe(true)
+    // ... and that page-level container overflows, so the whole page scrolls to
+    // reveal the full-height table.
+    expect(metrics.appPageOverflow).toBeGreaterThan(200)
   })
 })
