@@ -739,9 +739,9 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
           </>
         ))
       },
-      minSize: 160,
-      size: 160,
-      maxSize: 200,
+      minSize: 96,
+      size: 110,
+      maxSize: 160,
     },
     {
       id: 'clinic',
@@ -852,9 +852,9 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
           </Tooltip>
         ))
       },
-      minSize: 150,
-      size: 150,
-      maxSize: 200,
+      minSize: 100,
+      size: 110,
+      maxSize: 160,
     },
     {
       id: 'updateDate',
@@ -1099,6 +1099,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
     <TableProvider
       data={patients}
       columns={columns}
+      columnSizingMode="natural"
       fillerRowCell={fillerRowCell}
       onRowClick={onRowClick}
 
@@ -1235,10 +1236,11 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
                   overscan: TABLE_OVERSCAN_ROWS,
                   onReachBottom: listLayout === 'table' ? handleReachBottom : undefined,
                 } : false}
+                tableHeaderProps={usePageScroll ? { isSticky: true } : undefined}
                 containerProps={{
                   className: 'print:max-h-none print:overflow-visible',
                 }}
-                className="print-content hw-autosize-table overflow-x-auto hw-touch-scroll"
+                className="print-content overflow-x-auto hw-touch-scroll"
               />
             </div>
             {listLayout === 'card' && (

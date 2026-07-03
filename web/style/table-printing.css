@@ -33,7 +33,7 @@
     visibility: hidden;
   }
 
-  table[data-name="table"].hw-autosize-table [data-name="table-body-cell"] {
+  table[data-name="table"] [data-name="table-body-cell"] {
     vertical-align: top;
   }
 
@@ -42,13 +42,30 @@
     visibility: visible;
   }
 
+  [data-name="app-page"],
+  [data-name="app-page-content"],
+  [data-name="app-page-main-content"] {
+    display: block !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  [data-name="app-page-header"],
+  [data-name="app-sidebar-container"],
+  [data-name="app-sidebar-backdrop"] {
+    display: none !important;
+  }
+
+  [data-name="table-container"] {
+    overflow: visible !important;
+    border: none !important;
+  }
+
   .print-content {
-    position: absolute;
-    z-index: 10000 !important;
+    position: static !important;
     width: 100% !important;
     max-width: 100% !important;
-    left: 0 !important;
-    top: 0 !important;
     margin: 0 !important;
     padding: 0 !important;
     height: auto !important;
@@ -97,10 +114,12 @@
     overflow-wrap: anywhere !important;
   }
 
+  .print-content thead {
+    display: table-header-group;
+  }
+
   .print-content thead tr th {
-    position: sticky;
-    top: 0;
-    z-index: 1;
+    position: static !important;
     width: auto !important;
     max-width: 100% !important;
 
