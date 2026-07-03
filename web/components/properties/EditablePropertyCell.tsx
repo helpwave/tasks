@@ -19,9 +19,23 @@ export type EditablePropertyCellProps = {
   onValueChanged: (input: PropertyValueInput | null) => void,
 }
 
-const editableTriggerButtonProps = {
-  className: 'justify-between group gap-x-2 w-full min-w-32 max-w-full h-auto max-h-none px-2 py-1 font-normal text-left',
-} as const
+function triggerMinWidthClass(fieldType: FieldType): string {
+  switch (fieldType) {
+  case FieldType.FieldTypeNumber:
+  case FieldType.FieldTypeCheckbox:
+    return 'min-w-16'
+  case FieldType.FieldTypeSelect:
+    return 'min-w-24'
+  default:
+    return 'min-w-32'
+  }
+}
+
+function editableTriggerButtonProps(minWidthClass: string) {
+  return {
+    className: clsx('justify-between group gap-x-2 w-full max-w-full h-auto max-h-none px-2 py-1 font-normal text-left', minWidthClass),
+  }
+}
 
 function stopRowActivation(e: React.SyntheticEvent) {
   e.stopPropagation()
@@ -29,10 +43,10 @@ function stopRowActivation(e: React.SyntheticEvent) {
 
 import { formatLocalCalendarDate, parseApiDateTime, parseLocalCalendarDate, serializeDateTimeForApi } from '@/utils/calendarDate'
 
-function wrapTrigger(node: ReactNode, definitionId: string): ReactNode {
+function wrapTrigger(node: ReactNode, definitionId: string, minWidthClass: string): ReactNode {
   return (
     <div
-      className="flex min-w-32 w-full max-w-full"
+      className={clsx('flex w-full max-w-full', minWidthClass)}
       data-testid="editable-property-cell"
       data-property-definition-id={definitionId}
       onPointerDown={stopRowActivation}
@@ -80,6 +94,8 @@ export function EditablePropertyCell({
 }: EditablePropertyCellProps) {
   const fieldType = definition.fieldType
   const definitionId = definition.id
+  const minWidthClass = triggerMinWidthClass(fieldType)
+  const buttonProps = editableTriggerButtonProps(minWidthClass)
 
   if (!allowUpdates || disabled) {
     return <PropertyCell property={property as PropertyValueType | undefined} fieldType={fieldType} />
@@ -95,7 +111,7 @@ export function EditablePropertyCell({
     return wrapTrigger(
       <InTableTextEditPopUp
         value={textVal}
-        buttonProps={editableTriggerButtonProps}
+        buttonProps={buttonProps}
         onUpdate={(next) => {
           const t = next?.trim() ?? ''
           onValueChanged(t === '' ? null : { definitionId, textValue: t })
@@ -103,7 +119,8 @@ export function EditablePropertyCell({
       >
         <EditablePropertyTriggerDisplay property={property as PropertyValueType | undefined} fieldType={fieldType} />
       </InTableTextEditPopUp>,
-      definitionId
+      definitionId,
+      minWidthClass
     )
   }
   case FieldType.FieldTypeNumber: {
@@ -111,14 +128,15 @@ export function EditablePropertyCell({
     return wrapTrigger(
       <InTableNumberEditPopUp
         value={numVal}
-        buttonProps={editableTriggerButtonProps}
+        buttonProps={buttonProps}
         onUpdate={(next) => {
           onValueChanged(next == null ? null : { definitionId, numberValue: next })
         }}
       >
         <EditablePropertyTriggerDisplay property={property as PropertyValueType | undefined} fieldType={fieldType} />
       </InTableNumberEditPopUp>,
-      definitionId
+      definitionId,
+      minWidthClass
     )
   }
   case FieldType.FieldTypeCheckbox: {
@@ -126,14 +144,15 @@ export function EditablePropertyCell({
     return wrapTrigger(
       <InTableCheckboxEditPopUp
         value={boolVal}
-        buttonProps={editableTriggerButtonProps}
+        buttonProps={buttonProps}
         onUpdate={(next) => {
           onValueChanged(next == null ? null : { definitionId, booleanValue: next })
         }}
       >
         <EditablePropertyTriggerDisplay property={property as PropertyValueType | undefined} fieldType={fieldType} />
       </InTableCheckboxEditPopUp>,
-      definitionId
+      definitionId,
+      minWidthClass
     )
   }
   case FieldType.FieldTypeDate: {
@@ -142,7 +161,7 @@ export function EditablePropertyCell({
       <InTableDateTimeEditPopUp
         mode="date"
         value={d}
-        buttonProps={editableTriggerButtonProps}
+        buttonProps={buttonProps}
         onUpdate={(next) => {
           onValueChanged(
             next == null
@@ -153,7 +172,8 @@ export function EditablePropertyCell({
       >
         <EditablePropertyTriggerDisplay property={property as PropertyValueType | undefined} fieldType={fieldType} />
       </InTableDateTimeEditPopUp>,
-      definitionId
+      definitionId,
+      minWidthClass
     )
   }
   case FieldType.FieldTypeDateTime: {
@@ -162,7 +182,7 @@ export function EditablePropertyCell({
       <InTableDateTimeEditPopUp
         mode="dateTime"
         value={d}
-        buttonProps={editableTriggerButtonProps}
+        buttonProps={buttonProps}
         onUpdate={(next) => {
           onValueChanged(
             next == null ? null : { definitionId, dateTimeValue: serializeDateTimeForApi(next) }
@@ -171,7 +191,8 @@ export function EditablePropertyCell({
       >
         <EditablePropertyTriggerDisplay property={property as PropertyValueType | undefined} fieldType={fieldType} />
       </InTableDateTimeEditPopUp>,
-      definitionId
+      definitionId,
+      minWidthClass
     )
   }
   case FieldType.FieldTypeSelect: {
@@ -181,14 +202,15 @@ export function EditablePropertyCell({
         definitionId={definitionId}
         optionLabels={definition.options}
         value={sel}
-        buttonProps={{ ...editableTriggerButtonProps, className: clsx(editableTriggerButtonProps.className, { 'pl-1': !!sel }) }}
+        buttonProps={{ ...buttonProps, className: clsx(buttonProps.className, { 'pl-1': !!sel }) }}
         onUpdate={(next) => {
           onValueChanged(next == null ? null : { definitionId, selectValue: next })
         }}
       >
         <EditablePropertyTriggerDisplay property={property as PropertyValueType | undefined} fieldType={fieldType} />
       </InTableSingleSelectEditPopUp>,
-      definitionId
+      definitionId,
+      minWidthClass
     )
   }
   case FieldType.FieldTypeMultiSelect: {
@@ -198,7 +220,7 @@ export function EditablePropertyCell({
         definitionId={definitionId}
         optionLabels={definition.options}
         value={multi}
-        buttonProps={{ ...editableTriggerButtonProps, className: clsx(editableTriggerButtonProps.className, { 'pl-1': multi.length > 0 }) }}
+        buttonProps={{ ...buttonProps, className: clsx(buttonProps.className, { 'pl-1': multi.length > 0 }) }}
         onUpdate={(next) => {
           onValueChanged(
             next == null || next.length === 0 ? null : { definitionId, multiSelectValues: next }
@@ -207,7 +229,8 @@ export function EditablePropertyCell({
       >
         <EditablePropertyTriggerDisplay property={property as PropertyValueType | undefined} fieldType={fieldType} />
       </InTableMultiSelectEditPopUp>,
-      definitionId
+      definitionId,
+      minWidthClass
     )
   }
   case FieldType.FieldTypeUser: {
