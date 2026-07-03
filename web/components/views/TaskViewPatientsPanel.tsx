@@ -109,17 +109,17 @@ export function TaskViewPatientsPanel({
 
   if (loading && embeddedPatients.length === 0) {
     return (
-      <div className="relative flex-1 min-h-0 flex flex-col overflow-hidden">
+      <div className="relative flex flex-col">
         <ListLoadingHint active />
       </div>
     )
   }
 
   return (
-    <div className="relative flex-1 min-h-0 flex flex-col overflow-hidden">
+    <div className="relative flex flex-col">
       <div
         aria-busy={loading}
-        className="flex-1 min-h-0 flex flex-col"
+        className="flex flex-col"
       >
         <PatientList
           embedded

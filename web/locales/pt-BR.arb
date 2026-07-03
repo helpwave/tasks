@@ -89,6 +89,7 @@
   "lastName": "Sobrenome",
   "listViewCard": "Visualização em cartões",
   "listViewTable": "Visualização em tabela",
+  "scrollToTop": "Rolar para o topo",
   "loadMore": "Carregar mais",
   "loadingHangOn": "Um momento — estamos buscando os dados mais recentes...",
   "loadingMoment": "Só um segundo, quase lá...",

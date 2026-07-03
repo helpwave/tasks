@@ -466,9 +466,9 @@ const ViewPage: NextPage = () => {
           min-height: calc(var(--spacing) * 4);
         }
       `}</style>
-      <Page pageTitle={titleWrapper(view.name)} noScrolling noSpacer>
+      <Page pageTitle={titleWrapper(view.name)} noSpacer>
         <ContentPanel
-          className="flex-1 min-h-0 pb-4"
+          className="pb-4"
           titleElement={(
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between w-full">
               <div className="flex flex-wrap items-center gap-2">
@@ -536,7 +536,7 @@ const ViewPage: NextPage = () => {
           {view.baseEntityType === SavedViewEntityType.Patient && (
             <TabSwitcher>
               <TabList className="mb-6 shrink-0" />
-              <TabPanel label={translation('patients')} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+              <TabPanel label={translation('patients')} className="flex flex-col">
                 <PatientList
                   key={view.id}
                   rootLocationIds={params.rootLocationIds}
@@ -552,7 +552,7 @@ const ViewPage: NextPage = () => {
                   onPatientUpdated={() => setPatientViewRefreshVersion(v => v + 1)}
                 />
               </TabPanel>
-              <TabPanel label={translation('tasks')} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+              <TabPanel label={translation('tasks')} className="flex flex-col">
                 <PatientViewTasksPanel
                   filterDefinitionJson={view.filterDefinition}
                   sortDefinitionJson={view.sortDefinition}
@@ -571,7 +571,7 @@ const ViewPage: NextPage = () => {
           {view.baseEntityType === SavedViewEntityType.Task && (
             <TabSwitcher>
               <TabList className="mb-6 shrink-0" />
-              <TabPanel label={translation('myTasks')} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+              <TabPanel label={translation('myTasks')} className="flex flex-col">
                 <SavedTaskViewTab
                   key={view.id}
                   viewId={view.id}
@@ -581,7 +581,7 @@ const ViewPage: NextPage = () => {
                   isOwner={view.isOwner}
                 />
               </TabPanel>
-              <TabPanel label={translation('patients')} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+              <TabPanel label={translation('patients')} className="flex flex-col">
                 <TaskViewPatientsPanel
                   filterDefinitionJson={view.filterDefinition}
                   sortDefinitionJson={view.sortDefinition}

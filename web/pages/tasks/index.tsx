@@ -179,9 +179,9 @@ const TasksPage: NextPage = () => {
   }, [user?.id])
 
   return (
-    <Page pageTitle={titleWrapper(translation('myTasks'))} noScrolling noSpacer>
+    <Page pageTitle={titleWrapper(translation('myTasks'))} noSpacer>
       <ContentPanel
-        className="flex-1 min-h-0 pb-4"
+        className="pb-4"
         titleElement={translation('myTasks')}
         description={(
           <Chip color="neutral" coloringStyle="tonal" size="sm">
