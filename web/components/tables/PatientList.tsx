@@ -1,7 +1,7 @@
 import { useMemo, useState, forwardRef, useImperativeHandle, useEffect, useCallback, useRef, type ReactNode } from 'react'
 import { useMutation } from '@apollo/client/react'
 import type { IdentifierFilterValue, FilterListItem, FilterListPopUpBuilderProps } from '@helpwave/hightide'
-import { Chip, DateUtils, FillerCell, SearchBar, ProgressIndicator, Tooltip, Drawer, TableProvider, TableDisplay, TableColumnSwitcher, IconButton, useLocale, FilterList, SortingList, Button, ExpansionIcon, Visibility, ConfirmDialog } from '@helpwave/hightide'
+import { Chip, DateUtils, FillerCell, SearchBar, ProgressIndicator, Tooltip, Drawer, TableProvider, TableDisplay, TableColumnSwitcher, IconButton, useLocale, FilterList, SortingList, Button, ExpansionIcon, Visibility, ConfirmDialog, VirtualizedCardGrid } from '@helpwave/hightide'
 import clsx from 'clsx'
 import { LayoutGrid, PlusIcon, Table2 } from 'lucide-react'
 import type { LocationType } from '@/api/gql/generated'
@@ -23,11 +23,10 @@ import { columnFiltersToQueryFilterClauses, sortingStateToQuerySortClauses } fro
 import { LIST_PAGE_SIZE } from '@/utils/listPaging'
 import { useAccumulatedPagination } from '@/hooks/useAccumulatedPagination'
 import { RowRefreshingGate } from '@/components/tables/RowRefreshingGate'
-import { VirtualizedCardGrid } from '@/components/common/VirtualizedCardGrid'
 import { overscanRowsForBuffer } from '@/utils/virtualGrid'
 import { ListLoadingHint } from '@/components/common/ListLoadingHint'
 import { useIsPrinting } from '@/hooks/useIsPrinting'
-import { isNearBottom } from '@/utils/nearBottom'
+import { ScrollToTopButton } from '@/components/common/ScrollToTopButton'
 import { DateDisplay } from '@/components/Date/DateDisplay'
 import { PatientCardView } from '@/components/patients/PatientCardView'
 import { queryableFieldsToFilterListItems, queryableFieldsToSortingListItems, type QueryableChoiceTagLabelResolver } from '@/utils/queryableFilterList'
@@ -544,10 +543,14 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
 
   const showBlockingLoadingOverlay = (patientsLoading || waitingForLocationScope) && patients.length === 0 && !derivedVirtualMode
   const isListLoading = showBlockingLoadingOverlay || isFetchingMore
-  const useBoxScroll = !isPrinting && (!embedded || derivedVirtualMode)
-  const handleListScroll = useCallback((element: HTMLElement) => {
+  // The list virtualizes against the surrounding AppPage scroll container (page
+  // scroll) so the whole page expands and scrolls as one, instead of the table/cards
+  // scrolling inside their own capped box. Applies to the main list pages and to the
+  // virtualized related-entity panels (embedded + derivedVirtualMode).
+  const usePageScroll = !isPrinting && (!embedded || derivedVirtualMode)
+  const handleReachBottom = useCallback(() => {
     if (embedded || derivedVirtualMode || isFetchingMore || !hasMore) return
-    if (isNearBottom(element, 600)) loadMore()
+    loadMore()
   }, [embedded, derivedVirtualMode, isFetchingMore, hasMore, loadMore])
 
   const tablePagination = useMemo(
@@ -1125,7 +1128,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
       enableSorting={false}
       enableColumnPinning={false}
     >
-      <div className={clsx('flex flex-col gap-4', useBoxScroll ? 'flex-1 min-h-0' : 'h-full')}>
+      <div className={clsx('flex flex-col gap-4', usePageScroll ? 'w-full' : 'h-full')}>
         {showFullToolbar && (
           <div className="flex-col-2 w-full">
             <div className="flex flex-col-reverse items-start gap-3 md:flex-row md:flex-row-8 md:justify-between w-full">
@@ -1217,21 +1220,23 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
             )}
           </div>
         )}
-        <div className={clsx('relative print:static overflow-hidden', useBoxScroll && 'flex-1 min-h-0 flex flex-col')}>
+        <div className="relative print:static overflow-hidden">
           <div
             aria-busy={isListLoading}
             className={clsx('transition-opacity', {
-              'flex-1 min-h-0 flex flex-col': useBoxScroll,
               'opacity-60 print:opacity-100': isListLoading,
             })}
           >
-            <div className={clsx(listLayout === 'table' ? clsx('block', useBoxScroll && 'flex-1 min-h-0 flex flex-col') : 'hidden print:block')}>
+            <div className={clsx(listLayout === 'table' ? 'block' : 'hidden print:block')}>
               <TableDisplay
-                virtualized={useBoxScroll ? { scroll: 'container', estimateRowHeight: TABLE_ROW_ESTIMATE_PX, overscan: TABLE_OVERSCAN_ROWS } : false}
-                tableHeaderProps={useBoxScroll ? { isSticky: true } : undefined}
+                virtualized={usePageScroll ? {
+                  scroll: 'page',
+                  estimateRowHeight: TABLE_ROW_ESTIMATE_PX,
+                  overscan: TABLE_OVERSCAN_ROWS,
+                  onReachBottom: listLayout === 'table' ? handleReachBottom : undefined,
+                } : false}
                 containerProps={{
-                  className: clsx(useBoxScroll && 'flex-1 min-h-0 overflow-y-auto', 'print:max-h-none print:overflow-visible'),
-                  onScroll: useBoxScroll ? (event) => handleListScroll(event.currentTarget) : undefined,
+                  className: 'print:max-h-none print:overflow-visible',
                 }}
                 className="print-content hw-autosize-table overflow-x-auto hw-touch-scroll"
               />
@@ -1241,8 +1246,8 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
                 items={patients}
                 getItemKey={(patient) => patient.id}
                 minCardWidthPx={352}
-                containerClassName={useBoxScroll ? 'flex-1 min-h-0 overflow-y-auto' : undefined}
-                onReachBottom={useBoxScroll ? loadMore : undefined}
+                scroll={usePageScroll ? 'page' : 'container'}
+                onReachBottom={usePageScroll ? handleReachBottom : undefined}
                 renderItem={(patient) => (
                   <RowRefreshingGate
                     key={patient.id}
@@ -1261,6 +1266,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
           </div>
           <ListLoadingHint active={isListLoading}/>
         </div>
+        {usePageScroll && !embedded && (<ScrollToTopButton />)}
         <Drawer
           isOpen={patientDialogState.isOpen}
           onClose={handleClose}

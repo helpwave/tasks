@@ -89,6 +89,7 @@
   "lastName": "Apellido",
   "listViewCard": "Vista de tarjetas",
   "listViewTable": "Vista de tabla",
+  "scrollToTop": "Desplazarse hacia arriba",
   "loadMore": "Cargar más",
   "loadingHangOn": "Un momento — estamos cargando los últimos datos...",
   "loadingMoment": "Solo un segundo, casi listo...",
