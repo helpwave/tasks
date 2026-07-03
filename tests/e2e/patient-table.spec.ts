@@ -219,4 +219,95 @@ test.describe('patient table (patient list)', () => {
     // reveal the full-height table.
     expect(metrics.appPageOverflow).toBeGreaterThan(200)
   })
+
+  test('keeps the table header visible while the page scrolls', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 720 })
+    await seedAuth(page)
+    await seedStoredSelection(page, ['root-1'])
+    await mockBackend(page, {
+      patients: PATIENTS,
+      propertyDefinitions: [ALLERGY_DEF],
+      rootLocations: ROOT_LOCATIONS,
+    })
+
+    await page.goto(`${BASE}/patients`)
+    await expect(page.locator(ROW_SELECTOR).first()).toBeVisible({ timeout: 20000 })
+
+    for (let step = 0; step < 3; step++) {
+      await scrollListStep(page)
+      await page.waitForTimeout(250)
+    }
+
+    const headerCell = page.locator('th[data-name="table-header-cell"]').first()
+    await expect(headerCell).toBeVisible()
+    const headerCellBox = await headerCell.boundingBox()
+    const appHeaderBox = await page.locator('[data-name="app-page-header"]').boundingBox()
+    expect(headerCellBox).not.toBeNull()
+    expect(appHeaderBox).not.toBeNull()
+    expect(headerCellBox!.y).toBeGreaterThanOrEqual(appHeaderBox!.y + appHeaderBox!.height - 1)
+    expect(headerCellBox!.y).toBeLessThan(appHeaderBox!.y + appHeaderBox!.height + 64)
+  })
+
+  test('prints every loaded row, not just the virtualized window', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 720 })
+    await seedAuth(page)
+    await seedStoredSelection(page, ['root-1'])
+    await mockBackend(page, {
+      patients: PATIENTS,
+      propertyDefinitions: [ALLERGY_DEF],
+      rootLocations: ROOT_LOCATIONS,
+    })
+
+    await page.goto(`${BASE}/patients`)
+    await expect(page.locator(ROW_SELECTOR).first()).toBeVisible({ timeout: 20000 })
+
+    const deadline = Date.now() + 30000
+    while (Date.now() < deadline) {
+      await scrollListStep(page)
+      await page.waitForTimeout(250)
+      const atBottom = await page.evaluate(() => {
+        const el = document.querySelector('[data-name="app-page-content"]')
+        if (!el) return false
+        return el.scrollHeight - el.scrollTop - el.clientHeight < 4
+      })
+      if (atBottom) break
+    }
+
+    expect(await page.locator(ROW_SELECTOR).count()).toBeLessThan(PATIENT_COUNT)
+
+    await page.evaluate(() => window.dispatchEvent(new Event('beforeprint')))
+    await expect.poll(() => page.locator(ROW_SELECTOR).count(), { timeout: 15000 })
+      .toBe(PATIENT_COUNT)
+
+    await page.emulateMedia({ media: 'print' })
+    const names = await visibleRowNames(page)
+    expect(new Set(names).size).toBe(PATIENT_COUNT)
+    const rows = page.locator(ROW_SELECTOR)
+    const firstBox = await rows.first().boundingBox()
+    const lastBox = await rows.last().boundingBox()
+    expect(firstBox).not.toBeNull()
+    expect(lastBox).not.toBeNull()
+    expect(lastBox!.y).toBeGreaterThan(firstBox!.y + 500)
+
+    await page.emulateMedia({ media: 'screen' })
+    await page.evaluate(() => window.dispatchEvent(new Event('afterprint')))
+  })
+
+  test('columns size to their content instead of a fixed negotiated width', async ({ page }) => {
+    await seedAuth(page)
+    await seedStoredSelection(page, ['root-1'])
+    await mockBackend(page, {
+      patients: PATIENTS,
+      propertyDefinitions: [ALLERGY_DEF],
+      rootLocations: ROOT_LOCATIONS,
+    })
+
+    await page.goto(`${BASE}/patients`)
+    await expect(page.locator(ROW_SELECTOR).first()).toBeVisible({ timeout: 20000 })
+
+    const table = page.locator('table[data-name="table"]')
+    await expect(table).toHaveAttribute('data-column-sizing', 'natural')
+    expect(await table.evaluate((el) => (el as HTMLElement).style.width)).toBe('')
+    expect(await table.evaluate((el) => getComputedStyle(el).tableLayout)).toBe('auto')
+  })
 })

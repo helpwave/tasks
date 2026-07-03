@@ -934,6 +934,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
       <TableProvider
         data={displayedTasks}
         columns={columns}
+        columnSizingMode="natural"
         fillerRowCell={useCallback(() => (<FillerCell className="min-h-12" />), [])}
         initialState={{
           pagination: {
@@ -1072,10 +1073,11 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
               <div className={clsx('w-full', listLayout === 'table' ? 'block' : 'hidden print:block')}>
                 <TableDisplay
                   virtualized={usePageScroll ? { scroll: 'page', estimateRowHeight: TABLE_ROW_ESTIMATE_PX, overscan: TABLE_OVERSCAN_ROWS, onReachBottom: listLayout === 'table' ? handleReachBottom : undefined } : false}
+                  tableHeaderProps={usePageScroll ? { isSticky: true } : undefined}
                   containerProps={{
                     className: 'print:max-h-none print:overflow-visible',
                   }}
-                  className="print-content hw-autosize-table w-full overflow-x-auto hw-touch-scroll"
+                  className="print-content w-full overflow-x-auto hw-touch-scroll"
                 />
               </div>
               {listLayout === 'card' && (
