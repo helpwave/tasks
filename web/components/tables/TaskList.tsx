@@ -1,7 +1,7 @@
 import { useMemo, useState, forwardRef, useImperativeHandle, useEffect, useRef, useCallback, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import type { FilterListItem } from '@helpwave/hightide'
-import { Button, Checkbox, ConfirmDialog, FilterList, FillerCell, IconButton, SearchBar, TableColumnSwitcher, TableDisplay, TableProvider, SortingList, ExpansionIcon, VirtualizedCardGrid } from '@helpwave/hightide'
+import { Button, Checkbox, ConfirmDialog, FilterList, FillerCell, IconButton, SearchBar, TableColumnSwitcher, TableDisplay, TableProvider, SortingList, ExpansionIcon, VirtualizedCardGrid, overscanRowsForBuffer } from '@helpwave/hightide'
 import clsx from 'clsx'
 import { Edit2, ExternalLink, LayoutGrid, PlusIcon, Table2, UserCheck } from 'lucide-react'
 import type { IdentifierFilterValue } from '@helpwave/hightide'
@@ -32,7 +32,7 @@ import { queryableFieldsToFilterListItems, queryableFieldsToSortingListItems, ty
 import { LIST_PAGE_SIZE } from '@/utils/listPaging'
 import { TaskCardView } from '@/components/tasks/TaskCardView'
 import { RefreshingTaskIdsContext, TaskRowRefreshingGate } from '@/components/tables/TaskRowRefreshingGate'
-import { overscanRowsForBuffer } from '@/utils/virtualGrid'
+
 import { ListLoadingHint } from '@/components/common/ListLoadingHint'
 import { useIsPrinting } from '@/hooks/useIsPrinting'
 import { ScrollToTopButton } from '@/components/common/ScrollToTopButton'
@@ -1055,7 +1055,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
               )}
             </div>
           )}
-          <div className={clsx('relative print:static overflow-hidden w-full', isMobileIOS && hasFilterPanelOpen && 'pointer-events-none')}>
+          <div className={clsx('relative print:static w-full', isMobileIOS && hasFilterPanelOpen && 'pointer-events-none')}>
             {!embedded && (
               <style>{`
             table th[data-column-id="done"],
@@ -1077,7 +1077,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
                   containerProps={{
                     className: 'print:max-h-none print:overflow-visible',
                   }}
-                  className="print-content w-full overflow-x-auto hw-touch-scroll"
+                  className="print-content w-full"
                 />
               </div>
               {listLayout === 'card' && (

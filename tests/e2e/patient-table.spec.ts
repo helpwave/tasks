@@ -308,6 +308,7 @@ test.describe('patient table (patient list)', () => {
     const table = page.locator('table[data-name="table"]')
     await expect(table).toHaveAttribute('data-column-sizing', 'natural')
     expect(await table.evaluate((el) => (el as HTMLElement).style.width)).toBe('')
-    expect(await table.evaluate((el) => getComputedStyle(el).tableLayout)).toBe('auto')
+    await expect(table).toHaveAttribute('data-natural-locked', '')
+    expect(await table.evaluate((el) => getComputedStyle(el).tableLayout)).toBe('fixed')
   })
 })
