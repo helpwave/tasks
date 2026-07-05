@@ -1,7 +1,7 @@
 import { useMemo, useState, forwardRef, useImperativeHandle, useEffect, useCallback, useRef, type ReactNode } from 'react'
 import { useMutation } from '@apollo/client/react'
 import type { IdentifierFilterValue, FilterListItem, FilterListPopUpBuilderProps } from '@helpwave/hightide'
-import { Chip, DateUtils, FillerCell, SearchBar, ProgressIndicator, Tooltip, Drawer, TableProvider, TableDisplay, TableColumnSwitcher, IconButton, useLocale, FilterList, SortingList, Button, ExpansionIcon, Visibility, ConfirmDialog, VirtualizedCardGrid } from '@helpwave/hightide'
+import { Chip, DateUtils, FillerCell, SearchBar, ProgressIndicator, Tooltip, Drawer, TableProvider, TableDisplay, TableColumnSwitcher, IconButton, useLocale, FilterList, SortingList, Button, ExpansionIcon, Visibility, ConfirmDialog, VirtualizedCardGrid, overscanRowsForBuffer } from '@helpwave/hightide'
 import clsx from 'clsx'
 import { LayoutGrid, PlusIcon, Table2 } from 'lucide-react'
 import type { LocationType } from '@/api/gql/generated'
@@ -23,7 +23,7 @@ import { columnFiltersToQueryFilterClauses, sortingStateToQuerySortClauses } fro
 import { LIST_PAGE_SIZE } from '@/utils/listPaging'
 import { useAccumulatedPagination } from '@/hooks/useAccumulatedPagination'
 import { RowRefreshingGate } from '@/components/tables/RowRefreshingGate'
-import { overscanRowsForBuffer } from '@/utils/virtualGrid'
+
 import { ListLoadingHint } from '@/components/common/ListLoadingHint'
 import { useIsPrinting } from '@/hooks/useIsPrinting'
 import { ScrollToTopButton } from '@/components/common/ScrollToTopButton'
@@ -1221,7 +1221,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
             )}
           </div>
         )}
-        <div className="relative print:static overflow-hidden">
+        <div className="relative print:static">
           <div
             aria-busy={isListLoading}
             className={clsx('transition-opacity', {
@@ -1240,7 +1240,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
                 containerProps={{
                   className: 'print:max-h-none print:overflow-visible',
                 }}
-                className="print-content overflow-x-auto hw-touch-scroll"
+                className="print-content"
               />
             </div>
             {listLayout === 'card' && (
