@@ -60,6 +60,25 @@
   "duplicate": "Duplicate",
   "done": "Terminé",
   "dueDate": "Date d''échéance",
+  "dueDateInDays": "+{days, plural, =1{# jour} other{# jours}}",
+  "@dueDateInDays": {
+    "placeholders": {
+      "days": {
+        "type": "number"
+      }
+    }
+  },
+  "dueDateInHours": "+{hours, plural, =1{# heure} other{# heures}}",
+  "@dueDateInHours": {
+    "placeholders": {
+      "hours": {
+        "type": "number"
+      }
+    }
+  },
+  "dueDateNow": "Maintenant",
+  "dueDateToday": "Aujourd''hui",
+  "dueDateTomorrow": "Demain",
   "edit": "Modifier",
   "editPatient": "Modifier le patient",
   "editTask": "Modifier la tâche",

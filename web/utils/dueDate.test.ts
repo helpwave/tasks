@@ -80,3 +80,73 @@ describe('DueDateUtils.serializeForApi', () => {
     expect(DueDateUtils.serializeForApi(undefined)).toBeNull()
   })
 })
+
+const wallClock = (date: Date) => ({
+  year: date.getFullYear(),
+  month: date.getMonth(),
+  day: date.getDate(),
+  hours: date.getHours(),
+  minutes: date.getMinutes(),
+  seconds: date.getSeconds(),
+  milliseconds: date.getMilliseconds(),
+})
+
+describe('DueDateUtils.dateTimeInHours', () => {
+  it('returns the current wall clock in the app timezone with zeroed seconds for an offset of 0', () => {
+    const now = new Date('2026-07-05T14:32:41.512Z')
+    const result = DueDateUtils.dateTimeInHours(0, now, 'Europe/Berlin')
+    expect(wallClock(result)).toEqual({ year: 2026, month: 6, day: 5, hours: 16, minutes: 32, seconds: 0, milliseconds: 0 })
+  })
+
+  it('adds the given number of hours', () => {
+    const now = new Date('2026-07-05T14:32:41.512Z')
+    const result = DueDateUtils.dateTimeInHours(3, now, 'Europe/Berlin')
+    expect(wallClock(result)).toEqual({ year: 2026, month: 6, day: 5, hours: 19, minutes: 32, seconds: 0, milliseconds: 0 })
+  })
+
+  it('rolls over to the next day for offsets crossing midnight', () => {
+    const now = new Date('2026-07-05T20:00:00.000Z')
+    const result = DueDateUtils.dateTimeInHours(6, now, 'Europe/Berlin')
+    expect(wallClock(result)).toEqual({ year: 2026, month: 6, day: 6, hours: 4, minutes: 0, seconds: 0, milliseconds: 0 })
+  })
+
+  it('never produces a date-only value', () => {
+    const now = new Date('2026-07-05T21:59:59.999Z')
+    for (const hours of [0, 1, 3, 6, 12, 24]) {
+      expect(DueDateUtils.isDateOnly(DueDateUtils.dateTimeInHours(hours, now, 'Europe/Berlin'))).toBe(false)
+    }
+  })
+})
+
+describe('DueDateUtils.dateOnlyInDays', () => {
+  it('returns the end-of-day sentinel for today with an offset of 0', () => {
+    const now = new Date('2026-07-05T14:32:41.512Z')
+    const result = DueDateUtils.dateOnlyInDays(0, now, 'Europe/Berlin')
+    expect(wallClock(result)).toEqual({ year: 2026, month: 6, day: 5, hours: 23, minutes: 59, seconds: 59, milliseconds: 999 })
+  })
+
+  it('uses the calendar day of the app timezone, not UTC', () => {
+    const now = new Date('2026-07-05T22:30:00.000Z')
+    const result = DueDateUtils.dateOnlyInDays(0, now, 'Europe/Berlin')
+    expect(wallClock(result)).toEqual({ year: 2026, month: 6, day: 6, hours: 23, minutes: 59, seconds: 59, milliseconds: 999 })
+  })
+
+  it('adds the given number of days', () => {
+    const now = new Date('2026-07-05T14:32:41.512Z')
+    expect(wallClock(DueDateUtils.dateOnlyInDays(1, now, 'Europe/Berlin')).day).toBe(6)
+    expect(wallClock(DueDateUtils.dateOnlyInDays(4, now, 'Europe/Berlin')).day).toBe(9)
+  })
+
+  it('rolls over month boundaries', () => {
+    const now = new Date('2026-07-30T08:00:00.000Z')
+    const result = DueDateUtils.dateOnlyInDays(2, now, 'Europe/Berlin')
+    expect(wallClock(result)).toEqual({ year: 2026, month: 7, day: 1, hours: 23, minutes: 59, seconds: 59, milliseconds: 999 })
+  })
+
+  it('always produces a date-only value', () => {
+    const now = new Date('2026-07-05T14:32:41.512Z')
+    for (const days of [0, 1, 2, 4]) {
+      expect(DueDateUtils.isDateOnly(DueDateUtils.dateOnlyInDays(days, now, 'Europe/Berlin'))).toBe(true)
+    }
+  })
+})

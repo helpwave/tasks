@@ -87,6 +87,11 @@ export type TasksTranslationEntries = {
   'diverse': string,
   'done': string,
   'dueDate': string,
+  'dueDateInDays': (values: { days: number }) => string,
+  'dueDateInHours': (values: { hours: number }) => string,
+  'dueDateNow': string,
+  'dueDateToday': string,
+  'dueDateTomorrow': string,
   'duplicate': string,
   'edit': string,
   'editPatient': string,
@@ -426,6 +431,27 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'diverse': `Divers`,
     'done': `Fertig`,
     'dueDate': `Fälligkeitsdatum`,
+    'dueDateInDays': ({ days }): string => {
+      let _out: string = ''
+      _out += `+`
+      _out += TranslationGen.resolvePlural(days, {
+        '=1': `${days} Tag`,
+        'other': `${days} Tage`,
+      })
+      return _out
+    },
+    'dueDateInHours': ({ hours }): string => {
+      let _out: string = ''
+      _out += `+`
+      _out += TranslationGen.resolvePlural(hours, {
+        '=1': `${hours} Stunde`,
+        'other': `${hours} Stunden`,
+      })
+      return _out
+    },
+    'dueDateNow': `Jetzt`,
+    'dueDateToday': `Heute`,
+    'dueDateTomorrow': `Morgen`,
     'duplicate': `Duplizieren`,
     'edit': `Bearbeiten`,
     'editPatient': `Patient bearbeiten`,
@@ -872,6 +898,27 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'diverse': `Diverse`,
     'done': `Done`,
     'dueDate': `Due Date`,
+    'dueDateInDays': ({ days }): string => {
+      let _out: string = ''
+      _out += `+`
+      _out += TranslationGen.resolvePlural(days, {
+        '=1': `${days} day`,
+        'other': `${days} days`,
+      })
+      return _out
+    },
+    'dueDateInHours': ({ hours }): string => {
+      let _out: string = ''
+      _out += `+`
+      _out += TranslationGen.resolvePlural(hours, {
+        '=1': `${hours} hour`,
+        'other': `${hours} hours`,
+      })
+      return _out
+    },
+    'dueDateNow': `Now`,
+    'dueDateToday': `Today`,
+    'dueDateTomorrow': `Tomorrow`,
     'duplicate': `Duplicate`,
     'edit': `Edit`,
     'editPatient': `Edit Patient`,
@@ -1319,6 +1366,27 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'diverse': `Diverso`,
     'done': `Hecho`,
     'dueDate': `Fecha de vencimiento`,
+    'dueDateInDays': ({ days }): string => {
+      let _out: string = ''
+      _out += `+`
+      _out += TranslationGen.resolvePlural(days, {
+        '=1': `${days} día`,
+        'other': `${days} días`,
+      })
+      return _out
+    },
+    'dueDateInHours': ({ hours }): string => {
+      let _out: string = ''
+      _out += `+`
+      _out += TranslationGen.resolvePlural(hours, {
+        '=1': `${hours} hora`,
+        'other': `${hours} horas`,
+      })
+      return _out
+    },
+    'dueDateNow': `Ahora`,
+    'dueDateToday': `Hoy`,
+    'dueDateTomorrow': `Mañana`,
     'duplicate': `Duplicate`,
     'edit': `Editar`,
     'editPatient': `Editar paciente`,
@@ -1765,6 +1833,27 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'diverse': `Divers`,
     'done': `Terminé`,
     'dueDate': `Date d'échéance`,
+    'dueDateInDays': ({ days }): string => {
+      let _out: string = ''
+      _out += `+`
+      _out += TranslationGen.resolvePlural(days, {
+        '=1': `${days} jour`,
+        'other': `${days} jours`,
+      })
+      return _out
+    },
+    'dueDateInHours': ({ hours }): string => {
+      let _out: string = ''
+      _out += `+`
+      _out += TranslationGen.resolvePlural(hours, {
+        '=1': `${hours} heure`,
+        'other': `${hours} heures`,
+      })
+      return _out
+    },
+    'dueDateNow': `Maintenant`,
+    'dueDateToday': `Aujourd'hui`,
+    'dueDateTomorrow': `Demain`,
     'duplicate': `Duplicate`,
     'edit': `Modifier`,
     'editPatient': `Modifier le patient`,
@@ -2211,6 +2300,27 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'diverse': `Divers`,
     'done': `Klaar`,
     'dueDate': `Vervaldatum`,
+    'dueDateInDays': ({ days }): string => {
+      let _out: string = ''
+      _out += `+`
+      _out += TranslationGen.resolvePlural(days, {
+        '=1': `${days} dag`,
+        'other': `${days} dagen`,
+      })
+      return _out
+    },
+    'dueDateInHours': ({ hours }): string => {
+      let _out: string = ''
+      _out += `+`
+      _out += TranslationGen.resolvePlural(hours, {
+        '=1': `${hours} uur`,
+        'other': `${hours} uur`,
+      })
+      return _out
+    },
+    'dueDateNow': `Nu`,
+    'dueDateToday': `Vandaag`,
+    'dueDateTomorrow': `Morgen`,
     'duplicate': `Duplicate`,
     'edit': `Bewerken`,
     'editPatient': `Patiënt bewerken`,
@@ -2660,6 +2770,27 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'diverse': `Diverso`,
     'done': `Concluído`,
     'dueDate': `Data de vencimento`,
+    'dueDateInDays': ({ days }): string => {
+      let _out: string = ''
+      _out += `+`
+      _out += TranslationGen.resolvePlural(days, {
+        '=1': `${days} dia`,
+        'other': `${days} dias`,
+      })
+      return _out
+    },
+    'dueDateInHours': ({ hours }): string => {
+      let _out: string = ''
+      _out += `+`
+      _out += TranslationGen.resolvePlural(hours, {
+        '=1': `${hours} hora`,
+        'other': `${hours} horas`,
+      })
+      return _out
+    },
+    'dueDateNow': `Agora`,
+    'dueDateToday': `Hoje`,
+    'dueDateTomorrow': `Amanhã`,
     'duplicate': `Duplicate`,
     'edit': `Editar`,
     'editPatient': `Editar paciente`,
