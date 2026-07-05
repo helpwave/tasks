@@ -178,23 +178,35 @@ function extractSelectedTags(parameter: FilterValue['parameter']): string[] {
   return []
 }
 
+function resolveSingleTagSelection(parameter: FilterValue['parameter']): string | undefined {
+  if (parameter.uuidValue != null && String(parameter.uuidValue) !== '') {
+    return String(parameter.uuidValue)
+  }
+  const tags = extractSelectedTags(parameter)
+  if (tags.length === 1) {
+    return tags[0]
+  }
+  if (parameter.stringValue) {
+    return String(parameter.stringValue)
+  }
+  return undefined
+}
+
 function matchesSingleTagOperator(
   value: string | undefined,
   operator: FilterOperator,
   fv: FilterValue
 ): boolean {
   const tags = extractSelectedTags(fv.parameter)
-  // "equals"/"notEquals" use a single selection: the tag popup stores it in
-  // uuidValue (extracted above), legacy filters in stringValue.
-  const single = tags.length === 1 ? tags[0] : fv.parameter.stringValue
+  const single = resolveSingleTagSelection(fv.parameter)
   const v = value ?? ''
   switch (operator) {
   case 'equals':
-    return single == null || v === single
+    return single != null && v === single
   case 'notEquals':
     return single == null || v !== single
   case 'contains':
-    return tags.length === 0 || tags.includes(v)
+    return tags.length > 0 && tags.includes(v)
   case 'notContains':
     return tags.length === 0 || !tags.includes(v)
   case 'isUndefined':

@@ -28,12 +28,12 @@ export async function seedStoredSelection(page: Page, ids: string[]): Promise<vo
 // ---------------------------------------------------------------------------
 
 export async function openFilterPanel(page: Page): Promise<void> {
-  await page.getByRole('button', { name: /^Filter \(\d+\)/ }).click()
+  await page.locator('button:visible', { hasText: /^Filter \(\d+\)/ }).first().click()
   await expect(page.getByRole('button', { name: 'Add filter' })).toBeVisible()
 }
 
 export async function openSortingPanel(page: Page): Promise<void> {
-  await page.getByRole('button', { name: /^Sorting \(\d+\)/ }).click()
+  await page.locator('button:visible', { hasText: /^Sorting \(\d+\)/ }).first().click()
   await expect(page.getByRole('button', { name: 'Add sorting' })).toBeVisible()
 }
 
@@ -62,9 +62,9 @@ export async function removeSorting(page: Page, label: string): Promise<void> {
   await page.getByRole('button', { name: 'Remove filter' }).click()
 }
 
-// ---------------------------------------------------------------------------
-// filters
-// ---------------------------------------------------------------------------
+function activeFilterPopup(page: Page) {
+  return page.locator('[data-name="pop-up"]:visible, [role="dialog"]:visible').last()
+}
 
 /** Open the "Add filter" combobox and pick a field; leaves the filter popup open. */
 export async function beginAddFilter(page: Page, label: string): Promise<void> {
@@ -88,15 +88,32 @@ export async function addTextFilter(page: Page, label: string, text: string): Pr
 }
 
 /**
+ * Add a singleTag filter with the "equals" operator and pick one option.
+ * The filter panel must be open.
+ */
+export async function addSingleTagEqualsFilter(page: Page, label: string, optionLabel: string): Promise<void> {
+  await beginAddFilter(page, label)
+  const dialog = page.getByRole('dialog').filter({ hasText: label })
+  await dialog.locator('[data-name="filter-operator-select"]').click()
+  await page.getByRole('option', { name: 'Equals', exact: true }).click()
+  await dialog.getByRole('button', { name: /click to select/i }).click()
+  const option = page.getByRole('option', { name: optionLabel, exact: true })
+  if (await option.count() > 0) {
+    await option.click()
+  } else {
+    await page.getByRole('option').first().click()
+  }
+  await commitFilterPopup(page)
+}
+
+/**
  * Add a tag filter (singleTag `contains` = multi select) and pick the given
  * options. The filter panel must be open.
  */
 export async function addTagFilter(page: Page, label: string, optionLabels: string[]): Promise<void> {
   await beginAddFilter(page, label)
-  // open the multi select inside the popup
-  const popup = page.locator('[data-name="pop-up"], [role="dialog"]').last()
+  const popup = activeFilterPopup(page)
   await popup.getByRole('button', { name: /Select/i }).first().click().catch(async () => {
-    // fallback: first combobox-ish button inside the popup
     await popup.locator('button').first().click()
   })
   for (const option of optionLabels) {

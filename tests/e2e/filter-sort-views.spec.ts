@@ -3,6 +3,7 @@ import { mockBackend, seedAuth, type PatientFixture, type SavedViewFixture, type
 import {
   ROW_SELECTOR,
   addSorting,
+  addSingleTagEqualsFilter,
   beginAddFilter,
   commitFilterPopup,
   openFilterPanel,
@@ -271,15 +272,9 @@ test.describe('custom views (saved views) filtering and sorting', () => {
       .toEqual(['Update chart', 'Administer meds', 'Check vitals', 'Draw blood'])
 
     await openFilterPanel(page)
-    await beginAddFilter(page, 'Priority')
-    // switch the operator from the default "contains" to "equals"
-    await page.locator('[data-name="filter-operator-select"]').click()
-    await page.getByRole('option', { name: 'Equals', exact: true }).click()
-    // pick the single tag (P1 is labelled "Normal")
-    await page.getByRole('button', { name: /Select/i }).first().click()
-    await page.getByRole('option', { name: 'Normal', exact: true }).click()
-    await commitFilterPopup(page)
+    await addSingleTagEqualsFilter(page, 'Priority', 'Normal')
 
+    await expect(page.locator('button:visible', { hasText: 'Filter (1)' })).toBeVisible()
     await expect.poll(() => taskRowTitles(page), { timeout: 15000 })
       .toEqual(['Administer meds'])
   })
