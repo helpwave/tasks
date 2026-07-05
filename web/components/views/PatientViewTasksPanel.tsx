@@ -63,8 +63,14 @@ export function PatientViewTasksPanel({
   isOwner,
   refreshVersion,
 }: PatientViewTasksPanelProps) {
-  const filters = deserializeColumnFiltersFromView(filterDefinitionJson)
-  const sorting = deserializeSortingFromView(sortDefinitionJson)
+  const filters = useMemo(
+    () => deserializeColumnFiltersFromView(filterDefinitionJson),
+    [filterDefinitionJson]
+  )
+  const sorting = useMemo(
+    () => deserializeSortingFromView(sortDefinitionJson),
+    [sortDefinitionJson]
+  )
   const apiFilters = useMemo(() => columnFiltersToQueryFilterClauses(filters), [filters])
   const apiSorting = useMemo(() => sortingStateToQuerySortClauses(sorting), [sorting])
   const hasLocationFilter = useMemo(
@@ -218,25 +224,12 @@ export function PatientViewTasksPanel({
   const [searchQuery, setSearchQuery] = useState(baselineSearch)
 
   useEffect(() => {
-    setRelatedFilters(deserializeColumnFiltersFromView(relatedFilterDefinitionJson))
-    const nextSort = deserializeSortingFromView(relatedSortDefinitionJson)
-    setRelatedSorting(nextSort.length > 0 ? nextSort : baselineSort)
-    setSearchQuery(relatedParams.searchQuery ?? '')
-    setRelatedColumnVisibility(relatedParams.columnVisibility ?? {})
-    setRelatedColumnOrder(relatedParams.columnOrder ?? [])
-  }, [
-    persistedRelatedContentKey,
-    relatedFilterDefinitionJson,
-    relatedSortDefinitionJson,
-    relatedParams.searchQuery,
-    relatedParams.columnVisibility,
-    relatedParams.columnOrder,
-    baselineSort,
-    setRelatedFilters,
-    setRelatedSorting,
-    setRelatedColumnVisibility,
-    setRelatedColumnOrder,
-  ])
+    setRelatedFilters(defaultRelatedFilters)
+    setRelatedSorting(relatedSortBaseline)
+    setSearchQuery(baselineSearch)
+    setRelatedColumnVisibility(baselineColumnVisibility)
+    setRelatedColumnOrder(baselineColumnOrder)
+  }, [persistedRelatedContentKey])
 
   const viewMatchesRelatedBaseline = useMemo(
     () => tableViewStateMatchesBaseline({
