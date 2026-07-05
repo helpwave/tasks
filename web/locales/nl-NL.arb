@@ -65,6 +65,10 @@
   "editTask": "Taak bewerken",
   "errorOccurred": "Er is een fout opgetreden",
   "estimatedTime": "Geschatte tijd (minuten)",
+  "export": "Exporteren",
+  "exportCsv": "Exporteren als CSV",
+  "exportExcel": "Exporteren als Excel (afdrukbaar)",
+  "exportFailed": "Exporteren mislukt. Probeer het opnieuw.",
   "timeEstimate": "Geschatte tijd",
   "nMinutesShort": "{minCount} min",
   "@nMinutesShort": {

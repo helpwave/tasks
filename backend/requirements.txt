@@ -9,6 +9,8 @@ sqlalchemy==2.0.51
 strawberry-graphql[fastapi]==0.320.0
 uvicorn[standard]==0.49.0
 influxdb_client==1.50.0
+openpyxl==3.1.5
+tzdata==2025.2
 pytest==9.1.1
 pytest-asyncio==1.4.0
 pytest-cov==7.1.0
