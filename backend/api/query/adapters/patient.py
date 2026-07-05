@@ -100,6 +100,20 @@ def _parse_property_key(field_key: str) -> str | None:
     return field_key.removeprefix("property_")
 
 
+FIELD_UPDATE_DATE_COLUMNS: dict[str, Any] = {
+    "stateUpdateDate": models.Patient.state_updated_at,
+    "clinicUpdateDate": models.Patient.clinic_updated_at,
+    "positionUpdateDate": models.Patient.position_updated_at,
+}
+
+
+FIELD_UPDATE_DATE_LABELS: dict[str, str] = {
+    "stateUpdateDate": "State updated",
+    "clinicUpdateDate": "Clinic updated",
+    "positionUpdateDate": "Location updated",
+}
+
+
 LOCATION_SORT_KEY_KINDS: dict[str, tuple[str, ...]] = {
     "location-WARD": ("WARD",),
     "location-ROOM": ("ROOM",),
@@ -222,6 +236,13 @@ def apply_patient_filter_clause(
         if c is not None:
             query = query.where(c)
         return query
+    if key in FIELD_UPDATE_DATE_COLUMNS:
+        c = apply_ops_to_column(
+            FIELD_UPDATE_DATE_COLUMNS[key], op, val, as_datetime=True
+        )
+        if c is not None:
+            query = query.where(c)
+        return query
     if key in LOCATION_SORT_KEY_KINDS:
         query, lineage_nodes = _ensure_position_lineage_joins(query, ctx)
         expr = _location_title_for_kind(
@@ -270,6 +291,7 @@ def apply_patient_filter_clause(
         expr = location_title_expr(ln)
         if op in (
             QueryOperator.CONTAINS,
+            QueryOperator.NOT_CONTAINS,
             QueryOperator.STARTS_WITH,
             QueryOperator.ENDS_WITH,
         ):
@@ -368,6 +390,11 @@ def apply_patient_sorts(
             order_parts.append(
                 col.desc().nulls_last() if desc_order else col.asc().nulls_first()
             )
+        elif key in FIELD_UPDATE_DATE_COLUMNS:
+            col = FIELD_UPDATE_DATE_COLUMNS[key]
+            order_parts.append(
+                col.desc().nulls_last() if desc_order else col.asc().nulls_first()
+            )
         elif key == "position":
             query, ln = _ensure_position_join(query, ctx)
             t = location_title_expr(ln)
@@ -427,6 +454,7 @@ def build_patient_queryable_fields_static() -> list[QueryableField]:
         QueryOperator.EQ,
         QueryOperator.NEQ,
         QueryOperator.CONTAINS,
+        QueryOperator.NOT_CONTAINS,
         QueryOperator.STARTS_WITH,
         QueryOperator.ENDS_WITH,
         QueryOperator.IN,
@@ -442,6 +470,7 @@ def build_patient_queryable_fields_static() -> list[QueryableField]:
         QueryOperator.LT,
         QueryOperator.LTE,
         QueryOperator.BETWEEN,
+        QueryOperator.NOT_BETWEEN,
         QueryOperator.IS_NULL,
         QueryOperator.IS_NOT_NULL,
     ]
@@ -545,6 +574,19 @@ def build_patient_queryable_fields_static() -> list[QueryableField]:
             sort_directions=sort_directions_for(True),
             searchable=False,
         ),
+        *[
+            QueryableField(
+                key=key,
+                label=label,
+                kind=QueryableFieldKind.SCALAR,
+                value_type=QueryableValueType.DATETIME,
+                allowed_operators=dt_ops,
+                sortable=True,
+                sort_directions=sort_directions_for(True),
+                searchable=False,
+            )
+            for key, label in FIELD_UPDATE_DATE_LABELS.items()
+        ],
         QueryableField(
             key="description",
             label="Description",
@@ -574,6 +616,7 @@ def build_patient_queryable_fields_static() -> list[QueryableField]:
                 QueryOperator.EQ,
                 QueryOperator.IN,
                 QueryOperator.CONTAINS,
+                QueryOperator.NOT_CONTAINS,
                 QueryOperator.STARTS_WITH,
                 QueryOperator.ENDS_WITH,
                 QueryOperator.IS_NULL,

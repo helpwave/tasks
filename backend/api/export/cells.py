@@ -291,4 +291,10 @@ def patient_cell(
         return ExportCell(f"{closed}/{len(tasks)}")
     if key == "updateDate":
         return _datetime_cell(_patient_update_date(patient), ctx)
+    if key == "stateUpdateDate":
+        return _datetime_cell(patient.state_updated_at, ctx)
+    if key == "clinicUpdateDate":
+        return _datetime_cell(patient.clinic_updated_at, ctx)
+    if key == "positionUpdateDate":
+        return _datetime_cell(patient.position_updated_at, ctx)
     return ExportCell(None)

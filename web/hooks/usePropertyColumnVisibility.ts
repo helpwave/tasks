@@ -26,11 +26,15 @@ export function getPropertyColumnIds(
 export function useColumnVisibilityWithPropertyDefaults(
   propertyDefinitionsData: PropertyDefinitionsData,
   entity: PropertyEntity,
-  setColumnVisibility: Dispatch<SetStateAction<VisibilityState>>
+  setColumnVisibility: Dispatch<SetStateAction<VisibilityState>>,
+  extraHiddenByDefaultColumnIds: readonly string[] = []
 ): Dispatch<SetStateAction<VisibilityState>> {
-  const propertyColumnIds = useMemo(
-    () => getPropertyColumnIds(propertyDefinitionsData, entity),
-    [propertyDefinitionsData, entity]
+  const hiddenByDefaultColumnIds = useMemo(
+    () => [
+      ...getPropertyColumnIds(propertyDefinitionsData, entity),
+      ...extraHiddenByDefaultColumnIds,
+    ],
+    [propertyDefinitionsData, entity, extraHiddenByDefaultColumnIds]
   )
 
   return useCallback(
@@ -39,13 +43,13 @@ export function useColumnVisibilityWithPropertyDefaults(
         const next = typeof updater === 'function'
           ? (updater as (p: VisibilityState) => VisibilityState)(prev)
           : updater
-        if (propertyColumnIds.length === 0) {
+        if (hiddenByDefaultColumnIds.length === 0) {
           return normalizedVisibilityForViewCompare(next) === normalizedVisibilityForViewCompare(prev)
             ? prev
             : next
         }
         const merged: VisibilityState = { ...next }
-        for (const id of propertyColumnIds) {
+        for (const id of hiddenByDefaultColumnIds) {
           if (!(id in merged)) {
             merged[id] = false
           }
@@ -55,6 +59,6 @@ export function useColumnVisibilityWithPropertyDefaults(
           : merged
       })
     },
-    [propertyColumnIds, setColumnVisibility]
+    [hiddenByDefaultColumnIds, setColumnVisibility]
   )
 }

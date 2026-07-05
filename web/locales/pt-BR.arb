@@ -60,6 +60,25 @@
   "duplicate": "Duplicate",
   "done": "Concluído",
   "dueDate": "Data de vencimento",
+  "dueDateInDays": "+{days, plural, =1{# dia} other{# dias}}",
+  "@dueDateInDays": {
+    "placeholders": {
+      "days": {
+        "type": "number"
+      }
+    }
+  },
+  "dueDateInHours": "+{hours, plural, =1{# hora} other{# horas}}",
+  "@dueDateInHours": {
+    "placeholders": {
+      "hours": {
+        "type": "number"
+      }
+    }
+  },
+  "dueDateNow": "Agora",
+  "dueDateToday": "Hoje",
+  "dueDateTomorrow": "Amanhã",
   "edit": "Editar",
   "editPatient": "Editar paciente",
   "editTask": "Editar tarefa",
@@ -278,6 +297,9 @@
   "totalPatients": "Total de pacientes",
   "type": "Tipo",
   "updated": "Atualizado",
+  "stateUpdated": "Status atualizado",
+  "clinicUpdated": "Clínica atualizada",
+  "positionUpdated": "Localização atualizada",
   "user": "Usuário",
   "users": "Usuários",
   "wards": "Enfermarias",

@@ -1,4 +1,4 @@
-import { parseApiDateTime, serializeDateTimeForApi } from '@/utils/calendarDate'
+import { getAppTimezone, parseApiDateTime, serializeDateTimeForApi } from '@/utils/calendarDate'
 import { DateUtils } from '@helpwave/hightide'
 
 const DATE_ONLY_HOURS = 23
@@ -98,6 +98,19 @@ export const DueDateUtils = {
       instant: DueDateUtils.toDisplayInstant(zoned, timeZone),
       isDateOnly,
     }
+  },
+
+  dateTimeInHours: (hours: number, now: Date = new Date(), timeZone: string = getAppTimezone()): Date => {
+    const date = DateUtils.toZonedDate(new Date(now.getTime() + hours * 60 * 60 * 1000), timeZone)
+    date.setSeconds(0, 0)
+    return date
+  },
+
+  dateOnlyInDays: (days: number, now: Date = new Date(), timeZone: string = getAppTimezone()): Date => {
+    const date = DateUtils.toZonedDate(now, timeZone)
+    date.setDate(date.getDate() + days)
+    date.setHours(DATE_ONLY_HOURS, DATE_ONLY_MINUTES, DATE_ONLY_SECONDS, DATE_ONLY_MILLISECONDS)
+    return date
   },
 
   serializeForApi: (dueDate: Date | null | undefined, timeZone?: string): string | null => {

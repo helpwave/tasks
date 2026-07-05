@@ -1,13 +1,13 @@
-import { defineConfig, devices } from '@playwright/test';
+import { defineConfig, devices } from '@playwright/test'
 
-const baseURL = process.env.E2E_BASE_URL || 'http://localhost:3000';
+const baseURL = process.env.E2E_BASE_URL || 'http://localhost:3000'
 
 if (!baseURL || baseURL.trim() === '') {
-  throw new Error('E2E_BASE_URL must be set to a valid URL');
+  throw new Error('E2E_BASE_URL must be set to a valid URL')
 }
 
 export default defineConfig({
-  testDir: './tests/e2e',
+  testDir: './e2e',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
@@ -21,17 +21,15 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { 
+      use: {
         ...devices['Desktop Chrome'],
         baseURL: baseURL.trim(),
       },
     },
   ],
   webServer: process.env.CI ? undefined : {
-    command: 'cd web && npm run dev',
+    command: 'cd ../web && npm run dev',
     url: baseURL.trim(),
     reuseExistingServer: true,
   },
-});
-
-
+})
