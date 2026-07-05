@@ -26,6 +26,7 @@ def _str_ops() -> list[QueryOperator]:
         QueryOperator.EQ,
         QueryOperator.NEQ,
         QueryOperator.CONTAINS,
+        QueryOperator.NOT_CONTAINS,
         QueryOperator.STARTS_WITH,
         QueryOperator.ENDS_WITH,
         QueryOperator.IN,
@@ -44,6 +45,7 @@ def _num_ops() -> list[QueryOperator]:
         QueryOperator.LT,
         QueryOperator.LTE,
         QueryOperator.BETWEEN,
+        QueryOperator.NOT_BETWEEN,
         QueryOperator.IS_NULL,
         QueryOperator.IS_NOT_NULL,
     ]
@@ -58,6 +60,7 @@ def _date_ops() -> list[QueryOperator]:
         QueryOperator.LT,
         QueryOperator.LTE,
         QueryOperator.BETWEEN,
+        QueryOperator.NOT_BETWEEN,
         QueryOperator.IS_NULL,
         QueryOperator.IS_NOT_NULL,
     ]

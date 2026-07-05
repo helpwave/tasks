@@ -640,6 +640,8 @@ export enum QueryOperator {
   AnyIn = 'ANY_IN',
   Between = 'BETWEEN',
   Contains = 'CONTAINS',
+  NotBetween = 'NOT_BETWEEN',
+  NotContains = 'NOT_CONTAINS',
   EndsWith = 'ENDS_WITH',
   Eq = 'EQ',
   Gt = 'GT',

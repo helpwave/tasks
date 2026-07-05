@@ -19,19 +19,29 @@ const ADMITTED_OR_WAITING: PatientState[] = [PatientState.Admitted, PatientState
 type TaskPatient = NonNullable<GetTasksQuery['tasks'][0]['patient']>
 
 function buildEmbeddedPatientsFromTasks(tasks: GetTasksQuery['tasks']): PatientViewModel[] {
-  const agg = new Map<string, { patient: TaskPatient, open: number, closed: number }>()
+  const agg = new Map<string, { patient: TaskPatient, open: number, closed: number, lastUpdate: number | null }>()
   for (const t of tasks) {
     if (!t.patient) continue
     const id = t.patient.id
     let row = agg.get(id)
     if (!row) {
-      row = { patient: t.patient, open: 0, closed: 0 }
+      row = { patient: t.patient, open: 0, closed: 0, lastUpdate: null }
       agg.set(id, row)
     }
     if (t.done) row.closed += 1
     else row.open += 1
+    // The tasks query does not expose the patient's own update date, so use
+    // the latest related task update as the patient's "Updated" value. This
+    // is what the panel visualizes and sorts by.
+    const raw = t.updateDate ?? t.creationDate
+    if (raw) {
+      const ts = new Date(raw).getTime()
+      if (!Number.isNaN(ts)) {
+        row.lastUpdate = row.lastUpdate == null ? ts : Math.max(row.lastUpdate, ts)
+      }
+    }
   }
-  return [...agg.values()].map(({ patient, open, closed }) => {
+  return [...agg.values()].map(({ patient, open, closed, lastUpdate }) => {
     const countForAggregate = ADMITTED_OR_WAITING.includes(patient.state)
     return {
       id: patient.id,
@@ -45,6 +55,7 @@ function buildEmbeddedPatientsFromTasks(tasks: GetTasksQuery['tasks']): PatientV
       position: patient.position,
       openTasksCount: countForAggregate ? open : 0,
       closedTasksCount: countForAggregate ? closed : 0,
+      updateDate: lastUpdate != null ? new Date(lastUpdate) : undefined,
       tasks: [],
       properties: patient.properties ?? [],
     }

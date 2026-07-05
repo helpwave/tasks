@@ -291,6 +291,7 @@ def apply_patient_filter_clause(
         expr = location_title_expr(ln)
         if op in (
             QueryOperator.CONTAINS,
+            QueryOperator.NOT_CONTAINS,
             QueryOperator.STARTS_WITH,
             QueryOperator.ENDS_WITH,
         ):
@@ -453,6 +454,7 @@ def build_patient_queryable_fields_static() -> list[QueryableField]:
         QueryOperator.EQ,
         QueryOperator.NEQ,
         QueryOperator.CONTAINS,
+        QueryOperator.NOT_CONTAINS,
         QueryOperator.STARTS_WITH,
         QueryOperator.ENDS_WITH,
         QueryOperator.IN,
@@ -468,6 +470,7 @@ def build_patient_queryable_fields_static() -> list[QueryableField]:
         QueryOperator.LT,
         QueryOperator.LTE,
         QueryOperator.BETWEEN,
+        QueryOperator.NOT_BETWEEN,
         QueryOperator.IS_NULL,
         QueryOperator.IS_NOT_NULL,
     ]
@@ -613,6 +616,7 @@ def build_patient_queryable_fields_static() -> list[QueryableField]:
                 QueryOperator.EQ,
                 QueryOperator.IN,
                 QueryOperator.CONTAINS,
+                QueryOperator.NOT_CONTAINS,
                 QueryOperator.STARTS_WITH,
                 QueryOperator.ENDS_WITH,
                 QueryOperator.IS_NULL,
