@@ -527,7 +527,12 @@ class PatientMutation(BaseMutationResolver[models.Patient]):
                 new_patient, data.properties, "patient"
             )
 
-        new_patient.updated_at = datetime.now()
+        now = datetime.now()
+        new_patient.updated_at = now
+        new_patient.state_updated_at = now
+        new_patient.clinic_updated_at = now
+        if new_patient.position_id is not None:
+            new_patient.position_updated_at = now
 
         repo = BaseMutationResolver.get_repository(db, models.Patient)
         await repo.create(new_patient)
@@ -589,10 +594,14 @@ class PatientMutation(BaseMutationResolver[models.Patient]):
             if data.clinic_id not in accessible_location_ids:
                 raise_forbidden()
             await location_service.validate_and_get_clinic(data.clinic_id)
+            if patient.clinic_id != data.clinic_id:
+                patient.clinic_updated_at = datetime.now()
             patient.clinic_id = data.clinic_id
 
         if data.position_id is not strawberry.UNSET:
             if data.position_id is None:
+                if patient.position_id is not None:
+                    patient.position_updated_at = datetime.now()
                 patient.position_id = None
             else:
                 if data.position_id not in accessible_location_ids:
@@ -600,6 +609,8 @@ class PatientMutation(BaseMutationResolver[models.Patient]):
                 await location_service.validate_and_get_position(
                     data.position_id
                 )
+                if patient.position_id != data.position_id:
+                    patient.position_updated_at = datetime.now()
                 patient.position_id = data.position_id
 
         if data.team_ids is not strawberry.UNSET:
@@ -702,8 +713,11 @@ class PatientMutation(BaseMutationResolver[models.Patient]):
         ):
             raise_forbidden()
 
+        now = datetime.now()
+        if patient.state != state.value:
+            patient.state_updated_at = now
         patient.state = state.value
-        patient.updated_at = datetime.now()
+        patient.updated_at = now
         await BaseMutationResolver.update_and_notify(
             info, patient, models.Patient, "patient"
         )

@@ -169,6 +169,18 @@ class PatientType:
         return task_max or patient_updated
 
     @strawberry.field
+    def state_update_date(self) -> datetime | None:
+        return self.state_updated_at
+
+    @strawberry.field
+    def clinic_update_date(self) -> datetime | None:
+        return self.clinic_updated_at
+
+    @strawberry.field
+    def position_update_date(self) -> datetime | None:
+        return self.position_updated_at
+
+    @strawberry.field
     async def tasks(
         self,
         info: Info,

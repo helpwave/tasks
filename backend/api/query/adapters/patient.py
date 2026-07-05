@@ -100,6 +100,20 @@ def _parse_property_key(field_key: str) -> str | None:
     return field_key.removeprefix("property_")
 
 
+FIELD_UPDATE_DATE_COLUMNS: dict[str, Any] = {
+    "stateUpdateDate": models.Patient.state_updated_at,
+    "clinicUpdateDate": models.Patient.clinic_updated_at,
+    "positionUpdateDate": models.Patient.position_updated_at,
+}
+
+
+FIELD_UPDATE_DATE_LABELS: dict[str, str] = {
+    "stateUpdateDate": "State updated",
+    "clinicUpdateDate": "Clinic updated",
+    "positionUpdateDate": "Location updated",
+}
+
+
 LOCATION_SORT_KEY_KINDS: dict[str, tuple[str, ...]] = {
     "location-WARD": ("WARD",),
     "location-ROOM": ("ROOM",),
@@ -219,6 +233,13 @@ def apply_patient_filter_clause(
         query, max_task_update_date = _ensure_max_task_update_join(query, ctx)
         expr = _patient_update_date_expr(max_task_update_date)
         c = apply_ops_to_column(expr, op, val, as_datetime=True)
+        if c is not None:
+            query = query.where(c)
+        return query
+    if key in FIELD_UPDATE_DATE_COLUMNS:
+        c = apply_ops_to_column(
+            FIELD_UPDATE_DATE_COLUMNS[key], op, val, as_datetime=True
+        )
         if c is not None:
             query = query.where(c)
         return query
@@ -365,6 +386,11 @@ def apply_patient_sorts(
         elif key == "updateDate":
             query, max_task_update_date = _ensure_max_task_update_join(query, ctx)
             col = _patient_update_date_expr(max_task_update_date)
+            order_parts.append(
+                col.desc().nulls_last() if desc_order else col.asc().nulls_first()
+            )
+        elif key in FIELD_UPDATE_DATE_COLUMNS:
+            col = FIELD_UPDATE_DATE_COLUMNS[key]
             order_parts.append(
                 col.desc().nulls_last() if desc_order else col.asc().nulls_first()
             )
@@ -545,6 +571,19 @@ def build_patient_queryable_fields_static() -> list[QueryableField]:
             sort_directions=sort_directions_for(True),
             searchable=False,
         ),
+        *[
+            QueryableField(
+                key=key,
+                label=label,
+                kind=QueryableFieldKind.SCALAR,
+                value_type=QueryableValueType.DATETIME,
+                allowed_operators=dt_ops,
+                sortable=True,
+                sort_directions=sort_directions_for(True),
+                searchable=False,
+            )
+            for key, label in FIELD_UPDATE_DATE_LABELS.items()
+        ],
         QueryableField(
             key="description",
             label="Description",
