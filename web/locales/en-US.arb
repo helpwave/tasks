@@ -100,6 +100,25 @@
   "duplicate": "Duplicate",
   "done": "Done",
   "dueDate": "Due Date",
+  "dueDateInDays": "+{days, plural, =1{# day} other{# days}}",
+  "@dueDateInDays": {
+    "placeholders": {
+      "days": {
+        "type": "number"
+      }
+    }
+  },
+  "dueDateInHours": "+{hours, plural, =1{# hour} other{# hours}}",
+  "@dueDateInHours": {
+    "placeholders": {
+      "hours": {
+        "type": "number"
+      }
+    }
+  },
+  "dueDateNow": "Now",
+  "dueDateToday": "Today",
+  "dueDateTomorrow": "Tomorrow",
   "edit": "Edit",
   "editPatient": "Edit Patient",
   "editTask": "Edit Task",
