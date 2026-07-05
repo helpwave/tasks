@@ -307,6 +307,18 @@ function patientMatchesColumnFilter(patient: PatientViewModel, filter: ColumnFil
     const total = open + closed
     return matchesNumberOperator(total, op, fv.parameter)
   }
+  if (id === 'updateDate') {
+    return matchesDateOperator(patient.updateDate, op, fv)
+  }
+  if (id === 'stateUpdateDate') {
+    return matchesDateOperator(patient.stateUpdateDate, op, fv)
+  }
+  if (id === 'clinicUpdateDate') {
+    return matchesDateOperator(patient.clinicUpdateDate, op, fv)
+  }
+  if (id === 'positionUpdateDate') {
+    return matchesDateOperator(patient.positionUpdateDate, op, fv)
+  }
   if (id.startsWith('property_')) {
     const defId = id.replace(/^property_/, '')
     return matchesTextOperator(patientPropertyText(patient, defId), op, fv.parameter.stringValue ?? '')
@@ -452,6 +464,12 @@ function comparePatientBySortId(
   }
   if (sortId === 'updateDate') {
     return cmp(a.name.localeCompare(b.name))
+  }
+  if (sortId === 'stateUpdateDate' || sortId === 'clinicUpdateDate' || sortId === 'positionUpdateDate') {
+    const ta = a[sortId]?.getTime() ?? Number.POSITIVE_INFINITY
+    const tb = b[sortId]?.getTime() ?? Number.POSITIVE_INFINITY
+    if (ta === tb) return 0
+    return cmp(ta < tb ? -1 : 1)
   }
   if (sortId.startsWith('property_')) {
     const defId = sortId.replace(/^property_/, '')

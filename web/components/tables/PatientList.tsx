@@ -83,6 +83,9 @@ export type PatientViewModel = {
   sex: Sex,
   state: PatientState,
   updateDate?: Date,
+  stateUpdateDate?: Date,
+  clinicUpdateDate?: Date,
+  positionUpdateDate?: Date,
   tasks: TaskType[],
   properties?: GetPatientsQuery['patients'][0]['properties'],
 }
@@ -95,6 +98,14 @@ const LOCATION_KIND_HEADERS: Record<LocationKindColumn, string> = {
 }
 
 const ADMITTED_OR_WAITING_STATES: PatientState[] = [PatientState.Admitted, PatientState.Wait]
+
+const FIELD_UPDATE_DATE_COLUMNS = [
+  { id: 'stateUpdateDate', translationKey: 'stateUpdated' },
+  { id: 'clinicUpdateDate', translationKey: 'clinicUpdated' },
+  { id: 'positionUpdateDate', translationKey: 'positionUpdated' },
+] as const
+
+const HIDDEN_BY_DEFAULT_COLUMN_IDS: readonly string[] = FIELD_UPDATE_DATE_COLUMNS.map(({ id }) => id)
 
 const TABLE_ROW_ESTIMATE_PX = 56
 // Render about a screenful of extra rows so fast mobile scrolling does not
@@ -233,13 +244,17 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
   const useEmbeddedNoop = embedded && !derivedVirtualMode
   const [sorting, setSorting] = useState<SortingState>(() => viewDefaultSorting ?? [])
   const [filters, setFilters] = useState<ColumnFiltersState>(() => viewDefaultFilters ?? [])
-  const [columnVisibility, setColumnVisibilityRaw] = useState<VisibilityState>(() => viewDefaultColumnVisibility ?? {})
+  const [columnVisibility, setColumnVisibilityRaw] = useState<VisibilityState>(() => ({
+    ...Object.fromEntries(HIDDEN_BY_DEFAULT_COLUMN_IDS.map(id => [id, false])),
+    ...(viewDefaultColumnVisibility ?? {}),
+  }))
   const [columnOrder, setColumnOrder] = useState<ColumnOrderState>(() => viewDefaultColumnOrder ?? [])
 
   const setColumnVisibility = useColumnVisibilityWithPropertyDefaults(
     propertyDefinitionsData,
     PropertyEntity.Patient,
-    setColumnVisibilityRaw
+    setColumnVisibilityRaw,
+    HIDDEN_BY_DEFAULT_COLUMN_IDS
   )
 
   const baselineFilters = useMemo(() => viewDefaultFilters ?? [], [viewDefaultFilters])
@@ -256,6 +271,11 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
   const propertyColumnIds = useMemo(
     () => getPropertyColumnIds(propertyDefinitionsData, PropertyEntity.Patient),
     [propertyDefinitionsData]
+  )
+
+  const hiddenByDefaultAwareColumnIds = useMemo(
+    () => [...propertyColumnIds, ...HIDDEN_BY_DEFAULT_COLUMN_IDS],
+    [propertyColumnIds]
   )
 
   const persistedSavedViewContentKey = useMemo(
@@ -513,6 +533,9 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
       openTasksCount: countForAggregate ? (p.tasks?.filter(t => !t.done).length ?? 0) : 0,
       closedTasksCount: countForAggregate ? (p.tasks?.filter(t => t.done).length ?? 0) : 0,
       updateDate: p.updateDate ? new Date(p.updateDate) : undefined,
+      stateUpdateDate: p.stateUpdateDate ? new Date(p.stateUpdateDate) : undefined,
+      clinicUpdateDate: p.clinicUpdateDate ? new Date(p.clinicUpdateDate) : undefined,
+      positionUpdateDate: p.positionUpdateDate ? new Date(p.positionUpdateDate) : undefined,
       tasks: [],
       properties: p.properties ?? [],
     }
@@ -871,6 +894,19 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
       maxSize: 220,
       filterFn: 'date',
     },
+    ...FIELD_UPDATE_DATE_COLUMNS.map(({ id, translationKey }): ColumnDef<PatientViewModel> => ({
+      id,
+      header: translation(translationKey),
+      accessorFn: (row: PatientViewModel) => row[id],
+      cell: ({ row }: { row: Row<PatientViewModel> }) => {
+        const d = row.original[id]
+        return gateCell(row.original.id, d ? <DateDisplay date={d} mode="absolute" /> : <FillerCell />)
+      },
+      minSize: 220,
+      size: 220,
+      maxSize: 220,
+      filterFn: 'date',
+    })),
     ...patientPropertyColumnsWithActions.map((col) => ({
       ...col,
       cell: col.cell
@@ -934,6 +970,9 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
       'tasks': translation('tasks'),
       'updated': translation('updated'),
       'updateDate': translation('updated'),
+      'stateUpdateDate': translation('stateUpdated'),
+      'clinicUpdateDate': translation('clinicUpdated'),
+      'positionUpdateDate': translation('positionUpdated'),
       'description': translation('description'),
     }
     return translatedByKey[key] ?? field.label
@@ -1001,6 +1040,12 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
         dataType: 'date',
         tags: [],
       },
+      ...FIELD_UPDATE_DATE_COLUMNS.map(({ id, translationKey }): FilterListItem => ({
+        id,
+        label: translation(translationKey),
+        dataType: 'dateTime',
+        tags: [],
+      })),
       {
         id: 'tasks',
         label: translation('tasks'),
@@ -1072,7 +1117,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
       baselineColumnVisibility,
       columnOrder: sanitizedColumnOrder,
       baselineColumnOrder: sanitizedBaselineColumnOrder,
-      propertyColumnIds,
+      propertyColumnIds: hiddenByDefaultAwareColumnIds,
     }),
     [
       filters,
@@ -1085,7 +1130,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
       baselineColumnVisibility,
       sanitizedColumnOrder,
       sanitizedBaselineColumnOrder,
-      propertyColumnIds,
+      hiddenByDefaultAwareColumnIds,
     ]
   )
   const hasUnsavedViewChanges = !viewMatchesBaseline
