@@ -298,9 +298,11 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
           return a.done ? 1 : -1
         }
 
+        // backend parity: ascending due-date order with tasks that have no
+        // due date first (dueDate.asc().nulls_first())
         if (!a.dueDate && !b.dueDate) return 0
-        if (!a.dueDate) return 1
-        if (!b.dueDate) return -1
+        if (!a.dueDate) return -1
+        if (!b.dueDate) return 1
 
         return a.dueDate.getTime() - b.dueDate.getTime()
       })

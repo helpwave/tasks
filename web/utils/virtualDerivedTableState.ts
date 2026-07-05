@@ -3,6 +3,7 @@ import type { SortingState } from '@tanstack/table-core'
 import type { FilterOperator, FilterValue } from '@helpwave/hightide'
 import type { TaskViewModel } from '@/components/tables/TaskList'
 import type { PatientViewModel } from '@/components/tables/PatientList'
+import { getLocationNodesByKind, type LocationKindColumn } from '@/utils/location'
 
 function normalizeLower(s: string | undefined | null): string {
   return (s ?? '').toLowerCase()
@@ -169,6 +170,9 @@ function extractSelectedTags(parameter: FilterValue['parameter']): string[] {
     const v = p[field]
     if (Array.isArray(v) && v.length > 0) return v.map(String)
   }
+  if (parameter.uuidValue != null && String(parameter.uuidValue) !== '') {
+    return [String(parameter.uuidValue)]
+  }
   if (p['searchTag'] != null) return [String(p['searchTag'])]
   if (parameter.stringValue) return [String(parameter.stringValue)]
   return []
@@ -180,17 +184,19 @@ function matchesSingleTagOperator(
   fv: FilterValue
 ): boolean {
   const tags = extractSelectedTags(fv.parameter)
-  const single = fv.parameter.stringValue ?? (tags.length === 1 ? tags[0] : undefined)
+  // "equals"/"notEquals" use a single selection: the tag popup stores it in
+  // uuidValue (extracted above), legacy filters in stringValue.
+  const single = tags.length === 1 ? tags[0] : fv.parameter.stringValue
   const v = value ?? ''
   switch (operator) {
   case 'equals':
-    return v === single
+    return single == null || v === single
   case 'notEquals':
-    return v !== single
+    return single == null || v !== single
   case 'contains':
-    return tags.includes(v)
+    return tags.length === 0 || tags.includes(v)
   case 'notContains':
-    return !tags.includes(v)
+    return tags.length === 0 || !tags.includes(v)
   case 'isUndefined':
     return v === ''
   case 'isNotUndefined':
@@ -226,6 +232,20 @@ function taskMatchesColumnFilter(task: TaskViewModel, filter: ColumnFilter): boo
     return matchesTextOperator(task.patient?.name ?? '', op, fv.parameter.stringValue ?? '')
   }
   if (id === 'assignee') {
+    // the assignee filter popup selects users by id (uuidValue/uuidValues)
+    const p = fv.parameter
+    const selectedIds = Array.isArray(p.uuidValues) && p.uuidValues.length > 0
+      ? p.uuidValues.map(String)
+      : p.uuidValue != null && String(p.uuidValue) !== ''
+        ? [String(p.uuidValue)]
+        : []
+    if (selectedIds.length > 0) {
+      const assigneeId = task.assignee?.id ?? (task.assigneeTeam ? `team:${task.assigneeTeam.id}` : undefined)
+      const matches = assigneeId != null && selectedIds.includes(assigneeId)
+      return op === 'notEquals' || op === 'notContains' ? !matches : matches
+    }
+    if (op === 'isUndefined') return task.assignee == null && task.assigneeTeam == null
+    if (op === 'isNotUndefined') return task.assignee != null || task.assigneeTeam != null
     const label = task.assignee?.name ?? task.assigneeTeam?.title ?? ''
     return matchesTextOperator(label, op, fv.parameter.stringValue ?? '')
   }
@@ -258,25 +278,14 @@ function patientMatchesColumnFilter(patient: PatientViewModel, filter: ColumnFil
   if (id === 'name') {
     return matchesTextOperator(patient.name, op, fv.parameter.stringValue ?? '')
   }
+  if (id === 'firstname') {
+    return matchesTextOperator(patient.firstname, op, fv.parameter.stringValue ?? '')
+  }
+  if (id === 'lastname') {
+    return matchesTextOperator(patient.lastname, op, fv.parameter.stringValue ?? '')
+  }
   if (id === 'state') {
-    const tags = extractSelectedTags(fv.parameter)
-    const state = String(patient.state ?? '')
-    switch (op) {
-    case 'contains':
-      return tags.length === 0 || tags.includes(state)
-    case 'notContains':
-      return tags.length === 0 || !tags.includes(state)
-    case 'equals':
-      return tags.length === 0 || (tags.length === 1 && tags[0] === state)
-    case 'notEquals':
-      return tags.length === 0 || tags[0] !== state
-    case 'isUndefined':
-      return state === ''
-    case 'isNotUndefined':
-      return state !== ''
-    default:
-      return true
-    }
+    return matchesSingleTagOperator(String(patient.state ?? ''), op, fv)
   }
   if (id === 'sex') {
     return matchesSingleTagOperator(patient.sex, op, fv)
@@ -300,6 +309,11 @@ function patientMatchesColumnFilter(patient: PatientViewModel, filter: ColumnFil
   }
   if (id === 'clinic') {
     return matchesTextOperator(patient.clinic?.title ?? '', op, fv.parameter.stringValue ?? '')
+  }
+  if (id === 'location-WARD' || id === 'location-ROOM' || id === 'location-BED') {
+    const kind = id.replace('location-', '') as LocationKindColumn
+    const title = getLocationNodesByKind(patient.position ?? null)[kind]?.title ?? ''
+    return matchesTextOperator(title, op, fv.parameter.stringValue ?? '')
   }
   if (id === 'tasks') {
     const open = patient.openTasksCount
@@ -352,13 +366,27 @@ function compareTaskBySortId(
     return cmp((a.description ?? '').localeCompare(b.description ?? ''))
   }
   if (sortId === 'dueDate') {
-    const ta = a.dueDate?.getTime() ?? Number.POSITIVE_INFINITY
-    const tb = b.dueDate?.getTime() ?? Number.POSITIVE_INFINITY
+    // backend parity: ascending puts tasks without a due date first,
+    // descending puts them last (asc().nulls_first() / desc().nulls_last())
+    const ta = a.dueDate?.getTime()
+    const tb = b.dueDate?.getTime()
+    if (ta == null && tb == null) return 0
+    if (ta == null) return -dir
+    if (tb == null) return dir
     if (ta === tb) return 0
     return cmp(ta < tb ? -1 : 1)
   }
   if (sortId === 'priority') {
-    return cmp((a.priority ?? '').localeCompare(b.priority ?? ''))
+    // backend parity: P1 < P2 < P3 < P4, tasks without a priority rank
+    // behind P4 (the direction flips that ordering as a whole)
+    const order = (p: string | null | undefined): number => {
+      const idx = ['P1', 'P2', 'P3', 'P4'].indexOf(p ?? '')
+      return idx === -1 ? 99 : idx + 1
+    }
+    const pa = order(a.priority)
+    const pb = order(b.priority)
+    if (pa === pb) return 0
+    return cmp(pa < pb ? -1 : 1)
   }
   if (sortId === 'patient') {
     return cmp((a.patient?.name ?? '').localeCompare(b.patient?.name ?? ''))
@@ -426,8 +454,22 @@ function comparePatientBySortId(
     if (byLast !== 0) return cmp(byLast)
     return cmp(a.firstname.localeCompare(b.firstname))
   }
+  if (sortId === 'firstname') {
+    return cmp(a.firstname.localeCompare(b.firstname))
+  }
+  if (sortId === 'lastname') {
+    return cmp(a.lastname.localeCompare(b.lastname))
+  }
   if (sortId === 'state') {
-    return cmp(a.state.localeCompare(b.state))
+    // backend parity: WAIT < ADMITTED < DISCHARGED < DEAD
+    const order = (s: string): number => {
+      const idx = ['WAIT', 'ADMITTED', 'DISCHARGED', 'DEAD'].indexOf(s)
+      return idx === -1 ? 4 : idx
+    }
+    const sa = order(String(a.state))
+    const sb = order(String(b.state))
+    if (sa === sb) return 0
+    return cmp(sa < sb ? -1 : 1)
   }
   if (sortId === 'sex') {
     return cmp(a.sex.localeCompare(b.sex))
@@ -450,8 +492,22 @@ function comparePatientBySortId(
     if (ta === tb) return 0
     return cmp(ta < tb ? -1 : 1)
   }
-  if (sortId === 'updateDate') {
-    return cmp(a.name.localeCompare(b.name))
+  if (sortId === 'updated' || sortId === 'updateDate') {
+    // backend parity: sort by the update date itself; patients without one
+    // come first ascending, last descending
+    const ta = a.updateDate?.getTime()
+    const tb = b.updateDate?.getTime()
+    if (ta == null && tb == null) return 0
+    if (ta == null) return -dir
+    if (tb == null) return dir
+    if (ta === tb) return 0
+    return cmp(ta < tb ? -1 : 1)
+  }
+  if (sortId === 'location-WARD' || sortId === 'location-ROOM' || sortId === 'location-BED') {
+    const kind = sortId.replace('location-', '') as LocationKindColumn
+    const la = getLocationNodesByKind(a.position ?? null)[kind]?.title ?? ''
+    const lb = getLocationNodesByKind(b.position ?? null)[kind]?.title ?? ''
+    return cmp(la.localeCompare(lb))
   }
   if (sortId.startsWith('property_')) {
     const defId = sortId.replace(/^property_/, '')

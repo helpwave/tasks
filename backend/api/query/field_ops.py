@@ -88,6 +88,23 @@ def apply_ops_to_column(
             return column.between(value.float_min, value.float_max)
         return None
 
+    if operator == QueryOperator.NOT_BETWEEN:
+        # "not between" keeps rows outside the range, including rows without a
+        # value (SQL NOT BETWEEN would drop NULLs).
+        if value is None:
+            return None
+        if value.date_min is not None and value.date_max is not None:
+            return or_(
+                column.is_(None),
+                not_(func.date(column).between(value.date_min, value.date_max)),
+            )
+        if value.float_min is not None and value.float_max is not None:
+            return or_(
+                column.is_(None),
+                not_(column.between(value.float_min, value.float_max)),
+            )
+        return None
+
     if operator == QueryOperator.IN:
         if value and value.string_values:
             return column.in_(value.string_values)
@@ -107,6 +124,13 @@ def apply_ops_to_column(
         if s is None:
             return None
         return column.ilike(f"%{s}%")
+    if operator == QueryOperator.NOT_CONTAINS:
+        # "does not contain" keeps rows whose value lacks the needle, including
+        # rows without a value (SQL NOT ILIKE would drop NULLs).
+        s = _str_norm(value) if value else None
+        if s is None:
+            return None
+        return or_(column.is_(None), not_(column.ilike(f"%{s}%")))
     if operator == QueryOperator.STARTS_WITH:
         s = _str_norm(value) if value else None
         if s is None:
@@ -151,6 +175,15 @@ def _apply_date_ops(
         and value.date_max is not None
     ):
         return dc.between(value.date_min, value.date_max)
+    if (
+        operator == QueryOperator.NOT_BETWEEN
+        and value.date_min is not None
+        and value.date_max is not None
+    ):
+        return or_(
+            column.is_(None),
+            not_(dc.between(value.date_min, value.date_max)),
+        )
     if operator == QueryOperator.IN and value.string_values:
         return dc.in_(value.string_values)
     if value.date_value is not None:
@@ -193,6 +226,15 @@ def _apply_datetime_ops(
         and value.date_max is not None
     ):
         return func.date(column).between(value.date_min, value.date_max)
+    if (
+        operator == QueryOperator.NOT_BETWEEN
+        and value.date_min is not None
+        and value.date_max is not None
+    ):
+        return or_(
+            column.is_(None),
+            not_(func.date(column).between(value.date_min, value.date_max)),
+        )
     return None
 
 
