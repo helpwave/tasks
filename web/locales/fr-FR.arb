@@ -65,6 +65,10 @@
   "editTask": "Modifier la tâche",
   "errorOccurred": "Une erreur s''est produite",
   "estimatedTime": "Temps estimé (minutes)",
+  "export": "Exporter",
+  "exportCsv": "Exporter en CSV",
+  "exportExcel": "Exporter en Excel (imprimable)",
+  "exportFailed": "Échec de l''exportation. Veuillez réessayer.",
   "timeEstimate": "Temps estimé",
   "nMinutesShort": "{minCount} min",
   "@nMinutesShort": {

@@ -66,6 +66,8 @@ try:
 except ValueError:
     SCAFFOLD_STRATEGY = ScaffoldStrategy.CHECK
 
+EXPORT_MAX_ROWS = int(os.getenv("EXPORT_MAX_ROWS", "10000"))
+
 INFLUXDB_URL = os.getenv("INFLUXDB_URL", "http://localhost:8086")
 INFLUXDB_TOKEN = os.getenv("INFLUXDB_TOKEN", None)
 INFLUXDB_ORG = os.getenv("INFLUXDB_ORG", "tasks")

@@ -218,6 +218,11 @@ const TasksPage: NextPage = () => {
           loadMore={loadMore}
           hasMore={hasMore}
           isFetchingMore={isFetchingMore}
+          exportScope={{
+            rootLocationIds: selectedRootLocationIds ?? undefined,
+            assigneeId: user?.id,
+          }}
+          exportTitle={translation('myTasks')}
           saveViewSlot={(
             <Visibility isVisible={hasUnsavedViewChanges}>
               <SaveViewActionsMenu

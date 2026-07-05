@@ -20,6 +20,8 @@ import type { ColumnDef, ColumnFiltersState, ColumnOrderState, PaginationState, 
 import { getPropertyColumnsForEntity, type PropertyColumnValueChangedPayload } from '@/utils/propertyColumn'
 import { getPropertyColumnIds, useColumnVisibilityWithPropertyDefaults } from '@/hooks/usePropertyColumnVisibility'
 import { columnFiltersToQueryFilterClauses, sortingStateToQuerySortClauses } from '@/utils/tableStateToApi'
+import { collectExportColumns, type TableExportFormat, type TableExportRequest } from '@/utils/tableExport'
+import { TableExportMenu } from '@/components/tables/TableExportMenu'
 import { LIST_PAGE_SIZE } from '@/utils/listPaging'
 import { useAccumulatedPagination } from '@/hooks/useAccumulatedPagination'
 import { RowRefreshingGate } from '@/components/tables/RowRefreshingGate'
@@ -1088,6 +1090,24 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
   )
   const hasUnsavedViewChanges = !viewMatchesBaseline
 
+  const canExport = !derivedVirtualMode && !(embedded && embeddedPatients !== undefined)
+  const buildExportRequest = useCallback((format: TableExportFormat): TableExportRequest => ({
+    entity: 'patients',
+    format,
+    columns: collectExportColumns(columns, tableColumnVisibility, sanitizedColumnOrder),
+    filters: apiFilters,
+    sorts: apiSorting,
+    search: searchInput,
+    locale,
+    timezone: timeZone,
+    title: translation('patients'),
+    scope: {
+      locationNodeId: patientsQueryVariables.locationId,
+      rootLocationIds: patientsQueryVariables.rootLocationIds,
+      states: patientsQueryVariables.states,
+    },
+  }), [columns, tableColumnVisibility, sanitizedColumnOrder, apiFilters, apiSorting, searchInput, locale, timeZone, translation, patientsQueryVariables])
+
   const deferSetColumnOrder = useDeferredColumnOrderChange(setColumnOrder)
 
   const embeddedTableStateNoop = useCallback(() => {}, [])
@@ -1145,6 +1165,9 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
                   buttonProps={{ className: 'min-h-11 min-w-11 shrink-0' }}
                   style={{ zIndex: 120 }}
                 />
+                {canExport && (
+                  <TableExportMenu buildRequest={buildExportRequest} />
+                )}
                 <div className="inline-flex flex-wrap gap-2 items-center shrink-0">
                   <Button
                     onClick={() => setIsShowFilters(!isShowFilters)}
