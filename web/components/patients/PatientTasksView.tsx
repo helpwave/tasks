@@ -1,7 +1,10 @@
 import { useState, useMemo, useEffect, useCallback } from 'react'
-import { Button, Drawer, ExpandableContent, ExpandableHeader, ExpandableRoot } from '@helpwave/hightide'
+import { Button, Drawer, ExpandableContent, ExpandableHeader, ExpandableRoot, useLocale } from '@helpwave/hightide'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { CheckCircle2, ChevronDown, Circle, Combine, PlusIcon } from 'lucide-react'
+import { SortDirection } from '@/api/gql/generated'
+import type { TableExportFormat, TableExportRequest } from '@/utils/tableExport'
+import { TableExportMenu } from '@/components/tables/TableExportMenu'
 import { TaskCardView } from '@/components/tasks/TaskCardView'
 import clsx from 'clsx'
 import type { GetPatientQuery } from '@/api/gql/generated'
@@ -90,6 +93,29 @@ export const PatientTasksView = ({
   const openTasks = useMemo(() => sortByDueDate(tasks.filter(t => !t.done)), [tasks])
   const closedTasks = useMemo(() => sortByDueDate(tasks.filter(t => t.done)), [tasks])
 
+  const { locale, timeZone } = useLocale()
+  const buildExportRequest = useCallback((format: TableExportFormat): TableExportRequest => ({
+    entity: 'tasks',
+    format,
+    columns: [
+      { key: 'done', label: translation('done') },
+      { key: 'title', label: translation('title') },
+      { key: 'description', label: translation('description') },
+      { key: 'dueDate', label: translation('dueDate') },
+      { key: 'assignee', label: translation('assignedTo') },
+    ],
+    sorts: [
+      { fieldKey: 'done', direction: SortDirection.Asc },
+      { fieldKey: 'dueDate', direction: SortDirection.Asc },
+    ],
+    locale,
+    timezone: timeZone,
+    title: initialPatientName
+      ? `${translation('tasks')}: ${initialPatientName}`
+      : translation('tasks'),
+    scope: { patientId },
+  }), [translation, locale, timeZone, initialPatientName, patientId])
+
   useEffect(() => {
     setOptimisticTaskUpdates(new Map())
   }, [patientData?.patient?.tasks])
@@ -151,6 +177,7 @@ export const PatientTasksView = ({
           </ExpandableRoot>
         </div>
         <div className="flex-row-4 justify-end my-2 flex-wrap gap-2">
+          <TableExportMenu buildRequest={buildExportRequest} />
           <Button
             onClick={() => setLoadPresetOpen(true)}
             className="w-fit"

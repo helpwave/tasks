@@ -31,6 +31,10 @@ _THIN_BORDER = Border(
 
 _MIN_COLUMN_WIDTH = 10
 _MAX_COLUMN_WIDTH = 45
+_HEADER_ROW_HEIGHT = 26
+_BASE_ROW_HEIGHT = 22
+_LINE_HEIGHT = 13
+_MAX_WRAP_LINES = 4
 
 
 def neutralize_formula(text: str) -> str:
@@ -108,6 +112,17 @@ def _estimate_width(values: list[str]) -> float:
     return min(max(longest + 3, _MIN_COLUMN_WIDTH), _MAX_COLUMN_WIDTH)
 
 
+def _estimate_row_height(texts: list[str], widths: list[float]) -> float:
+    max_lines = 1
+    for text, width in zip(texts, widths):
+        if not text:
+            continue
+        usable_chars = max(int(width) - 2, 1)
+        lines = min(-(-len(text) // usable_chars), _MAX_WRAP_LINES)
+        max_lines = max(max_lines, lines)
+    return max(_BASE_ROW_HEIGHT, max_lines * _LINE_HEIGHT + 9.0)
+
+
 def render_xlsx(
     headers: list[str],
     rows: list[list[ExportCell]],
@@ -120,9 +135,14 @@ def render_xlsx(
 
     column_count = max(len(headers), 1)
     generated_at = ctx.now.strftime(ctx.formats["datetime"])
+    generated_by = (
+        f" {ctx.labels['generated_by']} {ctx.exported_by}"
+        if ctx.exported_by
+        else ""
+    )
     subtitle = (
-        f"{ctx.labels['generated_at']} {generated_at} ({ctx.tz.key}) — "
-        f"{len(rows)} {ctx.labels['entries']}"
+        f"{ctx.labels['generated_at']} {generated_at} ({ctx.tz.key})"
+        f"{generated_by} — {len(rows)} {ctx.labels['entries']}"
     )
 
     title_cell = worksheet.cell(row=1, column=1, value=title)
@@ -136,7 +156,27 @@ def render_xlsx(
         start_row=2, start_column=1, end_row=2, end_column=column_count,
     )
 
+    text_rows = [
+        [format_cell_text(cell, ctx) for cell in row] for row in rows
+    ]
+    widths = [
+        _estimate_width(
+            [headers[column_index]]
+            + [
+                text_row[column_index]
+                for text_row in text_rows
+                if column_index < len(text_row)
+            ],
+        )
+        for column_index in range(column_count)
+    ]
+    for column_index, width in enumerate(widths, start=1):
+        worksheet.column_dimensions[
+            get_column_letter(column_index)
+        ].width = width
+
     header_row = 4
+    worksheet.row_dimensions[header_row].height = _HEADER_ROW_HEIGHT
     for index, header in enumerate(headers, start=1):
         cell = worksheet.cell(row=header_row, column=index, value=header)
         cell.font = Font(bold=True, color="FFFFFFFF")
@@ -151,18 +191,13 @@ def render_xlsx(
         for column_index, cell in enumerate(row, start=1):
             written = _write_cell(worksheet, row_index, column_index, cell, ctx)
             written.border = _THIN_BORDER
-            written.alignment = Alignment(vertical="top", wrap_text=True)
+            written.alignment = Alignment(vertical="center", wrap_text=True)
             if row_offset % 2 == 1:
                 written.fill = _ZEBRA_FILL
-
-    for column_index in range(1, column_count + 1):
-        texts = [headers[column_index - 1]]
-        for row in rows:
-            if column_index <= len(row):
-                texts.append(format_cell_text(row[column_index - 1], ctx))
-        worksheet.column_dimensions[
-            get_column_letter(column_index)
-        ].width = _estimate_width(texts)
+        worksheet.row_dimensions[row_index].height = _estimate_row_height(
+            text_rows[row_offset],
+            widths,
+        )
 
     last_row = header_row + len(rows)
     worksheet.freeze_panes = f"A{header_row + 1}"

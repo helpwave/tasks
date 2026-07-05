@@ -14,6 +14,7 @@ from api.export.cells import (
     LocationInfo,
     patient_cell,
     task_cell,
+    user_display_name,
 )
 from api.export.labels import get_formats, get_labels
 from api.export.render import render_csv, render_xlsx
@@ -162,6 +163,7 @@ async def run_table_export(
         formats=get_formats(request.locale),
         tz=tz,
         now=datetime.now(tz).replace(tzinfo=None),
+        exported_by=user_display_name(context.user),
     )
     ctx.locations = await _load_locations(db)
 

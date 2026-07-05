@@ -1,3 +1,4 @@
+import re
 from dataclasses import dataclass, field
 from datetime import date, datetime, timezone
 from typing import Any
@@ -40,6 +41,7 @@ class ExportContext:
     formats: dict[str, str]
     tz: ZoneInfo
     now: datetime
+    exported_by: str | None = None
     locations: dict[str, LocationInfo] = field(default_factory=dict)
     users: dict[str, models.User] = field(default_factory=dict)
     property_definitions: dict[str, models.PropertyDefinition] = field(
@@ -115,6 +117,25 @@ def _due_date_cell(value: datetime | None, ctx: ExportContext) -> ExportCell:
     return _datetime_cell(value, ctx)
 
 
+# Select values are stored as "<definitionId>-opt-<index>" keys; the label is
+# looked up in the definition's comma-separated options, mirroring the UI
+# (web/components/properties/PropertyCell.tsx).
+_SELECT_OPTION_KEY = re.compile(r"-opt-(\d+)$")
+
+
+def select_option_label(
+    raw_value: str,
+    definition: models.PropertyDefinition,
+) -> str:
+    match = _SELECT_OPTION_KEY.search(raw_value)
+    if match and definition.options:
+        options = definition.options.split(",")
+        index = int(match.group(1))
+        if 0 <= index < len(options):
+            return options[index]
+    return raw_value
+
+
 def _property_cell(
     entity_id: str,
     definition_id: str,
@@ -136,13 +157,17 @@ def _property_cell(
     if field_type == FieldType.FIELD_TYPE_DATE_TIME.value:
         return _datetime_cell(prop.date_time_value, ctx)
     if field_type == FieldType.FIELD_TYPE_SELECT.value:
-        return ExportCell(prop.select_value)
+        if not prop.select_value:
+            return ExportCell(None)
+        return ExportCell(select_option_label(prop.select_value, definition))
     if field_type == FieldType.FIELD_TYPE_MULTI_SELECT.value:
         if not prop.multi_select_values:
             return ExportCell(None)
         return ExportCell(
             ", ".join(
-                v for v in prop.multi_select_values.split(",") if v
+                select_option_label(v, definition)
+                for v in prop.multi_select_values.split(",")
+                if v
             ),
         )
     if field_type == FieldType.FIELD_TYPE_USER.value:

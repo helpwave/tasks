@@ -60,6 +60,10 @@ Implemented in `backend/api/export/cells.py` / `render.py`:
   position's ancestor chain, task progress (`closed/total`), birthdate with
   age, patient update date (max of patient and task updates), and dynamic
   `property_*` columns for all field types.
+- Select and multi-select property values are stored as
+  `<definitionId>-opt-<index>` keys; the export resolves them to the
+  definition's option labels exactly like `PropertyCell.tsx`, joining
+  multi-select values inline with `, `.
 - CSV is `;`-separated, CRLF, UTF-8 with BOM — opens correctly in German
   Excel. Decimal numbers use a comma for `de-*` locales.
 - Text cells starting with `=`, `+`, `-`, `@` are apostrophe-prefixed to
@@ -68,10 +72,12 @@ Implemented in `backend/api/export/cells.py` / `render.py`:
 ## XLSX print template
 
 The XLSX renderer produces a ward list that prints well without any manual
-setup: title + generation timestamp block, styled header row, zebra striping,
-column widths estimated from content, freeze pane below the header,
-auto-filter, A4 landscape, fit-to-width scaling, the header row repeated on
-every printed page, and a footer with generation info and page numbers.
+setup: title + generation block (timestamp, timezone, **exporting user** and
+row count — repeated in the print footer), styled header row, zebra striping,
+column widths estimated from content, row heights scaled to wrapped content
+(minimum 22pt), freeze pane below the header, auto-filter, A4 **landscape by
+default**, fit-to-width scaling, the header row repeated on every printed
+page, and a footer with generation info and page numbers.
 
 ## Frontend integration
 
@@ -82,6 +88,8 @@ every printed page, and a footer with generation info and page numbers.
 - `PatientList` builds its export request itself (it owns its query state);
   `TaskList` receives the page-level scope via the `exportScope` /
   `exportTitle` props (used by `/tasks` and `/view/[uid]`).
+- The patient detail's tasks tab (`PatientTasksView`) exports the patient's
+  todo list with a fixed column set, scoped via `patientId`.
 
 ## Testing
 

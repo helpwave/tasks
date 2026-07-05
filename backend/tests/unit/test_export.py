@@ -12,6 +12,7 @@ from api.export.cells import (
     is_date_only_due_date,
     location_title_by_kind,
     patient_cell,
+    select_option_label,
     task_cell,
     to_zoned,
 )
@@ -23,8 +24,9 @@ from api.export.render import (
     render_xlsx,
 )
 from api.export.service import _slugify_filename
-from api.inputs import PatientState, Sex
+from api.inputs import FieldType, PatientState, Sex
 from database.models.patient import Patient
+from database.models.property import PropertyDefinition, PropertyValue
 from database.models.task import Task
 from database.models.user import User
 
@@ -37,6 +39,7 @@ def make_context(locale: str = "de-DE") -> ExportContext:
         formats=get_formats(locale),
         tz=BERLIN,
         now=datetime(2026, 7, 5, 12, 0),
+        exported_by="Erika Musterfrau",
     )
 
 
@@ -149,6 +152,61 @@ def test_discharged_patient_task_progress_is_zero():
     assert patient_cell(patient, "tasks", ctx).value == "0/0"
 
 
+def _select_definition(definition_id: str, field_type: FieldType) -> PropertyDefinition:
+    return PropertyDefinition(
+        id=definition_id,
+        name="Diet",
+        field_type=field_type.value,
+        options="Vegetarisch,Vegan,Normal",
+    )
+
+
+def test_select_option_label_resolves_option_keys():
+    definition = _select_definition("def-1", FieldType.FIELD_TYPE_SELECT)
+    assert select_option_label("def-1-opt-0", definition) == "Vegetarisch"
+    assert select_option_label("def-1-opt-2", definition) == "Normal"
+    assert select_option_label("def-1-opt-9", definition) == "def-1-opt-9"
+    assert select_option_label("free text", definition) == "free text"
+
+
+def test_select_property_cell_shows_option_label():
+    ctx = make_context()
+    definition = _select_definition("def-1", FieldType.FIELD_TYPE_SELECT)
+    ctx.property_definitions = {"def-1": definition}
+    ctx.properties_by_entity = {
+        "patient-1": {
+            "def-1": PropertyValue(
+                id="pv-1",
+                definition_id="def-1",
+                patient_id="patient-1",
+                select_value="def-1-opt-1",
+            ),
+        },
+    }
+    patient = make_patient()
+    assert patient_cell(patient, "property_def-1", ctx).value == "Vegan"
+
+
+def test_multi_select_property_cell_joins_option_labels_inline():
+    ctx = make_context()
+    definition = _select_definition("def-1", FieldType.FIELD_TYPE_MULTI_SELECT)
+    ctx.property_definitions = {"def-1": definition}
+    ctx.properties_by_entity = {
+        "task-1": {
+            "def-1": PropertyValue(
+                id="pv-1",
+                definition_id="def-1",
+                task_id="task-1",
+                multi_select_values="def-1-opt-0,def-1-opt-2",
+            ),
+        },
+    }
+    task = Task(id="task-1", title="x", done=False)
+    task.assignees = []
+    cell = task_cell(task, "property_def-1", ctx)
+    assert cell.value == "Vegetarisch, Normal"
+
+
 def test_location_title_by_kind_missing_levels():
     locations = {
         "ward-1": LocationInfo("Station 3", "WARD", None),
@@ -212,6 +270,8 @@ def test_render_xlsx_printable_layout():
 
     assert sheet.title == "Station 3"
     assert sheet.cell(row=1, column=1).value == "Station 3"
+    subtitle = sheet.cell(row=2, column=1).value
+    assert "von Erika Musterfrau" in subtitle
     assert sheet.cell(row=4, column=1).value == "Name"
     assert sheet.cell(row=5, column=1).value == "Erika Musterfrau"
     assert sheet.cell(row=5, column=2).value == datetime(2026, 7, 1, 12, 0)
@@ -220,6 +280,8 @@ def test_render_xlsx_printable_layout():
     assert sheet.print_title_rows == "$4:$4"
     assert sheet.page_setup.orientation == "landscape"
     assert sheet.page_setup.fitToWidth == 1
+    assert sheet.row_dimensions[4].height == 26
+    assert sheet.row_dimensions[5].height >= 22
 
 
 def test_slugify_filename_handles_umlauts():
@@ -287,6 +349,7 @@ async def test_run_table_export_tasks_xlsx_end_to_end(
     workbook = load_workbook(io.BytesIO(result.content))
     sheet = workbook.active
     assert sheet.cell(row=1, column=1).value == "Meine Aufgaben"
+    assert "Test User" in sheet.cell(row=2, column=1).value
     assert sheet.cell(row=4, column=1).value == "Titel"
     assert sheet.cell(row=5, column=1).value == "Test Task"
     assert sheet.cell(row=5, column=2).value == "John Doe"
