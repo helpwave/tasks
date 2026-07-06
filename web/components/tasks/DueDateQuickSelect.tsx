@@ -18,7 +18,7 @@ export const DueDateQuickSelect = ({ onSelect }: DueDateQuickSelectProps) => {
         <Button
           size="xs"
           color="neutral"
-          coloringStyle="outline"
+          coloringStyle="solid"
           onClick={() => onSelect(DueDateUtils.dateTimeInHours(0))}
         >
           {translation('dueDateNow')}
@@ -28,7 +28,7 @@ export const DueDateQuickSelect = ({ onSelect }: DueDateQuickSelectProps) => {
             key={hours}
             size="xs"
             color="neutral"
-            coloringStyle="outline"
+            coloringStyle="solid"
             onClick={() => onSelect(DueDateUtils.dateTimeInHours(hours))}
           >
             {translation('dueDateInHours', { hours })}
@@ -39,7 +39,7 @@ export const DueDateQuickSelect = ({ onSelect }: DueDateQuickSelectProps) => {
         <Button
           size="xs"
           color="neutral"
-          coloringStyle="outline"
+          coloringStyle="solid"
           onClick={() => onSelect(DueDateUtils.dateOnlyInDays(0))}
         >
           {translation('dueDateToday')}
@@ -47,7 +47,7 @@ export const DueDateQuickSelect = ({ onSelect }: DueDateQuickSelectProps) => {
         <Button
           size="xs"
           color="neutral"
-          coloringStyle="outline"
+          coloringStyle="solid"
           onClick={() => onSelect(DueDateUtils.dateOnlyInDays(1))}
         >
           {translation('dueDateTomorrow')}
@@ -57,7 +57,7 @@ export const DueDateQuickSelect = ({ onSelect }: DueDateQuickSelectProps) => {
             key={days}
             size="xs"
             color="neutral"
-            coloringStyle="outline"
+            coloringStyle="solid"
             onClick={() => onSelect(DueDateUtils.dateOnlyInDays(days))}
           >
             {translation('dueDateInDays', { days })}

@@ -147,7 +147,7 @@ export const AssigneeSelectDialog = ({
       onClose={handleClose}
       titleElement={dialogTitle || translation('selectAssignee') || 'Assign to...'}
       description=""
-      className="w-[500px] h-[600px] max-w-full flex flex-col"
+      className="w-128 h-150 flex flex-col"
       isModal={true}
     >
       <div ref={searchInputRef} className="flex-shrink-0">
@@ -163,7 +163,7 @@ export const AssigneeSelectDialog = ({
         <div className="overflow-y-auto flex-1 min-h-0 border border-divider rounded-lg bg-surface" style={{ height: '300px' }}>
           {filteredUsers.length > 0 && (
             <>
-              <div className="px-3 py-2 text-xs font-semibold text-description bg-surface sticky top-0">{translation('users') ?? 'Users'}</div>
+              <div className="px-3 py-2 text-xs font-semibold text-description bg-surface sticky top-0 z-10">{translation('users') ?? 'Users'}</div>
               {filteredUsers.map(user => (
                 <div
                   key={user.id}
@@ -213,7 +213,7 @@ export const AssigneeSelectDialog = ({
           )}
           {allowTeams && filteredTeams.length > 0 && (
             <>
-              <div className="px-3 py-2 text-xs font-semibold text-description bg-surface sticky top-0">{translation('teams')}</div>
+              <div className="px-3 py-2 text-xs font-semibold text-description bg-surface sticky top-0 z-10">{translation('teams')}</div>
               {filteredTeams.map(team => (
                 <button
                   key={team.id}
