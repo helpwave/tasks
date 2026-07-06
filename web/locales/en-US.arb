@@ -100,11 +100,34 @@
   "duplicate": "Duplicate",
   "done": "Done",
   "dueDate": "Due Date",
+  "dueDateInDays": "+{days, plural, =1{# day} other{# days}}",
+  "@dueDateInDays": {
+    "placeholders": {
+      "days": {
+        "type": "number"
+      }
+    }
+  },
+  "dueDateInHours": "+{hours, plural, =1{# hour} other{# hours}}",
+  "@dueDateInHours": {
+    "placeholders": {
+      "hours": {
+        "type": "number"
+      }
+    }
+  },
+  "dueDateNow": "Now",
+  "dueDateToday": "Today",
+  "dueDateTomorrow": "Tomorrow",
   "edit": "Edit",
   "editPatient": "Edit Patient",
   "editTask": "Edit Task",
   "errorOccurred": "An error occurred",
   "estimatedTime": "Estimated Time (minutes)",
+  "export": "Export",
+  "exportCsv": "Export as CSV",
+  "exportExcel": "Export as Excel (printable)",
+  "exportFailed": "Export failed. Please try again.",
   "timeEstimate": "Time Estimate",
   "nMinutesShort": "{minCount} min",
   "@nMinutesShort": {
@@ -436,6 +459,9 @@
   "totalPatients": "Total Patients",
   "type": "Type",
   "updated": "Updated",
+  "stateUpdated": "State updated",
+  "clinicUpdated": "Clinic updated",
+  "positionUpdated": "Location updated",
   "user": "User",
   "users": "Users",
   "wards": "Wards",

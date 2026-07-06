@@ -30,6 +30,7 @@ import { DateDisplay } from '@/components/Date/DateDisplay'
 import { AssigneeSelect } from './AssigneeSelect'
 import { UserInfoPopup } from '@/components/UserInfoPopup'
 import { DueDateUtils, getTaskDueDateFlexibleInputProps } from '@/utils/dueDate'
+import { DueDateQuickSelect } from './DueDateQuickSelect'
 import { PatientDetailView } from '@/components/patients/PatientDetailView'
 import { ErrorDialog } from '@/components/ErrorDialog'
 import { useCreateDraftDirty } from '@/hooks/useCreateDraftDirty'
@@ -85,6 +86,7 @@ export const TaskDataEditor = ({
   const [errorDialog, setErrorDialog] = useState<DialogState<{ message?: string }>>({ isOpen: false, data: { message: undefined } })
   const [isShowingPatientDialog, setIsShowingPatientDialog] = useState<boolean>(false)
   const [assigneeUserPopupId, setAssigneeUserPopupId] = useState<string | null>(null)
+  const [dueDateQuickSelectCount, setDueDateQuickSelectCount] = useState(0)
 
   const isEditMode = id !== null
   const taskId = id
@@ -493,15 +495,25 @@ export const TaskDataEditor = ({
                   updateValue(next)
                 }
                 return (
-                  <FlexibleDateTimeInput
-                    key={isEditMode ? `${taskId}-${dueDate?.getTime() ?? 'pending'}` : 'create'}
-                    {...getTaskDueDateFlexibleInputProps()}
-                    {...focusableElementProps}
-                    {...interactionStates}
-                    value={value ?? null}
-                    onValueChange={commitDueDate}
-                    onEditComplete={commitDueDate}
-                  />
+                  <div className="flex flex-col gap-2">
+                    <FlexibleDateTimeInput
+                      key={isEditMode ? `${taskId}-${dueDate?.getTime() ?? 'pending'}` : `create-${dueDateQuickSelectCount}`}
+                      {...getTaskDueDateFlexibleInputProps()}
+                      {...focusableElementProps}
+                      {...interactionStates}
+                      value={value ?? null}
+                      onValueChange={commitDueDate}
+                      onEditComplete={commitDueDate}
+                    />
+                    {!isEditMode && (
+                      <DueDateQuickSelect
+                        onSelect={(nextDueDate) => {
+                          commitDueDate(nextDueDate)
+                          setDueDateQuickSelectCount((count) => count + 1)
+                        }}
+                      />
+                    )}
+                  </div>
                 )
               }}
             </FormField>

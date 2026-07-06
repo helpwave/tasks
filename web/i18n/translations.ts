@@ -42,6 +42,7 @@ export type TasksTranslationEntries = {
   'clearPropertyColumnTypeNameInstruction': (values: { propertyName: string }) => string,
   'clinic': string,
   'clinics': string,
+  'clinicUpdated': string,
   'close': string,
   'closedTasks': string,
   'collapseAll': string,
@@ -87,6 +88,11 @@ export type TasksTranslationEntries = {
   'diverse': string,
   'done': string,
   'dueDate': string,
+  'dueDateInDays': (values: { days: number }) => string,
+  'dueDateInHours': (values: { hours: number }) => string,
+  'dueDateNow': string,
+  'dueDateToday': string,
+  'dueDateTomorrow': string,
   'duplicate': string,
   'edit': string,
   'editPatient': string,
@@ -97,6 +103,10 @@ export type TasksTranslationEntries = {
   'errorOccurred': string,
   'estimatedTime': string,
   'expandAll': string,
+  'export': string,
+  'exportCsv': string,
+  'exportExcel': string,
+  'exportFailed': string,
   'feedback': string,
   'feedbackDescription': string,
   'female': string,
@@ -195,6 +205,7 @@ export type TasksTranslationEntries = {
   'pickTeams': string,
   'pickTeamsDescription': string,
   'position': string,
+  'positionUpdated': string,
   'preferences': string,
   'priority': string,
   'priorityLabel': string,
@@ -252,6 +263,7 @@ export type TasksTranslationEntries = {
   'sPropertyType': (values: { type: string }) => string,
   'stagingModalDisclaimerMarkdown': string,
   'startRecording': string,
+  'stateUpdated': string,
   'status': string,
   'stopRecording': string,
   'subjectType': string,
@@ -362,6 +374,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     },
     'clinic': `Klinik`,
     'clinics': `Kliniken`,
+    'clinicUpdated': `Klinik aktualisiert`,
     'close': `Schließen`,
     'closedTasks': `Erledigte Aufgaben`,
     'collapseAll': `Alle einklappen`,
@@ -426,6 +439,27 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'diverse': `Divers`,
     'done': `Fertig`,
     'dueDate': `Fälligkeitsdatum`,
+    'dueDateInDays': ({ days }): string => {
+      let _out: string = ''
+      _out += `+`
+      _out += TranslationGen.resolvePlural(days, {
+        '=1': `${days} Tag`,
+        'other': `${days} Tage`,
+      })
+      return _out
+    },
+    'dueDateInHours': ({ hours }): string => {
+      let _out: string = ''
+      _out += `+`
+      _out += TranslationGen.resolvePlural(hours, {
+        '=1': `${hours} Stunde`,
+        'other': `${hours} Stunden`,
+      })
+      return _out
+    },
+    'dueDateNow': `Jetzt`,
+    'dueDateToday': `Heute`,
+    'dueDateTomorrow': `Morgen`,
     'duplicate': `Duplizieren`,
     'edit': `Bearbeiten`,
     'editPatient': `Patient bearbeiten`,
@@ -436,6 +470,10 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'errorOccurred': `Ein Fehler ist aufgetreten`,
     'estimatedTime': `Geschätzte Zeit (Minuten)`,
     'expandAll': `Alle ausklappen`,
+    'export': `Exportieren`,
+    'exportCsv': `Als CSV exportieren`,
+    'exportExcel': `Als Excel exportieren (druckbar)`,
+    'exportFailed': `Export fehlgeschlagen. Bitte erneut versuchen.`,
     'feedback': `Feedback`,
     'feedbackDescription': `Teilen Sie Ihr Feedback, melden Sie Fehler oder schlagen Sie Verbesserungen vor.`,
     'female': `Weiblich`,
@@ -593,6 +631,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'pickTeams': `Teams auswählen`,
     'pickTeamsDescription': `Wählen Sie ein oder mehrere Teams für diesen Patienten aus. Sie können Klinik-, Team-, Praxis- oder Krankenhaus-Standorte auswählen.`,
     'position': `Standort`,
+    'positionUpdated': `Ort aktualisiert`,
     'preferences': `Präferenzen`,
     'priority': `Priorität`,
     'priorityLabel': `Priorität`,
@@ -691,6 +730,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     },
     'stagingModalDisclaimerMarkdown': `Diese öffentliche Instanz von helpwave tasks ist für \\b{Entwicklungs- und Vorschauzwecke} gedacht. Bitte stellen Sie sicher, dass Sie \\b{ausschließlich nicht-vertrauliche Testdaten} eingeben. Diese Instanz kann \\negative{\\b{jederzeit gelöscht}} werden.`,
     'startRecording': `Aufnahme starten`,
+    'stateUpdated': `Status aktualisiert`,
     'status': `Status`,
     'stopRecording': `Aufnahme stoppen`,
     'subjectType': `Subjekt Type`,
@@ -808,6 +848,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     },
     'clinic': `Clinic`,
     'clinics': `Clinics`,
+    'clinicUpdated': `Clinic updated`,
     'close': `Close`,
     'closedTasks': `Closed Tasks`,
     'collapseAll': `Collapse All`,
@@ -872,6 +913,27 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'diverse': `Diverse`,
     'done': `Done`,
     'dueDate': `Due Date`,
+    'dueDateInDays': ({ days }): string => {
+      let _out: string = ''
+      _out += `+`
+      _out += TranslationGen.resolvePlural(days, {
+        '=1': `${days} day`,
+        'other': `${days} days`,
+      })
+      return _out
+    },
+    'dueDateInHours': ({ hours }): string => {
+      let _out: string = ''
+      _out += `+`
+      _out += TranslationGen.resolvePlural(hours, {
+        '=1': `${hours} hour`,
+        'other': `${hours} hours`,
+      })
+      return _out
+    },
+    'dueDateNow': `Now`,
+    'dueDateToday': `Today`,
+    'dueDateTomorrow': `Tomorrow`,
     'duplicate': `Duplicate`,
     'edit': `Edit`,
     'editPatient': `Edit Patient`,
@@ -882,6 +944,10 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'errorOccurred': `An error occurred`,
     'estimatedTime': `Estimated Time (minutes)`,
     'expandAll': `Expand All`,
+    'export': `Export`,
+    'exportCsv': `Export as CSV`,
+    'exportExcel': `Export as Excel (printable)`,
+    'exportFailed': `Export failed. Please try again.`,
     'feedback': `Feedback`,
     'feedbackDescription': `Share your feedback, report bugs, or suggest improvements.`,
     'female': `Female`,
@@ -1040,6 +1106,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'pickTeams': `Pick teams`,
     'pickTeamsDescription': `Select one or more teams for this patient. You can select clinic, team, practice, or hospital locations.`,
     'position': `Location`,
+    'positionUpdated': `Location updated`,
     'preferences': `Preferences`,
     'priority': `Priority`,
     'priorityLabel': `Priority`,
@@ -1138,6 +1205,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     },
     'stagingModalDisclaimerMarkdown': `This public instance of helpwave tasks is for \\b{development and preview purposes}. Please make sure to \\b{only} enter \\b{non-confidential testing data}. This instance can be \\negative{\\b{deleted at any time}}`,
     'startRecording': `Start Recording`,
+    'stateUpdated': `State updated`,
     'status': `Status`,
     'stopRecording': `Stop Recording`,
     'subjectType': `Subject Type`,
@@ -1255,6 +1323,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     },
     'clinic': `Clínica`,
     'clinics': `Clínicas`,
+    'clinicUpdated': `Clínica actualizada`,
     'close': `Cerrar`,
     'closedTasks': `Tareas cerradas`,
     'collapseAll': `Contraer todo`,
@@ -1319,6 +1388,27 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'diverse': `Diverso`,
     'done': `Hecho`,
     'dueDate': `Fecha de vencimiento`,
+    'dueDateInDays': ({ days }): string => {
+      let _out: string = ''
+      _out += `+`
+      _out += TranslationGen.resolvePlural(days, {
+        '=1': `${days} día`,
+        'other': `${days} días`,
+      })
+      return _out
+    },
+    'dueDateInHours': ({ hours }): string => {
+      let _out: string = ''
+      _out += `+`
+      _out += TranslationGen.resolvePlural(hours, {
+        '=1': `${hours} hora`,
+        'other': `${hours} horas`,
+      })
+      return _out
+    },
+    'dueDateNow': `Ahora`,
+    'dueDateToday': `Hoy`,
+    'dueDateTomorrow': `Mañana`,
     'duplicate': `Duplicate`,
     'edit': `Editar`,
     'editPatient': `Editar paciente`,
@@ -1329,6 +1419,10 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'errorOccurred': `Se ha producido un error`,
     'estimatedTime': `Tiempo estimado (minutos)`,
     'expandAll': `Expandir todo`,
+    'export': `Exportar`,
+    'exportCsv': `Exportar como CSV`,
+    'exportExcel': `Exportar como Excel (imprimible)`,
+    'exportFailed': `Error en la exportación. Inténtelo de nuevo.`,
     'feedback': `Comentarios`,
     'feedbackDescription': `Comparta sus comentarios, reporte errores o sugiera mejoras.`,
     'female': `Femenino`,
@@ -1486,6 +1580,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'pickTeams': `Elegir equipos`,
     'pickTeamsDescription': `Seleccione uno o más equipos para este paciente. Puede elegir clínica, equipo, consulta u hospital.`,
     'position': `Ubicación`,
+    'positionUpdated': `Ubicación actualizada`,
     'preferences': `Preferencias`,
     'priority': `Prioridad`,
     'priorityLabel': `Prioridad`,
@@ -1584,6 +1679,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     },
     'stagingModalDisclaimerMarkdown': `Esta instancia pública de helpwave tasks es para \\b{desarrollo y vista previa}. Asegúrese de \\b{solo} introducir \\b{datos de prueba no confidenciales}. Esta instancia puede \\negative{\\b{eliminarse en cualquier momento}}`,
     'startRecording': `Iniciar grabación`,
+    'stateUpdated': `Estado actualizado`,
     'status': `Estado`,
     'stopRecording': `Detener grabación`,
     'subjectType': `Tipo de sujeto`,
@@ -1701,6 +1797,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     },
     'clinic': `Clinique`,
     'clinics': `Cliniques`,
+    'clinicUpdated': `Clinique mise à jour`,
     'close': `Fermer`,
     'closedTasks': `Tâches terminées`,
     'collapseAll': `Tout réduire`,
@@ -1765,6 +1862,27 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'diverse': `Divers`,
     'done': `Terminé`,
     'dueDate': `Date d'échéance`,
+    'dueDateInDays': ({ days }): string => {
+      let _out: string = ''
+      _out += `+`
+      _out += TranslationGen.resolvePlural(days, {
+        '=1': `${days} jour`,
+        'other': `${days} jours`,
+      })
+      return _out
+    },
+    'dueDateInHours': ({ hours }): string => {
+      let _out: string = ''
+      _out += `+`
+      _out += TranslationGen.resolvePlural(hours, {
+        '=1': `${hours} heure`,
+        'other': `${hours} heures`,
+      })
+      return _out
+    },
+    'dueDateNow': `Maintenant`,
+    'dueDateToday': `Aujourd'hui`,
+    'dueDateTomorrow': `Demain`,
     'duplicate': `Duplicate`,
     'edit': `Modifier`,
     'editPatient': `Modifier le patient`,
@@ -1775,6 +1893,10 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'errorOccurred': `Une erreur s'est produite`,
     'estimatedTime': `Temps estimé (minutes)`,
     'expandAll': `Tout développer`,
+    'export': `Exporter`,
+    'exportCsv': `Exporter en CSV`,
+    'exportExcel': `Exporter en Excel (imprimable)`,
+    'exportFailed': `Échec de l'exportation. Veuillez réessayer.`,
     'feedback': `Commentaires`,
     'feedbackDescription': `Partagez vos commentaires, signalez des bugs ou suggérez des améliorations.`,
     'female': `Féminin`,
@@ -1932,6 +2054,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'pickTeams': `Choisir les équipes`,
     'pickTeamsDescription': `Sélectionnez une ou plusieurs équipes pour ce patient. Vous pouvez choisir clinique, équipe, cabinet ou hôpital.`,
     'position': `Emplacement`,
+    'positionUpdated': `Emplacement mis à jour`,
     'preferences': `Préférences`,
     'priority': `Priorité`,
     'priorityLabel': `Priorité`,
@@ -2030,6 +2153,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     },
     'stagingModalDisclaimerMarkdown': `Cette instance publique de helpwave tasks est destinée au \\b{développement et à laperçu}. Veuillez \\b{ne} saisir \\b{que des données de test non confidentielles}. Cette instance peut \\negative{\\b{être supprimée à tout moment}}`,
     'startRecording': `Démarrer l'enregistrement`,
+    'stateUpdated': `Statut mis à jour`,
     'status': `Statut`,
     'stopRecording': `Arrêter l'enregistrement`,
     'subjectType': `Type de sujet`,
@@ -2147,6 +2271,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     },
     'clinic': `Kliniek`,
     'clinics': `Klinieken`,
+    'clinicUpdated': `Kliniek bijgewerkt`,
     'close': `Sluiten`,
     'closedTasks': `Afgeronde taken`,
     'collapseAll': `Alles invouwen`,
@@ -2211,6 +2336,27 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'diverse': `Divers`,
     'done': `Klaar`,
     'dueDate': `Vervaldatum`,
+    'dueDateInDays': ({ days }): string => {
+      let _out: string = ''
+      _out += `+`
+      _out += TranslationGen.resolvePlural(days, {
+        '=1': `${days} dag`,
+        'other': `${days} dagen`,
+      })
+      return _out
+    },
+    'dueDateInHours': ({ hours }): string => {
+      let _out: string = ''
+      _out += `+`
+      _out += TranslationGen.resolvePlural(hours, {
+        '=1': `${hours} uur`,
+        'other': `${hours} uur`,
+      })
+      return _out
+    },
+    'dueDateNow': `Nu`,
+    'dueDateToday': `Vandaag`,
+    'dueDateTomorrow': `Morgen`,
     'duplicate': `Duplicate`,
     'edit': `Bewerken`,
     'editPatient': `Patiënt bewerken`,
@@ -2221,6 +2367,10 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'errorOccurred': `Er is een fout opgetreden`,
     'estimatedTime': `Geschatte tijd (minuten)`,
     'expandAll': `Alles uitvouwen`,
+    'export': `Exporteren`,
+    'exportCsv': `Exporteren als CSV`,
+    'exportExcel': `Exporteren als Excel (afdrukbaar)`,
+    'exportFailed': `Exporteren mislukt. Probeer het opnieuw.`,
     'feedback': `Feedback`,
     'feedbackDescription': `Deel uw feedback, meld bugs of stel verbeteringen voor.`,
     'female': `Vrouw`,
@@ -2378,6 +2528,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'pickTeams': `Kies teams`,
     'pickTeamsDescription': `Selecteer een of meer teams voor deze patiënt. U kunt kliniek, team, praktijk of ziekenhuis selecteren.`,
     'position': `Locatie`,
+    'positionUpdated': `Locatie bijgewerkt`,
     'preferences': `Voorkeuren`,
     'priority': `Prioriteit`,
     'priorityLabel': `Prioriteit`,
@@ -2479,6 +2630,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     },
     'stagingModalDisclaimerMarkdown': `Deze openbare instantie van helpwave tasks is voor \\b{ontwikkeling en voorbeeld}. Zorg ervoor dat u \\b{alleen} \\b{niet-vertrouwelijke testgegevens} invoert. Deze instantie kan \\negative{\\b{op elk moment worden verwijderd}}`,
     'startRecording': `Opname starten`,
+    'stateUpdated': `Status bijgewerkt`,
     'status': `Status`,
     'stopRecording': `Opname stoppen`,
     'subjectType': `Onderwerptype`,
@@ -2596,6 +2748,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     },
     'clinic': `Clínica`,
     'clinics': `Clínicas`,
+    'clinicUpdated': `Clínica atualizada`,
     'close': `Fechar`,
     'closedTasks': `Tarefas concluídas`,
     'collapseAll': `Recolher tudo`,
@@ -2660,6 +2813,27 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'diverse': `Diverso`,
     'done': `Concluído`,
     'dueDate': `Data de vencimento`,
+    'dueDateInDays': ({ days }): string => {
+      let _out: string = ''
+      _out += `+`
+      _out += TranslationGen.resolvePlural(days, {
+        '=1': `${days} dia`,
+        'other': `${days} dias`,
+      })
+      return _out
+    },
+    'dueDateInHours': ({ hours }): string => {
+      let _out: string = ''
+      _out += `+`
+      _out += TranslationGen.resolvePlural(hours, {
+        '=1': `${hours} hora`,
+        'other': `${hours} horas`,
+      })
+      return _out
+    },
+    'dueDateNow': `Agora`,
+    'dueDateToday': `Hoje`,
+    'dueDateTomorrow': `Amanhã`,
     'duplicate': `Duplicate`,
     'edit': `Editar`,
     'editPatient': `Editar paciente`,
@@ -2670,6 +2844,10 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'errorOccurred': `Ocorreu um erro`,
     'estimatedTime': `Tempo estimado (minutos)`,
     'expandAll': `Expandir tudo`,
+    'export': `Exportar`,
+    'exportCsv': `Exportar como CSV`,
+    'exportExcel': `Exportar como Excel (imprimível)`,
+    'exportFailed': `Falha na exportação. Tente novamente.`,
     'feedback': `Feedback`,
     'feedbackDescription': `Compartilhe seu feedback, reporte bugs ou sugira melhorias.`,
     'female': `Feminino`,
@@ -2827,6 +3005,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'pickTeams': `Escolher equipes`,
     'pickTeamsDescription': `Selecione uma ou mais equipes para este paciente. Você pode escolher clínica, equipe, consultório ou hospital.`,
     'position': `Localização`,
+    'positionUpdated': `Localização atualizada`,
     'preferences': `Preferências`,
     'priority': `Prioridade`,
     'priorityLabel': `Prioridade`,
@@ -2925,6 +3104,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     },
     'stagingModalDisclaimerMarkdown': `Esta instância pública do helpwave tasks é para \\b{desenvolvimento e pré-visualização}. Certifique-se de \\b{apenas} inserir \\b{dados de teste não confidenciais}. Esta instância pode \\negative{\\b{ser excluída a qualquer momento}}`,
     'startRecording': `Iniciar gravação`,
+    'stateUpdated': `Status atualizado`,
     'status': `Status`,
     'stopRecording': `Parar gravação`,
     'subjectType': `Tipo de sujeito`,
