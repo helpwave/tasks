@@ -1,6 +1,5 @@
 import Head from 'next/head'
 import type { AppProps } from 'next/app'
-import { Inter, Space_Grotesk as SpaceGrotesk } from 'next/font/google'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import {
   HightideProvider
@@ -19,16 +18,6 @@ import { FeedbackToast } from '@/components/FeedbackToast'
 import { InstallPrompt } from '@/components/pwa/InstallPrompt'
 import { registerServiceWorker, requestNotificationPermission } from '@/utils/pushNotifications'
 import { useEffect } from 'react'
-
-const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-inter'
-})
-
-const spaceGrotesk = SpaceGrotesk({
-  subsets: ['latin'],
-  variable: '--font-space-grotesk'
-})
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -65,16 +54,6 @@ function MyApp({
         <Head>
           <title>{titleWrapper()}</title>
           <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes, viewport-fit=cover" />
-          <style
-            dangerouslySetInnerHTML={{
-              __html: `
-                  :root {
-                    --font-inter: ${inter.style.fontFamily};
-                    --font-space: ${spaceGrotesk.style.fontFamily};
-                  }
-                `,
-            }}
-          />
         </Head>
         <AuthProvider
           ignoredURLs={[

@@ -18,8 +18,8 @@
     "Firefox ESR",
     "not dead",
     "Android >= 5",
-    "Safari >= 11",
-    "iOS >= 11",
+    "Safari >= 8",
+    "iOS >= 8",
     "defaults"
   ],
   "overrides": {
