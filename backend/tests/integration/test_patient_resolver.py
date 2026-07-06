@@ -121,6 +121,93 @@ async def test_patient_mutation_discharge_patient(db_session, sample_patient, sa
 
 
 @pytest.mark.asyncio
+async def test_patient_field_update_timestamps_on_create(
+    db_session, sample_location, sample_user_with_location_access
+):
+    from api.inputs import CreatePatientInput
+    from datetime import date
+
+    info = MockInfo(db_session, sample_user_with_location_access)
+    mutation = PatientMutation()
+    input_data = CreatePatientInput(
+        firstname="Jane",
+        lastname="Doe",
+        birthdate=date(1990, 1, 1),
+        sex=Sex.FEMALE,
+        clinic_id=sample_location.id,
+    )
+    result = await mutation.create_patient(info, input_data)
+    assert result.state_updated_at is not None
+    assert result.clinic_updated_at is not None
+    assert result.position_updated_at is None
+
+
+@pytest.mark.asyncio
+async def test_patient_state_update_timestamp_on_state_change(
+    db_session, sample_patient, sample_user_with_location_access
+):
+    info = MockInfo(db_session, sample_user_with_location_access)
+    mutation = PatientMutation()
+    assert sample_patient.state_updated_at is None
+
+    result = await mutation.discharge_patient(info, sample_patient.id)
+    assert result.state_updated_at is not None
+    stamped = result.state_updated_at
+
+    result = await mutation.discharge_patient(info, sample_patient.id)
+    assert result.state_updated_at == stamped
+
+
+@pytest.mark.asyncio
+async def test_patient_field_update_timestamps_on_update(
+    db_session, sample_patient, sample_location, sample_user_with_location_access
+):
+    from api.inputs import UpdatePatientInput
+    from database.models.location import LocationNode
+
+    bed = LocationNode(
+        id="bed-1",
+        title="Bed 1",
+        kind="BED",
+        parent_id=sample_location.id,
+    )
+    db_session.add(bed)
+    await db_session.commit()
+
+    info = MockInfo(db_session, sample_user_with_location_access)
+    mutation = PatientMutation()
+
+    result = await mutation.update_patient(
+        info, sample_patient.id, UpdatePatientInput(firstname="Unchanged")
+    )
+    assert result.clinic_updated_at is None
+    assert result.position_updated_at is None
+
+    result = await mutation.update_patient(
+        info, sample_patient.id, UpdatePatientInput(position_id=bed.id)
+    )
+    assert result.position_updated_at is not None
+    stamped = result.position_updated_at
+
+    result = await mutation.update_patient(
+        info, sample_patient.id, UpdatePatientInput(position_id=bed.id)
+    )
+    assert result.position_updated_at == stamped
+
+    result = await mutation.update_patient(
+        info, sample_patient.id, UpdatePatientInput(clinic_id=sample_location.id)
+    )
+    assert result.clinic_updated_at is None
+
+    result = await mutation.update_patient(
+        info, sample_patient.id, UpdatePatientInput(position_id=None)
+    )
+    assert result.position_id is None
+    assert result.position_updated_at is not None
+    assert result.position_updated_at != stamped
+
+
+@pytest.mark.asyncio
 async def test_patient_mutation_clear_patient_property(
     db_session, sample_patient, sample_user_with_location_access
 ):

@@ -159,6 +159,16 @@ export function deserializeColumnFiltersFromView(json: string): ColumnFiltersSta
         uuidValue: parameter['uuidValue'] ?? parameter['singleOptionSearch'],
         uuidValues: (parameter['uuidValues'] ?? parameter['multiOptionSearch']) as unknown[] | undefined,
       }
+      // Older saved views stored tag selections under searchTag(s)/
+      // searchTagsContains instead of uuidValue(s). Preserve them so the
+      // filter still applies (tableStateToApi and the derived-table matchers
+      // read these legacy fields as a fallback).
+      const legacyParameter = filterParameter as Record<string, unknown>
+      for (const legacyKey of ['searchTags', 'searchTagsContains', 'searchTag'] as const) {
+        if (parameter[legacyKey] != null) {
+          legacyParameter[legacyKey] = parameter[legacyKey]
+        }
+      }
       const mappedValue: FilterValue = {
         operator: value['operator'] as FilterOperator,
         dataType: value['dataType'] as DataType,

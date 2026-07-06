@@ -247,6 +247,11 @@ def apply_task_filter_clause(
             c = _assignee_label_exists(op, val)
             if c is not None:
                 query = query.where(c)
+        elif op == QueryOperator.NOT_CONTAINS:
+            # keep tasks without a matching assignee (including unassigned)
+            c = _assignee_label_exists(QueryOperator.CONTAINS, val)
+            if c is not None:
+                query = query.where(~c)
         elif op in (QueryOperator.IS_NULL, QueryOperator.IS_NOT_NULL):
             has_assignees = exists(
                 select(1).where(models.task_assignees.c.task_id == models.Task.id)
@@ -264,6 +269,7 @@ def apply_task_filter_clause(
             query = query.where(models.Task.assignee_team_id == val.uuid_value)
         elif op in (
             QueryOperator.CONTAINS,
+            QueryOperator.NOT_CONTAINS,
             QueryOperator.STARTS_WITH,
             QueryOperator.ENDS_WITH,
         ):
@@ -296,6 +302,11 @@ def apply_task_filter_clause(
             c = _patient_label_exists(op, val)
             if c is not None:
                 query = query.where(c)
+        elif op == QueryOperator.NOT_CONTAINS:
+            # keep tasks whose patient does not match (including no patient)
+            c = _patient_label_exists(QueryOperator.CONTAINS, val)
+            if c is not None:
+                query = query.where(~c)
         return query
 
     return query
@@ -435,6 +446,7 @@ def build_task_queryable_fields_static() -> list[QueryableField]:
         QueryOperator.EQ,
         QueryOperator.IN,
         QueryOperator.CONTAINS,
+        QueryOperator.NOT_CONTAINS,
         QueryOperator.STARTS_WITH,
         QueryOperator.ENDS_WITH,
         QueryOperator.IS_NULL,
@@ -444,6 +456,7 @@ def build_task_queryable_fields_static() -> list[QueryableField]:
         QueryOperator.EQ,
         QueryOperator.NEQ,
         QueryOperator.CONTAINS,
+        QueryOperator.NOT_CONTAINS,
         QueryOperator.STARTS_WITH,
         QueryOperator.ENDS_WITH,
         QueryOperator.IN,
@@ -459,6 +472,7 @@ def build_task_queryable_fields_static() -> list[QueryableField]:
         QueryOperator.LT,
         QueryOperator.LTE,
         QueryOperator.BETWEEN,
+        QueryOperator.NOT_BETWEEN,
         QueryOperator.IS_NULL,
         QueryOperator.IS_NOT_NULL,
     ]
@@ -470,6 +484,7 @@ def build_task_queryable_fields_static() -> list[QueryableField]:
         QueryOperator.LT,
         QueryOperator.LTE,
         QueryOperator.BETWEEN,
+        QueryOperator.NOT_BETWEEN,
         QueryOperator.IS_NULL,
         QueryOperator.IS_NOT_NULL,
     ]

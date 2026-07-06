@@ -43,6 +43,7 @@
   }
 
   [data-name="app-page"],
+  [data-name="app-page-body"],
   [data-name="app-page-content"],
   [data-name="app-page-main-content"] {
     display: block !important;

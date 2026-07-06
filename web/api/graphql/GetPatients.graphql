@@ -8,6 +8,9 @@ query GetPatients($locationId: ID, $rootLocationIds: [ID!], $states: [PatientSta
     sex
     state
     updateDate
+    stateUpdateDate
+    clinicUpdateDate
+    positionUpdateDate
     assignedLocation {
       id
       title

@@ -27,10 +27,21 @@ export const ScrollToTopButton = () => {
 
   useEffect(() => {
     if (!scrollElement) return
-    const handleScroll = () => setIsVisible(scrollElement.scrollTop > SHOW_THRESHOLD_PX)
-    handleScroll()
+    let frame: number | null = null
+    const update = () => {
+      frame = null
+      setIsVisible(scrollElement.scrollTop > SHOW_THRESHOLD_PX)
+    }
+    const handleScroll = () => {
+      if (frame !== null) return
+      frame = window.requestAnimationFrame(update)
+    }
+    update()
     scrollElement.addEventListener('scroll', handleScroll, { passive: true })
-    return () => scrollElement.removeEventListener('scroll', handleScroll)
+    return () => {
+      if (frame !== null) window.cancelAnimationFrame(frame)
+      scrollElement.removeEventListener('scroll', handleScroll)
+    }
   }, [scrollElement])
 
   return (

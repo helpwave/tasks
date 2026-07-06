@@ -53,6 +53,7 @@ import { CopyPlus, Eye, Share2 } from 'lucide-react'
 
 type SavedTaskViewTabProps = {
   viewId: string,
+  viewName?: string,
   filterDefinition: string,
   sortDefinition: string,
   parameters: ReturnType<typeof parseViewParameters>,
@@ -61,6 +62,7 @@ type SavedTaskViewTabProps = {
 
 function SavedTaskViewTab({
   viewId,
+  viewName,
   filterDefinition,
   sortDefinition,
   parameters,
@@ -371,6 +373,11 @@ function SavedTaskViewTab({
         loadMore={loadMore}
         hasMore={hasMore}
         isFetchingMore={isFetchingMore}
+        exportScope={{
+          rootLocationIds: rootIds ?? undefined,
+          assigneeId: assigneeId ?? undefined,
+        }}
+        exportTitle={viewName}
         tableState={{
           sorting,
           setSorting,
@@ -575,6 +582,7 @@ const ViewPage: NextPage = () => {
                 <SavedTaskViewTab
                   key={view.id}
                   viewId={view.id}
+                  viewName={view.name}
                   filterDefinition={view.filterDefinition}
                   sortDefinition={view.sortDefinition}
                   parameters={params}

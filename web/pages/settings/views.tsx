@@ -8,7 +8,7 @@ import { Page } from '@/components/layout/Page'
 import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
-import { Button, ConfirmDialog, Dialog, FillerCell, IconButton, Input, TableDisplay, TableProvider } from '@helpwave/hightide'
+import { Button, ConfirmDialog, Dialog, FillerCell, IconButton, Input, TableDisplay, TableProvider, overscanRowsForBuffer } from '@helpwave/hightide'
 import { DateDisplay } from '@/components/Date/DateDisplay'
 import { SavedViewEntityTypeChip } from '@/components/views/SavedViewEntityTypeChip'
 import { useMySavedViews } from '@/data'
@@ -33,7 +33,7 @@ import {
 import type { ColumnDef } from '@tanstack/table-core'
 import { EditIcon, ExternalLink, Trash2, Share2, CopyPlus } from 'lucide-react'
 import type { MySavedViewsQuery, SavedViewEntityType } from '@/api/gql/generated'
-import { overscanRowsForBuffer } from '@/utils/virtualGrid'
+
 import { ListLoadingHint } from '@/components/common/ListLoadingHint'
 
 const TABLE_ROW_ESTIMATE_PX = 48

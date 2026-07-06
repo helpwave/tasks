@@ -61,6 +61,18 @@ class Patient(Base):
         default=datetime.now,
         onupdate=datetime.now,
     )
+    state_updated_at: Mapped[datetime | None] = mapped_column(
+        DateTime,
+        nullable=True,
+    )
+    clinic_updated_at: Mapped[datetime | None] = mapped_column(
+        DateTime,
+        nullable=True,
+    )
+    position_updated_at: Mapped[datetime | None] = mapped_column(
+        DateTime,
+        nullable=True,
+    )
 
     assigned_locations: Mapped[list[LocationNode]] = relationship(
         "LocationNode",
