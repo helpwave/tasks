@@ -170,7 +170,7 @@ const SettingsPage: NextPage = () => {
         description={translation('settingsDescription')}
       >
         <div className="flex flex-col gap-y-12">
-          <section className="flex-row-4 items-center p-4 bg-surface rounded-lg border border-divider">
+          <section className="flex-row-4 items-center p-4 bg-surface rounded-lg border border-divider max-w-200">
             <div className="relative">
               <AvatarWithStatus
                 size="lg"
@@ -249,25 +249,25 @@ const SettingsPage: NextPage = () => {
             <h2 className="typography-title-md border-b border-divider pb-2">{translation('system')}</h2>
             <div className="flex flex-col gap-6 max-w-200">
               <NavigationCard
-                className="justify-start h-auto py-4 w-full"
+                className="justify-start w-full py-4"
                 href="/properties"
-                leading={<TableProperties className="mr-2 shrink-0" />}
+                leading={<TableProperties className="shrink-0" />}
                 title={translation('properties')}
                 description={translation('propertiesSettingsDescription')}
                 LinkComponent={Link}
               />
               <NavigationCard
-                className="justify-start h-auto py-4 w-full"
+                className="justify-start w-full"
                 href="/settings/views"
-                leading={<Rabbit className="mr-2 shrink-0 size-5" />}
+                leading={<Rabbit className="shrink-0 size-5" />}
                 title={translation('views')}
                 description={translation('viewSettingsDescription')}
                 LinkComponent={Link}
               />
               <NavigationCard
-                className="justify-start h-auto py-4 w-full"
+                className="justify-start w-full"
                 href="/settings/task-presets"
-                leading={<Combine className="mr-2 shrink-0" />}
+                leading={<Combine className="shrink-0" />}
                 title={translation('taskPresets')}
                 description={translation('taskPresetsDescription')}
                 LinkComponent={Link}
