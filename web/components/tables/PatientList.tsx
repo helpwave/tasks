@@ -1,7 +1,7 @@
 import { useMemo, useState, forwardRef, useImperativeHandle, useEffect, useCallback, useRef, type ReactNode } from 'react'
 import { useMutation } from '@apollo/client/react'
 import type { IdentifierFilterValue, FilterListItem, FilterListPopUpBuilderProps } from '@helpwave/hightide'
-import { Chip, DateUtils, FillerCell, SearchBar, ProgressIndicator, Tooltip, Drawer, TableProvider, TableDisplay, TableColumnSwitcher, IconButton, useLocale, FilterList, SortingList, Button, ExpansionIcon, Visibility, ConfirmDialog, VirtualizedCardGrid } from '@helpwave/hightide'
+import { Chip, DateUtils, FillerCell, SearchBar, ProgressIndicator, Tooltip, Drawer, TableProvider, TableDisplay, TableColumnSwitcher, IconButton, useLocale, FilterList, SortingList, Button, ExpansionIcon, Visibility, ConfirmDialog, VirtualizedCardGrid, overscanRowsForBuffer } from '@helpwave/hightide'
 import clsx from 'clsx'
 import { LayoutGrid, PlusIcon, Table2 } from 'lucide-react'
 import type { LocationType } from '@/api/gql/generated'
@@ -20,10 +20,12 @@ import type { ColumnDef, ColumnFiltersState, ColumnOrderState, PaginationState, 
 import { getPropertyColumnsForEntity, type PropertyColumnValueChangedPayload } from '@/utils/propertyColumn'
 import { getPropertyColumnIds, useColumnVisibilityWithPropertyDefaults } from '@/hooks/usePropertyColumnVisibility'
 import { columnFiltersToQueryFilterClauses, sortingStateToQuerySortClauses } from '@/utils/tableStateToApi'
+import { collectExportColumns, type TableExportFormat, type TableExportRequest } from '@/utils/tableExport'
+import { TableExportMenu } from '@/components/tables/TableExportMenu'
 import { LIST_PAGE_SIZE } from '@/utils/listPaging'
 import { useAccumulatedPagination } from '@/hooks/useAccumulatedPagination'
 import { RowRefreshingGate } from '@/components/tables/RowRefreshingGate'
-import { overscanRowsForBuffer } from '@/utils/virtualGrid'
+
 import { ListLoadingHint } from '@/components/common/ListLoadingHint'
 import { useIsPrinting } from '@/hooks/useIsPrinting'
 import { ScrollToTopButton } from '@/components/common/ScrollToTopButton'
@@ -81,6 +83,9 @@ export type PatientViewModel = {
   sex: Sex,
   state: PatientState,
   updateDate?: Date,
+  stateUpdateDate?: Date,
+  clinicUpdateDate?: Date,
+  positionUpdateDate?: Date,
   tasks: TaskType[],
   properties?: GetPatientsQuery['patients'][0]['properties'],
 }
@@ -93,6 +98,14 @@ const LOCATION_KIND_HEADERS: Record<LocationKindColumn, string> = {
 }
 
 const ADMITTED_OR_WAITING_STATES: PatientState[] = [PatientState.Admitted, PatientState.Wait]
+
+const FIELD_UPDATE_DATE_COLUMNS = [
+  { id: 'stateUpdateDate', translationKey: 'stateUpdated' },
+  { id: 'clinicUpdateDate', translationKey: 'clinicUpdated' },
+  { id: 'positionUpdateDate', translationKey: 'positionUpdated' },
+] as const
+
+const HIDDEN_BY_DEFAULT_COLUMN_IDS: readonly string[] = FIELD_UPDATE_DATE_COLUMNS.map(({ id }) => id)
 
 const TABLE_ROW_ESTIMATE_PX = 56
 // Render about a screenful of extra rows so fast mobile scrolling does not
@@ -231,13 +244,17 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
   const useEmbeddedNoop = embedded && !derivedVirtualMode
   const [sorting, setSorting] = useState<SortingState>(() => viewDefaultSorting ?? [])
   const [filters, setFilters] = useState<ColumnFiltersState>(() => viewDefaultFilters ?? [])
-  const [columnVisibility, setColumnVisibilityRaw] = useState<VisibilityState>(() => viewDefaultColumnVisibility ?? {})
+  const [columnVisibility, setColumnVisibilityRaw] = useState<VisibilityState>(() => ({
+    ...Object.fromEntries(HIDDEN_BY_DEFAULT_COLUMN_IDS.map(id => [id, false])),
+    ...(viewDefaultColumnVisibility ?? {}),
+  }))
   const [columnOrder, setColumnOrder] = useState<ColumnOrderState>(() => viewDefaultColumnOrder ?? [])
 
   const setColumnVisibility = useColumnVisibilityWithPropertyDefaults(
     propertyDefinitionsData,
     PropertyEntity.Patient,
-    setColumnVisibilityRaw
+    setColumnVisibilityRaw,
+    HIDDEN_BY_DEFAULT_COLUMN_IDS
   )
 
   const baselineFilters = useMemo(() => viewDefaultFilters ?? [], [viewDefaultFilters])
@@ -254,6 +271,11 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
   const propertyColumnIds = useMemo(
     () => getPropertyColumnIds(propertyDefinitionsData, PropertyEntity.Patient),
     [propertyDefinitionsData]
+  )
+
+  const hiddenByDefaultAwareColumnIds = useMemo(
+    () => [...propertyColumnIds, ...HIDDEN_BY_DEFAULT_COLUMN_IDS],
+    [propertyColumnIds]
   )
 
   const persistedSavedViewContentKey = useMemo(
@@ -511,6 +533,9 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
       openTasksCount: countForAggregate ? (p.tasks?.filter(t => !t.done).length ?? 0) : 0,
       closedTasksCount: countForAggregate ? (p.tasks?.filter(t => t.done).length ?? 0) : 0,
       updateDate: p.updateDate ? new Date(p.updateDate) : undefined,
+      stateUpdateDate: p.stateUpdateDate ? new Date(p.stateUpdateDate) : undefined,
+      clinicUpdateDate: p.clinicUpdateDate ? new Date(p.clinicUpdateDate) : undefined,
+      positionUpdateDate: p.positionUpdateDate ? new Date(p.positionUpdateDate) : undefined,
       tasks: [],
       properties: p.properties ?? [],
     }
@@ -869,6 +894,19 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
       maxSize: 220,
       filterFn: 'date',
     },
+    ...FIELD_UPDATE_DATE_COLUMNS.map(({ id, translationKey }): ColumnDef<PatientViewModel> => ({
+      id,
+      header: translation(translationKey),
+      accessorFn: (row: PatientViewModel) => row[id],
+      cell: ({ row }: { row: Row<PatientViewModel> }) => {
+        const d = row.original[id]
+        return gateCell(row.original.id, d ? <DateDisplay date={d} mode="absolute" /> : <FillerCell />)
+      },
+      minSize: 220,
+      size: 220,
+      maxSize: 220,
+      filterFn: 'date',
+    })),
     ...patientPropertyColumnsWithActions.map((col) => ({
       ...col,
       cell: col.cell
@@ -932,6 +970,9 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
       'tasks': translation('tasks'),
       'updated': translation('updated'),
       'updateDate': translation('updated'),
+      'stateUpdateDate': translation('stateUpdated'),
+      'clinicUpdateDate': translation('clinicUpdated'),
+      'positionUpdateDate': translation('positionUpdated'),
       'description': translation('description'),
     }
     return translatedByKey[key] ?? field.label
@@ -999,6 +1040,12 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
         dataType: 'date',
         tags: [],
       },
+      ...FIELD_UPDATE_DATE_COLUMNS.map(({ id, translationKey }): FilterListItem => ({
+        id,
+        label: translation(translationKey),
+        dataType: 'dateTime',
+        tags: [],
+      })),
       {
         id: 'tasks',
         label: translation('tasks'),
@@ -1070,7 +1117,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
       baselineColumnVisibility,
       columnOrder: sanitizedColumnOrder,
       baselineColumnOrder: sanitizedBaselineColumnOrder,
-      propertyColumnIds,
+      propertyColumnIds: hiddenByDefaultAwareColumnIds,
     }),
     [
       filters,
@@ -1083,10 +1130,28 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
       baselineColumnVisibility,
       sanitizedColumnOrder,
       sanitizedBaselineColumnOrder,
-      propertyColumnIds,
+      hiddenByDefaultAwareColumnIds,
     ]
   )
   const hasUnsavedViewChanges = !viewMatchesBaseline
+
+  const canExport = !derivedVirtualMode && !(embedded && embeddedPatients !== undefined)
+  const buildExportRequest = useCallback((format: TableExportFormat): TableExportRequest => ({
+    entity: 'patients',
+    format,
+    columns: collectExportColumns(columns, tableColumnVisibility, sanitizedColumnOrder),
+    filters: apiFilters,
+    sorts: apiSorting,
+    search: searchInput,
+    locale,
+    timezone: timeZone,
+    title: translation('patients'),
+    scope: {
+      locationNodeId: patientsQueryVariables.locationId,
+      rootLocationIds: patientsQueryVariables.rootLocationIds,
+      states: patientsQueryVariables.states,
+    },
+  }), [columns, tableColumnVisibility, sanitizedColumnOrder, apiFilters, apiSorting, searchInput, locale, timeZone, translation, patientsQueryVariables])
 
   const deferSetColumnOrder = useDeferredColumnOrderChange(setColumnOrder)
 
@@ -1145,6 +1210,9 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
                   buttonProps={{ className: 'min-h-11 min-w-11 shrink-0' }}
                   style={{ zIndex: 120 }}
                 />
+                {canExport && (
+                  <TableExportMenu buildRequest={buildExportRequest} />
+                )}
                 <div className="inline-flex flex-wrap gap-2 items-center shrink-0">
                   <Button
                     onClick={() => setIsShowFilters(!isShowFilters)}
@@ -1221,7 +1289,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
             )}
           </div>
         )}
-        <div className="relative print:static overflow-hidden">
+        <div className="relative print:static">
           <div
             aria-busy={isListLoading}
             className={clsx('transition-opacity', {
@@ -1240,7 +1308,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
                 containerProps={{
                   className: 'print:max-h-none print:overflow-visible',
                 }}
-                className="print-content overflow-x-auto hw-touch-scroll"
+                className="print-content"
               />
             </div>
             {listLayout === 'card' && (

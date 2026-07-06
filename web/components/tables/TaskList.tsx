@@ -1,7 +1,7 @@
 import { useMemo, useState, forwardRef, useImperativeHandle, useEffect, useRef, useCallback, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import type { FilterListItem } from '@helpwave/hightide'
-import { Button, Checkbox, ConfirmDialog, FilterList, FillerCell, IconButton, SearchBar, TableColumnSwitcher, TableDisplay, TableProvider, SortingList, ExpansionIcon, VirtualizedCardGrid } from '@helpwave/hightide'
+import { Button, Checkbox, ConfirmDialog, FilterList, FillerCell, IconButton, SearchBar, TableColumnSwitcher, TableDisplay, TableProvider, SortingList, ExpansionIcon, VirtualizedCardGrid, overscanRowsForBuffer, useLocale } from '@helpwave/hightide'
 import clsx from 'clsx'
 import { Edit2, ExternalLink, LayoutGrid, PlusIcon, Table2, UserCheck } from 'lucide-react'
 import type { IdentifierFilterValue } from '@helpwave/hightide'
@@ -32,7 +32,7 @@ import { queryableFieldsToFilterListItems, queryableFieldsToSortingListItems, ty
 import { LIST_PAGE_SIZE } from '@/utils/listPaging'
 import { TaskCardView } from '@/components/tasks/TaskCardView'
 import { RefreshingTaskIdsContext, TaskRowRefreshingGate } from '@/components/tables/TaskRowRefreshingGate'
-import { overscanRowsForBuffer } from '@/utils/virtualGrid'
+
 import { ListLoadingHint } from '@/components/common/ListLoadingHint'
 import { useIsPrinting } from '@/hooks/useIsPrinting'
 import { ScrollToTopButton } from '@/components/common/ScrollToTopButton'
@@ -44,6 +44,9 @@ import { PropertyColumnHeader } from '@/components/properties/PropertyColumnHead
 import { ClearPropertyColumnDialog } from '@/components/properties/ClearPropertyColumnDialog'
 import { useTaskPropertyClearDialog } from '@/hooks/useTaskPropertyClearDialog'
 import { buildListLayoutStorageKey, resolveListRouteId, useListLayoutPreference } from '@/hooks/useListLayoutPreference'
+import { columnFiltersToQueryFilterClauses, sortingStateToQuerySortClauses } from '@/utils/tableStateToApi'
+import { collectExportColumns, type TableExportFormat, type TableExportRequest, type TableExportScope } from '@/utils/tableExport'
+import { TableExportMenu } from '@/components/tables/TableExportMenu'
 import { useRouter } from 'next/router'
 import type { DialogState } from '@/types/DialogState'
 
@@ -121,9 +124,11 @@ type TaskListProps = {
   embedded?: boolean,
   virtualDerivedOrder?: boolean,
   taskInitialCreationData?: TaskCreationInitialData,
+  exportScope?: TableExportScope,
+  exportTitle?: string,
 }
 
-export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initialTasks, onRefetch, showAssignee = false, initialTaskId, onInitialTaskOpened, headerActions, saveViewSlot, totalCount, loading = false, tableState: controlledTableState, searchQuery: searchQueryProp, onSearchQueryChange, loadMore: loadMoreProp, hasMore: hasMoreProp, isFetchingMore = false, embedded = false, virtualDerivedOrder = false, taskInitialCreationData }, ref) => {
+export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initialTasks, onRefetch, showAssignee = false, initialTaskId, onInitialTaskOpened, headerActions, saveViewSlot, totalCount, loading = false, tableState: controlledTableState, searchQuery: searchQueryProp, onSearchQueryChange, loadMore: loadMoreProp, hasMore: hasMoreProp, isFetchingMore = false, embedded = false, virtualDerivedOrder = false, taskInitialCreationData, exportScope, exportTitle }, ref) => {
   const translation = useTasksTranslation()
   const isPrinting = useIsPrinting()
   const { data: propertyDefinitionsData } = usePropertyDefinitions()
@@ -298,9 +303,11 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
           return a.done ? 1 : -1
         }
 
+        // backend parity: ascending due-date order with tasks that have no
+        // due date first (dueDate.asc().nulls_first())
         if (!a.dueDate && !b.dueDate) return 0
-        if (!a.dueDate) return 1
-        if (!b.dueDate) return -1
+        if (!a.dueDate) return -1
+        if (!b.dueDate) return 1
 
         return a.dueDate.getTime() - b.dueDate.getTime()
       })
@@ -881,6 +888,22 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
     [columnOrder, knownColumnIdsOrdered]
   )
 
+  const { locale, timeZone } = useLocale()
+  const buildExportRequest = useCallback((format: TableExportFormat): TableExportRequest => ({
+    entity: 'tasks',
+    format,
+    columns: collectExportColumns(columns, tableColumnVisibility, sanitizedColumnOrder, {
+      done: translation('done'),
+    }),
+    filters: columnFiltersToQueryFilterClauses(filters as ColumnFiltersState),
+    sorts: sortingStateToQuerySortClauses(sorting),
+    search: searchQuery ? { searchText: searchQuery, includeProperties: true } : undefined,
+    locale,
+    timezone: timeZone,
+    title: exportTitle,
+    scope: exportScope,
+  }), [columns, tableColumnVisibility, sanitizedColumnOrder, translation, filters, sorting, searchQuery, locale, timeZone, exportTitle, exportScope])
+
   const deferSetColumnOrder = useDeferredColumnOrderChange(setColumnOrder)
   const embeddedTableStateNoop = useCallback(() => { }, [])
   const hasOpenDrawer = taskDialogState.isOpen || patientDialogState != null
@@ -978,6 +1001,9 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
                     buttonProps={{ className: 'min-h-11 min-w-11 shrink-0' }}
                     style={{ zIndex: 120 }}
                   />
+                  {exportScope && (
+                    <TableExportMenu buildRequest={buildExportRequest} />
+                  )}
                   <div className="inline-flex flex-wrap gap-2 items-center shrink-0">
                     <Button
                       onClick={() => setIsShowFilters(!isShowFilters)}
@@ -1055,7 +1081,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
               )}
             </div>
           )}
-          <div className={clsx('relative print:static overflow-hidden w-full', isMobileIOS && hasFilterPanelOpen && 'pointer-events-none')}>
+          <div className={clsx('relative print:static w-full', isMobileIOS && hasFilterPanelOpen && 'pointer-events-none')}>
             {!embedded && (
               <style>{`
             table th[data-column-id="done"],
@@ -1077,7 +1103,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
                   containerProps={{
                     className: 'print:max-h-none print:overflow-visible',
                   }}
-                  className="print-content w-full overflow-x-auto hw-touch-scroll"
+                  className="print-content w-full"
                 />
               </div>
               {listLayout === 'card' && (

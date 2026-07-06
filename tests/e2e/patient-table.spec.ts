@@ -308,6 +308,55 @@ test.describe('patient table (patient list)', () => {
     const table = page.locator('table[data-name="table"]')
     await expect(table).toHaveAttribute('data-column-sizing', 'natural')
     expect(await table.evaluate((el) => (el as HTMLElement).style.width)).toBe('')
-    expect(await table.evaluate((el) => getComputedStyle(el).tableLayout)).toBe('auto')
+    await expect(table).toHaveAttribute('data-natural-locked', '')
+    expect(await table.evaluate((el) => getComputedStyle(el).tableLayout)).toBe('fixed')
+  })
+
+  test('column resize drags clamp to the minimum width but allow widening', async ({ page }) => {
+    await page.setViewportSize({ width: 1600, height: 900 })
+    await seedAuth(page)
+    await seedStoredSelection(page, ['root-1'])
+    await mockBackend(page, {
+      patients: PATIENTS,
+      propertyDefinitions: [ALLERGY_DEF],
+      rootLocations: ROOT_LOCATIONS,
+    })
+
+    await page.goto(`${BASE}/patients`)
+    await expect(page.locator(ROW_SELECTOR).first()).toBeVisible({ timeout: 20000 })
+    await page.waitForTimeout(500)
+
+    const nameHeader = page.locator('th[data-name="table-header-cell"]').first()
+    const handle = nameHeader.locator('[data-name="table-resize-indicator"]')
+    const before = (await nameHeader.boundingBox())!
+
+    await nameHeader.hover()
+    let handleBox = (await handle.boundingBox())!
+    await page.mouse.move(handleBox.x + handleBox.width / 2, handleBox.y + handleBox.height / 2)
+    await page.mouse.down()
+    for (let x = handleBox.x; x > handleBox.x - 400; x -= 40) {
+      await page.mouse.move(x, handleBox.y)
+      await page.waitForTimeout(20)
+    }
+    await page.mouse.up()
+    await page.waitForTimeout(300)
+
+    const shrunk = (await nameHeader.boundingBox())!
+    expect(shrunk.width).toBeGreaterThanOrEqual(199)
+    expect(shrunk.width).toBeLessThanOrEqual(before.width + 1)
+
+    await nameHeader.hover()
+    handleBox = (await handle.boundingBox())!
+    await page.mouse.move(handleBox.x + handleBox.width / 2, handleBox.y + handleBox.height / 2)
+    await page.mouse.down()
+    for (let x = handleBox.x; x < handleBox.x + 300; x += 40) {
+      await page.mouse.move(x, handleBox.y)
+      await page.waitForTimeout(20)
+    }
+    await page.mouse.up()
+    await page.waitForTimeout(300)
+
+    const widened = (await nameHeader.boundingBox())!
+    expect(widened.width).toBeGreaterThan(shrunk.width + 200)
   })
 })

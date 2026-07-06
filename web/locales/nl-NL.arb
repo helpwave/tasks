@@ -60,11 +60,34 @@
   "duplicate": "Duplicate",
   "done": "Klaar",
   "dueDate": "Vervaldatum",
+  "dueDateInDays": "+{days, plural, =1{# dag} other{# dagen}}",
+  "@dueDateInDays": {
+    "placeholders": {
+      "days": {
+        "type": "number"
+      }
+    }
+  },
+  "dueDateInHours": "+{hours, plural, =1{# uur} other{# uur}}",
+  "@dueDateInHours": {
+    "placeholders": {
+      "hours": {
+        "type": "number"
+      }
+    }
+  },
+  "dueDateNow": "Nu",
+  "dueDateToday": "Vandaag",
+  "dueDateTomorrow": "Morgen",
   "edit": "Bewerken",
   "editPatient": "Patiënt bewerken",
   "editTask": "Taak bewerken",
   "errorOccurred": "Er is een fout opgetreden",
   "estimatedTime": "Geschatte tijd (minuten)",
+  "export": "Exporteren",
+  "exportCsv": "Exporteren als CSV",
+  "exportExcel": "Exporteren als Excel (afdrukbaar)",
+  "exportFailed": "Exporteren mislukt. Probeer het opnieuw.",
   "timeEstimate": "Geschatte tijd",
   "nMinutesShort": "{minCount} min",
   "@nMinutesShort": {
@@ -274,6 +297,9 @@
   "totalPatients": "Totaal patiënten",
   "type": "Type",
   "updated": "Bijgewerkt",
+  "stateUpdated": "Status bijgewerkt",
+  "clinicUpdated": "Kliniek bijgewerkt",
+  "positionUpdated": "Locatie bijgewerkt",
   "user": "Gebruiker",
   "users": "Gebruikers",
   "wards": "Afdelingen",

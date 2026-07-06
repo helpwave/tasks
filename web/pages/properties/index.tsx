@@ -3,7 +3,7 @@ import { Page } from '@/components/layout/Page'
 import titleWrapper from '@/utils/titleWrapper'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { ContentPanel } from '@/components/layout/ContentPanel'
-import { Button, Chip, FillerCell, IconButton, TableDisplay, TableProvider } from '@helpwave/hightide'
+import { Button, Chip, FillerCell, IconButton, TableDisplay, TableProvider, overscanRowsForBuffer } from '@helpwave/hightide'
 import { useCallback, useMemo, useState } from 'react'
 import type { ColumnDef } from '@tanstack/table-core'
 import { EditIcon, PlusIcon } from 'lucide-react'
@@ -12,7 +12,7 @@ import type { Property } from '@/components/tables/PropertyList'
 import { PropertyDetailView } from '@/components/properties/PropertyDetailView'
 import { FieldType, PropertyEntity } from '@/api/gql/generated'
 import { usePropertyDefinitions } from '@/data'
-import { overscanRowsForBuffer } from '@/utils/virtualGrid'
+
 import { ListLoadingHint } from '@/components/common/ListLoadingHint'
 
 const TABLE_ROW_ESTIMATE_PX = 48
