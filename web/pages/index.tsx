@@ -76,7 +76,7 @@ const Dashboard: NextPage = () => {
 
         <div className="flex flex-wrap w-full gap-4 min-h-0">
           <NavigationCard
-            className="flex-1 min-w-64 py-4"
+            className="flex-1 min-w-64"
             href="/tasks"
             leading={(
               <div className="p-3 rounded-full bg-primary/10 text-primary">
@@ -84,12 +84,12 @@ const Dashboard: NextPage = () => {
               </div>
             )}
             title={translation('myOpenTasks')}
-            description={myTasksCount?.toString()}
+            description={!myTasksCount ? '-' : myTasksCount.toString()}
             LinkComponent={Link}
           />
 
           <NavigationCard
-            className="flex-1 min-w-64 py-4"
+            className="flex-1 min-w-64"
             href="/patients"
             leading={(
               <div className="p-3 rounded-full bg-positive/10 text-positive">
@@ -97,12 +97,12 @@ const Dashboard: NextPage = () => {
               </div>
             )}
             title={translation('totalPatients')}
-            description={scopedPatientsTotal?.toString()}
+            description={!scopedPatientsTotal ? '-' : scopedPatientsTotal.toString()}
             LinkComponent={Link}
           />
 
           <Card
-            className="flex-1 min-w-64 py-4"
+            className="flex-1 min-w-64"
             leading={(
               <div className="p-3 rounded-full bg-secondary/10 text-secondary">
                 <ClockIcon className="size-force-5"/>

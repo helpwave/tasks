@@ -20,10 +20,6 @@
   [data-name="tab-list"] {
     @apply !mb-2; /* TODO remove this at some point*/
   }
-
-  [data-name="table-container"][data-page-scroll] {
-    overflow: visible;
-  }
 }
 
 @layer utilities {

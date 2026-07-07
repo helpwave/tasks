@@ -2,6 +2,7 @@ import { z } from 'zod'
 
 export const publicEnvSchema = z.object({
   NODE_ENV: z.string().default('production'),
+  TESTMODE: z.literal('true').or(z.literal('false')).default('false'),
   RUNTIME_SHOW_STAGING_DISCLAIMER_MODAL: z.literal('true').or(z.literal('false')).optional(),
   RUNTIME_FEATURES_FEED_URL: z.string().url().default('https://cdn.helpwave.de/feed.json'),
   RUNTIME_IMPRINT_URL: z.string().url().default('https://cdn.helpwave.de/imprint.html'),
@@ -18,6 +19,7 @@ export const publicEnvSchema = z.object({
 
 const configSchema = publicEnvSchema.transform(obj => ({
   env: obj.NODE_ENV,
+  testMode: obj.TESTMODE === 'true',
   showStagingDisclaimerModal: obj.RUNTIME_SHOW_STAGING_DISCLAIMER_MODAL === 'true',
   featuresFeedUrl: obj.RUNTIME_FEATURES_FEED_URL,
   imprintUrl: obj.RUNTIME_IMPRINT_URL,

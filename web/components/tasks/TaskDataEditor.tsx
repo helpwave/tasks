@@ -617,7 +617,7 @@ export const TaskDataEditor = ({
           </div>
 
           {!isEditMode && (
-            <div className="flex-none pt-4 mt-auto border-t border-divider flex justify-end gap-2">
+            <div className="flex-none py-4 mt-auto border-t border-divider flex justify-end gap-2">
               <Button
                 onClick={form.submit}
                 disabled={isCreating}
