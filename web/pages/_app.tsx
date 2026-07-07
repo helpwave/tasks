@@ -74,7 +74,9 @@ function MyApp({
             </SubscriptionProvider>
           </ApolloProviderWithData>
         </AuthProvider>
-        {config.env === 'development' && <ReactQueryDevtools buttonPosition="bottom-left" />}
+        {config.env === 'development' && !config.testMode && (
+          <ReactQueryDevtools buttonPosition="bottom-left" />
+        )}
       </QueryClientProvider>
     </HightideProvider>
   )

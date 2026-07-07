@@ -1,5 +1,7 @@
 import { defineConfig, devices } from '@playwright/test'
 
+process.env.TESTMODE = 'true'
+
 const baseURL = process.env.E2E_BASE_URL || 'http://localhost:3000'
 
 if (!baseURL || baseURL.trim() === '') {
@@ -31,5 +33,9 @@ export default defineConfig({
     command: 'cd ../web && npm run dev',
     url: baseURL.trim(),
     reuseExistingServer: true,
+    env: {
+      ...process.env,
+      TESTMODE: 'true',
+    },
   },
 })
