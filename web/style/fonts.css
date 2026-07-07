@@ -1,6 +1,6 @@
 @font-face {
   font-family: "Inter";
-  src: url("/fonts/Inter-VariableFont_opsz,wght.ttf") format("truetype");
+  src: url("/fonts/Inter/Inter-VariableFont_opsz,wght.ttf") format("truetype");
   font-weight: 100 900;
   font-style: normal;
   font-display: swap;
@@ -8,7 +8,7 @@
 
 @font-face {
   font-family: "Space Grotesk";
-  src: url("/fonts/SpaceGrotesk-VariableFont_wght.ttf") format("truetype");
+  src: url("/fonts/Space_Grotesk/SpaceGrotesk-VariableFont_wght.ttf") format("truetype");
   font-weight: 300 700;
   font-style: normal;
   font-display: swap;
