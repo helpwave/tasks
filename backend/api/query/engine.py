@@ -66,8 +66,9 @@ async def apply_unified_query(
         if text:
             stmt = handler["apply_search"](stmt, search, ctx)
 
-    if ctx.get("needs_distinct"):
+    if ctx.get("needs_distinct") or bool(getattr(stmt, "_distinct", False)):
         stmt = dedupe_orm_select_by_root_id(stmt, handler["root_model"])
+        ctx.clear()
         ctx["needs_distinct"] = False
 
     if not for_count:

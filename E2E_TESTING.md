@@ -1,5 +1,50 @@
 # E2E Testing Guide
 
+There are two e2e setups:
+
+1. **Mock-based tests** (most specs under `tests/e2e/`): run the real Next.js
+   frontend and stub the GraphQL/OIDC network boundary. Fast, deterministic,
+   no backend required.
+2. **Proxied full-stack tests** (`tests/e2e/proxy-fullstack.spec.ts`): run the
+   production-like docker-compose stack — nginx proxy in front of web, backend
+   and Keycloak — built from the current commit's Docker images. These catch
+   routing issues (`/graphql`, `/keycloak/...`, `/auth/callback`) and verify
+   filtering/sorting against the real query engine.
+
+## Running the Proxied Full-Stack Tests
+
+1. **Build the images for your commit** (or use published ones):
+   ```bash
+   docker build -t local/tasks-backend:e2e backend
+   docker build -t local/tasks-web:e2e web
+   docker build -t local/tasks-proxy:e2e proxy
+   ```
+
+2. **Start the stack** (ephemeral, no persistent volumes):
+   ```bash
+   BACKEND_IMAGE=local/tasks-backend:e2e \
+   WEB_IMAGE=local/tasks-web:e2e \
+   PROXY_IMAGE=local/tasks-proxy:e2e \
+   docker compose -f docker-compose.e2e.yml up -d
+   ```
+
+3. **Wait for readiness** (Keycloak realm import takes a while):
+   ```bash
+   curl -fs http://localhost/keycloak/realms/tasks/.well-known/openid-configuration
+   curl -fs http://localhost/
+   ```
+
+4. **Run the tests against the proxy**:
+   ```bash
+   cd tests
+   E2E_PROXY_TARGET=1 E2E_BASE_URL=http://localhost npx playwright test e2e/proxy-fullstack.spec.ts
+   ```
+
+The `E2E_PROXY_TARGET=1` gate keeps these tests skipped during the mock-based
+runs. In CI the `e2e-proxy` job (`.github/workflows/tests.yml`) performs these
+steps automatically, rebuilding the commit's images from the shared Buildx
+cache of the Docker Build workflow.
+
 ## Running E2E Tests Locally
 
 ### Prerequisites
