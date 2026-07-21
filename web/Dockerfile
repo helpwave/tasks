@@ -43,6 +43,7 @@ ENV PROFILE_PICTURE_DIRECTORY=/profile
 COPY --from=builder --chown=tasks:nodejs /app/public ./public
 COPY --from=builder --chown=tasks:nodejs /app/build/standalone ./
 COPY --from=builder --chown=tasks:nodejs /app/build/static ./build/static
+COPY --from=builder --chown=tasks:nodejs /app/node_modules/@img ./node_modules/@img
 
 RUN printf "#!/bin/sh\n\
 echo \"window.__ENV = {\" > /app/public/env-config.js\n\

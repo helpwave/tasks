@@ -52,7 +52,7 @@ function getTokenFromRequest(req: NextApiRequest): string | null {
 
 async function getCurrentUser(token: string) {
   const config = getConfig()
-  const client = new GraphQLClient(config.graphqlEndpoint, {
+  const client = new GraphQLClient(config.graphqlServerEndpoint, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -129,7 +129,7 @@ export default async function handler(
     const avatarUrl = `/api/profile/${user.id}?v=${timestamp}`
 
     const config = getConfig()
-    const client = new GraphQLClient(config.graphqlEndpoint, {
+    const client = new GraphQLClient(config.graphqlServerEndpoint, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
