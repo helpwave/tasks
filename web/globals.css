@@ -23,6 +23,35 @@
 
   [data-name="table-container"][data-page-scroll] {
     overflow: visible;
+    border-width: 0;
+    border-radius: 0;
+  }
+
+  [data-name="table-container"][data-page-scroll] [data-name="table-header-cell"],
+  [data-name="table-container"][data-page-scroll] [data-name="table-body-cell"],
+  [data-name="table-container"][data-page-scroll] [data-name="table-body-filler-cell"] {
+    border-radius: 0;
+  }
+
+  [data-name="table-container"][data-page-scroll] [data-name="table-header-cell"][data-sticky] {
+    border-top: 2px solid var(--color-border);
+  }
+
+  [data-name="table-container"][data-page-scroll] [data-name="table-header-cell"][data-sticky]:first-child,
+  [data-name="table-container"][data-page-scroll] [data-name="table-body-cell"]:first-child,
+  [data-name="table-container"][data-page-scroll] [data-name="table-body-filler-cell"]:first-child {
+    border-left: 2px solid var(--color-border);
+  }
+
+  [data-name="table-container"][data-page-scroll] [data-name="table-header-cell"][data-sticky]:last-child,
+  [data-name="table-container"][data-page-scroll] [data-name="table-body-cell"]:last-child,
+  [data-name="table-container"][data-page-scroll] [data-name="table-body-filler-cell"]:last-child {
+    border-right: 2px solid var(--color-border);
+  }
+
+  [data-name="table-container"][data-page-scroll] [data-name="table-body-row"]:last-child > [data-name="table-body-cell"],
+  [data-name="table-container"][data-page-scroll] [data-name="table-body-filler-row"]:last-child > [data-name="table-body-filler-cell"] {
+    border-bottom: 2px solid var(--color-border);
   }
 }
 
