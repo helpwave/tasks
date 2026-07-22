@@ -427,30 +427,32 @@ export const PropertyList = ({
                     {translation('addProperty')}
                   </Button>
                 )}
-                className="min-w-50 p-2 "
+                className="flex-col-1 p-2 items-start min-w-50"
                 options={{
                   verticalAlignment: 'beforeStart',
                 }}
               >
                 {({ close }) => (
-                  <LoadingAndErrorComponent
-                    isLoading={isLoading}
-                    hasError={isError}
-                    loadingComponent={<LoadingAnimation classname="min-h-20" />}
-                  >
-                    {unattachedProperties.map(property => (
-                      <MenuItem
-                        key={property.id}
-                        onClick={() => {
-                          handleAddProperty(property)
-                          close()
-                        }}
-                        className="rounded-md cursor-pointer"
-                      >
-                        {property.name}
-                      </MenuItem>
-                    ))}
-                  </LoadingAndErrorComponent>
+                  <div className="flex-col-1 overflow-y-auto w-full">
+                    <LoadingAndErrorComponent
+                      isLoading={isLoading}
+                      hasError={isError}
+                      loadingComponent={<LoadingAnimation classname="min-h-20" />}
+                    >
+                      {unattachedProperties.map(property => (
+                        <MenuItem
+                          key={property.id}
+                          onClick={() => {
+                            handleAddProperty(property)
+                            close()
+                          }}
+                          className="rounded-md cursor-pointer"
+                        >
+                          {property.name}
+                        </MenuItem>
+                      ))}
+                    </LoadingAndErrorComponent>
+                  </div>
                 )}
               </Menu>
             ) : (
@@ -476,30 +478,32 @@ export const PropertyList = ({
                 <span>{translation('addProperty')}</span>
               </div>
             )}
-            className="min-w-50 p-2 "
+            className="flex-col-1 p-2 items-start min-w-50"
             options={{
               verticalAlignment: 'beforeStart',
             }}
           >
             {({ close }) => (
-              <LoadingAndErrorComponent
-                isLoading={isLoading}
-                hasError={isError}
-                loadingComponent={<LoadingAnimation classname="min-h-20" />}
-              >
-                {unattachedProperties.map(property => (
-                  <MenuItem
-                    key={property.id}
-                    onClick={() => {
-                      handleAddProperty(property)
-                      close()
-                    }}
-                    className="rounded-md cursor-pointer"
-                  >
-                    {property.name}
-                  </MenuItem>
-                ))}
-              </LoadingAndErrorComponent>
+              <div className="flex-col-1 overflow-y-auto w-full">
+                <LoadingAndErrorComponent
+                  isLoading={isLoading}
+                  hasError={isError}
+                  loadingComponent={<LoadingAnimation classname="min-h-20" />}
+                >
+                  {unattachedProperties.map(property => (
+                    <MenuItem
+                      key={property.id}
+                      onClick={() => {
+                        handleAddProperty(property)
+                        close()
+                      }}
+                      className="rounded-md cursor-pointer"
+                    >
+                      {property.name}
+                    </MenuItem>
+                  ))}
+                </LoadingAndErrorComponent>
+              </div>
             )}
           </Menu>
         )}
