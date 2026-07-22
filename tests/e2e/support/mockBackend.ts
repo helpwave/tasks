@@ -95,6 +95,8 @@ export type MockHandle = {
   operations: Array<{ name: string, variables: Record<string, unknown> }>,
   // mutations captured for assertions
   mutations: Array<{ name: string, variables: Record<string, unknown> }>,
+  setAvatarUrl: (url: string | null) => void,
+  getAvatarUrl: () => string | null,
 }
 
 /**
@@ -377,13 +379,37 @@ export async function mockBackend(page: Page, options: MockOptions): Promise<Moc
   const rootLocations = options.rootLocations ?? [
     { id: 'root-1', title: 'General Hospital', kind: 'CLINIC' },
   ]
-  const handle: MockHandle = { operations: [], mutations: [] }
+  let avatarUrl: string | null = null
+  const handle: MockHandle = {
+    operations: [],
+    mutations: [],
+    setAvatarUrl: (url) => {
+      avatarUrl = url
+    },
+    getAvatarUrl: () => avatarUrl,
+  }
 
   // mutable patient store so optimistic edits + refetches stay consistent
   const patients = new Map(options.patients.map(p => [p.id, fullPatient(p, defs)]))
 
   const users = options.users ?? [{ id: 'user-1', name: 'Test User' }]
   const userById = new Map(users.map(u => [u.id, u]))
+  const meUser = () => ({
+    __typename: 'UserType' as const,
+    id: 'user-1',
+    username: 'test',
+    name: 'Test User',
+    email: 'test@example.com',
+    firstname: 'Test',
+    lastname: 'User',
+    title: null,
+    avatarUrl,
+    lastOnline: null,
+    isOnline: true,
+    organizations: null,
+    rootLocations: rootLocations.map(l => ({ __typename: 'LocationNodeType', ...l })),
+    tasks: [],
+  })
   const fullTask = (t: TaskFixture) => ({
     __typename: 'TaskType',
     id: t.id,
@@ -530,20 +556,7 @@ export async function mockBackend(page: Page, options: MockOptions): Promise<Moc
     case 'GetGlobalData':
       return respond(route, {
         data: {
-          me: {
-            __typename: 'UserType',
-            id: 'user-1',
-            username: 'test',
-            name: 'Test User',
-            firstname: 'Test',
-            lastname: 'User',
-            avatarUrl: null,
-            lastOnline: null,
-            isOnline: true,
-            organizations: null,
-            rootLocations: rootLocations.map(l => ({ __typename: 'LocationNodeType', ...l })),
-            tasks: [],
-          },
+          me: meUser(),
           wards: [],
           teams: [],
           clinics: rootLocations.map(l => ({ __typename: 'LocationNodeType', id: l.id, title: l.title, parentId: null })),
@@ -557,6 +570,24 @@ export async function mockBackend(page: Page, options: MockOptions): Promise<Moc
           },
         },
       })
+
+    case 'GetMe':
+      return respond(route, { data: { me: meUser() } })
+
+    case 'GetUser': {
+      const id = variables['id'] as string | undefined
+      if (id && id !== 'user-1') {
+        return respond(route, { data: { user: null } })
+      }
+      return respond(route, { data: { user: meUser() } })
+    }
+
+    case 'UpdateProfilePicture': {
+      handle.mutations.push({ name, variables })
+      const data = (variables['data'] ?? {}) as { avatarUrl?: string | null }
+      avatarUrl = data.avatarUrl ?? null
+      return respond(route, { data: { updateProfilePicture: meUser() } })
+    }
 
     case 'GetLocations': {
       if (options.locationsDelayMs) {

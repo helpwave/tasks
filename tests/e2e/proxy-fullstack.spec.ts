@@ -262,4 +262,42 @@ test.describe('full stack behind the nginx proxy', () => {
       return names.map(n => n.includes('-alpha') ? 'alpha' : n.includes('-mid') ? 'mid' : n.includes('-zeta') ? 'zeta' : n)
     }, { timeout: 20000 }).toEqual(['zeta', 'mid', 'alpha'])
   })
+
+  test('uploads a profile picture through sharp in the alpine web image', async ({ request }) => {
+    // Regression: Next standalone tracing omitted @img/sharp-libvips-* so the
+    // musl sharp binary failed to dlopen libvips-cpp inside the alpine image.
+    const { token, me } = seeded
+    const png = Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+      'base64'
+    )
+
+    const upload = await request.post(`${BASE}/api/profile/upload`, {
+      headers: { authorization: `Bearer ${token}` },
+      multipart: {
+        file: {
+          name: 'avatar.png',
+          mimeType: 'image/png',
+          buffer: png,
+        },
+      },
+    })
+    expect(upload.status(), await upload.text()).toBe(200)
+    const body = await upload.json() as { success?: boolean, avatarUrl?: string }
+    expect(body.success).toBe(true)
+    expect(body.avatarUrl).toMatch(new RegExp(`^/api/profile/${me.id}\\?v=\\d+$`))
+
+    const image = await request.get(`${BASE}${body.avatarUrl}`)
+    expect(image.status()).toBe(200)
+    expect(image.headers()['content-type'] ?? '').toContain('image/jpeg')
+    const bytes = Buffer.from(await image.body())
+    expect(bytes.subarray(0, 2).equals(Buffer.from([0xff, 0xd8]))).toBe(true)
+
+    const { me: updated } = await gql<{ me: { id: string, avatarUrl: string | null } }>(
+      request,
+      token,
+      `query { me { id avatarUrl } }`
+    )
+    expect(updated.avatarUrl).toBe(body.avatarUrl)
+  })
 })

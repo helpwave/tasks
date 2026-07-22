@@ -3,6 +3,13 @@ const nextConfig = {
   distDir: 'build',
   reactStrictMode: true,
   output: 'standalone',
+  outputFileTracingIncludes: {
+    '/api/profile/upload': [
+      './node_modules/sharp/**/*',
+      './node_modules/@img/**/*',
+    ],
+  },
+  serverExternalPackages: ['sharp'],
   images: {
     dangerouslyAllowSVG: true,
     remotePatterns: [

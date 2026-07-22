@@ -83,6 +83,7 @@ services:
     image: ${WEB_IMAGE:-ghcr.io/helpwave/tasks-web:latest}
     environment:
       RUNTIME_GRAPHQL_ENDPOINT: "http://localhost/graphql"
+      GRAPHQL_SERVER_ENDPOINT: "http://backend/graphql"
       RUNTIME_ISSUER_URI: "http://localhost/keycloak/realms/tasks"
       RUNTIME_REDIRECT_URI: "http://localhost/auth/callback"
       RUNTIME_POST_LOGOUT_REDIRECT_URI: "http://localhost/"
