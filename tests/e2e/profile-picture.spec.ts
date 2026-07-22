@@ -18,8 +18,9 @@ async function seedStoredSelection(page: Page, ids: string[]) {
 
 async function openSettings(page: Page) {
   await page.goto(`${BASE}/settings`)
-  await expect(page.getByText('Test User')).toBeVisible({ timeout: 15000 })
-  await expect(page.getByRole('button', { name: 'Upload Picture' })).toBeVisible()
+  const profileSection = page.getByRole('main')
+  await expect(profileSection.getByText('Test User', { exact: true })).toBeVisible({ timeout: 15000 })
+  await expect(profileSection.getByRole('button', { name: 'Upload Picture' })).toBeVisible()
 }
 
 test.describe('profile picture settings', () => {
@@ -32,19 +33,20 @@ test.describe('profile picture settings', () => {
     await mockBackend(page, { patients: [], rootLocations: ROOT_LOCATIONS })
     await openSettings(page)
 
-    await page.locator('#profile-picture-upload').setInputFiles({
+    const profileSection = page.getByRole('main')
+    await profileSection.locator('#profile-picture-upload').setInputFiles({
       name: 'avatar.png',
       mimeType: 'image/png',
       buffer: TINY_PNG,
     })
 
-    await expect(page.getByRole('button', { name: 'Change Picture' })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Save' })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Remove selected image' })).toBeVisible()
+    await expect(profileSection.getByRole('button', { name: 'Change Picture' })).toBeVisible()
+    await expect(profileSection.getByRole('button', { name: 'Save' })).toBeVisible()
+    await expect(profileSection.getByRole('button', { name: 'Remove selected image' })).toBeVisible()
 
-    await page.getByRole('button', { name: 'Remove selected image' }).click()
-    await expect(page.getByRole('button', { name: 'Upload Picture' })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Save' })).toHaveCount(0)
+    await profileSection.getByRole('button', { name: 'Remove selected image' }).click()
+    await expect(profileSection.getByRole('button', { name: 'Upload Picture' })).toBeVisible()
+    await expect(profileSection.getByRole('button', { name: 'Save' })).toHaveCount(0)
   })
 
   test('saving an upload updates the avatar url after refetch', async ({ page }) => {
@@ -62,15 +64,16 @@ test.describe('profile picture settings', () => {
 
     await openSettings(page)
 
-    await page.locator('#profile-picture-upload').setInputFiles({
+    const profileSection = page.getByRole('main')
+    await profileSection.locator('#profile-picture-upload').setInputFiles({
       name: 'avatar.png',
       mimeType: 'image/png',
       buffer: TINY_PNG,
     })
-    await page.getByRole('button', { name: 'Save' }).click()
+    await profileSection.getByRole('button', { name: 'Save' }).click()
 
-    await expect(page.getByRole('button', { name: 'Upload Picture' })).toBeVisible({ timeout: 10000 })
-    await expect(page.getByRole('button', { name: 'Save' })).toHaveCount(0)
+    await expect(profileSection.getByRole('button', { name: 'Upload Picture' })).toBeVisible({ timeout: 10000 })
+    await expect(profileSection.getByRole('button', { name: 'Save' })).toHaveCount(0)
     expect(handle.getAvatarUrl()).toBe(avatarUrl)
 
     await expect
