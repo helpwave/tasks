@@ -229,7 +229,18 @@ export function PatientViewTasksPanel({
     setSearchQuery(baselineSearch)
     setRelatedColumnVisibility(baselineColumnVisibility)
     setRelatedColumnOrder(baselineColumnOrder)
-  }, [persistedRelatedContentKey])
+  }, [
+    persistedRelatedContentKey,
+    defaultRelatedFilters,
+    relatedSortBaseline,
+    baselineSearch,
+    baselineColumnVisibility,
+    baselineColumnOrder,
+    setRelatedFilters,
+    setRelatedSorting,
+    setRelatedColumnVisibility,
+    setRelatedColumnOrder,
+  ])
 
   const viewMatchesRelatedBaseline = useMemo(
     () => tableViewStateMatchesBaseline({

@@ -914,7 +914,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
           gateCell(params.row.original.id, (col.cell as (p: unknown) => React.ReactNode)(params))
         : undefined,
     })),
-  ], [translation, patientPropertyColumnsWithActions, gateCell, formatBirthdate, handleEdit])
+  ], [translation, patientPropertyColumnsWithActions, gateCell, formatBirthdate])
 
   const propertyFieldTypeByDefId = useMemo(
     () => new Map(propertyDefinitionsData?.propertyDefinitions.map(d => [d.id, d.fieldType]) ?? []),

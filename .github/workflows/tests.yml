@@ -24,7 +24,7 @@ jobs:
       - uses: DeterminateSystems/nix-installer-action@v19
       - uses: DeterminateSystems/magic-nix-cache-action@v12
       - name: Run ruff
-        run: nix develop --command ruff check backend --output-format=concise --exclude database/migrations
+        run: nix shell --inputs-from . nixpkgs#ruff -c ruff check backend --output-format=concise --exclude database/migrations
 
   simulator-lint:
     name: Lint simulator
@@ -34,7 +34,7 @@ jobs:
       - uses: DeterminateSystems/nix-installer-action@v19
       - uses: DeterminateSystems/magic-nix-cache-action@v12
       - name: Run ruff
-        run: nix develop --command ruff check simulator --output-format=concise
+        run: nix shell --inputs-from . nixpkgs#ruff -c ruff check simulator --output-format=concise
 
   frontend-lint:
     name: Lint frontend
@@ -86,7 +86,9 @@ jobs:
       - uses: DeterminateSystems/nix-installer-action@v19
       - uses: DeterminateSystems/magic-nix-cache-action@v12
       - name: Check nix formatting
-        run: nix develop --command bash -c 'mapfile -t files < <(find . -name "*.nix" -not -path "./result*"); nixfmt --check "${files[@]}"'
+        run: |
+          mapfile -t files < <(find . -name '*.nix' -not -path './result*')
+          nix shell --inputs-from . nixpkgs#nixfmt -c nixfmt --check "${files[@]}"
 
   lint:
     name: Lint
@@ -396,9 +398,40 @@ jobs:
         run: docker compose -f docker-compose.e2e.yml up -d
       - name: Wait for the stack
         run: |
-          timeout 180 bash -c 'until curl -fs http://localhost/keycloak/realms/tasks/.well-known/openid-configuration > /dev/null; do sleep 3; done'
-          timeout 180 bash -c 'until [ "$(curl -s -o /dev/null -w "%{http_code}" -X POST -H "content-type: application/json" -d "{\"query\":\"{ __typename }\"}" http://localhost/graphql)" -lt 500 ]; do sleep 3; done'
-          timeout 180 bash -c 'until curl -fs http://localhost/ > /dev/null; do sleep 3; done'
+          echo "Waiting for keycloak (realm import)..."
+          for _ in $(seq 1 60); do
+            if curl -fs http://localhost/keycloak/realms/tasks/.well-known/openid-configuration > /dev/null; then
+              break
+            fi
+            sleep 3
+          done
+          curl -fs http://localhost/keycloak/realms/tasks/.well-known/openid-configuration > /dev/null
+
+          echo "Waiting for the backend..."
+          for _ in $(seq 1 60); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' -X POST \
+              -H 'content-type: application/json' \
+              -d '{"query":"{ __typename }"}' \
+              http://localhost/graphql || true)
+            if [ "$code" -lt 500 ]; then
+              break
+            fi
+            sleep 3
+          done
+          code=$(curl -s -o /dev/null -w '%{http_code}' -X POST \
+            -H 'content-type: application/json' \
+            -d '{"query":"{ __typename }"}' \
+            http://localhost/graphql)
+          test "$code" -lt 500
+
+          echo "Waiting for the frontend..."
+          for _ in $(seq 1 60); do
+            if curl -fs http://localhost/ > /dev/null; then
+              break
+            fi
+            sleep 3
+          done
+          curl -fs http://localhost/ > /dev/null
       - uses: actions/setup-node@v7
         with:
           node-version: "22"
