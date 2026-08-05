@@ -36,7 +36,6 @@ let
     "FRONTEND_HOST=127.0.0.1:3000"
     "BACKEND_HOST=127.0.0.1:8000"
     "KEYCLOAK_HOST=127.0.0.1:8080"
-    "NGINX_PREFIX=/tmp/helpwave-tasks-proxy"
   ];
 in
 {

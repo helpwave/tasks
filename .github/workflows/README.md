@@ -29,18 +29,15 @@ flowchart TD
   subgraph tests["4. Tests"]
     BT[backend-tests]
     FT[frontend-tests]
-    E2E[e2e-tests]
     EP[e2e-proxy]
   end
 
   L --> N --> D
   D --> BT
   D --> FT
-  D --> E2E
   D --> EP
   BT --> CI[ci]
   FT --> CI
-  E2E --> CI
   EP --> CI
   N --> CI
   D --> CI
@@ -52,7 +49,7 @@ flowchart TD
 |----------|---------|---------|
 | `tests.yml` | Push/PR to `main` or `develop`, manual dispatch | Full gate: lint → nix → docker → tests |
 
-Images are built with Nix (`streamLayeredImage` from scratch). Dockerfiles are a two-step `nixos/nix` builder → `scratch` rootfs for local `docker compose build`.
+Images are Nix `streamLayeredImage` scratch builds. E2E runs only against the proxied docker-compose stack.
 
 ## Local act
 
