@@ -74,23 +74,74 @@ Use this if you prefer managing your own Python and Node versions.
     python -m simulator
     ```
 
-### Option B: Automated Setup (Nix)
-Use this to let Nix handle dependencies, environment variables, and helper commands automatically.
+### Option B: Nix flake
 
-1.  **Enter Shell**
-    ```bash
-    nix-shell
-    ```
+Requires [Nix](https://nixos.org/download/) with flakes enabled. The flake provides pure packages, a side-effect-free `nix develop` shell, and a NixOS module. Infrastructure (Postgres, Redis, Keycloak, InfluxDB) still comes from Docker Compose in the develop shell.
 
-2.  **Start Everything**
-    ```bash
-    run-dev-all
-    ```
+#### Develop
 
-3.  **Run Simulator** (Optional)
-    ```bash
-    run-simulator
-    ```
+```bash
+nix develop
+# or from anywhere:
+nix develop github:helpwave/tasks
+```
+
+First time only for the frontend checkout:
+
+```bash
+(cd web && npm ci)
+```
+
+Then:
+
+```bash
+run-dev-all
+# optional:
+run-simulator
+```
+
+Helpers on `PATH`: `run-dev-backend`, `run-dev-web`, `run-dev-all`, `run-alembic`, `run-alembic-upgrade`, `psql-dev`, `redis-cli-dev`, `start-docker`, `stop-docker`, `clean-dev`, `run-simulator`, `lint-dockerfiles`, `run-act`.
+
+The develop shell does **not** create `venv/` or run `npm install` into the tree.
+
+#### Run / install from GitHub
+
+```bash
+nix run github:helpwave/tasks            # usage help
+nix run github:helpwave/tasks#backend
+nix run github:helpwave/tasks#web
+nix run github:helpwave/tasks#simulator
+nix run github:helpwave/tasks#proxy
+
+nix profile install github:helpwave/tasks#backend
+nix profile install github:helpwave/tasks#web
+```
+
+Standalone packages expect configured Postgres, Redis, Keycloak, and InfluxDB (or use the NixOS module below).
+
+#### NixOS module
+
+```nix
+{
+  inputs.helpwave-tasks.url = "github:helpwave/tasks";
+
+  outputs = { nixpkgs, helpwave-tasks, ... }: {
+    nixosConfigurations.example = nixpkgs.lib.nixosSystem {
+      system = "x86_64-linux";
+      modules = [
+        helpwave-tasks.nixosModules.default
+        {
+          services.helpwave-tasks.enable = true;
+          # services.helpwave-tasks.backend.environmentFile = "/run/secrets/tasks.env";
+          # services.helpwave-tasks.keycloak.issuerUri = "https://auth.example/realms/tasks";
+        }
+      ];
+    };
+  };
+}
+```
+
+Local Postgres and Redis are enabled by default. Optional InfluxDB 2 and Keycloak can be turned on with `influxdb.createLocally` / `keycloak.createLocally`. Put secrets in `backend.environmentFile`.
 
 ### Access & Credentials
 
@@ -163,8 +214,25 @@ act -j backend-tests
 
 ## Docker Images
 
-All components are containerized and available on GitHub Container Registry:
+Images are built from Nix (scratch rootfs). GHCR tags on `main`:
+
 - `ghcr.io/helpwave/tasks-backend:latest`
 - `ghcr.io/helpwave/tasks-web:latest`
 - `ghcr.io/helpwave/tasks-simulator:latest`
 - `ghcr.io/helpwave/tasks-proxy:latest`
+
+Build locally via stream:
+
+```bash
+nix build .#backend-docker && ./result | docker load
+nix build .#web-docker && ./result | docker load
+```
+
+Or via two-step Dockerfiles (`nixos/nix` → `scratch`), from the repo root:
+
+```bash
+docker build -f backend/Dockerfile -t helpwave-tasks-backend .
+docker build -f web/Dockerfile -t helpwave-tasks-web .
+docker build -f proxy/Dockerfile -t helpwave-tasks-proxy .
+docker build -f simulator/Dockerfile -t helpwave-tasks-simulator .
+```

@@ -85,7 +85,15 @@ Important paths:
 
 ## 4) Local Development Workflow
 
-## Start infrastructure
+### Nix (recommended if available)
+
+```bash
+nix develop
+(cd web && npm ci)   # once
+run-dev-all
+```
+
+### Start infrastructure
 From repository root:
 
 ```bash
@@ -139,6 +147,8 @@ Never skip these steps when applicable.
 ## 6) Validation Checklist Before Finalizing
 
 Run only what is relevant to your change scope.
+
+CI order on GitHub: **lint → nix build → docker images → tests**.
 
 ### Frontend changes
 ```bash

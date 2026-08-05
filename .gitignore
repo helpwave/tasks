@@ -20,6 +20,10 @@ htmlcov/
 /web/profile/
 /profile/
 
+# nix
+/result
+/result-*
+
 # __pycache__
 __pycache__/
 */__pycache__/

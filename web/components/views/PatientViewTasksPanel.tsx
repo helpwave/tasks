@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useEffectEvent, useMemo, useState } from 'react'
 import { useMutation } from '@apollo/client/react'
 import { Visibility } from '@helpwave/hightide'
 import type { ColumnFiltersState } from '@tanstack/react-table'
@@ -223,13 +223,17 @@ export function PatientViewTasksPanel({
 
   const [searchQuery, setSearchQuery] = useState(baselineSearch)
 
-  useEffect(() => {
+  const resetRelatedTableState = useEffectEvent(() => {
     setRelatedFilters(defaultRelatedFilters)
     setRelatedSorting(relatedSortBaseline)
     setSearchQuery(baselineSearch)
     setRelatedColumnVisibility(baselineColumnVisibility)
     setRelatedColumnOrder(baselineColumnOrder)
-  }, [persistedRelatedContentKey])
+  })
+
+  useEffect(() => {
+    resetRelatedTableState()
+  }, [persistedRelatedContentKey, resetRelatedTableState])
 
   const viewMatchesRelatedBaseline = useMemo(
     () => tableViewStateMatchesBaseline({
