@@ -62,7 +62,9 @@ services:
       - "influxdb-data:/var/lib/influxdb2"
 
   backend:
-    build: backend
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
     ports:
       - "8000:80"
     environment:
@@ -94,7 +96,9 @@ services:
       - influxdb
 
   web:
-    build: web
+    build:
+      context: .
+      dockerfile: web/Dockerfile
     ports:
       - "3000:80"
     environment:
@@ -107,7 +111,9 @@ services:
       - backend
 
   simulator:
-    build: simulator
+    build:
+      context: .
+      dockerfile: simulator/Dockerfile
     environment:
       KEYCLOAK_URL: "http://keycloak:8080"
       API_URL: "http://backend:80/graphql"

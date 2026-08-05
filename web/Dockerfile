@@ -1,61 +1,31 @@
-ARG NODE_ALPINE_DIGEST="sha256:8ea2348b068a9544dae7317b4f3aafcdc032df1647bb7d768a05a5cad1a7683f"
+# syntax=docker/dockerfile:1
 
-FROM node:22-alpine@${NODE_ALPINE_DIGEST} AS base
+FROM nixos/nix:2.28.4 AS builder
 
-FROM base AS deps
-RUN apk add --no-cache \
-    gcompat=1.1.0-r4 \
-    libucontext=1.3.3-r0 \
-    musl-obstack=1.2.3-r2
-WORKDIR /app
-COPY package.json package-lock.json ./
-RUN npm ci
+RUN printf '%s\n' \
+      'extra-experimental-features = nix-command flakes' \
+      'filter-syscalls = false' \
+      >> /etc/nix/nix.conf
 
-FROM base AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
-RUN npm run build
+WORKDIR /build
 
-FROM base
-WORKDIR /app
-ENV NODE_ENV=production
-ENV PORT=80
-ENV HOSTNAME="0.0.0.0"
+COPY flake.nix flake.lock ./
+COPY nix ./nix
+COPY web ./web
 
-RUN apk add --no-cache \
-    libcap=2.78-r0 \
-    libcap-getcap=2.78-r0 \
-    libcap-setcap=2.78-r0 \
-    libcap-utils=2.78-r0 \
-    libcap2=2.78-r0 && \
-    setcap 'cap_net_bind_service=+ep' /usr/local/bin/node && \
-    addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 tasks && \
-    mkdir -p /feedback && \
-    mkdir -p /profile && \
-    chown tasks:nodejs /feedback && \
-    chown tasks:nodejs /profile
+RUN nix build "path:/build#web-rootfs" --out-link /rootfs
 
-ENV FEEDBACK_DIR=/feedback
-ENV PROFILE_PICTURE_DIRECTORY=/profile
+FROM scratch
 
-COPY --from=builder --chown=tasks:nodejs /app/public ./public
-COPY --from=builder --chown=tasks:nodejs /app/build/standalone ./
-COPY --from=builder --chown=tasks:nodejs /app/build/static ./build/static
-COPY --from=builder --chown=tasks:nodejs /app/node_modules/@img ./node_modules/@img
+COPY --from=builder /rootfs/ /
 
-RUN printf "#!/bin/sh\n\
-echo \"window.__ENV = {\" > /app/public/env-config.js\n\
-env | grep \"^RUNTIME_\" | while read -r line; do\n\
-  key=\$(echo \"\$line\" | cut -d \"=\" -f 1)\n\
-  val=\$(echo \"\$line\" | cut -d \"=\" -f 2-)\n\
-  echo \"  \\\"\$key\\\": \\\"\$val\\\",\" >> /app/public/env-config.js\n\
-done\n\
-echo \"}\" >> /app/public/env-config.js\n\
-exec \"\$@\"\n" > /app/entrypoint.sh && chmod +x /app/entrypoint.sh
+ENV PATH=/bin \
+    SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt \
+    HOSTNAME=0.0.0.0 \
+    PORT=80 \
+    NODE_ENV=production \
+    TASKS_WEB_RUNTIME_DIR=/tmp/helpwave-tasks-web
 
-USER tasks
 EXPOSE 80
-ENTRYPOINT ["/app/entrypoint.sh"]
-CMD ["node", "server.js"]
+
+ENTRYPOINT ["/bin/tasks-web"]

@@ -1,86 +1,62 @@
 # GitHub Actions
 
-## Workflow map
+## Pipeline order
 
 ```mermaid
 flowchart TD
-  subgraph quality["Quality gate — tests.yml (main/develop PRs)"]
+  subgraph lint["1. Lint"]
     BL[backend-lint]
     SL[simulator-lint]
-    FE[frontend]
+    FE[frontend-lint]
+    DL[dockerfile-lint]
+    NF[nix-fmt]
+    L[lint aggregator]
+    BL --> L
+    SL --> L
+    FE --> L
+    DL --> L
+    NF --> L
+  end
+
+  subgraph nix["2. Nix"]
+    N[nix build packages + docker streams + rootfs]
+  end
+
+  subgraph docker["3. Docker"]
+    D[load streams / push GHCR / image artifacts]
+  end
+
+  subgraph tests["4. Tests"]
     BT[backend-tests]
+    FT[frontend-tests]
     E2E[e2e-tests]
-    CI[ci]
-
-    BL --> BT
-    FE --> E2E
-    BT --> CI
-    SL --> CI
-    FE --> CI
-    E2E --> CI
+    EP[e2e-proxy]
   end
 
-  subgraph compile["Compile checks — path-filtered"]
-    BW[build-web.yml]
-    LD[lint-dockerfiles.yml]
-  end
-
-  subgraph release["Container images — main + relevant PRs"]
-    DB[docker-build.yml]
-  end
+  L --> N --> D
+  D --> BT
+  D --> FT
+  D --> E2E
+  D --> EP
+  BT --> CI[ci]
+  FT --> CI
+  E2E --> CI
+  EP --> CI
+  N --> CI
+  D --> CI
 ```
 
-## When each workflow runs
+## Workflow
 
 | Workflow | Trigger | Purpose |
 |----------|---------|---------|
-| `tests.yml` | Push/PR to `main` or `develop`, manual dispatch | Primary quality gate: lint, unit/integration tests, E2E |
-| `build-web.yml` | Push/PR when `web/**` changes | Next.js production build on Node 22 |
-| `lint-dockerfiles.yml` | Push/PR when Dockerfiles change | Hadolint |
-| `docker-build.yml` | Push to `main`; PR when app/Docker paths change | Build and push GHCR images |
+| `tests.yml` | Push/PR to `main` or `develop`, manual dispatch | Full gate: lint → nix → docker → tests |
 
-## `tests.yml` job graph
+Images are built with Nix (`streamLayeredImage` from scratch). Dockerfiles are a two-step `nixos/nix` builder → `scratch` rootfs for local `docker compose build`.
 
-Lint and frontend checks start immediately in parallel:
-
-- `backend-lint` → `backend-tests` (Python 3.11 / 3.12 / 3.13)
-- `simulator-lint`
-- `frontend` (ESLint, typecheck, translation keys, Vitest)
-
-`e2e-tests` depends only on `frontend`, not on the backend test matrix. E2E boots its own backend and most data-loading specs mock GraphQL anyway, so waiting for three Python versions added minutes without improving signal.
-
-`ci` is the single aggregation job for branch protection. It succeeds only when `backend-tests`, `simulator-lint`, `frontend`, and `e2e-tests` all pass.
-
-Re-run the full suite manually:
+## Local act
 
 ```bash
-gh workflow run tests.yml
-```
-
-## Running locally with act
-
-```bash
-# List jobs
 act -l -W .github/workflows/tests.yml
-
-# Run the full quality gate
-act -W .github/workflows/tests.yml
-
-# Run one job
-act -W .github/workflows/tests.yml -j frontend
-act -W .github/workflows/tests.yml -j e2e-tests
+act -W .github/workflows/tests.yml -j nix
 ```
-
-Prerequisites: Docker running, [act](https://github.com/nektos/act) installed.
-
-E2E and service-backed jobs need a medium or large act image. Service containers (Postgres, Redis) are started automatically.
-
-## Removed workflows
-
-These duplicated `tests.yml` and ran the same checks twice on every PR:
-
-- `e2e-tests.yml`
-- `backend-tests.yml`
-- `frontend-tests.yml`
-- `lint-python.yml` (flake8; the repo uses ruff in `tests.yml`)
-- `build-docker-*.yml` (four files → `docker-build.yml` matrix)

@@ -58,7 +58,7 @@ The simulator supports two authentication modes:
 
 1. **Using Nix** (Recommended):
    ```bash
-   nix-shell
+   nix develop
    run-simulator
    ```
 

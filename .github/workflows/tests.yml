@@ -1,4 +1,4 @@
-name: Tests
+name: CI
 
 on:
   push:
@@ -8,89 +8,188 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: tests-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
+
+env:
+  REGISTRY: ghcr.io
+  NIX_CONFIG: "experimental-features = nix-command flakes"
 
 jobs:
   backend-lint:
+    name: Lint backend
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-
-      - name: Set up Python
-        uses: actions/setup-python@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.13"
-
-      - name: Install dependencies
+      - name: Install ruff
+        run: pip install ruff
+      - name: Run ruff
         working-directory: backend
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-
-      - name: Run linting
-        working-directory: backend
-        run: |
-          pip install ruff
-          ruff check . --output-format=concise --exclude database/migrations
+        run: ruff check . --output-format=concise --exclude database/migrations
 
   simulator-lint:
+    name: Lint simulator
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-
-      - name: Set up Python
-        uses: actions/setup-python@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.13"
-
-      - name: Install dependencies
+      - name: Install ruff
+        run: pip install ruff
+      - name: Run ruff
         working-directory: simulator
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+        run: ruff check . --output-format=concise
 
-      - name: Run linting
-        working-directory: simulator
-        run: |
-          pip install ruff
-          ruff check . --output-format=concise
-
-  frontend:
+  frontend-lint:
+    name: Lint frontend
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v7
+      - uses: actions/setup-node@v7
         with:
-          node-version: "20"
+          node-version: "22"
           cache: "npm"
           cache-dependency-path: web/package-lock.json
-
       - name: Install dependencies
         working-directory: web
         run: npm ci
-
       - name: Lint
         working-directory: web
         run: npm run lint
-
       - name: Check translation keys
         working-directory: web
         run: npm run check-translations
 
-      - name: Unit tests
-        working-directory: web
-        run: npm run test
+  dockerfile-lint:
+    name: Lint Dockerfiles
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: hadolint/hadolint-action@v3.3.0
+        with:
+          dockerfile: backend/Dockerfile
+          failure-threshold: warning
+      - uses: hadolint/hadolint-action@v3.3.0
+        with:
+          dockerfile: web/Dockerfile
+          failure-threshold: warning
+      - uses: hadolint/hadolint-action@v3.3.0
+        with:
+          dockerfile: simulator/Dockerfile
+          failure-threshold: warning
+      - uses: hadolint/hadolint-action@v3.3.0
+        with:
+          dockerfile: proxy/Dockerfile
+          failure-threshold: warning
+
+  nix-fmt:
+    name: Format nix
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: DeterminateSystems/nix-installer-action@v19
+      - uses: DeterminateSystems/magic-nix-cache-action@v12
+      - name: Check nix formatting
+        run: |
+          mapfile -t files < <(find . -name '*.nix' -not -path './result*' )
+          nix shell nixpkgs#nixfmt -c nixfmt --check "${files[@]}"
+
+  lint:
+    name: Lint
+    needs: [backend-lint, simulator-lint, frontend-lint, dockerfile-lint, nix-fmt]
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "All lint jobs passed."
+
+  nix:
+    name: Nix build
+    needs: [lint]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: DeterminateSystems/nix-installer-action@v19
+      - uses: DeterminateSystems/magic-nix-cache-action@v12
+      - name: Build packages
+        run: |
+          nix build .#backend .#web .#simulator .#proxy .#default -L
+      - name: Build scratch image streams
+        run: |
+          nix build .#backend-docker .#web-docker .#proxy-docker .#simulator-docker -L
+      - name: Build rootfs derivations
+        run: |
+          nix build .#backend-rootfs .#web-rootfs .#proxy-rootfs .#simulator-rootfs -L
+      - name: Flake check
+        run: nix flake check --no-build
+
+  docker:
+    name: Docker ${{ matrix.component }}
+    needs: [nix]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - component: backend
+            flake_attr: backend-docker
+            image_name: helpwave-tasks-backend
+            ghcr_image: ${{ github.repository }}-backend
+          - component: web
+            flake_attr: web-docker
+            image_name: helpwave-tasks-web
+            ghcr_image: ${{ github.repository }}-web
+          - component: proxy
+            flake_attr: proxy-docker
+            image_name: helpwave-tasks-proxy
+            ghcr_image: ${{ github.repository }}-proxy
+          - component: simulator
+            flake_attr: simulator-docker
+            image_name: helpwave-tasks-simulator
+            ghcr_image: ${{ github.repository }}-simulator
+    steps:
+      - uses: actions/checkout@v7
+      - uses: DeterminateSystems/nix-installer-action@v19
+      - uses: DeterminateSystems/magic-nix-cache-action@v12
+      - uses: docker/setup-buildx-action@v4
+      - name: Log in to GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build nix image stream and load
+        run: |
+          nix build ".#${{ matrix.flake_attr }}" -o "./result-${{ matrix.component }}" -L
+          "./result-${{ matrix.component }}" | docker load
+          docker tag "${{ matrix.image_name }}:latest" "local/tasks-${{ matrix.component }}:ci"
+      - name: Push to GHCR
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        run: |
+          docker tag "${{ matrix.image_name }}:latest" "${{ env.REGISTRY }}/${{ matrix.ghcr_image }}:latest"
+          docker push "${{ env.REGISTRY }}/${{ matrix.ghcr_image }}:latest"
+      - name: Save image artifact for tests
+        run: |
+          docker save "local/tasks-${{ matrix.component }}:ci" | gzip > "/tmp/tasks-${{ matrix.component }}.tar.gz"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: image-${{ matrix.component }}
+          path: /tmp/tasks-${{ matrix.component }}.tar.gz
+          retention-days: 1
 
   backend-tests:
-    needs: [backend-lint]
+    name: Backend tests
+    needs: [docker]
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: ["3.11", "3.12", "3.13"]
-
     services:
       postgres:
         image: postgres:15
@@ -105,7 +204,6 @@ jobs:
           --health-retries 5
         ports:
           - 5432:5432
-
       redis:
         image: redis:7-alpine
         options: >-
@@ -115,40 +213,29 @@ jobs:
           --health-retries 5
         ports:
           - 6379:6379
-
     steps:
       - uses: actions/checkout@v7
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
-
-      - name: Cache pip packages
-        uses: actions/cache@v6
+      - uses: actions/cache@v6
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('backend/requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
-
       - name: Install dependencies
         working-directory: backend
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-
-      - name: Run unit tests
+      - name: Unit tests
         working-directory: backend
-        run: |
-          pytest tests/unit -v --cov=api --cov=database --cov-report=xml --cov-report=term
-
-      - name: Run integration tests
+        run: pytest tests/unit -v --cov=api --cov=database --cov-report=xml --cov-report=term
+      - name: Integration tests
         working-directory: backend
-        run: |
-          pytest tests/integration -v
-
-      - name: Upload coverage to Codecov
+        run: pytest tests/integration -v
+      - name: Upload coverage
         if: matrix.python-version == '3.13'
         uses: codecov/codecov-action@v7
         with:
@@ -156,10 +243,28 @@ jobs:
           flags: backend
           name: backend-coverage
 
-  e2e-tests:
-    needs: [frontend]
+  frontend-tests:
+    name: Frontend unit tests
+    needs: [docker]
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: web/package-lock.json
+      - name: Install dependencies
+        working-directory: web
+        run: npm ci
+      - name: Unit tests
+        working-directory: web
+        run: npm run test
 
+  e2e-tests:
+    name: E2E
+    needs: [docker]
+    runs-on: ubuntu-latest
     services:
       postgres:
         image: postgres:15
@@ -174,7 +279,6 @@ jobs:
           --health-retries 5
         ports:
           - 5432:5432
-
       redis:
         image: redis:7-alpine
         options: >-
@@ -184,7 +288,6 @@ jobs:
           --health-retries 5
         ports:
           - 6379:6379
-
     env:
       DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/test
       REDIS_URL: redis://localhost:6379
@@ -199,85 +302,66 @@ jobs:
       INFLUXDB_BUCKET: test
       NEXT_PUBLIC_API_URL: http://localhost:8000/graphql
       E2E_BASE_URL: http://localhost:3000
-
     steps:
       - uses: actions/checkout@v7
-
-      - name: Set up Python
-        uses: actions/setup-python@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.13"
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v7
+      - uses: actions/setup-node@v7
         with:
-          node-version: "20"
+          node-version: "22"
           cache: "npm"
-          cache-dependency-path: web/package-lock.json
-
+          cache-dependency-path: |
+            web/package-lock.json
+            tests/package-lock.json
       - name: Install backend dependencies
         working-directory: backend
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-
       - name: Install frontend dependencies
         working-directory: web
         run: npm ci
-
-      - name: Install E2E test dependencies
+      - name: Install E2E dependencies
         working-directory: tests
         run: npm ci
-
       - name: Install Playwright browsers
         working-directory: tests
         run: npx playwright install --with-deps chromium
         continue-on-error: true
-
-      - name: Run database migrations
+      - name: Migrate database
         working-directory: backend
         run: alembic upgrade head
-
-      - name: Start backend server
+      - name: Start backend
         working-directory: backend
         run: |
           uvicorn main:app --host 0.0.0.0 --port 8000 > /tmp/backend.log 2>&1 &
           echo $! > /tmp/backend.pid
-
       - name: Build frontend
         working-directory: web
         run: npm run build
-
-      - name: Start frontend server
+      - name: Start frontend
         working-directory: web
         run: |
           npm start > /tmp/frontend.log 2>&1 &
           echo $! > /tmp/frontend.pid
-
       - name: Wait for servers
         run: |
-          echo "Waiting for backend..."
           timeout 120 bash -c 'until curl -f -s http://localhost:8000/health > /dev/null 2>&1; do sleep 2; done'
-          echo "Waiting for frontend..."
           timeout 120 bash -c 'until curl -f -s http://localhost:3000 > /dev/null 2>&1; do sleep 2; done'
-
       - name: Run E2E tests
         working-directory: tests
         env:
           CI: true
         run: npx playwright test
-
-      - name: Upload Playwright report
+      - uses: actions/upload-artifact@v7
         if: always()
-        uses: actions/upload-artifact@v7
         with:
           name: playwright-report
           path: tests/playwright-report/
           retention-days: 30
-
-      - name: Upload server logs
+      - uses: actions/upload-artifact@v7
         if: failure()
-        uses: actions/upload-artifact@v7
         with:
           name: server-logs
           path: |
@@ -286,76 +370,56 @@ jobs:
           retention-days: 7
 
   e2e-proxy:
-    name: E2E (docker stack via nginx proxy)
-    needs: [backend-lint, frontend]
+    name: E2E (proxy stack)
+    needs: [docker]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
-
-      - name: Build backend image
-        uses: docker/build-push-action@v7
+      - name: Download backend image
+        uses: actions/download-artifact@v7
         with:
-          context: backend
-          push: false
-          load: true
-          tags: local/tasks-backend:e2e
-          cache-from: type=gha,scope=backend
-          cache-to: type=gha,mode=max,scope=backend
-
-      - name: Build web image
-        uses: docker/build-push-action@v7
+          name: image-backend
+          path: /tmp/images
+      - name: Download web image
+        uses: actions/download-artifact@v7
         with:
-          context: web
-          push: false
-          load: true
-          tags: local/tasks-web:e2e
-          cache-from: type=gha,scope=web
-          cache-to: type=gha,mode=max,scope=web
-
-      - name: Build proxy image
-        uses: docker/build-push-action@v7
+          name: image-web
+          path: /tmp/images
+      - name: Download proxy image
+        uses: actions/download-artifact@v7
         with:
-          context: proxy
-          push: false
-          load: true
-          tags: local/tasks-proxy:e2e
-          cache-from: type=gha,scope=proxy
-          cache-to: type=gha,mode=max,scope=proxy
-
+          name: image-proxy
+          path: /tmp/images
+      - name: Load images
+        run: |
+          gunzip -c /tmp/images/tasks-backend.tar.gz | docker load
+          gunzip -c /tmp/images/tasks-web.tar.gz | docker load
+          gunzip -c /tmp/images/tasks-proxy.tar.gz | docker load
+          docker tag local/tasks-backend:ci local/tasks-backend:e2e
+          docker tag local/tasks-web:ci local/tasks-web:e2e
+          docker tag local/tasks-proxy:ci local/tasks-proxy:e2e
       - name: Start the stack
         env:
           BACKEND_IMAGE: local/tasks-backend:e2e
           WEB_IMAGE: local/tasks-web:e2e
           PROXY_IMAGE: local/tasks-proxy:e2e
         run: docker compose -f docker-compose.e2e.yml up -d
-
-      - name: Wait for the stack behind the proxy
+      - name: Wait for the stack
         run: |
-          echo "Waiting for keycloak (realm import)..."
           timeout 180 bash -c 'until curl -fs http://localhost/keycloak/realms/tasks/.well-known/openid-configuration > /dev/null; do sleep 3; done'
-          echo "Waiting for the backend (graphql must answer, 5xx means not routed/up yet)..."
           timeout 180 bash -c 'until [ "$(curl -s -o /dev/null -w "%{http_code}" -X POST -H "content-type: application/json" -d "{\"query\":\"{ __typename }\"}" http://localhost/graphql)" -lt 500 ]; do sleep 3; done'
-          echo "Waiting for the frontend..."
           timeout 180 bash -c 'until curl -fs http://localhost/ > /dev/null; do sleep 3; done'
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v7
+      - uses: actions/setup-node@v7
         with:
-          node-version: "20"
+          node-version: "22"
           cache: "npm"
           cache-dependency-path: tests/package-lock.json
-
-      - name: Install E2E test dependencies
+      - name: Install E2E dependencies
         working-directory: tests
         run: npm ci
-
       - name: Install Playwright browsers
         working-directory: tests
         run: npx playwright install --with-deps chromium
-
       - name: Run proxied E2E tests
         working-directory: tests
         env:
@@ -363,22 +427,17 @@ jobs:
           E2E_PROXY_TARGET: "1"
           E2E_BASE_URL: http://localhost
         run: npx playwright test e2e/proxy-fullstack.spec.ts
-
       - name: Dump stack logs
         if: failure()
         run: docker compose -f docker-compose.e2e.yml logs --no-color > /tmp/stack.log 2>&1 || true
-
-      - name: Upload Playwright report
+      - uses: actions/upload-artifact@v7
         if: always()
-        uses: actions/upload-artifact@v7
         with:
           name: playwright-report-proxy
           path: tests/playwright-report/
           retention-days: 30
-
-      - name: Upload stack logs
+      - uses: actions/upload-artifact@v7
         if: failure()
-        uses: actions/upload-artifact@v7
         with:
           name: proxy-stack-logs
           path: /tmp/stack.log
@@ -386,17 +445,18 @@ jobs:
 
   ci:
     name: CI
-    needs: [backend-tests, simulator-lint, frontend, e2e-tests, e2e-proxy]
+    needs: [backend-tests, frontend-tests, e2e-tests, e2e-proxy, nix, docker]
     if: always()
     runs-on: ubuntu-latest
     steps:
       - name: Check required jobs
         run: |
           if [[ "${{ needs.backend-tests.result }}" != "success" ]] \
-            || [[ "${{ needs.simulator-lint.result }}" != "success" ]] \
-            || [[ "${{ needs.frontend.result }}" != "success" ]] \
+            || [[ "${{ needs.frontend-tests.result }}" != "success" ]] \
             || [[ "${{ needs.e2e-tests.result }}" != "success" ]] \
-            || [[ "${{ needs.e2e-proxy.result }}" != "success" ]]; then
+            || [[ "${{ needs.e2e-proxy.result }}" != "success" ]] \
+            || [[ "${{ needs.nix.result }}" != "success" ]] \
+            || [[ "${{ needs.docker.result }}" != "success" ]]; then
             echo "One or more required jobs failed or were skipped."
             exit 1
           fi
