@@ -16,6 +16,7 @@
 
         packages = [
           pythonEnv
+          pkgs.ruff
           pkgs.nodejs_22
           pkgs.docker
           pkgs.docker-compose
@@ -26,6 +27,7 @@
           pkgs.hadolint
           pkgs.act
           pkgs.git
+          pkgs.nixfmt
         ]
         ++ helpers
         ++ [
@@ -62,7 +64,7 @@
           echo ">>> helpwave tasks dev shell (side-effect free)"
           echo ">>> Commands: run-dev-backend, run-dev-web, run-dev-all, run-alembic,"
           echo ">>>           psql-dev, redis-cli-dev, start-docker, stop-docker,"
-          echo ">>>           clean-dev, run-simulator, lint-dockerfiles, run-act"
+          echo ">>>           clean-dev, run-simulator, lint-python, lint-dockerfiles, run-act"
           echo ">>> Frontend: run '(cd web && npm ci)' once if node_modules is missing."
         '';
       };

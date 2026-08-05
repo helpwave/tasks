@@ -21,28 +21,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
-        with:
-          python-version: "3.13"
-      - name: Install ruff
-        run: pip install ruff
+      - uses: DeterminateSystems/nix-installer-action@v19
+      - uses: DeterminateSystems/magic-nix-cache-action@v12
       - name: Run ruff
-        working-directory: backend
-        run: ruff check . --output-format=concise --exclude database/migrations
+        run: nix develop --command ruff check backend --output-format=concise --exclude database/migrations
 
   simulator-lint:
     name: Lint simulator
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
-        with:
-          python-version: "3.13"
-      - name: Install ruff
-        run: pip install ruff
+      - uses: DeterminateSystems/nix-installer-action@v19
+      - uses: DeterminateSystems/magic-nix-cache-action@v12
       - name: Run ruff
-        working-directory: simulator
-        run: ruff check . --output-format=concise
+        run: nix develop --command ruff check simulator --output-format=concise
 
   frontend-lint:
     name: Lint frontend
@@ -94,9 +86,7 @@ jobs:
       - uses: DeterminateSystems/nix-installer-action@v19
       - uses: DeterminateSystems/magic-nix-cache-action@v12
       - name: Check nix formatting
-        run: |
-          mapfile -t files < <(find . -name '*.nix' -not -path './result*' )
-          nix shell nixpkgs#nixfmt -c nixfmt --check "${files[@]}"
+        run: nix develop --command bash -c 'mapfile -t files < <(find . -name "*.nix" -not -path "./result*"); nixfmt --check "${files[@]}"'
 
   lint:
     name: Lint

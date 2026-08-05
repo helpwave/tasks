@@ -165,6 +165,18 @@ let
     '';
   };
 
+  lint-python = writeShellApplication {
+    name = "lint-python";
+    runtimeInputs = [ pkgs.ruff ];
+    text = ''
+      : "''${PROJECT_ROOT:?PROJECT_ROOT is not set}"
+      echo ">>> Ruff: backend"
+      ruff check "$PROJECT_ROOT/backend" --output-format=concise --exclude database/migrations
+      echo ">>> Ruff: simulator"
+      ruff check "$PROJECT_ROOT/simulator" --output-format=concise
+    '';
+  };
+
   run-act = writeShellApplication {
     name = "run-act";
     runtimeInputs = [ pkgs.act ];
@@ -235,5 +247,6 @@ in
   redis-cli-dev
   run-simulator
   lint-dockerfiles
+  lint-python
   run-act
 ]
