@@ -2,7 +2,11 @@ pkgs:
 
 let
   inherit (pkgs) writeShellApplication;
-  pythonEnv = import ../packages/python-env.nix { python3 = pkgs.python313; };
+  pythonEnv = import ../packages/python-env.nix {
+    inherit (pkgs) lib;
+    python3 = pkgs.python313;
+    withTestDeps = true;
+  };
 
   start-docker = writeShellApplication {
     name = "start-docker";

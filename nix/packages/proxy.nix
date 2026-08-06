@@ -1,10 +1,9 @@
 {
   lib,
-  writeShellApplication,
   nginx,
-  gnused,
-  coreutils,
+  busybox,
   writeTextDir,
+  writeScriptBin,
 }:
 
 let
@@ -92,37 +91,33 @@ let
     }
   '';
 in
-writeShellApplication {
-  name = "tasks-proxy";
-  runtimeInputs = [
-    nginx
-    gnused
-    coreutils
-  ];
-  text = ''
-    set -euo pipefail
+(writeScriptBin "tasks-proxy" ''
+  #!${busybox}/bin/sh
+  set -eu
 
-    : "''${FRONTEND_HOST:=127.0.0.1:3000}"
-    : "''${BACKEND_HOST:=127.0.0.1:8000}"
-    : "''${KEYCLOAK_HOST:=127.0.0.1:8080}"
+  export PATH="${nginx}/bin:${busybox}/bin''${PATH:+:$PATH}"
 
-    mkdir -p /tmp/client_body_temp /tmp/proxy_temp /tmp/fastcgi_temp /tmp/uwsgi_temp /tmp/scgi_temp /var/log/nginx
+  : "''${FRONTEND_HOST:=127.0.0.1:3000}"
+  : "''${BACKEND_HOST:=127.0.0.1:8000}"
+  : "''${KEYCLOAK_HOST:=127.0.0.1:8080}"
 
-    conf=/tmp/helpwave-tasks-nginx.conf
-    sed \
-      -e "s|\''${FRONTEND_HOST}|$FRONTEND_HOST|g" \
-      -e "s|\''${BACKEND_HOST}|$BACKEND_HOST|g" \
-      -e "s|\''${KEYCLOAK_HOST}|$KEYCLOAK_HOST|g" \
-      "${nginxMainConf}/conf/nginx.conf" \
-      > "$conf"
+  mkdir -p /tmp/client_body_temp /tmp/proxy_temp /tmp/fastcgi_temp /tmp/uwsgi_temp /tmp/scgi_temp /var/log/nginx
 
-    exec nginx -c "$conf"
-  '';
+  conf=/tmp/helpwave-tasks-nginx.conf
+  sed \
+    -e "s|\''${FRONTEND_HOST}|$FRONTEND_HOST|g" \
+    -e "s|\''${BACKEND_HOST}|$BACKEND_HOST|g" \
+    -e "s|\''${KEYCLOAK_HOST}|$KEYCLOAK_HOST|g" \
+    "${nginxMainConf}/conf/nginx.conf" \
+    > "$conf"
 
-  meta = {
-    description = "helpwave tasks nginx reverse proxy";
-    homepage = "https://github.com/helpwave/tasks";
-    license = lib.licenses.mpl20;
-    mainProgram = "tasks-proxy";
-  };
-}
+  exec nginx -c "$conf"
+'').overrideAttrs
+  (old: {
+    meta = (old.meta or { }) // {
+      description = "helpwave tasks nginx reverse proxy";
+      homepage = "https://github.com/helpwave/tasks";
+      license = lib.licenses.mpl20;
+      mainProgram = "tasks-proxy";
+    };
+  })

@@ -1,19 +1,20 @@
-{ python3 }:
+{
+  python3,
+  lib,
+  withTestDeps ? false,
+}:
 
 python3.withPackages (
-  ps: with ps; [
-    aiosqlite
+  ps:
+  with ps;
+  [
     alembic
     asyncpg
     cryptography
     fastapi
-    httpx
     httptools
     influxdb-client
     openpyxl
-    pytest
-    pytest-asyncio
-    pytest-cov
     python-dotenv
     python-jose
     python-multipart
@@ -24,7 +25,13 @@ python3.withPackages (
     tzdata
     uvicorn
     uvloop
-    watchfiles
     websockets
+  ]
+  ++ lib.optionals withTestDeps [
+    aiosqlite
+    httpx
+    pytest
+    pytest-asyncio
+    pytest-cov
   ]
 )

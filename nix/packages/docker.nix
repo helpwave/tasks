@@ -1,7 +1,7 @@
 {
   lib,
   pkgs,
-  writeShellScriptBin,
+  writeScriptBin,
   backend,
   web,
   simulator,
@@ -17,8 +17,9 @@ let
     "profile"
   ];
 
-  backendEntrypoint = writeShellScriptBin "docker-entrypoint" ''
-    set -euo pipefail
+  backendEntrypoint = writeScriptBin "docker-entrypoint" ''
+    #!${pkgs.busybox}/bin/sh
+    set -eu
     tasks-alembic upgrade head
     exec tasks-backend "$@"
   '';

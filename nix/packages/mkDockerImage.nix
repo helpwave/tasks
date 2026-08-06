@@ -9,21 +9,15 @@
   env ? [ ],
   exposedPorts ? [ "80" ],
   emptyDirs ? [ ],
+  basePackages ? [
+    pkgs.busybox
+    pkgs.dockerTools.caCertificates
+    pkgs.dockerTools.fakeNss
+  ],
 }:
 
 let
-  contents = [
-    package
-    pkgs.bash
-    pkgs.coreutils
-    pkgs.gnugrep
-    pkgs.gnused
-    pkgs.dockerTools.binSh
-    pkgs.dockerTools.usrBinEnv
-    pkgs.dockerTools.caCertificates
-    pkgs.dockerTools.fakeNss
-  ]
-  ++ extraPackages;
+  contents = [ package ] ++ basePackages ++ extraPackages;
 in
 pkgs.dockerTools.streamLayeredImage {
   inherit name tag;

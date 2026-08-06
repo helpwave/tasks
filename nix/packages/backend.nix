@@ -2,11 +2,15 @@
   lib,
   stdenv,
   python313,
-  writeShellScript,
+  busybox,
+  writeScript,
 }:
 
 let
-  pythonEnv = import ./python-env.nix { python3 = python313; };
+  pythonEnv = import ./python-env.nix {
+    inherit lib;
+    python3 = python313;
+  };
 
   backendSrc = lib.cleanSourceWith {
     src = ../../backend;
@@ -28,8 +32,9 @@ let
 
   scaffoldSrc = lib.cleanSource ../../scaffold;
 
-  launcher = writeShellScript "tasks-backend-launch" ''
-    set -euo pipefail
+  launcher = writeScript "tasks-backend-launch" ''
+    #!${busybox}/bin/sh
+    set -eu
     root="@out@/lib/helpwave-tasks-backend"
     export SCAFFOLD_DIRECTORY="''${SCAFFOLD_DIRECTORY:-@out@/share/helpwave-tasks/scaffold}"
     export PYTHONPATH="$root''${PYTHONPATH:+:$PYTHONPATH}"
@@ -41,8 +46,9 @@ let
       "$@"
   '';
 
-  alembicLauncher = writeShellScript "tasks-alembic-launch" ''
-    set -euo pipefail
+  alembicLauncher = writeScript "tasks-alembic-launch" ''
+    #!${busybox}/bin/sh
+    set -eu
     root="@out@/lib/helpwave-tasks-backend"
     export PYTHONPATH="$root''${PYTHONPATH:+:$PYTHONPATH}"
     cd "$root"

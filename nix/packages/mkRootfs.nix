@@ -5,23 +5,17 @@
   pname,
   extraPackages ? [ ],
   emptyDirs ? [ ],
+  basePackages ? [
+    pkgs.busybox
+    pkgs.dockerTools.caCertificates
+    pkgs.dockerTools.fakeNss
+  ],
 }:
 
 let
   contents = pkgs.buildEnv {
     name = "${pname}-image-contents";
-    paths = [
-      package
-      pkgs.bash
-      pkgs.coreutils
-      pkgs.gnugrep
-      pkgs.gnused
-      pkgs.dockerTools.binSh
-      pkgs.dockerTools.usrBinEnv
-      pkgs.dockerTools.caCertificates
-      pkgs.dockerTools.fakeNss
-    ]
-    ++ extraPackages;
+    paths = [ package ] ++ basePackages ++ extraPackages;
     pathsToLink = [
       "/bin"
       "/etc"

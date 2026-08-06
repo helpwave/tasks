@@ -2,28 +2,37 @@
   lib,
   buildNpmPackage,
   nodejs_22,
-  writeShellScript,
+  nodejs-slim_22,
+  pkgs,
+  writeScript,
 }:
 
 let
-  launcher = writeShellScript "tasks-web-launch" ''
-    set -euo pipefail
+  nodejsRuntime = import ./nodejs-runtime.nix {
+    inherit lib pkgs;
+    nodejs-slim = nodejs-slim_22;
+  };
+
+  launcher = writeScript "tasks-web-launch" ''
+    #!${pkgs.busybox}/bin/sh
+    set -eu
 
     app="@out@/lib/helpwave-tasks-web"
     runtime="''${TASKS_WEB_RUNTIME_DIR:-''${XDG_RUNTIME_DIR:-/tmp}/helpwave-tasks-web-$$}"
     mkdir -p "$runtime"
 
-    cp -a --no-preserve=mode "$app/." "$runtime/"
+    cp -a "$app/." "$runtime/"
     mkdir -p "$runtime/public"
 
     {
       echo "window.__ENV = {"
-      env | grep "^RUNTIME_" | while IFS= read -r line; do
-        key=''${line%%=*}
-        val=''${line#*=}
-        val=''${val//\\/\\\\}
-        val=''${val//\"/\\\"}
-        printf '  "%s": "%s",\n' "$key" "$val"
+      env | while IFS='=' read -r key val; do
+        case "$key" in
+          RUNTIME_*)
+            val=$(printf '%s' "$val" | sed 's/\\/\\\\/g; s/"/\\"/g')
+            printf '  "%s": "%s",\n' "$key" "$val"
+            ;;
+        esac
       done
       echo "}"
     } > "$runtime/public/env-config.js"
@@ -33,7 +42,7 @@ let
     export HOSTNAME="''${HOSTNAME:-0.0.0.0}"
 
     cd "$runtime"
-    exec ${nodejs_22}/bin/node server.js "$@"
+    exec ${nodejsRuntime}/bin/node server.js "$@"
   '';
 in
 buildNpmPackage {
@@ -85,11 +94,33 @@ buildNpmPackage {
       cp -aL node_modules/@img $out/lib/helpwave-tasks-web/node_modules/@img
     fi
 
+    find "$out/lib/helpwave-tasks-web" -type d \( \
+      -name '*musl*' -o \
+      -name '*wasm32*' -o \
+      -name '*darwin*' -o \
+      -name '*win32*' -o \
+      -name '*linux-arm*' \
+    \) | while IFS= read -r dir; do
+      rm -rf "$dir"
+    done
+
+    rm -rf "$out/lib/helpwave-tasks-web/node_modules/@img/@img"
+
     substitute ${launcher} $out/bin/tasks-web --subst-var-by out $out
     chmod +x $out/bin/tasks-web
 
     runHook postInstall
   '';
+
+  postFixup = ''
+    find "$out" -type f -print0 | xargs -0 sed -i \
+      "s|${nodejs_22}/bin/node|${nodejsRuntime}/bin/node|g"
+  '';
+
+  disallowedRequisites = [
+    nodejs_22
+    nodejs-slim_22
+  ];
 
   meta = {
     description = "helpwave tasks Next.js frontend";
