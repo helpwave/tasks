@@ -9,8 +9,13 @@
 }:
 
 let
-  mkRootfs = import ./mkRootfs.nix { inherit pkgs; };
+  mkRootfs = import ./mkRootfs.nix { inherit lib pkgs; };
   mkDockerImage = import ./mkDockerImage.nix { inherit lib pkgs; };
+
+  webDataDirs = [
+    "feedback"
+    "profile"
+  ];
 
   backendEntrypoint = writeShellScriptBin "docker-entrypoint" ''
     set -euo pipefail
@@ -30,6 +35,8 @@ let
     "PORT=80"
     "NODE_ENV=production"
     "TASKS_WEB_RUNTIME_DIR=/tmp/helpwave-tasks-web"
+    "FEEDBACK_DIRECTORY=/feedback"
+    "PROFILE_PICTURE_DIRECTORY=/profile"
   ];
 
   proxyEnv = [
@@ -48,6 +55,7 @@ in
   web-rootfs = mkRootfs {
     package = web;
     pname = "helpwave-tasks-web";
+    emptyDirs = webDataDirs;
   };
 
   simulator-rootfs = mkRootfs {
@@ -73,6 +81,7 @@ in
     name = "helpwave-tasks-web";
     entrypoint = [ "${web}/bin/tasks-web" ];
     env = webEnv;
+    emptyDirs = webDataDirs;
   };
 
   simulator-docker = mkDockerImage {

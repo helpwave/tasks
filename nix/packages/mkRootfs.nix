@@ -1,9 +1,10 @@
-{ pkgs }:
+{ lib, pkgs }:
 
 {
   package,
   pname,
   extraPackages ? [ ],
+  emptyDirs ? [ ],
 }:
 
 let
@@ -45,4 +46,5 @@ pkgs.runCommand "${pname}-rootfs" { } ''
   rm -rf "$out/tmp" "$out/var" "$out/run" "$out/proc" "$out/sys" "$out/dev"
   mkdir -p "$out/tmp" "$out/var/tmp" "$out/run" "$out/proc" "$out/sys" "$out/dev"
   chmod 1777 "$out/tmp" "$out/var/tmp"
+  ${lib.concatMapStringsSep "\n" (dir: ''mkdir -p "$out/${dir}"'') emptyDirs}
 ''

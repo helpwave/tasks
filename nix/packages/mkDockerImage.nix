@@ -8,6 +8,7 @@
   entrypoint,
   env ? [ ],
   exposedPorts ? [ "80" ],
+  emptyDirs ? [ ],
 }:
 
 let
@@ -28,6 +29,7 @@ pkgs.dockerTools.streamLayeredImage {
   inherit name tag;
   inherit contents;
   maxLayers = 100;
+  extraCommands = lib.concatMapStringsSep "\n" (dir: "mkdir -p ./${dir}") emptyDirs;
   config = {
     Entrypoint = entrypoint;
     Env = [

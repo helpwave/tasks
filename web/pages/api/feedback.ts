@@ -10,8 +10,8 @@ type FeedbackData = {
   userId?: string,
 }
 
-const FEEDBACK_DIR = process.env['FEEDBACK_DIR'] || path.join(process.cwd(), 'feedback')
-const FEEDBACK_FILE = path.join(FEEDBACK_DIR, 'data.json')
+const FEEDBACK_DIRECTORY = process.env['FEEDBACK_DIRECTORY'] || path.join(process.cwd(), 'feedback')
+const FEEDBACK_FILE = path.join(FEEDBACK_DIRECTORY, 'data.json')
 
 async function ensureDirectoryExists(dirPath: string) {
   try {
@@ -21,11 +21,11 @@ async function ensureDirectoryExists(dirPath: string) {
   }
 }
 
-ensureDirectoryExists(FEEDBACK_DIR).catch(() => {})
+ensureDirectoryExists(FEEDBACK_DIRECTORY).catch(() => {})
 
 async function readFeedbackFile(): Promise<FeedbackData[]> {
   try {
-    await ensureDirectoryExists(FEEDBACK_DIR)
+    await ensureDirectoryExists(FEEDBACK_DIRECTORY)
     const filePath = path.resolve(FEEDBACK_FILE)
     const fileContent = await fs.readFile(filePath, 'utf-8')
     const parsed = JSON.parse(fileContent)
@@ -44,7 +44,7 @@ async function readFeedbackFile(): Promise<FeedbackData[]> {
 }
 
 async function writeFeedbackFile(data: FeedbackData[]) {
-  await ensureDirectoryExists(FEEDBACK_DIR)
+  await ensureDirectoryExists(FEEDBACK_DIRECTORY)
   const filePath = path.resolve(FEEDBACK_FILE)
   await fs.writeFile(filePath, JSON.stringify(data, null, 2), 'utf-8')
 }

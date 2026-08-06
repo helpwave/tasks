@@ -24,7 +24,9 @@ ENV PATH=/bin \
     HOSTNAME=0.0.0.0 \
     PORT=80 \
     NODE_ENV=production \
-    TASKS_WEB_RUNTIME_DIR=/tmp/helpwave-tasks-web
+    TASKS_WEB_RUNTIME_DIR=/tmp/helpwave-tasks-web \
+    FEEDBACK_DIRECTORY=/feedback \
+    PROFILE_PICTURE_DIRECTORY=/profile
 
 EXPOSE 80
 

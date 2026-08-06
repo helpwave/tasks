@@ -372,6 +372,8 @@ in
           StateDirectory = "helpwave-tasks-web";
           Environment = [
             "TASKS_WEB_RUNTIME_DIR=/var/lib/helpwave-tasks-web"
+            "FEEDBACK_DIRECTORY=/var/lib/helpwave-tasks-web/feedback"
+            "PROFILE_PICTURE_DIRECTORY=/var/lib/helpwave-tasks-web/profile"
             "PORT=${toString cfg.web.port}"
             "HOSTNAME=${cfg.web.host}"
             "NODE_ENV=production"
