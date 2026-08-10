@@ -22,7 +22,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: DeterminateSystems/nix-installer-action@v19
-      - uses: DeterminateSystems/magic-nix-cache-action@v12
+      - uses: DeterminateSystems/magic-nix-cache-action@v14
       - name: Run ruff
         run: nix shell --inputs-from . nixpkgs#ruff -c ruff check backend --output-format=concise --exclude database/migrations
 
@@ -32,7 +32,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: DeterminateSystems/nix-installer-action@v19
-      - uses: DeterminateSystems/magic-nix-cache-action@v12
+      - uses: DeterminateSystems/magic-nix-cache-action@v14
       - name: Run ruff
         run: nix shell --inputs-from . nixpkgs#ruff -c ruff check simulator --output-format=concise
 
@@ -84,7 +84,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: DeterminateSystems/nix-installer-action@v19
-      - uses: DeterminateSystems/magic-nix-cache-action@v12
+      - uses: DeterminateSystems/magic-nix-cache-action@v14
       - name: Check nix formatting
         run: |
           mapfile -t files < <(find . -name '*.nix' -not -path './result*')
@@ -104,7 +104,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: DeterminateSystems/nix-installer-action@v19
-      - uses: DeterminateSystems/magic-nix-cache-action@v12
+      - uses: DeterminateSystems/magic-nix-cache-action@v14
       - name: Build packages
         run: |
           nix build .#backend .#web .#simulator .#proxy .#default -L
@@ -147,7 +147,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: DeterminateSystems/nix-installer-action@v19
-      - uses: DeterminateSystems/magic-nix-cache-action@v12
+      - uses: DeterminateSystems/magic-nix-cache-action@v14
       - uses: docker/setup-buildx-action@v4
       - name: Log in to GHCR
         if: github.event_name != 'pull_request'
