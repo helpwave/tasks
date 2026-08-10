@@ -260,17 +260,17 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Download backend image
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: image-backend
           path: /tmp/images
       - name: Download web image
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: image-web
           path: /tmp/images
       - name: Download proxy image
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: image-proxy
           path: /tmp/images
