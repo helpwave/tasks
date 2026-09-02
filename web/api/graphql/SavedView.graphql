@@ -1,5 +1,5 @@
-query MySavedViews {
-  mySavedViews {
+query MySavedViews($rootLocationIds: [ID!]) {
+  mySavedViews(rootLocationIds: $rootLocationIds) {
     id
     name
     baseEntityType
@@ -11,6 +11,22 @@ query MySavedViews {
     relatedParameters
     ownerUserId
     visibility
+    locationId
+    location {
+      id
+      title
+      kind
+      parent {
+        id
+        title
+        kind
+        parent {
+          id
+          title
+          kind
+        }
+      }
+    }
     createdAt
     updatedAt
     isOwner
@@ -30,6 +46,22 @@ query SavedView($id: ID!) {
     relatedParameters
     ownerUserId
     visibility
+    locationId
+    location {
+      id
+      title
+      kind
+      parent {
+        id
+        title
+        kind
+        parent {
+          id
+          title
+          kind
+        }
+      }
+    }
     createdAt
     updatedAt
     isOwner
@@ -49,6 +81,22 @@ mutation CreateSavedView($data: CreateSavedViewInput!) {
     relatedParameters
     ownerUserId
     visibility
+    locationId
+    location {
+      id
+      title
+      kind
+      parent {
+        id
+        title
+        kind
+        parent {
+          id
+          title
+          kind
+        }
+      }
+    }
     createdAt
     updatedAt
     isOwner
@@ -68,6 +116,22 @@ mutation UpdateSavedView($id: ID!, $data: UpdateSavedViewInput!) {
     relatedParameters
     ownerUserId
     visibility
+    locationId
+    location {
+      id
+      title
+      kind
+      parent {
+        id
+        title
+        kind
+        parent {
+          id
+          title
+          kind
+        }
+      }
+    }
     createdAt
     updatedAt
     isOwner
@@ -91,6 +155,22 @@ mutation DuplicateSavedView($id: ID!, $name: String!) {
     relatedParameters
     ownerUserId
     visibility
+    locationId
+    location {
+      id
+      title
+      kind
+      parent {
+        id
+        title
+        kind
+        parent {
+          id
+          title
+          kind
+        }
+      }
+    }
     createdAt
     updatedAt
     isOwner

@@ -4,9 +4,10 @@ import uuid
 from datetime import date, datetime
 from typing import TYPE_CHECKING
 
-from database.models.base import Base
 from sqlalchemy import Boolean, Float, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from database.models.base import Base
 
 if TYPE_CHECKING:
     from .patient import Patient
@@ -27,6 +28,13 @@ class PropertyDefinition(Base):
     options: Mapped[str | None] = mapped_column(String, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     allowed_entities: Mapped[str] = mapped_column(String, default="PATIENT")
+    visibility: Mapped[str] = mapped_column(
+        String(16), nullable=False, default="private"
+    )
+    owner_user_id: Mapped[str | None] = mapped_column(
+        ForeignKey("users.id"),
+        nullable=True,
+    )
     location_id: Mapped[str | None] = mapped_column(
         ForeignKey("location_nodes.id"),
         nullable=True,

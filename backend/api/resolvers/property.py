@@ -7,10 +7,18 @@ from api.inputs import (
 )
 from api.resolvers.base import BaseMutationResolver
 from api.services.authorization import AuthorizationService
+from api.services.scope import (
+    apply_scope_update,
+    can_manage_property_definition,
+    can_read_scoped,
+    normalize_root_location_ids,
+    resolve_scope_input,
+    scoped_visibility_condition,
+)
 from api.types.property import PropertyDefinitionType
 from database import models
 from graphql import GraphQLError
-from sqlalchemy import or_, select
+from sqlalchemy import select
 
 
 def _require_user(info: Info) -> models.User:
@@ -26,19 +34,17 @@ class PropertyDefinitionQuery:
     async def property_definitions(
         self,
         info: Info,
+        root_location_ids: list[strawberry.ID] | None = None,
     ) -> list[PropertyDefinitionType]:
         user = _require_user(info)
         auth_service = AuthorizationService(info.context.db)
-        accessible = await auth_service.get_user_accessible_location_ids(
-            user, info.context
+        scope = await auth_service.get_scope_location_ids(
+            user, info.context, normalize_root_location_ids(root_location_ids)
         )
-        conditions = [models.PropertyDefinition.location_id.is_(None)]
-        if accessible:
-            conditions.append(
-                models.PropertyDefinition.location_id.in_(accessible)
-            )
         result = await info.context.db.execute(
-            select(models.PropertyDefinition).where(or_(*conditions)),
+            select(models.PropertyDefinition).where(
+                scoped_visibility_condition(models.PropertyDefinition, user.id, scope)
+            ),
         )
         return result.scalars().all()
 
@@ -56,22 +62,9 @@ class PropertyDefinitionMutation(
         data: CreatePropertyDefinitionInput,
     ) -> PropertyDefinitionType:
         user = _require_user(info)
-        auth_service = AuthorizationService(info.context.db)
-
-        if data.location_id is not None:
-            if not await auth_service.can_access_location(
-                user, str(data.location_id), info.context
-            ):
-                raise_forbidden()
-            location_id = str(data.location_id)
-        else:
-            location_id = await auth_service.default_scope_location_id(
-                user, info.context
-            )
-            if location_id is None:
-                raise_forbidden(
-                    "You must belong to a location to create property definitions."
-                )
+        visibility, location_id = await resolve_scope_input(
+            info, user, data.visibility, data.location_id
+        )
 
         entities_str = ",".join([e.value for e in data.allowed_entities])
         options_str = ",".join(data.options) if data.options else None
@@ -83,6 +76,8 @@ class PropertyDefinitionMutation(
             options=options_str,
             is_active=data.is_active,
             allowed_entities=entities_str,
+            visibility=visibility,
+            owner_user_id=user.id,
             location_id=location_id,
         )
         return await BaseMutationResolver.create_and_notify(
@@ -116,6 +111,7 @@ class PropertyDefinitionMutation(
             defn.allowed_entities = ",".join(
                 [e.value for e in data.allowed_entities],
             )
+        await apply_scope_update(info, user, defn, data.visibility, data.location_id)
 
         return await BaseMutationResolver.update_and_notify(
             info, defn, models.PropertyDefinition, "property_definition"
@@ -146,15 +142,12 @@ async def _require_definition_scope(
     user: models.User,
     defn: models.PropertyDefinition,
 ) -> None:
-    if defn.location_id is None:
+    if defn.visibility != "private" and defn.location_id is None:
         raise_forbidden(
             "This property definition is global and cannot be modified. "
             "Recreate it within a location to manage it."
         )
-    auth_service = AuthorizationService(info.context.db)
-    if not await auth_service.can_access_location(
-        user, defn.location_id, info.context
-    ):
+    if not await can_manage_property_definition(info, user, defn):
         raise_forbidden()
 
 
@@ -167,21 +160,17 @@ async def user_can_use_definition(
         return False
     db = info.context.db
     result = await db.execute(
-        select(models.PropertyDefinition.location_id).where(
+        select(models.PropertyDefinition).where(
             models.PropertyDefinition.id == str(definition_id),
         )
     )
-    row = result.first()
-    if row is None:
+    defn = result.scalars().first()
+    if defn is None:
         raise GraphQLError(
             "Property definition not found.",
             extensions={"code": "BAD_REQUEST"},
         )
-    location_id = row[0]
-    if location_id is None:
-        return True
-    auth_service = AuthorizationService(db)
-    return await auth_service.can_access_location(user, location_id, info.context)
+    return await can_read_scoped(info, user, defn)
 
 
 async def validate_property_value_inputs(info: Info, props) -> None:

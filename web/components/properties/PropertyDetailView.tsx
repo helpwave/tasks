@@ -19,6 +19,14 @@ import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { PlusIcon, XIcon } from 'lucide-react'
 import { FieldType, PropertyEntity } from '@/api/gql/generated'
 import { useCreatePropertyDefinition, useUpdatePropertyDefinition } from '@/data'
+import {
+  isScopeComplete,
+  privateScope,
+  ScopeVisibilityField,
+  scopeFromEntity,
+  scopeToInput,
+  type ScopeValue
+} from '@/components/locations/ScopeVisibilityField'
 
 interface PropertyDetailViewProps {
   id?: string,
@@ -75,6 +83,31 @@ export const PropertyDetailView = ({
 
   const [createProperty, { loading: isCreating }] = useCreatePropertyDefinition()
   const [updateProperty, { loading: isUpdating }] = useUpdatePropertyDefinition()
+  const [scope, setScope] = useState<ScopeValue>(() => (
+    initialData?.visibility
+      ? scopeFromEntity({ visibility: initialData.visibility, location: initialData.location })
+      : privateScope()
+  ))
+  const canEditScope = !isEditMode || initialData?.canEdit !== false
+  const initialVisibility = initialData?.visibility
+  const initialLocation = initialData?.location
+
+  useEffect(() => {
+    setScope(
+      initialVisibility
+        ? scopeFromEntity({ visibility: initialVisibility, location: initialLocation })
+        : privateScope()
+    )
+  }, [id, initialVisibility, initialLocation])
+
+  const handleScopeChange = (next: ScopeValue) => {
+    setScope(next)
+    if (!isEditMode || !id || !isScopeComplete(next)) return
+    updateProperty({
+      variables: { id, data: scopeToInput(next) },
+      onCompleted: () => onSuccess(),
+    })
+  }
 
   const persist = (updates: Partial<PropertyFormValues>) => {
     if (!isEditMode || !id) return
@@ -112,7 +145,7 @@ export const PropertyDetailView = ({
       },
     },
     onFormSubmit: (values) => {
-      if (!values.name.trim()) return
+      if (!values.name.trim() || !isScopeComplete(scope)) return
 
       const createData = {
         name: values.name,
@@ -121,6 +154,7 @@ export const PropertyDetailView = ({
         allowedEntities: [mapSubjectTypeToBackend(values.subjectType)],
         options: values.selectData?.options.map(opt => opt.name) || null,
         isActive: !values.isArchived,
+        ...scopeToInput(scope),
       }
 
       createProperty({
@@ -279,6 +313,12 @@ export const PropertyDetailView = ({
               </Select>
             )}
           </FormField>
+
+          <ScopeVisibilityField
+            value={scope}
+            onChange={handleScopeChange}
+            disabled={!canEditScope || isLoading}
+          />
 
           <FormObserverKey<PropertyFormValues, 'fieldType'> formKey="fieldType">
             {({ value: fieldType }) => {
@@ -475,7 +515,7 @@ export const PropertyDetailView = ({
             <Button
               type="submit"
               onClick={() => form.submit()}
-              disabled={isLoading}
+              disabled={isLoading || !isScopeComplete(scope)}
               className="min-h-11 w-full sm:w-fit"
             >
               {translation('create')}

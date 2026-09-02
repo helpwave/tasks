@@ -3,11 +3,11 @@ import type { FormFieldDataHandling } from '@helpwave/hightide'
 import { FormProvider, Input, DateTimeInput, Select, SelectOption, Textarea, Checkbox, Button, ConfirmDialog, LoadingContainer, useCreateForm, FormField, Visibility, useFormObserverKey, IconButton } from '@helpwave/hightide'
 import { CenteredLoadingLogo } from '@/components/CenteredLoadingLogo'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
-import type { CreatePatientInput, LocationNodeType, UpdatePatientInput, GetPatientQuery } from '@/api/gql/generated'
+import type { CreatePatientInput, LocationNodeType, UpdatePatientInput } from '@/api/gql/generated'
 import { Sex, PatientState } from '@/api/gql/generated'
 import { useLocations, usePatient } from '@/data'
 import { Building2, CheckIcon, Locate, PlusIcon, Users, XIcon } from 'lucide-react'
-import { formatLocationPath, formatLocationPathFromId } from '@/utils/location'
+import { formatLocationPath, formatLocationPathFromId, type TypedLocationPathNode } from '@/utils/location'
 import { toISODate } from './PatientDetailView'
 import { LocationSelectionDialog } from '@/components/locations/LocationSelectionDialog'
 import {
@@ -27,9 +27,9 @@ import { serializePatientCreateDraft } from '@/utils/createDraftSnapshots'
 import { applyDefinedOverrides } from '@/utils/applyDefinedOverrides'
 
 type PatientFormValues = Omit<CreatePatientInput, 'clinicId' | 'teamIds' | 'positionId'> & {
-  clinic: NonNullable<GetPatientQuery['patient']>['clinic'] | null,
-  teams?: NonNullable<GetPatientQuery['patient']>['teams'] | null,
-  position?: NonNullable<GetPatientQuery['patient']>['position'] | null,
+  clinic: TypedLocationPathNode | null,
+  teams?: TypedLocationPathNode[] | null,
+  position?: TypedLocationPathNode | null,
 }
 
 interface PatientDataEditorProps {

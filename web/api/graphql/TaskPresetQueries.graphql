@@ -1,10 +1,27 @@
-query TaskPresets {
-  taskPresets {
+query TaskPresets($rootLocationIds: [ID!]) {
+  taskPresets(rootLocationIds: $rootLocationIds) {
     id
     name
     key
-    scope
+    visibility
     ownerUserId
+    isOwner
+    locationId
+    location {
+      id
+      title
+      kind
+      parent {
+        id
+        title
+        kind
+        parent {
+          id
+          title
+          kind
+        }
+      }
+    }
     graph {
       nodes {
         id
@@ -26,8 +43,25 @@ query TaskPreset($id: ID!) {
     id
     name
     key
-    scope
+    visibility
     ownerUserId
+    isOwner
+    locationId
+    location {
+      id
+      title
+      kind
+      parent {
+        id
+        title
+        kind
+        parent {
+          id
+          title
+          kind
+        }
+      }
+    }
     graph {
       nodes {
         id

@@ -3,7 +3,8 @@ from typing import TYPE_CHECKING, Annotated
 
 import strawberry
 from api.context import Info
-from api.inputs import FieldType, PropertyEntity
+from api.inputs import FieldType, PropertyEntity, ScopeVisibility
+from api.services.scope import can_manage_property_definition, load_scope_location
 from database import models
 from sqlalchemy import select
 
@@ -19,7 +20,23 @@ class PropertyDefinitionType:
     description: str | None
     field_type: FieldType
     is_active: bool
+    visibility: ScopeVisibility
+    owner_user_id: strawberry.ID | None
     location_id: strawberry.ID | None
+
+    @strawberry.field
+    async def location(
+        self,
+        info: Info,
+    ) -> (
+        Annotated["LocationNodeType", strawberry.lazy("api.types.location")]
+        | None
+    ):
+        return await load_scope_location(info, self.location_id)
+
+    @strawberry.field
+    async def can_edit(self, info: Info) -> bool:
+        return await can_manage_property_definition(info, info.context.user, self)
 
     @strawberry.field
     def options(self) -> list[str]:

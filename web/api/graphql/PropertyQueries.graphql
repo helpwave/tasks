@@ -1,5 +1,5 @@
-query GetPropertyDefinitions {
-  propertyDefinitions {
+query GetPropertyDefinitions($rootLocationIds: [ID!]) {
+  propertyDefinitions(rootLocationIds: $rootLocationIds) {
     id
     name
     description
@@ -7,11 +7,30 @@ query GetPropertyDefinitions {
     isActive
     allowedEntities
     options
+    visibility
+    ownerUserId
+    canEdit
+    locationId
+    location {
+      id
+      title
+      kind
+      parent {
+        id
+        title
+        kind
+        parent {
+          id
+          title
+          kind
+        }
+      }
+    }
   }
 }
 
-query GetPropertiesForSubject($subjectId: ID!, $subjectType: PropertyEntity!) {
-  propertyDefinitions {
+query GetPropertiesForSubject($subjectId: ID!, $subjectType: PropertyEntity!, $rootLocationIds: [ID!]) {
+  propertyDefinitions(rootLocationIds: $rootLocationIds) {
     id
     name
     description
@@ -19,6 +38,25 @@ query GetPropertiesForSubject($subjectId: ID!, $subjectType: PropertyEntity!) {
     isActive
     allowedEntities
     options
+    visibility
+    ownerUserId
+    canEdit
+    locationId
+    location {
+      id
+      title
+      kind
+      parent {
+        id
+        title
+        kind
+        parent {
+          id
+          title
+          kind
+        }
+      }
+    }
   }
 }
 

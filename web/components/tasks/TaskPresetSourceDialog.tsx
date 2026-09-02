@@ -3,7 +3,7 @@ import { ExternalLink } from 'lucide-react'
 import Link from 'next/link'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { useTaskPreset } from '@/data'
-import { TaskPresetScope } from '@/api/gql/generated'
+import { ScopeChip } from '@/components/locations/ScopeChip'
 
 type TaskPresetSourceDialogProps = {
   isOpen: boolean,
@@ -42,12 +42,8 @@ export function TaskPresetSourceDialog({
               <span className="font-medium">{preset.name}</span>
             </div>
             <div className="flex flex-col gap-1">
-              <span className="typography-label-lg text-description">{translation('taskPresetScope')}</span>
-              <span>
-                {preset.scope === TaskPresetScope.Global
-                  ? translation('taskPresetScopeGlobal')
-                  : translation('taskPresetScopePersonal')}
-              </span>
+              <span className="typography-label-lg text-description">{translation('scopeVisibility')}</span>
+              <ScopeChip visibility={preset.visibility} location={preset.location} small />
             </div>
             <div className="flex flex-col gap-1">
               <span className="typography-label-lg text-description">{translation('taskPresetSourceTasksInGraph')}</span>

@@ -12,12 +12,34 @@ const schema = fs.existsSync(schemaFromBackend)
     ? schemaFromWeb
     : getConfig().graphqlEndpoint
 
+const sharedConfig = {
+  scalars: {
+    ID: { input: 'string', output: 'string' },
+    Date: 'any',
+    DateTime: 'any',
+  },
+  skipTypename: false,
+  avoidOptionals: false,
+}
+
 const config: CodegenConfig = {
   schema,
   documents: 'api/graphql/**/*.graphql',
   generates: {
+    'api/gql/types.ts': {
+      plugins: ['typescript'],
+      config: sharedConfig,
+    },
     'api/gql/generated.ts': {
-      plugins: ['typescript', 'typescript-operations', 'typed-document-node'],
+      plugins: [
+        { add: { content: "export * from './types'" } },
+        'typescript-operations',
+        'typed-document-node',
+      ],
+      config: {
+        ...sharedConfig,
+        importSchemaTypesFrom: 'api/gql/types',
+      },
     },
   },
 }

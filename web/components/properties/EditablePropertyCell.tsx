@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react'
 import clsx from 'clsx'
 import { Edit2 } from 'lucide-react'
-import { FieldType, type PropertyDefinitionType, type PropertyValueInput, type PropertyValueType } from '@/api/gql/generated'
+import { FieldType, type PropertyValueInput, type PropertyValueType } from '@/api/gql/generated'
+import type { PropertyValueRowDefinition } from '@/utils/propertyColumn'
 import { PropertyCell } from '@/components/properties/PropertyCell'
 import { AssigneeSelect } from '@/components/tasks/AssigneeSelect'
 import { InTableTextEditPopUp } from '@/components/tables/in-table-edit/InTableTextEditPopUp'
@@ -12,7 +13,7 @@ import { InTableSingleSelectEditPopUp } from '@/components/tables/in-table-edit/
 import { InTableMultiSelectEditPopUp } from '@/components/tables/in-table-edit/InTableMultiSelectEditPopUp'
 
 export type EditablePropertyCellProps = {
-  definition: PropertyDefinitionType,
+  definition: PropertyValueRowDefinition,
   property?: PropertyValueType | undefined,
   allowUpdates: boolean,
   disabled?: boolean,

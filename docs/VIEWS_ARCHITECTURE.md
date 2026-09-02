@@ -10,9 +10,21 @@ A **SavedView** stores a named configuration for list screens:
 | `sortDefinition` | JSON string: TanStack `SortingState` array. |
 | `parameters` | JSON string: **scope** and cross-entity context — `rootLocationIds`, `locationId`, `searchQuery` (patient), `assigneeId` (task / my tasks). |
 | `baseEntityType` | `PATIENT` or `TASK` — primary tab when opening `/view/:uid`. |
-| `visibility` | `PRIVATE` or `LINK_SHARED` (share by link / UID). |
+| `visibility` | `PRIVATE` (owner only, no location needed) or `PUBLIC` (stored at a scaffold node via `locationId`). |
+| `locationId` | Scaffold node a `PUBLIC` view is stored at. Everyone who can reach that node sees the view: users whose selected root location lies on the node's path (ancestor or descendant). |
 
 Location is **not** a separate route anymore for saved views: it is encoded in `parameters` (`rootLocationIds`, `locationId`).
+
+## Scoping to a scaffold node
+
+Saved views, task presets and property definitions share the same scoping model (`ScopeVisibility`):
+
+- **Private** (default): only the owner sees the entry. No scaffold node is required.
+- **Public**: the entry is stored at a scaffold node (`locationId`). It is visible to everyone who can access that node and whose selected root location lies on the node's path, i.e. the node itself, its subtree and its ancestors. Storing an entry at the root makes it visible to everyone.
+
+List queries (`mySavedViews`, `taskPresets`, `propertyDefinitions`) accept `rootLocationIds`; the web client passes the currently selected root locations so lists follow the app node selection. Editing stays with the owner (views, presets) or with users who can access the node (property definitions).
+
+Migration `add_scope_visibility` makes existing property definitions public on the root node and turns existing saved views and presets private.
 
 ## Cross-entity model
 
@@ -47,7 +59,8 @@ mutation {
     filterDefinition: "[]"
     sortDefinition: "[]"
     parameters: "{\"rootLocationIds\":[\"…\"],\"locationId\":null,\"searchQuery\":\"\"}"
-    visibility: PRIVATE
+    visibility: PUBLIC
+    locationId: "…"
   }) { id }
 }
 ```
@@ -75,5 +88,4 @@ Apply Alembic migration `add_saved_views_table` (or your project’s revision ch
 ## Follow-ups
 
 - **Update view** from UI (owner edits in place → `updateSavedView`) instead of only “save as new”.
-- **Share visibility** UI (`LINK_SHARED`) and server checks are already modeled; expose in settings.
 - **Redirect** `/location/[id]` → a default view or keep both during transition.

@@ -3,8 +3,25 @@ mutation CreateTaskPreset($data: CreateTaskPresetInput!) {
     id
     name
     key
-    scope
+    visibility
     ownerUserId
+    isOwner
+    locationId
+    location {
+      id
+      title
+      kind
+      parent {
+        id
+        title
+        kind
+        parent {
+          id
+          title
+          kind
+        }
+      }
+    }
     graph {
       nodes {
         id
@@ -26,8 +43,25 @@ mutation UpdateTaskPreset($id: ID!, $data: UpdateTaskPresetInput!) {
     id
     name
     key
-    scope
+    visibility
     ownerUserId
+    isOwner
+    locationId
+    location {
+      id
+      title
+      kind
+      parent {
+        id
+        title
+        kind
+        parent {
+          id
+          title
+          kind
+        }
+      }
+    }
     graph {
       nodes {
         id

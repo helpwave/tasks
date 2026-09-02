@@ -19,7 +19,6 @@ import {
   type DeleteSavedViewMutationVariables,
   type DuplicateSavedViewMutation,
   type DuplicateSavedViewMutationVariables,
-  MySavedViewsDocument,
   UpdateSavedViewDocument,
   type UpdateSavedViewMutation,
   type UpdateSavedViewMutationVariables
@@ -33,6 +32,16 @@ import {
 import type { ColumnDef } from '@tanstack/table-core'
 import { EditIcon, ExternalLink, Trash2, Share2, CopyPlus } from 'lucide-react'
 import type { MySavedViewsQuery, SavedViewEntityType } from '@/api/gql/generated'
+import { ScopeChip } from '@/components/locations/ScopeChip'
+import {
+  isScopeComplete,
+  privateScope,
+  ScopeVisibilityField,
+  scopeEquals,
+  scopeFromEntity,
+  scopeToInput,
+  type ScopeValue
+} from '@/components/locations/ScopeVisibilityField'
 
 import { ListLoadingHint } from '@/components/common/ListLoadingHint'
 
@@ -46,6 +55,8 @@ type SavedViewRow = {
   name: string,
   baseEntityType: SavedViewEntityType,
   updatedAt: string,
+  isOwner: boolean,
+  scope: ScopeValue,
 }
 
 const ViewsSettingsPage: NextPage = () => {
@@ -58,14 +69,18 @@ const ViewsSettingsPage: NextPage = () => {
       name: v.name,
       baseEntityType: v.baseEntityType,
       updatedAt: v.updatedAt,
+      isOwner: v.isOwner,
+      scope: scopeFromEntity(v),
     }))
   }, [data])
 
   const fillerRowCell = useCallback(() => (<FillerCell className="min-h-12" />), [])
 
-  const [renameOpen, setRenameOpen] = useState(false)
-  const [renameId, setRenameId] = useState<string | null>(null)
-  const [renameValue, setRenameValue] = useState('')
+  const [editOpen, setEditOpen] = useState(false)
+  const [editId, setEditId] = useState<string | null>(null)
+  const [editName, setEditName] = useState('')
+  const [editScope, setEditScope] = useState<ScopeValue>(privateScope)
+  const [editInitialScope, setEditInitialScope] = useState<ScopeValue>(privateScope)
 
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleteId, setDeleteId] = useState<string | null>(null)
@@ -74,7 +89,7 @@ const ViewsSettingsPage: NextPage = () => {
   const [duplicateId, setDuplicateId] = useState<string | null>(null)
   const [duplicateName, setDuplicateName] = useState('')
 
-  const savedViewsRefetch = { query: getParsedDocument(MySavedViewsDocument) }
+  const savedViewsRefetch = 'MySavedViews'
   const [updateSavedView] = useMutation<UpdateSavedViewMutation, UpdateSavedViewMutationVariables>(
     getParsedDocument(UpdateSavedViewDocument),
     {
@@ -119,12 +134,20 @@ const ViewsSettingsPage: NextPage = () => {
     void navigator.clipboard.writeText(`${window.location.origin}/view/${id}`)
   }, [])
 
-  const handleRename = useCallback(async () => {
-    if (!renameId || renameValue.trim().length < 1) return
-    await updateSavedView({ variables: { id: renameId, data: { name: renameValue.trim() } } })
-    setRenameOpen(false)
-    setRenameId(null)
-  }, [renameId, renameValue, updateSavedView])
+  const handleEdit = useCallback(async () => {
+    if (!editId || editName.trim().length < 1 || !isScopeComplete(editScope)) return
+    await updateSavedView({
+      variables: {
+        id: editId,
+        data: {
+          name: editName.trim(),
+          ...(scopeEquals(editScope, editInitialScope) ? {} : scopeToInput(editScope)),
+        },
+      },
+    })
+    setEditOpen(false)
+    setEditId(null)
+  }, [editId, editName, editScope, editInitialScope, updateSavedView])
 
   const handleDelete = useCallback(async () => {
     if (!deleteId) return
@@ -165,6 +188,16 @@ const ViewsSettingsPage: NextPage = () => {
       enableSorting: false,
     },
     {
+      id: 'scope',
+      header: translation('scopeVisibility'),
+      cell: ({ row }) => (
+        <ScopeChip visibility={row.original.scope.visibility} location={row.original.scope.location} small />
+      ),
+      minSize: 180,
+      size: 220,
+      enableSorting: false,
+    },
+    {
       id: 'updated',
       header: translation('updated'),
       accessorKey: 'updatedAt',
@@ -196,18 +229,22 @@ const ViewsSettingsPage: NextPage = () => {
           >
             <Share2 />
           </IconButton>
-          <IconButton
-            tooltip={translation('rEdit', { name: translation('name') })}
-            coloringStyle="text"
-            color="neutral"
-            onClick={() => {
-              setRenameId(row.original.id)
-              setRenameValue(row.original.name)
-              setRenameOpen(true)
-            }}
-          >
-            <EditIcon />
-          </IconButton>
+          {row.original.isOwner && (
+            <IconButton
+              tooltip={translation('edit')}
+              coloringStyle="text"
+              color="neutral"
+              onClick={() => {
+                setEditId(row.original.id)
+                setEditName(row.original.name)
+                setEditScope(row.original.scope)
+                setEditInitialScope(row.original.scope)
+                setEditOpen(true)
+              }}
+            >
+              <EditIcon />
+            </IconButton>
+          )}
           <IconButton
             tooltip={translation('copyViewToMyViews')}
             coloringStyle="text"
@@ -220,17 +257,19 @@ const ViewsSettingsPage: NextPage = () => {
           >
             <CopyPlus />
           </IconButton>
-          <IconButton
-            tooltip={translation('delete')}
-            coloringStyle="text"
-            color="negative"
-            onClick={() => {
-              setDeleteId(row.original.id)
-              setDeleteOpen(true)
-            }}
-          >
-            <Trash2 />
-          </IconButton>
+          {row.original.isOwner && (
+            <IconButton
+              tooltip={translation('delete')}
+              coloringStyle="text"
+              color="negative"
+              onClick={() => {
+                setDeleteId(row.original.id)
+                setDeleteOpen(true)
+              }}
+            >
+              <Trash2 />
+            </IconButton>
+          )}
         </div>
       ),
       size: 228,
@@ -277,16 +316,26 @@ const ViewsSettingsPage: NextPage = () => {
         </div>
 
         <Dialog
-          isOpen={renameOpen}
-          onClose={() => setRenameOpen(false)}
-          titleElement={translation('rEdit', { name: translation('name') })}
+          isOpen={editOpen}
+          onClose={() => setEditOpen(false)}
+          titleElement={translation('rEdit', { name: translation('savedViews') })}
           description={undefined}
         >
           <div className="flex-col-4">
-            <Input value={renameValue} onChange={(e) => setRenameValue(e.target.value)} />
+            <div className="flex flex-col gap-1">
+              <label>{translation('name')}</label>
+              <Input value={editName} onChange={(e) => setEditName(e.target.value)} />
+            </div>
+            <ScopeVisibilityField value={editScope} onChange={setEditScope} />
             <div className="flex-row-2 justify-end">
-              <Button color="neutral" onClick={() => setRenameOpen(false)}>{translation('cancel')}</Button>
-              <Button color="primary" onClick={() => void handleRename()}>{translation('confirm')}</Button>
+              <Button color="neutral" onClick={() => setEditOpen(false)}>{translation('cancel')}</Button>
+              <Button
+                color="primary"
+                disabled={editName.trim().length < 1 || !isScopeComplete(editScope)}
+                onClick={() => void handleEdit()}
+              >
+                {translation('confirm')}
+              </Button>
             </div>
           </div>
         </Dialog>

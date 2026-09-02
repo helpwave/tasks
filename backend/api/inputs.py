@@ -151,6 +151,12 @@ class UpdateLocationNodeInput:
     parent_id: strawberry.ID | None = None
 
 
+@strawberry.enum
+class ScopeVisibility(Enum):
+    PRIVATE = "private"
+    PUBLIC = "public"
+
+
 @strawberry.input
 class CreatePropertyDefinitionInput:
     name: str
@@ -159,6 +165,7 @@ class CreatePropertyDefinitionInput:
     description: str | None = None
     options: list[str] | None = None
     is_active: bool = True
+    visibility: ScopeVisibility = ScopeVisibility.PRIVATE
     location_id: strawberry.ID | None = None
 
 
@@ -169,6 +176,8 @@ class UpdatePropertyDefinitionInput:
     options: list[str] | None = None
     is_active: bool | None = None
     allowed_entities: list[PropertyEntity] | None = None
+    visibility: ScopeVisibility | None = None
+    location_id: strawberry.ID | None = None
 
 
 @strawberry.input
@@ -194,12 +203,6 @@ class SavedViewEntityType(Enum):
     PATIENT = "patient"
 
 
-@strawberry.enum
-class SavedViewVisibility(Enum):
-    PRIVATE = "private"
-    LINK_SHARED = "link_shared"
-
-
 @strawberry.input
 class CreateSavedViewInput:
     name: str
@@ -210,7 +213,7 @@ class CreateSavedViewInput:
     related_filter_definition: str = "{}"
     related_sort_definition: str = "{}"
     related_parameters: str = "{}"
-    visibility: SavedViewVisibility = SavedViewVisibility.LINK_SHARED
+    visibility: ScopeVisibility = ScopeVisibility.PRIVATE
     location_id: strawberry.ID | None = None
 
 
@@ -223,13 +226,8 @@ class UpdateSavedViewInput:
     related_filter_definition: str | None = None
     related_sort_definition: str | None = None
     related_parameters: str | None = None
-    visibility: SavedViewVisibility | None = None
-
-
-@strawberry.enum
-class TaskPresetScope(Enum):
-    PERSONAL = "PERSONAL"
-    GLOBAL = "GLOBAL"
+    visibility: ScopeVisibility | None = None
+    location_id: strawberry.ID | None = None
 
 
 @strawberry.input
@@ -256,9 +254,10 @@ class TaskGraphInput:
 @strawberry.input
 class CreateTaskPresetInput:
     name: str
-    key: str | None = None
-    scope: TaskPresetScope
     graph: TaskGraphInput
+    key: str | None = None
+    visibility: ScopeVisibility = ScopeVisibility.PRIVATE
+    location_id: strawberry.ID | None = None
 
 
 @strawberry.input
@@ -266,6 +265,8 @@ class UpdateTaskPresetInput:
     name: str | None = None
     key: str | None = None
     graph: TaskGraphInput | None = None
+    visibility: ScopeVisibility | None = None
+    location_id: strawberry.ID | None = None
 
 
 @strawberry.input

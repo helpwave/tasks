@@ -4,9 +4,10 @@ import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from database.models.base import Base
 from sqlalchemy import DateTime, ForeignKey, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from database.models.base import Base
 
 if TYPE_CHECKING:
     from .user import User
@@ -39,7 +40,9 @@ class SavedView(Base):
     location_id: Mapped[str | None] = mapped_column(
         String, ForeignKey("location_nodes.id"), nullable=True
     )
-    visibility: Mapped[str] = mapped_column(String, nullable=False, default="private")
+    visibility: Mapped[str] = mapped_column(
+        String(16), nullable=False, default="private"
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )

@@ -46,25 +46,88 @@ class AuthorizationService:
                 context._accessible_location_ids = result
             return result
 
-        cte = (
-            select(models.LocationNode.id)
-            .where(models.LocationNode.id.in_(root_location_ids))
-            .cte(name="accessible_locations", recursive=True)
-        )
-
-        children = select(models.LocationNode.id).join(
-            cte, models.LocationNode.parent_id == cte.c.id
-        )
-        cte = cte.union_all(children)
-
-        result = await self.db.execute(select(cte.c.id))
-        rows = result.fetchall()
-        accessible_ids = {row[0] for row in rows}
+        accessible_ids = await self._collect_descendant_ids(root_location_ids)
 
         if context:
             context._accessible_location_ids = accessible_ids
 
         return accessible_ids
+
+    async def _collect_descendant_ids(self, node_ids: set[str]) -> set[str]:
+        if not node_ids:
+            return set()
+        cte = (
+            select(models.LocationNode.id)
+            .where(models.LocationNode.id.in_(node_ids))
+            .cte(name="accessible_locations", recursive=True)
+        )
+        children = select(models.LocationNode.id).join(
+            cte, models.LocationNode.parent_id == cte.c.id
+        )
+        cte = cte.union_all(children)
+        result = await self.db.execute(select(cte.c.id))
+        return {row[0] for row in result.fetchall()}
+
+    async def _collect_ancestor_ids(self, node_ids: set[str]) -> set[str]:
+        if not node_ids:
+            return set()
+        cte = (
+            select(models.LocationNode.id, models.LocationNode.parent_id)
+            .where(models.LocationNode.id.in_(node_ids))
+            .cte(name="ancestor_locations", recursive=True)
+        )
+        parents = select(models.LocationNode.id, models.LocationNode.parent_id).join(
+            cte, models.LocationNode.id == cte.c.parent_id
+        )
+        cte = cte.union_all(parents)
+        result = await self.db.execute(select(cte.c.id))
+        return {row[0] for row in result.fetchall()}
+
+    async def get_user_root_location_ids(self, user: models.User | None) -> set[str]:
+        if not user:
+            return set()
+        result = await self.db.execute(
+            select(models.user_root_locations.c.location_id).where(
+                models.user_root_locations.c.user_id == user.id
+            )
+        )
+        return {row[0] for row in result.fetchall()}
+
+    async def get_scope_location_ids(
+        self,
+        user: models.User | None,
+        context=None,
+        root_location_ids: list[str] | None = None,
+    ) -> set[str]:
+        if not user:
+            return set()
+        accessible = await self.get_user_accessible_location_ids(user, context)
+        if not accessible:
+            return set()
+
+        requested = [str(lid) for lid in root_location_ids or []]
+        cache_key = tuple(sorted(requested))
+        cache = getattr(context, "_scope_location_ids_cache", None)
+        if cache is not None and cache_key in cache:
+            return cache[cache_key]
+
+        if requested:
+            roots = {lid for lid in requested if lid in accessible}
+            if not roots:
+                scope: set[str] = set()
+            else:
+                scope = await self._collect_descendant_ids(roots)
+                scope |= await self._collect_ancestor_ids(roots)
+        else:
+            roots = await self.get_user_root_location_ids(user)
+            scope = set(accessible) | await self._collect_ancestor_ids(roots)
+
+        if context is not None:
+            if cache is None:
+                cache = {}
+                context._scope_location_ids_cache = cache
+            cache[cache_key] = scope
+        return scope
 
     async def can_access_location(
         self,

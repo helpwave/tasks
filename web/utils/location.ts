@@ -1,4 +1,4 @@
-import type { LocationNodeType } from '@/api/gql/generated'
+import type { LocationNodeType, LocationType } from '@/api/gql/generated'
 
 export const LOCATION_PATH_SEPARATOR = ' / '
 
@@ -32,6 +32,15 @@ export type PartialLocationNodeWithParent = {
   kind?: string,
   parent?: PartialLocationNodeWithParent | null,
 }
+
+export type LocationPathNode = {
+  id: string,
+  title: string,
+  kind?: LocationType,
+  parent?: LocationPathNode | null,
+}
+
+export type TypedLocationPathNode = LocationPathNode & { kind: LocationType }
 
 export const buildLocationPathNodes = (location: PartialLocationNodeWithParent | LocationNodeType | null | undefined): PartialLocationNodeWithParent[] => {
   if (!location) return []

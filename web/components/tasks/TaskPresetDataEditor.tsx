@@ -3,14 +3,16 @@ import {
   Button,
   Chip,
   IconButton,
-  Input,
-  Select,
-  SelectOption
+  Input
 } from '@helpwave/hightide'
 import { Pencil, PlusIcon, Save, Trash2, X } from 'lucide-react'
 import clsx from 'clsx'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
-import { TaskPresetScope } from '@/api/gql/generated'
+import {
+  isScopeComplete,
+  ScopeVisibilityField,
+  type ScopeValue
+} from '@/components/locations/ScopeVisibilityField'
 import {
   defaultTaskPresetTask,
   hasEmptyTaskPresetTaskTitle,
@@ -28,8 +30,8 @@ type TaskPresetDataEditorProps = {
   onSave: () => void,
   onCancel: () => void,
   saving?: boolean,
-  scope?: TaskPresetScope,
-  onScopeChange?: (scope: TaskPresetScope) => void,
+  scope: ScopeValue,
+  onScopeChange: (scope: ScopeValue) => void,
 }
 
 export function TaskPresetDataEditor({
@@ -45,14 +47,14 @@ export function TaskPresetDataEditor({
   onScopeChange,
 }: TaskPresetDataEditorProps) {
   const translation = useTasksTranslation()
-  const showScope = scope != null && onScopeChange != null
 
   const canSave = useMemo(
     () =>
       name.trim().length > 0
       && listRowsToTaskGraphInput(rows).nodes.length > 0
-      && !hasEmptyTaskPresetTaskTitle(rows),
-    [name, rows]
+      && !hasEmptyTaskPresetTaskTitle(rows)
+      && isScopeComplete(scope),
+    [name, rows, scope]
   )
 
   const updateRowTitle = (index: number, title: string) => {
@@ -78,29 +80,7 @@ export function TaskPresetDataEditor({
             <span className="typography-label-lg">{translation('taskPresetName')}</span>
             <Input value={name} onChange={e => onNameChange(e.target.value)} className="w-full" />
           </div>
-          {showScope && (
-            <div className="flex flex-col gap-3">
-              <span className="typography-label-lg">{translation('taskPresetScope')}</span>
-              <Select
-                value={scope}
-                onValueChange={v => onScopeChange(v as TaskPresetScope)}
-                buttonProps={{ className: 'w-full' }}
-              >
-                <SelectOption
-                  value={TaskPresetScope.Personal}
-                  label={translation('taskPresetScopePersonal')}
-                >
-                  {translation('taskPresetScopePersonal')}
-                </SelectOption>
-                <SelectOption
-                  value={TaskPresetScope.Global}
-                  label={translation('taskPresetScopeGlobal')}
-                >
-                  {translation('taskPresetScopeGlobal')}
-                </SelectOption>
-              </Select>
-            </div>
-          )}
+          <ScopeVisibilityField value={scope} onChange={onScopeChange} className="max-w-2xl" />
         </div>
         <div className="flex flex-col gap-5 mt-2 pt-2 border-t border-divider">
           <span className="typography-label-lg">{translation('addTask')}</span>

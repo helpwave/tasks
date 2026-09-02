@@ -4,6 +4,7 @@ import {
   type GetPropertiesForSubjectQueryVariables
 } from '@/api/gql/generated'
 import { useQueryWhenReady } from './queryHelpers'
+import { useScopeRootLocationIds } from './useScopeRootLocationIds'
 
 export type UsePropertiesForSubjectResult = {
   data: GetPropertiesForSubjectQuery | undefined,
@@ -16,9 +17,10 @@ export function usePropertiesForSubject(
   variables: GetPropertiesForSubjectQueryVariables,
   options?: { skip?: boolean }
 ): UsePropertiesForSubjectResult {
+  const rootLocationIds = useScopeRootLocationIds()
   const result = useQueryWhenReady<
     GetPropertiesForSubjectQuery,
     GetPropertiesForSubjectQueryVariables
-  >(GetPropertiesForSubjectDocument, variables, options)
+  >(GetPropertiesForSubjectDocument, { rootLocationIds, ...variables }, options)
   return result
 }

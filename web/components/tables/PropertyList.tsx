@@ -3,7 +3,8 @@ import { Plus } from 'lucide-react'
 import { useMemo, useState, useEffect } from 'react'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { PropertyEntry } from '@/components/properties/PropertyEntry'
-import { FieldType, PropertyEntity } from '@/api/gql/generated'
+import { FieldType, PropertyEntity, type ScopeVisibility } from '@/api/gql/generated'
+import type { ScopeLocation } from '@/components/locations/ScopeChip'
 import { usePropertyDefinitions } from '@/data'
 import { parseApiDateTime, parseLocalCalendarDate } from '@/utils/calendarDate'
 
@@ -37,6 +38,9 @@ export type Property = {
   setId?: string,
   selectData?: PropertySelectData,
   alwaysIncludeForViewSource?: boolean,
+  visibility?: ScopeVisibility,
+  location?: ScopeLocation | null,
+  canEdit?: boolean,
 }
 
 export type PropertyValue = {

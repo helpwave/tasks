@@ -6,12 +6,19 @@ from sqlalchemy import select
 
 from api.context import Info
 from api.errors import raise_unauthenticated
-from api.services.authorization import AuthorizationService
-from api.services.base import BaseRepository
 from api.inputs import (
     CreateSavedViewInput,
-    SavedViewVisibility,
     UpdateSavedViewInput,
+)
+from api.services.authorization import AuthorizationService
+from api.services.base import BaseRepository
+from api.services.scope import (
+    PRIVATE,
+    apply_scope_update,
+    can_read_scoped,
+    normalize_root_location_ids,
+    resolve_scope_input,
+    scoped_visibility_condition,
 )
 from api.types.saved_view import SavedViewType
 from database import models
@@ -24,38 +31,12 @@ def _require_user(info: Info) -> models.User:
     return user
 
 
-async def _can_read_shared(
-    info: Info,
-    user: models.User,
-    row: models.SavedView,
-) -> bool:
-    if row.owner_user_id == user.id:
-        return True
-    if row.visibility != SavedViewVisibility.LINK_SHARED.value:
-        return False
-    if not row.location_id:
-        return False
-    auth_service = AuthorizationService(info.context.db)
-    return await auth_service.can_access_location(
-        user, row.location_id, info.context
-    )
-
-
-async def _resolve_scope_location(
-    info: Info,
-    user: models.User,
-    requested_location_id: strawberry.ID | None,
-) -> str | None:
-    auth_service = AuthorizationService(info.context.db)
-    if requested_location_id is not None:
-        if not await auth_service.can_access_location(
-            user, str(requested_location_id), info.context
-        ):
-            from api.errors import raise_forbidden
-
-            raise_forbidden()
-        return str(requested_location_id)
-    return await auth_service.default_scope_location_id(user, info.context)
+def _validated_json(blob: str, label: str) -> str:
+    try:
+        json.loads(blob)
+    except json.JSONDecodeError as e:
+        raise GraphQLError(f"Invalid JSON in {label}") from e
+    return blob
 
 
 @strawberry.type
@@ -70,17 +51,25 @@ class SavedViewQuery:
         row = result.scalars().first()
         if not row:
             return None
-        if not await _can_read_shared(info, user, row):
+        if not await can_read_scoped(info, user, row):
             raise GraphQLError("Not found or access denied")
         return SavedViewType.from_model(row, current_user_id=user.id)
 
     @strawberry.field
-    async def my_saved_views(self, info: Info) -> list[SavedViewType]:
+    async def my_saved_views(
+        self,
+        info: Info,
+        root_location_ids: list[strawberry.ID] | None = None,
+    ) -> list[SavedViewType]:
         user = _require_user(info)
         db = info.context.db
+        auth_service = AuthorizationService(db)
+        scope = await auth_service.get_scope_location_ids(
+            user, info.context, normalize_root_location_ids(root_location_ids)
+        )
         result = await db.execute(
             select(models.SavedView)
-            .where(models.SavedView.owner_user_id == user.id)
+            .where(scoped_visibility_condition(models.SavedView, user.id, scope))
             .order_by(models.SavedView.updated_at.desc())
         )
         rows = result.scalars().all()
@@ -96,7 +85,9 @@ class SavedViewMutation:
         data: CreateSavedViewInput,
     ) -> SavedViewType:
         user = _require_user(info)
-        location_id = await _resolve_scope_location(info, user, data.location_id)
+        visibility, location_id = await resolve_scope_input(
+            info, user, data.visibility, data.location_id
+        )
         for blob, label in (
             (data.filter_definition, "filter_definition"),
             (data.sort_definition, "sort_definition"),
@@ -105,10 +96,7 @@ class SavedViewMutation:
             (data.related_sort_definition, "related_sort_definition"),
             (data.related_parameters, "related_parameters"),
         ):
-            try:
-                json.loads(blob)
-            except json.JSONDecodeError as e:
-                raise GraphQLError(f"Invalid JSON in {label}") from e
+            _validated_json(blob, label)
 
         row = models.SavedView(
             name=data.name.strip(),
@@ -121,7 +109,7 @@ class SavedViewMutation:
             related_parameters=data.related_parameters,
             owner_user_id=user.id,
             location_id=location_id,
-            visibility=data.visibility.value,
+            visibility=visibility,
         )
         info.context.db.add(row)
         await info.context.db.commit()
@@ -149,43 +137,28 @@ class SavedViewMutation:
         if data.name is not None:
             row.name = data.name.strip()
         if data.filter_definition is not None:
-            try:
-                json.loads(data.filter_definition)
-            except json.JSONDecodeError as e:
-                raise GraphQLError("Invalid JSON in filter_definition") from e
-            row.filter_definition = data.filter_definition
+            row.filter_definition = _validated_json(
+                data.filter_definition, "filter_definition"
+            )
         if data.sort_definition is not None:
-            try:
-                json.loads(data.sort_definition)
-            except json.JSONDecodeError as e:
-                raise GraphQLError("Invalid JSON in sort_definition") from e
-            row.sort_definition = data.sort_definition
+            row.sort_definition = _validated_json(
+                data.sort_definition, "sort_definition"
+            )
         if data.parameters is not None:
-            try:
-                json.loads(data.parameters)
-            except json.JSONDecodeError as e:
-                raise GraphQLError("Invalid JSON in parameters") from e
-            row.parameters = data.parameters
+            row.parameters = _validated_json(data.parameters, "parameters")
         if data.related_filter_definition is not None:
-            try:
-                json.loads(data.related_filter_definition)
-            except json.JSONDecodeError as e:
-                raise GraphQLError("Invalid JSON in related_filter_definition") from e
-            row.related_filter_definition = data.related_filter_definition
+            row.related_filter_definition = _validated_json(
+                data.related_filter_definition, "related_filter_definition"
+            )
         if data.related_sort_definition is not None:
-            try:
-                json.loads(data.related_sort_definition)
-            except json.JSONDecodeError as e:
-                raise GraphQLError("Invalid JSON in related_sort_definition") from e
-            row.related_sort_definition = data.related_sort_definition
+            row.related_sort_definition = _validated_json(
+                data.related_sort_definition, "related_sort_definition"
+            )
         if data.related_parameters is not None:
-            try:
-                json.loads(data.related_parameters)
-            except json.JSONDecodeError as e:
-                raise GraphQLError("Invalid JSON in related_parameters") from e
-            row.related_parameters = data.related_parameters
-        if data.visibility is not None:
-            row.visibility = data.visibility.value
+            row.related_parameters = _validated_json(
+                data.related_parameters, "related_parameters"
+            )
+        await apply_scope_update(info, user, row, data.visibility, data.location_id)
 
         await db.commit()
         await db.refresh(row)
@@ -222,7 +195,7 @@ class SavedViewMutation:
         src = result.scalars().first()
         if not src:
             raise GraphQLError("View not found")
-        if not await _can_read_shared(info, user, src):
+        if not await can_read_scoped(info, user, src):
             raise GraphQLError("Not found or access denied")
 
         clone = models.SavedView(
@@ -235,8 +208,8 @@ class SavedViewMutation:
             related_sort_definition=src.related_sort_definition,
             related_parameters=src.related_parameters,
             owner_user_id=user.id,
-            location_id=await _resolve_scope_location(info, user, None),
-            visibility=SavedViewVisibility.PRIVATE.value,
+            location_id=None,
+            visibility=PRIVATE,
         )
         db.add(clone)
         await db.commit()

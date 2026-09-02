@@ -19,7 +19,6 @@ import { usePropertyDefinitions, useSavedView, useTasksPaginated } from '@/data'
 import { getPropertyColumnIds } from '@/hooks/usePropertyColumnVisibility'
 import {
   DuplicateSavedViewDocument,
-  MySavedViewsDocument,
   SavedViewDocument,
   UpdateSavedViewDocument,
   type DuplicateSavedViewMutation,
@@ -43,6 +42,7 @@ import {
 import { SaveViewDialog } from '@/components/views/SaveViewDialog'
 import { SaveViewActionsMenu } from '@/components/views/SaveViewActionsMenu'
 import { SavedViewEntityTypeChip } from '@/components/views/SavedViewEntityTypeChip'
+import { ScopeChip } from '@/components/locations/ScopeChip'
 import type { ColumnFiltersState } from '@tanstack/react-table'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { useTableState } from '@/hooks/useTableState'
@@ -198,7 +198,7 @@ function SavedTaskViewTab({
     awaitRefetchQueries: true,
     refetchQueries: [
       { query: getParsedDocument(SavedViewDocument), variables: { id: viewId } },
-      { query: getParsedDocument(MySavedViewsDocument) },
+      'MySavedViews',
     ],
     update(cache, { data }) {
       const view = data?.updateSavedView
@@ -409,7 +409,7 @@ const ViewPage: NextPage = () => {
     DuplicateSavedViewMutation,
     DuplicateSavedViewMutationVariables
   >(getParsedDocument(DuplicateSavedViewDocument), {
-    refetchQueries: [{ query: getParsedDocument(MySavedViewsDocument) }],
+    refetchQueries: ['MySavedViews'],
     awaitRefetchQueries: true,
     update(cache, { data }) {
       const view = data?.duplicateSavedView
@@ -481,6 +481,7 @@ const ViewPage: NextPage = () => {
               <div className="flex flex-wrap items-center gap-2">
                 <span className="typography-title-lg font-bold">{view.name}</span>
                 <SavedViewEntityTypeChip entityType={view.baseEntityType} />
+                <ScopeChip visibility={view.visibility} location={view.location} small />
                 {!view.isOwner && (
                   <Chip
                     size="sm"

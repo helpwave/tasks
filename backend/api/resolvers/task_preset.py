@@ -2,18 +2,26 @@ import re
 import uuid
 
 import strawberry
+from graphql import GraphQLError
+from sqlalchemy import select
+
 from api.context import Info
 from api.errors import raise_forbidden
 from api.inputs import CreateTaskPresetInput, UpdateTaskPresetInput
+from api.services.authorization import AuthorizationService
+from api.services.scope import (
+    apply_scope_update,
+    can_read_scoped,
+    normalize_root_location_ids,
+    resolve_scope_input,
+    scoped_visibility_condition,
+)
 from api.services.task_graph import (
     graph_dict_from_preset_inputs,
     validate_task_graph_dict,
 )
 from api.types.task_preset import TaskPresetType, task_preset_type_from_model
 from database import models
-from database.models.task_preset import TaskPresetScope as DbTaskPresetScope
-from graphql import GraphQLError
-from sqlalchemy import and_, or_, select
 
 
 def _slugify(name: str) -> str:
@@ -61,32 +69,53 @@ def _can_delete_preset(
     return preset.owner_user_id is not None and preset.owner_user_id == user_id
 
 
+def _require_user(info: Info) -> models.User:
+    user = info.context.user
+    if not user:
+        raise GraphQLError(
+            "Not authenticated",
+            extensions={"code": "UNAUTHENTICATED"},
+        )
+    return user
+
+
+async def _readable_preset_or_raise(
+    info: Info,
+    user: models.User,
+    query,
+) -> models.TaskPreset | None:
+    r = await info.context.db.execute(query)
+    preset = r.scalars().first()
+    if not preset:
+        return None
+    if not await can_read_scoped(info, user, preset):
+        raise_forbidden()
+    return preset
+
+
 @strawberry.type
 class TaskPresetQuery:
     @strawberry.field
-    async def task_presets(self, info: Info) -> list[TaskPresetType]:
-        user = info.context.user
-        if not user:
-            raise GraphQLError(
-                "Not authenticated",
-                extensions={"code": "UNAUTHENTICATED"},
-            )
+    async def task_presets(
+        self,
+        info: Info,
+        root_location_ids: list[strawberry.ID] | None = None,
+    ) -> list[TaskPresetType]:
+        user = _require_user(info)
+        auth_service = AuthorizationService(info.context.db)
+        scope = await auth_service.get_scope_location_ids(
+            user, info.context, normalize_root_location_ids(root_location_ids)
+        )
         q = (
             select(models.TaskPreset)
-            .where(
-                or_(
-                    models.TaskPreset.scope == DbTaskPresetScope.GLOBAL.value,
-                    and_(
-                        models.TaskPreset.scope == DbTaskPresetScope.PERSONAL.value,
-                        models.TaskPreset.owner_user_id == user.id,
-                    ),
-                ),
-            )
+            .where(scoped_visibility_condition(models.TaskPreset, user.id, scope))
             .order_by(models.TaskPreset.name)
         )
         r = await info.context.db.execute(q)
         rows = r.scalars().all()
-        return [task_preset_type_from_model(p) for p in rows]
+        return [
+            task_preset_type_from_model(p, current_user_id=user.id) for p in rows
+        ]
 
     @strawberry.field
     async def task_preset(
@@ -94,21 +123,15 @@ class TaskPresetQuery:
         info: Info,
         id: strawberry.ID,
     ) -> TaskPresetType | None:
-        user = info.context.user
-        if not user:
-            raise GraphQLError(
-                "Not authenticated",
-                extensions={"code": "UNAUTHENTICATED"},
-            )
-        r = await info.context.db.execute(
+        user = _require_user(info)
+        preset = await _readable_preset_or_raise(
+            info,
+            user,
             select(models.TaskPreset).where(models.TaskPreset.id == id),
         )
-        preset = r.scalars().first()
         if not preset:
             return None
-        if preset.scope == DbTaskPresetScope.PERSONAL.value and preset.owner_user_id != user.id:
-            raise_forbidden()
-        return task_preset_type_from_model(preset)
+        return task_preset_type_from_model(preset, current_user_id=user.id)
 
     @strawberry.field
     async def task_preset_by_key(
@@ -116,21 +139,15 @@ class TaskPresetQuery:
         info: Info,
         key: str,
     ) -> TaskPresetType | None:
-        user = info.context.user
-        if not user:
-            raise GraphQLError(
-                "Not authenticated",
-                extensions={"code": "UNAUTHENTICATED"},
-            )
-        r = await info.context.db.execute(
+        user = _require_user(info)
+        preset = await _readable_preset_or_raise(
+            info,
+            user,
             select(models.TaskPreset).where(models.TaskPreset.key == key),
         )
-        preset = r.scalars().first()
         if not preset:
             return None
-        if preset.scope == DbTaskPresetScope.PERSONAL.value and preset.owner_user_id != user.id:
-            raise_forbidden()
-        return task_preset_type_from_model(preset)
+        return task_preset_type_from_model(preset, current_user_id=user.id)
 
 
 @strawberry.type
@@ -141,16 +158,12 @@ class TaskPresetMutation:
         info: Info,
         data: CreateTaskPresetInput,
     ) -> TaskPresetType:
-        user = info.context.user
-        if not user:
-            raise GraphQLError(
-                "Not authenticated",
-                extensions={"code": "UNAUTHENTICATED"},
-            )
+        user = _require_user(info)
         graph_dict = graph_dict_from_preset_inputs(data.graph.nodes, data.graph.edges)
         validate_task_graph_dict(graph_dict)
-        scope_val = data.scope.value
-        owner_id = user.id
+        visibility, location_id = await resolve_scope_input(
+            info, user, data.visibility, data.location_id
+        )
         if data.key:
             if not await _key_is_available(info.context.db, data.key):
                 raise GraphQLError(
@@ -163,14 +176,15 @@ class TaskPresetMutation:
         preset = models.TaskPreset(
             name=data.name,
             key=key,
-            scope=scope_val,
-            owner_user_id=owner_id,
+            visibility=visibility,
+            owner_user_id=user.id,
+            location_id=location_id,
             graph_json=graph_dict,
         )
         info.context.db.add(preset)
         await info.context.db.commit()
         await info.context.db.refresh(preset)
-        return task_preset_type_from_model(preset)
+        return task_preset_type_from_model(preset, current_user_id=user.id)
 
     @strawberry.mutation
     async def update_task_preset(
@@ -179,12 +193,7 @@ class TaskPresetMutation:
         id: strawberry.ID,
         data: UpdateTaskPresetInput,
     ) -> TaskPresetType:
-        user = info.context.user
-        if not user:
-            raise GraphQLError(
-                "Not authenticated",
-                extensions={"code": "UNAUTHENTICATED"},
-            )
+        user = _require_user(info)
         r = await info.context.db.execute(
             select(models.TaskPreset).where(models.TaskPreset.id == id),
         )
@@ -209,9 +218,10 @@ class TaskPresetMutation:
             graph_dict = graph_dict_from_preset_inputs(data.graph.nodes, data.graph.edges)
             validate_task_graph_dict(graph_dict)
             preset.graph_json = graph_dict
+        await apply_scope_update(info, user, preset, data.visibility, data.location_id)
         await info.context.db.commit()
         await info.context.db.refresh(preset)
-        return task_preset_type_from_model(preset)
+        return task_preset_type_from_model(preset, current_user_id=user.id)
 
     @strawberry.mutation
     async def delete_task_preset(
@@ -219,12 +229,7 @@ class TaskPresetMutation:
         info: Info,
         id: strawberry.ID,
     ) -> bool:
-        user = info.context.user
-        if not user:
-            raise GraphQLError(
-                "Not authenticated",
-                extensions={"code": "UNAUTHENTICATED"},
-            )
+        user = _require_user(info)
         r = await info.context.db.execute(
             select(models.TaskPreset).where(models.TaskPreset.id == id),
         )

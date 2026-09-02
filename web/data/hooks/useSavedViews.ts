@@ -10,6 +10,7 @@ import {
 } from '@/api/gql/generated'
 import { schedulePersistCache } from '../cache/persist'
 import { getParsedDocument, useQueryWhenReady } from './queryHelpers'
+import { useScopeRootLocationIds } from './useScopeRootLocationIds'
 
 type MySavedViewsHookOptions = {
   skip?: boolean,
@@ -19,8 +20,9 @@ type MySavedViewsHookOptions = {
 export function useMySavedViews(options?: MySavedViewsHookOptions) {
   const client = useApolloClient()
   const doc = useMemo(() => getParsedDocument(MySavedViewsDocument), [])
+  const rootLocationIds = useScopeRootLocationIds()
   const result = useQuery<MySavedViewsQuery, MySavedViewsQueryVariables>(doc, {
-    variables: {},
+    variables: { rootLocationIds },
     skip: options?.skip,
     fetchPolicy: options?.fetchPolicy ?? 'cache-first',
   })
