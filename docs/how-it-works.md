@@ -6,8 +6,18 @@ Core flows and main abstractions.
 
 - Frontend redirects to Keycloak for login; receives JWT.
 - Apollo link sends `Authorization: Bearer <token>` on every request.
-- Backend `auth.py` validates the token and attaches the user to the request context.
-- Resolvers use `info.context.user` and `AuthorizationService` to enforce access.
+- Backend `auth.py` validates the token against the realm JWKS (signature,
+  expiry, trusted issuer, audience/`azp`) and attaches the user to the request
+  context. Tokens are taken only from the bearer header (and WebSocket
+  `connection_params`); the cookie is a development-only convenience for the IDE.
+- Deny-by-default: anonymous HTTP `/graphql` requests are rejected with `401`
+  in production, a schema extension refuses every non-introspection field for an
+  unauthenticated caller (fragments included), WebSocket connections are
+  rejected unless they present a valid token, and the IDE/introspection/GET
+  queries are off outside development.
+- Resolvers use `info.context.user` and `AuthorizationService` to enforce
+  location-scoped access. Property definitions and saved views carry a
+  `location_id` and are authorized against the caller's accessible subtree.
 
 ## Patient and task CRUD
 
@@ -24,6 +34,7 @@ Core flows and main abstractions.
 
 - Base subscriptions (`entity_created`, `entity_updated`, `entity_deleted`) subscribe to Redis channels and yield entity IDs.
 - **Location filter**: `subscribe_with_location_filter(base_iterator, db, root_location_ids_str, belongs_check)` wraps a base iterator and yields only IDs for which the entity belongs to the given root locations (via `patient_belongs_to_root_locations` or `task_belongs_to_root_locations`). Patient and task subscription resolvers use this so the UI only gets events for the current location scope.
+- **Scope enforcement**: `effective_root_location_ids(info, client_root_ids)` intersects any client-supplied roots with the caller's accessible locations (falling back to the caller's own roots when none are supplied, never "everything"). A subscription with no accessible roots yields nothing, so a client can never observe events outside its scope.
 
 ## Frontend: table state and property columns
 

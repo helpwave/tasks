@@ -42,6 +42,7 @@ input CreatePropertyDefinitionInput {
   description: String = null
   options: [String!] = null
   isActive: Boolean! = true
+  locationId: ID = null
 }
 
 input CreateSavedViewInput {
@@ -54,6 +55,7 @@ input CreateSavedViewInput {
   relatedSortDefinition: String! = "{}"
   relatedParameters: String! = "{}"
   visibility: SavedViewVisibility! = LINK_SHARED
+  locationId: ID = null
 }
 
 input CreateTaskInput {
@@ -117,17 +119,17 @@ enum LocationType {
 }
 
 type Mutation {
+  clearPatientProperty(propertyDefinitionId: ID!, patientIds: [ID!]!): Int!
   createPatient(data: CreatePatientInput!): PatientType!
   updatePatient(id: ID!, data: UpdatePatientInput!): PatientType!
-  clearPatientProperty(propertyDefinitionId: ID!, patientIds: [ID!]!): Int!
   deletePatient(id: ID!): Boolean!
   admitPatient(id: ID!): PatientType!
   dischargePatient(id: ID!): PatientType!
   markPatientDead(id: ID!): PatientType!
   waitPatient(id: ID!): PatientType!
+  clearTaskProperty(propertyDefinitionId: ID!, taskIds: [ID!]!): Int!
   createTask(data: CreateTaskInput!): TaskType!
   updateTask(id: ID!, data: UpdateTaskInput!): TaskType!
-  clearTaskProperty(propertyDefinitionId: ID!, taskIds: [ID!]!): Int!
   addTaskAssignee(id: ID!, userId: ID!): TaskType!
   removeTaskAssignee(id: ID!, userId: ID!): TaskType!
   assignTaskToTeam(id: ID!, teamId: ID!): TaskType!
@@ -164,14 +166,6 @@ enum PatientState {
   DEAD
 }
 
-type ScopedPatientCounts {
-  scopedPatientsTotal: Int!
-  scopedPatientsWaiting: Int!
-  scopedPatientsAdmitted: Int!
-  scopedPatientsDischarged: Int!
-  scopedPatientsDeceased: Int!
-}
-
 type PatientType {
   id: ID!
   firstname: String!
@@ -190,12 +184,12 @@ type PatientType {
   clinic: LocationNodeType!
   position: LocationNodeType
   teams: [LocationNodeType!]!
-  tasks(done: Boolean = null): [TaskType!]!
-  properties: [PropertyValueType!]!
   updateDate: DateTime
   stateUpdateDate: DateTime
   clinicUpdateDate: DateTime
   positionUpdateDate: DateTime
+  tasks(done: Boolean = null): [TaskType!]!
+  properties: [PropertyValueType!]!
   checksum: String!
 }
 
@@ -205,6 +199,7 @@ type PropertyDefinitionType {
   description: String
   fieldType: FieldType!
   isActive: Boolean!
+  locationId: ID
   options: [String!]!
   allowedEntities: [PropertyEntity!]!
 }
@@ -245,7 +240,7 @@ type Query {
   patient(id: ID!): PatientType
   patients(locationNodeId: ID = null, rootLocationIds: [ID!] = null, states: [PatientState!] = null, filters: [QueryFilterClauseInput!] = null, sorts: [QuerySortClauseInput!] = null, pagination: PaginationInput = null, search: QuerySearchInput = null): [PatientType!]!
   patientsTotal(locationNodeId: ID = null, rootLocationIds: [ID!] = null, states: [PatientState!] = null, filters: [QueryFilterClauseInput!] = null, sorts: [QuerySortClauseInput!] = null, search: QuerySearchInput = null): Int!
-  scopedPatientCounts(rootLocationIds: [ID!] = null): ScopedPatientCounts!
+  scopedPatientCounts(rootLocationIds: [ID!] = null): ScopedPatientCountsType!
   recentPatients(rootLocationIds: [ID!] = null, filters: [QueryFilterClauseInput!] = null, sorts: [QuerySortClauseInput!] = null, pagination: PaginationInput = null, search: QuerySearchInput = null): [PatientType!]!
   recentPatientsTotal(rootLocationIds: [ID!] = null, filters: [QueryFilterClauseInput!] = null, sorts: [QuerySortClauseInput!] = null, search: QuerySearchInput = null): Int!
   task(id: ID!): TaskType
@@ -387,6 +382,7 @@ type SavedView {
   relatedSortDefinition: String!
   relatedParameters: String!
   ownerUserId: ID!
+  locationId: ID
   visibility: SavedViewVisibility!
   createdAt: String!
   updatedAt: String!
@@ -401,6 +397,14 @@ enum SavedViewEntityType {
 enum SavedViewVisibility {
   PRIVATE
   LINK_SHARED
+}
+
+type ScopedPatientCountsType {
+  scopedPatientsTotal: Int!
+  scopedPatientsWaiting: Int!
+  scopedPatientsAdmitted: Int!
+  scopedPatientsDischarged: Int!
+  scopedPatientsDeceased: Int!
 }
 
 enum Sex {

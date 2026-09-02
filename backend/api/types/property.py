@@ -19,6 +19,7 @@ class PropertyDefinitionType:
     description: str | None
     field_type: FieldType
     is_active: bool
+    location_id: strawberry.ID | None
 
     @strawberry.field
     def options(self) -> list[str]:
@@ -74,6 +75,13 @@ class PropertyValueType:
         if not self.user_value or not self.user_value.startswith("team:"):
             return None
         team_id = self.user_value[5:]
+        from api.services.authorization import AuthorizationService
+
+        auth_service = AuthorizationService(info.context.db)
+        if not await auth_service.can_access_location(
+            info.context.user, str(team_id), info.context
+        ):
+            return None
         result = await info.context.db.execute(
             select(models.LocationNode).where(
                 models.LocationNode.id == team_id,

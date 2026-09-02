@@ -15,10 +15,12 @@ from api.query.inputs import (
 from api.query.registry import PATIENT
 from api.resolvers.base import BaseMutationResolver, BaseSubscriptionResolver
 from api.services.authorization import AuthorizationService
+from api.services.subscription import effective_root_location_ids
 from api.services.checksum import validate_checksum
 from api.services.location import LocationService
 from api.services.notifications import notify_entity_deleted, notify_entity_update
 from api.services.property import PropertyService
+from api.resolvers.property import validate_property_value_inputs
 from api.types.patient import PatientType, ScopedPatientCountsType
 from api.errors import raise_forbidden
 from api.query.dedupe_select import dedupe_orm_select_by_root_id
@@ -487,6 +489,12 @@ class PatientMutation(BaseMutationResolver[models.Patient]):
                 data.team_ids
             )
 
+        if (
+            data.assigned_location_id is not None
+            and data.assigned_location_id not in accessible_location_ids
+        ):
+            raise_forbidden()
+
         new_patient = models.Patient(
             firstname=data.firstname,
             lastname=data.lastname,
@@ -522,6 +530,7 @@ class PatientMutation(BaseMutationResolver[models.Patient]):
             new_patient.assigned_locations = [location] if location else []
 
         if data.properties is not None:
+            await validate_property_value_inputs(info, data.properties)
             property_service = PatientMutation._get_property_service(db)
             await property_service.process_properties(
                 new_patient, data.properties, "patient"
@@ -644,6 +653,7 @@ class PatientMutation(BaseMutationResolver[models.Patient]):
             patient.assigned_locations = [location] if location else []
 
         if data.properties is not None:
+            await validate_property_value_inputs(info, data.properties)
             property_service = PatientMutation._get_property_service(db)
             await property_service.process_properties(
                 patient, data.properties, "patient"
@@ -769,11 +779,11 @@ class PatientSubscription(BaseSubscriptionResolver):
             subscribe_with_location_filter,
         )
 
-        root_location_ids_str = (
-            [str(lid) for lid in root_location_ids]
-            if root_location_ids
-            else None
+        root_location_ids_str = await effective_root_location_ids(
+            info, root_location_ids
         )
+        if not root_location_ids_str:
+            return
         base = BaseSubscriptionResolver.entity_created(info, "patient")
         async for patient_id in subscribe_with_location_filter(
             base,
@@ -795,11 +805,11 @@ class PatientSubscription(BaseSubscriptionResolver):
             subscribe_with_location_filter,
         )
 
-        root_location_ids_str = (
-            [str(lid) for lid in root_location_ids]
-            if root_location_ids
-            else None
+        root_location_ids_str = await effective_root_location_ids(
+            info, root_location_ids
         )
+        if not root_location_ids_str:
+            return
         base = BaseSubscriptionResolver.entity_updated(
             info, "patient", patient_id
         )
@@ -824,11 +834,11 @@ class PatientSubscription(BaseSubscriptionResolver):
             subscribe_with_location_filter,
         )
 
-        root_location_ids_str = (
-            [str(lid) for lid in root_location_ids]
-            if root_location_ids
-            else None
+        root_location_ids_str = await effective_root_location_ids(
+            info, root_location_ids
         )
+        if not root_location_ids_str:
+            return
         base = create_redis_subscription(
             "patient_state_changed",
             str(patient_id) if patient_id else None,
@@ -852,11 +862,11 @@ class PatientSubscription(BaseSubscriptionResolver):
             subscribe_with_location_filter,
         )
 
-        root_location_ids_str = (
-            [str(lid) for lid in root_location_ids]
-            if root_location_ids
-            else None
+        root_location_ids_str = await effective_root_location_ids(
+            info, root_location_ids
         )
+        if not root_location_ids_str:
+            return
         base = BaseSubscriptionResolver.entity_deleted(info, "patient")
         async for patient_id in subscribe_with_location_filter(
             base,

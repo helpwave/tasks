@@ -156,21 +156,14 @@ class UserType:
     ) -> list[
         Annotated["LocationNodeType", strawberry.lazy("api.types.location")]
     ]:
-        import logging
-        logger = logging.getLogger(__name__)
+        from api.services.authorization import AuthorizationService
 
-        user_root_check = await info.context.db.execute(
-            select(models.user_root_locations.c.location_id).where(
-                models.user_root_locations.c.user_id == self.id
-            )
+        auth_service = AuthorizationService(info.context.db)
+        accessible = await auth_service.get_user_accessible_location_ids(
+            info.context.user, info.context
         )
-        user_root_location_ids = [
-            row[0] for row in user_root_check.all()
-        ]
-        logger.info(
-            f"User {self.id} has {len(user_root_location_ids)} "
-            f"entries in user_root_locations: {user_root_location_ids}"
-        )
+        if not accessible:
+            return []
 
         result = await info.context.db.execute(
             select(models.LocationNode)
@@ -179,29 +172,10 @@ class UserType:
                 models.LocationNode.id
                 == models.user_root_locations.c.location_id,
             )
-            .where(models.user_root_locations.c.user_id == self.id)
+            .where(
+                models.user_root_locations.c.user_id == self.id,
+                models.LocationNode.id.in_(accessible),
+            )
             .distinct()
         )
-        locations = result.scalars().all()
-        logger.info(
-            f"User {self.id} root_locations query returned "
-            f"{len(locations)} locations: {[loc.id for loc in locations]}"
-        )
-
-        if user_root_location_ids and not locations:
-            location_check = await info.context.db.execute(
-                select(models.LocationNode).where(
-                    models.LocationNode.id.in_(user_root_location_ids)
-                )
-            )
-            existing_locations = location_check.scalars().all()
-            logger.warning(
-                f"User {self.id} has {len(user_root_location_ids)} "
-                f"root location IDs but query returned empty. "
-                f"Checking if locations exist: "
-                f"{[loc.id for loc in existing_locations]} "
-                f"with parent_ids: "
-                f"{[loc.parent_id for loc in existing_locations]}"
-            )
-
-        return locations
+        return result.scalars().all()

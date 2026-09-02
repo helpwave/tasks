@@ -1,5 +1,6 @@
 import strawberry
 from api.context import Info
+from api.errors import raise_unauthenticated
 from api.inputs import PaginationInput, UpdateProfilePictureInput
 from api.query.execute import unified_list_query
 from api.query.inputs import (
@@ -9,10 +10,27 @@ from api.query.inputs import (
 )
 from api.query.registry import USER
 from api.resolvers.base import BaseMutationResolver
+from api.services.authorization import AuthorizationService
 from api.types.user import UserType
 from database import models
 from graphql import GraphQLError
-from sqlalchemy import select
+from sqlalchemy import or_, select
+
+
+async def _visible_user_filter(info: Info):
+    user = info.context.user
+    if not user:
+        raise_unauthenticated()
+    auth_service = AuthorizationService(info.context.db)
+    accessible = await auth_service.get_user_accessible_location_ids(
+        user, info.context
+    )
+    peer_ids = select(models.user_root_locations.c.user_id).where(
+        models.user_root_locations.c.location_id.in_(accessible)
+        if accessible
+        else models.user_root_locations.c.location_id.is_(None)
+    )
+    return or_(models.User.id == user.id, models.User.id.in_(peer_ids))
 
 
 @strawberry.type
@@ -20,7 +38,10 @@ class UserQuery:
     @strawberry.field
     async def user(self, info: Info, id: strawberry.ID) -> UserType | None:
         result = await info.context.db.execute(
-            select(models.User).where(models.User.id == id),
+            select(models.User).where(
+                models.User.id == id,
+                await _visible_user_filter(info),
+            ),
         )
         return result.scalars().first()
 
@@ -34,7 +55,7 @@ class UserQuery:
         pagination: PaginationInput | None = None,
         search: QuerySearchInput | None = None,
     ) -> list[UserType]:
-        query = select(models.User)
+        query = select(models.User).where(await _visible_user_filter(info))
         return query
 
     @strawberry.field

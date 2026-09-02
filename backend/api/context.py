@@ -5,10 +5,11 @@ from typing import Any
 
 import strawberry
 from auth import get_token_from_connection_params, get_user_payload, verify_token
+from config import IS_DEV
 from database.models.location import LocationNode, location_organizations
 from database.models.user import User, user_root_locations
 from database.session import get_db_session
-from fastapi import Depends
+from fastapi import Depends, HTTPException
 from graphql import GraphQLError
 from sqlalchemy import delete, select
 from sqlalchemy.dialects.postgresql import insert
@@ -168,9 +169,20 @@ async def get_user_from_connection_params(
     try:
         user_payload = verify_token(token)
     except Exception as e:
-        logger.warning("WebSocket auth failed for token: %s", e)
+        logger.warning("WebSocket authentication rejected: %s", e)
         return None
     return await _resolve_user_from_payload(session, user_payload)
+
+
+def _is_websocket(connection: HTTPConnection) -> bool:
+    return getattr(connection, "scope", {}).get("type") == "websocket"
+
+
+def _is_graphql_http(connection: HTTPConnection) -> bool:
+    scope = getattr(connection, "scope", {})
+    if scope.get("type") == "websocket":
+        return False
+    return str(scope.get("path", "")).rstrip("/").endswith("/graphql")
 
 
 async def get_context(
@@ -184,6 +196,13 @@ async def get_context(
     if user_payload:
         organizations = _organizations_from_payload(user_payload)
         db_user = await _resolve_user_from_payload(session, user_payload)
+
+    if db_user is None and not IS_DEV and _is_graphql_http(connection):
+        raise HTTPException(
+            status_code=401,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
     return Context(db=session, user=db_user, organizations=organizations)
 
@@ -250,13 +269,45 @@ async def _update_user_root_locations(
 
     if not root_location_ids:
         personal_org_title = f"{user.username}'s Organization"
-        result = await session.execute(
-            select(LocationNode).where(
-                LocationNode.title == personal_org_title,
+
+        existing_personal = await session.execute(
+            select(LocationNode)
+            .join(
+                user_root_locations,
+                LocationNode.id == user_root_locations.c.location_id,
+            )
+            .outerjoin(
+                location_organizations,
+                LocationNode.id == location_organizations.c.location_id,
+            )
+            .where(
+                user_root_locations.c.user_id == user.id,
                 LocationNode.parent_id.is_(None),
-            ),
+                location_organizations.c.location_id.is_(None),
+            )
         )
-        personal_location = result.scalars().first()
+        personal_location = existing_personal.scalars().first()
+
+        if not personal_location:
+            result = await session.execute(
+                select(LocationNode)
+                .outerjoin(
+                    location_organizations,
+                    LocationNode.id == location_organizations.c.location_id,
+                )
+                .outerjoin(
+                    user_root_locations,
+                    LocationNode.id == user_root_locations.c.location_id,
+                )
+                .where(
+                    LocationNode.title == personal_org_title,
+                    LocationNode.parent_id.is_(None),
+                    location_organizations.c.location_id.is_(None),
+                    (user_root_locations.c.user_id == user.id)
+                    | (user_root_locations.c.user_id.is_(None)),
+                ),
+            )
+            personal_location = result.scalars().first()
 
         if not personal_location:
             personal_location = LocationNode(

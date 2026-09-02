@@ -3,11 +3,19 @@ from typing import TYPE_CHECKING, Annotated
 import strawberry
 from api import inputs
 from api.context import Info
+from api.services.authorization import AuthorizationService
 from database import models
 from sqlalchemy import select
 
 if TYPE_CHECKING:
     from api.types.patient import PatientType
+
+
+async def _accessible_ids(info: Info) -> set[str]:
+    auth_service = AuthorizationService(info.context.db)
+    return await auth_service.get_user_accessible_location_ids(
+        info.context.user, info.context
+    )
 
 
 @strawberry.type
@@ -30,6 +38,9 @@ class LocationNodeType:
     ):
         if not self.parent_id:
             return None
+        accessible = await _accessible_ids(info)
+        if str(self.parent_id) not in accessible:
+            return None
         result = await info.context.db.execute(
             select(models.LocationNode).where(
                 models.LocationNode.id == self.parent_id,
@@ -44,9 +55,13 @@ class LocationNodeType:
     ) -> list[
         Annotated["LocationNodeType", strawberry.lazy("api.types.location")]
     ]:
+        accessible = await _accessible_ids(info)
+        if not accessible:
+            return []
         result = await info.context.db.execute(
             select(models.LocationNode).where(
                 models.LocationNode.parent_id == self.id,
+                models.LocationNode.id.in_(accessible),
             ),
         )
         return result.scalars().all()
@@ -56,12 +71,18 @@ class LocationNodeType:
         self,
         info: Info,
     ) -> list[Annotated["PatientType", strawberry.lazy("api.types.patient")]]:
-
-        result = await info.context.db.execute(
-            select(models.Patient).where(
-                models.Patient.assigned_location_id == self.id,
-            ),
+        accessible = await _accessible_ids(info)
+        if str(self.id) not in accessible:
+            return []
+        auth_service = AuthorizationService(info.context.db)
+        query = select(models.Patient).where(
+            models.Patient.assigned_location_id == self.id,
+            models.Patient.deleted.is_(False),
         )
+        query = auth_service.filter_patients_by_access(
+            info.context.user, query, accessible
+        )
+        result = await info.context.db.execute(query)
         return result.scalars().all()
 
     @strawberry.field

@@ -1,14 +1,55 @@
 import logging
+import re
 from datetime import datetime
 from typing import Any
 
 import strawberry
 from api.audit import AuditLogger
 from api.context import Info
+from api.errors import raise_forbidden, raise_unauthenticated
+from api.services.authorization import AuthorizationService
 from api.types.audit import AuditLogType
 from config import INFLUXDB_BUCKET, INFLUXDB_ORG, LOGGER
+from database import models
+from graphql import GraphQLError
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 logger = logging.getLogger(LOGGER)
+
+_CASE_ID_PATTERN = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
+_MAX_AUDIT_LIMIT = 1000
+
+
+async def _authorize_case_access(
+    info: Info,
+    case_id: str,
+) -> None:
+    user = info.context.user
+    if not user:
+        raise_unauthenticated()
+
+    auth_service = AuthorizationService(info.context.db)
+    if await auth_service.can_access_patient_id(user, case_id, info.context):
+        return
+
+    result = await info.context.db.execute(
+        select(models.Task)
+        .where(models.Task.id == case_id)
+        .options(
+            selectinload(models.Task.patient).selectinload(
+                models.Patient.assigned_locations
+            ),
+            selectinload(models.Task.patient).selectinload(
+                models.Patient.teams
+            ),
+        )
+    )
+    task = result.scalars().first()
+    if task and await auth_service.can_access_task(user, task, info.context):
+        return
+
+    raise_forbidden()
 
 
 @strawberry.type
@@ -21,6 +62,15 @@ class AuditQuery:
         limit: int | None = None,
         offset: int | None = None,
     ) -> list[AuditLogType]:
+        case_id_str = str(case_id)
+        if not _CASE_ID_PATTERN.match(case_id_str):
+            raise GraphQLError(
+                "Invalid case id.",
+                extensions={"code": "BAD_REQUEST"},
+            )
+
+        await _authorize_case_access(info, case_id_str)
+
         client = AuditLogger._get_client()
         if not client:
             logger.warning(
@@ -28,19 +78,21 @@ class AuditQuery:
             )
             return []
 
+        limit_clause = ""
+        if limit is not None:
+            safe_limit = max(0, min(int(limit), _MAX_AUDIT_LIMIT))
+            safe_offset = max(0, int(offset)) if offset is not None else 0
+            limit_clause = f"|> limit(n: {safe_limit}, offset: {safe_offset})"
+
         try:
             query_api = client.query_api()
-
-            limit_clause = f"LIMIT {limit}" if limit else ""
-            offset_clause = f"OFFSET {offset}" if offset else ""
 
             query = f'''
                 from(bucket: "{INFLUXDB_BUCKET}")
                 |> range(start: 0)
                 |> filter(fn: (r) => r["_measurement"] == "activity")
-                |> filter(fn: (r) => r["case_id"] == "{case_id}")
+                |> filter(fn: (r) => r["case_id"] == "{case_id_str}")
                 |> sort(columns: ["_time"], desc: true)
-                {offset_clause}
                 {limit_clause}
             '''
 

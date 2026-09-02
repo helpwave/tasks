@@ -1,24 +1,44 @@
 import logging
-from typing import Any, Optional
+import threading
+from typing import Optional
 
-import requests
+import jwt
 from config import (
+    ALLOWED_ISSUERS,
     CLIENT_ID,
     FRONTEND_CLIENT_ID,
+    IS_DEV,
     ISSUER_URI,
     LOGGER,
     PUBLIC_ISSUER_URI,
 )
 from fastapi import Request
 from fastapi.responses import RedirectResponse
-from jose import jwk, jwt
 from starlette.requests import HTTPConnection
 
 logger = logging.getLogger(LOGGER)
 
 AUTH_COOKIE_NAME = "access_token"
 
-jwks_cache: dict[str, Any] = {}
+_ACCEPTED_ALGORITHMS = ["RS256", "RS384", "RS512", "ES256", "ES384", "ES512"]
+
+_jwk_client: jwt.PyJWKClient | None = None
+_jwk_client_lock = threading.Lock()
+
+
+def _get_jwk_client() -> jwt.PyJWKClient:
+    global _jwk_client
+    if _jwk_client is None:
+        with _jwk_client_lock:
+            if _jwk_client is None:
+                jwks_uri = f"{ISSUER_URI}/protocol/openid-connect/certs"
+                _jwk_client = jwt.PyJWKClient(
+                    jwks_uri,
+                    cache_keys=True,
+                    lifespan=3600,
+                    timeout=5,
+                )
+    return _jwk_client
 
 
 def delete_auth_cookie(response):
@@ -40,101 +60,65 @@ def get_user_payload(connection: HTTPConnection) -> Optional[dict]:
     try:
         return verify_token(token)
     except Exception as e:
-        logger.warning(f"Auth failed for token: {e}")
+        logger.warning("Auth rejected: %s", e)
         return None
 
 
-def get_public_key(token: str) -> Any:
-    try:
-        header = jwt.get_unverified_header(token)
-        kid = header.get("kid")
-
-        if not kid:
-            raise Exception("Token header missing 'kid' field")
-
-        if kid in jwks_cache:
-            return jwks_cache[kid]
-
-        jwks_uri = f"{ISSUER_URI}/protocol/openid-connect/certs"
-
-        try:
-            response = requests.get(jwks_uri, timeout=5)
-            response.raise_for_status()
-            jwks = response.json()
-        except Exception as net_err:
-            logger.error(f"Failed to fetch JWKS from {jwks_uri}: {net_err}")
-            raise Exception(
-                "Could not reach authentication server to verify token",
-            )
-
-        for key_data in jwks.get("keys", []):
-            if key_data.get("kid") == kid:
-                key = jwk.construct(key_data)
-                jwks_cache[kid] = key
-                return key
-
-        raise Exception(f"Public key (kid={kid}) not found in JWKS")
-
-    except Exception as e:
-        logger.error(f"Key retrieval error: {e}")
-        raise e
-
-
 def verify_token(token: str) -> dict:
-    """
-    Verifies and decodes the access token JWT.
-    Reads claims directly from the access token payload (not from /userinfo endpoint).
-    The token is obtained from either:
-    - Authorization header (Bearer token)
-    - Cookie named 'access_token'
-    """
-    try:
-        public_key = get_public_key(token)
+    signing_key = _get_jwk_client().get_signing_key_from_jwt(token)
 
-        payload = jwt.decode(
-            token,
-            public_key,
-            algorithms=["RS256"],
-            options={"verify_aud": False},
-        )
+    payload = jwt.decode(
+        token,
+        signing_key.key,
+        algorithms=_ACCEPTED_ALGORITHMS,
+        issuer=ALLOWED_ISSUERS,
+        options={
+            "require": ["exp", "iat", "iss"],
+            "verify_exp": True,
+            "verify_iat": True,
+            "verify_iss": True,
+            "verify_aud": False,
+        },
+    )
 
-        azp = payload.get("azp")
-        aud = payload.get("aud")
+    if not payload.get("sub"):
+        raise jwt.InvalidTokenError("Token is missing the 'sub' claim")
 
-        if isinstance(aud, str):
-            aud = [aud]
-        elif aud is None:
-            aud = []
+    azp = payload.get("azp")
+    aud = payload.get("aud")
+    if isinstance(aud, str):
+        aud = [aud]
+    elif aud is None:
+        aud = []
 
-        if (azp and azp == CLIENT_ID) or azp == FRONTEND_CLIENT_ID:
-            return payload
+    trusted_clients = {CLIENT_ID, FRONTEND_CLIENT_ID}
+    if azp in trusted_clients or trusted_clients.intersection(aud):
+        return payload
 
-        if CLIENT_ID in aud or FRONTEND_CLIENT_ID in aud:
-            return payload
-
-        error_msg = (
-            f"Audience/AZP mismatch. "
-            f"Configured CLIENT_ID='{CLIENT_ID}'. "
-            f"Token azp='{azp}', aud='{aud}'."
-        )
-        logger.warning(error_msg)
-        raise Exception(error_msg)
-
-    except jwt.ExpiredSignatureError:
-        raise Exception("Token has expired")
-    except jwt.JWTError as e:
-        raise Exception(f"Invalid token format or signature: {e!s}")
-    except Exception as e:
-        raise Exception(f"{e!s}")
+    raise jwt.InvalidAudienceError(
+        f"Audience/AZP mismatch: azp={azp!r}, aud={aud!r}"
+    )
 
 
 def get_token_from_connection_params(connection_params: dict | None) -> str | None:
     if not connection_params or not isinstance(connection_params, dict):
         return None
-    auth = connection_params.get("authorization")
+    auth = connection_params.get("authorization") or connection_params.get(
+        "Authorization"
+    )
     if not auth or not isinstance(auth, str):
         return None
     parts = auth.split()
+    if len(parts) == 2 and parts[0].lower() == "bearer":
+        return parts[1]
+    return None
+
+
+def _bearer_from_header(connection: HTTPConnection) -> str | None:
+    auth_header = connection.headers.get("authorization")
+    if not auth_header:
+        return None
+    parts = auth_header.split()
     if len(parts) == 2 and parts[0].lower() == "bearer":
         return parts[1]
     return None
@@ -145,28 +129,15 @@ def get_token_source(connection: HTTPConnection) -> str | None:
         token = get_token_from_connection_params(connection.connection_params)
         if token:
             return token
-    auth_header = connection.headers.get("authorization")
-    if auth_header:
-        parts = auth_header.split()
-        if len(parts) == 2 and parts[0].lower() == "bearer":
-            return parts[1]
 
-    try:
-        if hasattr(connection, "query_params"):
-            token_param = connection.query_params.get("token")
-            if token_param:
-                return token_param
-    except (AttributeError, KeyError):
-        try:
-            from urllib.parse import urlparse, parse_qs
-            parsed_url = urlparse(str(connection.url))
-            query_params = parse_qs(parsed_url.query)
-            if "token" in query_params and query_params["token"]:
-                return query_params["token"][0]
-        except Exception:
-            pass
+    header_token = _bearer_from_header(connection)
+    if header_token:
+        return header_token
 
-    return connection.cookies.get(AUTH_COOKIE_NAME)
+    if IS_DEV:
+        return connection.cookies.get(AUTH_COOKIE_NAME)
+
+    return None
 
 
 class UnauthenticatedRedirect(Exception):

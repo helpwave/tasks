@@ -2,7 +2,7 @@ alembic==1.19.1
 asyncpg==0.31.0
 fastapi==0.141.1
 python-dotenv==1.2.3
-python-jose[cryptography]==3.5.0
+PyJWT[crypto]==2.13.0
 redis==8.1.0
 requests==2.34.2
 sqlalchemy==2.0.52

@@ -27,6 +27,10 @@ class PropertyDefinition(Base):
     options: Mapped[str | None] = mapped_column(String, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     allowed_entities: Mapped[str] = mapped_column(String, default="PATIENT")
+    location_id: Mapped[str | None] = mapped_column(
+        ForeignKey("location_nodes.id"),
+        nullable=True,
+    )
 
 
 class PropertyValue(Base):

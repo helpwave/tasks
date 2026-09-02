@@ -6,7 +6,14 @@ from api.extensions import GlobalAuthExtension
 from api.resolvers import Mutation, Query, Subscription
 from api.router import AuthedGraphQLRouter
 from auth import UnauthenticatedRedirect, unauthenticated_redirect_handler
-from config import ALLOWED_ORIGINS, IS_DEV, LOGGER
+from config import (
+    ALLOWED_ORIGINS,
+    GRAPHQL_MAX_ALIASES,
+    GRAPHQL_MAX_DEPTH,
+    GRAPHQL_MAX_TOKENS,
+    IS_DEV,
+    LOGGER,
+)
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -14,6 +21,11 @@ from routers import auth, export
 from scaffold import load_scaffold_data
 from starlette.requests import ClientDisconnect
 from strawberry import Schema
+from strawberry.extensions import (
+    MaxAliasesLimiter,
+    MaxTokensLimiter,
+    QueryDepthLimiter,
+)
 
 logger = logging.getLogger(LOGGER)
 
@@ -26,17 +38,30 @@ async def lifespan(app: FastAPI):
     logger.info("Shutting down application...")
 
 
+extensions = [
+    MaxTokensLimiter(max_token_count=GRAPHQL_MAX_TOKENS),
+    MaxAliasesLimiter(max_alias_count=GRAPHQL_MAX_ALIASES),
+    QueryDepthLimiter(max_depth=GRAPHQL_MAX_DEPTH),
+    GlobalAuthExtension,
+]
+
+if not IS_DEV:
+    from strawberry.extensions import DisableIntrospection
+
+    extensions.append(DisableIntrospection)
+
 schema = Schema(
     query=Query,
     mutation=Mutation,
     subscription=Subscription,
-    extensions=[GlobalAuthExtension],
+    extensions=extensions,
 )
 
 graphql_app = AuthedGraphQLRouter(
     schema,
     context_getter=get_context,
-    graphql_ide=IS_DEV,
+    graphql_ide="graphiql" if IS_DEV else None,
+    allow_queries_via_get=False,
 )
 
 app = FastAPI(
@@ -60,7 +85,22 @@ async def client_disconnect_handler(request: Request, exc: ClientDisconnect):
         status_code=499, content={"detail": "Client disconnected"}
     )
 
-app.include_router(auth.router)
+
+@app.middleware("http")
+async def security_headers_middleware(request: Request, call_next):
+    response = await call_next(request)
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Referrer-Policy", "no-referrer")
+    response.headers.setdefault(
+        "Permissions-Policy", "geolocation=(), microphone=(), camera=()"
+    )
+    return response
+
+
+if IS_DEV:
+    app.include_router(auth.router)
+
 app.include_router(export.router)
 app.include_router(graphql_app, prefix="/graphql")
 
