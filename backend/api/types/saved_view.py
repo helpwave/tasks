@@ -18,6 +18,7 @@ class SavedViewType:
     related_sort_definition: str
     related_parameters: str
     owner_user_id: strawberry.ID
+    location_id: strawberry.ID | None
     visibility: SavedViewVisibility
     created_at: str
     updated_at: str
@@ -40,6 +41,9 @@ class SavedViewType:
             related_sort_definition=row.related_sort_definition,
             related_parameters=row.related_parameters,
             owner_user_id=strawberry.ID(row.owner_user_id),
+            location_id=(
+                strawberry.ID(row.location_id) if row.location_id else None
+            ),
             visibility=SavedViewVisibility(row.visibility),
             created_at=row.created_at.isoformat() if row.created_at else "",
             updated_at=row.updated_at.isoformat() if row.updated_at else "",

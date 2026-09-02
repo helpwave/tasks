@@ -35,7 +35,34 @@ INFLUXDB_URL=http://localhost:8086
 INFLUXDB_TOKEN=tasks-token-secret
 INFLUXDB_ORG=tasks
 INFLUXDB_BUCKET=audit
+
+# Optional hardening knobs
+ADDITIONAL_ISSUERS=            # extra trusted token issuers (comma-separated)
+GRAPHQL_MAX_DEPTH=15           # reject documents deeper than this
+GRAPHQL_MAX_ALIASES=50         # reject documents with more aliases than this
+GRAPHQL_MAX_TOKENS=2000        # reject documents with more tokens than this
 ```
+
+## Security model
+
+Authentication and authorization are enforced server-side, deny-by-default:
+
+- **Authentication.** Access tokens are verified with the realm JWKS
+  (signature, expiry, trusted issuer, and audience/`azp`). Tokens are read only
+  from the `Authorization: Bearer` header (HTTP and WebSocket
+  `connection_params`); the `access_token` cookie is honoured in development
+  only, and tokens are never read from the query string.
+- **GraphQL is locked down.** Anonymous HTTP requests to `/graphql` are
+  rejected with `401` in production; the only thing an unauthenticated caller
+  may do (in development) is introspection. The GraphiQL IDE, GET queries, and
+  schema introspection are disabled outside development. A schema extension
+  denies every non-introspection field for an unauthenticated caller, including
+  fields wrapped in fragments. Subscriptions require a valid token at connect
+  time. Documents are bounded by depth/alias/token limits.
+- **Authorization is location-scoped.** Every resolver restricts reads and
+  writes to the caller's accessible location subtree (rooted at
+  `user_root_locations`). Property definitions and saved views are attached to a
+  scaffold location and are only visible/editable inside that scope.
 
 ## Development Setup
 

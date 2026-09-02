@@ -58,6 +58,42 @@ async def create_redis_subscription(
                 pass
 
 
+async def effective_root_location_ids(
+    info,
+    client_root_location_ids: list[str] | None,
+) -> list[str]:
+    """Resolve the location roots a subscription is allowed to observe.
+
+    Deny-by-default: the returned ids are always a subset of what the caller can
+    access. Client-supplied roots are intersected with the accessible set; when
+    the client supplies none we fall back to the caller's own root locations
+    (never "everything"). An empty result means the caller may observe nothing.
+    """
+    from api.services.authorization import AuthorizationService
+
+    user = getattr(info.context, "user", None)
+    if not user:
+        return []
+
+    auth_service = AuthorizationService(info.context.db)
+    accessible = await auth_service.get_user_accessible_location_ids(
+        user, info.context
+    )
+    if not accessible:
+        return []
+
+    if client_root_location_ids:
+        requested = [str(lid) for lid in client_root_location_ids]
+        return [lid for lid in requested if lid in accessible]
+
+    result = await info.context.db.execute(
+        select(models.user_root_locations.c.location_id).where(
+            models.user_root_locations.c.user_id == user.id
+        )
+    )
+    return [row[0] for row in result.fetchall()]
+
+
 async def patient_belongs_to_root_locations(
     db: AsyncSession,
     patient_id: str,

@@ -22,10 +22,12 @@ from api.query.inputs import (
 from api.query.registry import TASK
 from api.resolvers.base import BaseMutationResolver, BaseSubscriptionResolver
 from api.services.authorization import AuthorizationService
+from api.services.subscription import effective_root_location_ids
 from api.services.checksum import validate_checksum
 from api.services.datetime import normalize_datetime_to_utc
 from api.services.notifications import notify_entity_update
 from api.services.property import PropertyService
+from api.resolvers.property import validate_property_value_inputs
 from api.services.task_graph import (
     apply_task_graph_to_patient,
     graph_dict_from_preset_inputs,
@@ -694,6 +696,49 @@ class TaskMutation(BaseMutationResolver[models.Task]):
         return users
 
     @staticmethod
+    async def _require_team_in_scope(
+        info: Info, team_id: strawberry.ID | None
+    ) -> None:
+        if team_id is None:
+            return
+        auth_service = AuthorizationService(info.context.db)
+        if not await auth_service.can_access_location(
+            info.context.user, str(team_id), info.context
+        ):
+            raise_forbidden()
+
+    @staticmethod
+    async def _require_assignees_in_scope(
+        info: Info, users: list[models.User]
+    ) -> None:
+        if not users:
+            return
+        auth_service = AuthorizationService(info.context.db)
+        accessible = await auth_service.get_user_accessible_location_ids(
+            info.context.user, info.context
+        )
+        caller_id = info.context.user.id if info.context.user else None
+        for assignee in users:
+            if assignee.id == caller_id:
+                continue
+            if not accessible:
+                raise_forbidden(
+                    "You cannot assign a user outside your locations."
+                )
+            result = await info.context.db.execute(
+                select(models.user_root_locations.c.location_id)
+                .where(
+                    models.user_root_locations.c.user_id == assignee.id,
+                    models.user_root_locations.c.location_id.in_(accessible),
+                )
+                .limit(1)
+            )
+            if result.first() is None:
+                raise_forbidden(
+                    "You cannot assign a user outside your locations."
+                )
+
+    @staticmethod
     def _validate_task_scope(
         patient_id: strawberry.ID | None,
         assignee_count: int,
@@ -779,6 +824,8 @@ class TaskMutation(BaseMutationResolver[models.Task]):
             raise_forbidden()
 
         assignees = await TaskMutation._users_by_ids(info, data.assignee_ids)
+        await TaskMutation._require_assignees_in_scope(info, assignees)
+        await TaskMutation._require_team_in_scope(info, data.assignee_team_id)
         TaskMutation._validate_task_scope(
             data.patient_id,
             len(assignees),
@@ -797,6 +844,7 @@ class TaskMutation(BaseMutationResolver[models.Task]):
         )
 
         if data.properties is not None:
+            await validate_property_value_inputs(info, data.properties)
             property_service = TaskMutation._get_property_service(
                 info.context.db,
             )
@@ -900,10 +948,12 @@ class TaskMutation(BaseMutationResolver[models.Task]):
         next_assignees = task.assignees
         if data.assignee_ids is not strawberry.UNSET:
             next_assignees = await TaskMutation._users_by_ids(info, data.assignee_ids)
+            await TaskMutation._require_assignees_in_scope(info, next_assignees)
             task.assignees = next_assignees
 
         next_assignee_team_id = task.assignee_team_id
         if data.assignee_team_id is not strawberry.UNSET:
+            await TaskMutation._require_team_in_scope(info, data.assignee_team_id)
             next_assignee_team_id = data.assignee_team_id
             task.assignee_team_id = data.assignee_team_id
             if data.assignee_team_id is not None:
@@ -920,6 +970,7 @@ class TaskMutation(BaseMutationResolver[models.Task]):
         )
 
         if data.properties is not None:
+            await validate_property_value_inputs(info, data.properties)
             property_service = TaskMutation._get_property_service(db)
             await property_service.process_properties(
                 task,
@@ -1007,6 +1058,7 @@ class TaskMutation(BaseMutationResolver[models.Task]):
                 "Assignee user was not found.",
                 extensions={"code": "BAD_REQUEST"},
             )
+        await TaskMutation._require_assignees_in_scope(info, [user])
         return await TaskMutation._update_task_field(
             info,
             id,
@@ -1042,6 +1094,7 @@ class TaskMutation(BaseMutationResolver[models.Task]):
         id: strawberry.ID,
         team_id: strawberry.ID,
     ) -> TaskType:
+        await TaskMutation._require_team_in_scope(info, team_id)
         return await TaskMutation._update_task_field(
             info,
             id,
@@ -1236,11 +1289,11 @@ class TaskSubscription(BaseSubscriptionResolver):
             task_belongs_to_root_locations,
         )
 
-        root_location_ids_str = (
-            [str(lid) for lid in root_location_ids]
-            if root_location_ids
-            else None
+        root_location_ids_str = await effective_root_location_ids(
+            info, root_location_ids
         )
+        if not root_location_ids_str:
+            return
         base = BaseSubscriptionResolver.entity_created(info, "task")
         async for task_id in subscribe_with_location_filter(
             base,
@@ -1262,11 +1315,11 @@ class TaskSubscription(BaseSubscriptionResolver):
             task_belongs_to_root_locations,
         )
 
-        root_location_ids_str = (
-            [str(lid) for lid in root_location_ids]
-            if root_location_ids
-            else None
+        root_location_ids_str = await effective_root_location_ids(
+            info, root_location_ids
         )
+        if not root_location_ids_str:
+            return
         base = BaseSubscriptionResolver.entity_updated(
             info,
             "task",
@@ -1291,11 +1344,11 @@ class TaskSubscription(BaseSubscriptionResolver):
             task_belongs_to_root_locations,
         )
 
-        root_location_ids_str = (
-            [str(lid) for lid in root_location_ids]
-            if root_location_ids
-            else None
+        root_location_ids_str = await effective_root_location_ids(
+            info, root_location_ids
         )
+        if not root_location_ids_str:
+            return
         base = BaseSubscriptionResolver.entity_deleted(info, "task")
         async for task_id in subscribe_with_location_filter(
             base,

@@ -66,6 +66,36 @@ class AuthorizationService:
 
         return accessible_ids
 
+    async def can_access_location(
+        self,
+        user: models.User | None,
+        location_id: str | None,
+        context=None,
+    ) -> bool:
+        if not user or not location_id:
+            return False
+        accessible = await self.get_user_accessible_location_ids(user, context)
+        return location_id in accessible
+
+    async def default_scope_location_id(
+        self, user: models.User | None, context=None
+    ) -> str | None:
+        """Pick a deterministic home location for entities the caller creates.
+
+        Used when a client does not name an explicit scaffold location: the
+        entity is anchored to one of the caller's own root locations so it stays
+        inside their accessible subtree.
+        """
+        if not user:
+            return None
+        result = await self.db.execute(
+            select(models.user_root_locations.c.location_id)
+            .where(models.user_root_locations.c.user_id == user.id)
+            .order_by(models.user_root_locations.c.location_id.asc())
+        )
+        rows = result.fetchall()
+        return rows[0][0] if rows else None
+
     async def can_access_patient(
         self, user: models.User | None, patient: models.Patient, context=None
     ) -> bool:

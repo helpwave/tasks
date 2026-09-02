@@ -5,6 +5,8 @@ from graphql import GraphQLError
 from sqlalchemy import select
 
 from api.context import Info
+from api.errors import raise_unauthenticated
+from api.services.authorization import AuthorizationService
 from api.services.base import BaseRepository
 from api.inputs import (
     CreateSavedViewInput,
@@ -18,14 +20,56 @@ from database import models
 def _require_user(info: Info) -> models.User:
     user = info.context.user
     if not user:
-        raise GraphQLError("Authentication required")
+        raise_unauthenticated("Authentication required")
     return user
+
+
+async def _can_read_shared(
+    info: Info,
+    user: models.User,
+    row: models.SavedView,
+) -> bool:
+    """Non-owner read rule for a saved view.
+
+    A link-shared view is only readable by another user if it is anchored to a
+    location inside that user's accessible subtree. Link-shared views with no
+    location (legacy) stay owner-only, closing the previous cross-tenant "anyone
+    with the id" hole.
+    """
+    if row.owner_user_id == user.id:
+        return True
+    if row.visibility != SavedViewVisibility.LINK_SHARED.value:
+        return False
+    if not row.location_id:
+        return False
+    auth_service = AuthorizationService(info.context.db)
+    return await auth_service.can_access_location(
+        user, row.location_id, info.context
+    )
+
+
+async def _resolve_scope_location(
+    info: Info,
+    user: models.User,
+    requested_location_id: strawberry.ID | None,
+) -> str | None:
+    auth_service = AuthorizationService(info.context.db)
+    if requested_location_id is not None:
+        if not await auth_service.can_access_location(
+            user, str(requested_location_id), info.context
+        ):
+            from api.errors import raise_forbidden
+
+            raise_forbidden()
+        return str(requested_location_id)
+    return await auth_service.default_scope_location_id(user, info.context)
 
 
 @strawberry.type
 class SavedViewQuery:
     @strawberry.field
     async def saved_view(self, info: Info, id: strawberry.ID) -> SavedViewType | None:
+        user = _require_user(info)
         db = info.context.db
         result = await db.execute(
             select(models.SavedView).where(models.SavedView.id == str(id))
@@ -33,10 +77,9 @@ class SavedViewQuery:
         row = result.scalars().first()
         if not row:
             return None
-        uid = info.context.user.id if info.context.user else None
-        if row.owner_user_id != uid and row.visibility != SavedViewVisibility.LINK_SHARED.value:
+        if not await _can_read_shared(info, user, row):
             raise GraphQLError("Not found or access denied")
-        return SavedViewType.from_model(row, current_user_id=uid)
+        return SavedViewType.from_model(row, current_user_id=user.id)
 
     @strawberry.field
     async def my_saved_views(self, info: Info) -> list[SavedViewType]:
@@ -60,6 +103,7 @@ class SavedViewMutation:
         data: CreateSavedViewInput,
     ) -> SavedViewType:
         user = _require_user(info)
+        location_id = await _resolve_scope_location(info, user, data.location_id)
         for blob, label in (
             (data.filter_definition, "filter_definition"),
             (data.sort_definition, "sort_definition"),
@@ -83,6 +127,7 @@ class SavedViewMutation:
             related_sort_definition=data.related_sort_definition,
             related_parameters=data.related_parameters,
             owner_user_id=user.id,
+            location_id=location_id,
             visibility=data.visibility.value,
         )
         info.context.db.add(row)
@@ -184,7 +229,7 @@ class SavedViewMutation:
         src = result.scalars().first()
         if not src:
             raise GraphQLError("View not found")
-        if src.owner_user_id != user.id and src.visibility != SavedViewVisibility.LINK_SHARED.value:
+        if not await _can_read_shared(info, user, src):
             raise GraphQLError("Not found or access denied")
 
         clone = models.SavedView(
@@ -197,6 +242,7 @@ class SavedViewMutation:
             related_sort_definition=src.related_sort_definition,
             related_parameters=src.related_parameters,
             owner_user_id=user.id,
+            location_id=await _resolve_scope_location(info, user, None),
             visibility=SavedViewVisibility.PRIVATE.value,
         )
         db.add(clone)

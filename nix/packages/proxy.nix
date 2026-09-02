@@ -22,12 +22,20 @@ let
         include       ${nginx}/conf/mime.types;
         default_type  application/octet-stream;
         access_log    /dev/stdout;
+        server_tokens off;
         client_max_body_size 20M;
         client_body_temp_path /tmp/client_body_temp;
         proxy_temp_path       /tmp/proxy_temp;
         fastcgi_temp_path     /tmp/fastcgi_temp;
         uwsgi_temp_path       /tmp/uwsgi_temp;
         scgi_temp_path        /tmp/scgi_temp;
+
+        map $http_upgrade $connection_upgrade {
+            default upgrade;
+            '''      close;
+        }
+
+        limit_req_zone $binary_remote_addr zone=graphql:10m rate=20r/s;
 
         upstream frontend_upstream {
             server ''${FRONTEND_HOST};
@@ -45,7 +53,28 @@ let
             listen 80;
             server_name localhost;
 
-            location ~ ^/(graphql|callback|export(/.*)?)$ {
+            add_header X-Content-Type-Options "nosniff" always;
+            add_header X-Frame-Options "DENY" always;
+            add_header Referrer-Policy "no-referrer" always;
+            add_header Permissions-Policy "geolocation=(), microphone=(), camera=()" always;
+
+            location = /graphql {
+                limit_req zone=graphql burst=40 nodelay;
+
+                set $graphql_ok 0;
+                if ($request_method = POST) {
+                    set $graphql_ok 1;
+                }
+                if ($request_method = OPTIONS) {
+                    set $graphql_ok 1;
+                }
+                if ($http_upgrade) {
+                    set $graphql_ok 1;
+                }
+                if ($graphql_ok = 0) {
+                    return 405;
+                }
+
                 proxy_pass http://backend_upstream;
 
                 proxy_set_header Host $host;
@@ -55,7 +84,22 @@ let
 
                 proxy_http_version 1.1;
                 proxy_set_header Upgrade $http_upgrade;
-                proxy_set_header Connection "upgrade";
+                proxy_set_header Connection $connection_upgrade;
+            }
+
+            location ~ ^/export(/.*)?$ {
+                limit_except POST OPTIONS {
+                    deny all;
+                }
+
+                proxy_pass http://backend_upstream;
+
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+
+                proxy_http_version 1.1;
             }
 
             location /keycloak/ {
@@ -79,13 +123,17 @@ let
 
                 proxy_http_version 1.1;
                 proxy_set_header Upgrade $http_upgrade;
-                proxy_set_header Connection "upgrade";
+                proxy_set_header Connection $connection_upgrade;
 
                 proxy_hide_header Cache-Control;
                 proxy_hide_header Pragma;
                 add_header Cache-Control "no-store, no-cache, must-revalidate, max-age=0" always;
                 add_header Pragma "no-cache" always;
                 add_header Expires "0" always;
+                add_header X-Content-Type-Options "nosniff" always;
+                add_header X-Frame-Options "DENY" always;
+                add_header Referrer-Policy "no-referrer" always;
+                add_header Permissions-Policy "geolocation=(), microphone=(), camera=()" always;
             }
         }
     }

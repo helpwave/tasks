@@ -16,7 +16,7 @@ python3.withPackages (
     influxdb-client
     openpyxl
     python-dotenv
-    python-jose
+    pyjwt
     python-multipart
     redis
     requests

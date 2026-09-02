@@ -51,18 +51,17 @@ def _can_edit_preset(
     preset: models.TaskPreset,
     user_id: str,
 ) -> bool:
-    if preset.scope == DbTaskPresetScope.PERSONAL.value:
-        return preset.owner_user_id == user_id
-    return True
+    # Deny-by-default: only the creator may modify a preset, whatever its scope.
+    # A GLOBAL preset stays readable by everyone but is not a free-for-all to
+    # rewrite. Legacy globals with no owner are immutable.
+    return preset.owner_user_id is not None and preset.owner_user_id == user_id
 
 
 def _can_delete_preset(
     preset: models.TaskPreset,
     user_id: str,
 ) -> bool:
-    if preset.scope == DbTaskPresetScope.PERSONAL.value:
-        return preset.owner_user_id == user_id
-    return True
+    return preset.owner_user_id is not None and preset.owner_user_id == user_id
 
 
 @strawberry.type
@@ -154,10 +153,9 @@ class TaskPresetMutation:
         graph_dict = graph_dict_from_preset_inputs(data.graph.nodes, data.graph.edges)
         validate_task_graph_dict(graph_dict)
         scope_val = data.scope.value
-        if scope_val == DbTaskPresetScope.PERSONAL.value:
-            owner_id = user.id
-        else:
-            owner_id = None
+        # Record the creator as owner for every scope so a GLOBAL preset can be
+        # managed by (and only by) the person who published it.
+        owner_id = user.id
         if data.key:
             if not await _key_is_available(info.context.db, data.key):
                 raise GraphQLError(

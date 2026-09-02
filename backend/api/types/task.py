@@ -58,6 +58,13 @@ class TaskType:
     ) -> Annotated["LocationNodeType", strawberry.lazy("api.types.location")] | None:
         if not self.assignee_team_id:
             return None
+        from api.services.authorization import AuthorizationService
+
+        auth_service = AuthorizationService(info.context.db)
+        if not await auth_service.can_access_location(
+            info.context.user, str(self.assignee_team_id), info.context
+        ):
+            return None
         result = await info.context.db.execute(
             select(models.LocationNode).where(models.LocationNode.id == self.assignee_team_id),
         )

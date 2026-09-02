@@ -159,6 +159,7 @@ class CreatePropertyDefinitionInput:
     description: str | None = None
     options: list[str] | None = None
     is_active: bool = True
+    location_id: strawberry.ID | None = None
 
 
 @strawberry.input
@@ -210,6 +211,7 @@ class CreateSavedViewInput:
     related_sort_definition: str = "{}"
     related_parameters: str = "{}"
     visibility: SavedViewVisibility = SavedViewVisibility.LINK_SHARED
+    location_id: strawberry.ID | None = None
 
 
 @strawberry.input

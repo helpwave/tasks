@@ -137,7 +137,10 @@ class LocationMutation(BaseMutationResolver[models.LocationNode]):
         if not accessible_location_ids:
             raise_forbidden()
 
-        if data.parent_id and data.parent_id not in accessible_location_ids:
+        # Deny-by-default: a new node must attach under a location the caller
+        # already owns. Allowing parent_id=None would mint unlimited top-level
+        # roots outside every scope.
+        if not data.parent_id or data.parent_id not in accessible_location_ids:
             raise_forbidden()
 
         location = models.LocationNode(
