@@ -1,6 +1,13 @@
-from typing import Any
+from typing import TYPE_CHECKING, Annotated, Any
 
 import strawberry
+
+from api.context import Info
+from api.inputs import ScopeVisibility
+from api.services.scope import load_scope_location
+
+if TYPE_CHECKING:
+    from api.types.location import LocationNodeType
 
 
 @strawberry.type
@@ -58,21 +65,39 @@ class TaskPresetType:
     id: strawberry.ID
     name: str
     key: str
-    scope: str
+    visibility: ScopeVisibility
     owner_user_id: strawberry.ID | None
+    location_id: strawberry.ID | None
+    is_owner: bool
     _graph_json: strawberry.Private[dict[str, Any]]
 
     @strawberry.field
     def graph(self) -> TaskGraphType:
         return task_graph_type_from_dict(self._graph_json)
 
+    @strawberry.field
+    async def location(
+        self,
+        info: Info,
+    ) -> (
+        Annotated["LocationNodeType", strawberry.lazy("api.types.location")]
+        | None
+    ):
+        return await load_scope_location(info, self.location_id)
 
-def task_preset_type_from_model(p: Any) -> TaskPresetType:
+
+def task_preset_type_from_model(
+    p: Any,
+    *,
+    current_user_id: str | None = None,
+) -> TaskPresetType:
     return TaskPresetType(
         id=p.id,
         name=p.name,
         key=p.key,
-        scope=p.scope,
+        visibility=ScopeVisibility(p.visibility),
         owner_user_id=p.owner_user_id,
+        location_id=strawberry.ID(p.location_id) if p.location_id else None,
+        is_owner=current_user_id is not None and p.owner_user_id == current_user_id,
         _graph_json=p.graph_json,
     )

@@ -42,6 +42,7 @@ input CreatePropertyDefinitionInput {
   description: String = null
   options: [String!] = null
   isActive: Boolean! = true
+  visibility: ScopeVisibility! = PRIVATE
   locationId: ID = null
 }
 
@@ -54,7 +55,7 @@ input CreateSavedViewInput {
   relatedFilterDefinition: String! = "{}"
   relatedSortDefinition: String! = "{}"
   relatedParameters: String! = "{}"
-  visibility: SavedViewVisibility! = LINK_SHARED
+  visibility: ScopeVisibility! = PRIVATE
   locationId: ID = null
 }
 
@@ -73,9 +74,10 @@ input CreateTaskInput {
 
 input CreateTaskPresetInput {
   name: String!
-  key: String = null
-  scope: TaskPresetScope!
   graph: TaskGraphInput!
+  key: String = null
+  visibility: ScopeVisibility! = PRIVATE
+  locationId: ID = null
 }
 
 """Date (isoformat)"""
@@ -199,7 +201,11 @@ type PropertyDefinitionType {
   description: String
   fieldType: FieldType!
   isActive: Boolean!
+  visibility: ScopeVisibility!
+  ownerUserId: ID
   locationId: ID
+  location: LocationNodeType
+  canEdit: Boolean!
   options: [String!]!
   allowedEntities: [PropertyEntity!]!
 }
@@ -248,20 +254,20 @@ type Query {
   tasksTotal(patientId: ID = null, assigneeId: ID = null, assigneeTeamId: ID = null, rootLocationIds: [ID!] = null, filters: [QueryFilterClauseInput!] = null, sorts: [QuerySortClauseInput!] = null, search: QuerySearchInput = null): Int!
   recentTasks(rootLocationIds: [ID!] = null, filters: [QueryFilterClauseInput!] = null, sorts: [QuerySortClauseInput!] = null, pagination: PaginationInput = null, search: QuerySearchInput = null): [TaskType!]!
   recentTasksTotal(rootLocationIds: [ID!] = null, filters: [QueryFilterClauseInput!] = null, sorts: [QuerySortClauseInput!] = null, search: QuerySearchInput = null): Int!
-  taskPresets: [TaskPresetType!]!
+  taskPresets(rootLocationIds: [ID!] = null): [TaskPresetType!]!
   taskPreset(id: ID!): TaskPresetType
   taskPresetByKey(key: String!): TaskPresetType
   locationRoots: [LocationNodeType!]!
   locationNode(id: ID!): LocationNodeType
   locationNodes(kind: LocationType = null, search: String = null, parentId: ID = null, recursive: Boolean! = false, orderByName: Boolean! = false, limit: Int = null, offset: Int = null): [LocationNodeType!]!
-  propertyDefinitions: [PropertyDefinitionType!]!
+  propertyDefinitions(rootLocationIds: [ID!] = null): [PropertyDefinitionType!]!
   user(id: ID!): UserType
   users(filters: [QueryFilterClauseInput!] = null, sorts: [QuerySortClauseInput!] = null, pagination: PaginationInput = null, search: QuerySearchInput = null): [UserType!]!
   me: UserType
   auditLogs(caseId: ID!, limit: Int = null, offset: Int = null): [AuditLogType!]!
   queryableFields(entity: String!): [QueryableField!]!
   savedView(id: ID!): SavedView
-  mySavedViews: [SavedView!]!
+  mySavedViews(rootLocationIds: [ID!] = null): [SavedView!]!
 }
 
 input QueryFilterClauseInput {
@@ -383,10 +389,11 @@ type SavedView {
   relatedParameters: String!
   ownerUserId: ID!
   locationId: ID
-  visibility: SavedViewVisibility!
+  visibility: ScopeVisibility!
   createdAt: String!
   updatedAt: String!
   isOwner: Boolean!
+  location: LocationNodeType
 }
 
 enum SavedViewEntityType {
@@ -394,9 +401,9 @@ enum SavedViewEntityType {
   PATIENT
 }
 
-enum SavedViewVisibility {
+enum ScopeVisibility {
   PRIVATE
-  LINK_SHARED
+  PUBLIC
 }
 
 type ScopedPatientCountsType {
@@ -467,18 +474,16 @@ type TaskGraphType {
   edges: [TaskGraphEdgeType!]!
 }
 
-enum TaskPresetScope {
-  PERSONAL
-  GLOBAL
-}
-
 type TaskPresetType {
   id: ID!
   name: String!
   key: String!
-  scope: String!
+  visibility: ScopeVisibility!
   ownerUserId: ID
+  locationId: ID
+  isOwner: Boolean!
   graph: TaskGraphType!
+  location: LocationNodeType
 }
 
 enum TaskPriority {
@@ -539,6 +544,8 @@ input UpdatePropertyDefinitionInput {
   options: [String!] = null
   isActive: Boolean = null
   allowedEntities: [PropertyEntity!] = null
+  visibility: ScopeVisibility = null
+  locationId: ID = null
 }
 
 input UpdateSavedViewInput {
@@ -549,7 +556,8 @@ input UpdateSavedViewInput {
   relatedFilterDefinition: String = null
   relatedSortDefinition: String = null
   relatedParameters: String = null
-  visibility: SavedViewVisibility = null
+  visibility: ScopeVisibility = null
+  locationId: ID = null
 }
 
 input UpdateTaskInput {
@@ -571,6 +579,8 @@ input UpdateTaskPresetInput {
   name: String = null
   key: String = null
   graph: TaskGraphInput = null
+  visibility: ScopeVisibility = null
+  locationId: ID = null
 }
 
 type UserType {

@@ -7,6 +7,25 @@ mutation CreatePropertyDefinition($data: CreatePropertyDefinitionInput!) {
     isActive
     allowedEntities
     options
+    visibility
+    ownerUserId
+    canEdit
+    locationId
+    location {
+      id
+      title
+      kind
+      parent {
+        id
+        title
+        kind
+        parent {
+          id
+          title
+          kind
+        }
+      }
+    }
   }
 }
 
@@ -19,6 +38,25 @@ mutation UpdatePropertyDefinition($id: ID!, $data: UpdatePropertyDefinitionInput
     isActive
     allowedEntities
     options
+    visibility
+    ownerUserId
+    canEdit
+    locationId
+    location {
+      id
+      title
+      kind
+      parent {
+        id
+        title
+        kind
+        parent {
+          id
+          title
+          kind
+        }
+      }
+    }
   }
 }
 

@@ -10,8 +10,9 @@ import { EditIcon, PlusIcon } from 'lucide-react'
 import { Drawer } from '@helpwave/hightide'
 import type { Property } from '@/components/tables/PropertyList'
 import { PropertyDetailView } from '@/components/properties/PropertyDetailView'
-import { FieldType, PropertyEntity } from '@/api/gql/generated'
+import { FieldType, PropertyEntity, ScopeVisibility } from '@/api/gql/generated'
 import { usePropertyDefinitions } from '@/data'
+import { ScopeChip } from '@/components/locations/ScopeChip'
 
 import { ListLoadingHint } from '@/components/common/ListLoadingHint'
 
@@ -51,6 +52,9 @@ const PropertiesPage: NextPage = () => {
     subjectType: mapSubjectTypeFromBackend(def.allowedEntities[0] || PropertyEntity.Patient),
     fieldType: mapFieldTypeFromBackend(def.fieldType),
     isArchived: !def.isActive,
+    visibility: def.visibility,
+    location: def.location,
+    canEdit: def.canEdit,
     selectData: (def.fieldType === FieldType.FieldTypeSelect || def.fieldType === FieldType.FieldTypeMultiSelect) && def.options.length > 0 ? {
       isAllowingFreetext: false,
       options: def.options.map((opt, idx) => ({
@@ -129,6 +133,18 @@ const PropertiesPage: NextPage = () => {
       filterFn: 'text',
     },
     {
+      id: 'scope',
+      header: translation('scopeVisibility'),
+      accessorFn: ({ location, visibility }) => location?.title ?? visibility ?? '',
+      cell: ({ row }) => (
+        <ScopeChip visibility={row.original.visibility ?? ScopeVisibility.Private} location={row.original.location} small />
+      ),
+      minSize: 180,
+      size: 220,
+      maxSize: 320,
+      filterFn: 'text',
+    },
+    {
       id: 'active',
       header: translation('status'),
       accessorFn: ({ isArchived }) => !isArchived,
@@ -151,6 +167,7 @@ const PropertiesPage: NextPage = () => {
           tooltip={translation('edit')}
           coloringStyle="text"
           color="neutral"
+          disabled={row.original.canEdit === false}
           onClick={() => handleEdit(row.original)}
         >
           <EditIcon/>

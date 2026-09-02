@@ -3,7 +3,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/router'
 import {
   Button,
-  Chip,
   Dialog,
   Drawer,
   FillerCell,
@@ -23,8 +22,14 @@ import {
   useTaskPresets,
   useUpdateTaskPreset
 } from '@/data'
-import { TaskPresetScope } from '@/api/gql/generated'
 import { TaskPresetDataEditor } from '@/components/tasks/TaskPresetDataEditor'
+import { ScopeChip } from '@/components/locations/ScopeChip'
+import {
+  privateScope,
+  scopeFromEntity,
+  scopeToInput,
+  type ScopeValue
+} from '@/components/locations/ScopeVisibilityField'
 import { TaskPresetTaskDataEditor } from '@/components/tasks/TaskPresetTaskDataEditor'
 import {
   defaultTaskPresetTask,
@@ -32,8 +37,6 @@ import {
   listRowsToTaskGraphInput,
   type TaskPresetTask
 } from '@/utils/taskGraph'
-
-const isGlobalScope = (scope: string): boolean => scope === TaskPresetScope.Global
 
 type PresetRowDrawerTarget = null | {
   section: 'create' | 'edit',
@@ -44,7 +47,8 @@ type PresetRowDrawerTarget = null | {
 type PresetTableRow = {
   id: string,
   name: string,
-  scope: string,
+  isOwner: boolean,
+  scope: ScopeValue,
 }
 
 const TaskPresetsPage: NextPage = () => {
@@ -65,13 +69,14 @@ const TaskPresetsPage: NextPage = () => {
   const [deletePreset] = useDeleteTaskPreset()
 
   const [name, setName] = useState('')
-  const [scope, setScope] = useState<TaskPresetScope>(TaskPresetScope.Personal)
+  const [scope, setScope] = useState<ScopeValue>(privateScope)
   const [rows, setRows] = useState<TaskPresetTask[]>([defaultTaskPresetTask()])
   const [saving, setSaving] = useState(false)
 
   const [editOpen, setEditOpen] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
   const [editName, setEditName] = useState('')
+  const [editScope, setEditScope] = useState<ScopeValue>(privateScope)
   const [editRows, setEditRows] = useState<TaskPresetTask[]>([defaultTaskPresetTask()])
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleteId, setDeleteId] = useState<string | null>(null)
@@ -85,7 +90,8 @@ const TaskPresetsPage: NextPage = () => {
       presets.map(p => ({
         id: p.id,
         name: p.name,
-        scope: p.scope,
+        isOwner: p.isOwner,
+        scope: scopeFromEntity(p),
       })),
     [presets]
   )
@@ -108,7 +114,7 @@ const TaskPresetsPage: NextPage = () => {
 
   const resetCreateForm = useCallback(() => {
     setName('')
-    setScope(TaskPresetScope.Personal)
+    setScope(privateScope())
     setRows([defaultTaskPresetTask()])
   }, [])
 
@@ -128,8 +134,8 @@ const TaskPresetsPage: NextPage = () => {
         variables: {
           data: {
             name: name.trim(),
-            scope,
             graph,
+            ...scopeToInput(scope),
           },
         },
       })
@@ -144,10 +150,11 @@ const TaskPresetsPage: NextPage = () => {
   const openEdit = useCallback(
     (id: string) => {
       const p = presets.find(x => x.id === id)
-      if (!p) return
+      if (!p || !p.isOwner) return
       setPresetRowDrawer(null)
       setEditId(id)
       setEditName(p.name)
+      setEditScope(scopeFromEntity(p))
       setEditRows(graphNodesToListRows(p.graph))
       setEditOpen(true)
     },
@@ -197,6 +204,7 @@ const TaskPresetsPage: NextPage = () => {
           data: {
             name: editName.trim(),
             graph,
+            ...scopeToInput(editScope),
           },
         },
       })
@@ -204,7 +212,7 @@ const TaskPresetsPage: NextPage = () => {
     } finally {
       setSaving(false)
     }
-  }, [editId, editName, editRows, updatePreset, closeEditDrawer])
+  }, [editId, editName, editRows, editScope, updatePreset, closeEditDrawer])
 
   const confirmDelete = useCallback(async () => {
     if (!deleteId) return
@@ -235,24 +243,18 @@ const TaskPresetsPage: NextPage = () => {
       },
       {
         id: 'scope',
-        header: translation('taskPresetScope'),
+        header: translation('scopeVisibility'),
         cell: ({ row }) => (
-          <Chip className="coloring-tonal" color="neutral">
-            <span>
-              {isGlobalScope(row.original.scope)
-                ? translation('taskPresetScopeGlobal')
-                : translation('taskPresetScopePersonal')}
-            </span>
-          </Chip>
+          <ScopeChip visibility={row.original.scope.visibility} location={row.original.scope.location} small />
         ),
-        minSize: 120,
-        size: 140,
+        minSize: 180,
+        size: 220,
         enableSorting: false,
       },
       {
         id: 'actions',
         header: '',
-        cell: ({ row }) => (
+        cell: ({ row }) => row.original.isOwner && (
           <div className="flex flex-row items-center gap-0.5 justify-end">
             <IconButton
               tooltip={translation('taskPresetEdit')}
@@ -362,6 +364,8 @@ const TaskPresetsPage: NextPage = () => {
           onSave={() => void handleUpdate()}
           onCancel={closeEditDrawer}
           saving={saving}
+          scope={editScope}
+          onScopeChange={setEditScope}
         />
       </Drawer>
 

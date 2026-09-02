@@ -1,23 +1,18 @@
 from __future__ import annotations
 
-import enum
 import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
-from database.models.base import Base
 from sqlalchemy import ForeignKey, String
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from database.models.base import Base
+
 if TYPE_CHECKING:
     from database.models.task import Task
     from database.models.user import User
-
-
-class TaskPresetScope(str, enum.Enum):
-    PERSONAL = "PERSONAL"
-    GLOBAL = "GLOBAL"
 
 
 class TaskPreset(Base):
@@ -30,9 +25,15 @@ class TaskPreset(Base):
     )
     name: Mapped[str] = mapped_column(String)
     key: Mapped[str] = mapped_column(String, unique=True, index=True)
-    scope: Mapped[str] = mapped_column(String(32))
+    visibility: Mapped[str] = mapped_column(
+        String(16), nullable=False, default="private"
+    )
     owner_user_id: Mapped[str | None] = mapped_column(
         ForeignKey("users.id"),
+        nullable=True,
+    )
+    location_id: Mapped[str | None] = mapped_column(
+        ForeignKey("location_nodes.id"),
         nullable=True,
     )
     graph_json: Mapped[dict[str, Any]] = mapped_column(JSON)

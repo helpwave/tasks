@@ -1,9 +1,16 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, Annotated
+
 import strawberry
 
-from api.inputs import SavedViewEntityType, SavedViewVisibility
+from api.context import Info
+from api.inputs import SavedViewEntityType, ScopeVisibility
+from api.services.scope import load_scope_location
 from database.models.saved_view import SavedView as SavedViewModel
+
+if TYPE_CHECKING:
+    from api.types.location import LocationNodeType
 
 
 @strawberry.type(name="SavedView")
@@ -19,10 +26,20 @@ class SavedViewType:
     related_parameters: str
     owner_user_id: strawberry.ID
     location_id: strawberry.ID | None
-    visibility: SavedViewVisibility
+    visibility: ScopeVisibility
     created_at: str
     updated_at: str
     is_owner: bool
+
+    @strawberry.field
+    async def location(
+        self,
+        info: Info,
+    ) -> (
+        Annotated["LocationNodeType", strawberry.lazy("api.types.location")]
+        | None
+    ):
+        return await load_scope_location(info, self.location_id)
 
     @staticmethod
     def from_model(
@@ -44,7 +61,7 @@ class SavedViewType:
             location_id=(
                 strawberry.ID(row.location_id) if row.location_id else None
             ),
-            visibility=SavedViewVisibility(row.visibility),
+            visibility=ScopeVisibility(row.visibility),
             created_at=row.created_at.isoformat() if row.created_at else "",
             updated_at=row.updated_at.isoformat() if row.updated_at else "",
             is_owner=current_user_id is not None and row.owner_user_id == current_user_id,

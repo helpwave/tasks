@@ -11,8 +11,10 @@ import { getPropertyFilterFn } from './propertyFilterMapping'
 import { PropertyCell } from '@/components/properties/PropertyCell'
 import { EditablePropertyCell } from '@/components/properties/EditablePropertyCell'
 
+export type PropertyValueRowDefinition = Pick<PropertyDefinitionType, 'id' | 'name' | 'description' | 'fieldType' | 'isActive' | 'allowedEntities' | 'options'>
+
 export type PropertyValueRow = Pick<PropertyValueType, 'textValue' | 'numberValue' | 'booleanValue' | 'dateValue' | 'dateTimeValue' | 'selectValue' | 'multiSelectValues' | 'userValue'> & {
-  definition: PropertyDefinitionType,
+  definition: PropertyValueRowDefinition,
   user?: { id: string, name: string, avatarUrl?: string | null, isOnline?: boolean } | null,
   team?: { id: string, title: string, kind: LocationType } | null,
 }
@@ -69,7 +71,7 @@ function getPropertySizeInformation(fieldType: FieldType) {
   }
 }
 
-function getFilterData(prop: PropertyDefinitionType) {
+function getFilterData(prop: PropertyValueRowDefinition) {
   const filterFn = getPropertyFilterFn(prop.fieldType)
   if (filterFn === 'multiTags' || filterFn === 'singleTag') {
     return {
@@ -83,7 +85,7 @@ function getFilterData(prop: PropertyDefinitionType) {
 }
 
 export function createPropertyColumn<T extends RowWithProperties>(
-  prop: PropertyDefinitionType,
+  prop: PropertyValueRowDefinition,
   hasFilter?: boolean,
   options?: PropertyColumnFactoryOptions<T>
 ): ColumnDef<T> {
@@ -140,7 +142,7 @@ export function createPropertyColumn<T extends RowWithProperties>(
 }
 
 type PropertyDefinitionsData = {
-  propertyDefinitions?: PropertyDefinitionType[],
+  propertyDefinitions?: PropertyValueRowDefinition[],
 } | null | undefined
 
 export function getPropertyColumnsForEntity<T extends RowWithProperties>(

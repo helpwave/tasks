@@ -22,6 +22,7 @@ from api.query.inputs import (
 from api.query.registry import TASK
 from api.resolvers.base import BaseMutationResolver, BaseSubscriptionResolver
 from api.services.authorization import AuthorizationService
+from api.services.scope import can_read_scoped
 from api.services.subscription import effective_root_location_ids
 from api.services.checksum import validate_checksum
 from api.services.datetime import normalize_datetime_to_utc
@@ -37,7 +38,6 @@ from api.services.task_graph import (
 )
 from api.types.task import TaskType
 from database import models
-from database.models.task_preset import TaskPresetScope as DbTaskPresetScope
 from graphql import GraphQLError
 from sqlalchemy import and_, exists, or_, select
 from sqlalchemy.orm import aliased, selectinload
@@ -1194,10 +1194,7 @@ class TaskMutation(BaseMutationResolver[models.Task]):
                     "Preset not found",
                     extensions={"code": "NOT_FOUND"},
                 )
-            if (
-                preset.scope == DbTaskPresetScope.PERSONAL.value
-                and preset.owner_user_id != user.id
-            ):
+            if not await can_read_scoped(info, user, preset):
                 raise_forbidden()
             graph_dict = preset.graph_json
         else:
@@ -1222,10 +1219,7 @@ class TaskMutation(BaseMutationResolver[models.Task]):
                     "Preset not found",
                     extensions={"code": "NOT_FOUND"},
                 )
-            if (
-                preset_src.scope == DbTaskPresetScope.PERSONAL.value
-                and preset_src.owner_user_id != user.id
-            ):
+            if not await can_read_scoped(info, user, preset_src):
                 raise_forbidden()
             source_preset_id = str(data.source_preset_id)
         else:

@@ -47,11 +47,11 @@ function optimisticAssigneeTeam(
   if (assigneeTeamId === null) return null
   if (previous?.id === assigneeTeamId) return previous
   return {
-    __typename: 'LocationNodeType' as const,
+    __typename: 'LocationNodeType',
     id: assigneeTeamId,
     title: '',
     kind: LocationType.Team,
-  }
+  } as NonNullable<TaskEntity['assigneeTeam']>
 }
 
 export const updateTaskOptimisticPlanKey = 'UpdateTask'

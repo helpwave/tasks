@@ -11,7 +11,7 @@ import { PatientDetailView } from '@/components/patients/PatientDetailView'
 import { LocationChips } from '@/components/locations/LocationChips'
 import { LocationChipsBySetting } from '@/components/patients/LocationChipsBySetting'
 import { PatientStateChip } from '@/components/patients/PatientStateChip'
-import { getLocationNodesByKind, type LocationKindColumn } from '@/utils/location'
+import { getLocationNodesByKind, type LocationKindColumn, type TypedLocationPathNode } from '@/utils/location'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { buildListLayoutStorageKey, resolveListRouteId, useListLayoutPreference } from '@/hooks/useListLayoutPreference'
@@ -38,7 +38,6 @@ import { ExpandableTextBlock } from '@/components/common/ExpandableTextBlock'
 import { SaveViewDialog } from '@/components/views/SaveViewDialog'
 import { SaveViewActionsMenu } from '@/components/views/SaveViewActionsMenu'
 import {
-  MySavedViewsDocument,
   SavedViewDocument,
   SavedViewEntityType,
   UpdateSavedViewDocument,
@@ -75,8 +74,8 @@ export type PatientViewModel = {
   name: string,
   firstname: string,
   lastname: string,
-  clinic: GetPatientsQuery['patients'][0]['clinic'] | null,
-  position: GetPatientsQuery['patients'][0]['position'],
+  clinic: TypedLocationPathNode | null,
+  position: TypedLocationPathNode | null,
   openTasksCount: number,
   closedTasksCount: number,
   birthdate: Date,
@@ -331,9 +330,9 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
     refetchQueries: savedViewId
       ? [
         { query: getParsedDocument(SavedViewDocument), variables: { id: savedViewId } },
-        { query: getParsedDocument(MySavedViewsDocument) },
+        'MySavedViews',
       ]
-      : [{ query: getParsedDocument(MySavedViewsDocument) }],
+      : ['MySavedViews'],
     update(cache, { data }) {
       const view = data?.updateSavedView
       if (view) {

@@ -7,14 +7,19 @@ import type {
   SavedViewEntityType } from '@/api/gql/generated'
 import {
   CreateSavedViewDocument,
-  MySavedViewsDocument,
   type CreateSavedViewMutation,
-  type CreateSavedViewMutationVariables,
-  SavedViewVisibility
+  type CreateSavedViewMutationVariables
 } from '@/api/gql/generated'
 import { getParsedDocument } from '@/data/hooks/queryHelpers'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { appendSavedViewToMySavedViewsCache } from '@/utils/savedViewsCache'
+import {
+  isScopeComplete,
+  privateScope,
+  ScopeVisibilityField,
+  scopeToInput,
+  type ScopeValue
+} from '@/components/locations/ScopeVisibilityField'
 
 type SaveViewDialogProps = {
   isOpen: boolean,
@@ -39,17 +44,19 @@ export function SaveViewDialog({
 }: SaveViewDialogProps) {
   const translation = useTasksTranslation()
   const [name, setName] = useState('')
+  const [scope, setScope] = useState<ScopeValue>(privateScope)
 
   const handleClose = useCallback(() => {
     onClose()
     setName('')
+    setScope(privateScope())
   }, [onClose])
 
   const [createSavedView, { loading }] = useMutation<
     CreateSavedViewMutation,
     CreateSavedViewMutationVariables
   >(getParsedDocument(CreateSavedViewDocument), {
-    refetchQueries: [{ query: getParsedDocument(MySavedViewsDocument) }],
+    refetchQueries: ['MySavedViews'],
     awaitRefetchQueries: true,
     update(cache, { data }) {
       const view = data?.createSavedView
@@ -78,6 +85,7 @@ export function SaveViewDialog({
             onChange={(e) => setName(e.target.value)}
           />
         </div>
+        <ScopeVisibilityField value={scope} onChange={setScope} />
         <div className="flex-row-2 justify-end">
           <Button
             color="neutral"
@@ -86,7 +94,7 @@ export function SaveViewDialog({
             {translation('cancel')}
           </Button>
           <Button
-            disabled={name.trim().length < 2 || loading}
+            disabled={name.trim().length < 2 || loading || !isScopeComplete(scope)}
             color="primary"
             onClick={() => {
               createSavedView({
@@ -97,7 +105,7 @@ export function SaveViewDialog({
                     filterDefinition,
                     sortDefinition,
                     parameters,
-                    visibility: SavedViewVisibility.LinkShared,
+                    ...scopeToInput(scope),
                   },
                 },
               })

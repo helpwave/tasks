@@ -15,7 +15,7 @@ import { useRouter } from 'next/router'
 import type { ColumnFiltersState } from '@tanstack/react-table'
 import type { FilterValue } from '@helpwave/hightide'
 import { LocationChips } from '@/components/locations/LocationChips'
-import { LOCATION_PATH_SEPARATOR } from '@/utils/location'
+import { LOCATION_PATH_SEPARATOR, type LocationPathNode } from '@/utils/location'
 import { DueDateUtils } from '@/utils/dueDate'
 
 const getKindStyles = (kind: string) => {
@@ -157,7 +157,7 @@ const LocationPage: NextPage = () => {
   const parentChain = useMemo(() => {
     if (!locationData?.locationNode?.parent) return []
     const chain: Array<{ id: string, title: string, kind?: LocationType }> = []
-    let current: typeof locationData.locationNode.parent | null = locationData.locationNode.parent
+    let current: LocationPathNode | null = locationData.locationNode.parent
 
     while (current) {
       chain.push({

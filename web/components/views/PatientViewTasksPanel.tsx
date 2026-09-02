@@ -10,7 +10,6 @@ import type { QuerySearchInput } from '@/api/gql/generated'
 import {
   PropertyEntity,
   UpdateSavedViewDocument,
-  MySavedViewsDocument,
   SavedViewDocument,
   type UpdateSavedViewMutation,
   type UpdateSavedViewMutationVariables
@@ -273,9 +272,9 @@ export function PatientViewTasksPanel({
     refetchQueries: savedViewId
       ? [
         { query: getParsedDocument(SavedViewDocument), variables: { id: savedViewId } },
-        { query: getParsedDocument(MySavedViewsDocument) },
+        'MySavedViews',
       ]
-      : [{ query: getParsedDocument(MySavedViewsDocument) }],
+      : ['MySavedViews'],
     update(cache, { data }) {
       const view = data?.updateSavedView
       if (view) {
