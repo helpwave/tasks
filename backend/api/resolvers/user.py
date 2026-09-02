@@ -18,12 +18,6 @@ from sqlalchemy import or_, select
 
 
 async def _visible_user_filter(info: Info):
-    """A SQL predicate limiting the user directory to the caller's peers.
-
-    A user is visible if they share at least one accessible location with the
-    caller (their root location falls inside the caller's subtree), plus the
-    caller themselves. This prevents a global cross-tenant directory dump.
-    """
     user = info.context.user
     if not user:
         raise_unauthenticated()

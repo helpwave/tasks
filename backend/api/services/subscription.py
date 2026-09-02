@@ -62,13 +62,6 @@ async def effective_root_location_ids(
     info,
     client_root_location_ids: list[str] | None,
 ) -> list[str]:
-    """Resolve the location roots a subscription is allowed to observe.
-
-    Deny-by-default: the returned ids are always a subset of what the caller can
-    access. Client-supplied roots are intersected with the accessible set; when
-    the client supplies none we fall back to the caller's own root locations
-    (never "everything"). An empty result means the caller may observe nothing.
-    """
     from api.services.authorization import AuthorizationService
 
     user = getattr(info.context, "user", None)

@@ -158,9 +158,6 @@ class UserType:
     ]:
         from api.services.authorization import AuthorizationService
 
-        # A user object only exposes the root locations that lie inside the
-        # *caller's* accessible subtree. Reading your own user returns all of
-        # yours; reading a colleague only reveals the locations you share.
         auth_service = AuthorizationService(info.context.db)
         accessible = await auth_service.get_user_accessible_location_ids(
             info.context.user, info.context

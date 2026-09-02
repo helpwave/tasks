@@ -186,7 +186,6 @@ async def test_cannot_use_property_definition_out_of_scope(two_tenants, db_sessi
     from api.inputs import PropertyValueInput
 
     props = [PropertyValueInput(definition_id=created.id, text_value="v")]
-    # owner may use it, foreign user may not
     await validate_property_value_inputs(info1, props)
     with pytest.raises(GraphQLError):
         await validate_property_value_inputs(info2, props)
@@ -211,9 +210,7 @@ async def test_link_shared_view_denied_across_scope(two_tenants, db_session):
         ),
     )
     assert view.location_id == "loc-a"
-    # owner reads it
     assert (await SavedViewQuery().saved_view(info1, view.id)) is not None
-    # a user from another tenant cannot
     with pytest.raises(GraphQLError):
         await SavedViewQuery().saved_view(info2, view.id)
 
@@ -248,7 +245,6 @@ async def test_user_directory_is_scoped(two_tenants, db_session):
     from api.resolvers.user import UserQuery
 
     info1 = MockInfo(db_session, two_tenants["user1"])
-    # user-2 lives in another tenant and must not be reachable by id
     other = await UserQuery().user(info1, "user-2")
     assert other is None
     myself = await UserQuery().user(info1, "user-1")
@@ -273,11 +269,8 @@ async def test_location_children_are_scoped(two_tenants, db_session):
 @pytest.mark.asyncio
 async def test_effective_subscription_roots_are_scoped(two_tenants, db_session):
     info1 = MockInfo(db_session, two_tenants["user1"])
-    # no client ids -> caller's own roots
     assert set(await effective_root_location_ids(info1, None)) == {"loc-a"}
-    # a foreign root requested by the client is dropped
     assert await effective_root_location_ids(info1, ["loc-b"]) == []
-    # an in-scope child is kept
     assert await effective_root_location_ids(info1, ["loc-a"]) == ["loc-a"]
 
 

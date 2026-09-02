@@ -48,10 +48,6 @@ CLIENT_ID = os.getenv("CLIENT_ID", "tasks-backend")
 CLIENT_SECRET = os.getenv("CLIENT_SECRET", "tasks-secret")
 FRONTEND_CLIENT_ID = os.getenv("FRONTEND_CLIENT_ID", "tasks-web")
 
-# Issuers we accept ``iss`` claims from. Both the internal and public Keycloak
-# URLs are trusted because the browser and the backend reach Keycloak under
-# different hostnames while sharing one realm. Extra issuers can be added via
-# ADDITIONAL_ISSUERS (comma-separated).
 _additional_issuers = [
     issuer.strip()
     for issuer in os.getenv("ADDITIONAL_ISSUERS", "").split(",")
@@ -61,7 +57,6 @@ ALLOWED_ISSUERS = list(
     dict.fromkeys([ISSUER_URI, PUBLIC_ISSUER_URI, *_additional_issuers])
 )
 
-# GraphQL request-shape limits (defence against abusive/expensive documents).
 GRAPHQL_MAX_DEPTH = int(os.getenv("GRAPHQL_MAX_DEPTH", "15"))
 GRAPHQL_MAX_ALIASES = int(os.getenv("GRAPHQL_MAX_ALIASES", "50"))
 GRAPHQL_MAX_TOKENS = int(os.getenv("GRAPHQL_MAX_TOKENS", "2000"))

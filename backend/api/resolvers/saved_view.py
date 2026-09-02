@@ -29,13 +29,6 @@ async def _can_read_shared(
     user: models.User,
     row: models.SavedView,
 ) -> bool:
-    """Non-owner read rule for a saved view.
-
-    A link-shared view is only readable by another user if it is anchored to a
-    location inside that user's accessible subtree. Link-shared views with no
-    location (legacy) stay owner-only, closing the previous cross-tenant "anyone
-    with the id" hole.
-    """
     if row.owner_user_id == user.id:
         return True
     if row.visibility != SavedViewVisibility.LINK_SHARED.value:

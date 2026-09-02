@@ -17,8 +17,6 @@ from sqlalchemy.orm import selectinload
 
 logger = logging.getLogger(LOGGER)
 
-# Audit case ids are entity ids (uuids). Constraining the charset makes it
-# impossible for the value to break out of the Flux string literal below.
 _CASE_ID_PATTERN = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
 _MAX_AUDIT_LIMIT = 1000
 
@@ -71,8 +69,6 @@ class AuditQuery:
                 extensions={"code": "BAD_REQUEST"},
             )
 
-        # Deny-by-default: only expose a case's audit trail to a caller who can
-        # access the underlying patient or task.
         await _authorize_case_access(info, case_id_str)
 
         client = AuditLogger._get_client()

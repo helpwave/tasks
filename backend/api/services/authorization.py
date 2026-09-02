@@ -80,12 +80,6 @@ class AuthorizationService:
     async def default_scope_location_id(
         self, user: models.User | None, context=None
     ) -> str | None:
-        """Pick a deterministic home location for entities the caller creates.
-
-        Used when a client does not name an explicit scaffold location: the
-        entity is anchored to one of the caller's own root locations so it stays
-        inside their accessible subtree.
-        """
         if not user:
             return None
         result = await self.db.execute(

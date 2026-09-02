@@ -197,12 +197,6 @@ async def get_context(
         organizations = _organizations_from_payload(user_payload)
         db_user = await _resolve_user_from_payload(session, user_payload)
 
-    # Deny-by-default at the HTTP boundary: an anonymous GraphQL request never
-    # reaches a resolver in production. WebSocket connections authenticate later
-    # (via connection_params in on_ws_connect), and development keeps the door
-    # open only so the built-in IDE can run introspection. Other routes (e.g.
-    # /export) run their own explicit checks, so we only gate the GraphQL entry
-    # point here.
     if db_user is None and not IS_DEV and _is_graphql_http(connection):
         raise HTTPException(
             status_code=401,
@@ -276,9 +270,6 @@ async def _update_user_root_locations(
     if not root_location_ids:
         personal_org_title = f"{user.username}'s Organization"
 
-        # Prefer a personal root already bound to *this* user. Matching only by
-        # title would let two users who happen to share a username collapse onto
-        # the same location, silently granting each access to the other's data.
         existing_personal = await session.execute(
             select(LocationNode)
             .join(

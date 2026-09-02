@@ -5,6 +5,14 @@
 
 **helpwave tasks** is a modern, open-source task and ward-management platform tailored for healthcare - designed to bring clarity, efficiency and structure to hospitals, wards and clinical workflows.
 
+> ⚠️ **Pre-release — not for productive use.** This project is still under active
+> development and has **not been released yet**. It is **not ready for
+> production or real patient data**, and no stability, security, or data-safety
+> guarantees are made at this stage. We expect this to change over the coming
+> month. Until then, use it for evaluation and development only.
+>
+> Found a security issue? Please report it privately — see [`SECURITY.md`](SECURITY.md).
+
 ## Quick Start
 
 If you simply want to test the application without modifying code, use the production compose file. This pulls official images and runs them behind a reverse proxy.

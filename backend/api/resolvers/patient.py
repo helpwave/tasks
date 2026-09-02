@@ -489,9 +489,6 @@ class PatientMutation(BaseMutationResolver[models.Patient]):
                 data.team_ids
             )
 
-        # ``assigned_location_id`` is written straight onto the model below; it
-        # must be validated here too, otherwise a patient could be planted in a
-        # foreign location's scope when assigned_location_ids is also supplied.
         if (
             data.assigned_location_id is not None
             and data.assigned_location_id not in accessible_location_ids

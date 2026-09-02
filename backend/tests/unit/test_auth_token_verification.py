@@ -86,8 +86,6 @@ def test_tampered_signature_is_rejected():
 
 
 def test_token_from_query_string_is_ignored():
-    """Tokens must never be accepted from the URL (log/history leakage)."""
-
     class _Conn:
         headers: dict = {}
         cookies: dict = {}

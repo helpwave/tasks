@@ -38,10 +38,6 @@ async def lifespan(app: FastAPI):
     logger.info("Shutting down application...")
 
 
-# Order matters: the request-shape limiters run before the auth gate so an
-# unauthenticated caller cannot force expensive parsing/validation. The
-# limiters are stateless config and are passed as instances; the auth gate is
-# passed as a class so a fresh instance is built per request.
 extensions = [
     MaxTokensLimiter(max_token_count=GRAPHQL_MAX_TOKENS),
     MaxAliasesLimiter(max_alias_count=GRAPHQL_MAX_ALIASES),
@@ -50,7 +46,6 @@ extensions = [
 ]
 
 if not IS_DEV:
-    # Introspection is a schema-disclosure vector; keep it for the dev IDE only.
     from strawberry.extensions import DisableIntrospection
 
     extensions.append(DisableIntrospection)
@@ -103,10 +98,6 @@ async def security_headers_middleware(request: Request, call_next):
     return response
 
 
-# The backend OAuth callback/logout routes exist only to let the built-in
-# GraphQL IDE obtain a cookie; the production SPA authenticates through its own
-# OIDC flow. Exposing them in production would serve an anonymous login handler
-# in front of a locked-down API, so they are development-only.
 if IS_DEV:
     app.include_router(auth.router)
 

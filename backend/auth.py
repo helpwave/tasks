@@ -65,12 +65,6 @@ def get_user_payload(connection: HTTPConnection) -> Optional[dict]:
 
 
 def verify_token(token: str) -> dict:
-    """Verify and decode a Keycloak access token.
-
-    Deny-by-default: the signature must validate against the realm JWKS, the
-    token must be unexpired, its issuer must be one we trust, and it must be
-    addressed to this deployment (``azp``/``aud``). Any failure raises.
-    """
     signing_key = _get_jwk_client().get_signing_key_from_jwt(token)
 
     payload = jwt.decode(
@@ -83,8 +77,6 @@ def verify_token(token: str) -> dict:
             "verify_exp": True,
             "verify_iat": True,
             "verify_iss": True,
-            # Keycloak sets ``aud`` inconsistently across clients; we enforce
-            # the audience ourselves below against azp/aud.
             "verify_aud": False,
         },
     )
@@ -133,14 +125,6 @@ def _bearer_from_header(connection: HTTPConnection) -> str | None:
 
 
 def get_token_source(connection: HTTPConnection) -> str | None:
-    """Resolve the caller's bearer token.
-
-    Only two transports are accepted: the ``Authorization: Bearer`` header
-    (HTTP and WebSocket ``connection_params``). Tokens are never read from the
-    query string (they would leak into logs and history). The ``access_token``
-    cookie is honoured in development only, purely so the built-in GraphQL IDE
-    can authenticate; production never trusts it.
-    """
     if hasattr(connection, "connection_params") and connection.connection_params:
         token = get_token_from_connection_params(connection.connection_params)
         if token:

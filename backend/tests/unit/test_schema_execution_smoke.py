@@ -1,11 +1,3 @@
-"""End-to-end smoke test for the *configured* schema and its extensions.
-
-The resolver-level tests call resolvers directly and never exercise
-``schema.execute``, so a misconfigured extension list (e.g. a factory that the
-installed Strawberry version calls with ``execution_context``) would slip
-through. This test runs a query through the real schema wired up in ``main``.
-"""
-
 import pytest
 
 

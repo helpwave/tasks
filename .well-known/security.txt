@@ -1,0 +1,5 @@
+Canonical: https://helpwave.de/.well-known/security.txt
+Contact: mailto:security@helpwave.de
+Encryption: https://keys.openpgp.org/vks/v1/by-fingerprint/720952685A7162BDA45F27DBC62B9749E1C6B631
+Expires: 2028-08-31T23:59:00Z
+Preferred-Languages: en, de

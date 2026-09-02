@@ -9,9 +9,6 @@ from api.context import get_user_from_connection_params
 
 class AuthedGraphQLRouter(GraphQLRouter):
     async def on_ws_connect(self, context):
-        # Deny-by-default: a subscription connection must present a valid bearer
-        # token in its connection_params. Anonymous WebSockets are rejected
-        # before any subscription resolver can run.
         user = None
         if (
             hasattr(context, "connection_params")

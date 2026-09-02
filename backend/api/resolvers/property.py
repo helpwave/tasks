@@ -32,8 +32,6 @@ class PropertyDefinitionQuery:
         accessible = await auth_service.get_user_accessible_location_ids(
             user, info.context
         )
-        # A definition is visible if it lives in the caller's accessible subtree
-        # or is a legacy/global definition (location_id IS NULL).
         conditions = [models.PropertyDefinition.location_id.is_(None)]
         if accessible:
             conditions.append(
@@ -148,11 +146,6 @@ async def _require_definition_scope(
     user: models.User,
     defn: models.PropertyDefinition,
 ) -> None:
-    """A definition may only be mutated from inside its own location scope.
-
-    Legacy/global definitions (``location_id IS NULL``) are read-only: nobody
-    owns them, so no caller is allowed to rewrite the shared schema.
-    """
     if defn.location_id is None:
         raise_forbidden(
             "This property definition is global and cannot be modified. "
@@ -169,11 +162,6 @@ async def user_can_use_definition(
     info: Info,
     definition_id: str,
 ) -> bool:
-    """Whether the caller may attach a property value for this definition.
-
-    In-scope definitions and legacy/global ones are usable; a definition rooted
-    in another tenant's subtree is not.
-    """
     user = info.context.user
     if not user:
         return False
@@ -197,7 +185,6 @@ async def user_can_use_definition(
 
 
 async def validate_property_value_inputs(info: Info, props) -> None:
-    """Reject attaching values for property definitions outside the scope."""
     if not props:
         return
     for prop in props:

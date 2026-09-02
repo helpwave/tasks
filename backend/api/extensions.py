@@ -9,11 +9,6 @@ from strawberry.extensions import SchemaExtension
 
 
 def _iter_top_level_fields(document, selection_set, fragments, seen_fragments):
-    """Yield every field reachable at the operation's top level.
-
-    Fragment spreads and inline fragments are expanded so that wrapping a query
-    in a fragment cannot smuggle a field past the check.
-    """
     if selection_set is None:
         return
     for selection in selection_set.selections:
@@ -36,15 +31,6 @@ def _iter_top_level_fields(document, selection_set, fragments, seen_fragments):
 
 
 class GlobalAuthExtension(SchemaExtension):
-    """Deny-by-default authentication gate.
-
-    An unauthenticated request may only touch introspection meta-fields
-    (``__schema``/``__type``/``__typename``). Every other selection — however
-    it is wrapped (fragment spread, inline fragment, alias) — is rejected. This
-    backstops the HTTP/WebSocket boundary, which already refuses anonymous
-    callers, so a resolver can never run for ``user is None`` by accident.
-    """
-
     def on_execute(self):
         execution_context = self.execution_context
         user = getattr(execution_context.context, "user", None)

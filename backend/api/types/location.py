@@ -38,7 +38,6 @@ class LocationNodeType:
     ):
         if not self.parent_id:
             return None
-        # Never let the tree be walked upward out of the caller's scope.
         accessible = await _accessible_ids(info)
         if str(self.parent_id) not in accessible:
             return None
@@ -72,8 +71,6 @@ class LocationNodeType:
         self,
         info: Info,
     ) -> list[Annotated["PatientType", strawberry.lazy("api.types.patient")]]:
-        # Only surface patients the caller is authorized to see, and only from
-        # a location within their scope.
         accessible = await _accessible_ids(info)
         if str(self.id) not in accessible:
             return []

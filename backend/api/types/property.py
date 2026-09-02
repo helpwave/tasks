@@ -75,9 +75,6 @@ class PropertyValueType:
         if not self.user_value or not self.user_value.startswith("team:"):
             return None
         team_id = self.user_value[5:]
-        # ``user_value`` is client-written free text, so this is an
-        # attacker-controlled id: only resolve it if it is inside the caller's
-        # scope, otherwise it would be a self-serve handle to any location.
         from api.services.authorization import AuthorizationService
 
         auth_service = AuthorizationService(info.context.db)
