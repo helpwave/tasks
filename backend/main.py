@@ -39,12 +39,13 @@ async def lifespan(app: FastAPI):
 
 
 # Order matters: the request-shape limiters run before the auth gate so an
-# unauthenticated caller cannot force expensive parsing/validation. Extensions
-# are passed as factory callables so a fresh instance is built per request.
+# unauthenticated caller cannot force expensive parsing/validation. The
+# limiters are stateless config and are passed as instances; the auth gate is
+# passed as a class so a fresh instance is built per request.
 extensions = [
-    lambda: MaxTokensLimiter(max_token_count=GRAPHQL_MAX_TOKENS),
-    lambda: MaxAliasesLimiter(max_alias_count=GRAPHQL_MAX_ALIASES),
-    lambda: QueryDepthLimiter(max_depth=GRAPHQL_MAX_DEPTH),
+    MaxTokensLimiter(max_token_count=GRAPHQL_MAX_TOKENS),
+    MaxAliasesLimiter(max_alias_count=GRAPHQL_MAX_ALIASES),
+    QueryDepthLimiter(max_depth=GRAPHQL_MAX_DEPTH),
     GlobalAuthExtension,
 ]
 
