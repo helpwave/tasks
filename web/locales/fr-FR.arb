@@ -260,6 +260,8 @@
   "scopeVisibility": "Partage",
   "scopePrivate": "Privé",
   "scopePublic": "Public",
+  "scopeShared": "Partagé par lien",
+  "scopeSharedDescription": "Vous seul voyez cette entrée dans vos listes. Toute personne ayant accès au nœud sélectionné ou à son sous-arbre peut l'ouvrir via son lien.",
   "scopePublicDescription": "Toutes les personnes ayant accès au nœud sélectionné ou à son sous-arbre peuvent voir et utiliser cette entrée.",
   "scopePrivateDescription": "Vous seul pouvez voir et utiliser cette entrée.",
   "scopeSelectNode": "Sélectionner un nœud",

@@ -260,6 +260,8 @@
   "scopeVisibility": "Compartir",
   "scopePrivate": "Privado",
   "scopePublic": "Público",
+  "scopeShared": "Compartido por enlace",
+  "scopeSharedDescription": "Solo usted ve esta entrada en sus listas. Todos los que pueden acceder al nodo seleccionado o a su subárbol pueden abrirla mediante su enlace.",
   "scopePublicDescription": "Todos los que tienen acceso al nodo seleccionado o a su subárbol pueden ver y usar esta entrada.",
   "scopePrivateDescription": "Solo usted puede ver y usar esta entrada.",
   "scopeSelectNode": "Seleccionar nodo",

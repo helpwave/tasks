@@ -85,7 +85,7 @@ export function SaveViewDialog({
             onChange={(e) => setName(e.target.value)}
           />
         </div>
-        <ScopeVisibilityField value={scope} onChange={setScope} />
+        <ScopeVisibilityField value={scope} onChange={setScope} allowShared />
         <div className="flex-row-2 justify-end">
           <Button
             color="neutral"

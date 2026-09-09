@@ -260,6 +260,8 @@
   "scopeVisibility": "Delen",
   "scopePrivate": "Privé",
   "scopePublic": "Openbaar",
+  "scopeShared": "Gedeeld via link",
+  "scopeSharedDescription": "Alleen u ziet dit item in uw lijsten. Iedereen met toegang tot het geselecteerde knooppunt of de onderliggende structuur kan het via de link openen.",
   "scopePublicDescription": "Iedereen met toegang tot de geselecteerde node of de onderliggende structuur kan dit item zien en gebruiken.",
   "scopePrivateDescription": "Alleen u kunt dit item zien en gebruiken.",
   "scopeSelectNode": "Node selecteren",

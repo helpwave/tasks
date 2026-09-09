@@ -326,7 +326,7 @@ const ViewsSettingsPage: NextPage = () => {
               <label>{translation('name')}</label>
               <Input value={editName} onChange={(e) => setEditName(e.target.value)} />
             </div>
-            <ScopeVisibilityField value={editScope} onChange={setEditScope} />
+            <ScopeVisibilityField value={editScope} onChange={setEditScope} allowShared />
             <div className="flex-row-2 justify-end">
               <Button color="neutral" onClick={() => setEditOpen(false)}>{translation('cancel')}</Button>
               <Button

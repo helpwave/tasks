@@ -404,6 +404,8 @@
   "scopeVisibility": "Freigabe",
   "scopePrivate": "Privat",
   "scopePublic": "Öffentlich",
+  "scopeShared": "Per Link geteilt",
+  "scopeSharedDescription": "Nur Sie sehen diesen Eintrag in Ihren Listen. Alle, die Zugriff auf den gewählten Knoten oder dessen Unterbaum haben, können ihn über den Link öffnen.",
   "scopePublicDescription": "Alle, die Zugriff auf den gewählten Knoten oder dessen Unterbaum haben, können diesen Eintrag sehen und verwenden.",
   "scopePrivateDescription": "Nur Sie können diesen Eintrag sehen und verwenden.",
   "scopeSelectNode": "Knoten auswählen",

@@ -404,6 +404,8 @@
   "scopeVisibility": "Sharing",
   "scopePrivate": "Private",
   "scopePublic": "Public",
+  "scopeShared": "Shared via link",
+  "scopeSharedDescription": "Only you see this entry in your lists. Everyone who can access the selected node or its subtree can open it via its link.",
   "scopePublicDescription": "Everyone who can access the selected node or its subtree can see and use this entry.",
   "scopePrivateDescription": "Only you can see and use this entry.",
   "scopeSelectNode": "Select node",
