@@ -1,12 +1,12 @@
-alembic==1.19.1
+alembic==1.19.2
 asyncpg==0.31.0
 fastapi==0.141.1
 python-dotenv==1.2.3
-PyJWT[crypto]==2.13.0
+PyJWT[crypto]==2.14.0
 redis==8.1.0
 requests==2.34.2
 sqlalchemy==2.0.52
-strawberry-graphql[fastapi]==0.327.2
+strawberry-graphql[fastapi]==0.327.7
 uvicorn[standard]==0.52.4
 influxdb_client==1.50.0
 openpyxl==3.1.5
