@@ -769,7 +769,8 @@ export enum SavedViewEntityType {
 
 export enum ScopeVisibility {
   Private = 'PRIVATE',
-  Public = 'PUBLIC'
+  Public = 'PUBLIC',
+  Shared = 'SHARED'
 }
 
 export type ScopedPatientCountsType = {

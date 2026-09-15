@@ -13,7 +13,9 @@ from api.services.authorization import AuthorizationService
 from database import models
 
 PRIVATE = ScopeVisibility.PRIVATE.value
+SHARED = ScopeVisibility.SHARED.value
 PUBLIC = ScopeVisibility.PUBLIC.value
+LINK_READABLE = (PUBLIC, SHARED)
 
 
 def normalize_root_location_ids(
@@ -47,7 +49,7 @@ async def can_read_scoped(info: Info, user: models.User | None, row: Any) -> boo
     owner_user_id = getattr(row, "owner_user_id", None)
     if owner_user_id is not None and owner_user_id == user.id:
         return True
-    if row.visibility != PUBLIC:
+    if row.visibility not in LINK_READABLE:
         return False
     if row.location_id is None:
         return True
@@ -61,9 +63,16 @@ async def resolve_scope_input(
     user: models.User,
     visibility: ScopeVisibility,
     location_id: strawberry.ID | str | None,
+    *,
+    allow_shared: bool = False,
 ) -> tuple[str, str | None]:
     if visibility == ScopeVisibility.PRIVATE:
         return PRIVATE, None
+    if visibility == ScopeVisibility.SHARED and not allow_shared:
+        raise GraphQLError(
+            "Link sharing is only available for saved views.",
+            extensions={"code": "BAD_REQUEST"},
+        )
     auth_service = AuthorizationService(info.context.db)
     if location_id is None:
         default_location_id = await auth_service.default_scope_location_id(
@@ -74,12 +83,12 @@ async def resolve_scope_input(
                 "A location is required to share this entry.",
                 extensions={"code": "BAD_REQUEST"},
             )
-        return PUBLIC, default_location_id
+        return visibility.value, default_location_id
     if not await auth_service.can_access_location(
         user, str(location_id), info.context
     ):
         raise_forbidden()
-    return PUBLIC, str(location_id)
+    return visibility.value, str(location_id)
 
 
 async def apply_scope_update(
@@ -88,6 +97,8 @@ async def apply_scope_update(
     row: Any,
     visibility: ScopeVisibility | None,
     location_id: strawberry.ID | None,
+    *,
+    allow_shared: bool = False,
 ) -> None:
     if visibility is None and location_id is None:
         return
@@ -98,7 +109,7 @@ async def apply_scope_update(
         str(location_id) if location_id is not None else row.location_id
     )
     row.visibility, row.location_id = await resolve_scope_input(
-        info, user, target_visibility, target_location_id
+        info, user, target_visibility, target_location_id, allow_shared=allow_shared
     )
 
 

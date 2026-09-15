@@ -423,6 +423,108 @@ async def test_private_view_is_owner_only_and_needs_no_location(
         )
 
 
+@pytest.mark.asyncio
+async def test_shared_view_is_reachable_by_link_but_not_listed(
+    two_tenants, db_session
+):
+    info1 = MockInfo(db_session, two_tenants["user1"])
+    info2 = MockInfo(db_session, two_tenants["user2"])
+    info3 = MockInfo(db_session, two_tenants["user3"])
+
+    view = await SavedViewMutation().create_saved_view(
+        info1,
+        CreateSavedViewInput(
+            name="Shared by link",
+            base_entity_type=SavedViewEntityType.PATIENT,
+            filter_definition="{}",
+            sort_definition="{}",
+            parameters="{}",
+            visibility=ScopeVisibility.SHARED,
+            location_id="loc-a",
+        ),
+    )
+    assert view.visibility == ScopeVisibility.SHARED
+    assert view.location_id == "loc-a"
+    assert view.id in [v.id for v in await SavedViewQuery().my_saved_views(info1)]
+    assert view.id not in [v.id for v in await SavedViewQuery().my_saved_views(info3)]
+    assert (await SavedViewQuery().saved_view(info3, view.id)) is not None
+    with pytest.raises(GraphQLError):
+        await SavedViewQuery().saved_view(info2, view.id)
+
+    copy = await SavedViewMutation().duplicate_saved_view(info3, view.id, "Copy")
+    assert copy.visibility == ScopeVisibility.PRIVATE
+    assert copy.owner_user_id == "user-3"
+
+
+@pytest.mark.asyncio
+async def test_shared_view_defaults_into_scope_and_can_be_updated(
+    two_tenants, db_session
+):
+    info1 = MockInfo(db_session, two_tenants["user1"])
+    info3 = MockInfo(db_session, two_tenants["user3"])
+
+    view = await SavedViewMutation().create_saved_view(
+        info1,
+        CreateSavedViewInput(
+            name="Shared",
+            base_entity_type=SavedViewEntityType.TASK,
+            filter_definition="{}",
+            sort_definition="{}",
+            parameters="{}",
+            visibility=ScopeVisibility.SHARED,
+        ),
+    )
+    assert view.location_id == "loc-a"
+
+    listed = await SavedViewMutation().update_saved_view(
+        info1, view.id, UpdateSavedViewInput(visibility=ScopeVisibility.PUBLIC)
+    )
+    assert listed.visibility == ScopeVisibility.PUBLIC
+    assert listed.location_id == "loc-a"
+    assert view.id in [v.id for v in await SavedViewQuery().my_saved_views(info3)]
+
+    unlisted = await SavedViewMutation().update_saved_view(
+        info1, view.id, UpdateSavedViewInput(visibility=ScopeVisibility.SHARED)
+    )
+    assert unlisted.visibility == ScopeVisibility.SHARED
+    assert unlisted.location_id == "loc-a"
+    assert view.id not in [v.id for v in await SavedViewQuery().my_saved_views(info3)]
+    assert (await SavedViewQuery().saved_view(info3, view.id)) is not None
+
+
+@pytest.mark.asyncio
+async def test_shared_visibility_is_rejected_for_presets_and_definitions(
+    two_tenants, db_session
+):
+    info1 = MockInfo(db_session, two_tenants["user1"])
+
+    with pytest.raises(GraphQLError):
+        await TaskPresetMutation().create_task_preset(
+            info1,
+            _preset_input("Shared", visibility=ScopeVisibility.SHARED, location_id="loc-a"),
+        )
+    with pytest.raises(GraphQLError):
+        await PropertyDefinitionMutation().create_property_definition(
+            info1,
+            CreatePropertyDefinitionInput(
+                name="Shared",
+                field_type=FieldType.FIELD_TYPE_TEXT,
+                allowed_entities=[PropertyEntity.PATIENT],
+                visibility=ScopeVisibility.SHARED,
+                location_id="loc-a",
+            ),
+        )
+
+    preset = await TaskPresetMutation().create_task_preset(
+        info1, _preset_input("Private")
+    )
+    with pytest.raises(GraphQLError):
+        await TaskPresetMutation().update_task_preset(
+            info1, preset.id, UpdateTaskPresetInput(visibility=ScopeVisibility.SHARED)
+        )
+    assert preset.visibility == ScopeVisibility.PRIVATE
+
+
 def _preset_input(name: str, **kwargs) -> CreateTaskPresetInput:
     return CreateTaskPresetInput(
         name=name,

@@ -86,7 +86,7 @@ class SavedViewMutation:
     ) -> SavedViewType:
         user = _require_user(info)
         visibility, location_id = await resolve_scope_input(
-            info, user, data.visibility, data.location_id
+            info, user, data.visibility, data.location_id, allow_shared=True
         )
         for blob, label in (
             (data.filter_definition, "filter_definition"),
@@ -158,7 +158,9 @@ class SavedViewMutation:
             row.related_parameters = _validated_json(
                 data.related_parameters, "related_parameters"
             )
-        await apply_scope_update(info, user, row, data.visibility, data.location_id)
+        await apply_scope_update(
+            info, user, row, data.visibility, data.location_id, allow_shared=True
+        )
 
         await db.commit()
         await db.refresh(row)

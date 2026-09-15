@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react'
 import { Chip } from '@helpwave/hightide'
-import { Lock } from 'lucide-react'
+import { Link2, Lock } from 'lucide-react'
 import clsx from 'clsx'
 import { ScopeVisibility, type LocationType } from '@/api/gql/generated'
 import { LocationChips } from '@/components/locations/LocationChips'
@@ -78,6 +78,7 @@ export function ScopeChip({ visibility, location, small = false, className }: Sc
     return <ScopeLocationChip location={location} small={small} className={className} />
   }
   const isPublic = visibility === ScopeVisibility.Public
+  const isShared = visibility === ScopeVisibility.Shared
   return (
     <Chip
       size="sm"
@@ -85,8 +86,11 @@ export function ScopeChip({ visibility, location, small = false, className }: Sc
       coloringStyle="tonal"
       className={clsx('inline-flex items-center gap-1 w-fit', { 'text-xs': small }, className)}
     >
-      {!isPublic && <Lock className="size-force-4 shrink-0" />}
-      <span>{isPublic ? translation('scopePublic') : translation('scopePrivate')}</span>
+      {isShared && <Link2 className="size-force-4 shrink-0" />}
+      {!isPublic && !isShared && <Lock className="size-force-4 shrink-0" />}
+      <span>
+        {isPublic ? translation('scopePublic') : isShared ? translation('scopeShared') : translation('scopePrivate')}
+      </span>
     </Chip>
   )
 }

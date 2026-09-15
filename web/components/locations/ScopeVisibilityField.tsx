@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Button, Checkbox } from '@helpwave/hightide'
+import { Button, Checkbox, Select, SelectOption } from '@helpwave/hightide'
 import { MapPin } from 'lucide-react'
 import clsx from 'clsx'
 import { ScopeVisibility } from '@/api/gql/generated'
@@ -24,7 +24,7 @@ export const scopeFromEntity = (entity: {
   location?: ScopeLocation | null,
 }): ScopeValue => ({
   visibility: entity.visibility,
-  location: entity.visibility === ScopeVisibility.Public ? entity.location ?? null : null,
+  location: entity.visibility === ScopeVisibility.Private ? null : entity.location ?? null,
 })
 
 export const isScopeComplete = (value: ScopeValue): boolean =>
@@ -32,7 +32,7 @@ export const isScopeComplete = (value: ScopeValue): boolean =>
 
 export const scopeToInput = (value: ScopeValue): { visibility: ScopeVisibility, locationId: string | null } => ({
   visibility: value.visibility,
-  locationId: value.visibility === ScopeVisibility.Public ? value.location?.id ?? null : null,
+  locationId: value.visibility === ScopeVisibility.Private ? null : value.location?.id ?? null,
 })
 
 export const scopeEquals = (a: ScopeValue, b: ScopeValue): boolean =>
@@ -42,48 +42,74 @@ type ScopeVisibilityFieldProps = {
   value: ScopeValue,
   onChange: (value: ScopeValue) => void,
   disabled?: boolean,
+  allowShared?: boolean,
   className?: string,
 }
+
+const visibilityDescriptionKey = {
+  [ScopeVisibility.Private]: 'scopePrivateDescription',
+  [ScopeVisibility.Shared]: 'scopeSharedDescription',
+  [ScopeVisibility.Public]: 'scopePublicDescription',
+} as const
 
 export function ScopeVisibilityField({
   value,
   onChange,
   disabled = false,
+  allowShared = false,
   className,
 }: ScopeVisibilityFieldProps) {
   const translation = useTasksTranslation()
   const [dialogOpen, setDialogOpen] = useState(false)
   const isPublic = value.visibility === ScopeVisibility.Public
+  const needsLocation = value.visibility !== ScopeVisibility.Private
 
-  const setPublic = (checked: boolean) => {
+  const setVisibility = (visibility: ScopeVisibility) => {
     if (disabled) return
     onChange({
-      visibility: checked ? ScopeVisibility.Public : ScopeVisibility.Private,
-      location: checked ? value.location : null,
+      visibility,
+      location: visibility === ScopeVisibility.Private ? null : value.location,
     })
   }
 
   return (
     <div className={clsx('flex flex-col gap-3', className)}>
       <span className="typography-label-lg">{translation('scopeVisibility')}</span>
-      <div className="flex items-start gap-3">
-        <Checkbox
-          value={isPublic}
-          disabled={disabled}
-          onValueChange={setPublic}
-          className="mt-0.5 shrink-0"
-        />
-        <div
-          className={clsx('flex flex-col min-w-0 select-none', disabled ? 'cursor-default' : 'cursor-pointer')}
-          onClick={() => setPublic(!isPublic)}
-        >
-          <span className="font-medium">{translation('scopePublic')}</span>
+      {allowShared ? (
+        <div className="flex flex-col gap-1">
+          <Select<ScopeVisibility>
+            value={value.visibility}
+            disabled={disabled}
+            onValueChange={setVisibility}
+          >
+            <SelectOption value={ScopeVisibility.Private} label={translation('scopePrivate')} />
+            <SelectOption value={ScopeVisibility.Shared} label={translation('scopeShared')} />
+            <SelectOption value={ScopeVisibility.Public} label={translation('scopePublic')} />
+          </Select>
           <span className="text-description text-sm">
-            {isPublic ? translation('scopePublicDescription') : translation('scopePrivateDescription')}
+            {translation(visibilityDescriptionKey[value.visibility])}
           </span>
         </div>
-      </div>
-      {isPublic && (
+      ) : (
+        <div className="flex items-start gap-3">
+          <Checkbox
+            value={isPublic}
+            disabled={disabled}
+            onValueChange={(checked) => setVisibility(checked ? ScopeVisibility.Public : ScopeVisibility.Private)}
+            className="mt-0.5 shrink-0"
+          />
+          <div
+            className={clsx('flex flex-col min-w-0 select-none', disabled ? 'cursor-default' : 'cursor-pointer')}
+            onClick={() => setVisibility(isPublic ? ScopeVisibility.Private : ScopeVisibility.Public)}
+          >
+            <span className="font-medium">{translation('scopePublic')}</span>
+            <span className="text-description text-sm">
+              {isPublic ? translation('scopePublicDescription') : translation('scopePrivateDescription')}
+            </span>
+          </div>
+        </div>
+      )}
+      {needsLocation && (
         <div className="flex flex-wrap items-center gap-3 rounded-lg border border-divider bg-surface-subdued p-3">
           <div className="flex-1 min-w-0 flex flex-col gap-1">
             <span className="text-xs font-semibold uppercase text-description">{translation('scopeStoredAt')}</span>
@@ -111,7 +137,7 @@ export function ScopeVisibilityField({
         onSelect={(locations) => {
           const node = locations[0]
           if (!node) return
-          onChange({ visibility: ScopeVisibility.Public, location: node })
+          onChange({ visibility: value.visibility, location: node })
         }}
         initialSelectedIds={value.location ? [value.location.id] : []}
         multiSelect={false}

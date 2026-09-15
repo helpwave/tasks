@@ -10,8 +10,8 @@ A **SavedView** stores a named configuration for list screens:
 | `sortDefinition` | JSON string: TanStack `SortingState` array. |
 | `parameters` | JSON string: **scope** and cross-entity context — `rootLocationIds`, `locationId`, `searchQuery` (patient), `assigneeId` (task / my tasks). |
 | `baseEntityType` | `PATIENT` or `TASK` — primary tab when opening `/view/:uid`. |
-| `visibility` | `PRIVATE` (owner only, no location needed) or `PUBLIC` (stored at a scaffold node via `locationId`). |
-| `locationId` | Scaffold node a `PUBLIC` view is stored at. Everyone who can reach that node sees the view: users whose selected root location lies on the node's path (ancestor or descendant). |
+| `visibility` | `PRIVATE` (owner only, no location needed), `SHARED` (reachable by link at a scaffold node via `locationId`, listed only for the owner) or `PUBLIC` (stored at a scaffold node via `locationId`, listed for everyone in scope). |
+| `locationId` | Scaffold node a `SHARED` or `PUBLIC` view is stored at. Everyone who can reach that node sees the view: users whose selected root location lies on the node's path (ancestor or descendant). |
 
 Location is **not** a separate route anymore for saved views: it is encoded in `parameters` (`rootLocationIds`, `locationId`).
 
@@ -21,10 +21,11 @@ Saved views, task presets and property definitions share the same scoping model 
 
 - **Private** (default): only the owner sees the entry. No scaffold node is required.
 - **Public**: the entry is stored at a scaffold node (`locationId`). It is visible to everyone who can access that node and whose selected root location lies on the node's path, i.e. the node itself, its subtree and its ancestors. Storing an entry at the root makes it visible to everyone.
+- **Shared** (saved views only): the view is stored at a scaffold node like a public one, but it is only listed for its owner. Everyone in the node's scope can open it via its link (`savedView(id)`), which mirrors the former `LINK_SHARED` mode.
 
 List queries (`mySavedViews`, `taskPresets`, `propertyDefinitions`) accept `rootLocationIds`; the web client passes the currently selected root locations so lists follow the app node selection. Editing stays with the owner (views, presets) or with users who can access the node (property definitions).
 
-Migration `add_scope_visibility` makes existing property definitions public on the root node and turns existing saved views and presets private.
+Migration `add_scope_visibility` makes existing property definitions public on the root node, keeps formerly link-shared saved views reachable by link (`SHARED`, stored at their node or the root) while other views become private, and turns existing presets private.
 
 ## Cross-entity model
 

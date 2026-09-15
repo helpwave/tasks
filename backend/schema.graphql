@@ -403,6 +403,7 @@ enum SavedViewEntityType {
 
 enum ScopeVisibility {
   PRIVATE
+  SHARED
   PUBLIC
 }
 

@@ -154,6 +154,7 @@ class UpdateLocationNodeInput:
 @strawberry.enum
 class ScopeVisibility(Enum):
     PRIVATE = "private"
+    SHARED = "shared"
     PUBLIC = "public"
 
 
