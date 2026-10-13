@@ -1,4 +1,4 @@
-import { DateUtils, Tooltip, useLocale } from '@helpwave/hightide'
+import { DateUtils, Tooltip, useLocalization } from '@helpwave/hightide'
 import clsx from 'clsx'
 import { useEffect, useMemo, useState } from 'react'
 
@@ -7,7 +7,7 @@ type CurrentTimeProps = {
 }
 
 export const CurrentTime = ({ className }: CurrentTimeProps) => {
-  const { locale, timeZone, is24HourFormat } = useLocale()
+  const { locale, timeZone, is24HourFormat } = useLocalization()
   const [date, setDate] = useState(new Date())
 
   useEffect(() => {

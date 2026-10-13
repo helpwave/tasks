@@ -13,7 +13,7 @@ import { TaskList } from '@/components/tables/TaskList'
 import { PatientList } from '@/components/tables/PatientList'
 import { overviewRecentTaskToTaskViewModel } from '@/utils/overviewRecentTaskToTaskViewModel'
 import { overviewRecentPatientToPatientViewModel } from '@/utils/overviewRecentPatientToPatientViewModel'
-import { DateUtils, useLocale } from '@helpwave/hightide'
+import { DateUtils, useLocalization } from '@helpwave/hightide'
 
 
 const getGreetingKey = (timeZone: string) => {
@@ -32,7 +32,7 @@ interface GreetingSectionProps {
 
 const GreetingSection = ({ userName, userAvatarUrl }: GreetingSectionProps) => {
   const translation = useTasksTranslation()
-  const { timeZone } = useLocale()
+  const { timeZone } = useLocalization()
   const greetingKey = getGreetingKey(timeZone ?? 'Europe/Berlin')
 
   return (

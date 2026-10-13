@@ -12,7 +12,6 @@ import {
   Input,
   LoadingContainer,
   Select,
-  SelectOption,
   Textarea,
   useCreateForm,
   Drawer,
@@ -364,10 +363,10 @@ export const TaskDataEditor = ({
                       onEditComplete?.(nextValue)
                     }}
                   >
-                    <SelectOption value="" label={translation('none') || 'None'} />
+                    <Select.Option value="" label={translation('none') || 'None'} />
                     {patients.map(patient => {
                       return (
-                        <SelectOption key={patient.id} value={patient.id} label={patient.name} />
+                        <Select.Option key={patient.id} value={patient.id} label={patient.name} />
                       )
                     })}
                   </Select>
@@ -534,14 +533,14 @@ export const TaskDataEditor = ({
                       dataProps.onEditComplete?.(priority)
                     }}
                   >
-                    <SelectOption value="none" iconAppearance="right" label={translation('priorityNone')} />
+                    <Select.Option value="none" iconAppearance="right" label={translation('priorityNone')} />
                     {priorities.map(({ value, label }) => (
-                      <SelectOption key={value} value={value} iconAppearance="right" label={label}>
+                      <Select.Option key={value} value={value} iconAppearance="right" label={label}>
                         <div className="flex items-center gap-2">
                           <span className={`w-2 h-2 rounded-full ${PriorityUtils.toBackgroundColor(value as TaskPriority | null | undefined)}`} />
                           <span>{label}</span>
                         </div>
-                      </SelectOption>
+                      </Select.Option>
                     ))}
                   </Select>
                 )

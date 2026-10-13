@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from 'react'
 import type { FormFieldDataHandling } from '@helpwave/hightide'
-import { FormProvider, Input, DateTimeInput, Select, SelectOption, Textarea, Checkbox, Button, ConfirmDialog, LoadingContainer, useCreateForm, FormField, Visibility, useFormObserverKey, IconButton } from '@helpwave/hightide'
+import { FormProvider, Input, DateTimeInput, Select, Textarea, Checkbox, Button, ConfirmDialog, LoadingContainer, useCreateForm, FormField, Visibility, useFormObserverKey, IconButton } from '@helpwave/hightide'
 import { CenteredLoadingLogo } from '@/components/CenteredLoadingLogo'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import type { CreatePatientInput, LocationNodeType, UpdatePatientInput } from '@/api/gql/generated'
@@ -377,7 +377,7 @@ export const PatientDataEditor = ({
                 {...interactionStates}
               >
                 {sexOptions.map(option => (
-                  <SelectOption key={option.value} value={option.value} label={option.label} />
+                  <Select.Option key={option.value} value={option.value} label={option.label} />
                 ))}
               </Select>
             )}

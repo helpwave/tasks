@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from 'react'
-import { Button, Drawer, ExpandableContent, ExpandableHeader, ExpandableRoot, useLocale } from '@helpwave/hightide'
+import { Button, Drawer, ExpandableContent, ExpandableHeader, ExpandableRoot, useLocalization } from '@helpwave/hightide'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { CheckCircle2, ChevronDown, Circle, Combine, PlusIcon } from 'lucide-react'
 import { SortDirection } from '@/api/gql/generated'
@@ -93,7 +93,7 @@ export const PatientTasksView = ({
   const openTasks = useMemo(() => sortByDueDate(tasks.filter(t => !t.done)), [tasks])
   const closedTasks = useMemo(() => sortByDueDate(tasks.filter(t => t.done)), [tasks])
 
-  const { locale, timeZone } = useLocale()
+  const { locale, timeZone } = useLocalization()
   const buildExportRequest = useCallback((format: TableExportFormat): TableExportRequest => ({
     entity: 'tasks',
     format,

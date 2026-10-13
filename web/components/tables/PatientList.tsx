@@ -1,7 +1,7 @@
 import { useMemo, useState, forwardRef, useImperativeHandle, useEffect, useCallback, useRef, type ReactNode } from 'react'
 import { useMutation } from '@apollo/client/react'
 import type { IdentifierFilterValue, FilterListItem, FilterListPopUpBuilderProps } from '@helpwave/hightide'
-import { Chip, DateUtils, FillerCell, SearchBar, ProgressIndicator, Tooltip, Drawer, TableProvider, TableDisplay, TableColumnSwitcher, IconButton, useLocale, FilterList, SortingList, Button, ExpansionIcon, Visibility, ConfirmDialog, VirtualizedCardGrid, overscanRowsForBuffer } from '@helpwave/hightide'
+import { Chip, DateUtils, FillerCell, SearchBar, ProgressIndicator, Tooltip, Drawer, TableProvider, TableDisplay, TableColumnSwitcher, IconButton, useLocalization, FilterList, SortingList, Button, ExpansionIcon, Visibility, ConfirmDialog, VirtualizedCardGrid, overscanRowsForBuffer } from '@helpwave/hightide'
 import clsx from 'clsx'
 import { LayoutGrid, PlusIcon, Table2 } from 'lucide-react'
 import type { LocationType } from '@/api/gql/generated'
@@ -177,7 +177,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
 }, ref) => {
   const translation = useTasksTranslation()
   const isPrinting = useIsPrinting()
-  const { locale } = useLocale()
+  const { locale } = useLocalization()
   const { selectedRootLocationIds } = useTasksContext()
   const { refreshingPatientIds } = useRefreshingEntityIds()
   const { data: propertyDefinitionsData } = usePropertyDefinitions()
@@ -691,7 +691,7 @@ export const PatientList = forwardRef<PatientListRef, PatientListProps>(({
     })
   ), [patientPropertyColumns, translation, handleOpenClearProperty])
 
-  const { timeZone, is24HourFormat } = useLocale()
+  const { timeZone, is24HourFormat } = useLocalization()
   const formatBirthdate = useCallback(
     (birthdate: Date) => DateUtils.formatAbsolute(birthdate, locale, 'date', { timeZone, is24HourFormat }),
     [locale, timeZone, is24HourFormat]

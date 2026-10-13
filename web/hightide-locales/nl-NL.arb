@@ -1,0 +1,10 @@
+{
+  "pThemes": "{count, plural, =1{Thema} other{Thema''s}}",
+  "@pThemes": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  }
+}

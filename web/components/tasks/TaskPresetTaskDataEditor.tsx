@@ -6,7 +6,6 @@ import {
   FormProvider,
   Input,
   Select,
-  SelectOption,
   Textarea,
   useCreateForm
 } from '@helpwave/hightide'
@@ -105,14 +104,14 @@ export function TaskPresetTaskDataEditor({
                     dataProps.onEditComplete?.(priority)
                   }}
                 >
-                  <SelectOption value="none" iconAppearance="right" label={translation('priorityNone')} />
+                  <Select.Option value="none" iconAppearance="right" label={translation('priorityNone')} />
                   {priorities.map(({ value, label }) => (
-                    <SelectOption key={value} value={value} iconAppearance="right" label={label}>
+                    <Select.Option key={value} value={value} iconAppearance="right" label={label}>
                       <div className="flex items-center gap-2">
                         <span className={`w-2 h-2 rounded-full ${PriorityUtils.toBackgroundColor(value as TaskPriority | null | undefined)}`} />
                         <span>{label}</span>
                       </div>
-                    </SelectOption>
+                    </Select.Option>
                   ))}
                 </Select>
               )

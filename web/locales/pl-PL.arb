@@ -1,0 +1,582 @@
+{
+  "@@locale": "pl-PL",
+  "account": "Konto",
+  "active": "Aktywny",
+  "add": "Dodaj",
+  "addFastAccess": "Dodaj szybki dostęp",
+  "addFastAccessDescription": "Podaj nazwę nowego szybkiego dostępu.",
+  "addPatient": "Dodaj pacjenta",
+  "addProperty": "Dodaj właściwość",
+  "addTask": "Dodaj zadanie",
+  "archivedPropertyDescription": "Zarchiwizowanych właściwości nie można już przypisywać do obiektów.",
+  "archiveProperty": "Archiwizuj właściwość",
+  "assignedTo": "Przypisano do",
+  "assigneeTeam": "Przypisany zespół",
+  "additionalAssigneesCount": "+{count}",
+  "@additionalAssigneesCount": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "authenticationFailed": "Uwierzytelnianie nie powiodło się",
+  "birthdate": "Data urodzenia",
+  "cancel": "Anuluj",
+  "clearCache": "Wyczyść pamięć podręczną",
+  "close": "Zamknij",
+  "clinics": "Kliniki",
+  "closedTasks": "Zamknięte zadania",
+  "conflictDetected": "Wykryto konflikt",
+  "confirm": "Potwierdź",
+  "confirmShiftHandover": "Potwierdź przekazanie dyżuru",
+  "confirmShiftHandoverDescription": "Czy na pewno chcesz przekazać wszystkie otwarte zadania wybranemu użytkownikowi?",
+  "confirmShiftHandoverDescriptionWithName": "Czy na pewno chcesz przekazać {taskCount, plural, =1{# otwarte zadanie} few{# otwarte zadania} many{# otwartych zadań} other{# otwartego zadania}} użytkownikowi {name}?",
+  "@confirmShiftHandoverDescriptionWithName": {
+    "placeholders": {
+      "taskCount": {
+        "type": "number"
+      },
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "copyShareLink": "Kopiuj link",
+  "copyViewToMyViews": "Kopiuj do mojego szybkiego dostępu",
+  "confirmDeleteView": "Usunąć ten zapisany szybki dostęp? Tej operacji nie można cofnąć.",
+  "create": "Utwórz",
+  "createTask": "Utwórz zadanie",
+  "creationDate": "Data utworzenia",
+  "currentTime": "Aktualny czas",
+  "dashboard": "Pulpit",
+  "dashboardWelcomeDescription": "Oto co dzieje się dzisiaj.",
+  "dashboardWelcomeMorning": "Dzień dobry, {name}!",
+  "@dashboardWelcomeMorning": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "dashboardWelcomeNoon": "Dzień dobry, {name}!",
+  "@dashboardWelcomeNoon": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "dashboardWelcomeAfternoon": "Dzień dobry, {name}!",
+  "@dashboardWelcomeAfternoon": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "dashboardWelcomeEvening": "Dobry wieczór, {name}!",
+  "@dashboardWelcomeEvening": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "dashboardWelcomeNight": "Dobranoc, {name}!",
+  "@dashboardWelcomeNight": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "delete": "Usuń",
+  "description": "Opis",
+  "diverse": "Inna",
+  "descriptionPlaceholder": "Dodaj więcej szczegółów...",
+  "developmentAndPreviewInstance": "Instancja deweloperska i podglądowa",
+  "dismiss": "Odrzuć",
+  "duplicate": "Duplikuj",
+  "done": "Gotowe",
+  "dueDate": "Termin",
+  "dueDateInDays": "+{days, plural, =1{# dzień} few{# dni} many{# dni} other{# dnia}}",
+  "@dueDateInDays": {
+    "placeholders": {
+      "days": {
+        "type": "number"
+      }
+    }
+  },
+  "dueDateInHours": "+{hours, plural, =1{# godzina} few{# godziny} many{# godzin} other{# godziny}}",
+  "@dueDateInHours": {
+    "placeholders": {
+      "hours": {
+        "type": "number"
+      }
+    }
+  },
+  "dueDateNow": "Teraz",
+  "dueDateToday": "Dzisiaj",
+  "dueDateTomorrow": "Jutro",
+  "edit": "Edytuj",
+  "editPatient": "Edytuj pacjenta",
+  "editTask": "Edytuj zadanie",
+  "errorOccurred": "Wystąpił błąd",
+  "estimatedTime": "Szacowany czas (minuty)",
+  "export": "Eksportuj",
+  "exportCsv": "Eksportuj jako CSV",
+  "exportExcel": "Eksportuj jako Excel (do druku)",
+  "exportFailed": "Eksport nie powiódł się. Spróbuj ponownie.",
+  "timeEstimate": "Szacowany czas",
+  "nMinutesShort": "{minCount} min",
+  "@nMinutesShort": {
+    "placeholders": {
+      "minCount": {
+        "type": "number"
+      }
+    }
+  },
+  "feedback": "Opinia",
+  "female": "Kobieta",
+  "filter": "Filtr",
+  "filterAll": "Wszystkie",
+  "filterUndone": "Niewykonane",
+  "firstName": "Imię",
+  "freeBeds": "Wolne łóżka",
+  "homePage": "Strona główna",
+  "hide": "Ukryj",
+  "imprint": "Nota prawna",
+  "inactive": "Nieaktywny",
+  "language": "Język",
+  "lastName": "Nazwisko",
+  "listViewCard": "Widok kart",
+  "listViewTable": "Widok tabeli",
+  "scrollToTop": "Przewiń na górę",
+  "loadMore": "Wczytaj więcej",
+  "loadingHangOn": "Chwileczkę — pobieramy najnowsze dane...",
+  "loadingMoment": "Sekunda, prawie gotowe...",
+  "loadingAlmostThere": "Prawie gotowe...",
+  "loadingGettingReady": "Chwileczkę — przygotowujemy wszystko...",
+  "more": "Więcej",
+  "location": "Lokalizacja",
+  "locationBed": "Łóżko",
+  "locationClinic": "Klinika",
+  "locationRoom": "Sala",
+  "locationType": "{type, select, CLINIC{Klinika} WARD{Oddział} TEAM{Zespół} ROOM{Sala} BED{Łóżko} other{Inne}}",
+  "@locationType": {
+    "placeholders": {
+      "type": {
+        "type": "string"
+      }
+    }
+  },
+  "locationWard": "Oddział",
+  "loading": "Ładowanie...",
+  "logInAgain": "Zaloguj się ponownie",
+  "login": "Zaloguj się",
+  "logout": "Wyloguj się",
+  "male": "Mężczyzna",
+  "menu": "Menu",
+  "myFavorites": "Moje ulubione",
+  "myOpenTasks": "Moje otwarte zadania",
+  "myTasks": "Moje zadania",
+  "name": "Nazwa",
+  "no": "Nie",
+  "none": "Brak",
+  "noClosedTasks": "Brak zamkniętych zadań",
+  "noOpenTasks": "Brak otwartych zadań",
+  "noPatient": "Brak pacjenta",
+  "noPatientsInTaskView": "Nie znaleziono pacjentów dla tego szybkiego dostępu do zadań.",
+  "noResultsFound": "Nie znaleziono wyników",
+  "notAssigned": "Nieprzypisane",
+  "nFilter": "{count, plural, =1{# filtr} few{# filtry} many{# filtrów} other{# filtra}}",
+  "@nFilter": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "nSorting": "{count, plural, =1{# sortowanie} few{# sortowania} many{# sortowań} other{# sortowania}}",
+  "@nSorting": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "nPatient": "{count, plural, =1{# pacjent} few{# pacjentów} many{# pacjentów} other{# pacjenta}}",
+  "@nPatient": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "patientsCountChipTotal": "Łącznie {count}",
+  "@patientsCountChipTotal": {
+    "placeholders": {
+      "count": {
+        "type": "string"
+      }
+    }
+  },
+  "patientsCountChipAdmitted": "Przyjęci {count}",
+  "@patientsCountChipAdmitted": {
+    "placeholders": {
+      "count": {
+        "type": "string"
+      }
+    }
+  },
+  "patientsCountChipWaiting": "Oczekujący {count}",
+  "@patientsCountChipWaiting": {
+    "placeholders": {
+      "count": {
+        "type": "string"
+      }
+    }
+  },
+  "nTask": "{count, plural, =1{# zadanie} few{# zadania} many{# zadań} other{# zadania}}",
+  "@nTask": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "nYears": "{years, plural, =0{0 lat} =1{1 rok} few{# lata} many{# lat} other{# roku}}",
+  "@nYears": {
+    "placeholders": {
+      "years": {
+        "type": "number"
+      }
+    }
+  },
+  "occupancy": "Obłożenie",
+  "onboardingSurvey": "Ankieta wdrożeniowa",
+  "openSurvey": "Otwórz ankietę",
+  "weeklySurvey": "Ankieta tygodniowa",
+  "openTasks": "Otwarte zadania",
+  "openView": "Otwórz",
+  "option": "Opcja",
+  "organizations": "Organizacje",
+  "overview": "Przegląd",
+  "pages.404.notFound": "404 - Nie znaleziono strony",
+  "pages.404.notFoundDescription1": "To na pewno nie jest strona, której szukasz",
+  "pages.404.notFoundDescription2": "Wróć do",
+  "patient": "Pacjent",
+  "patientData": "Dane",
+  "patients": "Pacjenci",
+  "patientState": "{state, select, WAIT{Oczekujący} ADMITTED{Przyjęty} DISCHARGED{Wypisany} DEAD{Zmarły} other{Nieznany}}",
+  "@patientState": {
+    "placeholders": {
+      "state": {
+        "type": "string"
+      }
+    }
+  },
+  "patientsUpdatedRecently": "Ostatnio zaktualizowani pacjenci",
+  "pThemes": "{count, plural, =1{Motyw} few{Motywy} many{Motywy} other{Motywy}}",
+  "@pThemes": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "preferences": "Preferencje",
+  "priority": "Priorytet",
+  "sPriority": "{priority, select, P1{Normalny} P2{Średni} P3{Wysoki} P4{Krytyczny} other{-}}",
+  "@sPriority": {
+    "placeholders": {
+      "priority": {}
+    }
+  },
+  "priorityLabel": "Priorytet",
+  "priorityNone": "Brak",
+  "privacy": "Prywatność",
+  "properties": "Właściwości",
+  "propertiesSettingsDescription": "Własne pola dla zadań i pacjentów: zdefiniuj typy i używaj ich w filtrach.",
+  "property": "Właściwość",
+  "rAdd": "Dodaj {name}",
+  "@rAdd": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "rEdit": "Zaktualizuj {name}",
+  "@rEdit": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "recentPatients": "Twoi ostatni pacjenci",
+  "recentTasks": "Twoje ostatnie zadania",
+  "refreshing": "Odświeżanie…",
+  "removeProperty": "Usuń właściwość",
+  "removePropertyConfirmation": "Czy na pewno chcesz usunąć tę właściwość? Tej operacji nie można cofnąć.",
+  "clearPropertyColumnActionTask": "Usuń tę właściwość z wyświetlonych zadań",
+  "clearPropertyColumnActionPatient": "Wyczyść wartości tej właściwości u wyświetlonych pacjentów",
+  "clearPropertyColumnDialogTitleTask": "Usuń właściwość z zadań",
+  "clearPropertyColumnDialogTitlePatient": "Wyczyść wartości właściwości u pacjentów",
+  "clearPropertyColumnDialogDescriptionTask": "Spowoduje to trwałe usunięcie właściwości \"{propertyName}\" z zadań aktualnie wczytanych na tej liście (liczba: {count}). Zadania niewczytane na tej liście nie zostaną zmienione.",
+  "@clearPropertyColumnDialogDescriptionTask": {
+    "placeholders": {
+      "propertyName": {
+        "type": "string"
+      },
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "clearPropertyColumnDialogDescriptionPatient": "Spowoduje to wyczyszczenie wszystkich wartości właściwości \"{propertyName}\" u pacjentów aktualnie wczytanych na tej liście (liczba: {count}). Właściwość pozostanie przypisana do tych pacjentów. Pacjenci niewczytani na tej liście nie zostaną zmienieni.",
+  "@clearPropertyColumnDialogDescriptionPatient": {
+    "placeholders": {
+      "propertyName": {
+        "type": "string"
+      },
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "clearPropertyColumnTypeNameInstruction": "Wpisz \"{propertyName}\", aby potwierdzić.",
+  "@clearPropertyColumnTypeNameInstruction": {
+    "placeholders": {
+      "propertyName": {
+        "type": "string"
+      }
+    }
+  },
+  "clearPropertyColumnConfirmButtonTask": "Usuń właściwość z zadań",
+  "clearPropertyColumnConfirmButtonPatient": "Wyczyść wartości właściwości",
+  "readOnlyView": "Tylko do odczytu",
+  "retakeSurvey": "Wypełnij ankietę ponownie",
+  "saveView": "Zapisz szybki dostęp",
+  "saveViewDescription": "Nazwij ten szybki dostęp. Filtry, sortowanie, wyszukiwanie i lokalizacja zostaną zapisane.",
+  "saveViewOverwriteCurrent": "Nadpisz bieżący szybki dostęp",
+  "saveViewAsNew": "Zapisz jako nowy szybki dostęp",
+  "saveViewDescriptionFromSystemList": "Tworzy nowy wpis szybkiego dostępu na podstawie tego układu. Ta strona jest stała w aplikacji i nie jest nadpisywana — otwórz szybki dostęp z paska bocznego, gdy będzie potrzebny.",
+  "discardViewChanges": "Odrzuć zmiany",
+  "discard": "Odrzuć",
+  "discardDraftTitle": "Odrzucić wersję roboczą?",
+  "discardDraftMessage": "Masz niezapisane wpisy. Jeśli teraz zamkniesz, wszystkie wprowadzone dane zostaną utracone.",
+  "savedViews": "Szybki dostęp",
+  "viewDerivedPatientsHint": "Pacjenci występujący w zadaniach pasujących do tego szybkiego dostępu (bez powtórzeń).",
+  "viewSettings": "Szybki dostęp",
+  "viewSettingsDescription": "Zarządzaj zapisanym szybkim dostępem do zadań i pacjentów.",
+  "views": "Szybki dostęp",
+  "viewsEntityPatient": "Pacjenci",
+  "viewsEntityTask": "Zadania",
+  "viewVisibility": "Widoczność",
+  "viewVisibilityPrivate": "Prywatny",
+  "viewVisibilityLinkShared": "Udostępniony przez link",
+  "viewAnyoneWithLinkCanView": "Każda osoba z linkiem może wyświetlać",
+  "copyShareLinkEnableSharingFirst": "Włącz udostępnianie przez link, aby inne osoby z linkiem mogły otworzyć ten szybki dostęp.",
+  "rShow": "Pokaż {name}",
+  "@rShow": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "rChipTotal": "Łącznie {value}",
+  "@rChipTotal": {
+    "placeholders": {
+      "value": {
+        "type": "string"
+      }
+    }
+  },
+  "search": "Szukaj",
+  "searchUserOrTeam": "Szukaj użytkownika (lub zespołu)...",
+  "searchUsersOrTeams": "Szukaj użytkowników lub zespołów...",
+  "security": "Bezpieczeństwo",
+  "selectAssignee": "Przypisz do...",
+  "scopeVisibility": "Udostępnianie",
+  "scopePrivate": "Prywatny",
+  "scopePublic": "Publiczny",
+  "scopeShared": "Udostępniony przez link",
+  "scopeSharedDescription": "Tylko Ty widzisz ten wpis na swoich listach. Każdy, kto ma dostęp do wybranego węzła lub jego poddrzewa, może go otworzyć przez link.",
+  "scopePublicDescription": "Każdy, kto ma dostęp do wybranego węzła lub jego poddrzewa, może widzieć i używać tego wpisu.",
+  "scopePrivateDescription": "Tylko Ty możesz widzieć i używać tego wpisu.",
+  "scopeSelectNode": "Wybierz węzeł",
+  "scopeChangeNode": "Zmień węzeł",
+  "scopeNoNodeSelected": "Wybierz węzeł, w którym zostanie zapisany ten wpis.",
+  "scopeStoredAt": "Zapisano w",
+  "selectLocation": "Wybierz lokalizację",
+  "selectOptions": "Wybierz opcje",
+  "sessionExpired": "Sesja wygasła",
+  "sessionExpiredDescription": "Zostałeś wylogowany z powodu braku aktywności. Zaloguj się ponownie, aby kontynuować. Niezapisane zmiany mogą zostać utracone.",
+  "settings": "Ustawienia",
+  "settingsDescription": "Tutaj możesz zmienić konfigurację aplikacji.",
+  "sex": "Płeć",
+  "shiftHandover": "Przekazanie dyżuru",
+  "showAllTasks": "Pokaż wszystkie zadania",
+  "showPatient": "Pokaż pacjenta {name}",
+  "@showPatient": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "showTeamTasks": "Pokaż zadania zespołu",
+  "sorting": "Sortowanie",
+  "stagingModalDisclaimerMarkdown": "Ta publiczna instancja helpwave tasks służy '\\b{do celów deweloperskich i podglądowych}'. Wprowadzaj '\\b{wyłącznie}' '\\b{niepoufne dane testowe}'. Ta instancja może zostać '\\negative{\\b{usunięta w dowolnym momencie}}'",
+  "status": "Status",
+  "subjectType": "Typ obiektu",
+  "surveyDescription": "Twoja opinia jest dla nas cenna. Poświęć chwilę na wypełnienie naszej ankiety.",
+  "surveyTitle": "Pomóż nam ulepszyć helpwave tasks",
+  "sPropertySubjectType": "{subject, select, patient{Pacjent} task{Zadanie} other{Nieokreślony typ obiektu}}",
+  "@sPropertySubjectType": {
+    "placeholders": {
+      "subject": {
+        "type": "string"
+      }
+    }
+  },
+  "sPropertyType": "{type, select, multiSelect{Wielokrotny wybór} singleSelect{Pojedynczy wybór} number{Liczba} text{Tekst} date{Data} dateTime{Data i godzina} checkbox{Pole wyboru} user{Użytkownik} other{Nieokreślony typ}}",
+  "@sPropertyType": {
+    "placeholders": {
+      "type": {
+        "type": "string"
+      }
+    }
+  },
+  "system": "System",
+  "task": "Zadanie",
+  "tasks": "Zadania",
+  "tasksUpdatedRecently": "Ostatnio zaktualizowane zadania",
+  "taskTitlePlaceholder": "Co trzeba zrobić?",
+  "teams": "Zespoły",
+  "themeMode": "{theme, select, dark{Ciemny} light{Jasny} system{Systemowy} other{Systemowy}}",
+  "@themeMode": {
+    "placeholders": {
+      "theme": {
+        "type": "string"
+      }
+    }
+  },
+  "title": "Tytuł",
+  "totalPatients": "Łącznie pacjentów",
+  "type": "Typ",
+  "updated": "Zaktualizowano",
+  "stateUpdated": "Zaktualizowano status",
+  "clinicUpdated": "Zaktualizowano klinikę",
+  "positionUpdated": "Zaktualizowano lokalizację",
+  "user": "Użytkownik",
+  "users": "Użytkownicy",
+  "wards": "Oddziały",
+  "yes": "Tak",
+  "anonymous": "Anonimowo",
+  "anonymousSubmission": "Zgłoszenie anonimowe",
+  "collapseAll": "Zwiń wszystko",
+  "confirmSelection": "Potwierdź wybór",
+  "deselectAll": "Odznacz wszystko",
+  "enterFeedback": "Wpisz tutaj swoją opinię...",
+  "expandAll": "Rozwiń wszystko",
+  "feedbackDescription": "Podziel się opinią, zgłoś błędy lub zaproponuj ulepszenia.",
+  "noLocationsFound": "Nie znaleziono lokalizacji",
+  "pickClinic": "Wybierz klinikę",
+  "pickClinicDescription": "Wybierz klinikę dla tego pacjenta. Można wybrać tylko lokalizacje typu klinika.",
+  "pickPosition": "Wybierz lokalizację",
+  "pickPositionDescription": "Wybierz lokalizację dla tego pacjenta. Możesz wybrać szpital, praktykę, klinikę, oddział, łóżko lub salę.",
+  "pickTeams": "Wybierz zespoły",
+  "pickTeamsDescription": "Wybierz jeden lub więcej zespołów dla tego pacjenta. Możesz wybrać klinikę, zespół, praktykę lub szpital.",
+  "searchLocations": "Szukaj lokalizacji...",
+  "selectAll": "Zaznacz wszystko",
+  "selectLocationDescription": "Wybierz lokalizację przypisaną do pacjenta.",
+  "selectRootLocation": "Wybierz lokalizację główną",
+  "selectRootLocationDescription": "Wybierz lokalizacje główne określające Twój zakres dostępu. Można wybrać tylko szpitale, praktyki, kliniki i zespoły. Wybór lokalizacji nadrzędnej obejmuje wszystkie jej lokalizacje podrzędne.",
+  "startRecording": "Rozpocznij nagrywanie",
+  "stopRecording": "Zatrzymaj nagrywanie",
+  "submissionDetails": "Szczegóły zgłoszenia",
+  "submittingAs": "Wysyłasz jako {name}",
+  "@submittingAs": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "submit": "Wyślij",
+  "url": "URL",
+  "userInformation": "Informacje o użytkowniku",
+  "admitPatient": "Przyjmij pacjenta",
+  "clear": "Wyczyść",
+  "clinic": "Klinika",
+  "connectionConnected": "Połączono",
+  "connectionConnecting": "Łączenie…",
+  "connectionDisconnected": "Rozłączono",
+  "deletePatient": "Usuń pacjenta",
+  "deletePatientConfirmation": "Czy na pewno chcesz usunąć tego pacjenta? Tej operacji nie można cofnąć.",
+  "dischargePatient": "Wypisz pacjenta",
+  "dischargePatientConfirmation": "Czy na pewno chcesz wypisać tego pacjenta? Ta operacja zmieni status pacjenta.",
+  "dismissAll": "Odrzuć wszystkie",
+  "error": "Błąd",
+  "install": "Zainstaluj",
+  "installApp": "Zainstaluj aplikację",
+  "installAppDescription": "Zainstaluj helpwave tasks, aby korzystać z trybu offline i szybszego dostępu.",
+  "loginRequired": "Wymagane logowanie",
+  "loginRequiredDescription": "Aby korzystać z tej strony, musisz się zalogować.",
+  "markPatientDead": "Oznacz pacjenta jako zmarłego",
+  "markPatientDeadConfirmation": "Czy na pewno chcesz oznaczyć tego pacjenta jako zmarłego?",
+  "noNotifications": "Brak nowych aktualizacji",
+  "notifications": "Powiadomienia",
+  "ok": "OK",
+  "patientActions": "Działania dotyczące pacjenta",
+  "position": "Lokalizacja",
+  "selectClinic": "Wybierz klinikę",
+  "selectPosition": "Wybierz lokalizację",
+  "selectTeams": "Wybierz zespoły",
+  "waitPatient": "Ustaw pacjenta jako oczekującego",
+  "waitingForPatient": "Oczekiwanie na pacjenta",
+  "taskPresets": "Szablony",
+  "taskPresetsDescription": "Listy zadań wielokrotnego użytku z opcjonalnymi zależnościami.",
+  "taskPresetName": "Nazwa",
+  "taskPresetKey": "Klucz",
+  "taskPresetKeyHint": "Opcjonalny unikalny klucz do wyszukiwania. Pozostaw puste, aby wygenerować automatycznie.",
+  "taskPresetAddRow": "Dodaj zadanie",
+  "taskPresetRemoveRow": "Usuń",
+  "taskPresetSave": "Zapisz szablon",
+  "taskPresetCreate": "Utwórz szablon",
+  "taskPresetEdit": "Edytuj szablon",
+  "taskPresetDelete": "Usuń",
+  "taskPresetDeleteConfirm": "Usunąć ten szablon zadań?",
+  "taskPresetEmptyList": "Brak szablonów zadań.",
+  "loadTaskPreset": "Wczytaj szablon",
+  "loadTaskPresetTitle": "Wczytaj szablon zadań",
+  "loadTaskPresetConfirm": "Utworzyć {count, plural, =1{# zadanie} few{# zadania} many{# zadań} other{# zadania}} dla tego pacjenta?",
+  "@loadTaskPresetConfirm": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "loadTaskPresetConfirmTitle": "Potwierdź wczytanie szablonu",
+  "loadTaskPresetSelectTasks": "Zadania z szablonu",
+  "loadTaskPresetCreateAndAssign": "Utwórz i przypisz do mnie",
+  "loadTaskPresetTaskLabel": "Szablon",
+  "taskPresetNoTasks": "Ten szablon nie zawiera zadań.",
+  "taskPresetSelectPlaceholder": "Wybierz szablon",
+  "taskPresetEditDetails": "Edytuj szczegóły",
+  "editPresetTask": "Edytuj zadanie szablonu",
+  "taskPresetApplyToRow": "Zastosuj do wiersza szablonu",
+  "taskPresetNoEstimate": "Brak szacunku",
+  "tasksCreatedFromPreset": "Utworzono zadania",
+  "taskFromPresetTooltip": "Utworzono z szablonu zadań",
+  "taskPresetSourceTitle": "Szablon źródłowy",
+  "taskPresetSourceNotFound": "Nie udało się wczytać szablonu.",
+  "taskPresetSourceTasksInGraph": "Zadania w szablonie",
+  "taskPresetSourceOpenSettings": "Otwórz w ustawieniach"
+}

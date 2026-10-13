@@ -1,4 +1,4 @@
-import { AvatarWithStatus, Button, Checkbox, Tooltip, useLocale } from '@helpwave/hightide'
+import { AvatarWithStatus, Button, Checkbox, Tooltip, useLocalization } from '@helpwave/hightide'
 import { Clock, Combine, User, Users, Flag } from 'lucide-react'
 import clsx from 'clsx'
 import { DueDateDisplay } from '@/components/Date/DueDateDisplay'
@@ -75,7 +75,7 @@ const isCloseToDueDate = (dueDate: Date | undefined, done: boolean): boolean => 
 
 export const TaskCardView = ({ task, onToggleDone: _onToggleDone, onClick, showAssignee: _showAssignee = false, showPatient = true, className, fullWidth: _fullWidth = false, extraContent }: TaskCardViewProps) => {
   const translation = useTasksTranslation()
-  const { timeZone } = useLocale()
+  const { timeZone } = useLocalization()
   const router = useRouter()
   const [presetDialogId, setPresetDialogId] = useState<string | null>(null)
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)

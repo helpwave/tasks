@@ -1,0 +1,582 @@
+{
+  "@@locale": "tr-TR",
+  "account": "Hesap",
+  "active": "Aktif",
+  "add": "Ekle",
+  "addFastAccess": "Hızlı erişim ekle",
+  "addFastAccessDescription": "Yeni hızlı erişim için bir ad girin.",
+  "addPatient": "Hasta ekle",
+  "addProperty": "Özellik ekle",
+  "addTask": "Görev ekle",
+  "archivedPropertyDescription": "Arşivlenen özellikler artık nesnelere atanamaz.",
+  "archiveProperty": "Özelliği arşivle",
+  "assignedTo": "Atanan kişi",
+  "assigneeTeam": "Atanan ekip",
+  "additionalAssigneesCount": "+{count}",
+  "@additionalAssigneesCount": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "authenticationFailed": "Kimlik doğrulama başarısız",
+  "birthdate": "Doğum tarihi",
+  "cancel": "İptal",
+  "clearCache": "Önbelleği temizle",
+  "close": "Kapat",
+  "clinics": "Klinikler",
+  "closedTasks": "Tamamlanan görevler",
+  "conflictDetected": "Çakışma algılandı",
+  "confirm": "Onayla",
+  "confirmShiftHandover": "Vardiya devrini onayla",
+  "confirmShiftHandoverDescription": "Tüm açık görevleri seçilen kullanıcıya devretmek istediğinizden emin misiniz?",
+  "confirmShiftHandoverDescriptionWithName": "{taskCount, plural, =1{# açık görevi} other{# açık görevi}} {name} adlı kişiye devretmek istediğinizden emin misiniz?",
+  "@confirmShiftHandoverDescriptionWithName": {
+    "placeholders": {
+      "taskCount": {
+        "type": "number"
+      },
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "copyShareLink": "Bağlantıyı kopyala",
+  "copyViewToMyViews": "Hızlı erişimime kopyala",
+  "confirmDeleteView": "Kayıtlı bu hızlı erişim silinsin mi? Bu işlem geri alınamaz.",
+  "create": "Oluştur",
+  "createTask": "Görev oluştur",
+  "creationDate": "Oluşturma tarihi",
+  "currentTime": "Geçerli saat",
+  "dashboard": "Gösterge paneli",
+  "dashboardWelcomeDescription": "Bugün olup bitenler burada.",
+  "dashboardWelcomeMorning": "Günaydın, {name}!",
+  "@dashboardWelcomeMorning": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "dashboardWelcomeNoon": "Tünaydın, {name}!",
+  "@dashboardWelcomeNoon": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "dashboardWelcomeAfternoon": "İyi günler, {name}!",
+  "@dashboardWelcomeAfternoon": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "dashboardWelcomeEvening": "İyi akşamlar, {name}!",
+  "@dashboardWelcomeEvening": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "dashboardWelcomeNight": "İyi geceler, {name}!",
+  "@dashboardWelcomeNight": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "delete": "Sil",
+  "description": "Açıklama",
+  "diverse": "Diğer",
+  "descriptionPlaceholder": "Daha fazla ayrıntı ekleyin...",
+  "developmentAndPreviewInstance": "Geliştirme ve önizleme ortamı",
+  "dismiss": "Kapat",
+  "duplicate": "Çoğalt",
+  "done": "Tamamlandı",
+  "dueDate": "Son tarih",
+  "dueDateInDays": "+{days, plural, =1{# gün} other{# gün}}",
+  "@dueDateInDays": {
+    "placeholders": {
+      "days": {
+        "type": "number"
+      }
+    }
+  },
+  "dueDateInHours": "+{hours, plural, =1{# saat} other{# saat}}",
+  "@dueDateInHours": {
+    "placeholders": {
+      "hours": {
+        "type": "number"
+      }
+    }
+  },
+  "dueDateNow": "Şimdi",
+  "dueDateToday": "Bugün",
+  "dueDateTomorrow": "Yarın",
+  "edit": "Düzenle",
+  "editPatient": "Hastayı düzenle",
+  "editTask": "Görevi düzenle",
+  "errorOccurred": "Bir hata oluştu",
+  "estimatedTime": "Tahmini süre (dakika)",
+  "export": "Dışa aktar",
+  "exportCsv": "CSV olarak dışa aktar",
+  "exportExcel": "Excel olarak dışa aktar (yazdırılabilir)",
+  "exportFailed": "Dışa aktarma başarısız oldu. Lütfen tekrar deneyin.",
+  "timeEstimate": "Süre tahmini",
+  "nMinutesShort": "{minCount} dk",
+  "@nMinutesShort": {
+    "placeholders": {
+      "minCount": {
+        "type": "number"
+      }
+    }
+  },
+  "feedback": "Geri bildirim",
+  "female": "Kadın",
+  "filter": "Filtre",
+  "filterAll": "Tümü",
+  "filterUndone": "Açık",
+  "firstName": "Ad",
+  "freeBeds": "Boş yataklar",
+  "homePage": "Ana sayfa",
+  "hide": "Gizle",
+  "imprint": "Künye",
+  "inactive": "Pasif",
+  "language": "Dil",
+  "lastName": "Soyad",
+  "listViewCard": "Kart görünümü",
+  "listViewTable": "Tablo görünümü",
+  "scrollToTop": "Başa dön",
+  "loadMore": "Daha fazla yükle",
+  "loadingHangOn": "Bir saniye — en güncel veriler alınıyor...",
+  "loadingMoment": "Az kaldı, neredeyse hazır...",
+  "loadingAlmostThere": "Neredeyse hazır...",
+  "loadingGettingReady": "Bir dakika — her şey hazırlanıyor...",
+  "more": "Daha fazla",
+  "location": "Konum",
+  "locationBed": "Yatak",
+  "locationClinic": "Klinik",
+  "locationRoom": "Oda",
+  "locationType": "{type, select, CLINIC{Klinik} WARD{Servis} TEAM{Ekip} ROOM{Oda} BED{Yatak} other{Diğer}}",
+  "@locationType": {
+    "placeholders": {
+      "type": {
+        "type": "string"
+      }
+    }
+  },
+  "locationWard": "Servis",
+  "loading": "Yükleniyor...",
+  "logInAgain": "Tekrar giriş yap",
+  "login": "Giriş",
+  "logout": "Çıkış yap",
+  "male": "Erkek",
+  "menu": "Menü",
+  "myFavorites": "Favorilerim",
+  "myOpenTasks": "Açık görevlerim",
+  "myTasks": "Görevlerim",
+  "name": "Ad",
+  "no": "Hayır",
+  "none": "Yok",
+  "noClosedTasks": "Tamamlanan görev yok",
+  "noOpenTasks": "Açık görev yok",
+  "noPatient": "Hasta yok",
+  "noPatientsInTaskView": "Bu görev hızlı erişimi için hasta bulunamadı.",
+  "noResultsFound": "Sonuç bulunamadı",
+  "notAssigned": "Atanmamış",
+  "nFilter": "{count, plural, =1{# filtre} other{# filtre}}",
+  "@nFilter": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "nSorting": "{count, plural, =1{# sıralama} other{# sıralama}}",
+  "@nSorting": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "nPatient": "{count, plural, =1{# hasta} other{# hasta}}",
+  "@nPatient": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "patientsCountChipTotal": "Toplam {count}",
+  "@patientsCountChipTotal": {
+    "placeholders": {
+      "count": {
+        "type": "string"
+      }
+    }
+  },
+  "patientsCountChipAdmitted": "Yatışı yapılan {count}",
+  "@patientsCountChipAdmitted": {
+    "placeholders": {
+      "count": {
+        "type": "string"
+      }
+    }
+  },
+  "patientsCountChipWaiting": "Bekleyen {count}",
+  "@patientsCountChipWaiting": {
+    "placeholders": {
+      "count": {
+        "type": "string"
+      }
+    }
+  },
+  "nTask": "{count, plural, =1{# görev} other{# görev}}",
+  "@nTask": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "nYears": "{years, plural, =0{0 yaş} =1{1 yaş} other{# yaş}}",
+  "@nYears": {
+    "placeholders": {
+      "years": {
+        "type": "number"
+      }
+    }
+  },
+  "occupancy": "Doluluk",
+  "onboardingSurvey": "Başlangıç anketi",
+  "openSurvey": "Anketi aç",
+  "weeklySurvey": "Haftalık anket",
+  "openTasks": "Açık görevler",
+  "openView": "Aç",
+  "option": "Seçenek",
+  "organizations": "Kuruluşlar",
+  "overview": "Genel bakış",
+  "pages.404.notFound": "404 - Sayfa bulunamadı",
+  "pages.404.notFoundDescription1": "Aradığınız sayfa kesinlikle bu değil",
+  "pages.404.notFoundDescription2": "Sizi şuraya götürelim:",
+  "patient": "Hasta",
+  "patientData": "Veriler",
+  "patients": "Hastalar",
+  "patientState": "{state, select, WAIT{Bekliyor} ADMITTED{Yatışı yapıldı} DISCHARGED{Taburcu edildi} DEAD{Vefat etti} other{Bilinmiyor}}",
+  "@patientState": {
+    "placeholders": {
+      "state": {
+        "type": "string"
+      }
+    }
+  },
+  "patientsUpdatedRecently": "Son güncellenen hastalar",
+  "pThemes": "{count, plural, =1{Tema} other{Temalar}}",
+  "@pThemes": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "preferences": "Tercihler",
+  "priority": "Öncelik",
+  "sPriority": "{priority, select, P1{Normal} P2{Orta} P3{Yüksek} P4{Kritik} other{-}}",
+  "@sPriority": {
+    "placeholders": {
+      "priority": {}
+    }
+  },
+  "priorityLabel": "Öncelik",
+  "priorityNone": "Yok",
+  "privacy": "Gizlilik",
+  "properties": "Özellikler",
+  "propertiesSettingsDescription": "Görevler ve hastalar için özel alanlar: türleri tanımlayın ve filtrelerde kullanın.",
+  "property": "Özellik",
+  "rAdd": "{name} ekle",
+  "@rAdd": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "rEdit": "{name} güncelle",
+  "@rEdit": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "recentPatients": "Son hastalarınız",
+  "recentTasks": "Son görevleriniz",
+  "refreshing": "Yenileniyor…",
+  "removeProperty": "Özelliği kaldır",
+  "removePropertyConfirmation": "Bu özelliği kaldırmak istediğinizden emin misiniz? Bu işlem geri alınamaz.",
+  "clearPropertyColumnActionTask": "Bu özelliği listelenen görevlerden kaldır",
+  "clearPropertyColumnActionPatient": "Listelenen hastalarda bu özelliğin değerlerini temizle",
+  "clearPropertyColumnDialogTitleTask": "Özelliği görevlerden kaldır",
+  "clearPropertyColumnDialogTitlePatient": "Hastalardaki özellik değerlerini temizle",
+  "clearPropertyColumnDialogDescriptionTask": "\"{propertyName}\" özelliği, bu listede şu anda yüklü olan {count} görevden kalıcı olarak kaldırılacak. Bu listede yüklü olmayan görevler etkilenmez.",
+  "@clearPropertyColumnDialogDescriptionTask": {
+    "placeholders": {
+      "propertyName": {
+        "type": "string"
+      },
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "clearPropertyColumnDialogDescriptionPatient": "\"{propertyName}\" özelliğinin tüm değerleri, bu listede şu anda yüklü olan {count} hastada temizlenecek. Özellik bu hastalara bağlı kalır. Bu listede yüklü olmayan hastalar etkilenmez.",
+  "@clearPropertyColumnDialogDescriptionPatient": {
+    "placeholders": {
+      "propertyName": {
+        "type": "string"
+      },
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "clearPropertyColumnTypeNameInstruction": "Onaylamak için \"{propertyName}\" yazın.",
+  "@clearPropertyColumnTypeNameInstruction": {
+    "placeholders": {
+      "propertyName": {
+        "type": "string"
+      }
+    }
+  },
+  "clearPropertyColumnConfirmButtonTask": "Özelliği görevlerden kaldır",
+  "clearPropertyColumnConfirmButtonPatient": "Özellik değerlerini temizle",
+  "readOnlyView": "Salt okunur",
+  "retakeSurvey": "Anketi yeniden yanıtla",
+  "saveView": "Hızlı erişimi kaydet",
+  "saveViewDescription": "Bu hızlı erişime bir ad verin. Filtreler, sıralama, arama ve konum kaydedilir.",
+  "saveViewOverwriteCurrent": "Mevcut hızlı erişimin üzerine yaz",
+  "saveViewAsNew": "Yeni hızlı erişim olarak kaydet",
+  "saveViewDescriptionFromSystemList": "Bu düzenden yeni bir hızlı erişim kaydı oluşturur. Bu sayfa uygulama tarafından sabitlenmiştir ve yerinde kaydedilmez — gerektiğinde kenar çubuğundan açın.",
+  "discardViewChanges": "Değişiklikleri at",
+  "discard": "At",
+  "discardDraftTitle": "Taslak atılsın mı?",
+  "discardDraftMessage": "Kaydedilmemiş girişleriniz var. Şimdi kapatırsanız girdiğiniz her şey kaybolur.",
+  "savedViews": "Hızlı erişim",
+  "viewDerivedPatientsHint": "Bu hızlı erişimle eşleşen görevlerde yer alan hastalar (tekil).",
+  "viewSettings": "Hızlı erişim",
+  "viewSettingsDescription": "Kayıtlı görev ve hasta hızlı erişimlerini yönetin.",
+  "views": "Hızlı erişim",
+  "viewsEntityPatient": "Hastalar",
+  "viewsEntityTask": "Görevler",
+  "viewVisibility": "Görünürlük",
+  "viewVisibilityPrivate": "Özel",
+  "viewVisibilityLinkShared": "Bağlantıyla paylaşıldı",
+  "viewAnyoneWithLinkCanView": "Bağlantıya sahip herkes görüntüleyebilir",
+  "copyShareLinkEnableSharingFirst": "Bağlantıya sahip diğer kişilerin bu hızlı erişimi açabilmesi için bağlantı paylaşımını etkinleştirin.",
+  "rShow": "{name} göster",
+  "@rShow": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "rChipTotal": "Toplam {value}",
+  "@rChipTotal": {
+    "placeholders": {
+      "value": {
+        "type": "string"
+      }
+    }
+  },
+  "search": "Ara",
+  "searchUserOrTeam": "Kullanıcı (veya ekip) ara...",
+  "searchUsersOrTeams": "Kullanıcı veya ekip ara...",
+  "security": "Güvenlik",
+  "selectAssignee": "Ata...",
+  "scopeVisibility": "Paylaşım",
+  "scopePrivate": "Özel",
+  "scopePublic": "Herkese açık",
+  "scopeShared": "Bağlantıyla paylaşıldı",
+  "scopeSharedDescription": "Bu kaydı listelerinizde yalnızca siz görürsünüz. Seçilen düğüme veya alt ağacına erişimi olan herkes kaydı bağlantısı üzerinden açabilir.",
+  "scopePublicDescription": "Seçilen düğüme veya alt ağacına erişimi olan herkes bu kaydı görebilir ve kullanabilir.",
+  "scopePrivateDescription": "Bu kaydı yalnızca siz görebilir ve kullanabilirsiniz.",
+  "scopeSelectNode": "Düğüm seç",
+  "scopeChangeNode": "Düğümü değiştir",
+  "scopeNoNodeSelected": "Bu kaydın saklanacağı düğümü seçin.",
+  "scopeStoredAt": "Saklandığı yer",
+  "selectLocation": "Konum seç",
+  "selectOptions": "Seçenekleri seç",
+  "sessionExpired": "Oturumun süresi doldu",
+  "sessionExpiredDescription": "Uzun süre işlem yapılmadığı için oturumunuz kapatıldı. Devam etmek için lütfen tekrar giriş yapın. Kaydedilmemiş değişiklikler kaybolmuş olabilir.",
+  "settings": "Ayarlar",
+  "settingsDescription": "Uygulama yapılandırmasını buradan değiştirebilirsiniz.",
+  "sex": "Cinsiyet",
+  "shiftHandover": "Vardiya devri",
+  "showAllTasks": "Tüm görevleri göster",
+  "showPatient": "{name} adlı hastayı göster",
+  "@showPatient": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "showTeamTasks": "Ekip görevlerini göster",
+  "sorting": "Sıralama",
+  "stagingModalDisclaimerMarkdown": "helpwave tasks uygulamasının bu herkese açık örneği '\\b{geliştirme ve önizleme amaçlıdır}'. Lütfen '\\b{yalnızca}' '\\b{gizli olmayan test verileri}' girdiğinizden emin olun. Bu örnek '\\negative{\\b{her an silinebilir}}'",
+  "status": "Durum",
+  "subjectType": "Nesne türü",
+  "surveyDescription": "Geri bildiriminiz bizim için değerlidir. Lütfen anketimizi doldurmak için birkaç dakikanızı ayırın.",
+  "surveyTitle": "helpwave tasks uygulamasını geliştirmemize yardımcı olun",
+  "sPropertySubjectType": "{subject, select, patient{Hasta} task{Görev} other{Tanımsız nesne türü}}",
+  "@sPropertySubjectType": {
+    "placeholders": {
+      "subject": {
+        "type": "string"
+      }
+    }
+  },
+  "sPropertyType": "{type, select, multiSelect{Çoklu seçim} singleSelect{Tekli seçim} number{Sayı} text{Metin} date{Tarih} dateTime{Zaman noktası} checkbox{Onay kutusu} user{Kullanıcı} other{Tanımsız tür}}",
+  "@sPropertyType": {
+    "placeholders": {
+      "type": {
+        "type": "string"
+      }
+    }
+  },
+  "system": "Sistem",
+  "task": "Görev",
+  "tasks": "Görevler",
+  "tasksUpdatedRecently": "Son güncellenen görevler",
+  "taskTitlePlaceholder": "Ne yapılması gerekiyor?",
+  "teams": "Ekipler",
+  "themeMode": "{theme, select, dark{Koyu} light{Açık} system{Sistem} other{Sistem}}",
+  "@themeMode": {
+    "placeholders": {
+      "theme": {
+        "type": "string"
+      }
+    }
+  },
+  "title": "Başlık",
+  "totalPatients": "Toplam hasta",
+  "type": "Tür",
+  "updated": "Güncellendi",
+  "stateUpdated": "Durum güncellendi",
+  "clinicUpdated": "Klinik güncellendi",
+  "positionUpdated": "Konum güncellendi",
+  "user": "Kullanıcı",
+  "users": "Kullanıcılar",
+  "wards": "Servisler",
+  "yes": "Evet",
+  "anonymous": "Anonim",
+  "anonymousSubmission": "Anonim gönderim",
+  "collapseAll": "Tümünü daralt",
+  "confirmSelection": "Seçimi onayla",
+  "deselectAll": "Tüm seçimleri kaldır",
+  "enterFeedback": "Geri bildiriminizi buraya yazın...",
+  "expandAll": "Tümünü genişlet",
+  "feedbackDescription": "Geri bildiriminizi paylaşın, hata bildirin veya iyileştirme önerin.",
+  "noLocationsFound": "Konum bulunamadı",
+  "pickClinic": "Klinik seçin",
+  "pickClinicDescription": "Bu hasta için kliniği seçin. Yalnızca klinik konumları seçilebilir.",
+  "pickPosition": "Konum seçin",
+  "pickPositionDescription": "Bu hasta için konumu seçin. Hastane, muayenehane, klinik, servis, yatak veya oda konumlarını seçebilirsiniz.",
+  "pickTeams": "Ekip seçin",
+  "pickTeamsDescription": "Bu hasta için bir veya daha fazla ekip seçin. Klinik, ekip, muayenehane veya hastane konumlarını seçebilirsiniz.",
+  "searchLocations": "Konum ara...",
+  "selectAll": "Tümünü seç",
+  "selectLocationDescription": "Lütfen hasta için atanan konumu seçin.",
+  "selectRootLocation": "Kök konum seç",
+  "selectRootLocationDescription": "Erişim kapsamınızı belirleyen kök konumları seçin. Yalnızca hastaneler, muayenehaneler, klinikler ve ekipler seçilebilir. Bir üst konumun seçilmesi tüm alt konumlarını da kapsar.",
+  "startRecording": "Kaydı başlat",
+  "stopRecording": "Kaydı durdur",
+  "submissionDetails": "Gönderim ayrıntıları",
+  "submittingAs": "{name} olarak gönderiliyor",
+  "@submittingAs": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "submit": "Gönder",
+  "url": "URL",
+  "userInformation": "Kullanıcı bilgileri",
+  "admitPatient": "Hastanın yatışını yap",
+  "clear": "Temizle",
+  "clinic": "Klinik",
+  "connectionConnected": "Bağlandı",
+  "connectionConnecting": "Bağlanıyor…",
+  "connectionDisconnected": "Bağlantı kesildi",
+  "deletePatient": "Hastayı sil",
+  "deletePatientConfirmation": "Bu hastayı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
+  "dischargePatient": "Hastayı taburcu et",
+  "dischargePatientConfirmation": "Bu hastayı taburcu etmek istediğinizden emin misiniz? Bu işlem hastanın durumunu değiştirir.",
+  "dismissAll": "Tümünü kapat",
+  "error": "Hata",
+  "install": "Yükle",
+  "installApp": "Uygulamayı yükle",
+  "installAppDescription": "Çevrimdışı destek ve daha hızlı erişimle daha iyi bir deneyim için helpwave tasks uygulamasını yükleyin.",
+  "loginRequired": "Giriş gerekli",
+  "loginRequiredDescription": "Bu sayfayı kullanmak için giriş yapmanız gerekir.",
+  "markPatientDead": "Hastayı vefat etmiş olarak işaretle",
+  "markPatientDeadConfirmation": "Bu hastayı vefat etmiş olarak işaretlemek istediğinizden emin misiniz?",
+  "noNotifications": "Yeni güncelleme yok",
+  "notifications": "Bildirimler",
+  "ok": "Tamam",
+  "patientActions": "Hasta işlemleri",
+  "position": "Konum",
+  "selectClinic": "Klinik seç",
+  "selectPosition": "Konum seç",
+  "selectTeams": "Ekip seç",
+  "waitPatient": "Hastayı bekleme durumuna al",
+  "waitingForPatient": "Hasta bekleniyor",
+  "taskPresets": "Şablonlar",
+  "taskPresetsDescription": "İsteğe bağlı bağımlılıklar içeren, yeniden kullanılabilir görev listeleri.",
+  "taskPresetName": "Ad",
+  "taskPresetKey": "Anahtar",
+  "taskPresetKeyHint": "Aramalar için isteğe bağlı benzersiz anahtar. Otomatik oluşturulması için boş bırakın.",
+  "taskPresetAddRow": "Görev ekle",
+  "taskPresetRemoveRow": "Kaldır",
+  "taskPresetSave": "Şablonu kaydet",
+  "taskPresetCreate": "Şablon oluştur",
+  "taskPresetEdit": "Şablonu düzenle",
+  "taskPresetDelete": "Sil",
+  "taskPresetDeleteConfirm": "Bu görev şablonu silinsin mi?",
+  "taskPresetEmptyList": "Henüz görev şablonu yok.",
+  "loadTaskPreset": "Şablon yükle",
+  "loadTaskPresetTitle": "Görev şablonu yükle",
+  "loadTaskPresetConfirm": "Bu hasta için {count, plural, =1{# görev} other{# görev}} oluşturulsun mu?",
+  "@loadTaskPresetConfirm": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "loadTaskPresetConfirmTitle": "Şablon yüklemeyi onayla",
+  "loadTaskPresetSelectTasks": "Şablondaki görevler",
+  "loadTaskPresetCreateAndAssign": "Oluştur ve bana ata",
+  "loadTaskPresetTaskLabel": "Şablon",
+  "taskPresetNoTasks": "Bu şablonda görev yok.",
+  "taskPresetSelectPlaceholder": "Bir şablon seçin",
+  "taskPresetEditDetails": "Ayrıntıları düzenle",
+  "editPresetTask": "Şablon görevini düzenle",
+  "taskPresetApplyToRow": "Şablon satırına uygula",
+  "taskPresetNoEstimate": "Tahmin yok",
+  "tasksCreatedFromPreset": "Görevler oluşturuldu",
+  "taskFromPresetTooltip": "Bir görev şablonundan oluşturuldu",
+  "taskPresetSourceTitle": "Kaynak şablon",
+  "taskPresetSourceNotFound": "Şablon yüklenemedi.",
+  "taskPresetSourceTasksInGraph": "Şablondaki görevler",
+  "taskPresetSourceOpenSettings": "Ayarlarda aç"
+}

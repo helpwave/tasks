@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { useLocale } from '@helpwave/hightide'
+import { useLocalization } from '@helpwave/hightide'
 import { DateDisplay } from '@/components/Date/DateDisplay'
 import { DueDateUtils } from '@/utils/dueDate'
 
@@ -10,7 +10,7 @@ type DueDateDisplayProps = {
 }
 
 export const DueDateDisplay = ({ value, className, mode = 'absolute' }: DueDateDisplayProps) => {
-  const { timeZone } = useLocale()
+  const { timeZone } = useLocalization()
   const resolved = useMemo(
     () => (timeZone ? DueDateUtils.resolveForDisplay(value, timeZone) : undefined),
     [value, timeZone]

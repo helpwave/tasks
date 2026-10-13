@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { Dialog, Button, Textarea, FormField, FormProvider, Checkbox, useCreateForm, useTranslatedValidators, useFormObserverKey, IconButton } from '@helpwave/hightide'
-import { useTasksTranslation, useLocale } from '@/i18n/useTasksTranslation'
+import { useLocalization } from '@helpwave/hightide'
+import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { useTasksContext } from '@/hooks/useTasksContext'
 import { Mic, Pause } from 'lucide-react'
 
@@ -38,7 +39,7 @@ interface SpeechRecognitionInstance {
 
 export const FeedbackDialog = ({ isOpen, onClose, hideUrl = false }: FeedbackDialogProps) => {
   const translation = useTasksTranslation()
-  const { locale } = useLocale()
+  const { locale } = useLocalization()
   const { user } = useTasksContext()
   const [isRecording, setIsRecording] = useState(false)
   const [isSupported, setIsSupported] = useState(false)

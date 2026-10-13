@@ -1,0 +1,582 @@
+{
+  "@@locale": "ru-RU",
+  "account": "Аккаунт",
+  "active": "Активно",
+  "add": "Добавить",
+  "addFastAccess": "Добавить быстрый доступ",
+  "addFastAccessDescription": "Введите название нового быстрого доступа.",
+  "addPatient": "Добавить пациента",
+  "addProperty": "Добавить свойство",
+  "addTask": "Добавить задачу",
+  "archivedPropertyDescription": "Архивные свойства больше нельзя назначать объектам.",
+  "archiveProperty": "Архивировать свойство",
+  "assignedTo": "Назначено",
+  "assigneeTeam": "Назначенная команда",
+  "additionalAssigneesCount": "+{count}",
+  "@additionalAssigneesCount": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "authenticationFailed": "Ошибка аутентификации",
+  "birthdate": "Дата рождения",
+  "cancel": "Отмена",
+  "clearCache": "Очистить кэш",
+  "close": "Закрыть",
+  "clinics": "Клиники",
+  "closedTasks": "Выполненные задачи",
+  "conflictDetected": "Обнаружен конфликт",
+  "confirm": "Подтвердить",
+  "confirmShiftHandover": "Подтвердить передачу смены",
+  "confirmShiftHandoverDescription": "Вы уверены, что хотите передать все открытые задачи выбранному пользователю?",
+  "confirmShiftHandoverDescriptionWithName": "Вы уверены, что хотите передать {taskCount, plural, =1{# открытую задачу} one{# открытую задачу} few{# открытые задачи} many{# открытых задач} other{# открытой задачи}} пользователю {name}?",
+  "@confirmShiftHandoverDescriptionWithName": {
+    "placeholders": {
+      "taskCount": {
+        "type": "number"
+      },
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "copyShareLink": "Копировать ссылку",
+  "copyViewToMyViews": "Копировать в мой быстрый доступ",
+  "confirmDeleteView": "Удалить этот сохранённый быстрый доступ? Это действие нельзя отменить.",
+  "create": "Создать",
+  "createTask": "Создать задачу",
+  "creationDate": "Дата создания",
+  "currentTime": "Текущее время",
+  "dashboard": "Обзорная панель",
+  "dashboardWelcomeDescription": "Вот что происходит сегодня.",
+  "dashboardWelcomeMorning": "Доброе утро, {name}!",
+  "@dashboardWelcomeMorning": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "dashboardWelcomeNoon": "Добрый день, {name}!",
+  "@dashboardWelcomeNoon": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "dashboardWelcomeAfternoon": "Добрый день, {name}!",
+  "@dashboardWelcomeAfternoon": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "dashboardWelcomeEvening": "Добрый вечер, {name}!",
+  "@dashboardWelcomeEvening": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "dashboardWelcomeNight": "Доброй ночи, {name}!",
+  "@dashboardWelcomeNight": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "delete": "Удалить",
+  "description": "Описание",
+  "diverse": "Другой",
+  "descriptionPlaceholder": "Добавьте подробности...",
+  "developmentAndPreviewInstance": "Экземпляр для разработки и предварительного просмотра",
+  "dismiss": "Закрыть",
+  "duplicate": "Дублировать",
+  "done": "Готово",
+  "dueDate": "Срок выполнения",
+  "dueDateInDays": "+{days, plural, =1{# день} one{# день} few{# дня} many{# дней} other{# дня}}",
+  "@dueDateInDays": {
+    "placeholders": {
+      "days": {
+        "type": "number"
+      }
+    }
+  },
+  "dueDateInHours": "+{hours, plural, =1{# час} one{# час} few{# часа} many{# часов} other{# часа}}",
+  "@dueDateInHours": {
+    "placeholders": {
+      "hours": {
+        "type": "number"
+      }
+    }
+  },
+  "dueDateNow": "Сейчас",
+  "dueDateToday": "Сегодня",
+  "dueDateTomorrow": "Завтра",
+  "edit": "Редактировать",
+  "editPatient": "Редактировать пациента",
+  "editTask": "Редактировать задачу",
+  "errorOccurred": "Произошла ошибка",
+  "estimatedTime": "Расчётное время (минуты)",
+  "export": "Экспорт",
+  "exportCsv": "Экспорт в CSV",
+  "exportExcel": "Экспорт в Excel (для печати)",
+  "exportFailed": "Не удалось выполнить экспорт. Попробуйте ещё раз.",
+  "timeEstimate": "Оценка времени",
+  "nMinutesShort": "{minCount} мин",
+  "@nMinutesShort": {
+    "placeholders": {
+      "minCount": {
+        "type": "number"
+      }
+    }
+  },
+  "feedback": "Обратная связь",
+  "female": "Женский",
+  "filter": "Фильтр",
+  "filterAll": "Все",
+  "filterUndone": "Невыполненные",
+  "firstName": "Имя",
+  "freeBeds": "Свободные койки",
+  "homePage": "Главная страница",
+  "hide": "Скрыть",
+  "imprint": "Выходные данные",
+  "inactive": "Неактивно",
+  "language": "Язык",
+  "lastName": "Фамилия",
+  "listViewCard": "Карточки",
+  "listViewTable": "Таблица",
+  "scrollToTop": "Наверх",
+  "loadMore": "Загрузить ещё",
+  "loadingHangOn": "Подождите — загружаем актуальные данные...",
+  "loadingMoment": "Секунду, почти готово...",
+  "loadingAlmostThere": "Почти готово...",
+  "loadingGettingReady": "Минуту — всё подготавливаем...",
+  "more": "Ещё",
+  "location": "Местоположение",
+  "locationBed": "Койка",
+  "locationClinic": "Клиника",
+  "locationRoom": "Палата",
+  "locationType": "{type, select, CLINIC{Клиника} WARD{Отделение} TEAM{Команда} ROOM{Палата} BED{Койка} other{Другое}}",
+  "@locationType": {
+    "placeholders": {
+      "type": {
+        "type": "string"
+      }
+    }
+  },
+  "locationWard": "Отделение",
+  "loading": "Загрузка...",
+  "logInAgain": "Войти снова",
+  "login": "Вход",
+  "logout": "Выйти",
+  "male": "Мужской",
+  "menu": "Меню",
+  "myFavorites": "Избранное",
+  "myOpenTasks": "Мои открытые задачи",
+  "myTasks": "Мои задачи",
+  "name": "Название",
+  "no": "Нет",
+  "none": "Нет",
+  "noClosedTasks": "Нет выполненных задач",
+  "noOpenTasks": "Нет открытых задач",
+  "noPatient": "Нет пациента",
+  "noPatientsInTaskView": "Для этого быстрого доступа к задачам пациенты не найдены.",
+  "noResultsFound": "Ничего не найдено",
+  "notAssigned": "Не назначено",
+  "nFilter": "{count, plural, =1{# фильтр} one{# фильтр} few{# фильтра} many{# фильтров} other{# фильтра}}",
+  "@nFilter": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "nSorting": "{count, plural, =1{# сортировка} one{# сортировка} few{# сортировки} many{# сортировок} other{# сортировки}}",
+  "@nSorting": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "nPatient": "{count, plural, =1{# пациент} one{# пациент} few{# пациента} many{# пациентов} other{# пациента}}",
+  "@nPatient": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "patientsCountChipTotal": "Всего {count}",
+  "@patientsCountChipTotal": {
+    "placeholders": {
+      "count": {
+        "type": "string"
+      }
+    }
+  },
+  "patientsCountChipAdmitted": "Госпитализировано {count}",
+  "@patientsCountChipAdmitted": {
+    "placeholders": {
+      "count": {
+        "type": "string"
+      }
+    }
+  },
+  "patientsCountChipWaiting": "Ожидают {count}",
+  "@patientsCountChipWaiting": {
+    "placeholders": {
+      "count": {
+        "type": "string"
+      }
+    }
+  },
+  "nTask": "{count, plural, =1{# задача} one{# задача} few{# задачи} many{# задач} other{# задачи}}",
+  "@nTask": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "nYears": "{years, plural, =0{0 лет} =1{1 год} one{# год} few{# года} many{# лет} other{# года}}",
+  "@nYears": {
+    "placeholders": {
+      "years": {
+        "type": "number"
+      }
+    }
+  },
+  "occupancy": "Заполненность",
+  "onboardingSurvey": "Вводный опрос",
+  "openSurvey": "Открыть опрос",
+  "weeklySurvey": "Еженедельный опрос",
+  "openTasks": "Открытые задачи",
+  "openView": "Открыть",
+  "option": "Вариант",
+  "organizations": "Организации",
+  "overview": "Обзор",
+  "pages.404.notFound": "404 — Страница не найдена",
+  "pages.404.notFoundDescription1": "Это точно не та страница, которую вы ищете",
+  "pages.404.notFoundDescription2": "Вернуться на",
+  "patient": "Пациент",
+  "patientData": "Данные",
+  "patients": "Пациенты",
+  "patientState": "{state, select, WAIT{Ожидает} ADMITTED{Госпитализирован} DISCHARGED{Выписан} DEAD{Умер} other{Неизвестно}}",
+  "@patientState": {
+    "placeholders": {
+      "state": {
+        "type": "string"
+      }
+    }
+  },
+  "patientsUpdatedRecently": "Недавно обновлённые пациенты",
+  "pThemes": "{count, plural, =1{Тема} other{Темы}}",
+  "@pThemes": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "preferences": "Настройки",
+  "priority": "Приоритет",
+  "sPriority": "{priority, select, P1{Обычный} P2{Средний} P3{Высокий} P4{Критический} other{-}}",
+  "@sPriority": {
+    "placeholders": {
+      "priority": {}
+    }
+  },
+  "priorityLabel": "Приоритет",
+  "priorityNone": "Нет",
+  "privacy": "Конфиденциальность",
+  "properties": "Свойства",
+  "propertiesSettingsDescription": "Пользовательские поля для задач и пациентов: задавайте типы и используйте их в фильтрах.",
+  "property": "Свойство",
+  "rAdd": "Добавить: {name}",
+  "@rAdd": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "rEdit": "Изменить: {name}",
+  "@rEdit": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "recentPatients": "Ваши недавние пациенты",
+  "recentTasks": "Ваши недавние задачи",
+  "refreshing": "Обновление…",
+  "removeProperty": "Удалить свойство",
+  "removePropertyConfirmation": "Вы уверены, что хотите удалить это свойство? Это действие нельзя отменить.",
+  "clearPropertyColumnActionTask": "Удалить это свойство из задач в списке",
+  "clearPropertyColumnActionPatient": "Очистить значения этого свойства у пациентов в списке",
+  "clearPropertyColumnDialogTitleTask": "Удалить свойство из задач",
+  "clearPropertyColumnDialogTitlePatient": "Очистить значения свойства у пациентов",
+  "clearPropertyColumnDialogDescriptionTask": "Свойство «{propertyName}» будет безвозвратно удалено из задач, загруженных в этот список (количество: {count}). Задачи, не загруженные в этот список, не затрагиваются.",
+  "@clearPropertyColumnDialogDescriptionTask": {
+    "placeholders": {
+      "propertyName": {
+        "type": "string"
+      },
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "clearPropertyColumnDialogDescriptionPatient": "Все значения свойства «{propertyName}» будут очищены у пациентов, загруженных в этот список (количество: {count}). Само свойство останется у этих пациентов. Пациенты, не загруженные в этот список, не затрагиваются.",
+  "@clearPropertyColumnDialogDescriptionPatient": {
+    "placeholders": {
+      "propertyName": {
+        "type": "string"
+      },
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "clearPropertyColumnTypeNameInstruction": "Введите «{propertyName}» для подтверждения.",
+  "@clearPropertyColumnTypeNameInstruction": {
+    "placeholders": {
+      "propertyName": {
+        "type": "string"
+      }
+    }
+  },
+  "clearPropertyColumnConfirmButtonTask": "Удалить свойство из задач",
+  "clearPropertyColumnConfirmButtonPatient": "Очистить значения свойства",
+  "readOnlyView": "Только чтение",
+  "retakeSurvey": "Пройти опрос снова",
+  "saveView": "Сохранить быстрый доступ",
+  "saveViewDescription": "Назовите этот быстрый доступ. Фильтры, сортировка, поиск и местоположение будут сохранены.",
+  "saveViewOverwriteCurrent": "Перезаписать текущий быстрый доступ",
+  "saveViewAsNew": "Сохранить как новый быстрый доступ",
+  "saveViewDescriptionFromSystemList": "Создаёт новый быстрый доступ на основе этого макета. Эта страница задана приложением и не перезаписывается — при необходимости откройте быстрый доступ на боковой панели.",
+  "discardViewChanges": "Отменить изменения",
+  "discard": "Отменить",
+  "discardDraftTitle": "Отменить черновик?",
+  "discardDraftMessage": "У вас есть несохранённые данные. Если закрыть сейчас, всё введённое будет потеряно.",
+  "savedViews": "Быстрый доступ",
+  "viewDerivedPatientsHint": "Пациенты из задач, соответствующих этому быстрому доступу (без повторов).",
+  "viewSettings": "Быстрый доступ",
+  "viewSettingsDescription": "Управление сохранёнными быстрыми доступами к задачам и пациентам.",
+  "views": "Быстрый доступ",
+  "viewsEntityPatient": "Пациенты",
+  "viewsEntityTask": "Задачи",
+  "viewVisibility": "Видимость",
+  "viewVisibilityPrivate": "Личный",
+  "viewVisibilityLinkShared": "Доступ по ссылке",
+  "viewAnyoneWithLinkCanView": "Просматривать может любой, у кого есть ссылка",
+  "copyShareLinkEnableSharingFirst": "Включите доступ по ссылке, чтобы другие пользователи со ссылкой могли открыть этот быстрый доступ.",
+  "rShow": "Показать: {name}",
+  "@rShow": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "rChipTotal": "Всего {value}",
+  "@rChipTotal": {
+    "placeholders": {
+      "value": {
+        "type": "string"
+      }
+    }
+  },
+  "search": "Поиск",
+  "searchUserOrTeam": "Найти пользователя (или команду)...",
+  "searchUsersOrTeams": "Поиск пользователей или команд...",
+  "security": "Безопасность",
+  "selectAssignee": "Назначить...",
+  "scopeVisibility": "Общий доступ",
+  "scopePrivate": "Личный",
+  "scopePublic": "Общедоступный",
+  "scopeShared": "Доступ по ссылке",
+  "scopeSharedDescription": "Эта запись видна в списках только вам. Все, у кого есть доступ к выбранному узлу или его поддереву, могут открыть её по ссылке.",
+  "scopePublicDescription": "Все, у кого есть доступ к выбранному узлу или его поддереву, могут видеть и использовать эту запись.",
+  "scopePrivateDescription": "Только вы можете видеть и использовать эту запись.",
+  "scopeSelectNode": "Выбрать узел",
+  "scopeChangeNode": "Изменить узел",
+  "scopeNoNodeSelected": "Выберите узел, в котором будет храниться эта запись.",
+  "scopeStoredAt": "Хранится в",
+  "selectLocation": "Выбрать местоположение",
+  "selectOptions": "Выбрать варианты",
+  "sessionExpired": "Сеанс истёк",
+  "sessionExpiredDescription": "Вы вышли из системы из-за бездействия. Войдите снова, чтобы продолжить. Несохранённые изменения могут быть потеряны.",
+  "settings": "Настройки",
+  "settingsDescription": "Здесь можно изменить настройки приложения.",
+  "sex": "Пол",
+  "shiftHandover": "Передача смены",
+  "showAllTasks": "Показать все задачи",
+  "showPatient": "Показать пациента {name}",
+  "@showPatient": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "showTeamTasks": "Показать задачи команды",
+  "sorting": "Сортировка",
+  "stagingModalDisclaimerMarkdown": "Этот общедоступный экземпляр helpwave tasks предназначен '\\b{для разработки и предварительного просмотра}'. Пожалуйста, вводите '\\b{только}' '\\b{неконфиденциальные тестовые данные}'. Этот экземпляр может быть '\\negative{\\b{удалён в любой момент}}'",
+  "status": "Статус",
+  "subjectType": "Тип объекта",
+  "surveyDescription": "Ваше мнение очень важно для нас. Пожалуйста, уделите минуту, чтобы пройти наш опрос.",
+  "surveyTitle": "Помогите нам улучшить helpwave tasks",
+  "sPropertySubjectType": "{subject, select, patient{Пациент} task{Задача} other{Неопределённый тип объекта}}",
+  "@sPropertySubjectType": {
+    "placeholders": {
+      "subject": {
+        "type": "string"
+      }
+    }
+  },
+  "sPropertyType": "{type, select, multiSelect{Множественный выбор} singleSelect{Одиночный выбор} number{Число} text{Текст} date{Дата} dateTime{Дата и время} checkbox{Флажок} user{Пользователь} other{Неопределённый тип}}",
+  "@sPropertyType": {
+    "placeholders": {
+      "type": {
+        "type": "string"
+      }
+    }
+  },
+  "system": "Система",
+  "task": "Задача",
+  "tasks": "Задачи",
+  "tasksUpdatedRecently": "Недавно обновлённые задачи",
+  "taskTitlePlaceholder": "Что нужно сделать?",
+  "teams": "Команды",
+  "themeMode": "{theme, select, dark{Тёмная} light{Светлая} system{Системная} other{Системная}}",
+  "@themeMode": {
+    "placeholders": {
+      "theme": {
+        "type": "string"
+      }
+    }
+  },
+  "title": "Заголовок",
+  "totalPatients": "Всего пациентов",
+  "type": "Тип",
+  "updated": "Обновлено",
+  "stateUpdated": "Статус обновлён",
+  "clinicUpdated": "Клиника обновлена",
+  "positionUpdated": "Местоположение обновлено",
+  "user": "Пользователь",
+  "users": "Пользователи",
+  "wards": "Отделения",
+  "yes": "Да",
+  "anonymous": "Анонимно",
+  "anonymousSubmission": "Анонимная отправка",
+  "collapseAll": "Свернуть все",
+  "confirmSelection": "Подтвердить выбор",
+  "deselectAll": "Снять выбор",
+  "enterFeedback": "Введите ваш отзыв...",
+  "expandAll": "Развернуть все",
+  "feedbackDescription": "Поделитесь отзывом, сообщите об ошибке или предложите улучшение.",
+  "noLocationsFound": "Местоположения не найдены",
+  "pickClinic": "Выберите клинику",
+  "pickClinicDescription": "Выберите клинику для этого пациента. Можно выбрать только клиники.",
+  "pickPosition": "Выберите местоположение",
+  "pickPositionDescription": "Выберите местоположение для этого пациента. Можно выбрать больницу, практику, клинику, отделение, койку или палату.",
+  "pickTeams": "Выберите команды",
+  "pickTeamsDescription": "Выберите одну или несколько команд для этого пациента. Можно выбрать клинику, команду, практику или больницу.",
+  "searchLocations": "Поиск местоположений...",
+  "selectAll": "Выбрать все",
+  "selectLocationDescription": "Выберите местоположение, назначенное пациенту.",
+  "selectRootLocation": "Выбрать корневое местоположение",
+  "selectRootLocationDescription": "Выберите корневые местоположения, определяющие доступную вам область. Можно выбрать только больницы, практики, клиники и команды. Выбор родительского местоположения включает все дочерние.",
+  "startRecording": "Начать запись",
+  "stopRecording": "Остановить запись",
+  "submissionDetails": "Сведения об отправке",
+  "submittingAs": "Отправка от имени {name}",
+  "@submittingAs": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "submit": "Отправить",
+  "url": "URL",
+  "userInformation": "Сведения о пользователе",
+  "admitPatient": "Госпитализировать пациента",
+  "clear": "Очистить",
+  "clinic": "Клиника",
+  "connectionConnected": "Подключено",
+  "connectionConnecting": "Подключение…",
+  "connectionDisconnected": "Отключено",
+  "deletePatient": "Удалить пациента",
+  "deletePatientConfirmation": "Вы уверены, что хотите удалить этого пациента? Это действие нельзя отменить.",
+  "dischargePatient": "Выписать пациента",
+  "dischargePatientConfirmation": "Вы уверены, что хотите выписать этого пациента? Статус пациента будет изменён.",
+  "dismissAll": "Закрыть все",
+  "error": "Ошибка",
+  "install": "Установить",
+  "installApp": "Установить приложение",
+  "installAppDescription": "Установите helpwave tasks для удобной работы, офлайн-доступа и более быстрого запуска.",
+  "loginRequired": "Требуется вход",
+  "loginRequiredDescription": "Чтобы пользоваться этим сайтом, необходимо войти в систему.",
+  "markPatientDead": "Отметить пациента как умершего",
+  "markPatientDeadConfirmation": "Вы уверены, что хотите отметить этого пациента как умершего?",
+  "noNotifications": "Нет новых обновлений",
+  "notifications": "Уведомления",
+  "ok": "ОК",
+  "patientActions": "Действия с пациентом",
+  "position": "Местоположение",
+  "selectClinic": "Выбрать клинику",
+  "selectPosition": "Выбрать местоположение",
+  "selectTeams": "Выбрать команды",
+  "waitPatient": "Перевести пациента в ожидание",
+  "waitingForPatient": "Ожидание пациента",
+  "taskPresets": "Шаблоны",
+  "taskPresetsDescription": "Многократно используемые списки задач с необязательными зависимостями.",
+  "taskPresetName": "Название",
+  "taskPresetKey": "Ключ",
+  "taskPresetKeyHint": "Необязательный уникальный ключ для поиска. Оставьте пустым для автоматической генерации.",
+  "taskPresetAddRow": "Добавить задачу",
+  "taskPresetRemoveRow": "Удалить",
+  "taskPresetSave": "Сохранить шаблон",
+  "taskPresetCreate": "Создать шаблон",
+  "taskPresetEdit": "Редактировать шаблон",
+  "taskPresetDelete": "Удалить",
+  "taskPresetDeleteConfirm": "Удалить этот шаблон задач?",
+  "taskPresetEmptyList": "Шаблонов задач пока нет.",
+  "loadTaskPreset": "Загрузить шаблон",
+  "loadTaskPresetTitle": "Загрузить шаблон задач",
+  "loadTaskPresetConfirm": "Создать {count, plural, =1{# задачу} one{# задачу} few{# задачи} many{# задач} other{# задачи}} для этого пациента?",
+  "@loadTaskPresetConfirm": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "loadTaskPresetConfirmTitle": "Подтвердить загрузку шаблона",
+  "loadTaskPresetSelectTasks": "Задачи из шаблона",
+  "loadTaskPresetCreateAndAssign": "Создать и назначить мне",
+  "loadTaskPresetTaskLabel": "Шаблон",
+  "taskPresetNoTasks": "В этом шаблоне нет задач.",
+  "taskPresetSelectPlaceholder": "Выберите шаблон",
+  "taskPresetEditDetails": "Изменить детали",
+  "editPresetTask": "Редактировать задачу шаблона",
+  "taskPresetApplyToRow": "Применить к строке шаблона",
+  "taskPresetNoEstimate": "Без оценки",
+  "tasksCreatedFromPreset": "Задачи созданы",
+  "taskFromPresetTooltip": "Создано из шаблона задач",
+  "taskPresetSourceTitle": "Исходный шаблон",
+  "taskPresetSourceNotFound": "Не удалось загрузить шаблон.",
+  "taskPresetSourceTasksInGraph": "Задачи в шаблоне",
+  "taskPresetSourceOpenSettings": "Открыть в настройках"
+}

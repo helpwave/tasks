@@ -5,7 +5,6 @@ import {
   Checkbox,
   Input,
   Select,
-  SelectOption,
   Textarea,
   FormField,
   FormProvider,
@@ -283,7 +282,7 @@ export const PropertyDetailView = ({
                 }}
               >
                 {propertySubjectTypeList.map(v => (
-                  <SelectOption key={v} value={v} label={translation('sPropertySubjectType', { subject: v })} />
+                  <Select.Option key={v} value={v} label={translation('sPropertySubjectType', { subject: v })} />
                 ))}
               </Select>
             )}
@@ -308,7 +307,7 @@ export const PropertyDetailView = ({
                 }}
               >
                 {propertyFieldTypeList.map(v => (
-                  <SelectOption key={v} value={v} label={translation('sPropertyType', { type: v })} />
+                  <Select.Option key={v} value={v} label={translation('sPropertyType', { type: v })} />
                 ))}
               </Select>
             )}
