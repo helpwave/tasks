@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Button, Checkbox, Select, SelectOption } from '@helpwave/hightide'
+import { Button, Checkbox, Select } from '@helpwave/hightide'
 import { MapPin } from 'lucide-react'
 import clsx from 'clsx'
 import { ScopeVisibility } from '@/api/gql/generated'
@@ -82,9 +82,9 @@ export function ScopeVisibilityField({
             disabled={disabled}
             onValueChange={setVisibility}
           >
-            <SelectOption value={ScopeVisibility.Private} label={translation('scopePrivate')} />
-            <SelectOption value={ScopeVisibility.Shared} label={translation('scopeShared')} />
-            <SelectOption value={ScopeVisibility.Public} label={translation('scopePublic')} />
+            <Select.Option value={ScopeVisibility.Private} label={translation('scopePrivate')} />
+            <Select.Option value={ScopeVisibility.Shared} label={translation('scopeShared')} />
+            <Select.Option value={ScopeVisibility.Public} label={translation('scopePublic')} />
           </Select>
           <span className="text-description text-sm">
             {translation(visibilityDescriptionKey[value.visibility])}

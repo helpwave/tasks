@@ -1,7 +1,7 @@
 import { useMemo, useState, forwardRef, useImperativeHandle, useEffect, useRef, useCallback, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import type { FilterListItem } from '@helpwave/hightide'
-import { Button, Checkbox, ConfirmDialog, FilterList, FillerCell, IconButton, SearchBar, TableColumnSwitcher, TableDisplay, TableProvider, SortingList, ExpansionIcon, VirtualizedCardGrid, overscanRowsForBuffer, useLocale } from '@helpwave/hightide'
+import { Button, Checkbox, ConfirmDialog, FilterList, FillerCell, IconButton, SearchBar, TableColumnSwitcher, TableDisplay, TableProvider, SortingList, ExpansionIcon, VirtualizedCardGrid, overscanRowsForBuffer, useLocalization } from '@helpwave/hightide'
 import clsx from 'clsx'
 import { Edit2, ExternalLink, LayoutGrid, PlusIcon, Table2, UserCheck } from 'lucide-react'
 import type { IdentifierFilterValue } from '@helpwave/hightide'
@@ -888,7 +888,7 @@ export const TaskList = forwardRef<TaskListRef, TaskListProps>(({ tasks: initial
     [columnOrder, knownColumnIdsOrdered]
   )
 
-  const { locale, timeZone } = useLocale()
+  const { locale, timeZone } = useLocalization()
   const buildExportRequest = useCallback((format: TableExportFormat): TableExportRequest => ({
     entity: 'tasks',
     format,

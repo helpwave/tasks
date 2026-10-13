@@ -1,0 +1,582 @@
+{
+  "@@locale": "it-IT",
+  "account": "Account",
+  "active": "Attivo",
+  "add": "Aggiungi",
+  "addFastAccess": "Aggiungi accesso rapido",
+  "addFastAccessDescription": "Inserisci un nome per il nuovo accesso rapido.",
+  "addPatient": "Aggiungi paziente",
+  "addProperty": "Aggiungi proprietà",
+  "addTask": "Aggiungi attività",
+  "archivedPropertyDescription": "Le proprietà archiviate non possono più essere assegnate agli oggetti.",
+  "archiveProperty": "Archivia proprietà",
+  "assignedTo": "Assegnato a",
+  "assigneeTeam": "Team assegnato",
+  "additionalAssigneesCount": "+{count}",
+  "@additionalAssigneesCount": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "authenticationFailed": "Autenticazione non riuscita",
+  "birthdate": "Data di nascita",
+  "cancel": "Annulla",
+  "clearCache": "Svuota cache",
+  "close": "Chiudi",
+  "clinics": "Cliniche",
+  "closedTasks": "Attività chiuse",
+  "conflictDetected": "Conflitto rilevato",
+  "confirm": "Conferma",
+  "confirmShiftHandover": "Conferma passaggio di consegne",
+  "confirmShiftHandoverDescription": "Vuoi davvero trasferire tutte le attività aperte all''utente selezionato?",
+  "confirmShiftHandoverDescriptionWithName": "Vuoi davvero trasferire {taskCount, plural, =1{# attività aperta} other{# attività aperte}} a {name}?",
+  "@confirmShiftHandoverDescriptionWithName": {
+    "placeholders": {
+      "taskCount": {
+        "type": "number"
+      },
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "copyShareLink": "Copia link",
+  "copyViewToMyViews": "Copia nel mio accesso rapido",
+  "confirmDeleteView": "Eliminare questo accesso rapido salvato? L''operazione non può essere annullata.",
+  "create": "Crea",
+  "createTask": "Crea attività",
+  "creationDate": "Data di creazione",
+  "currentTime": "Ora attuale",
+  "dashboard": "Dashboard",
+  "dashboardWelcomeDescription": "Ecco cosa succede oggi.",
+  "dashboardWelcomeMorning": "Buongiorno, {name}!",
+  "@dashboardWelcomeMorning": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "dashboardWelcomeNoon": "Buon pomeriggio, {name}!",
+  "@dashboardWelcomeNoon": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "dashboardWelcomeAfternoon": "Buon pomeriggio, {name}!",
+  "@dashboardWelcomeAfternoon": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "dashboardWelcomeEvening": "Buonasera, {name}!",
+  "@dashboardWelcomeEvening": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "dashboardWelcomeNight": "Buonanotte, {name}!",
+  "@dashboardWelcomeNight": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "delete": "Elimina",
+  "description": "Descrizione",
+  "diverse": "Altro",
+  "descriptionPlaceholder": "Aggiungi altri dettagli...",
+  "developmentAndPreviewInstance": "Istanza di sviluppo e anteprima",
+  "dismiss": "Chiudi",
+  "duplicate": "Duplica",
+  "done": "Completata",
+  "dueDate": "Scadenza",
+  "dueDateInDays": "+{days, plural, =1{# giorno} other{# giorni}}",
+  "@dueDateInDays": {
+    "placeholders": {
+      "days": {
+        "type": "number"
+      }
+    }
+  },
+  "dueDateInHours": "+{hours, plural, =1{# ora} other{# ore}}",
+  "@dueDateInHours": {
+    "placeholders": {
+      "hours": {
+        "type": "number"
+      }
+    }
+  },
+  "dueDateNow": "Adesso",
+  "dueDateToday": "Oggi",
+  "dueDateTomorrow": "Domani",
+  "edit": "Modifica",
+  "editPatient": "Modifica paziente",
+  "editTask": "Modifica attività",
+  "errorOccurred": "Si è verificato un errore",
+  "estimatedTime": "Tempo stimato (minuti)",
+  "export": "Esporta",
+  "exportCsv": "Esporta come CSV",
+  "exportExcel": "Esporta come Excel (stampabile)",
+  "exportFailed": "Esportazione non riuscita. Riprova.",
+  "timeEstimate": "Stima del tempo",
+  "nMinutesShort": "{minCount} min",
+  "@nMinutesShort": {
+    "placeholders": {
+      "minCount": {
+        "type": "number"
+      }
+    }
+  },
+  "feedback": "Feedback",
+  "female": "Femmina",
+  "filter": "Filtro",
+  "filterAll": "Tutte",
+  "filterUndone": "Da completare",
+  "firstName": "Nome",
+  "freeBeds": "Letti liberi",
+  "homePage": "Home page",
+  "hide": "Nascondi",
+  "imprint": "Note legali",
+  "inactive": "Inattivo",
+  "language": "Lingua",
+  "lastName": "Cognome",
+  "listViewCard": "Vista schede",
+  "listViewTable": "Vista tabella",
+  "scrollToTop": "Torna su",
+  "loadMore": "Carica altro",
+  "loadingHangOn": "Un attimo — recupero dei dati più recenti...",
+  "loadingMoment": "Solo un secondo, ci siamo quasi...",
+  "loadingAlmostThere": "Quasi pronto...",
+  "loadingGettingReady": "Un momento — stiamo preparando tutto...",
+  "more": "Altro",
+  "location": "Posizione",
+  "locationBed": "Letto",
+  "locationClinic": "Clinica",
+  "locationRoom": "Stanza",
+  "locationType": "{type, select, CLINIC{Clinica} WARD{Reparto} TEAM{Team} ROOM{Stanza} BED{Letto} other{Altro}}",
+  "@locationType": {
+    "placeholders": {
+      "type": {
+        "type": "string"
+      }
+    }
+  },
+  "locationWard": "Reparto",
+  "loading": "Caricamento...",
+  "logInAgain": "Accedi di nuovo",
+  "login": "Accedi",
+  "logout": "Esci",
+  "male": "Maschio",
+  "menu": "Menu",
+  "myFavorites": "I miei preferiti",
+  "myOpenTasks": "Le mie attività aperte",
+  "myTasks": "Le mie attività",
+  "name": "Nome",
+  "no": "No",
+  "none": "Nessuno",
+  "noClosedTasks": "Nessuna attività chiusa",
+  "noOpenTasks": "Nessuna attività aperta",
+  "noPatient": "Nessun paziente",
+  "noPatientsInTaskView": "Nessun paziente trovato per questo accesso rapido alle attività.",
+  "noResultsFound": "Nessun risultato trovato",
+  "notAssigned": "Non assegnato",
+  "nFilter": "{count, plural, =1{# filtro} other{# filtri}}",
+  "@nFilter": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "nSorting": "{count, plural, =1{# ordinamento} other{# ordinamenti}}",
+  "@nSorting": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "nPatient": "{count, plural, =1{# paziente} other{# pazienti}}",
+  "@nPatient": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "patientsCountChipTotal": "Totale {count}",
+  "@patientsCountChipTotal": {
+    "placeholders": {
+      "count": {
+        "type": "string"
+      }
+    }
+  },
+  "patientsCountChipAdmitted": "Ricoverati {count}",
+  "@patientsCountChipAdmitted": {
+    "placeholders": {
+      "count": {
+        "type": "string"
+      }
+    }
+  },
+  "patientsCountChipWaiting": "In attesa {count}",
+  "@patientsCountChipWaiting": {
+    "placeholders": {
+      "count": {
+        "type": "string"
+      }
+    }
+  },
+  "nTask": "{count, plural, =1{# attività} other{# attività}}",
+  "@nTask": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "nYears": "{years, plural, =0{0 anni} =1{1 anno} other{# anni}}",
+  "@nYears": {
+    "placeholders": {
+      "years": {
+        "type": "number"
+      }
+    }
+  },
+  "occupancy": "Occupazione",
+  "onboardingSurvey": "Questionario iniziale",
+  "openSurvey": "Apri questionario",
+  "weeklySurvey": "Questionario settimanale",
+  "openTasks": "Attività aperte",
+  "openView": "Apri",
+  "option": "Opzione",
+  "organizations": "Organizzazioni",
+  "overview": "Panoramica",
+  "pages.404.notFound": "404 - Pagina non trovata",
+  "pages.404.notFoundDescription1": "Questa non è sicuramente la pagina che stai cercando",
+  "pages.404.notFoundDescription2": "Torna alla",
+  "patient": "Paziente",
+  "patientData": "Dati",
+  "patients": "Pazienti",
+  "patientState": "{state, select, WAIT{In attesa} ADMITTED{Ricoverato} DISCHARGED{Dimesso} DEAD{Deceduto} other{Sconosciuto}}",
+  "@patientState": {
+    "placeholders": {
+      "state": {
+        "type": "string"
+      }
+    }
+  },
+  "patientsUpdatedRecently": "Pazienti aggiornati di recente",
+  "pThemes": "{count, plural, =1{Tema} other{Temi}}",
+  "@pThemes": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "preferences": "Preferenze",
+  "priority": "Priorità",
+  "sPriority": "{priority, select, P1{Normale} P2{Media} P3{Alta} P4{Critica} other{-}}",
+  "@sPriority": {
+    "placeholders": {
+      "priority": {}
+    }
+  },
+  "priorityLabel": "Priorità",
+  "priorityNone": "Nessuna",
+  "privacy": "Privacy",
+  "properties": "Proprietà",
+  "propertiesSettingsDescription": "Campi personalizzati per attività e pazienti: definisci i tipi e usali nei filtri.",
+  "property": "Proprietà",
+  "rAdd": "Aggiungi {name}",
+  "@rAdd": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "rEdit": "Aggiorna {name}",
+  "@rEdit": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "recentPatients": "I tuoi pazienti recenti",
+  "recentTasks": "Le tue attività recenti",
+  "refreshing": "Aggiornamento…",
+  "removeProperty": "Rimuovi proprietà",
+  "removePropertyConfirmation": "Vuoi davvero rimuovere questa proprietà? L''operazione non può essere annullata.",
+  "clearPropertyColumnActionTask": "Rimuovi questa proprietà dalle attività elencate",
+  "clearPropertyColumnActionPatient": "Cancella i valori di questa proprietà per i pazienti elencati",
+  "clearPropertyColumnDialogTitleTask": "Rimuovi proprietà dalle attività",
+  "clearPropertyColumnDialogTitlePatient": "Cancella i valori della proprietà per i pazienti",
+  "clearPropertyColumnDialogDescriptionTask": "La proprietà \"{propertyName}\" verrà rimossa definitivamente da {count} attività attualmente caricate in questo elenco. Le attività non caricate in questo elenco non vengono modificate.",
+  "@clearPropertyColumnDialogDescriptionTask": {
+    "placeholders": {
+      "propertyName": {
+        "type": "string"
+      },
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "clearPropertyColumnDialogDescriptionPatient": "Tutti i valori della proprietà \"{propertyName}\" verranno cancellati per {count} pazienti attualmente caricati in questo elenco. La proprietà resta associata a questi pazienti. I pazienti non caricati in questo elenco non vengono modificati.",
+  "@clearPropertyColumnDialogDescriptionPatient": {
+    "placeholders": {
+      "propertyName": {
+        "type": "string"
+      },
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "clearPropertyColumnTypeNameInstruction": "Digita \"{propertyName}\" per confermare.",
+  "@clearPropertyColumnTypeNameInstruction": {
+    "placeholders": {
+      "propertyName": {
+        "type": "string"
+      }
+    }
+  },
+  "clearPropertyColumnConfirmButtonTask": "Rimuovi proprietà dalle attività",
+  "clearPropertyColumnConfirmButtonPatient": "Cancella valori della proprietà",
+  "readOnlyView": "Sola lettura",
+  "retakeSurvey": "Ripeti questionario",
+  "saveView": "Salva accesso rapido",
+  "saveViewDescription": "Assegna un nome a questo accesso rapido. Filtri, ordinamento, ricerca e posizione vengono salvati.",
+  "saveViewOverwriteCurrent": "Sovrascrivi accesso rapido attuale",
+  "saveViewAsNew": "Salva come nuovo accesso rapido",
+  "saveViewDescriptionFromSystemList": "Crea un nuovo accesso rapido da questo layout. Questa pagina è predefinita dall''app e non viene sovrascritta — apri l''accesso rapido dalla barra laterale quando ti serve.",
+  "discardViewChanges": "Annulla modifiche",
+  "discard": "Scarta",
+  "discardDraftTitle": "Scartare la bozza?",
+  "discardDraftMessage": "Ci sono dati non salvati. Se chiudi ora, tutto ciò che hai inserito andrà perso.",
+  "savedViews": "Accesso rapido",
+  "viewDerivedPatientsHint": "Pazienti presenti nelle attività di questo accesso rapido (senza duplicati).",
+  "viewSettings": "Accesso rapido",
+  "viewSettingsDescription": "Gestisci gli accessi rapidi salvati per attività e pazienti.",
+  "views": "Accesso rapido",
+  "viewsEntityPatient": "Pazienti",
+  "viewsEntityTask": "Attività",
+  "viewVisibility": "Visibilità",
+  "viewVisibilityPrivate": "Privato",
+  "viewVisibilityLinkShared": "Condiviso tramite link",
+  "viewAnyoneWithLinkCanView": "Chiunque abbia il link può visualizzare",
+  "copyShareLinkEnableSharingFirst": "Attiva la condivisione tramite link affinché altre persone con il link possano aprire questo accesso rapido.",
+  "rShow": "Mostra {name}",
+  "@rShow": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "rChipTotal": "Totale {value}",
+  "@rChipTotal": {
+    "placeholders": {
+      "value": {
+        "type": "string"
+      }
+    }
+  },
+  "search": "Cerca",
+  "searchUserOrTeam": "Cerca utente (o team)...",
+  "searchUsersOrTeams": "Cerca utenti o team...",
+  "security": "Sicurezza",
+  "selectAssignee": "Assegna a...",
+  "scopeVisibility": "Condivisione",
+  "scopePrivate": "Privato",
+  "scopePublic": "Pubblico",
+  "scopeShared": "Condiviso tramite link",
+  "scopeSharedDescription": "Solo tu vedi questa voce nei tuoi elenchi. Chiunque abbia accesso al nodo selezionato o ai suoi sottonodi può aprirla tramite il link.",
+  "scopePublicDescription": "Chiunque abbia accesso al nodo selezionato o ai suoi sottonodi può vedere e usare questa voce.",
+  "scopePrivateDescription": "Solo tu puoi vedere e usare questa voce.",
+  "scopeSelectNode": "Seleziona nodo",
+  "scopeChangeNode": "Cambia nodo",
+  "scopeNoNodeSelected": "Seleziona il nodo in cui salvare questa voce.",
+  "scopeStoredAt": "Salvato in",
+  "selectLocation": "Seleziona posizione",
+  "selectOptions": "Seleziona opzioni",
+  "sessionExpired": "Sessione scaduta",
+  "sessionExpiredDescription": "Sei stato disconnesso per inattività. Accedi di nuovo per continuare. Eventuali modifiche non salvate potrebbero andare perse.",
+  "settings": "Impostazioni",
+  "settingsDescription": "Qui puoi modificare la configurazione dell''app.",
+  "sex": "Sesso",
+  "shiftHandover": "Passaggio di consegne",
+  "showAllTasks": "Mostra tutte le attività",
+  "showPatient": "Mostra paziente {name}",
+  "@showPatient": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "showTeamTasks": "Mostra attività del team",
+  "sorting": "Ordinamento",
+  "stagingModalDisclaimerMarkdown": "Questa istanza pubblica di helpwave tasks è destinata a '\\b{scopi di sviluppo e anteprima}'. Assicurati di inserire '\\b{solo}' '\\b{dati di test non riservati}'. Questa istanza può essere '\\negative{\\b{eliminata in qualsiasi momento}}'",
+  "status": "Stato",
+  "subjectType": "Tipo di oggetto",
+  "surveyDescription": "Il tuo feedback è prezioso per noi. Dedica un momento alla compilazione del nostro questionario.",
+  "surveyTitle": "Aiutaci a migliorare helpwave tasks",
+  "sPropertySubjectType": "{subject, select, patient{Paziente} task{Attività} other{Tipo di oggetto non definito}}",
+  "@sPropertySubjectType": {
+    "placeholders": {
+      "subject": {
+        "type": "string"
+      }
+    }
+  },
+  "sPropertyType": "{type, select, multiSelect{Selezione multipla} singleSelect{Selezione singola} number{Numero} text{Testo} date{Data} dateTime{Data e ora} checkbox{Casella di controllo} user{Utente} other{Tipo non definito}}",
+  "@sPropertyType": {
+    "placeholders": {
+      "type": {
+        "type": "string"
+      }
+    }
+  },
+  "system": "Sistema",
+  "task": "Attività",
+  "tasks": "Attività",
+  "tasksUpdatedRecently": "Attività aggiornate di recente",
+  "taskTitlePlaceholder": "Cosa bisogna fare?",
+  "teams": "Team",
+  "themeMode": "{theme, select, dark{Scuro} light{Chiaro} system{Sistema} other{Sistema}}",
+  "@themeMode": {
+    "placeholders": {
+      "theme": {
+        "type": "string"
+      }
+    }
+  },
+  "title": "Titolo",
+  "totalPatients": "Pazienti totali",
+  "type": "Tipo",
+  "updated": "Aggiornato",
+  "stateUpdated": "Stato aggiornato",
+  "clinicUpdated": "Clinica aggiornata",
+  "positionUpdated": "Posizione aggiornata",
+  "user": "Utente",
+  "users": "Utenti",
+  "wards": "Reparti",
+  "yes": "Sì",
+  "anonymous": "Anonimo",
+  "anonymousSubmission": "Invio anonimo",
+  "collapseAll": "Comprimi tutto",
+  "confirmSelection": "Conferma selezione",
+  "deselectAll": "Deseleziona tutto",
+  "enterFeedback": "Inserisci qui il tuo feedback...",
+  "expandAll": "Espandi tutto",
+  "feedbackDescription": "Condividi il tuo feedback, segnala errori o suggerisci miglioramenti.",
+  "noLocationsFound": "Nessuna posizione trovata",
+  "pickClinic": "Scegli la clinica",
+  "pickClinicDescription": "Seleziona la clinica per questo paziente. È possibile selezionare solo posizioni di tipo clinica.",
+  "pickPosition": "Scegli la posizione",
+  "pickPositionDescription": "Seleziona la posizione per questo paziente. Puoi selezionare ospedali, ambulatori, cliniche, reparti, letti o stanze.",
+  "pickTeams": "Scegli i team",
+  "pickTeamsDescription": "Seleziona uno o più team per questo paziente. Puoi selezionare cliniche, team, ambulatori od ospedali.",
+  "searchLocations": "Cerca posizioni...",
+  "selectAll": "Seleziona tutto",
+  "selectLocationDescription": "Seleziona la posizione assegnata al paziente.",
+  "selectRootLocation": "Seleziona posizione principale",
+  "selectRootLocationDescription": "Seleziona le posizioni principali che definiscono il tuo ambito di accesso. È possibile selezionare solo ospedali, ambulatori, cliniche e team. Selezionando una posizione superiore vengono incluse tutte le posizioni sottostanti.",
+  "startRecording": "Avvia registrazione",
+  "stopRecording": "Interrompi registrazione",
+  "submissionDetails": "Dettagli dell''invio",
+  "submittingAs": "Invio come {name}",
+  "@submittingAs": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "submit": "Invia",
+  "url": "URL",
+  "userInformation": "Informazioni utente",
+  "admitPatient": "Ricovera paziente",
+  "clear": "Cancella",
+  "clinic": "Clinica",
+  "connectionConnected": "Connesso",
+  "connectionConnecting": "Connessione in corso…",
+  "connectionDisconnected": "Disconnesso",
+  "deletePatient": "Elimina paziente",
+  "deletePatientConfirmation": "Vuoi davvero eliminare questo paziente? L''operazione non può essere annullata.",
+  "dischargePatient": "Dimetti paziente",
+  "dischargePatientConfirmation": "Vuoi davvero dimettere questo paziente? L''operazione modificherà lo stato del paziente.",
+  "dismissAll": "Chiudi tutto",
+  "error": "Errore",
+  "install": "Installa",
+  "installApp": "Installa app",
+  "installAppDescription": "Installa helpwave tasks per un''esperienza migliore con supporto offline e accesso più rapido.",
+  "loginRequired": "Accesso richiesto",
+  "loginRequiredDescription": "Per usare questo sito devi effettuare l''accesso.",
+  "markPatientDead": "Segna paziente come deceduto",
+  "markPatientDeadConfirmation": "Vuoi davvero segnare questo paziente come deceduto?",
+  "noNotifications": "Nessun aggiornamento recente",
+  "notifications": "Notifiche",
+  "ok": "OK",
+  "patientActions": "Azioni paziente",
+  "position": "Posizione",
+  "selectClinic": "Seleziona clinica",
+  "selectPosition": "Seleziona posizione",
+  "selectTeams": "Seleziona team",
+  "waitPatient": "Metti paziente in attesa",
+  "waitingForPatient": "In attesa del paziente",
+  "taskPresets": "Modelli",
+  "taskPresetsDescription": "Elenchi di attività riutilizzabili con dipendenze opzionali.",
+  "taskPresetName": "Nome",
+  "taskPresetKey": "Chiave",
+  "taskPresetKeyHint": "Chiave univoca opzionale per le ricerche. Lascia vuoto per generarla automaticamente.",
+  "taskPresetAddRow": "Aggiungi attività",
+  "taskPresetRemoveRow": "Rimuovi",
+  "taskPresetSave": "Salva modello",
+  "taskPresetCreate": "Crea modello",
+  "taskPresetEdit": "Modifica modello",
+  "taskPresetDelete": "Elimina",
+  "taskPresetDeleteConfirm": "Eliminare questo modello di attività?",
+  "taskPresetEmptyList": "Ancora nessun modello di attività.",
+  "loadTaskPreset": "Carica modello",
+  "loadTaskPresetTitle": "Carica modello di attività",
+  "loadTaskPresetConfirm": "Creare {count, plural, =1{# attività} other{# attività}} per questo paziente?",
+  "@loadTaskPresetConfirm": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "loadTaskPresetConfirmTitle": "Conferma caricamento modello",
+  "loadTaskPresetSelectTasks": "Attività dal modello",
+  "loadTaskPresetCreateAndAssign": "Crea e assegna a me",
+  "loadTaskPresetTaskLabel": "Modello",
+  "taskPresetNoTasks": "Questo modello non contiene attività.",
+  "taskPresetSelectPlaceholder": "Seleziona un modello",
+  "taskPresetEditDetails": "Modifica dettagli",
+  "editPresetTask": "Modifica attività del modello",
+  "taskPresetApplyToRow": "Applica alla riga del modello",
+  "taskPresetNoEstimate": "Nessuna stima",
+  "tasksCreatedFromPreset": "Attività create",
+  "taskFromPresetTooltip": "Creata da un modello di attività",
+  "taskPresetSourceTitle": "Modello di origine",
+  "taskPresetSourceNotFound": "Impossibile caricare il modello.",
+  "taskPresetSourceTasksInGraph": "Attività nel modello",
+  "taskPresetSourceOpenSettings": "Apri nelle impostazioni"
+}

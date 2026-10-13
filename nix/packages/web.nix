@@ -66,7 +66,7 @@ buildNpmPackage {
       ]);
   };
 
-  npmDepsHash = "sha256-5dIfshqcfVQk96oDRwuiqpFeKkR4Ly6L0tC8+L8Is/s=";
+  npmDepsHash = "sha256-FJ+GeN6rln8YuKwOeHXmbTgZYMIIcDR54af9m13HJqg=";
 
   nodejs = nodejs_22;
 

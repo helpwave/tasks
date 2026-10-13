@@ -1,0 +1,582 @@
+{
+  "@@locale": "el-GR",
+  "account": "Λογαριασμός",
+  "active": "Ενεργό",
+  "add": "Προσθήκη",
+  "addFastAccess": "Προσθήκη γρήγορης πρόσβασης",
+  "addFastAccessDescription": "Δώστε ένα όνομα στη νέα γρήγορη πρόσβαση.",
+  "addPatient": "Προσθήκη ασθενούς",
+  "addProperty": "Προσθήκη ιδιότητας",
+  "addTask": "Προσθήκη εργασίας",
+  "archivedPropertyDescription": "Οι αρχειοθετημένες ιδιότητες δεν μπορούν πλέον να αντιστοιχιστούν σε αντικείμενα.",
+  "archiveProperty": "Αρχειοθέτηση ιδιότητας",
+  "assignedTo": "Ανατέθηκε σε",
+  "assigneeTeam": "Ομάδα ανάθεσης",
+  "additionalAssigneesCount": "+{count}",
+  "@additionalAssigneesCount": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "authenticationFailed": "Αποτυχία ταυτοποίησης",
+  "birthdate": "Ημερομηνία γέννησης",
+  "cancel": "Ακύρωση",
+  "clearCache": "Εκκαθάριση προσωρινής μνήμης",
+  "close": "Κλείσιμο",
+  "clinics": "Κλινικές",
+  "closedTasks": "Ολοκληρωμένες εργασίες",
+  "conflictDetected": "Εντοπίστηκε διένεξη",
+  "confirm": "Επιβεβαίωση",
+  "confirmShiftHandover": "Επιβεβαίωση παράδοσης βάρδιας",
+  "confirmShiftHandoverDescription": "Θέλετε σίγουρα να μεταφέρετε όλες τις ανοιχτές εργασίες στον επιλεγμένο χρήστη;",
+  "confirmShiftHandoverDescriptionWithName": "Θέλετε σίγουρα να μεταφέρετε {taskCount, plural, =1{# ανοιχτή εργασία} other{# ανοιχτές εργασίες}} στον/στην {name};",
+  "@confirmShiftHandoverDescriptionWithName": {
+    "placeholders": {
+      "taskCount": {
+        "type": "number"
+      },
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "copyShareLink": "Αντιγραφή συνδέσμου",
+  "copyViewToMyViews": "Αντιγραφή στη γρήγορη πρόσβασή μου",
+  "confirmDeleteView": "Διαγραφή αυτής της αποθηκευμένης γρήγορης πρόσβασης; Η ενέργεια δεν μπορεί να αναιρεθεί.",
+  "create": "Δημιουργία",
+  "createTask": "Δημιουργία εργασίας",
+  "creationDate": "Ημερομηνία δημιουργίας",
+  "currentTime": "Τρέχουσα ώρα",
+  "dashboard": "Πίνακας ελέγχου",
+  "dashboardWelcomeDescription": "Δείτε τι συμβαίνει σήμερα.",
+  "dashboardWelcomeMorning": "Καλημέρα, {name}!",
+  "@dashboardWelcomeMorning": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "dashboardWelcomeNoon": "Καλό μεσημέρι, {name}!",
+  "@dashboardWelcomeNoon": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "dashboardWelcomeAfternoon": "Καλό απόγευμα, {name}!",
+  "@dashboardWelcomeAfternoon": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "dashboardWelcomeEvening": "Καλησπέρα, {name}!",
+  "@dashboardWelcomeEvening": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "dashboardWelcomeNight": "Καληνύχτα, {name}!",
+  "@dashboardWelcomeNight": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "delete": "Διαγραφή",
+  "description": "Περιγραφή",
+  "diverse": "Άλλο",
+  "descriptionPlaceholder": "Προσθέστε περισσότερες λεπτομέρειες...",
+  "developmentAndPreviewInstance": "Περιβάλλον ανάπτυξης και προεπισκόπησης",
+  "dismiss": "Απόρριψη",
+  "duplicate": "Αντιγραφή",
+  "done": "Ολοκληρώθηκε",
+  "dueDate": "Προθεσμία",
+  "dueDateInDays": "+{days, plural, =1{# ημέρα} other{# ημέρες}}",
+  "@dueDateInDays": {
+    "placeholders": {
+      "days": {
+        "type": "number"
+      }
+    }
+  },
+  "dueDateInHours": "+{hours, plural, =1{# ώρα} other{# ώρες}}",
+  "@dueDateInHours": {
+    "placeholders": {
+      "hours": {
+        "type": "number"
+      }
+    }
+  },
+  "dueDateNow": "Τώρα",
+  "dueDateToday": "Σήμερα",
+  "dueDateTomorrow": "Αύριο",
+  "edit": "Επεξεργασία",
+  "editPatient": "Επεξεργασία ασθενούς",
+  "editTask": "Επεξεργασία εργασίας",
+  "errorOccurred": "Παρουσιάστηκε σφάλμα",
+  "estimatedTime": "Εκτιμώμενος χρόνος (λεπτά)",
+  "export": "Εξαγωγή",
+  "exportCsv": "Εξαγωγή ως CSV",
+  "exportExcel": "Εξαγωγή ως Excel (για εκτύπωση)",
+  "exportFailed": "Η εξαγωγή απέτυχε. Δοκιμάστε ξανά.",
+  "timeEstimate": "Εκτίμηση χρόνου",
+  "nMinutesShort": "{minCount} λεπ.",
+  "@nMinutesShort": {
+    "placeholders": {
+      "minCount": {
+        "type": "number"
+      }
+    }
+  },
+  "feedback": "Σχόλια",
+  "female": "Γυναίκα",
+  "filter": "Φίλτρο",
+  "filterAll": "Όλα",
+  "filterUndone": "Εκκρεμή",
+  "firstName": "Όνομα",
+  "freeBeds": "Ελεύθερες κλίνες",
+  "homePage": "Αρχική σελίδα",
+  "hide": "Απόκρυψη",
+  "imprint": "Στοιχεία εκδότη",
+  "inactive": "Ανενεργό",
+  "language": "Γλώσσα",
+  "lastName": "Επώνυμο",
+  "listViewCard": "Προβολή καρτών",
+  "listViewTable": "Προβολή πίνακα",
+  "scrollToTop": "Μετάβαση στην κορυφή",
+  "loadMore": "Φόρτωση περισσότερων",
+  "loadingHangOn": "Μια στιγμή — φορτώνονται τα πιο πρόσφατα δεδομένα...",
+  "loadingMoment": "Ένα δευτερόλεπτο, σχεδόν έτοιμο...",
+  "loadingAlmostThere": "Σχεδόν έτοιμο...",
+  "loadingGettingReady": "Μια στιγμή — γίνεται προετοιμασία...",
+  "more": "Περισσότερα",
+  "location": "Τοποθεσία",
+  "locationBed": "Κλίνη",
+  "locationClinic": "Κλινική",
+  "locationRoom": "Θάλαμος",
+  "locationType": "{type, select, CLINIC{Κλινική} WARD{Πτέρυγα} TEAM{Ομάδα} ROOM{Θάλαμος} BED{Κλίνη} other{Άλλο}}",
+  "@locationType": {
+    "placeholders": {
+      "type": {
+        "type": "string"
+      }
+    }
+  },
+  "locationWard": "Πτέρυγα",
+  "loading": "Φόρτωση...",
+  "logInAgain": "Σύνδεση ξανά",
+  "login": "Σύνδεση",
+  "logout": "Αποσύνδεση",
+  "male": "Άνδρας",
+  "menu": "Μενού",
+  "myFavorites": "Τα αγαπημένα μου",
+  "myOpenTasks": "Οι ανοιχτές εργασίες μου",
+  "myTasks": "Οι εργασίες μου",
+  "name": "Όνομα",
+  "no": "Όχι",
+  "none": "Κανένα",
+  "noClosedTasks": "Δεν υπάρχουν ολοκληρωμένες εργασίες",
+  "noOpenTasks": "Δεν υπάρχουν ανοιχτές εργασίες",
+  "noPatient": "Χωρίς ασθενή",
+  "noPatientsInTaskView": "Δεν βρέθηκαν ασθενείς για αυτή τη γρήγορη πρόσβαση εργασιών.",
+  "noResultsFound": "Δεν βρέθηκαν αποτελέσματα",
+  "notAssigned": "Χωρίς ανάθεση",
+  "nFilter": "{count, plural, =1{# φίλτρο} other{# φίλτρα}}",
+  "@nFilter": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "nSorting": "{count, plural, =1{# ταξινόμηση} other{# ταξινομήσεις}}",
+  "@nSorting": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "nPatient": "{count, plural, =1{# ασθενής} other{# ασθενείς}}",
+  "@nPatient": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "patientsCountChipTotal": "Σύνολο {count}",
+  "@patientsCountChipTotal": {
+    "placeholders": {
+      "count": {
+        "type": "string"
+      }
+    }
+  },
+  "patientsCountChipAdmitted": "Εισηγμένοι {count}",
+  "@patientsCountChipAdmitted": {
+    "placeholders": {
+      "count": {
+        "type": "string"
+      }
+    }
+  },
+  "patientsCountChipWaiting": "Σε αναμονή {count}",
+  "@patientsCountChipWaiting": {
+    "placeholders": {
+      "count": {
+        "type": "string"
+      }
+    }
+  },
+  "nTask": "{count, plural, =1{# εργασία} other{# εργασίες}}",
+  "@nTask": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "nYears": "{years, plural, =0{0 έτη} =1{1 έτος} other{# έτη}}",
+  "@nYears": {
+    "placeholders": {
+      "years": {
+        "type": "number"
+      }
+    }
+  },
+  "occupancy": "Πληρότητα",
+  "onboardingSurvey": "Έρευνα εισαγωγής",
+  "openSurvey": "Άνοιγμα έρευνας",
+  "weeklySurvey": "Εβδομαδιαία έρευνα",
+  "openTasks": "Ανοιχτές εργασίες",
+  "openView": "Άνοιγμα",
+  "option": "Επιλογή",
+  "organizations": "Οργανισμοί",
+  "overview": "Επισκόπηση",
+  "pages.404.notFound": "404 - Η σελίδα δεν βρέθηκε",
+  "pages.404.notFoundDescription1": "Αυτή σίγουρα δεν είναι η σελίδα που αναζητάτε",
+  "pages.404.notFoundDescription2": "Επιστροφή στην",
+  "patient": "Ασθενής",
+  "patientData": "Δεδομένα",
+  "patients": "Ασθενείς",
+  "patientState": "{state, select, WAIT{Σε αναμονή} ADMITTED{Εισηγμένος} DISCHARGED{Εξιτήριο} DEAD{Απεβίωσε} other{Άγνωστο}}",
+  "@patientState": {
+    "placeholders": {
+      "state": {
+        "type": "string"
+      }
+    }
+  },
+  "patientsUpdatedRecently": "Πρόσφατα ενημερωμένοι ασθενείς",
+  "pThemes": "{count, plural, =1{Θέμα} other{Θέματα}}",
+  "@pThemes": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "preferences": "Προτιμήσεις",
+  "priority": "Προτεραιότητα",
+  "sPriority": "{priority, select, P1{Κανονική} P2{Μέτρια} P3{Υψηλή} P4{Κρίσιμη} other{-}}",
+  "@sPriority": {
+    "placeholders": {
+      "priority": {}
+    }
+  },
+  "priorityLabel": "Προτεραιότητα",
+  "priorityNone": "Καμία",
+  "privacy": "Απόρρητο",
+  "properties": "Ιδιότητες",
+  "propertiesSettingsDescription": "Προσαρμοσμένα πεδία για εργασίες και ασθενείς: ορίστε τύπους και χρησιμοποιήστε τα σε φίλτρα.",
+  "property": "Ιδιότητα",
+  "rAdd": "Προσθήκη {name}",
+  "@rAdd": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "rEdit": "Ενημέρωση {name}",
+  "@rEdit": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "recentPatients": "Οι πρόσφατοι ασθενείς σας",
+  "recentTasks": "Οι πρόσφατες εργασίες σας",
+  "refreshing": "Ανανέωση…",
+  "removeProperty": "Αφαίρεση ιδιότητας",
+  "removePropertyConfirmation": "Θέλετε σίγουρα να αφαιρέσετε αυτή την ιδιότητα; Η ενέργεια δεν μπορεί να αναιρεθεί.",
+  "clearPropertyColumnActionTask": "Αφαίρεση αυτής της ιδιότητας από τις εργασίες της λίστας",
+  "clearPropertyColumnActionPatient": "Εκκαθάριση τιμών αυτής της ιδιότητας στους ασθενείς της λίστας",
+  "clearPropertyColumnDialogTitleTask": "Αφαίρεση ιδιότητας από εργασίες",
+  "clearPropertyColumnDialogTitlePatient": "Εκκαθάριση τιμών ιδιότητας σε ασθενείς",
+  "clearPropertyColumnDialogDescriptionTask": "Η ιδιότητα \"{propertyName}\" θα αφαιρεθεί οριστικά από {count} εργασίες που είναι φορτωμένες αυτή τη στιγμή σε αυτή τη λίστα. Οι εργασίες που δεν έχουν φορτωθεί στη λίστα δεν επηρεάζονται.",
+  "@clearPropertyColumnDialogDescriptionTask": {
+    "placeholders": {
+      "propertyName": {
+        "type": "string"
+      },
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "clearPropertyColumnDialogDescriptionPatient": "Θα εκκαθαριστούν όλες οι τιμές της ιδιότητας \"{propertyName}\" σε {count} ασθενείς που είναι φορτωμένοι αυτή τη στιγμή σε αυτή τη λίστα. Η ιδιότητα παραμένει συνδεδεμένη με αυτούς τους ασθενείς. Οι ασθενείς που δεν έχουν φορτωθεί στη λίστα δεν επηρεάζονται.",
+  "@clearPropertyColumnDialogDescriptionPatient": {
+    "placeholders": {
+      "propertyName": {
+        "type": "string"
+      },
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "clearPropertyColumnTypeNameInstruction": "Πληκτρολογήστε \"{propertyName}\" για επιβεβαίωση.",
+  "@clearPropertyColumnTypeNameInstruction": {
+    "placeholders": {
+      "propertyName": {
+        "type": "string"
+      }
+    }
+  },
+  "clearPropertyColumnConfirmButtonTask": "Αφαίρεση ιδιότητας από εργασίες",
+  "clearPropertyColumnConfirmButtonPatient": "Εκκαθάριση τιμών ιδιότητας",
+  "readOnlyView": "Μόνο ανάγνωση",
+  "retakeSurvey": "Επανάληψη έρευνας",
+  "saveView": "Αποθήκευση γρήγορης πρόσβασης",
+  "saveViewDescription": "Δώστε όνομα σε αυτή τη γρήγορη πρόσβαση. Αποθηκεύονται τα φίλτρα, η ταξινόμηση, η αναζήτηση και η τοποθεσία.",
+  "saveViewOverwriteCurrent": "Αντικατάσταση τρέχουσας γρήγορης πρόσβασης",
+  "saveViewAsNew": "Αποθήκευση ως νέα γρήγορη πρόσβαση",
+  "saveViewDescriptionFromSystemList": "Δημιουργεί μια νέα γρήγορη πρόσβαση από αυτή τη διάταξη. Η σελίδα αυτή ορίζεται από την εφαρμογή και δεν αντικαθίσταται — ανοίξτε τη γρήγορη πρόσβαση από την πλαϊνή στήλη όταν τη χρειάζεστε.",
+  "discardViewChanges": "Απόρριψη αλλαγών",
+  "discard": "Απόρριψη",
+  "discardDraftTitle": "Απόρριψη πρόχειρου;",
+  "discardDraftMessage": "Υπάρχουν μη αποθηκευμένες καταχωρίσεις. Αν κλείσετε τώρα, όλα όσα εισαγάγατε θα χαθούν.",
+  "savedViews": "Γρήγορη πρόσβαση",
+  "viewDerivedPatientsHint": "Ασθενείς που εμφανίζονται σε εργασίες αυτής της γρήγορης πρόσβασης (χωρίς διπλότυπα).",
+  "viewSettings": "Γρήγορη πρόσβαση",
+  "viewSettingsDescription": "Διαχείριση αποθηκευμένων γρήγορων προσβάσεων εργασιών και ασθενών.",
+  "views": "Γρήγορη πρόσβαση",
+  "viewsEntityPatient": "Ασθενείς",
+  "viewsEntityTask": "Εργασίες",
+  "viewVisibility": "Ορατότητα",
+  "viewVisibilityPrivate": "Ιδιωτική",
+  "viewVisibilityLinkShared": "Κοινοποίηση με σύνδεσμο",
+  "viewAnyoneWithLinkCanView": "Όποιος έχει τον σύνδεσμο μπορεί να δει",
+  "copyShareLinkEnableSharingFirst": "Ενεργοποιήστε την κοινοποίηση με σύνδεσμο, ώστε όσοι έχουν τον σύνδεσμο να μπορούν να ανοίξουν αυτή τη γρήγορη πρόσβαση.",
+  "rShow": "Εμφάνιση {name}",
+  "@rShow": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "rChipTotal": "Σύνολο {value}",
+  "@rChipTotal": {
+    "placeholders": {
+      "value": {
+        "type": "string"
+      }
+    }
+  },
+  "search": "Αναζήτηση",
+  "searchUserOrTeam": "Αναζήτηση χρήστη (ή ομάδας)...",
+  "searchUsersOrTeams": "Αναζήτηση χρηστών ή ομάδων...",
+  "security": "Ασφάλεια",
+  "selectAssignee": "Ανάθεση σε...",
+  "scopeVisibility": "Κοινοποίηση",
+  "scopePrivate": "Ιδιωτικό",
+  "scopePublic": "Δημόσιο",
+  "scopeShared": "Κοινοποίηση με σύνδεσμο",
+  "scopeSharedDescription": "Μόνο εσείς βλέπετε αυτή την καταχώριση στις λίστες σας. Όποιος έχει πρόσβαση στον επιλεγμένο κόμβο ή στο υποδέντρο του μπορεί να την ανοίξει μέσω του συνδέσμου της.",
+  "scopePublicDescription": "Όποιος έχει πρόσβαση στον επιλεγμένο κόμβο ή στο υποδέντρο του μπορεί να δει και να χρησιμοποιήσει αυτή την καταχώριση.",
+  "scopePrivateDescription": "Μόνο εσείς μπορείτε να δείτε και να χρησιμοποιήσετε αυτή την καταχώριση.",
+  "scopeSelectNode": "Επιλογή κόμβου",
+  "scopeChangeNode": "Αλλαγή κόμβου",
+  "scopeNoNodeSelected": "Επιλέξτε τον κόμβο στον οποίο αποθηκεύεται αυτή η καταχώριση.",
+  "scopeStoredAt": "Αποθηκεύεται σε",
+  "selectLocation": "Επιλογή τοποθεσίας",
+  "selectOptions": "Επιλογή επιλογών",
+  "sessionExpired": "Η συνεδρία έληξε",
+  "sessionExpiredDescription": "Αποσυνδεθήκατε λόγω αδράνειας. Συνδεθείτε ξανά για να συνεχίσετε. Τυχόν μη αποθηκευμένες αλλαγές ενδέχεται να χαθούν.",
+  "settings": "Ρυθμίσεις",
+  "settingsDescription": "Εδώ μπορείτε να αλλάξετε τις ρυθμίσεις της εφαρμογής.",
+  "sex": "Φύλο",
+  "shiftHandover": "Παράδοση βάρδιας",
+  "showAllTasks": "Εμφάνιση όλων των εργασιών",
+  "showPatient": "Εμφάνιση ασθενούς {name}",
+  "@showPatient": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "showTeamTasks": "Εμφάνιση εργασιών ομάδας",
+  "sorting": "Ταξινόμηση",
+  "stagingModalDisclaimerMarkdown": "Αυτό το δημόσιο περιβάλλον του helpwave tasks προορίζεται για '\\b{σκοπούς ανάπτυξης και προεπισκόπησης}'. Βεβαιωθείτε ότι εισάγετε '\\b{μόνο}' '\\b{μη εμπιστευτικά δεδομένα δοκιμών}'. Αυτό το περιβάλλον μπορεί να '\\negative{\\b{διαγραφεί ανά πάσα στιγμή}}'",
+  "status": "Κατάσταση",
+  "subjectType": "Τύπος αντικειμένου",
+  "surveyDescription": "Τα σχόλιά σας είναι πολύτιμα για εμάς. Αφιερώστε λίγο χρόνο για να συμπληρώσετε την έρευνά μας.",
+  "surveyTitle": "Βοηθήστε μας να βελτιώσουμε το helpwave tasks",
+  "sPropertySubjectType": "{subject, select, patient{Ασθενής} task{Εργασία} other{Μη ορισμένος τύπος αντικειμένου}}",
+  "@sPropertySubjectType": {
+    "placeholders": {
+      "subject": {
+        "type": "string"
+      }
+    }
+  },
+  "sPropertyType": "{type, select, multiSelect{Πολλαπλή επιλογή} singleSelect{Μονή επιλογή} number{Αριθμός} text{Κείμενο} date{Ημερομηνία} dateTime{Χρονικό σημείο} checkbox{Πλαίσιο ελέγχου} user{Χρήστης} other{Μη ορισμένος τύπος}}",
+  "@sPropertyType": {
+    "placeholders": {
+      "type": {
+        "type": "string"
+      }
+    }
+  },
+  "system": "Σύστημα",
+  "task": "Εργασία",
+  "tasks": "Εργασίες",
+  "tasksUpdatedRecently": "Πρόσφατα ενημερωμένες εργασίες",
+  "taskTitlePlaceholder": "Τι πρέπει να γίνει;",
+  "teams": "Ομάδες",
+  "themeMode": "{theme, select, dark{Σκούρο} light{Φωτεινό} system{Σύστημα} other{Σύστημα}}",
+  "@themeMode": {
+    "placeholders": {
+      "theme": {
+        "type": "string"
+      }
+    }
+  },
+  "title": "Τίτλος",
+  "totalPatients": "Σύνολο ασθενών",
+  "type": "Τύπος",
+  "updated": "Ενημερώθηκε",
+  "stateUpdated": "Η κατάσταση ενημερώθηκε",
+  "clinicUpdated": "Η κλινική ενημερώθηκε",
+  "positionUpdated": "Η τοποθεσία ενημερώθηκε",
+  "user": "Χρήστης",
+  "users": "Χρήστες",
+  "wards": "Πτέρυγες",
+  "yes": "Ναι",
+  "anonymous": "Ανώνυμα",
+  "anonymousSubmission": "Ανώνυμη υποβολή",
+  "collapseAll": "Σύμπτυξη όλων",
+  "confirmSelection": "Επιβεβαίωση επιλογής",
+  "deselectAll": "Αποεπιλογή όλων",
+  "enterFeedback": "Γράψτε τα σχόλιά σας εδώ...",
+  "expandAll": "Ανάπτυξη όλων",
+  "feedbackDescription": "Μοιραστείτε τα σχόλιά σας, αναφέρετε σφάλματα ή προτείνετε βελτιώσεις.",
+  "noLocationsFound": "Δεν βρέθηκαν τοποθεσίες",
+  "pickClinic": "Επιλέξτε κλινική",
+  "pickClinicDescription": "Επιλέξτε την κλινική για αυτόν τον ασθενή. Μπορούν να επιλεγούν μόνο τοποθεσίες τύπου κλινικής.",
+  "pickPosition": "Επιλέξτε τοποθεσία",
+  "pickPositionDescription": "Επιλέξτε την τοποθεσία για αυτόν τον ασθενή. Μπορείτε να επιλέξετε νοσοκομείο, ιατρείο, κλινική, πτέρυγα, κλίνη ή θάλαμο.",
+  "pickTeams": "Επιλέξτε ομάδες",
+  "pickTeamsDescription": "Επιλέξτε μία ή περισσότερες ομάδες για αυτόν τον ασθενή. Μπορείτε να επιλέξετε κλινική, ομάδα, ιατρείο ή νοσοκομείο.",
+  "searchLocations": "Αναζήτηση τοποθεσιών...",
+  "selectAll": "Επιλογή όλων",
+  "selectLocationDescription": "Επιλέξτε την τοποθεσία που έχει αντιστοιχιστεί στον ασθενή.",
+  "selectRootLocation": "Επιλογή κύριας τοποθεσίας",
+  "selectRootLocationDescription": "Επιλέξτε τις κύριες τοποθεσίες που ορίζουν το εύρος πρόσβασής σας. Μπορούν να επιλεγούν μόνο νοσοκομεία, ιατρεία, κλινικές και ομάδες. Η επιλογή μιας γονικής τοποθεσίας περιλαμβάνει όλες τις υποκείμενες.",
+  "startRecording": "Έναρξη εγγραφής",
+  "stopRecording": "Διακοπή εγγραφής",
+  "submissionDetails": "Στοιχεία υποβολής",
+  "submittingAs": "Υποβολή ως {name}",
+  "@submittingAs": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "submit": "Υποβολή",
+  "url": "URL",
+  "userInformation": "Στοιχεία χρήστη",
+  "admitPatient": "Εισαγωγή ασθενούς",
+  "clear": "Εκκαθάριση",
+  "clinic": "Κλινική",
+  "connectionConnected": "Συνδέθηκε",
+  "connectionConnecting": "Σύνδεση…",
+  "connectionDisconnected": "Αποσυνδέθηκε",
+  "deletePatient": "Διαγραφή ασθενούς",
+  "deletePatientConfirmation": "Θέλετε σίγουρα να διαγράψετε αυτόν τον ασθενή; Η ενέργεια δεν μπορεί να αναιρεθεί.",
+  "dischargePatient": "Έξοδος ασθενούς",
+  "dischargePatientConfirmation": "Θέλετε σίγουρα να δώσετε εξιτήριο σε αυτόν τον ασθενή; Η ενέργεια θα αλλάξει την κατάσταση του ασθενούς.",
+  "dismissAll": "Απόρριψη όλων",
+  "error": "Σφάλμα",
+  "install": "Εγκατάσταση",
+  "installApp": "Εγκατάσταση εφαρμογής",
+  "installAppDescription": "Εγκαταστήστε το helpwave tasks για καλύτερη εμπειρία με υποστήριξη εκτός σύνδεσης και ταχύτερη πρόσβαση.",
+  "loginRequired": "Απαιτείται σύνδεση",
+  "loginRequiredDescription": "Για να χρησιμοποιήσετε αυτή τη σελίδα πρέπει να είστε συνδεδεμένοι.",
+  "markPatientDead": "Σήμανση ασθενούς ως αποβιώσαντος",
+  "markPatientDeadConfirmation": "Θέλετε σίγουρα να σημάνετε αυτόν τον ασθενή ως αποβιώσαντα;",
+  "noNotifications": "Δεν υπάρχουν πρόσφατες ενημερώσεις",
+  "notifications": "Ειδοποιήσεις",
+  "ok": "OK",
+  "patientActions": "Ενέργειες ασθενούς",
+  "position": "Τοποθεσία",
+  "selectClinic": "Επιλογή κλινικής",
+  "selectPosition": "Επιλογή τοποθεσίας",
+  "selectTeams": "Επιλογή ομάδων",
+  "waitPatient": "Ορισμός ασθενούς σε αναμονή",
+  "waitingForPatient": "Αναμονή ασθενούς",
+  "taskPresets": "Πρότυπα",
+  "taskPresetsDescription": "Επαναχρησιμοποιήσιμες λίστες εργασιών με προαιρετικές εξαρτήσεις.",
+  "taskPresetName": "Όνομα",
+  "taskPresetKey": "Κλειδί",
+  "taskPresetKeyHint": "Προαιρετικό μοναδικό κλειδί για αναζήτηση. Αφήστε το κενό για αυτόματη δημιουργία.",
+  "taskPresetAddRow": "Προσθήκη εργασίας",
+  "taskPresetRemoveRow": "Αφαίρεση",
+  "taskPresetSave": "Αποθήκευση προτύπου",
+  "taskPresetCreate": "Δημιουργία προτύπου",
+  "taskPresetEdit": "Επεξεργασία προτύπου",
+  "taskPresetDelete": "Διαγραφή",
+  "taskPresetDeleteConfirm": "Διαγραφή αυτού του προτύπου εργασιών;",
+  "taskPresetEmptyList": "Δεν υπάρχουν ακόμη πρότυπα εργασιών.",
+  "loadTaskPreset": "Φόρτωση προτύπου",
+  "loadTaskPresetTitle": "Φόρτωση προτύπου εργασιών",
+  "loadTaskPresetConfirm": "Δημιουργία {count, plural, =1{# εργασίας} other{# εργασιών}} για αυτόν τον ασθενή;",
+  "@loadTaskPresetConfirm": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "loadTaskPresetConfirmTitle": "Επιβεβαίωση φόρτωσης προτύπου",
+  "loadTaskPresetSelectTasks": "Εργασίες από το πρότυπο",
+  "loadTaskPresetCreateAndAssign": "Δημιουργία & ανάθεση σε εμένα",
+  "loadTaskPresetTaskLabel": "Πρότυπο",
+  "taskPresetNoTasks": "Αυτό το πρότυπο δεν περιέχει εργασίες.",
+  "taskPresetSelectPlaceholder": "Επιλέξτε πρότυπο",
+  "taskPresetEditDetails": "Επεξεργασία στοιχείων",
+  "editPresetTask": "Επεξεργασία εργασίας προτύπου",
+  "taskPresetApplyToRow": "Εφαρμογή στη γραμμή προτύπου",
+  "taskPresetNoEstimate": "Χωρίς εκτίμηση",
+  "tasksCreatedFromPreset": "Οι εργασίες δημιουργήθηκαν",
+  "taskFromPresetTooltip": "Δημιουργήθηκε από πρότυπο εργασιών",
+  "taskPresetSourceTitle": "Πρότυπο προέλευσης",
+  "taskPresetSourceNotFound": "Δεν ήταν δυνατή η φόρτωση του προτύπου.",
+  "taskPresetSourceTasksInGraph": "Εργασίες στο πρότυπο",
+  "taskPresetSourceOpenSettings": "Άνοιγμα στις ρυθμίσεις"
+}

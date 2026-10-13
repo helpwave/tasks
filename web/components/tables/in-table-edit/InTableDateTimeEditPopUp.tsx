@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { useEffect, useState, type ComponentProps } from 'react'
 import type { ButtonProps } from '@helpwave/hightide'
-import { Button, DateTimeInput, FlexibleDateTimeInput, PopUp, PopUpContext, PopUpOpener, PopUpRoot, useLocale } from '@helpwave/hightide'
+import { Button, DateTimeInput, FlexibleDateTimeInput, PopUp, PopUpContext, PopUpOpener, PopUpRoot, useLocalization } from '@helpwave/hightide'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import { getTaskDueDateFlexibleInputProps, TASK_DUE_DATE_DATE_TIME_INPUT_PROPS } from '@/utils/dueDate'
 import { samePropertyDateInputValue } from '@/utils/calendarDate'
@@ -36,7 +36,7 @@ export function InTableDateTimeEditPopUp({
   options = { horizontalAlignment: 'afterStart', verticalAlignment: 'afterEnd' },
   className = 'p-2',
 }: InTableDateTimeEditPopUpProps) {
-  const { timeZone } = useLocale()
+  const { timeZone } = useLocalization()
   const [draft, setDraft] = useState<Date | null>(value)
   const translation = useTasksTranslation()
 

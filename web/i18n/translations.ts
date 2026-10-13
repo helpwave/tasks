@@ -5,7 +5,7 @@
 import type { Translation } from '@helpwave/internationalization'
 import { TranslationGen } from '@helpwave/internationalization'
 
-export const tasksTranslationLocales = ['de-DE', 'en-US', 'es-ES', 'fr-FR', 'nl-NL', 'pt-BR'] as const
+export const tasksTranslationLocales = ['de-DE', 'el-GR', 'en-US', 'es-ES', 'fr-FR', 'it-IT', 'nl-NL', 'pl-PL', 'pt-BR', 'ro-RO', 'ru-RU', 'tr-TR'] as const
 
 export type TasksTranslationLocales = typeof tasksTranslationLocales[number]
 
@@ -823,6 +823,489 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'weeklySurvey': `Wöchentliche Umfrage`,
     'yes': `Ja`
   },
+  'el-GR': {
+    'account': `Λογαριασμός`,
+    'active': `Ενεργό`,
+    'add': `Προσθήκη`,
+    'addFastAccess': `Προσθήκη γρήγορης πρόσβασης`,
+    'addFastAccessDescription': `Δώστε ένα όνομα στη νέα γρήγορη πρόσβαση.`,
+    'additionalAssigneesCount': ({ count }): string => {
+      return `+${count}`
+    },
+    'addPatient': `Προσθήκη ασθενούς`,
+    'addProperty': `Προσθήκη ιδιότητας`,
+    'addTask': `Προσθήκη εργασίας`,
+    'admitPatient': `Εισαγωγή ασθενούς`,
+    'anonymous': `Ανώνυμα`,
+    'anonymousSubmission': `Ανώνυμη υποβολή`,
+    'archivedPropertyDescription': `Οι αρχειοθετημένες ιδιότητες δεν μπορούν πλέον να αντιστοιχιστούν σε αντικείμενα.`,
+    'archiveProperty': `Αρχειοθέτηση ιδιότητας`,
+    'assignedTo': `Ανατέθηκε σε`,
+    'assigneeTeam': `Ομάδα ανάθεσης`,
+    'authenticationFailed': `Αποτυχία ταυτοποίησης`,
+    'birthdate': `Ημερομηνία γέννησης`,
+    'cancel': `Ακύρωση`,
+    'clear': `Εκκαθάριση`,
+    'clearCache': `Εκκαθάριση προσωρινής μνήμης`,
+    'clearPropertyColumnActionPatient': `Εκκαθάριση τιμών αυτής της ιδιότητας στους ασθενείς της λίστας`,
+    'clearPropertyColumnActionTask': `Αφαίρεση αυτής της ιδιότητας από τις εργασίες της λίστας`,
+    'clearPropertyColumnConfirmButtonPatient': `Εκκαθάριση τιμών ιδιότητας`,
+    'clearPropertyColumnConfirmButtonTask': `Αφαίρεση ιδιότητας από εργασίες`,
+    'clearPropertyColumnDialogDescriptionPatient': ({ propertyName, count }): string => {
+      return `Θα εκκαθαριστούν όλες οι τιμές της ιδιότητας "${propertyName}" σε ${count} ασθενείς που είναι φορτωμένοι αυτή τη στιγμή σε αυτή τη λίστα. Η ιδιότητα παραμένει συνδεδεμένη με αυτούς τους ασθενείς. Οι ασθενείς που δεν έχουν φορτωθεί στη λίστα δεν επηρεάζονται.`
+    },
+    'clearPropertyColumnDialogDescriptionTask': ({ propertyName, count }): string => {
+      return `Η ιδιότητα "${propertyName}" θα αφαιρεθεί οριστικά από ${count} εργασίες που είναι φορτωμένες αυτή τη στιγμή σε αυτή τη λίστα. Οι εργασίες που δεν έχουν φορτωθεί στη λίστα δεν επηρεάζονται.`
+    },
+    'clearPropertyColumnDialogTitlePatient': `Εκκαθάριση τιμών ιδιότητας σε ασθενείς`,
+    'clearPropertyColumnDialogTitleTask': `Αφαίρεση ιδιότητας από εργασίες`,
+    'clearPropertyColumnTypeNameInstruction': ({ propertyName }): string => {
+      return `Πληκτρολογήστε "${propertyName}" για επιβεβαίωση.`
+    },
+    'clinic': `Κλινική`,
+    'clinics': `Κλινικές`,
+    'clinicUpdated': `Η κλινική ενημερώθηκε`,
+    'close': `Κλείσιμο`,
+    'closedTasks': `Ολοκληρωμένες εργασίες`,
+    'collapseAll': `Σύμπτυξη όλων`,
+    'confirm': `Επιβεβαίωση`,
+    'confirmDeleteView': `Διαγραφή αυτής της αποθηκευμένης γρήγορης πρόσβασης; Η ενέργεια δεν μπορεί να αναιρεθεί.`,
+    'confirmSelection': `Επιβεβαίωση επιλογής`,
+    'confirmShiftHandover': `Επιβεβαίωση παράδοσης βάρδιας`,
+    'confirmShiftHandoverDescription': `Θέλετε σίγουρα να μεταφέρετε όλες τις ανοιχτές εργασίες στον επιλεγμένο χρήστη;`,
+    'confirmShiftHandoverDescriptionWithName': ({ taskCount, name }): string => {
+      let _out: string = ''
+      _out += `Θέλετε σίγουρα να μεταφέρετε `
+      _out += TranslationGen.resolvePlural(taskCount, {
+        '=1': `${taskCount} ανοιχτή εργασία`,
+        'other': `${taskCount} ανοιχτές εργασίες`,
+      })
+      _out += ` στον/στην ${name};`
+      return _out
+    },
+    'conflictDetected': `Εντοπίστηκε διένεξη`,
+    'connectionConnected': `Συνδέθηκε`,
+    'connectionConnecting': `Σύνδεση…`,
+    'connectionDisconnected': `Αποσυνδέθηκε`,
+    'copyShareLink': `Αντιγραφή συνδέσμου`,
+    'copyShareLinkEnableSharingFirst': `Ενεργοποιήστε την κοινοποίηση με σύνδεσμο, ώστε όσοι έχουν τον σύνδεσμο να μπορούν να ανοίξουν αυτή τη γρήγορη πρόσβαση.`,
+    'copyViewToMyViews': `Αντιγραφή στη γρήγορη πρόσβασή μου`,
+    'create': `Δημιουργία`,
+    'createTask': `Δημιουργία εργασίας`,
+    'creationDate': `Ημερομηνία δημιουργίας`,
+    'currentTime': `Τρέχουσα ώρα`,
+    'dashboard': `Πίνακας ελέγχου`,
+    'dashboardWelcomeAfternoon': ({ name }): string => {
+      return `Καλό απόγευμα, ${name}!`
+    },
+    'dashboardWelcomeDescription': `Δείτε τι συμβαίνει σήμερα.`,
+    'dashboardWelcomeEvening': ({ name }): string => {
+      return `Καλησπέρα, ${name}!`
+    },
+    'dashboardWelcomeMorning': ({ name }): string => {
+      return `Καλημέρα, ${name}!`
+    },
+    'dashboardWelcomeNight': ({ name }): string => {
+      return `Καληνύχτα, ${name}!`
+    },
+    'dashboardWelcomeNoon': ({ name }): string => {
+      return `Καλό μεσημέρι, ${name}!`
+    },
+    'delete': `Διαγραφή`,
+    'deletePatient': `Διαγραφή ασθενούς`,
+    'deletePatientConfirmation': `Θέλετε σίγουρα να διαγράψετε αυτόν τον ασθενή; Η ενέργεια δεν μπορεί να αναιρεθεί.`,
+    'description': `Περιγραφή`,
+    'descriptionPlaceholder': `Προσθέστε περισσότερες λεπτομέρειες...`,
+    'deselectAll': `Αποεπιλογή όλων`,
+    'developmentAndPreviewInstance': `Περιβάλλον ανάπτυξης και προεπισκόπησης`,
+    'discard': `Απόρριψη`,
+    'discardDraftMessage': `Υπάρχουν μη αποθηκευμένες καταχωρίσεις. Αν κλείσετε τώρα, όλα όσα εισαγάγατε θα χαθούν.`,
+    'discardDraftTitle': `Απόρριψη πρόχειρου;`,
+    'discardViewChanges': `Απόρριψη αλλαγών`,
+    'dischargePatient': `Έξοδος ασθενούς`,
+    'dischargePatientConfirmation': `Θέλετε σίγουρα να δώσετε εξιτήριο σε αυτόν τον ασθενή; Η ενέργεια θα αλλάξει την κατάσταση του ασθενούς.`,
+    'dismiss': `Απόρριψη`,
+    'dismissAll': `Απόρριψη όλων`,
+    'diverse': `Άλλο`,
+    'done': `Ολοκληρώθηκε`,
+    'dueDate': `Προθεσμία`,
+    'dueDateInDays': ({ days }): string => {
+      let _out: string = ''
+      _out += `+`
+      _out += TranslationGen.resolvePlural(days, {
+        '=1': `${days} ημέρα`,
+        'other': `${days} ημέρες`,
+      })
+      return _out
+    },
+    'dueDateInHours': ({ hours }): string => {
+      let _out: string = ''
+      _out += `+`
+      _out += TranslationGen.resolvePlural(hours, {
+        '=1': `${hours} ώρα`,
+        'other': `${hours} ώρες`,
+      })
+      return _out
+    },
+    'dueDateNow': `Τώρα`,
+    'dueDateToday': `Σήμερα`,
+    'dueDateTomorrow': `Αύριο`,
+    'duplicate': `Αντιγραφή`,
+    'edit': `Επεξεργασία`,
+    'editPatient': `Επεξεργασία ασθενούς`,
+    'editPresetTask': `Επεξεργασία εργασίας προτύπου`,
+    'editTask': `Επεξεργασία εργασίας`,
+    'enterFeedback': `Γράψτε τα σχόλιά σας εδώ...`,
+    'error': `Σφάλμα`,
+    'errorOccurred': `Παρουσιάστηκε σφάλμα`,
+    'estimatedTime': `Εκτιμώμενος χρόνος (λεπτά)`,
+    'expandAll': `Ανάπτυξη όλων`,
+    'export': `Εξαγωγή`,
+    'exportCsv': `Εξαγωγή ως CSV`,
+    'exportExcel': `Εξαγωγή ως Excel (για εκτύπωση)`,
+    'exportFailed': `Η εξαγωγή απέτυχε. Δοκιμάστε ξανά.`,
+    'feedback': `Σχόλια`,
+    'feedbackDescription': `Μοιραστείτε τα σχόλιά σας, αναφέρετε σφάλματα ή προτείνετε βελτιώσεις.`,
+    'female': `Γυναίκα`,
+    'filter': `Φίλτρο`,
+    'filterAll': `Όλα`,
+    'filterUndone': `Εκκρεμή`,
+    'firstName': `Όνομα`,
+    'freeBeds': `Ελεύθερες κλίνες`,
+    'hide': `Απόκρυψη`,
+    'homePage': `Αρχική σελίδα`,
+    'imprint': `Στοιχεία εκδότη`,
+    'inactive': `Ανενεργό`,
+    'install': `Εγκατάσταση`,
+    'installApp': `Εγκατάσταση εφαρμογής`,
+    'installAppDescription': `Εγκαταστήστε το helpwave tasks για καλύτερη εμπειρία με υποστήριξη εκτός σύνδεσης και ταχύτερη πρόσβαση.`,
+    'language': `Γλώσσα`,
+    'lastName': `Επώνυμο`,
+    'listViewCard': `Προβολή καρτών`,
+    'listViewTable': `Προβολή πίνακα`,
+    'loading': `Φόρτωση...`,
+    'loadingAlmostThere': `Σχεδόν έτοιμο...`,
+    'loadingGettingReady': `Μια στιγμή — γίνεται προετοιμασία...`,
+    'loadingHangOn': `Μια στιγμή — φορτώνονται τα πιο πρόσφατα δεδομένα...`,
+    'loadingMoment': `Ένα δευτερόλεπτο, σχεδόν έτοιμο...`,
+    'loadMore': `Φόρτωση περισσότερων`,
+    'loadTaskPreset': `Φόρτωση προτύπου`,
+    'loadTaskPresetConfirm': ({ count }): string => {
+      let _out: string = ''
+      _out += `Δημιουργία `
+      _out += TranslationGen.resolvePlural(count, {
+        '=1': `${count} εργασίας`,
+        'other': `${count} εργασιών`,
+      })
+      _out += ` για αυτόν τον ασθενή;`
+      return _out
+    },
+    'loadTaskPresetConfirmTitle': `Επιβεβαίωση φόρτωσης προτύπου`,
+    'loadTaskPresetCreateAndAssign': `Δημιουργία & ανάθεση σε εμένα`,
+    'loadTaskPresetSelectTasks': `Εργασίες από το πρότυπο`,
+    'loadTaskPresetTaskLabel': `Πρότυπο`,
+    'loadTaskPresetTitle': `Φόρτωση προτύπου εργασιών`,
+    'location': `Τοποθεσία`,
+    'locationBed': `Κλίνη`,
+    'locationClinic': `Κλινική`,
+    'locationRoom': `Θάλαμος`,
+    'locationType': ({ type }): string => {
+      return TranslationGen.resolveSelect(type, {
+        'CLINIC': `Κλινική`,
+        'WARD': `Πτέρυγα`,
+        'TEAM': `Ομάδα`,
+        'ROOM': `Θάλαμος`,
+        'BED': `Κλίνη`,
+        'other': `Άλλο`,
+      })
+    },
+    'locationWard': `Πτέρυγα`,
+    'login': `Σύνδεση`,
+    'logInAgain': `Σύνδεση ξανά`,
+    'loginRequired': `Απαιτείται σύνδεση`,
+    'loginRequiredDescription': `Για να χρησιμοποιήσετε αυτή τη σελίδα πρέπει να είστε συνδεδεμένοι.`,
+    'logout': `Αποσύνδεση`,
+    'male': `Άνδρας`,
+    'markPatientDead': `Σήμανση ασθενούς ως αποβιώσαντος`,
+    'markPatientDeadConfirmation': `Θέλετε σίγουρα να σημάνετε αυτόν τον ασθενή ως αποβιώσαντα;`,
+    'menu': `Μενού`,
+    'more': `Περισσότερα`,
+    'myFavorites': `Τα αγαπημένα μου`,
+    'myOpenTasks': `Οι ανοιχτές εργασίες μου`,
+    'myTasks': `Οι εργασίες μου`,
+    'name': `Όνομα`,
+    'nFilter': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} φίλτρο`,
+        'other': `${count} φίλτρα`,
+      })
+    },
+    'nMinutesShort': ({ minCount }): string => {
+      return `${minCount} λεπ.`
+    },
+    'no': `Όχι`,
+    'noClosedTasks': `Δεν υπάρχουν ολοκληρωμένες εργασίες`,
+    'noLocationsFound': `Δεν βρέθηκαν τοποθεσίες`,
+    'none': `Κανένα`,
+    'noNotifications': `Δεν υπάρχουν πρόσφατες ενημερώσεις`,
+    'noOpenTasks': `Δεν υπάρχουν ανοιχτές εργασίες`,
+    'noPatient': `Χωρίς ασθενή`,
+    'noPatientsInTaskView': `Δεν βρέθηκαν ασθενείς για αυτή τη γρήγορη πρόσβαση εργασιών.`,
+    'noResultsFound': `Δεν βρέθηκαν αποτελέσματα`,
+    'notAssigned': `Χωρίς ανάθεση`,
+    'notifications': `Ειδοποιήσεις`,
+    'nPatient': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} ασθενής`,
+        'other': `${count} ασθενείς`,
+      })
+    },
+    'nSorting': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} ταξινόμηση`,
+        'other': `${count} ταξινομήσεις`,
+      })
+    },
+    'nTask': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} εργασία`,
+        'other': `${count} εργασίες`,
+      })
+    },
+    'nYears': ({ years }): string => {
+      return TranslationGen.resolvePlural(years, {
+        '=0': `0 έτη`,
+        '=1': `1 έτος`,
+        'other': `${years} έτη`,
+      })
+    },
+    'occupancy': `Πληρότητα`,
+    'ok': `OK`,
+    'onboardingSurvey': `Έρευνα εισαγωγής`,
+    'openSurvey': `Άνοιγμα έρευνας`,
+    'openTasks': `Ανοιχτές εργασίες`,
+    'openView': `Άνοιγμα`,
+    'option': `Επιλογή`,
+    'organizations': `Οργανισμοί`,
+    'overview': `Επισκόπηση`,
+    'pages.404.loading': `Φόρτωση...`,
+    'pages.404.notFound': `404 - Η σελίδα δεν βρέθηκε`,
+    'pages.404.notFoundDescription1': `Αυτή σίγουρα δεν είναι η σελίδα που αναζητάτε`,
+    'pages.404.notFoundDescription2': `Επιστροφή στην`,
+    'patient': `Ασθενής`,
+    'patientActions': `Ενέργειες ασθενούς`,
+    'patientData': `Δεδομένα`,
+    'patients': `Ασθενείς`,
+    'patientsCountChipAdmitted': ({ count }): string => {
+      return `Εισηγμένοι ${count}`
+    },
+    'patientsCountChipTotal': ({ count }): string => {
+      return `Σύνολο ${count}`
+    },
+    'patientsCountChipWaiting': ({ count }): string => {
+      return `Σε αναμονή ${count}`
+    },
+    'patientState': ({ state }): string => {
+      return TranslationGen.resolveSelect(state, {
+        'WAIT': `Σε αναμονή`,
+        'ADMITTED': `Εισηγμένος`,
+        'DISCHARGED': `Εξιτήριο`,
+        'DEAD': `Απεβίωσε`,
+        'other': `Άγνωστο`,
+      })
+    },
+    'patientsUpdatedRecently': `Πρόσφατα ενημερωμένοι ασθενείς`,
+    'pickClinic': `Επιλέξτε κλινική`,
+    'pickClinicDescription': `Επιλέξτε την κλινική για αυτόν τον ασθενή. Μπορούν να επιλεγούν μόνο τοποθεσίες τύπου κλινικής.`,
+    'pickPosition': `Επιλέξτε τοποθεσία`,
+    'pickPositionDescription': `Επιλέξτε την τοποθεσία για αυτόν τον ασθενή. Μπορείτε να επιλέξετε νοσοκομείο, ιατρείο, κλινική, πτέρυγα, κλίνη ή θάλαμο.`,
+    'pickTeams': `Επιλέξτε ομάδες`,
+    'pickTeamsDescription': `Επιλέξτε μία ή περισσότερες ομάδες για αυτόν τον ασθενή. Μπορείτε να επιλέξετε κλινική, ομάδα, ιατρείο ή νοσοκομείο.`,
+    'position': `Τοποθεσία`,
+    'positionUpdated': `Η τοποθεσία ενημερώθηκε`,
+    'preferences': `Προτιμήσεις`,
+    'priority': `Προτεραιότητα`,
+    'priorityLabel': `Προτεραιότητα`,
+    'priorityNone': `Καμία`,
+    'privacy': `Απόρρητο`,
+    'properties': `Ιδιότητες`,
+    'propertiesSettingsDescription': `Προσαρμοσμένα πεδία για εργασίες και ασθενείς: ορίστε τύπους και χρησιμοποιήστε τα σε φίλτρα.`,
+    'property': `Ιδιότητα`,
+    'pThemes': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `Θέμα`,
+        'other': `Θέματα`,
+      })
+    },
+    'rAdd': ({ name }): string => {
+      return `Προσθήκη ${name}`
+    },
+    'rChipTotal': ({ value }): string => {
+      return `Σύνολο ${value}`
+    },
+    'readOnlyView': `Μόνο ανάγνωση`,
+    'recentPatients': `Οι πρόσφατοι ασθενείς σας`,
+    'recentTasks': `Οι πρόσφατες εργασίες σας`,
+    'rEdit': ({ name }): string => {
+      return `Ενημέρωση ${name}`
+    },
+    'refreshing': `Ανανέωση…`,
+    'removeProperty': `Αφαίρεση ιδιότητας`,
+    'removePropertyConfirmation': `Θέλετε σίγουρα να αφαιρέσετε αυτή την ιδιότητα; Η ενέργεια δεν μπορεί να αναιρεθεί.`,
+    'retakeSurvey': `Επανάληψη έρευνας`,
+    'rShow': ({ name }): string => {
+      return `Εμφάνιση ${name}`
+    },
+    'savedViews': `Γρήγορη πρόσβαση`,
+    'saveView': `Αποθήκευση γρήγορης πρόσβασης`,
+    'saveViewAsNew': `Αποθήκευση ως νέα γρήγορη πρόσβαση`,
+    'saveViewDescription': `Δώστε όνομα σε αυτή τη γρήγορη πρόσβαση. Αποθηκεύονται τα φίλτρα, η ταξινόμηση, η αναζήτηση και η τοποθεσία.`,
+    'saveViewDescriptionFromSystemList': `Δημιουργεί μια νέα γρήγορη πρόσβαση από αυτή τη διάταξη. Η σελίδα αυτή ορίζεται από την εφαρμογή και δεν αντικαθίσταται — ανοίξτε τη γρήγορη πρόσβαση από την πλαϊνή στήλη όταν τη χρειάζεστε.`,
+    'saveViewOverwriteCurrent': `Αντικατάσταση τρέχουσας γρήγορης πρόσβασης`,
+    'scopeChangeNode': `Αλλαγή κόμβου`,
+    'scopeNoNodeSelected': `Επιλέξτε τον κόμβο στον οποίο αποθηκεύεται αυτή η καταχώριση.`,
+    'scopePrivate': `Ιδιωτικό`,
+    'scopePrivateDescription': `Μόνο εσείς μπορείτε να δείτε και να χρησιμοποιήσετε αυτή την καταχώριση.`,
+    'scopePublic': `Δημόσιο`,
+    'scopePublicDescription': `Όποιος έχει πρόσβαση στον επιλεγμένο κόμβο ή στο υποδέντρο του μπορεί να δει και να χρησιμοποιήσει αυτή την καταχώριση.`,
+    'scopeSelectNode': `Επιλογή κόμβου`,
+    'scopeShared': `Κοινοποίηση με σύνδεσμο`,
+    'scopeSharedDescription': `Μόνο εσείς βλέπετε αυτή την καταχώριση στις λίστες σας. Όποιος έχει πρόσβαση στον επιλεγμένο κόμβο ή στο υποδέντρο του μπορεί να την ανοίξει μέσω του συνδέσμου της.`,
+    'scopeStoredAt': `Αποθηκεύεται σε`,
+    'scopeVisibility': `Κοινοποίηση`,
+    'scrollToTop': `Μετάβαση στην κορυφή`,
+    'search': `Αναζήτηση`,
+    'searchLocations': `Αναζήτηση τοποθεσιών...`,
+    'searchUserOrTeam': `Αναζήτηση χρήστη (ή ομάδας)...`,
+    'searchUsersOrTeams': `Αναζήτηση χρηστών ή ομάδων...`,
+    'security': `Ασφάλεια`,
+    'selectAll': `Επιλογή όλων`,
+    'selectAssignee': `Ανάθεση σε...`,
+    'selectClinic': `Επιλογή κλινικής`,
+    'selectLocation': `Επιλογή τοποθεσίας`,
+    'selectLocationDescription': `Επιλέξτε την τοποθεσία που έχει αντιστοιχιστεί στον ασθενή.`,
+    'selectOptions': `Επιλογή επιλογών`,
+    'selectPosition': `Επιλογή τοποθεσίας`,
+    'selectRootLocation': `Επιλογή κύριας τοποθεσίας`,
+    'selectRootLocationDescription': `Επιλέξτε τις κύριες τοποθεσίες που ορίζουν το εύρος πρόσβασής σας. Μπορούν να επιλεγούν μόνο νοσοκομεία, ιατρεία, κλινικές και ομάδες. Η επιλογή μιας γονικής τοποθεσίας περιλαμβάνει όλες τις υποκείμενες.`,
+    'selectTeams': `Επιλογή ομάδων`,
+    'sessionExpired': `Η συνεδρία έληξε`,
+    'sessionExpiredDescription': `Αποσυνδεθήκατε λόγω αδράνειας. Συνδεθείτε ξανά για να συνεχίσετε. Τυχόν μη αποθηκευμένες αλλαγές ενδέχεται να χαθούν.`,
+    'settings': `Ρυθμίσεις`,
+    'settingsDescription': `Εδώ μπορείτε να αλλάξετε τις ρυθμίσεις της εφαρμογής.`,
+    'sex': `Φύλο`,
+    'shiftHandover': `Παράδοση βάρδιας`,
+    'showAllTasks': `Εμφάνιση όλων των εργασιών`,
+    'showPatient': ({ name }): string => {
+      return `Εμφάνιση ασθενούς ${name}`
+    },
+    'showTeamTasks': `Εμφάνιση εργασιών ομάδας`,
+    'sorting': `Ταξινόμηση`,
+    'sPriority': ({ priority }): string => {
+      return TranslationGen.resolveSelect(priority, {
+        'P1': `Κανονική`,
+        'P2': `Μέτρια`,
+        'P3': `Υψηλή`,
+        'P4': `Κρίσιμη`,
+        'other': `-`,
+      })
+    },
+    'sPropertySubjectType': ({ subject }): string => {
+      return TranslationGen.resolveSelect(subject, {
+        'patient': `Ασθενής`,
+        'task': `Εργασία`,
+        'other': `Μη ορισμένος τύπος αντικειμένου`,
+      })
+    },
+    'sPropertyType': ({ type }): string => {
+      return TranslationGen.resolveSelect(type, {
+        'multiSelect': `Πολλαπλή επιλογή`,
+        'singleSelect': `Μονή επιλογή`,
+        'number': `Αριθμός`,
+        'text': `Κείμενο`,
+        'date': `Ημερομηνία`,
+        'dateTime': `Χρονικό σημείο`,
+        'checkbox': `Πλαίσιο ελέγχου`,
+        'user': `Χρήστης`,
+        'other': `Μη ορισμένος τύπος`,
+      })
+    },
+    'stagingModalDisclaimerMarkdown': `Αυτό το δημόσιο περιβάλλον του helpwave tasks προορίζεται για \\b{σκοπούς ανάπτυξης και προεπισκόπησης}. Βεβαιωθείτε ότι εισάγετε \\b{μόνο} \\b{μη εμπιστευτικά δεδομένα δοκιμών}. Αυτό το περιβάλλον μπορεί να \\negative{\\b{διαγραφεί ανά πάσα στιγμή}}`,
+    'startRecording': `Έναρξη εγγραφής`,
+    'stateUpdated': `Η κατάσταση ενημερώθηκε`,
+    'status': `Κατάσταση`,
+    'stopRecording': `Διακοπή εγγραφής`,
+    'subjectType': `Τύπος αντικειμένου`,
+    'submissionDetails': `Στοιχεία υποβολής`,
+    'submit': `Υποβολή`,
+    'submittingAs': ({ name }): string => {
+      return `Υποβολή ως ${name}`
+    },
+    'surveyDescription': `Τα σχόλιά σας είναι πολύτιμα για εμάς. Αφιερώστε λίγο χρόνο για να συμπληρώσετε την έρευνά μας.`,
+    'surveyTitle': `Βοηθήστε μας να βελτιώσουμε το helpwave tasks`,
+    'system': `Σύστημα`,
+    'task': `Εργασία`,
+    'taskFromPresetTooltip': `Δημιουργήθηκε από πρότυπο εργασιών`,
+    'taskPresetAddRow': `Προσθήκη εργασίας`,
+    'taskPresetApplyToRow': `Εφαρμογή στη γραμμή προτύπου`,
+    'taskPresetCreate': `Δημιουργία προτύπου`,
+    'taskPresetDelete': `Διαγραφή`,
+    'taskPresetDeleteConfirm': `Διαγραφή αυτού του προτύπου εργασιών;`,
+    'taskPresetEdit': `Επεξεργασία προτύπου`,
+    'taskPresetEditDetails': `Επεξεργασία στοιχείων`,
+    'taskPresetEmptyList': `Δεν υπάρχουν ακόμη πρότυπα εργασιών.`,
+    'taskPresetKey': `Κλειδί`,
+    'taskPresetKeyHint': `Προαιρετικό μοναδικό κλειδί για αναζήτηση. Αφήστε το κενό για αυτόματη δημιουργία.`,
+    'taskPresetName': `Όνομα`,
+    'taskPresetNoEstimate': `Χωρίς εκτίμηση`,
+    'taskPresetNoTasks': `Αυτό το πρότυπο δεν περιέχει εργασίες.`,
+    'taskPresetRemoveRow': `Αφαίρεση`,
+    'taskPresets': `Πρότυπα`,
+    'taskPresetSave': `Αποθήκευση προτύπου`,
+    'taskPresetsDescription': `Επαναχρησιμοποιήσιμες λίστες εργασιών με προαιρετικές εξαρτήσεις.`,
+    'taskPresetSelectPlaceholder': `Επιλέξτε πρότυπο`,
+    'taskPresetSourceNotFound': `Δεν ήταν δυνατή η φόρτωση του προτύπου.`,
+    'taskPresetSourceOpenSettings': `Άνοιγμα στις ρυθμίσεις`,
+    'taskPresetSourceTasksInGraph': `Εργασίες στο πρότυπο`,
+    'taskPresetSourceTitle': `Πρότυπο προέλευσης`,
+    'tasks': `Εργασίες`,
+    'tasksCreatedFromPreset': `Οι εργασίες δημιουργήθηκαν`,
+    'tasksUpdatedRecently': `Πρόσφατα ενημερωμένες εργασίες`,
+    'taskTitlePlaceholder': `Τι πρέπει να γίνει;`,
+    'teams': `Ομάδες`,
+    'themeMode': ({ theme }): string => {
+      return TranslationGen.resolveSelect(theme, {
+        'dark': `Σκούρο`,
+        'light': `Φωτεινό`,
+        'system': `Σύστημα`,
+        'other': `Σύστημα`,
+      })
+    },
+    'timeEstimate': `Εκτίμηση χρόνου`,
+    'title': `Τίτλος`,
+    'totalPatients': `Σύνολο ασθενών`,
+    'type': `Τύπος`,
+    'updated': `Ενημερώθηκε`,
+    'url': `URL`,
+    'user': `Χρήστης`,
+    'userInformation': `Στοιχεία χρήστη`,
+    'users': `Χρήστες`,
+    'viewAnyoneWithLinkCanView': `Όποιος έχει τον σύνδεσμο μπορεί να δει`,
+    'viewDerivedPatientsHint': `Ασθενείς που εμφανίζονται σε εργασίες αυτής της γρήγορης πρόσβασης (χωρίς διπλότυπα).`,
+    'views': `Γρήγορη πρόσβαση`,
+    'viewsEntityPatient': `Ασθενείς`,
+    'viewsEntityTask': `Εργασίες`,
+    'viewSettings': `Γρήγορη πρόσβαση`,
+    'viewSettingsDescription': `Διαχείριση αποθηκευμένων γρήγορων προσβάσεων εργασιών και ασθενών.`,
+    'viewVisibility': `Ορατότητα`,
+    'viewVisibilityLinkShared': `Κοινοποίηση με σύνδεσμο`,
+    'viewVisibilityPrivate': `Ιδιωτική`,
+    'waitingForPatient': `Αναμονή ασθενούς`,
+    'waitPatient': `Ορισμός ασθενούς σε αναμονή`,
+    'wards': `Πτέρυγες`,
+    'weeklySurvey': `Εβδομαδιαία έρευνα`,
+    'yes': `Ναι`
+  },
   'en-US': {
     'account': `Account`,
     'active': `Active`,
@@ -1571,6 +2054,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'option': `Opción`,
     'organizations': `Organizaciones`,
     'overview': `Resumen`,
+    'pages.404.loading': `Cargando...`,
     'pages.404.notFound': `404 - Página no encontrada`,
     'pages.404.notFoundDescription1': `Esta no es la página que busca`,
     'pages.404.notFoundDescription2': `Volver a la`,
@@ -2053,6 +2537,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'option': `Option`,
     'organizations': `Organisations`,
     'overview': `Aperçu`,
+    'pages.404.loading': `Chargement...`,
     'pages.404.notFound': `404 - Page non trouvée`,
     'pages.404.notFoundDescription1': `Ce n'est définitivement pas la page que vous cherchez`,
     'pages.404.notFoundDescription2': `Retour à la`,
@@ -2134,6 +2619,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'scopePublicDescription': `Toutes les personnes ayant accès au nœud sélectionné ou à son sous-arbre peuvent voir et utiliser cette entrée.`,
     'scopeSelectNode': `Sélectionner un nœud`,
     'scopeShared': `Partagé par lien`,
+    'scopeSharedDescription': `Vous seul voyez cette entrée dans vos listes. Toute personne ayant accès au nœud sélectionné ou à son sous-arbre peut l'ouvrir via son lien.`,
     'scopeStoredAt': `Enregistré sous`,
     'scopeVisibility': `Partage`,
     'scrollToTop': `Revenir en haut`,
@@ -2268,6 +2754,489 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'wards': `Services`,
     'weeklySurvey': `Enquête hebdomadaire`,
     'yes': `Oui`
+  },
+  'it-IT': {
+    'account': `Account`,
+    'active': `Attivo`,
+    'add': `Aggiungi`,
+    'addFastAccess': `Aggiungi accesso rapido`,
+    'addFastAccessDescription': `Inserisci un nome per il nuovo accesso rapido.`,
+    'additionalAssigneesCount': ({ count }): string => {
+      return `+${count}`
+    },
+    'addPatient': `Aggiungi paziente`,
+    'addProperty': `Aggiungi proprietà`,
+    'addTask': `Aggiungi attività`,
+    'admitPatient': `Ricovera paziente`,
+    'anonymous': `Anonimo`,
+    'anonymousSubmission': `Invio anonimo`,
+    'archivedPropertyDescription': `Le proprietà archiviate non possono più essere assegnate agli oggetti.`,
+    'archiveProperty': `Archivia proprietà`,
+    'assignedTo': `Assegnato a`,
+    'assigneeTeam': `Team assegnato`,
+    'authenticationFailed': `Autenticazione non riuscita`,
+    'birthdate': `Data di nascita`,
+    'cancel': `Annulla`,
+    'clear': `Cancella`,
+    'clearCache': `Svuota cache`,
+    'clearPropertyColumnActionPatient': `Cancella i valori di questa proprietà per i pazienti elencati`,
+    'clearPropertyColumnActionTask': `Rimuovi questa proprietà dalle attività elencate`,
+    'clearPropertyColumnConfirmButtonPatient': `Cancella valori della proprietà`,
+    'clearPropertyColumnConfirmButtonTask': `Rimuovi proprietà dalle attività`,
+    'clearPropertyColumnDialogDescriptionPatient': ({ propertyName, count }): string => {
+      return `Tutti i valori della proprietà "${propertyName}" verranno cancellati per ${count} pazienti attualmente caricati in questo elenco. La proprietà resta associata a questi pazienti. I pazienti non caricati in questo elenco non vengono modificati.`
+    },
+    'clearPropertyColumnDialogDescriptionTask': ({ propertyName, count }): string => {
+      return `La proprietà "${propertyName}" verrà rimossa definitivamente da ${count} attività attualmente caricate in questo elenco. Le attività non caricate in questo elenco non vengono modificate.`
+    },
+    'clearPropertyColumnDialogTitlePatient': `Cancella i valori della proprietà per i pazienti`,
+    'clearPropertyColumnDialogTitleTask': `Rimuovi proprietà dalle attività`,
+    'clearPropertyColumnTypeNameInstruction': ({ propertyName }): string => {
+      return `Digita "${propertyName}" per confermare.`
+    },
+    'clinic': `Clinica`,
+    'clinics': `Cliniche`,
+    'clinicUpdated': `Clinica aggiornata`,
+    'close': `Chiudi`,
+    'closedTasks': `Attività chiuse`,
+    'collapseAll': `Comprimi tutto`,
+    'confirm': `Conferma`,
+    'confirmDeleteView': `Eliminare questo accesso rapido salvato? L'operazione non può essere annullata.`,
+    'confirmSelection': `Conferma selezione`,
+    'confirmShiftHandover': `Conferma passaggio di consegne`,
+    'confirmShiftHandoverDescription': `Vuoi davvero trasferire tutte le attività aperte all'utente selezionato?`,
+    'confirmShiftHandoverDescriptionWithName': ({ taskCount, name }): string => {
+      let _out: string = ''
+      _out += `Vuoi davvero trasferire `
+      _out += TranslationGen.resolvePlural(taskCount, {
+        '=1': `${taskCount} attività aperta`,
+        'other': `${taskCount} attività aperte`,
+      })
+      _out += ` a ${name}?`
+      return _out
+    },
+    'conflictDetected': `Conflitto rilevato`,
+    'connectionConnected': `Connesso`,
+    'connectionConnecting': `Connessione in corso…`,
+    'connectionDisconnected': `Disconnesso`,
+    'copyShareLink': `Copia link`,
+    'copyShareLinkEnableSharingFirst': `Attiva la condivisione tramite link affinché altre persone con il link possano aprire questo accesso rapido.`,
+    'copyViewToMyViews': `Copia nel mio accesso rapido`,
+    'create': `Crea`,
+    'createTask': `Crea attività`,
+    'creationDate': `Data di creazione`,
+    'currentTime': `Ora attuale`,
+    'dashboard': `Dashboard`,
+    'dashboardWelcomeAfternoon': ({ name }): string => {
+      return `Buon pomeriggio, ${name}!`
+    },
+    'dashboardWelcomeDescription': `Ecco cosa succede oggi.`,
+    'dashboardWelcomeEvening': ({ name }): string => {
+      return `Buonasera, ${name}!`
+    },
+    'dashboardWelcomeMorning': ({ name }): string => {
+      return `Buongiorno, ${name}!`
+    },
+    'dashboardWelcomeNight': ({ name }): string => {
+      return `Buonanotte, ${name}!`
+    },
+    'dashboardWelcomeNoon': ({ name }): string => {
+      return `Buon pomeriggio, ${name}!`
+    },
+    'delete': `Elimina`,
+    'deletePatient': `Elimina paziente`,
+    'deletePatientConfirmation': `Vuoi davvero eliminare questo paziente? L'operazione non può essere annullata.`,
+    'description': `Descrizione`,
+    'descriptionPlaceholder': `Aggiungi altri dettagli...`,
+    'deselectAll': `Deseleziona tutto`,
+    'developmentAndPreviewInstance': `Istanza di sviluppo e anteprima`,
+    'discard': `Scarta`,
+    'discardDraftMessage': `Ci sono dati non salvati. Se chiudi ora, tutto ciò che hai inserito andrà perso.`,
+    'discardDraftTitle': `Scartare la bozza?`,
+    'discardViewChanges': `Annulla modifiche`,
+    'dischargePatient': `Dimetti paziente`,
+    'dischargePatientConfirmation': `Vuoi davvero dimettere questo paziente? L'operazione modificherà lo stato del paziente.`,
+    'dismiss': `Chiudi`,
+    'dismissAll': `Chiudi tutto`,
+    'diverse': `Altro`,
+    'done': `Completata`,
+    'dueDate': `Scadenza`,
+    'dueDateInDays': ({ days }): string => {
+      let _out: string = ''
+      _out += `+`
+      _out += TranslationGen.resolvePlural(days, {
+        '=1': `${days} giorno`,
+        'other': `${days} giorni`,
+      })
+      return _out
+    },
+    'dueDateInHours': ({ hours }): string => {
+      let _out: string = ''
+      _out += `+`
+      _out += TranslationGen.resolvePlural(hours, {
+        '=1': `${hours} ora`,
+        'other': `${hours} ore`,
+      })
+      return _out
+    },
+    'dueDateNow': `Adesso`,
+    'dueDateToday': `Oggi`,
+    'dueDateTomorrow': `Domani`,
+    'duplicate': `Duplica`,
+    'edit': `Modifica`,
+    'editPatient': `Modifica paziente`,
+    'editPresetTask': `Modifica attività del modello`,
+    'editTask': `Modifica attività`,
+    'enterFeedback': `Inserisci qui il tuo feedback...`,
+    'error': `Errore`,
+    'errorOccurred': `Si è verificato un errore`,
+    'estimatedTime': `Tempo stimato (minuti)`,
+    'expandAll': `Espandi tutto`,
+    'export': `Esporta`,
+    'exportCsv': `Esporta come CSV`,
+    'exportExcel': `Esporta come Excel (stampabile)`,
+    'exportFailed': `Esportazione non riuscita. Riprova.`,
+    'feedback': `Feedback`,
+    'feedbackDescription': `Condividi il tuo feedback, segnala errori o suggerisci miglioramenti.`,
+    'female': `Femmina`,
+    'filter': `Filtro`,
+    'filterAll': `Tutte`,
+    'filterUndone': `Da completare`,
+    'firstName': `Nome`,
+    'freeBeds': `Letti liberi`,
+    'hide': `Nascondi`,
+    'homePage': `Home page`,
+    'imprint': `Note legali`,
+    'inactive': `Inattivo`,
+    'install': `Installa`,
+    'installApp': `Installa app`,
+    'installAppDescription': `Installa helpwave tasks per un'esperienza migliore con supporto offline e accesso più rapido.`,
+    'language': `Lingua`,
+    'lastName': `Cognome`,
+    'listViewCard': `Vista schede`,
+    'listViewTable': `Vista tabella`,
+    'loading': `Caricamento...`,
+    'loadingAlmostThere': `Quasi pronto...`,
+    'loadingGettingReady': `Un momento — stiamo preparando tutto...`,
+    'loadingHangOn': `Un attimo — recupero dei dati più recenti...`,
+    'loadingMoment': `Solo un secondo, ci siamo quasi...`,
+    'loadMore': `Carica altro`,
+    'loadTaskPreset': `Carica modello`,
+    'loadTaskPresetConfirm': ({ count }): string => {
+      let _out: string = ''
+      _out += `Creare `
+      _out += TranslationGen.resolvePlural(count, {
+        '=1': `${count} attività`,
+        'other': `${count} attività`,
+      })
+      _out += ` per questo paziente?`
+      return _out
+    },
+    'loadTaskPresetConfirmTitle': `Conferma caricamento modello`,
+    'loadTaskPresetCreateAndAssign': `Crea e assegna a me`,
+    'loadTaskPresetSelectTasks': `Attività dal modello`,
+    'loadTaskPresetTaskLabel': `Modello`,
+    'loadTaskPresetTitle': `Carica modello di attività`,
+    'location': `Posizione`,
+    'locationBed': `Letto`,
+    'locationClinic': `Clinica`,
+    'locationRoom': `Stanza`,
+    'locationType': ({ type }): string => {
+      return TranslationGen.resolveSelect(type, {
+        'CLINIC': `Clinica`,
+        'WARD': `Reparto`,
+        'TEAM': `Team`,
+        'ROOM': `Stanza`,
+        'BED': `Letto`,
+        'other': `Altro`,
+      })
+    },
+    'locationWard': `Reparto`,
+    'login': `Accedi`,
+    'logInAgain': `Accedi di nuovo`,
+    'loginRequired': `Accesso richiesto`,
+    'loginRequiredDescription': `Per usare questo sito devi effettuare l'accesso.`,
+    'logout': `Esci`,
+    'male': `Maschio`,
+    'markPatientDead': `Segna paziente come deceduto`,
+    'markPatientDeadConfirmation': `Vuoi davvero segnare questo paziente come deceduto?`,
+    'menu': `Menu`,
+    'more': `Altro`,
+    'myFavorites': `I miei preferiti`,
+    'myOpenTasks': `Le mie attività aperte`,
+    'myTasks': `Le mie attività`,
+    'name': `Nome`,
+    'nFilter': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} filtro`,
+        'other': `${count} filtri`,
+      })
+    },
+    'nMinutesShort': ({ minCount }): string => {
+      return `${minCount} min`
+    },
+    'no': `No`,
+    'noClosedTasks': `Nessuna attività chiusa`,
+    'noLocationsFound': `Nessuna posizione trovata`,
+    'none': `Nessuno`,
+    'noNotifications': `Nessun aggiornamento recente`,
+    'noOpenTasks': `Nessuna attività aperta`,
+    'noPatient': `Nessun paziente`,
+    'noPatientsInTaskView': `Nessun paziente trovato per questo accesso rapido alle attività.`,
+    'noResultsFound': `Nessun risultato trovato`,
+    'notAssigned': `Non assegnato`,
+    'notifications': `Notifiche`,
+    'nPatient': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} paziente`,
+        'other': `${count} pazienti`,
+      })
+    },
+    'nSorting': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} ordinamento`,
+        'other': `${count} ordinamenti`,
+      })
+    },
+    'nTask': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} attività`,
+        'other': `${count} attività`,
+      })
+    },
+    'nYears': ({ years }): string => {
+      return TranslationGen.resolvePlural(years, {
+        '=0': `0 anni`,
+        '=1': `1 anno`,
+        'other': `${years} anni`,
+      })
+    },
+    'occupancy': `Occupazione`,
+    'ok': `OK`,
+    'onboardingSurvey': `Questionario iniziale`,
+    'openSurvey': `Apri questionario`,
+    'openTasks': `Attività aperte`,
+    'openView': `Apri`,
+    'option': `Opzione`,
+    'organizations': `Organizzazioni`,
+    'overview': `Panoramica`,
+    'pages.404.loading': `Caricamento...`,
+    'pages.404.notFound': `404 - Pagina non trovata`,
+    'pages.404.notFoundDescription1': `Questa non è sicuramente la pagina che stai cercando`,
+    'pages.404.notFoundDescription2': `Torna alla`,
+    'patient': `Paziente`,
+    'patientActions': `Azioni paziente`,
+    'patientData': `Dati`,
+    'patients': `Pazienti`,
+    'patientsCountChipAdmitted': ({ count }): string => {
+      return `Ricoverati ${count}`
+    },
+    'patientsCountChipTotal': ({ count }): string => {
+      return `Totale ${count}`
+    },
+    'patientsCountChipWaiting': ({ count }): string => {
+      return `In attesa ${count}`
+    },
+    'patientState': ({ state }): string => {
+      return TranslationGen.resolveSelect(state, {
+        'WAIT': `In attesa`,
+        'ADMITTED': `Ricoverato`,
+        'DISCHARGED': `Dimesso`,
+        'DEAD': `Deceduto`,
+        'other': `Sconosciuto`,
+      })
+    },
+    'patientsUpdatedRecently': `Pazienti aggiornati di recente`,
+    'pickClinic': `Scegli la clinica`,
+    'pickClinicDescription': `Seleziona la clinica per questo paziente. È possibile selezionare solo posizioni di tipo clinica.`,
+    'pickPosition': `Scegli la posizione`,
+    'pickPositionDescription': `Seleziona la posizione per questo paziente. Puoi selezionare ospedali, ambulatori, cliniche, reparti, letti o stanze.`,
+    'pickTeams': `Scegli i team`,
+    'pickTeamsDescription': `Seleziona uno o più team per questo paziente. Puoi selezionare cliniche, team, ambulatori od ospedali.`,
+    'position': `Posizione`,
+    'positionUpdated': `Posizione aggiornata`,
+    'preferences': `Preferenze`,
+    'priority': `Priorità`,
+    'priorityLabel': `Priorità`,
+    'priorityNone': `Nessuna`,
+    'privacy': `Privacy`,
+    'properties': `Proprietà`,
+    'propertiesSettingsDescription': `Campi personalizzati per attività e pazienti: definisci i tipi e usali nei filtri.`,
+    'property': `Proprietà`,
+    'pThemes': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `Tema`,
+        'other': `Temi`,
+      })
+    },
+    'rAdd': ({ name }): string => {
+      return `Aggiungi ${name}`
+    },
+    'rChipTotal': ({ value }): string => {
+      return `Totale ${value}`
+    },
+    'readOnlyView': `Sola lettura`,
+    'recentPatients': `I tuoi pazienti recenti`,
+    'recentTasks': `Le tue attività recenti`,
+    'rEdit': ({ name }): string => {
+      return `Aggiorna ${name}`
+    },
+    'refreshing': `Aggiornamento…`,
+    'removeProperty': `Rimuovi proprietà`,
+    'removePropertyConfirmation': `Vuoi davvero rimuovere questa proprietà? L'operazione non può essere annullata.`,
+    'retakeSurvey': `Ripeti questionario`,
+    'rShow': ({ name }): string => {
+      return `Mostra ${name}`
+    },
+    'savedViews': `Accesso rapido`,
+    'saveView': `Salva accesso rapido`,
+    'saveViewAsNew': `Salva come nuovo accesso rapido`,
+    'saveViewDescription': `Assegna un nome a questo accesso rapido. Filtri, ordinamento, ricerca e posizione vengono salvati.`,
+    'saveViewDescriptionFromSystemList': `Crea un nuovo accesso rapido da questo layout. Questa pagina è predefinita dall'app e non viene sovrascritta — apri l'accesso rapido dalla barra laterale quando ti serve.`,
+    'saveViewOverwriteCurrent': `Sovrascrivi accesso rapido attuale`,
+    'scopeChangeNode': `Cambia nodo`,
+    'scopeNoNodeSelected': `Seleziona il nodo in cui salvare questa voce.`,
+    'scopePrivate': `Privato`,
+    'scopePrivateDescription': `Solo tu puoi vedere e usare questa voce.`,
+    'scopePublic': `Pubblico`,
+    'scopePublicDescription': `Chiunque abbia accesso al nodo selezionato o ai suoi sottonodi può vedere e usare questa voce.`,
+    'scopeSelectNode': `Seleziona nodo`,
+    'scopeShared': `Condiviso tramite link`,
+    'scopeSharedDescription': `Solo tu vedi questa voce nei tuoi elenchi. Chiunque abbia accesso al nodo selezionato o ai suoi sottonodi può aprirla tramite il link.`,
+    'scopeStoredAt': `Salvato in`,
+    'scopeVisibility': `Condivisione`,
+    'scrollToTop': `Torna su`,
+    'search': `Cerca`,
+    'searchLocations': `Cerca posizioni...`,
+    'searchUserOrTeam': `Cerca utente (o team)...`,
+    'searchUsersOrTeams': `Cerca utenti o team...`,
+    'security': `Sicurezza`,
+    'selectAll': `Seleziona tutto`,
+    'selectAssignee': `Assegna a...`,
+    'selectClinic': `Seleziona clinica`,
+    'selectLocation': `Seleziona posizione`,
+    'selectLocationDescription': `Seleziona la posizione assegnata al paziente.`,
+    'selectOptions': `Seleziona opzioni`,
+    'selectPosition': `Seleziona posizione`,
+    'selectRootLocation': `Seleziona posizione principale`,
+    'selectRootLocationDescription': `Seleziona le posizioni principali che definiscono il tuo ambito di accesso. È possibile selezionare solo ospedali, ambulatori, cliniche e team. Selezionando una posizione superiore vengono incluse tutte le posizioni sottostanti.`,
+    'selectTeams': `Seleziona team`,
+    'sessionExpired': `Sessione scaduta`,
+    'sessionExpiredDescription': `Sei stato disconnesso per inattività. Accedi di nuovo per continuare. Eventuali modifiche non salvate potrebbero andare perse.`,
+    'settings': `Impostazioni`,
+    'settingsDescription': `Qui puoi modificare la configurazione dell'app.`,
+    'sex': `Sesso`,
+    'shiftHandover': `Passaggio di consegne`,
+    'showAllTasks': `Mostra tutte le attività`,
+    'showPatient': ({ name }): string => {
+      return `Mostra paziente ${name}`
+    },
+    'showTeamTasks': `Mostra attività del team`,
+    'sorting': `Ordinamento`,
+    'sPriority': ({ priority }): string => {
+      return TranslationGen.resolveSelect(priority, {
+        'P1': `Normale`,
+        'P2': `Media`,
+        'P3': `Alta`,
+        'P4': `Critica`,
+        'other': `-`,
+      })
+    },
+    'sPropertySubjectType': ({ subject }): string => {
+      return TranslationGen.resolveSelect(subject, {
+        'patient': `Paziente`,
+        'task': `Attività`,
+        'other': `Tipo di oggetto non definito`,
+      })
+    },
+    'sPropertyType': ({ type }): string => {
+      return TranslationGen.resolveSelect(type, {
+        'multiSelect': `Selezione multipla`,
+        'singleSelect': `Selezione singola`,
+        'number': `Numero`,
+        'text': `Testo`,
+        'date': `Data`,
+        'dateTime': `Data e ora`,
+        'checkbox': `Casella di controllo`,
+        'user': `Utente`,
+        'other': `Tipo non definito`,
+      })
+    },
+    'stagingModalDisclaimerMarkdown': `Questa istanza pubblica di helpwave tasks è destinata a \\b{scopi di sviluppo e anteprima}. Assicurati di inserire \\b{solo} \\b{dati di test non riservati}. Questa istanza può essere \\negative{\\b{eliminata in qualsiasi momento}}`,
+    'startRecording': `Avvia registrazione`,
+    'stateUpdated': `Stato aggiornato`,
+    'status': `Stato`,
+    'stopRecording': `Interrompi registrazione`,
+    'subjectType': `Tipo di oggetto`,
+    'submissionDetails': `Dettagli dell'invio`,
+    'submit': `Invia`,
+    'submittingAs': ({ name }): string => {
+      return `Invio come ${name}`
+    },
+    'surveyDescription': `Il tuo feedback è prezioso per noi. Dedica un momento alla compilazione del nostro questionario.`,
+    'surveyTitle': `Aiutaci a migliorare helpwave tasks`,
+    'system': `Sistema`,
+    'task': `Attività`,
+    'taskFromPresetTooltip': `Creata da un modello di attività`,
+    'taskPresetAddRow': `Aggiungi attività`,
+    'taskPresetApplyToRow': `Applica alla riga del modello`,
+    'taskPresetCreate': `Crea modello`,
+    'taskPresetDelete': `Elimina`,
+    'taskPresetDeleteConfirm': `Eliminare questo modello di attività?`,
+    'taskPresetEdit': `Modifica modello`,
+    'taskPresetEditDetails': `Modifica dettagli`,
+    'taskPresetEmptyList': `Ancora nessun modello di attività.`,
+    'taskPresetKey': `Chiave`,
+    'taskPresetKeyHint': `Chiave univoca opzionale per le ricerche. Lascia vuoto per generarla automaticamente.`,
+    'taskPresetName': `Nome`,
+    'taskPresetNoEstimate': `Nessuna stima`,
+    'taskPresetNoTasks': `Questo modello non contiene attività.`,
+    'taskPresetRemoveRow': `Rimuovi`,
+    'taskPresets': `Modelli`,
+    'taskPresetSave': `Salva modello`,
+    'taskPresetsDescription': `Elenchi di attività riutilizzabili con dipendenze opzionali.`,
+    'taskPresetSelectPlaceholder': `Seleziona un modello`,
+    'taskPresetSourceNotFound': `Impossibile caricare il modello.`,
+    'taskPresetSourceOpenSettings': `Apri nelle impostazioni`,
+    'taskPresetSourceTasksInGraph': `Attività nel modello`,
+    'taskPresetSourceTitle': `Modello di origine`,
+    'tasks': `Attività`,
+    'tasksCreatedFromPreset': `Attività create`,
+    'tasksUpdatedRecently': `Attività aggiornate di recente`,
+    'taskTitlePlaceholder': `Cosa bisogna fare?`,
+    'teams': `Team`,
+    'themeMode': ({ theme }): string => {
+      return TranslationGen.resolveSelect(theme, {
+        'dark': `Scuro`,
+        'light': `Chiaro`,
+        'system': `Sistema`,
+        'other': `Sistema`,
+      })
+    },
+    'timeEstimate': `Stima del tempo`,
+    'title': `Titolo`,
+    'totalPatients': `Pazienti totali`,
+    'type': `Tipo`,
+    'updated': `Aggiornato`,
+    'url': `URL`,
+    'user': `Utente`,
+    'userInformation': `Informazioni utente`,
+    'users': `Utenti`,
+    'viewAnyoneWithLinkCanView': `Chiunque abbia il link può visualizzare`,
+    'viewDerivedPatientsHint': `Pazienti presenti nelle attività di questo accesso rapido (senza duplicati).`,
+    'views': `Accesso rapido`,
+    'viewsEntityPatient': `Pazienti`,
+    'viewsEntityTask': `Attività`,
+    'viewSettings': `Accesso rapido`,
+    'viewSettingsDescription': `Gestisci gli accessi rapidi salvati per attività e pazienti.`,
+    'viewVisibility': `Visibilità`,
+    'viewVisibilityLinkShared': `Condiviso tramite link`,
+    'viewVisibilityPrivate': `Privato`,
+    'waitingForPatient': `In attesa del paziente`,
+    'waitPatient': `Metti paziente in attesa`,
+    'wards': `Reparti`,
+    'weeklySurvey': `Questionario settimanale`,
+    'yes': `Sì`
   },
   'nl-NL': {
     'account': `Account`,
@@ -2534,6 +3503,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'option': `Optie`,
     'organizations': `Organisaties`,
     'overview': `Overzicht`,
+    'pages.404.loading': `Laden...`,
     'pages.404.notFound': `404 - Pagina niet gevonden`,
     'pages.404.notFoundDescription1': `Dit is zeker niet de pagina die u zoekt`,
     'pages.404.notFoundDescription2': `Terug naar de`,
@@ -2753,6 +3723,509 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'wards': `Afdelingen`,
     'weeklySurvey': `Wekelijkse enquête`,
     'yes': `Ja`
+  },
+  'pl-PL': {
+    'account': `Konto`,
+    'active': `Aktywny`,
+    'add': `Dodaj`,
+    'addFastAccess': `Dodaj szybki dostęp`,
+    'addFastAccessDescription': `Podaj nazwę nowego szybkiego dostępu.`,
+    'additionalAssigneesCount': ({ count }): string => {
+      return `+${count}`
+    },
+    'addPatient': `Dodaj pacjenta`,
+    'addProperty': `Dodaj właściwość`,
+    'addTask': `Dodaj zadanie`,
+    'admitPatient': `Przyjmij pacjenta`,
+    'anonymous': `Anonimowo`,
+    'anonymousSubmission': `Zgłoszenie anonimowe`,
+    'archivedPropertyDescription': `Zarchiwizowanych właściwości nie można już przypisywać do obiektów.`,
+    'archiveProperty': `Archiwizuj właściwość`,
+    'assignedTo': `Przypisano do`,
+    'assigneeTeam': `Przypisany zespół`,
+    'authenticationFailed': `Uwierzytelnianie nie powiodło się`,
+    'birthdate': `Data urodzenia`,
+    'cancel': `Anuluj`,
+    'clear': `Wyczyść`,
+    'clearCache': `Wyczyść pamięć podręczną`,
+    'clearPropertyColumnActionPatient': `Wyczyść wartości tej właściwości u wyświetlonych pacjentów`,
+    'clearPropertyColumnActionTask': `Usuń tę właściwość z wyświetlonych zadań`,
+    'clearPropertyColumnConfirmButtonPatient': `Wyczyść wartości właściwości`,
+    'clearPropertyColumnConfirmButtonTask': `Usuń właściwość z zadań`,
+    'clearPropertyColumnDialogDescriptionPatient': ({ propertyName, count }): string => {
+      return `Spowoduje to wyczyszczenie wszystkich wartości właściwości "${propertyName}" u pacjentów aktualnie wczytanych na tej liście (liczba: ${count}). Właściwość pozostanie przypisana do tych pacjentów. Pacjenci niewczytani na tej liście nie zostaną zmienieni.`
+    },
+    'clearPropertyColumnDialogDescriptionTask': ({ propertyName, count }): string => {
+      return `Spowoduje to trwałe usunięcie właściwości "${propertyName}" z zadań aktualnie wczytanych na tej liście (liczba: ${count}). Zadania niewczytane na tej liście nie zostaną zmienione.`
+    },
+    'clearPropertyColumnDialogTitlePatient': `Wyczyść wartości właściwości u pacjentów`,
+    'clearPropertyColumnDialogTitleTask': `Usuń właściwość z zadań`,
+    'clearPropertyColumnTypeNameInstruction': ({ propertyName }): string => {
+      return `Wpisz "${propertyName}", aby potwierdzić.`
+    },
+    'clinic': `Klinika`,
+    'clinics': `Kliniki`,
+    'clinicUpdated': `Zaktualizowano klinikę`,
+    'close': `Zamknij`,
+    'closedTasks': `Zamknięte zadania`,
+    'collapseAll': `Zwiń wszystko`,
+    'confirm': `Potwierdź`,
+    'confirmDeleteView': `Usunąć ten zapisany szybki dostęp? Tej operacji nie można cofnąć.`,
+    'confirmSelection': `Potwierdź wybór`,
+    'confirmShiftHandover': `Potwierdź przekazanie dyżuru`,
+    'confirmShiftHandoverDescription': `Czy na pewno chcesz przekazać wszystkie otwarte zadania wybranemu użytkownikowi?`,
+    'confirmShiftHandoverDescriptionWithName': ({ taskCount, name }): string => {
+      let _out: string = ''
+      _out += `Czy na pewno chcesz przekazać `
+      _out += TranslationGen.resolvePlural(taskCount, {
+        '=1': `${taskCount} otwarte zadanie`,
+        'few': `${taskCount} otwarte zadania`,
+        'many': `${taskCount} otwartych zadań`,
+        'other': `${taskCount} otwartego zadania`,
+      })
+      _out += ` użytkownikowi ${name}?`
+      return _out
+    },
+    'conflictDetected': `Wykryto konflikt`,
+    'connectionConnected': `Połączono`,
+    'connectionConnecting': `Łączenie…`,
+    'connectionDisconnected': `Rozłączono`,
+    'copyShareLink': `Kopiuj link`,
+    'copyShareLinkEnableSharingFirst': `Włącz udostępnianie przez link, aby inne osoby z linkiem mogły otworzyć ten szybki dostęp.`,
+    'copyViewToMyViews': `Kopiuj do mojego szybkiego dostępu`,
+    'create': `Utwórz`,
+    'createTask': `Utwórz zadanie`,
+    'creationDate': `Data utworzenia`,
+    'currentTime': `Aktualny czas`,
+    'dashboard': `Pulpit`,
+    'dashboardWelcomeAfternoon': ({ name }): string => {
+      return `Dzień dobry, ${name}!`
+    },
+    'dashboardWelcomeDescription': `Oto co dzieje się dzisiaj.`,
+    'dashboardWelcomeEvening': ({ name }): string => {
+      return `Dobry wieczór, ${name}!`
+    },
+    'dashboardWelcomeMorning': ({ name }): string => {
+      return `Dzień dobry, ${name}!`
+    },
+    'dashboardWelcomeNight': ({ name }): string => {
+      return `Dobranoc, ${name}!`
+    },
+    'dashboardWelcomeNoon': ({ name }): string => {
+      return `Dzień dobry, ${name}!`
+    },
+    'delete': `Usuń`,
+    'deletePatient': `Usuń pacjenta`,
+    'deletePatientConfirmation': `Czy na pewno chcesz usunąć tego pacjenta? Tej operacji nie można cofnąć.`,
+    'description': `Opis`,
+    'descriptionPlaceholder': `Dodaj więcej szczegółów...`,
+    'deselectAll': `Odznacz wszystko`,
+    'developmentAndPreviewInstance': `Instancja deweloperska i podglądowa`,
+    'discard': `Odrzuć`,
+    'discardDraftMessage': `Masz niezapisane wpisy. Jeśli teraz zamkniesz, wszystkie wprowadzone dane zostaną utracone.`,
+    'discardDraftTitle': `Odrzucić wersję roboczą?`,
+    'discardViewChanges': `Odrzuć zmiany`,
+    'dischargePatient': `Wypisz pacjenta`,
+    'dischargePatientConfirmation': `Czy na pewno chcesz wypisać tego pacjenta? Ta operacja zmieni status pacjenta.`,
+    'dismiss': `Odrzuć`,
+    'dismissAll': `Odrzuć wszystkie`,
+    'diverse': `Inna`,
+    'done': `Gotowe`,
+    'dueDate': `Termin`,
+    'dueDateInDays': ({ days }): string => {
+      let _out: string = ''
+      _out += `+`
+      _out += TranslationGen.resolvePlural(days, {
+        '=1': `${days} dzień`,
+        'few': `${days} dni`,
+        'many': `${days} dni`,
+        'other': `${days} dnia`,
+      })
+      return _out
+    },
+    'dueDateInHours': ({ hours }): string => {
+      let _out: string = ''
+      _out += `+`
+      _out += TranslationGen.resolvePlural(hours, {
+        '=1': `${hours} godzina`,
+        'few': `${hours} godziny`,
+        'many': `${hours} godzin`,
+        'other': `${hours} godziny`,
+      })
+      return _out
+    },
+    'dueDateNow': `Teraz`,
+    'dueDateToday': `Dzisiaj`,
+    'dueDateTomorrow': `Jutro`,
+    'duplicate': `Duplikuj`,
+    'edit': `Edytuj`,
+    'editPatient': `Edytuj pacjenta`,
+    'editPresetTask': `Edytuj zadanie szablonu`,
+    'editTask': `Edytuj zadanie`,
+    'enterFeedback': `Wpisz tutaj swoją opinię...`,
+    'error': `Błąd`,
+    'errorOccurred': `Wystąpił błąd`,
+    'estimatedTime': `Szacowany czas (minuty)`,
+    'expandAll': `Rozwiń wszystko`,
+    'export': `Eksportuj`,
+    'exportCsv': `Eksportuj jako CSV`,
+    'exportExcel': `Eksportuj jako Excel (do druku)`,
+    'exportFailed': `Eksport nie powiódł się. Spróbuj ponownie.`,
+    'feedback': `Opinia`,
+    'feedbackDescription': `Podziel się opinią, zgłoś błędy lub zaproponuj ulepszenia.`,
+    'female': `Kobieta`,
+    'filter': `Filtr`,
+    'filterAll': `Wszystkie`,
+    'filterUndone': `Niewykonane`,
+    'firstName': `Imię`,
+    'freeBeds': `Wolne łóżka`,
+    'hide': `Ukryj`,
+    'homePage': `Strona główna`,
+    'imprint': `Nota prawna`,
+    'inactive': `Nieaktywny`,
+    'install': `Zainstaluj`,
+    'installApp': `Zainstaluj aplikację`,
+    'installAppDescription': `Zainstaluj helpwave tasks, aby korzystać z trybu offline i szybszego dostępu.`,
+    'language': `Język`,
+    'lastName': `Nazwisko`,
+    'listViewCard': `Widok kart`,
+    'listViewTable': `Widok tabeli`,
+    'loading': `Ładowanie...`,
+    'loadingAlmostThere': `Prawie gotowe...`,
+    'loadingGettingReady': `Chwileczkę — przygotowujemy wszystko...`,
+    'loadingHangOn': `Chwileczkę — pobieramy najnowsze dane...`,
+    'loadingMoment': `Sekunda, prawie gotowe...`,
+    'loadMore': `Wczytaj więcej`,
+    'loadTaskPreset': `Wczytaj szablon`,
+    'loadTaskPresetConfirm': ({ count }): string => {
+      let _out: string = ''
+      _out += `Utworzyć `
+      _out += TranslationGen.resolvePlural(count, {
+        '=1': `${count} zadanie`,
+        'few': `${count} zadania`,
+        'many': `${count} zadań`,
+        'other': `${count} zadania`,
+      })
+      _out += ` dla tego pacjenta?`
+      return _out
+    },
+    'loadTaskPresetConfirmTitle': `Potwierdź wczytanie szablonu`,
+    'loadTaskPresetCreateAndAssign': `Utwórz i przypisz do mnie`,
+    'loadTaskPresetSelectTasks': `Zadania z szablonu`,
+    'loadTaskPresetTaskLabel': `Szablon`,
+    'loadTaskPresetTitle': `Wczytaj szablon zadań`,
+    'location': `Lokalizacja`,
+    'locationBed': `Łóżko`,
+    'locationClinic': `Klinika`,
+    'locationRoom': `Sala`,
+    'locationType': ({ type }): string => {
+      return TranslationGen.resolveSelect(type, {
+        'CLINIC': `Klinika`,
+        'WARD': `Oddział`,
+        'TEAM': `Zespół`,
+        'ROOM': `Sala`,
+        'BED': `Łóżko`,
+        'other': `Inne`,
+      })
+    },
+    'locationWard': `Oddział`,
+    'login': `Zaloguj się`,
+    'logInAgain': `Zaloguj się ponownie`,
+    'loginRequired': `Wymagane logowanie`,
+    'loginRequiredDescription': `Aby korzystać z tej strony, musisz się zalogować.`,
+    'logout': `Wyloguj się`,
+    'male': `Mężczyzna`,
+    'markPatientDead': `Oznacz pacjenta jako zmarłego`,
+    'markPatientDeadConfirmation': `Czy na pewno chcesz oznaczyć tego pacjenta jako zmarłego?`,
+    'menu': `Menu`,
+    'more': `Więcej`,
+    'myFavorites': `Moje ulubione`,
+    'myOpenTasks': `Moje otwarte zadania`,
+    'myTasks': `Moje zadania`,
+    'name': `Nazwa`,
+    'nFilter': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} filtr`,
+        'few': `${count} filtry`,
+        'many': `${count} filtrów`,
+        'other': `${count} filtra`,
+      })
+    },
+    'nMinutesShort': ({ minCount }): string => {
+      return `${minCount} min`
+    },
+    'no': `Nie`,
+    'noClosedTasks': `Brak zamkniętych zadań`,
+    'noLocationsFound': `Nie znaleziono lokalizacji`,
+    'none': `Brak`,
+    'noNotifications': `Brak nowych aktualizacji`,
+    'noOpenTasks': `Brak otwartych zadań`,
+    'noPatient': `Brak pacjenta`,
+    'noPatientsInTaskView': `Nie znaleziono pacjentów dla tego szybkiego dostępu do zadań.`,
+    'noResultsFound': `Nie znaleziono wyników`,
+    'notAssigned': `Nieprzypisane`,
+    'notifications': `Powiadomienia`,
+    'nPatient': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} pacjent`,
+        'few': `${count} pacjentów`,
+        'many': `${count} pacjentów`,
+        'other': `${count} pacjenta`,
+      })
+    },
+    'nSorting': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} sortowanie`,
+        'few': `${count} sortowania`,
+        'many': `${count} sortowań`,
+        'other': `${count} sortowania`,
+      })
+    },
+    'nTask': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} zadanie`,
+        'few': `${count} zadania`,
+        'many': `${count} zadań`,
+        'other': `${count} zadania`,
+      })
+    },
+    'nYears': ({ years }): string => {
+      return TranslationGen.resolvePlural(years, {
+        '=0': `0 lat`,
+        '=1': `1 rok`,
+        'few': `${years} lata`,
+        'many': `${years} lat`,
+        'other': `${years} roku`,
+      })
+    },
+    'occupancy': `Obłożenie`,
+    'ok': `OK`,
+    'onboardingSurvey': `Ankieta wdrożeniowa`,
+    'openSurvey': `Otwórz ankietę`,
+    'openTasks': `Otwarte zadania`,
+    'openView': `Otwórz`,
+    'option': `Opcja`,
+    'organizations': `Organizacje`,
+    'overview': `Przegląd`,
+    'pages.404.loading': `Ładowanie...`,
+    'pages.404.notFound': `404 - Nie znaleziono strony`,
+    'pages.404.notFoundDescription1': `To na pewno nie jest strona, której szukasz`,
+    'pages.404.notFoundDescription2': `Wróć do`,
+    'patient': `Pacjent`,
+    'patientActions': `Działania dotyczące pacjenta`,
+    'patientData': `Dane`,
+    'patients': `Pacjenci`,
+    'patientsCountChipAdmitted': ({ count }): string => {
+      return `Przyjęci ${count}`
+    },
+    'patientsCountChipTotal': ({ count }): string => {
+      return `Łącznie ${count}`
+    },
+    'patientsCountChipWaiting': ({ count }): string => {
+      return `Oczekujący ${count}`
+    },
+    'patientState': ({ state }): string => {
+      return TranslationGen.resolveSelect(state, {
+        'WAIT': `Oczekujący`,
+        'ADMITTED': `Przyjęty`,
+        'DISCHARGED': `Wypisany`,
+        'DEAD': `Zmarły`,
+        'other': `Nieznany`,
+      })
+    },
+    'patientsUpdatedRecently': `Ostatnio zaktualizowani pacjenci`,
+    'pickClinic': `Wybierz klinikę`,
+    'pickClinicDescription': `Wybierz klinikę dla tego pacjenta. Można wybrać tylko lokalizacje typu klinika.`,
+    'pickPosition': `Wybierz lokalizację`,
+    'pickPositionDescription': `Wybierz lokalizację dla tego pacjenta. Możesz wybrać szpital, praktykę, klinikę, oddział, łóżko lub salę.`,
+    'pickTeams': `Wybierz zespoły`,
+    'pickTeamsDescription': `Wybierz jeden lub więcej zespołów dla tego pacjenta. Możesz wybrać klinikę, zespół, praktykę lub szpital.`,
+    'position': `Lokalizacja`,
+    'positionUpdated': `Zaktualizowano lokalizację`,
+    'preferences': `Preferencje`,
+    'priority': `Priorytet`,
+    'priorityLabel': `Priorytet`,
+    'priorityNone': `Brak`,
+    'privacy': `Prywatność`,
+    'properties': `Właściwości`,
+    'propertiesSettingsDescription': `Własne pola dla zadań i pacjentów: zdefiniuj typy i używaj ich w filtrach.`,
+    'property': `Właściwość`,
+    'pThemes': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `Motyw`,
+        'few': `Motywy`,
+        'many': `Motywy`,
+        'other': `Motywy`,
+      })
+    },
+    'rAdd': ({ name }): string => {
+      return `Dodaj ${name}`
+    },
+    'rChipTotal': ({ value }): string => {
+      return `Łącznie ${value}`
+    },
+    'readOnlyView': `Tylko do odczytu`,
+    'recentPatients': `Twoi ostatni pacjenci`,
+    'recentTasks': `Twoje ostatnie zadania`,
+    'rEdit': ({ name }): string => {
+      return `Zaktualizuj ${name}`
+    },
+    'refreshing': `Odświeżanie…`,
+    'removeProperty': `Usuń właściwość`,
+    'removePropertyConfirmation': `Czy na pewno chcesz usunąć tę właściwość? Tej operacji nie można cofnąć.`,
+    'retakeSurvey': `Wypełnij ankietę ponownie`,
+    'rShow': ({ name }): string => {
+      return `Pokaż ${name}`
+    },
+    'savedViews': `Szybki dostęp`,
+    'saveView': `Zapisz szybki dostęp`,
+    'saveViewAsNew': `Zapisz jako nowy szybki dostęp`,
+    'saveViewDescription': `Nazwij ten szybki dostęp. Filtry, sortowanie, wyszukiwanie i lokalizacja zostaną zapisane.`,
+    'saveViewDescriptionFromSystemList': `Tworzy nowy wpis szybkiego dostępu na podstawie tego układu. Ta strona jest stała w aplikacji i nie jest nadpisywana — otwórz szybki dostęp z paska bocznego, gdy będzie potrzebny.`,
+    'saveViewOverwriteCurrent': `Nadpisz bieżący szybki dostęp`,
+    'scopeChangeNode': `Zmień węzeł`,
+    'scopeNoNodeSelected': `Wybierz węzeł, w którym zostanie zapisany ten wpis.`,
+    'scopePrivate': `Prywatny`,
+    'scopePrivateDescription': `Tylko Ty możesz widzieć i używać tego wpisu.`,
+    'scopePublic': `Publiczny`,
+    'scopePublicDescription': `Każdy, kto ma dostęp do wybranego węzła lub jego poddrzewa, może widzieć i używać tego wpisu.`,
+    'scopeSelectNode': `Wybierz węzeł`,
+    'scopeShared': `Udostępniony przez link`,
+    'scopeSharedDescription': `Tylko Ty widzisz ten wpis na swoich listach. Każdy, kto ma dostęp do wybranego węzła lub jego poddrzewa, może go otworzyć przez link.`,
+    'scopeStoredAt': `Zapisano w`,
+    'scopeVisibility': `Udostępnianie`,
+    'scrollToTop': `Przewiń na górę`,
+    'search': `Szukaj`,
+    'searchLocations': `Szukaj lokalizacji...`,
+    'searchUserOrTeam': `Szukaj użytkownika (lub zespołu)...`,
+    'searchUsersOrTeams': `Szukaj użytkowników lub zespołów...`,
+    'security': `Bezpieczeństwo`,
+    'selectAll': `Zaznacz wszystko`,
+    'selectAssignee': `Przypisz do...`,
+    'selectClinic': `Wybierz klinikę`,
+    'selectLocation': `Wybierz lokalizację`,
+    'selectLocationDescription': `Wybierz lokalizację przypisaną do pacjenta.`,
+    'selectOptions': `Wybierz opcje`,
+    'selectPosition': `Wybierz lokalizację`,
+    'selectRootLocation': `Wybierz lokalizację główną`,
+    'selectRootLocationDescription': `Wybierz lokalizacje główne określające Twój zakres dostępu. Można wybrać tylko szpitale, praktyki, kliniki i zespoły. Wybór lokalizacji nadrzędnej obejmuje wszystkie jej lokalizacje podrzędne.`,
+    'selectTeams': `Wybierz zespoły`,
+    'sessionExpired': `Sesja wygasła`,
+    'sessionExpiredDescription': `Zostałeś wylogowany z powodu braku aktywności. Zaloguj się ponownie, aby kontynuować. Niezapisane zmiany mogą zostać utracone.`,
+    'settings': `Ustawienia`,
+    'settingsDescription': `Tutaj możesz zmienić konfigurację aplikacji.`,
+    'sex': `Płeć`,
+    'shiftHandover': `Przekazanie dyżuru`,
+    'showAllTasks': `Pokaż wszystkie zadania`,
+    'showPatient': ({ name }): string => {
+      return `Pokaż pacjenta ${name}`
+    },
+    'showTeamTasks': `Pokaż zadania zespołu`,
+    'sorting': `Sortowanie`,
+    'sPriority': ({ priority }): string => {
+      return TranslationGen.resolveSelect(priority, {
+        'P1': `Normalny`,
+        'P2': `Średni`,
+        'P3': `Wysoki`,
+        'P4': `Krytyczny`,
+        'other': `-`,
+      })
+    },
+    'sPropertySubjectType': ({ subject }): string => {
+      return TranslationGen.resolveSelect(subject, {
+        'patient': `Pacjent`,
+        'task': `Zadanie`,
+        'other': `Nieokreślony typ obiektu`,
+      })
+    },
+    'sPropertyType': ({ type }): string => {
+      return TranslationGen.resolveSelect(type, {
+        'multiSelect': `Wielokrotny wybór`,
+        'singleSelect': `Pojedynczy wybór`,
+        'number': `Liczba`,
+        'text': `Tekst`,
+        'date': `Data`,
+        'dateTime': `Data i godzina`,
+        'checkbox': `Pole wyboru`,
+        'user': `Użytkownik`,
+        'other': `Nieokreślony typ`,
+      })
+    },
+    'stagingModalDisclaimerMarkdown': `Ta publiczna instancja helpwave tasks służy \\b{do celów deweloperskich i podglądowych}. Wprowadzaj \\b{wyłącznie} \\b{niepoufne dane testowe}. Ta instancja może zostać \\negative{\\b{usunięta w dowolnym momencie}}`,
+    'startRecording': `Rozpocznij nagrywanie`,
+    'stateUpdated': `Zaktualizowano status`,
+    'status': `Status`,
+    'stopRecording': `Zatrzymaj nagrywanie`,
+    'subjectType': `Typ obiektu`,
+    'submissionDetails': `Szczegóły zgłoszenia`,
+    'submit': `Wyślij`,
+    'submittingAs': ({ name }): string => {
+      return `Wysyłasz jako ${name}`
+    },
+    'surveyDescription': `Twoja opinia jest dla nas cenna. Poświęć chwilę na wypełnienie naszej ankiety.`,
+    'surveyTitle': `Pomóż nam ulepszyć helpwave tasks`,
+    'system': `System`,
+    'task': `Zadanie`,
+    'taskFromPresetTooltip': `Utworzono z szablonu zadań`,
+    'taskPresetAddRow': `Dodaj zadanie`,
+    'taskPresetApplyToRow': `Zastosuj do wiersza szablonu`,
+    'taskPresetCreate': `Utwórz szablon`,
+    'taskPresetDelete': `Usuń`,
+    'taskPresetDeleteConfirm': `Usunąć ten szablon zadań?`,
+    'taskPresetEdit': `Edytuj szablon`,
+    'taskPresetEditDetails': `Edytuj szczegóły`,
+    'taskPresetEmptyList': `Brak szablonów zadań.`,
+    'taskPresetKey': `Klucz`,
+    'taskPresetKeyHint': `Opcjonalny unikalny klucz do wyszukiwania. Pozostaw puste, aby wygenerować automatycznie.`,
+    'taskPresetName': `Nazwa`,
+    'taskPresetNoEstimate': `Brak szacunku`,
+    'taskPresetNoTasks': `Ten szablon nie zawiera zadań.`,
+    'taskPresetRemoveRow': `Usuń`,
+    'taskPresets': `Szablony`,
+    'taskPresetSave': `Zapisz szablon`,
+    'taskPresetsDescription': `Listy zadań wielokrotnego użytku z opcjonalnymi zależnościami.`,
+    'taskPresetSelectPlaceholder': `Wybierz szablon`,
+    'taskPresetSourceNotFound': `Nie udało się wczytać szablonu.`,
+    'taskPresetSourceOpenSettings': `Otwórz w ustawieniach`,
+    'taskPresetSourceTasksInGraph': `Zadania w szablonie`,
+    'taskPresetSourceTitle': `Szablon źródłowy`,
+    'tasks': `Zadania`,
+    'tasksCreatedFromPreset': `Utworzono zadania`,
+    'tasksUpdatedRecently': `Ostatnio zaktualizowane zadania`,
+    'taskTitlePlaceholder': `Co trzeba zrobić?`,
+    'teams': `Zespoły`,
+    'themeMode': ({ theme }): string => {
+      return TranslationGen.resolveSelect(theme, {
+        'dark': `Ciemny`,
+        'light': `Jasny`,
+        'system': `Systemowy`,
+        'other': `Systemowy`,
+      })
+    },
+    'timeEstimate': `Szacowany czas`,
+    'title': `Tytuł`,
+    'totalPatients': `Łącznie pacjentów`,
+    'type': `Typ`,
+    'updated': `Zaktualizowano`,
+    'url': `URL`,
+    'user': `Użytkownik`,
+    'userInformation': `Informacje o użytkowniku`,
+    'users': `Użytkownicy`,
+    'viewAnyoneWithLinkCanView': `Każda osoba z linkiem może wyświetlać`,
+    'viewDerivedPatientsHint': `Pacjenci występujący w zadaniach pasujących do tego szybkiego dostępu (bez powtórzeń).`,
+    'views': `Szybki dostęp`,
+    'viewsEntityPatient': `Pacjenci`,
+    'viewsEntityTask': `Zadania`,
+    'viewSettings': `Szybki dostęp`,
+    'viewSettingsDescription': `Zarządzaj zapisanym szybkim dostępem do zadań i pacjentów.`,
+    'viewVisibility': `Widoczność`,
+    'viewVisibilityLinkShared': `Udostępniony przez link`,
+    'viewVisibilityPrivate': `Prywatny`,
+    'waitingForPatient': `Oczekiwanie na pacjenta`,
+    'waitPatient': `Ustaw pacjenta jako oczekującego`,
+    'wards': `Oddziały`,
+    'weeklySurvey': `Ankieta tygodniowa`,
+    'yes': `Tak`
   },
   'pt-BR': {
     'account': `Conta`,
@@ -3019,6 +4492,7 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'option': `Opção`,
     'organizations': `Organizações`,
     'overview': `Visão geral`,
+    'pages.404.loading': `Carregando...`,
     'pages.404.notFound': `404 - Página não encontrada`,
     'pages.404.notFoundDescription1': `Esta não é a página que você procura`,
     'pages.404.notFoundDescription2': `Voltar para a`,
@@ -3235,6 +4709,1491 @@ export const tasksTranslation: Translation<TasksTranslationLocales, Partial<Task
     'wards': `Enfermarias`,
     'weeklySurvey': `Pesquisa semanal`,
     'yes': `Sim`
+  },
+  'ro-RO': {
+    'account': `Cont`,
+    'active': `Activ`,
+    'add': `Adaugă`,
+    'addFastAccess': `Adaugă acces rapid`,
+    'addFastAccessDescription': `Introduceți un nume pentru noul acces rapid.`,
+    'additionalAssigneesCount': ({ count }): string => {
+      return `+${count}`
+    },
+    'addPatient': `Adaugă pacient`,
+    'addProperty': `Adaugă proprietate`,
+    'addTask': `Adaugă sarcină`,
+    'admitPatient': `Internează pacientul`,
+    'anonymous': `Anonim`,
+    'anonymousSubmission': `Trimitere anonimă`,
+    'archivedPropertyDescription': `Proprietățile arhivate nu mai pot fi atribuite obiectelor.`,
+    'archiveProperty': `Arhivează proprietatea`,
+    'assignedTo': `Atribuit lui`,
+    'assigneeTeam': `Echipa atribuită`,
+    'authenticationFailed': `Autentificare eșuată`,
+    'birthdate': `Data nașterii`,
+    'cancel': `Anulează`,
+    'clear': `Golește`,
+    'clearCache': `Golește memoria cache`,
+    'clearPropertyColumnActionPatient': `Golește valorile acestei proprietăți la pacienții listați`,
+    'clearPropertyColumnActionTask': `Elimină această proprietate din sarcinile listate`,
+    'clearPropertyColumnConfirmButtonPatient': `Golește valorile proprietății`,
+    'clearPropertyColumnConfirmButtonTask': `Elimină proprietatea din sarcini`,
+    'clearPropertyColumnDialogDescriptionPatient': ({ propertyName, count }): string => {
+      return `Toate valorile proprietății „${propertyName}” vor fi golite la ${count} pacienți încărcați în prezent în această listă. Proprietatea rămâne atașată acestor pacienți. Pacienții care nu sunt încărcați în această listă nu sunt afectați.`
+    },
+    'clearPropertyColumnDialogDescriptionTask': ({ propertyName, count }): string => {
+      return `Proprietatea „${propertyName}” va fi eliminată definitiv din ${count} sarcini încărcate în prezent în această listă. Sarcinile care nu sunt încărcate în această listă nu sunt afectate.`
+    },
+    'clearPropertyColumnDialogTitlePatient': `Golește valorile proprietății la pacienți`,
+    'clearPropertyColumnDialogTitleTask': `Elimină proprietatea din sarcini`,
+    'clearPropertyColumnTypeNameInstruction': ({ propertyName }): string => {
+      return `Tastați „${propertyName}” pentru a confirma.`
+    },
+    'clinic': `Clinică`,
+    'clinics': `Clinici`,
+    'clinicUpdated': `Clinică actualizată`,
+    'close': `Închide`,
+    'closedTasks': `Sarcini finalizate`,
+    'collapseAll': `Restrânge tot`,
+    'confirm': `Confirmă`,
+    'confirmDeleteView': `Ștergeți acest acces rapid salvat? Acțiunea nu poate fi anulată.`,
+    'confirmSelection': `Confirmă selecția`,
+    'confirmShiftHandover': `Confirmă predarea turei`,
+    'confirmShiftHandoverDescription': `Sigur doriți să transferați toate sarcinile deschise utilizatorului selectat?`,
+    'confirmShiftHandoverDescriptionWithName': ({ taskCount, name }): string => {
+      let _out: string = ''
+      _out += `Sigur doriți să transferați `
+      _out += TranslationGen.resolvePlural(taskCount, {
+        '=1': `${taskCount} sarcină deschisă`,
+        'few': `${taskCount} sarcini deschise`,
+        'other': `${taskCount} de sarcini deschise`,
+      })
+      _out += ` către ${name}?`
+      return _out
+    },
+    'conflictDetected': `Conflict detectat`,
+    'connectionConnected': `Conectat`,
+    'connectionConnecting': `Se conectează…`,
+    'connectionDisconnected': `Deconectat`,
+    'copyShareLink': `Copiază linkul`,
+    'copyShareLinkEnableSharingFirst': `Activați partajarea prin link pentru ca alte persoane cu linkul să poată deschide acest acces rapid.`,
+    'copyViewToMyViews': `Copiază în accesul meu rapid`,
+    'create': `Creează`,
+    'createTask': `Creează sarcină`,
+    'creationDate': `Data creării`,
+    'currentTime': `Ora curentă`,
+    'dashboard': `Tablou de bord`,
+    'dashboardWelcomeAfternoon': ({ name }): string => {
+      return `Bună ziua, ${name}!`
+    },
+    'dashboardWelcomeDescription': `Iată ce se întâmplă astăzi.`,
+    'dashboardWelcomeEvening': ({ name }): string => {
+      return `Bună seara, ${name}!`
+    },
+    'dashboardWelcomeMorning': ({ name }): string => {
+      return `Bună dimineața, ${name}!`
+    },
+    'dashboardWelcomeNight': ({ name }): string => {
+      return `Noapte bună, ${name}!`
+    },
+    'dashboardWelcomeNoon': ({ name }): string => {
+      return `Bună ziua, ${name}!`
+    },
+    'delete': `Șterge`,
+    'deletePatient': `Șterge pacientul`,
+    'deletePatientConfirmation': `Sigur doriți să ștergeți acest pacient? Acțiunea nu poate fi anulată.`,
+    'description': `Descriere`,
+    'descriptionPlaceholder': `Adăugați mai multe detalii...`,
+    'deselectAll': `Deselectează tot`,
+    'developmentAndPreviewInstance': `Instanță de dezvoltare și previzualizare`,
+    'discard': `Renunță`,
+    'discardDraftMessage': `Aveți date nesalvate. Dacă închideți acum, tot ce ați introdus se va pierde.`,
+    'discardDraftTitle': `Renunțați la ciornă?`,
+    'discardViewChanges': `Renunță la modificări`,
+    'dischargePatient': `Externează pacientul`,
+    'dischargePatientConfirmation': `Sigur doriți să externați acest pacient? Această acțiune va modifica starea pacientului.`,
+    'dismiss': `Închide`,
+    'dismissAll': `Închide toate`,
+    'diverse': `Divers`,
+    'done': `Finalizat`,
+    'dueDate': `Termen`,
+    'dueDateInDays': ({ days }): string => {
+      let _out: string = ''
+      _out += `+`
+      _out += TranslationGen.resolvePlural(days, {
+        '=1': `${days} zi`,
+        'few': `${days} zile`,
+        'other': `${days} de zile`,
+      })
+      return _out
+    },
+    'dueDateInHours': ({ hours }): string => {
+      let _out: string = ''
+      _out += `+`
+      _out += TranslationGen.resolvePlural(hours, {
+        '=1': `${hours} oră`,
+        'few': `${hours} ore`,
+        'other': `${hours} de ore`,
+      })
+      return _out
+    },
+    'dueDateNow': `Acum`,
+    'dueDateToday': `Astăzi`,
+    'dueDateTomorrow': `Mâine`,
+    'duplicate': `Duplică`,
+    'edit': `Editează`,
+    'editPatient': `Editează pacientul`,
+    'editPresetTask': `Editează sarcina din șablon`,
+    'editTask': `Editează sarcina`,
+    'enterFeedback': `Introduceți feedbackul aici...`,
+    'error': `Eroare`,
+    'errorOccurred': `A apărut o eroare`,
+    'estimatedTime': `Timp estimat (minute)`,
+    'expandAll': `Extinde tot`,
+    'export': `Exportă`,
+    'exportCsv': `Exportă ca CSV`,
+    'exportExcel': `Exportă ca Excel (imprimabil)`,
+    'exportFailed': `Exportul a eșuat. Vă rugăm să încercați din nou.`,
+    'feedback': `Feedback`,
+    'feedbackDescription': `Trimiteți feedback, raportați erori sau sugerați îmbunătățiri.`,
+    'female': `Feminin`,
+    'filter': `Filtru`,
+    'filterAll': `Toate`,
+    'filterUndone': `Nefinalizate`,
+    'firstName': `Prenume`,
+    'freeBeds': `Paturi libere`,
+    'hide': `Ascunde`,
+    'homePage': `Pagina principală`,
+    'imprint': `Date de identificare`,
+    'inactive': `Inactiv`,
+    'install': `Instalează`,
+    'installApp': `Instalează aplicația`,
+    'installAppDescription': `Instalați helpwave tasks pentru o experiență mai bună, cu funcționare offline și acces mai rapid.`,
+    'language': `Limbă`,
+    'lastName': `Nume`,
+    'listViewCard': `Vizualizare carduri`,
+    'listViewTable': `Vizualizare tabel`,
+    'loading': `Se încarcă...`,
+    'loadingAlmostThere': `Aproape gata...`,
+    'loadingGettingReady': `Un moment — pregătim totul...`,
+    'loadingHangOn': `Un moment — se încarcă cele mai recente date...`,
+    'loadingMoment': `O secundă, aproape gata...`,
+    'loadMore': `Încarcă mai multe`,
+    'loadTaskPreset': `Încarcă șablon`,
+    'loadTaskPresetConfirm': ({ count }): string => {
+      let _out: string = ''
+      _out += `Creați `
+      _out += TranslationGen.resolvePlural(count, {
+        '=1': `${count} sarcină`,
+        'few': `${count} sarcini`,
+        'other': `${count} de sarcini`,
+      })
+      _out += ` pentru acest pacient?`
+      return _out
+    },
+    'loadTaskPresetConfirmTitle': `Confirmă încărcarea șablonului`,
+    'loadTaskPresetCreateAndAssign': `Creează și atribuie-mi`,
+    'loadTaskPresetSelectTasks': `Sarcini din șablon`,
+    'loadTaskPresetTaskLabel': `Șablon`,
+    'loadTaskPresetTitle': `Încarcă șablon de sarcini`,
+    'location': `Locație`,
+    'locationBed': `Pat`,
+    'locationClinic': `Clinică`,
+    'locationRoom': `Salon`,
+    'locationType': ({ type }): string => {
+      return TranslationGen.resolveSelect(type, {
+        'CLINIC': `Clinică`,
+        'WARD': `Secție`,
+        'TEAM': `Echipă`,
+        'ROOM': `Salon`,
+        'BED': `Pat`,
+        'other': `Altele`,
+      })
+    },
+    'locationWard': `Secție`,
+    'login': `Autentificare`,
+    'logInAgain': `Autentificați-vă din nou`,
+    'loginRequired': `Autentificare necesară`,
+    'loginRequiredDescription': `Pentru a folosi acest site trebuie să fiți autentificat.`,
+    'logout': `Deconectare`,
+    'male': `Masculin`,
+    'markPatientDead': `Marchează pacientul ca decedat`,
+    'markPatientDeadConfirmation': `Sigur doriți să marcați acest pacient ca decedat?`,
+    'menu': `Meniu`,
+    'more': `Mai mult`,
+    'myFavorites': `Favoritele mele`,
+    'myOpenTasks': `Sarcinile mele deschise`,
+    'myTasks': `Sarcinile mele`,
+    'name': `Nume`,
+    'nFilter': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} filtru`,
+        'few': `${count} filtre`,
+        'other': `${count} de filtre`,
+      })
+    },
+    'nMinutesShort': ({ minCount }): string => {
+      return `${minCount} min`
+    },
+    'no': `Nu`,
+    'noClosedTasks': `Nicio sarcină finalizată`,
+    'noLocationsFound': `Nu s-au găsit locații`,
+    'none': `Niciunul`,
+    'noNotifications': `Nicio actualizare recentă`,
+    'noOpenTasks': `Nicio sarcină deschisă`,
+    'noPatient': `Niciun pacient`,
+    'noPatientsInTaskView': `Nu s-au găsit pacienți pentru acest acces rapid la sarcini.`,
+    'noResultsFound': `Nu s-au găsit rezultate`,
+    'notAssigned': `Neatribuit`,
+    'notifications': `Notificări`,
+    'nPatient': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} pacient`,
+        'few': `${count} pacienți`,
+        'other': `${count} de pacienți`,
+      })
+    },
+    'nSorting': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} sortare`,
+        'few': `${count} sortări`,
+        'other': `${count} de sortări`,
+      })
+    },
+    'nTask': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} sarcină`,
+        'few': `${count} sarcini`,
+        'other': `${count} de sarcini`,
+      })
+    },
+    'nYears': ({ years }): string => {
+      return TranslationGen.resolvePlural(years, {
+        '=0': `0 ani`,
+        '=1': `1 an`,
+        'few': `${years} ani`,
+        'other': `${years} de ani`,
+      })
+    },
+    'occupancy': `Grad de ocupare`,
+    'ok': `OK`,
+    'onboardingSurvey': `Chestionar inițial`,
+    'openSurvey': `Deschide chestionarul`,
+    'openTasks': `Sarcini deschise`,
+    'openView': `Deschide`,
+    'option': `Opțiune`,
+    'organizations': `Organizații`,
+    'overview': `Prezentare generală`,
+    'pages.404.loading': `Se încarcă...`,
+    'pages.404.notFound': `404 - Pagina nu a fost găsită`,
+    'pages.404.notFoundDescription1': `Aceasta nu este pagina pe care o căutați`,
+    'pages.404.notFoundDescription2': `Înapoi la`,
+    'patient': `Pacient`,
+    'patientActions': `Acțiuni pacient`,
+    'patientData': `Date`,
+    'patients': `Pacienți`,
+    'patientsCountChipAdmitted': ({ count }): string => {
+      return `Internați ${count}`
+    },
+    'patientsCountChipTotal': ({ count }): string => {
+      return `Total ${count}`
+    },
+    'patientsCountChipWaiting': ({ count }): string => {
+      return `În așteptare ${count}`
+    },
+    'patientState': ({ state }): string => {
+      return TranslationGen.resolveSelect(state, {
+        'WAIT': `În așteptare`,
+        'ADMITTED': `Internat`,
+        'DISCHARGED': `Externat`,
+        'DEAD': `Decedat`,
+        'other': `Necunoscut`,
+      })
+    },
+    'patientsUpdatedRecently': `Pacienți actualizați recent`,
+    'pickClinic': `Alegeți clinica`,
+    'pickClinicDescription': `Selectați clinica pentru acest pacient. Pot fi selectate doar locații de tip clinică.`,
+    'pickPosition': `Alegeți locația`,
+    'pickPositionDescription': `Selectați locația pentru acest pacient. Puteți selecta spital, cabinet, clinică, secție, pat sau salon.`,
+    'pickTeams': `Alegeți echipele`,
+    'pickTeamsDescription': `Selectați una sau mai multe echipe pentru acest pacient. Puteți selecta clinică, echipă, cabinet sau spital.`,
+    'position': `Locație`,
+    'positionUpdated': `Locație actualizată`,
+    'preferences': `Preferințe`,
+    'priority': `Prioritate`,
+    'priorityLabel': `Prioritate`,
+    'priorityNone': `Niciuna`,
+    'privacy': `Confidențialitate`,
+    'properties': `Proprietăți`,
+    'propertiesSettingsDescription': `Câmpuri personalizate pentru sarcini și pacienți: definiți tipuri și folosiți-le în filtre.`,
+    'property': `Proprietate`,
+    'pThemes': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `Temă`,
+        'few': `Teme`,
+        'other': `Teme`,
+      })
+    },
+    'rAdd': ({ name }): string => {
+      return `Adaugă ${name}`
+    },
+    'rChipTotal': ({ value }): string => {
+      return `Total ${value}`
+    },
+    'readOnlyView': `Doar citire`,
+    'recentPatients': `Pacienții tăi recenți`,
+    'recentTasks': `Sarcinile tale recente`,
+    'rEdit': ({ name }): string => {
+      return `Actualizează ${name}`
+    },
+    'refreshing': `Se actualizează…`,
+    'removeProperty': `Elimină proprietatea`,
+    'removePropertyConfirmation': `Sigur doriți să eliminați această proprietate? Acțiunea nu poate fi anulată.`,
+    'retakeSurvey': `Completează din nou chestionarul`,
+    'rShow': ({ name }): string => {
+      return `Afișează ${name}`
+    },
+    'savedViews': `Acces rapid`,
+    'saveView': `Salvează accesul rapid`,
+    'saveViewAsNew': `Salvează ca acces rapid nou`,
+    'saveViewDescription': `Denumiți acest acces rapid. Filtrele, sortarea, căutarea și locația sunt salvate.`,
+    'saveViewDescriptionFromSystemList': `Creează un nou acces rapid pe baza acestui aspect. Această pagină este fixată de aplicație și nu este suprascrisă — deschideți accesul rapid din bara laterală când aveți nevoie.`,
+    'saveViewOverwriteCurrent': `Suprascrie accesul rapid curent`,
+    'scopeChangeNode': `Schimbă nodul`,
+    'scopeNoNodeSelected': `Selectați nodul la care este salvată această intrare.`,
+    'scopePrivate': `Privat`,
+    'scopePrivateDescription': `Doar dumneavoastră puteți vedea și folosi această intrare.`,
+    'scopePublic': `Public`,
+    'scopePublicDescription': `Oricine are acces la nodul selectat sau la subarborele acestuia poate vedea și folosi această intrare.`,
+    'scopeSelectNode': `Selectează nodul`,
+    'scopeShared': `Partajat prin link`,
+    'scopeSharedDescription': `Doar dumneavoastră vedeți această intrare în listele proprii. Oricine are acces la nodul selectat sau la subarborele acestuia o poate deschide prin link.`,
+    'scopeStoredAt': `Salvat la`,
+    'scopeVisibility': `Partajare`,
+    'scrollToTop': `Derulează în sus`,
+    'search': `Caută`,
+    'searchLocations': `Căutați locații...`,
+    'searchUserOrTeam': `Căutați utilizator (sau echipă)...`,
+    'searchUsersOrTeams': `Căutați utilizatori sau echipe...`,
+    'security': `Securitate`,
+    'selectAll': `Selectează tot`,
+    'selectAssignee': `Atribuie lui...`,
+    'selectClinic': `Selectează clinica`,
+    'selectLocation': `Selectează locația`,
+    'selectLocationDescription': `Vă rugăm să selectați locația atribuită pacientului.`,
+    'selectOptions': `Selectează opțiunile`,
+    'selectPosition': `Selectează locația`,
+    'selectRootLocation': `Selectează locația rădăcină`,
+    'selectRootLocationDescription': `Selectați locațiile rădăcină care definesc domeniul dumneavoastră de acces. Pot fi selectate doar spitale, cabinete, clinici și echipe. Selectarea unei locații părinte include toate locațiile subordonate.`,
+    'selectTeams': `Selectează echipele`,
+    'sessionExpired': `Sesiune expirată`,
+    'sessionExpiredDescription': `Ați fost deconectat din cauza inactivității. Vă rugăm să vă autentificați din nou pentru a continua. Modificările nesalvate se pot pierde.`,
+    'settings': `Setări`,
+    'settingsDescription': `Aici puteți modifica configurația aplicației.`,
+    'sex': `Sex`,
+    'shiftHandover': `Predarea turei`,
+    'showAllTasks': `Afișează toate sarcinile`,
+    'showPatient': ({ name }): string => {
+      return `Afișează pacientul ${name}`
+    },
+    'showTeamTasks': `Afișează sarcinile echipei`,
+    'sorting': `Sortare`,
+    'sPriority': ({ priority }): string => {
+      return TranslationGen.resolveSelect(priority, {
+        'P1': `Normală`,
+        'P2': `Medie`,
+        'P3': `Ridicată`,
+        'P4': `Critică`,
+        'other': `-`,
+      })
+    },
+    'sPropertySubjectType': ({ subject }): string => {
+      return TranslationGen.resolveSelect(subject, {
+        'patient': `Pacient`,
+        'task': `Sarcină`,
+        'other': `Tip de subiect nedefinit`,
+      })
+    },
+    'sPropertyType': ({ type }): string => {
+      return TranslationGen.resolveSelect(type, {
+        'multiSelect': `Selecție multiplă`,
+        'singleSelect': `Selecție unică`,
+        'number': `Număr`,
+        'text': `Text`,
+        'date': `Dată`,
+        'dateTime': `Moment`,
+        'checkbox': `Casetă de selectare`,
+        'user': `Utilizator`,
+        'other': `Tip nedefinit`,
+      })
+    },
+    'stagingModalDisclaimerMarkdown': `Această instanță publică a helpwave tasks este destinată \\b{dezvoltării și previzualizării}. Vă rugăm să introduceți \\b{doar} \\b{date de test neconfidențiale}. Această instanță poate fi \\negative{\\b{ștearsă oricând}}`,
+    'startRecording': `Pornește înregistrarea`,
+    'stateUpdated': `Stare actualizată`,
+    'status': `Status`,
+    'stopRecording': `Oprește înregistrarea`,
+    'subjectType': `Tip de subiect`,
+    'submissionDetails': `Detaliile trimiterii`,
+    'submit': `Trimite`,
+    'submittingAs': ({ name }): string => {
+      return `Se trimite ca ${name}`
+    },
+    'surveyDescription': `Feedbackul dumneavoastră este valoros pentru noi. Vă rugăm să acordați un moment completării chestionarului.`,
+    'surveyTitle': `Ajutați-ne să îmbunătățim helpwave tasks`,
+    'system': `Sistem`,
+    'task': `Sarcină`,
+    'taskFromPresetTooltip': `Creată dintr-un șablon de sarcini`,
+    'taskPresetAddRow': `Adaugă sarcină`,
+    'taskPresetApplyToRow': `Aplică pe rândul din șablon`,
+    'taskPresetCreate': `Creează șablon`,
+    'taskPresetDelete': `Șterge`,
+    'taskPresetDeleteConfirm': `Ștergeți acest șablon de sarcini?`,
+    'taskPresetEdit': `Editează șablonul`,
+    'taskPresetEditDetails': `Editează detaliile`,
+    'taskPresetEmptyList': `Încă nu există șabloane de sarcini.`,
+    'taskPresetKey': `Cheie`,
+    'taskPresetKeyHint': `Cheie unică opțională pentru căutări. Lăsați gol pentru generare automată.`,
+    'taskPresetName': `Nume`,
+    'taskPresetNoEstimate': `Fără estimare`,
+    'taskPresetNoTasks': `Acest șablon nu conține sarcini.`,
+    'taskPresetRemoveRow': `Elimină`,
+    'taskPresets': `Șabloane`,
+    'taskPresetSave': `Salvează șablonul`,
+    'taskPresetsDescription': `Liste de sarcini reutilizabile, cu dependențe opționale.`,
+    'taskPresetSelectPlaceholder': `Selectați un șablon`,
+    'taskPresetSourceNotFound': `Șablonul nu a putut fi încărcat.`,
+    'taskPresetSourceOpenSettings': `Deschide în setări`,
+    'taskPresetSourceTasksInGraph': `Sarcini în șablon`,
+    'taskPresetSourceTitle': `Șablon sursă`,
+    'tasks': `Sarcini`,
+    'tasksCreatedFromPreset': `Sarcini create`,
+    'tasksUpdatedRecently': `Sarcini actualizate recent`,
+    'taskTitlePlaceholder': `Ce trebuie făcut?`,
+    'teams': `Echipe`,
+    'themeMode': ({ theme }): string => {
+      return TranslationGen.resolveSelect(theme, {
+        'dark': `Întunecat`,
+        'light': `Luminos`,
+        'system': `Sistem`,
+        'other': `Sistem`,
+      })
+    },
+    'timeEstimate': `Estimare de timp`,
+    'title': `Titlu`,
+    'totalPatients': `Total pacienți`,
+    'type': `Tip`,
+    'updated': `Actualizat`,
+    'url': `URL`,
+    'user': `Utilizator`,
+    'userInformation': `Informații despre utilizator`,
+    'users': `Utilizatori`,
+    'viewAnyoneWithLinkCanView': `Oricine are linkul poate vizualiza`,
+    'viewDerivedPatientsHint': `Pacienții care apar în sarcinile ce corespund acestui acces rapid (fără duplicate).`,
+    'views': `Acces rapid`,
+    'viewsEntityPatient': `Pacienți`,
+    'viewsEntityTask': `Sarcini`,
+    'viewSettings': `Acces rapid`,
+    'viewSettingsDescription': `Gestionați accesele rapide salvate pentru sarcini și pacienți.`,
+    'viewVisibility': `Vizibilitate`,
+    'viewVisibilityLinkShared': `Partajat prin link`,
+    'viewVisibilityPrivate': `Privat`,
+    'waitingForPatient': `Se așteaptă pacientul`,
+    'waitPatient': `Trece pacientul în așteptare`,
+    'wards': `Secții`,
+    'weeklySurvey': `Chestionar săptămânal`,
+    'yes': `Da`
+  },
+  'ru-RU': {
+    'account': `Аккаунт`,
+    'active': `Активно`,
+    'add': `Добавить`,
+    'addFastAccess': `Добавить быстрый доступ`,
+    'addFastAccessDescription': `Введите название нового быстрого доступа.`,
+    'additionalAssigneesCount': ({ count }): string => {
+      return `+${count}`
+    },
+    'addPatient': `Добавить пациента`,
+    'addProperty': `Добавить свойство`,
+    'addTask': `Добавить задачу`,
+    'admitPatient': `Госпитализировать пациента`,
+    'anonymous': `Анонимно`,
+    'anonymousSubmission': `Анонимная отправка`,
+    'archivedPropertyDescription': `Архивные свойства больше нельзя назначать объектам.`,
+    'archiveProperty': `Архивировать свойство`,
+    'assignedTo': `Назначено`,
+    'assigneeTeam': `Назначенная команда`,
+    'authenticationFailed': `Ошибка аутентификации`,
+    'birthdate': `Дата рождения`,
+    'cancel': `Отмена`,
+    'clear': `Очистить`,
+    'clearCache': `Очистить кэш`,
+    'clearPropertyColumnActionPatient': `Очистить значения этого свойства у пациентов в списке`,
+    'clearPropertyColumnActionTask': `Удалить это свойство из задач в списке`,
+    'clearPropertyColumnConfirmButtonPatient': `Очистить значения свойства`,
+    'clearPropertyColumnConfirmButtonTask': `Удалить свойство из задач`,
+    'clearPropertyColumnDialogDescriptionPatient': ({ propertyName, count }): string => {
+      return `Все значения свойства «${propertyName}» будут очищены у пациентов, загруженных в этот список (количество: ${count}). Само свойство останется у этих пациентов. Пациенты, не загруженные в этот список, не затрагиваются.`
+    },
+    'clearPropertyColumnDialogDescriptionTask': ({ propertyName, count }): string => {
+      return `Свойство «${propertyName}» будет безвозвратно удалено из задач, загруженных в этот список (количество: ${count}). Задачи, не загруженные в этот список, не затрагиваются.`
+    },
+    'clearPropertyColumnDialogTitlePatient': `Очистить значения свойства у пациентов`,
+    'clearPropertyColumnDialogTitleTask': `Удалить свойство из задач`,
+    'clearPropertyColumnTypeNameInstruction': ({ propertyName }): string => {
+      return `Введите «${propertyName}» для подтверждения.`
+    },
+    'clinic': `Клиника`,
+    'clinics': `Клиники`,
+    'clinicUpdated': `Клиника обновлена`,
+    'close': `Закрыть`,
+    'closedTasks': `Выполненные задачи`,
+    'collapseAll': `Свернуть все`,
+    'confirm': `Подтвердить`,
+    'confirmDeleteView': `Удалить этот сохранённый быстрый доступ? Это действие нельзя отменить.`,
+    'confirmSelection': `Подтвердить выбор`,
+    'confirmShiftHandover': `Подтвердить передачу смены`,
+    'confirmShiftHandoverDescription': `Вы уверены, что хотите передать все открытые задачи выбранному пользователю?`,
+    'confirmShiftHandoverDescriptionWithName': ({ taskCount, name }): string => {
+      let _out: string = ''
+      _out += `Вы уверены, что хотите передать `
+      _out += TranslationGen.resolvePlural(taskCount, {
+        '=1': `${taskCount} открытую задачу`,
+        'one': `${taskCount} открытую задачу`,
+        'few': `${taskCount} открытые задачи`,
+        'many': `${taskCount} открытых задач`,
+        'other': `${taskCount} открытой задачи`,
+      })
+      _out += ` пользователю ${name}?`
+      return _out
+    },
+    'conflictDetected': `Обнаружен конфликт`,
+    'connectionConnected': `Подключено`,
+    'connectionConnecting': `Подключение…`,
+    'connectionDisconnected': `Отключено`,
+    'copyShareLink': `Копировать ссылку`,
+    'copyShareLinkEnableSharingFirst': `Включите доступ по ссылке, чтобы другие пользователи со ссылкой могли открыть этот быстрый доступ.`,
+    'copyViewToMyViews': `Копировать в мой быстрый доступ`,
+    'create': `Создать`,
+    'createTask': `Создать задачу`,
+    'creationDate': `Дата создания`,
+    'currentTime': `Текущее время`,
+    'dashboard': `Обзорная панель`,
+    'dashboardWelcomeAfternoon': ({ name }): string => {
+      return `Добрый день, ${name}!`
+    },
+    'dashboardWelcomeDescription': `Вот что происходит сегодня.`,
+    'dashboardWelcomeEvening': ({ name }): string => {
+      return `Добрый вечер, ${name}!`
+    },
+    'dashboardWelcomeMorning': ({ name }): string => {
+      return `Доброе утро, ${name}!`
+    },
+    'dashboardWelcomeNight': ({ name }): string => {
+      return `Доброй ночи, ${name}!`
+    },
+    'dashboardWelcomeNoon': ({ name }): string => {
+      return `Добрый день, ${name}!`
+    },
+    'delete': `Удалить`,
+    'deletePatient': `Удалить пациента`,
+    'deletePatientConfirmation': `Вы уверены, что хотите удалить этого пациента? Это действие нельзя отменить.`,
+    'description': `Описание`,
+    'descriptionPlaceholder': `Добавьте подробности...`,
+    'deselectAll': `Снять выбор`,
+    'developmentAndPreviewInstance': `Экземпляр для разработки и предварительного просмотра`,
+    'discard': `Отменить`,
+    'discardDraftMessage': `У вас есть несохранённые данные. Если закрыть сейчас, всё введённое будет потеряно.`,
+    'discardDraftTitle': `Отменить черновик?`,
+    'discardViewChanges': `Отменить изменения`,
+    'dischargePatient': `Выписать пациента`,
+    'dischargePatientConfirmation': `Вы уверены, что хотите выписать этого пациента? Статус пациента будет изменён.`,
+    'dismiss': `Закрыть`,
+    'dismissAll': `Закрыть все`,
+    'diverse': `Другой`,
+    'done': `Готово`,
+    'dueDate': `Срок выполнения`,
+    'dueDateInDays': ({ days }): string => {
+      let _out: string = ''
+      _out += `+`
+      _out += TranslationGen.resolvePlural(days, {
+        '=1': `${days} день`,
+        'one': `${days} день`,
+        'few': `${days} дня`,
+        'many': `${days} дней`,
+        'other': `${days} дня`,
+      })
+      return _out
+    },
+    'dueDateInHours': ({ hours }): string => {
+      let _out: string = ''
+      _out += `+`
+      _out += TranslationGen.resolvePlural(hours, {
+        '=1': `${hours} час`,
+        'one': `${hours} час`,
+        'few': `${hours} часа`,
+        'many': `${hours} часов`,
+        'other': `${hours} часа`,
+      })
+      return _out
+    },
+    'dueDateNow': `Сейчас`,
+    'dueDateToday': `Сегодня`,
+    'dueDateTomorrow': `Завтра`,
+    'duplicate': `Дублировать`,
+    'edit': `Редактировать`,
+    'editPatient': `Редактировать пациента`,
+    'editPresetTask': `Редактировать задачу шаблона`,
+    'editTask': `Редактировать задачу`,
+    'enterFeedback': `Введите ваш отзыв...`,
+    'error': `Ошибка`,
+    'errorOccurred': `Произошла ошибка`,
+    'estimatedTime': `Расчётное время (минуты)`,
+    'expandAll': `Развернуть все`,
+    'export': `Экспорт`,
+    'exportCsv': `Экспорт в CSV`,
+    'exportExcel': `Экспорт в Excel (для печати)`,
+    'exportFailed': `Не удалось выполнить экспорт. Попробуйте ещё раз.`,
+    'feedback': `Обратная связь`,
+    'feedbackDescription': `Поделитесь отзывом, сообщите об ошибке или предложите улучшение.`,
+    'female': `Женский`,
+    'filter': `Фильтр`,
+    'filterAll': `Все`,
+    'filterUndone': `Невыполненные`,
+    'firstName': `Имя`,
+    'freeBeds': `Свободные койки`,
+    'hide': `Скрыть`,
+    'homePage': `Главная страница`,
+    'imprint': `Выходные данные`,
+    'inactive': `Неактивно`,
+    'install': `Установить`,
+    'installApp': `Установить приложение`,
+    'installAppDescription': `Установите helpwave tasks для удобной работы, офлайн-доступа и более быстрого запуска.`,
+    'language': `Язык`,
+    'lastName': `Фамилия`,
+    'listViewCard': `Карточки`,
+    'listViewTable': `Таблица`,
+    'loading': `Загрузка...`,
+    'loadingAlmostThere': `Почти готово...`,
+    'loadingGettingReady': `Минуту — всё подготавливаем...`,
+    'loadingHangOn': `Подождите — загружаем актуальные данные...`,
+    'loadingMoment': `Секунду, почти готово...`,
+    'loadMore': `Загрузить ещё`,
+    'loadTaskPreset': `Загрузить шаблон`,
+    'loadTaskPresetConfirm': ({ count }): string => {
+      let _out: string = ''
+      _out += `Создать `
+      _out += TranslationGen.resolvePlural(count, {
+        '=1': `${count} задачу`,
+        'one': `${count} задачу`,
+        'few': `${count} задачи`,
+        'many': `${count} задач`,
+        'other': `${count} задачи`,
+      })
+      _out += ` для этого пациента?`
+      return _out
+    },
+    'loadTaskPresetConfirmTitle': `Подтвердить загрузку шаблона`,
+    'loadTaskPresetCreateAndAssign': `Создать и назначить мне`,
+    'loadTaskPresetSelectTasks': `Задачи из шаблона`,
+    'loadTaskPresetTaskLabel': `Шаблон`,
+    'loadTaskPresetTitle': `Загрузить шаблон задач`,
+    'location': `Местоположение`,
+    'locationBed': `Койка`,
+    'locationClinic': `Клиника`,
+    'locationRoom': `Палата`,
+    'locationType': ({ type }): string => {
+      return TranslationGen.resolveSelect(type, {
+        'CLINIC': `Клиника`,
+        'WARD': `Отделение`,
+        'TEAM': `Команда`,
+        'ROOM': `Палата`,
+        'BED': `Койка`,
+        'other': `Другое`,
+      })
+    },
+    'locationWard': `Отделение`,
+    'login': `Вход`,
+    'logInAgain': `Войти снова`,
+    'loginRequired': `Требуется вход`,
+    'loginRequiredDescription': `Чтобы пользоваться этим сайтом, необходимо войти в систему.`,
+    'logout': `Выйти`,
+    'male': `Мужской`,
+    'markPatientDead': `Отметить пациента как умершего`,
+    'markPatientDeadConfirmation': `Вы уверены, что хотите отметить этого пациента как умершего?`,
+    'menu': `Меню`,
+    'more': `Ещё`,
+    'myFavorites': `Избранное`,
+    'myOpenTasks': `Мои открытые задачи`,
+    'myTasks': `Мои задачи`,
+    'name': `Название`,
+    'nFilter': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} фильтр`,
+        'one': `${count} фильтр`,
+        'few': `${count} фильтра`,
+        'many': `${count} фильтров`,
+        'other': `${count} фильтра`,
+      })
+    },
+    'nMinutesShort': ({ minCount }): string => {
+      return `${minCount} мин`
+    },
+    'no': `Нет`,
+    'noClosedTasks': `Нет выполненных задач`,
+    'noLocationsFound': `Местоположения не найдены`,
+    'none': `Нет`,
+    'noNotifications': `Нет новых обновлений`,
+    'noOpenTasks': `Нет открытых задач`,
+    'noPatient': `Нет пациента`,
+    'noPatientsInTaskView': `Для этого быстрого доступа к задачам пациенты не найдены.`,
+    'noResultsFound': `Ничего не найдено`,
+    'notAssigned': `Не назначено`,
+    'notifications': `Уведомления`,
+    'nPatient': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} пациент`,
+        'one': `${count} пациент`,
+        'few': `${count} пациента`,
+        'many': `${count} пациентов`,
+        'other': `${count} пациента`,
+      })
+    },
+    'nSorting': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} сортировка`,
+        'one': `${count} сортировка`,
+        'few': `${count} сортировки`,
+        'many': `${count} сортировок`,
+        'other': `${count} сортировки`,
+      })
+    },
+    'nTask': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} задача`,
+        'one': `${count} задача`,
+        'few': `${count} задачи`,
+        'many': `${count} задач`,
+        'other': `${count} задачи`,
+      })
+    },
+    'nYears': ({ years }): string => {
+      return TranslationGen.resolvePlural(years, {
+        '=0': `0 лет`,
+        '=1': `1 год`,
+        'one': `${years} год`,
+        'few': `${years} года`,
+        'many': `${years} лет`,
+        'other': `${years} года`,
+      })
+    },
+    'occupancy': `Заполненность`,
+    'ok': `ОК`,
+    'onboardingSurvey': `Вводный опрос`,
+    'openSurvey': `Открыть опрос`,
+    'openTasks': `Открытые задачи`,
+    'openView': `Открыть`,
+    'option': `Вариант`,
+    'organizations': `Организации`,
+    'overview': `Обзор`,
+    'pages.404.loading': `Загрузка...`,
+    'pages.404.notFound': `404 — Страница не найдена`,
+    'pages.404.notFoundDescription1': `Это точно не та страница, которую вы ищете`,
+    'pages.404.notFoundDescription2': `Вернуться на`,
+    'patient': `Пациент`,
+    'patientActions': `Действия с пациентом`,
+    'patientData': `Данные`,
+    'patients': `Пациенты`,
+    'patientsCountChipAdmitted': ({ count }): string => {
+      return `Госпитализировано ${count}`
+    },
+    'patientsCountChipTotal': ({ count }): string => {
+      return `Всего ${count}`
+    },
+    'patientsCountChipWaiting': ({ count }): string => {
+      return `Ожидают ${count}`
+    },
+    'patientState': ({ state }): string => {
+      return TranslationGen.resolveSelect(state, {
+        'WAIT': `Ожидает`,
+        'ADMITTED': `Госпитализирован`,
+        'DISCHARGED': `Выписан`,
+        'DEAD': `Умер`,
+        'other': `Неизвестно`,
+      })
+    },
+    'patientsUpdatedRecently': `Недавно обновлённые пациенты`,
+    'pickClinic': `Выберите клинику`,
+    'pickClinicDescription': `Выберите клинику для этого пациента. Можно выбрать только клиники.`,
+    'pickPosition': `Выберите местоположение`,
+    'pickPositionDescription': `Выберите местоположение для этого пациента. Можно выбрать больницу, практику, клинику, отделение, койку или палату.`,
+    'pickTeams': `Выберите команды`,
+    'pickTeamsDescription': `Выберите одну или несколько команд для этого пациента. Можно выбрать клинику, команду, практику или больницу.`,
+    'position': `Местоположение`,
+    'positionUpdated': `Местоположение обновлено`,
+    'preferences': `Настройки`,
+    'priority': `Приоритет`,
+    'priorityLabel': `Приоритет`,
+    'priorityNone': `Нет`,
+    'privacy': `Конфиденциальность`,
+    'properties': `Свойства`,
+    'propertiesSettingsDescription': `Пользовательские поля для задач и пациентов: задавайте типы и используйте их в фильтрах.`,
+    'property': `Свойство`,
+    'pThemes': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `Тема`,
+        'other': `Темы`,
+      })
+    },
+    'rAdd': ({ name }): string => {
+      return `Добавить: ${name}`
+    },
+    'rChipTotal': ({ value }): string => {
+      return `Всего ${value}`
+    },
+    'readOnlyView': `Только чтение`,
+    'recentPatients': `Ваши недавние пациенты`,
+    'recentTasks': `Ваши недавние задачи`,
+    'rEdit': ({ name }): string => {
+      return `Изменить: ${name}`
+    },
+    'refreshing': `Обновление…`,
+    'removeProperty': `Удалить свойство`,
+    'removePropertyConfirmation': `Вы уверены, что хотите удалить это свойство? Это действие нельзя отменить.`,
+    'retakeSurvey': `Пройти опрос снова`,
+    'rShow': ({ name }): string => {
+      return `Показать: ${name}`
+    },
+    'savedViews': `Быстрый доступ`,
+    'saveView': `Сохранить быстрый доступ`,
+    'saveViewAsNew': `Сохранить как новый быстрый доступ`,
+    'saveViewDescription': `Назовите этот быстрый доступ. Фильтры, сортировка, поиск и местоположение будут сохранены.`,
+    'saveViewDescriptionFromSystemList': `Создаёт новый быстрый доступ на основе этого макета. Эта страница задана приложением и не перезаписывается — при необходимости откройте быстрый доступ на боковой панели.`,
+    'saveViewOverwriteCurrent': `Перезаписать текущий быстрый доступ`,
+    'scopeChangeNode': `Изменить узел`,
+    'scopeNoNodeSelected': `Выберите узел, в котором будет храниться эта запись.`,
+    'scopePrivate': `Личный`,
+    'scopePrivateDescription': `Только вы можете видеть и использовать эту запись.`,
+    'scopePublic': `Общедоступный`,
+    'scopePublicDescription': `Все, у кого есть доступ к выбранному узлу или его поддереву, могут видеть и использовать эту запись.`,
+    'scopeSelectNode': `Выбрать узел`,
+    'scopeShared': `Доступ по ссылке`,
+    'scopeSharedDescription': `Эта запись видна в списках только вам. Все, у кого есть доступ к выбранному узлу или его поддереву, могут открыть её по ссылке.`,
+    'scopeStoredAt': `Хранится в`,
+    'scopeVisibility': `Общий доступ`,
+    'scrollToTop': `Наверх`,
+    'search': `Поиск`,
+    'searchLocations': `Поиск местоположений...`,
+    'searchUserOrTeam': `Найти пользователя (или команду)...`,
+    'searchUsersOrTeams': `Поиск пользователей или команд...`,
+    'security': `Безопасность`,
+    'selectAll': `Выбрать все`,
+    'selectAssignee': `Назначить...`,
+    'selectClinic': `Выбрать клинику`,
+    'selectLocation': `Выбрать местоположение`,
+    'selectLocationDescription': `Выберите местоположение, назначенное пациенту.`,
+    'selectOptions': `Выбрать варианты`,
+    'selectPosition': `Выбрать местоположение`,
+    'selectRootLocation': `Выбрать корневое местоположение`,
+    'selectRootLocationDescription': `Выберите корневые местоположения, определяющие доступную вам область. Можно выбрать только больницы, практики, клиники и команды. Выбор родительского местоположения включает все дочерние.`,
+    'selectTeams': `Выбрать команды`,
+    'sessionExpired': `Сеанс истёк`,
+    'sessionExpiredDescription': `Вы вышли из системы из-за бездействия. Войдите снова, чтобы продолжить. Несохранённые изменения могут быть потеряны.`,
+    'settings': `Настройки`,
+    'settingsDescription': `Здесь можно изменить настройки приложения.`,
+    'sex': `Пол`,
+    'shiftHandover': `Передача смены`,
+    'showAllTasks': `Показать все задачи`,
+    'showPatient': ({ name }): string => {
+      return `Показать пациента ${name}`
+    },
+    'showTeamTasks': `Показать задачи команды`,
+    'sorting': `Сортировка`,
+    'sPriority': ({ priority }): string => {
+      return TranslationGen.resolveSelect(priority, {
+        'P1': `Обычный`,
+        'P2': `Средний`,
+        'P3': `Высокий`,
+        'P4': `Критический`,
+        'other': `-`,
+      })
+    },
+    'sPropertySubjectType': ({ subject }): string => {
+      return TranslationGen.resolveSelect(subject, {
+        'patient': `Пациент`,
+        'task': `Задача`,
+        'other': `Неопределённый тип объекта`,
+      })
+    },
+    'sPropertyType': ({ type }): string => {
+      return TranslationGen.resolveSelect(type, {
+        'multiSelect': `Множественный выбор`,
+        'singleSelect': `Одиночный выбор`,
+        'number': `Число`,
+        'text': `Текст`,
+        'date': `Дата`,
+        'dateTime': `Дата и время`,
+        'checkbox': `Флажок`,
+        'user': `Пользователь`,
+        'other': `Неопределённый тип`,
+      })
+    },
+    'stagingModalDisclaimerMarkdown': `Этот общедоступный экземпляр helpwave tasks предназначен \\b{для разработки и предварительного просмотра}. Пожалуйста, вводите \\b{только} \\b{неконфиденциальные тестовые данные}. Этот экземпляр может быть \\negative{\\b{удалён в любой момент}}`,
+    'startRecording': `Начать запись`,
+    'stateUpdated': `Статус обновлён`,
+    'status': `Статус`,
+    'stopRecording': `Остановить запись`,
+    'subjectType': `Тип объекта`,
+    'submissionDetails': `Сведения об отправке`,
+    'submit': `Отправить`,
+    'submittingAs': ({ name }): string => {
+      return `Отправка от имени ${name}`
+    },
+    'surveyDescription': `Ваше мнение очень важно для нас. Пожалуйста, уделите минуту, чтобы пройти наш опрос.`,
+    'surveyTitle': `Помогите нам улучшить helpwave tasks`,
+    'system': `Система`,
+    'task': `Задача`,
+    'taskFromPresetTooltip': `Создано из шаблона задач`,
+    'taskPresetAddRow': `Добавить задачу`,
+    'taskPresetApplyToRow': `Применить к строке шаблона`,
+    'taskPresetCreate': `Создать шаблон`,
+    'taskPresetDelete': `Удалить`,
+    'taskPresetDeleteConfirm': `Удалить этот шаблон задач?`,
+    'taskPresetEdit': `Редактировать шаблон`,
+    'taskPresetEditDetails': `Изменить детали`,
+    'taskPresetEmptyList': `Шаблонов задач пока нет.`,
+    'taskPresetKey': `Ключ`,
+    'taskPresetKeyHint': `Необязательный уникальный ключ для поиска. Оставьте пустым для автоматической генерации.`,
+    'taskPresetName': `Название`,
+    'taskPresetNoEstimate': `Без оценки`,
+    'taskPresetNoTasks': `В этом шаблоне нет задач.`,
+    'taskPresetRemoveRow': `Удалить`,
+    'taskPresets': `Шаблоны`,
+    'taskPresetSave': `Сохранить шаблон`,
+    'taskPresetsDescription': `Многократно используемые списки задач с необязательными зависимостями.`,
+    'taskPresetSelectPlaceholder': `Выберите шаблон`,
+    'taskPresetSourceNotFound': `Не удалось загрузить шаблон.`,
+    'taskPresetSourceOpenSettings': `Открыть в настройках`,
+    'taskPresetSourceTasksInGraph': `Задачи в шаблоне`,
+    'taskPresetSourceTitle': `Исходный шаблон`,
+    'tasks': `Задачи`,
+    'tasksCreatedFromPreset': `Задачи созданы`,
+    'tasksUpdatedRecently': `Недавно обновлённые задачи`,
+    'taskTitlePlaceholder': `Что нужно сделать?`,
+    'teams': `Команды`,
+    'themeMode': ({ theme }): string => {
+      return TranslationGen.resolveSelect(theme, {
+        'dark': `Тёмная`,
+        'light': `Светлая`,
+        'system': `Системная`,
+        'other': `Системная`,
+      })
+    },
+    'timeEstimate': `Оценка времени`,
+    'title': `Заголовок`,
+    'totalPatients': `Всего пациентов`,
+    'type': `Тип`,
+    'updated': `Обновлено`,
+    'url': `URL`,
+    'user': `Пользователь`,
+    'userInformation': `Сведения о пользователе`,
+    'users': `Пользователи`,
+    'viewAnyoneWithLinkCanView': `Просматривать может любой, у кого есть ссылка`,
+    'viewDerivedPatientsHint': `Пациенты из задач, соответствующих этому быстрому доступу (без повторов).`,
+    'views': `Быстрый доступ`,
+    'viewsEntityPatient': `Пациенты`,
+    'viewsEntityTask': `Задачи`,
+    'viewSettings': `Быстрый доступ`,
+    'viewSettingsDescription': `Управление сохранёнными быстрыми доступами к задачам и пациентам.`,
+    'viewVisibility': `Видимость`,
+    'viewVisibilityLinkShared': `Доступ по ссылке`,
+    'viewVisibilityPrivate': `Личный`,
+    'waitingForPatient': `Ожидание пациента`,
+    'waitPatient': `Перевести пациента в ожидание`,
+    'wards': `Отделения`,
+    'weeklySurvey': `Еженедельный опрос`,
+    'yes': `Да`
+  },
+  'tr-TR': {
+    'account': `Hesap`,
+    'active': `Aktif`,
+    'add': `Ekle`,
+    'addFastAccess': `Hızlı erişim ekle`,
+    'addFastAccessDescription': `Yeni hızlı erişim için bir ad girin.`,
+    'additionalAssigneesCount': ({ count }): string => {
+      return `+${count}`
+    },
+    'addPatient': `Hasta ekle`,
+    'addProperty': `Özellik ekle`,
+    'addTask': `Görev ekle`,
+    'admitPatient': `Hastanın yatışını yap`,
+    'anonymous': `Anonim`,
+    'anonymousSubmission': `Anonim gönderim`,
+    'archivedPropertyDescription': `Arşivlenen özellikler artık nesnelere atanamaz.`,
+    'archiveProperty': `Özelliği arşivle`,
+    'assignedTo': `Atanan kişi`,
+    'assigneeTeam': `Atanan ekip`,
+    'authenticationFailed': `Kimlik doğrulama başarısız`,
+    'birthdate': `Doğum tarihi`,
+    'cancel': `İptal`,
+    'clear': `Temizle`,
+    'clearCache': `Önbelleği temizle`,
+    'clearPropertyColumnActionPatient': `Listelenen hastalarda bu özelliğin değerlerini temizle`,
+    'clearPropertyColumnActionTask': `Bu özelliği listelenen görevlerden kaldır`,
+    'clearPropertyColumnConfirmButtonPatient': `Özellik değerlerini temizle`,
+    'clearPropertyColumnConfirmButtonTask': `Özelliği görevlerden kaldır`,
+    'clearPropertyColumnDialogDescriptionPatient': ({ propertyName, count }): string => {
+      return `"${propertyName}" özelliğinin tüm değerleri, bu listede şu anda yüklü olan ${count} hastada temizlenecek. Özellik bu hastalara bağlı kalır. Bu listede yüklü olmayan hastalar etkilenmez.`
+    },
+    'clearPropertyColumnDialogDescriptionTask': ({ propertyName, count }): string => {
+      return `"${propertyName}" özelliği, bu listede şu anda yüklü olan ${count} görevden kalıcı olarak kaldırılacak. Bu listede yüklü olmayan görevler etkilenmez.`
+    },
+    'clearPropertyColumnDialogTitlePatient': `Hastalardaki özellik değerlerini temizle`,
+    'clearPropertyColumnDialogTitleTask': `Özelliği görevlerden kaldır`,
+    'clearPropertyColumnTypeNameInstruction': ({ propertyName }): string => {
+      return `Onaylamak için "${propertyName}" yazın.`
+    },
+    'clinic': `Klinik`,
+    'clinics': `Klinikler`,
+    'clinicUpdated': `Klinik güncellendi`,
+    'close': `Kapat`,
+    'closedTasks': `Tamamlanan görevler`,
+    'collapseAll': `Tümünü daralt`,
+    'confirm': `Onayla`,
+    'confirmDeleteView': `Kayıtlı bu hızlı erişim silinsin mi? Bu işlem geri alınamaz.`,
+    'confirmSelection': `Seçimi onayla`,
+    'confirmShiftHandover': `Vardiya devrini onayla`,
+    'confirmShiftHandoverDescription': `Tüm açık görevleri seçilen kullanıcıya devretmek istediğinizden emin misiniz?`,
+    'confirmShiftHandoverDescriptionWithName': ({ taskCount, name }): string => {
+      let _out: string = ''
+      _out += TranslationGen.resolvePlural(taskCount, {
+        '=1': `${taskCount} açık görevi`,
+        'other': `${taskCount} açık görevi`,
+      })
+      _out += ` ${name} adlı kişiye devretmek istediğinizden emin misiniz?`
+      return _out
+    },
+    'conflictDetected': `Çakışma algılandı`,
+    'connectionConnected': `Bağlandı`,
+    'connectionConnecting': `Bağlanıyor…`,
+    'connectionDisconnected': `Bağlantı kesildi`,
+    'copyShareLink': `Bağlantıyı kopyala`,
+    'copyShareLinkEnableSharingFirst': `Bağlantıya sahip diğer kişilerin bu hızlı erişimi açabilmesi için bağlantı paylaşımını etkinleştirin.`,
+    'copyViewToMyViews': `Hızlı erişimime kopyala`,
+    'create': `Oluştur`,
+    'createTask': `Görev oluştur`,
+    'creationDate': `Oluşturma tarihi`,
+    'currentTime': `Geçerli saat`,
+    'dashboard': `Gösterge paneli`,
+    'dashboardWelcomeAfternoon': ({ name }): string => {
+      return `İyi günler, ${name}!`
+    },
+    'dashboardWelcomeDescription': `Bugün olup bitenler burada.`,
+    'dashboardWelcomeEvening': ({ name }): string => {
+      return `İyi akşamlar, ${name}!`
+    },
+    'dashboardWelcomeMorning': ({ name }): string => {
+      return `Günaydın, ${name}!`
+    },
+    'dashboardWelcomeNight': ({ name }): string => {
+      return `İyi geceler, ${name}!`
+    },
+    'dashboardWelcomeNoon': ({ name }): string => {
+      return `Tünaydın, ${name}!`
+    },
+    'delete': `Sil`,
+    'deletePatient': `Hastayı sil`,
+    'deletePatientConfirmation': `Bu hastayı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`,
+    'description': `Açıklama`,
+    'descriptionPlaceholder': `Daha fazla ayrıntı ekleyin...`,
+    'deselectAll': `Tüm seçimleri kaldır`,
+    'developmentAndPreviewInstance': `Geliştirme ve önizleme ortamı`,
+    'discard': `At`,
+    'discardDraftMessage': `Kaydedilmemiş girişleriniz var. Şimdi kapatırsanız girdiğiniz her şey kaybolur.`,
+    'discardDraftTitle': `Taslak atılsın mı?`,
+    'discardViewChanges': `Değişiklikleri at`,
+    'dischargePatient': `Hastayı taburcu et`,
+    'dischargePatientConfirmation': `Bu hastayı taburcu etmek istediğinizden emin misiniz? Bu işlem hastanın durumunu değiştirir.`,
+    'dismiss': `Kapat`,
+    'dismissAll': `Tümünü kapat`,
+    'diverse': `Diğer`,
+    'done': `Tamamlandı`,
+    'dueDate': `Son tarih`,
+    'dueDateInDays': ({ days }): string => {
+      let _out: string = ''
+      _out += `+`
+      _out += TranslationGen.resolvePlural(days, {
+        '=1': `${days} gün`,
+        'other': `${days} gün`,
+      })
+      return _out
+    },
+    'dueDateInHours': ({ hours }): string => {
+      let _out: string = ''
+      _out += `+`
+      _out += TranslationGen.resolvePlural(hours, {
+        '=1': `${hours} saat`,
+        'other': `${hours} saat`,
+      })
+      return _out
+    },
+    'dueDateNow': `Şimdi`,
+    'dueDateToday': `Bugün`,
+    'dueDateTomorrow': `Yarın`,
+    'duplicate': `Çoğalt`,
+    'edit': `Düzenle`,
+    'editPatient': `Hastayı düzenle`,
+    'editPresetTask': `Şablon görevini düzenle`,
+    'editTask': `Görevi düzenle`,
+    'enterFeedback': `Geri bildiriminizi buraya yazın...`,
+    'error': `Hata`,
+    'errorOccurred': `Bir hata oluştu`,
+    'estimatedTime': `Tahmini süre (dakika)`,
+    'expandAll': `Tümünü genişlet`,
+    'export': `Dışa aktar`,
+    'exportCsv': `CSV olarak dışa aktar`,
+    'exportExcel': `Excel olarak dışa aktar (yazdırılabilir)`,
+    'exportFailed': `Dışa aktarma başarısız oldu. Lütfen tekrar deneyin.`,
+    'feedback': `Geri bildirim`,
+    'feedbackDescription': `Geri bildiriminizi paylaşın, hata bildirin veya iyileştirme önerin.`,
+    'female': `Kadın`,
+    'filter': `Filtre`,
+    'filterAll': `Tümü`,
+    'filterUndone': `Açık`,
+    'firstName': `Ad`,
+    'freeBeds': `Boş yataklar`,
+    'hide': `Gizle`,
+    'homePage': `Ana sayfa`,
+    'imprint': `Künye`,
+    'inactive': `Pasif`,
+    'install': `Yükle`,
+    'installApp': `Uygulamayı yükle`,
+    'installAppDescription': `Çevrimdışı destek ve daha hızlı erişimle daha iyi bir deneyim için helpwave tasks uygulamasını yükleyin.`,
+    'language': `Dil`,
+    'lastName': `Soyad`,
+    'listViewCard': `Kart görünümü`,
+    'listViewTable': `Tablo görünümü`,
+    'loading': `Yükleniyor...`,
+    'loadingAlmostThere': `Neredeyse hazır...`,
+    'loadingGettingReady': `Bir dakika — her şey hazırlanıyor...`,
+    'loadingHangOn': `Bir saniye — en güncel veriler alınıyor...`,
+    'loadingMoment': `Az kaldı, neredeyse hazır...`,
+    'loadMore': `Daha fazla yükle`,
+    'loadTaskPreset': `Şablon yükle`,
+    'loadTaskPresetConfirm': ({ count }): string => {
+      let _out: string = ''
+      _out += `Bu hasta için `
+      _out += TranslationGen.resolvePlural(count, {
+        '=1': `${count} görev`,
+        'other': `${count} görev`,
+      })
+      _out += ` oluşturulsun mu?`
+      return _out
+    },
+    'loadTaskPresetConfirmTitle': `Şablon yüklemeyi onayla`,
+    'loadTaskPresetCreateAndAssign': `Oluştur ve bana ata`,
+    'loadTaskPresetSelectTasks': `Şablondaki görevler`,
+    'loadTaskPresetTaskLabel': `Şablon`,
+    'loadTaskPresetTitle': `Görev şablonu yükle`,
+    'location': `Konum`,
+    'locationBed': `Yatak`,
+    'locationClinic': `Klinik`,
+    'locationRoom': `Oda`,
+    'locationType': ({ type }): string => {
+      return TranslationGen.resolveSelect(type, {
+        'CLINIC': `Klinik`,
+        'WARD': `Servis`,
+        'TEAM': `Ekip`,
+        'ROOM': `Oda`,
+        'BED': `Yatak`,
+        'other': `Diğer`,
+      })
+    },
+    'locationWard': `Servis`,
+    'login': `Giriş`,
+    'logInAgain': `Tekrar giriş yap`,
+    'loginRequired': `Giriş gerekli`,
+    'loginRequiredDescription': `Bu sayfayı kullanmak için giriş yapmanız gerekir.`,
+    'logout': `Çıkış yap`,
+    'male': `Erkek`,
+    'markPatientDead': `Hastayı vefat etmiş olarak işaretle`,
+    'markPatientDeadConfirmation': `Bu hastayı vefat etmiş olarak işaretlemek istediğinizden emin misiniz?`,
+    'menu': `Menü`,
+    'more': `Daha fazla`,
+    'myFavorites': `Favorilerim`,
+    'myOpenTasks': `Açık görevlerim`,
+    'myTasks': `Görevlerim`,
+    'name': `Ad`,
+    'nFilter': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} filtre`,
+        'other': `${count} filtre`,
+      })
+    },
+    'nMinutesShort': ({ minCount }): string => {
+      return `${minCount} dk`
+    },
+    'no': `Hayır`,
+    'noClosedTasks': `Tamamlanan görev yok`,
+    'noLocationsFound': `Konum bulunamadı`,
+    'none': `Yok`,
+    'noNotifications': `Yeni güncelleme yok`,
+    'noOpenTasks': `Açık görev yok`,
+    'noPatient': `Hasta yok`,
+    'noPatientsInTaskView': `Bu görev hızlı erişimi için hasta bulunamadı.`,
+    'noResultsFound': `Sonuç bulunamadı`,
+    'notAssigned': `Atanmamış`,
+    'notifications': `Bildirimler`,
+    'nPatient': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} hasta`,
+        'other': `${count} hasta`,
+      })
+    },
+    'nSorting': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} sıralama`,
+        'other': `${count} sıralama`,
+      })
+    },
+    'nTask': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} görev`,
+        'other': `${count} görev`,
+      })
+    },
+    'nYears': ({ years }): string => {
+      return TranslationGen.resolvePlural(years, {
+        '=0': `0 yaş`,
+        '=1': `1 yaş`,
+        'other': `${years} yaş`,
+      })
+    },
+    'occupancy': `Doluluk`,
+    'ok': `Tamam`,
+    'onboardingSurvey': `Başlangıç anketi`,
+    'openSurvey': `Anketi aç`,
+    'openTasks': `Açık görevler`,
+    'openView': `Aç`,
+    'option': `Seçenek`,
+    'organizations': `Kuruluşlar`,
+    'overview': `Genel bakış`,
+    'pages.404.loading': `Yükleniyor...`,
+    'pages.404.notFound': `404 - Sayfa bulunamadı`,
+    'pages.404.notFoundDescription1': `Aradığınız sayfa kesinlikle bu değil`,
+    'pages.404.notFoundDescription2': `Sizi şuraya götürelim:`,
+    'patient': `Hasta`,
+    'patientActions': `Hasta işlemleri`,
+    'patientData': `Veriler`,
+    'patients': `Hastalar`,
+    'patientsCountChipAdmitted': ({ count }): string => {
+      return `Yatışı yapılan ${count}`
+    },
+    'patientsCountChipTotal': ({ count }): string => {
+      return `Toplam ${count}`
+    },
+    'patientsCountChipWaiting': ({ count }): string => {
+      return `Bekleyen ${count}`
+    },
+    'patientState': ({ state }): string => {
+      return TranslationGen.resolveSelect(state, {
+        'WAIT': `Bekliyor`,
+        'ADMITTED': `Yatışı yapıldı`,
+        'DISCHARGED': `Taburcu edildi`,
+        'DEAD': `Vefat etti`,
+        'other': `Bilinmiyor`,
+      })
+    },
+    'patientsUpdatedRecently': `Son güncellenen hastalar`,
+    'pickClinic': `Klinik seçin`,
+    'pickClinicDescription': `Bu hasta için kliniği seçin. Yalnızca klinik konumları seçilebilir.`,
+    'pickPosition': `Konum seçin`,
+    'pickPositionDescription': `Bu hasta için konumu seçin. Hastane, muayenehane, klinik, servis, yatak veya oda konumlarını seçebilirsiniz.`,
+    'pickTeams': `Ekip seçin`,
+    'pickTeamsDescription': `Bu hasta için bir veya daha fazla ekip seçin. Klinik, ekip, muayenehane veya hastane konumlarını seçebilirsiniz.`,
+    'position': `Konum`,
+    'positionUpdated': `Konum güncellendi`,
+    'preferences': `Tercihler`,
+    'priority': `Öncelik`,
+    'priorityLabel': `Öncelik`,
+    'priorityNone': `Yok`,
+    'privacy': `Gizlilik`,
+    'properties': `Özellikler`,
+    'propertiesSettingsDescription': `Görevler ve hastalar için özel alanlar: türleri tanımlayın ve filtrelerde kullanın.`,
+    'property': `Özellik`,
+    'pThemes': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `Tema`,
+        'other': `Temalar`,
+      })
+    },
+    'rAdd': ({ name }): string => {
+      return `${name} ekle`
+    },
+    'rChipTotal': ({ value }): string => {
+      return `Toplam ${value}`
+    },
+    'readOnlyView': `Salt okunur`,
+    'recentPatients': `Son hastalarınız`,
+    'recentTasks': `Son görevleriniz`,
+    'rEdit': ({ name }): string => {
+      return `${name} güncelle`
+    },
+    'refreshing': `Yenileniyor…`,
+    'removeProperty': `Özelliği kaldır`,
+    'removePropertyConfirmation': `Bu özelliği kaldırmak istediğinizden emin misiniz? Bu işlem geri alınamaz.`,
+    'retakeSurvey': `Anketi yeniden yanıtla`,
+    'rShow': ({ name }): string => {
+      return `${name} göster`
+    },
+    'savedViews': `Hızlı erişim`,
+    'saveView': `Hızlı erişimi kaydet`,
+    'saveViewAsNew': `Yeni hızlı erişim olarak kaydet`,
+    'saveViewDescription': `Bu hızlı erişime bir ad verin. Filtreler, sıralama, arama ve konum kaydedilir.`,
+    'saveViewDescriptionFromSystemList': `Bu düzenden yeni bir hızlı erişim kaydı oluşturur. Bu sayfa uygulama tarafından sabitlenmiştir ve yerinde kaydedilmez — gerektiğinde kenar çubuğundan açın.`,
+    'saveViewOverwriteCurrent': `Mevcut hızlı erişimin üzerine yaz`,
+    'scopeChangeNode': `Düğümü değiştir`,
+    'scopeNoNodeSelected': `Bu kaydın saklanacağı düğümü seçin.`,
+    'scopePrivate': `Özel`,
+    'scopePrivateDescription': `Bu kaydı yalnızca siz görebilir ve kullanabilirsiniz.`,
+    'scopePublic': `Herkese açık`,
+    'scopePublicDescription': `Seçilen düğüme veya alt ağacına erişimi olan herkes bu kaydı görebilir ve kullanabilir.`,
+    'scopeSelectNode': `Düğüm seç`,
+    'scopeShared': `Bağlantıyla paylaşıldı`,
+    'scopeSharedDescription': `Bu kaydı listelerinizde yalnızca siz görürsünüz. Seçilen düğüme veya alt ağacına erişimi olan herkes kaydı bağlantısı üzerinden açabilir.`,
+    'scopeStoredAt': `Saklandığı yer`,
+    'scopeVisibility': `Paylaşım`,
+    'scrollToTop': `Başa dön`,
+    'search': `Ara`,
+    'searchLocations': `Konum ara...`,
+    'searchUserOrTeam': `Kullanıcı (veya ekip) ara...`,
+    'searchUsersOrTeams': `Kullanıcı veya ekip ara...`,
+    'security': `Güvenlik`,
+    'selectAll': `Tümünü seç`,
+    'selectAssignee': `Ata...`,
+    'selectClinic': `Klinik seç`,
+    'selectLocation': `Konum seç`,
+    'selectLocationDescription': `Lütfen hasta için atanan konumu seçin.`,
+    'selectOptions': `Seçenekleri seç`,
+    'selectPosition': `Konum seç`,
+    'selectRootLocation': `Kök konum seç`,
+    'selectRootLocationDescription': `Erişim kapsamınızı belirleyen kök konumları seçin. Yalnızca hastaneler, muayenehaneler, klinikler ve ekipler seçilebilir. Bir üst konumun seçilmesi tüm alt konumlarını da kapsar.`,
+    'selectTeams': `Ekip seç`,
+    'sessionExpired': `Oturumun süresi doldu`,
+    'sessionExpiredDescription': `Uzun süre işlem yapılmadığı için oturumunuz kapatıldı. Devam etmek için lütfen tekrar giriş yapın. Kaydedilmemiş değişiklikler kaybolmuş olabilir.`,
+    'settings': `Ayarlar`,
+    'settingsDescription': `Uygulama yapılandırmasını buradan değiştirebilirsiniz.`,
+    'sex': `Cinsiyet`,
+    'shiftHandover': `Vardiya devri`,
+    'showAllTasks': `Tüm görevleri göster`,
+    'showPatient': ({ name }): string => {
+      return `${name} adlı hastayı göster`
+    },
+    'showTeamTasks': `Ekip görevlerini göster`,
+    'sorting': `Sıralama`,
+    'sPriority': ({ priority }): string => {
+      return TranslationGen.resolveSelect(priority, {
+        'P1': `Normal`,
+        'P2': `Orta`,
+        'P3': `Yüksek`,
+        'P4': `Kritik`,
+        'other': `-`,
+      })
+    },
+    'sPropertySubjectType': ({ subject }): string => {
+      return TranslationGen.resolveSelect(subject, {
+        'patient': `Hasta`,
+        'task': `Görev`,
+        'other': `Tanımsız nesne türü`,
+      })
+    },
+    'sPropertyType': ({ type }): string => {
+      return TranslationGen.resolveSelect(type, {
+        'multiSelect': `Çoklu seçim`,
+        'singleSelect': `Tekli seçim`,
+        'number': `Sayı`,
+        'text': `Metin`,
+        'date': `Tarih`,
+        'dateTime': `Zaman noktası`,
+        'checkbox': `Onay kutusu`,
+        'user': `Kullanıcı`,
+        'other': `Tanımsız tür`,
+      })
+    },
+    'stagingModalDisclaimerMarkdown': `helpwave tasks uygulamasının bu herkese açık örneği \\b{geliştirme ve önizleme amaçlıdır}. Lütfen \\b{yalnızca} \\b{gizli olmayan test verileri} girdiğinizden emin olun. Bu örnek \\negative{\\b{her an silinebilir}}`,
+    'startRecording': `Kaydı başlat`,
+    'stateUpdated': `Durum güncellendi`,
+    'status': `Durum`,
+    'stopRecording': `Kaydı durdur`,
+    'subjectType': `Nesne türü`,
+    'submissionDetails': `Gönderim ayrıntıları`,
+    'submit': `Gönder`,
+    'submittingAs': ({ name }): string => {
+      return `${name} olarak gönderiliyor`
+    },
+    'surveyDescription': `Geri bildiriminiz bizim için değerlidir. Lütfen anketimizi doldurmak için birkaç dakikanızı ayırın.`,
+    'surveyTitle': `helpwave tasks uygulamasını geliştirmemize yardımcı olun`,
+    'system': `Sistem`,
+    'task': `Görev`,
+    'taskFromPresetTooltip': `Bir görev şablonundan oluşturuldu`,
+    'taskPresetAddRow': `Görev ekle`,
+    'taskPresetApplyToRow': `Şablon satırına uygula`,
+    'taskPresetCreate': `Şablon oluştur`,
+    'taskPresetDelete': `Sil`,
+    'taskPresetDeleteConfirm': `Bu görev şablonu silinsin mi?`,
+    'taskPresetEdit': `Şablonu düzenle`,
+    'taskPresetEditDetails': `Ayrıntıları düzenle`,
+    'taskPresetEmptyList': `Henüz görev şablonu yok.`,
+    'taskPresetKey': `Anahtar`,
+    'taskPresetKeyHint': `Aramalar için isteğe bağlı benzersiz anahtar. Otomatik oluşturulması için boş bırakın.`,
+    'taskPresetName': `Ad`,
+    'taskPresetNoEstimate': `Tahmin yok`,
+    'taskPresetNoTasks': `Bu şablonda görev yok.`,
+    'taskPresetRemoveRow': `Kaldır`,
+    'taskPresets': `Şablonlar`,
+    'taskPresetSave': `Şablonu kaydet`,
+    'taskPresetsDescription': `İsteğe bağlı bağımlılıklar içeren, yeniden kullanılabilir görev listeleri.`,
+    'taskPresetSelectPlaceholder': `Bir şablon seçin`,
+    'taskPresetSourceNotFound': `Şablon yüklenemedi.`,
+    'taskPresetSourceOpenSettings': `Ayarlarda aç`,
+    'taskPresetSourceTasksInGraph': `Şablondaki görevler`,
+    'taskPresetSourceTitle': `Kaynak şablon`,
+    'tasks': `Görevler`,
+    'tasksCreatedFromPreset': `Görevler oluşturuldu`,
+    'tasksUpdatedRecently': `Son güncellenen görevler`,
+    'taskTitlePlaceholder': `Ne yapılması gerekiyor?`,
+    'teams': `Ekipler`,
+    'themeMode': ({ theme }): string => {
+      return TranslationGen.resolveSelect(theme, {
+        'dark': `Koyu`,
+        'light': `Açık`,
+        'system': `Sistem`,
+        'other': `Sistem`,
+      })
+    },
+    'timeEstimate': `Süre tahmini`,
+    'title': `Başlık`,
+    'totalPatients': `Toplam hasta`,
+    'type': `Tür`,
+    'updated': `Güncellendi`,
+    'url': `URL`,
+    'user': `Kullanıcı`,
+    'userInformation': `Kullanıcı bilgileri`,
+    'users': `Kullanıcılar`,
+    'viewAnyoneWithLinkCanView': `Bağlantıya sahip herkes görüntüleyebilir`,
+    'viewDerivedPatientsHint': `Bu hızlı erişimle eşleşen görevlerde yer alan hastalar (tekil).`,
+    'views': `Hızlı erişim`,
+    'viewsEntityPatient': `Hastalar`,
+    'viewsEntityTask': `Görevler`,
+    'viewSettings': `Hızlı erişim`,
+    'viewSettingsDescription': `Kayıtlı görev ve hasta hızlı erişimlerini yönetin.`,
+    'viewVisibility': `Görünürlük`,
+    'viewVisibilityLinkShared': `Bağlantıyla paylaşıldı`,
+    'viewVisibilityPrivate': `Özel`,
+    'waitingForPatient': `Hasta bekleniyor`,
+    'waitPatient': `Hastayı bekleme durumuna al`,
+    'wards': `Servisler`,
+    'weeklySurvey': `Haftalık anket`,
+    'yes': `Evet`
   }
 }
 

@@ -1,0 +1,582 @@
+{
+  "@@locale": "ro-RO",
+  "account": "Cont",
+  "active": "Activ",
+  "add": "Adaugă",
+  "addFastAccess": "Adaugă acces rapid",
+  "addFastAccessDescription": "Introduceți un nume pentru noul acces rapid.",
+  "addPatient": "Adaugă pacient",
+  "addProperty": "Adaugă proprietate",
+  "addTask": "Adaugă sarcină",
+  "archivedPropertyDescription": "Proprietățile arhivate nu mai pot fi atribuite obiectelor.",
+  "archiveProperty": "Arhivează proprietatea",
+  "assignedTo": "Atribuit lui",
+  "assigneeTeam": "Echipa atribuită",
+  "additionalAssigneesCount": "+{count}",
+  "@additionalAssigneesCount": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "authenticationFailed": "Autentificare eșuată",
+  "birthdate": "Data nașterii",
+  "cancel": "Anulează",
+  "clearCache": "Golește memoria cache",
+  "close": "Închide",
+  "clinics": "Clinici",
+  "closedTasks": "Sarcini finalizate",
+  "conflictDetected": "Conflict detectat",
+  "confirm": "Confirmă",
+  "confirmShiftHandover": "Confirmă predarea turei",
+  "confirmShiftHandoverDescription": "Sigur doriți să transferați toate sarcinile deschise utilizatorului selectat?",
+  "confirmShiftHandoverDescriptionWithName": "Sigur doriți să transferați {taskCount, plural, =1{# sarcină deschisă} few{# sarcini deschise} other{# de sarcini deschise}} către {name}?",
+  "@confirmShiftHandoverDescriptionWithName": {
+    "placeholders": {
+      "taskCount": {
+        "type": "number"
+      },
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "copyShareLink": "Copiază linkul",
+  "copyViewToMyViews": "Copiază în accesul meu rapid",
+  "confirmDeleteView": "Ștergeți acest acces rapid salvat? Acțiunea nu poate fi anulată.",
+  "create": "Creează",
+  "createTask": "Creează sarcină",
+  "creationDate": "Data creării",
+  "currentTime": "Ora curentă",
+  "dashboard": "Tablou de bord",
+  "dashboardWelcomeDescription": "Iată ce se întâmplă astăzi.",
+  "dashboardWelcomeMorning": "Bună dimineața, {name}!",
+  "@dashboardWelcomeMorning": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "dashboardWelcomeNoon": "Bună ziua, {name}!",
+  "@dashboardWelcomeNoon": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "dashboardWelcomeAfternoon": "Bună ziua, {name}!",
+  "@dashboardWelcomeAfternoon": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "dashboardWelcomeEvening": "Bună seara, {name}!",
+  "@dashboardWelcomeEvening": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "dashboardWelcomeNight": "Noapte bună, {name}!",
+  "@dashboardWelcomeNight": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "delete": "Șterge",
+  "description": "Descriere",
+  "diverse": "Divers",
+  "descriptionPlaceholder": "Adăugați mai multe detalii...",
+  "developmentAndPreviewInstance": "Instanță de dezvoltare și previzualizare",
+  "dismiss": "Închide",
+  "duplicate": "Duplică",
+  "done": "Finalizat",
+  "dueDate": "Termen",
+  "dueDateInDays": "+{days, plural, =1{# zi} few{# zile} other{# de zile}}",
+  "@dueDateInDays": {
+    "placeholders": {
+      "days": {
+        "type": "number"
+      }
+    }
+  },
+  "dueDateInHours": "+{hours, plural, =1{# oră} few{# ore} other{# de ore}}",
+  "@dueDateInHours": {
+    "placeholders": {
+      "hours": {
+        "type": "number"
+      }
+    }
+  },
+  "dueDateNow": "Acum",
+  "dueDateToday": "Astăzi",
+  "dueDateTomorrow": "Mâine",
+  "edit": "Editează",
+  "editPatient": "Editează pacientul",
+  "editTask": "Editează sarcina",
+  "errorOccurred": "A apărut o eroare",
+  "estimatedTime": "Timp estimat (minute)",
+  "export": "Exportă",
+  "exportCsv": "Exportă ca CSV",
+  "exportExcel": "Exportă ca Excel (imprimabil)",
+  "exportFailed": "Exportul a eșuat. Vă rugăm să încercați din nou.",
+  "timeEstimate": "Estimare de timp",
+  "nMinutesShort": "{minCount} min",
+  "@nMinutesShort": {
+    "placeholders": {
+      "minCount": {
+        "type": "number"
+      }
+    }
+  },
+  "feedback": "Feedback",
+  "female": "Feminin",
+  "filter": "Filtru",
+  "filterAll": "Toate",
+  "filterUndone": "Nefinalizate",
+  "firstName": "Prenume",
+  "freeBeds": "Paturi libere",
+  "homePage": "Pagina principală",
+  "hide": "Ascunde",
+  "imprint": "Date de identificare",
+  "inactive": "Inactiv",
+  "language": "Limbă",
+  "lastName": "Nume",
+  "listViewCard": "Vizualizare carduri",
+  "listViewTable": "Vizualizare tabel",
+  "scrollToTop": "Derulează în sus",
+  "loadMore": "Încarcă mai multe",
+  "loadingHangOn": "Un moment — se încarcă cele mai recente date...",
+  "loadingMoment": "O secundă, aproape gata...",
+  "loadingAlmostThere": "Aproape gata...",
+  "loadingGettingReady": "Un moment — pregătim totul...",
+  "more": "Mai mult",
+  "location": "Locație",
+  "locationBed": "Pat",
+  "locationClinic": "Clinică",
+  "locationRoom": "Salon",
+  "locationType": "{type, select, CLINIC{Clinică} WARD{Secție} TEAM{Echipă} ROOM{Salon} BED{Pat} other{Altele}}",
+  "@locationType": {
+    "placeholders": {
+      "type": {
+        "type": "string"
+      }
+    }
+  },
+  "locationWard": "Secție",
+  "loading": "Se încarcă...",
+  "logInAgain": "Autentificați-vă din nou",
+  "login": "Autentificare",
+  "logout": "Deconectare",
+  "male": "Masculin",
+  "menu": "Meniu",
+  "myFavorites": "Favoritele mele",
+  "myOpenTasks": "Sarcinile mele deschise",
+  "myTasks": "Sarcinile mele",
+  "name": "Nume",
+  "no": "Nu",
+  "none": "Niciunul",
+  "noClosedTasks": "Nicio sarcină finalizată",
+  "noOpenTasks": "Nicio sarcină deschisă",
+  "noPatient": "Niciun pacient",
+  "noPatientsInTaskView": "Nu s-au găsit pacienți pentru acest acces rapid la sarcini.",
+  "noResultsFound": "Nu s-au găsit rezultate",
+  "notAssigned": "Neatribuit",
+  "nFilter": "{count, plural, =1{# filtru} few{# filtre} other{# de filtre}}",
+  "@nFilter": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "nSorting": "{count, plural, =1{# sortare} few{# sortări} other{# de sortări}}",
+  "@nSorting": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "nPatient": "{count, plural, =1{# pacient} few{# pacienți} other{# de pacienți}}",
+  "@nPatient": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "patientsCountChipTotal": "Total {count}",
+  "@patientsCountChipTotal": {
+    "placeholders": {
+      "count": {
+        "type": "string"
+      }
+    }
+  },
+  "patientsCountChipAdmitted": "Internați {count}",
+  "@patientsCountChipAdmitted": {
+    "placeholders": {
+      "count": {
+        "type": "string"
+      }
+    }
+  },
+  "patientsCountChipWaiting": "În așteptare {count}",
+  "@patientsCountChipWaiting": {
+    "placeholders": {
+      "count": {
+        "type": "string"
+      }
+    }
+  },
+  "nTask": "{count, plural, =1{# sarcină} few{# sarcini} other{# de sarcini}}",
+  "@nTask": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "nYears": "{years, plural, =0{0 ani} =1{1 an} few{# ani} other{# de ani}}",
+  "@nYears": {
+    "placeholders": {
+      "years": {
+        "type": "number"
+      }
+    }
+  },
+  "occupancy": "Grad de ocupare",
+  "onboardingSurvey": "Chestionar inițial",
+  "openSurvey": "Deschide chestionarul",
+  "weeklySurvey": "Chestionar săptămânal",
+  "openTasks": "Sarcini deschise",
+  "openView": "Deschide",
+  "option": "Opțiune",
+  "organizations": "Organizații",
+  "overview": "Prezentare generală",
+  "pages.404.notFound": "404 - Pagina nu a fost găsită",
+  "pages.404.notFoundDescription1": "Aceasta nu este pagina pe care o căutați",
+  "pages.404.notFoundDescription2": "Înapoi la",
+  "patient": "Pacient",
+  "patientData": "Date",
+  "patients": "Pacienți",
+  "patientState": "{state, select, WAIT{În așteptare} ADMITTED{Internat} DISCHARGED{Externat} DEAD{Decedat} other{Necunoscut}}",
+  "@patientState": {
+    "placeholders": {
+      "state": {
+        "type": "string"
+      }
+    }
+  },
+  "patientsUpdatedRecently": "Pacienți actualizați recent",
+  "pThemes": "{count, plural, =1{Temă} few{Teme} other{Teme}}",
+  "@pThemes": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "preferences": "Preferințe",
+  "priority": "Prioritate",
+  "sPriority": "{priority, select, P1{Normală} P2{Medie} P3{Ridicată} P4{Critică} other{-}}",
+  "@sPriority": {
+    "placeholders": {
+      "priority": {}
+    }
+  },
+  "priorityLabel": "Prioritate",
+  "priorityNone": "Niciuna",
+  "privacy": "Confidențialitate",
+  "properties": "Proprietăți",
+  "propertiesSettingsDescription": "Câmpuri personalizate pentru sarcini și pacienți: definiți tipuri și folosiți-le în filtre.",
+  "property": "Proprietate",
+  "rAdd": "Adaugă {name}",
+  "@rAdd": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "rEdit": "Actualizează {name}",
+  "@rEdit": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "recentPatients": "Pacienții tăi recenți",
+  "recentTasks": "Sarcinile tale recente",
+  "refreshing": "Se actualizează…",
+  "removeProperty": "Elimină proprietatea",
+  "removePropertyConfirmation": "Sigur doriți să eliminați această proprietate? Acțiunea nu poate fi anulată.",
+  "clearPropertyColumnActionTask": "Elimină această proprietate din sarcinile listate",
+  "clearPropertyColumnActionPatient": "Golește valorile acestei proprietăți la pacienții listați",
+  "clearPropertyColumnDialogTitleTask": "Elimină proprietatea din sarcini",
+  "clearPropertyColumnDialogTitlePatient": "Golește valorile proprietății la pacienți",
+  "clearPropertyColumnDialogDescriptionTask": "Proprietatea „{propertyName}” va fi eliminată definitiv din {count} sarcini încărcate în prezent în această listă. Sarcinile care nu sunt încărcate în această listă nu sunt afectate.",
+  "@clearPropertyColumnDialogDescriptionTask": {
+    "placeholders": {
+      "propertyName": {
+        "type": "string"
+      },
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "clearPropertyColumnDialogDescriptionPatient": "Toate valorile proprietății „{propertyName}” vor fi golite la {count} pacienți încărcați în prezent în această listă. Proprietatea rămâne atașată acestor pacienți. Pacienții care nu sunt încărcați în această listă nu sunt afectați.",
+  "@clearPropertyColumnDialogDescriptionPatient": {
+    "placeholders": {
+      "propertyName": {
+        "type": "string"
+      },
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "clearPropertyColumnTypeNameInstruction": "Tastați „{propertyName}” pentru a confirma.",
+  "@clearPropertyColumnTypeNameInstruction": {
+    "placeholders": {
+      "propertyName": {
+        "type": "string"
+      }
+    }
+  },
+  "clearPropertyColumnConfirmButtonTask": "Elimină proprietatea din sarcini",
+  "clearPropertyColumnConfirmButtonPatient": "Golește valorile proprietății",
+  "readOnlyView": "Doar citire",
+  "retakeSurvey": "Completează din nou chestionarul",
+  "saveView": "Salvează accesul rapid",
+  "saveViewDescription": "Denumiți acest acces rapid. Filtrele, sortarea, căutarea și locația sunt salvate.",
+  "saveViewOverwriteCurrent": "Suprascrie accesul rapid curent",
+  "saveViewAsNew": "Salvează ca acces rapid nou",
+  "saveViewDescriptionFromSystemList": "Creează un nou acces rapid pe baza acestui aspect. Această pagină este fixată de aplicație și nu este suprascrisă — deschideți accesul rapid din bara laterală când aveți nevoie.",
+  "discardViewChanges": "Renunță la modificări",
+  "discard": "Renunță",
+  "discardDraftTitle": "Renunțați la ciornă?",
+  "discardDraftMessage": "Aveți date nesalvate. Dacă închideți acum, tot ce ați introdus se va pierde.",
+  "savedViews": "Acces rapid",
+  "viewDerivedPatientsHint": "Pacienții care apar în sarcinile ce corespund acestui acces rapid (fără duplicate).",
+  "viewSettings": "Acces rapid",
+  "viewSettingsDescription": "Gestionați accesele rapide salvate pentru sarcini și pacienți.",
+  "views": "Acces rapid",
+  "viewsEntityPatient": "Pacienți",
+  "viewsEntityTask": "Sarcini",
+  "viewVisibility": "Vizibilitate",
+  "viewVisibilityPrivate": "Privat",
+  "viewVisibilityLinkShared": "Partajat prin link",
+  "viewAnyoneWithLinkCanView": "Oricine are linkul poate vizualiza",
+  "copyShareLinkEnableSharingFirst": "Activați partajarea prin link pentru ca alte persoane cu linkul să poată deschide acest acces rapid.",
+  "rShow": "Afișează {name}",
+  "@rShow": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "rChipTotal": "Total {value}",
+  "@rChipTotal": {
+    "placeholders": {
+      "value": {
+        "type": "string"
+      }
+    }
+  },
+  "search": "Caută",
+  "searchUserOrTeam": "Căutați utilizator (sau echipă)...",
+  "searchUsersOrTeams": "Căutați utilizatori sau echipe...",
+  "security": "Securitate",
+  "selectAssignee": "Atribuie lui...",
+  "scopeVisibility": "Partajare",
+  "scopePrivate": "Privat",
+  "scopePublic": "Public",
+  "scopeShared": "Partajat prin link",
+  "scopeSharedDescription": "Doar dumneavoastră vedeți această intrare în listele proprii. Oricine are acces la nodul selectat sau la subarborele acestuia o poate deschide prin link.",
+  "scopePublicDescription": "Oricine are acces la nodul selectat sau la subarborele acestuia poate vedea și folosi această intrare.",
+  "scopePrivateDescription": "Doar dumneavoastră puteți vedea și folosi această intrare.",
+  "scopeSelectNode": "Selectează nodul",
+  "scopeChangeNode": "Schimbă nodul",
+  "scopeNoNodeSelected": "Selectați nodul la care este salvată această intrare.",
+  "scopeStoredAt": "Salvat la",
+  "selectLocation": "Selectează locația",
+  "selectOptions": "Selectează opțiunile",
+  "sessionExpired": "Sesiune expirată",
+  "sessionExpiredDescription": "Ați fost deconectat din cauza inactivității. Vă rugăm să vă autentificați din nou pentru a continua. Modificările nesalvate se pot pierde.",
+  "settings": "Setări",
+  "settingsDescription": "Aici puteți modifica configurația aplicației.",
+  "sex": "Sex",
+  "shiftHandover": "Predarea turei",
+  "showAllTasks": "Afișează toate sarcinile",
+  "showPatient": "Afișează pacientul {name}",
+  "@showPatient": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "showTeamTasks": "Afișează sarcinile echipei",
+  "sorting": "Sortare",
+  "stagingModalDisclaimerMarkdown": "Această instanță publică a helpwave tasks este destinată '\\b{dezvoltării și previzualizării}'. Vă rugăm să introduceți '\\b{doar}' '\\b{date de test neconfidențiale}'. Această instanță poate fi '\\negative{\\b{ștearsă oricând}}'",
+  "status": "Status",
+  "subjectType": "Tip de subiect",
+  "surveyDescription": "Feedbackul dumneavoastră este valoros pentru noi. Vă rugăm să acordați un moment completării chestionarului.",
+  "surveyTitle": "Ajutați-ne să îmbunătățim helpwave tasks",
+  "sPropertySubjectType": "{subject, select, patient{Pacient} task{Sarcină} other{Tip de subiect nedefinit}}",
+  "@sPropertySubjectType": {
+    "placeholders": {
+      "subject": {
+        "type": "string"
+      }
+    }
+  },
+  "sPropertyType": "{type, select, multiSelect{Selecție multiplă} singleSelect{Selecție unică} number{Număr} text{Text} date{Dată} dateTime{Moment} checkbox{Casetă de selectare} user{Utilizator} other{Tip nedefinit}}",
+  "@sPropertyType": {
+    "placeholders": {
+      "type": {
+        "type": "string"
+      }
+    }
+  },
+  "system": "Sistem",
+  "task": "Sarcină",
+  "tasks": "Sarcini",
+  "tasksUpdatedRecently": "Sarcini actualizate recent",
+  "taskTitlePlaceholder": "Ce trebuie făcut?",
+  "teams": "Echipe",
+  "themeMode": "{theme, select, dark{Întunecat} light{Luminos} system{Sistem} other{Sistem}}",
+  "@themeMode": {
+    "placeholders": {
+      "theme": {
+        "type": "string"
+      }
+    }
+  },
+  "title": "Titlu",
+  "totalPatients": "Total pacienți",
+  "type": "Tip",
+  "updated": "Actualizat",
+  "stateUpdated": "Stare actualizată",
+  "clinicUpdated": "Clinică actualizată",
+  "positionUpdated": "Locație actualizată",
+  "user": "Utilizator",
+  "users": "Utilizatori",
+  "wards": "Secții",
+  "yes": "Da",
+  "anonymous": "Anonim",
+  "anonymousSubmission": "Trimitere anonimă",
+  "collapseAll": "Restrânge tot",
+  "confirmSelection": "Confirmă selecția",
+  "deselectAll": "Deselectează tot",
+  "enterFeedback": "Introduceți feedbackul aici...",
+  "expandAll": "Extinde tot",
+  "feedbackDescription": "Trimiteți feedback, raportați erori sau sugerați îmbunătățiri.",
+  "noLocationsFound": "Nu s-au găsit locații",
+  "pickClinic": "Alegeți clinica",
+  "pickClinicDescription": "Selectați clinica pentru acest pacient. Pot fi selectate doar locații de tip clinică.",
+  "pickPosition": "Alegeți locația",
+  "pickPositionDescription": "Selectați locația pentru acest pacient. Puteți selecta spital, cabinet, clinică, secție, pat sau salon.",
+  "pickTeams": "Alegeți echipele",
+  "pickTeamsDescription": "Selectați una sau mai multe echipe pentru acest pacient. Puteți selecta clinică, echipă, cabinet sau spital.",
+  "searchLocations": "Căutați locații...",
+  "selectAll": "Selectează tot",
+  "selectLocationDescription": "Vă rugăm să selectați locația atribuită pacientului.",
+  "selectRootLocation": "Selectează locația rădăcină",
+  "selectRootLocationDescription": "Selectați locațiile rădăcină care definesc domeniul dumneavoastră de acces. Pot fi selectate doar spitale, cabinete, clinici și echipe. Selectarea unei locații părinte include toate locațiile subordonate.",
+  "startRecording": "Pornește înregistrarea",
+  "stopRecording": "Oprește înregistrarea",
+  "submissionDetails": "Detaliile trimiterii",
+  "submittingAs": "Se trimite ca {name}",
+  "@submittingAs": {
+    "placeholders": {
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "submit": "Trimite",
+  "url": "URL",
+  "userInformation": "Informații despre utilizator",
+  "admitPatient": "Internează pacientul",
+  "clear": "Golește",
+  "clinic": "Clinică",
+  "connectionConnected": "Conectat",
+  "connectionConnecting": "Se conectează…",
+  "connectionDisconnected": "Deconectat",
+  "deletePatient": "Șterge pacientul",
+  "deletePatientConfirmation": "Sigur doriți să ștergeți acest pacient? Acțiunea nu poate fi anulată.",
+  "dischargePatient": "Externează pacientul",
+  "dischargePatientConfirmation": "Sigur doriți să externați acest pacient? Această acțiune va modifica starea pacientului.",
+  "dismissAll": "Închide toate",
+  "error": "Eroare",
+  "install": "Instalează",
+  "installApp": "Instalează aplicația",
+  "installAppDescription": "Instalați helpwave tasks pentru o experiență mai bună, cu funcționare offline și acces mai rapid.",
+  "loginRequired": "Autentificare necesară",
+  "loginRequiredDescription": "Pentru a folosi acest site trebuie să fiți autentificat.",
+  "markPatientDead": "Marchează pacientul ca decedat",
+  "markPatientDeadConfirmation": "Sigur doriți să marcați acest pacient ca decedat?",
+  "noNotifications": "Nicio actualizare recentă",
+  "notifications": "Notificări",
+  "ok": "OK",
+  "patientActions": "Acțiuni pacient",
+  "position": "Locație",
+  "selectClinic": "Selectează clinica",
+  "selectPosition": "Selectează locația",
+  "selectTeams": "Selectează echipele",
+  "waitPatient": "Trece pacientul în așteptare",
+  "waitingForPatient": "Se așteaptă pacientul",
+  "taskPresets": "Șabloane",
+  "taskPresetsDescription": "Liste de sarcini reutilizabile, cu dependențe opționale.",
+  "taskPresetName": "Nume",
+  "taskPresetKey": "Cheie",
+  "taskPresetKeyHint": "Cheie unică opțională pentru căutări. Lăsați gol pentru generare automată.",
+  "taskPresetAddRow": "Adaugă sarcină",
+  "taskPresetRemoveRow": "Elimină",
+  "taskPresetSave": "Salvează șablonul",
+  "taskPresetCreate": "Creează șablon",
+  "taskPresetEdit": "Editează șablonul",
+  "taskPresetDelete": "Șterge",
+  "taskPresetDeleteConfirm": "Ștergeți acest șablon de sarcini?",
+  "taskPresetEmptyList": "Încă nu există șabloane de sarcini.",
+  "loadTaskPreset": "Încarcă șablon",
+  "loadTaskPresetTitle": "Încarcă șablon de sarcini",
+  "loadTaskPresetConfirm": "Creați {count, plural, =1{# sarcină} few{# sarcini} other{# de sarcini}} pentru acest pacient?",
+  "@loadTaskPresetConfirm": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "loadTaskPresetConfirmTitle": "Confirmă încărcarea șablonului",
+  "loadTaskPresetSelectTasks": "Sarcini din șablon",
+  "loadTaskPresetCreateAndAssign": "Creează și atribuie-mi",
+  "loadTaskPresetTaskLabel": "Șablon",
+  "taskPresetNoTasks": "Acest șablon nu conține sarcini.",
+  "taskPresetSelectPlaceholder": "Selectați un șablon",
+  "taskPresetEditDetails": "Editează detaliile",
+  "editPresetTask": "Editează sarcina din șablon",
+  "taskPresetApplyToRow": "Aplică pe rândul din șablon",
+  "taskPresetNoEstimate": "Fără estimare",
+  "tasksCreatedFromPreset": "Sarcini create",
+  "taskFromPresetTooltip": "Creată dintr-un șablon de sarcini",
+  "taskPresetSourceTitle": "Șablon sursă",
+  "taskPresetSourceNotFound": "Șablonul nu a putut fi încărcat.",
+  "taskPresetSourceTasksInGraph": "Sarcini în șablon",
+  "taskPresetSourceOpenSettings": "Deschide în setări"
+}

@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { useState, type ComponentProps } from 'react'
 import type { ButtonProps } from '@helpwave/hightide'
-import { Button, PopUp, PopUpContext, PopUpOpener, PopUpRoot, Select, SelectOption } from '@helpwave/hightide'
+import { Button, PopUp, PopUpContext, PopUpOpener, PopUpRoot, Select } from '@helpwave/hightide'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
 import clsx from 'clsx'
 
@@ -62,9 +62,9 @@ export function InTableSingleSelectEditPopUp({
             setDraft(next ?? emptyTag)
           }}
         >
-          <SelectOption value={emptyTag} label={translation('none') || '—'} />
+          <Select.Option value={emptyTag} label={translation('none') || '—'} />
           {optionLabels.map((label, idx) => (
-            <SelectOption
+            <Select.Option
               key={`${definitionId}-opt-${idx}`}
               value={`${definitionId}-opt-${idx}`}
               label={label}

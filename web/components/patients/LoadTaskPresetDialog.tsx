@@ -5,8 +5,7 @@ import {
   Chip,
   Dialog,
   FocusTrapWrapper,
-  Select,
-  SelectOption
+  Select
 } from '@helpwave/hightide'
 import { Check, Plus, UserPlus, X } from 'lucide-react'
 import { useTasksTranslation } from '@/i18n/useTasksTranslation'
@@ -147,14 +146,14 @@ export function LoadTaskPresetDialog({
                 <Select
                   value={selectedId ?? null}
                   onValueChange={(v) => setSelectedId(v)}
-                  buttonProps={{
+                  triggerProps={{
                     className: 'w-full',
                   }}
                 >
                   {presets.map(p => (
-                    <SelectOption key={p.id} value={p.id} label={p.name}>
+                    <Select.Option key={p.id} value={p.id} label={p.name}>
                       {p.name}
-                    </SelectOption>
+                    </Select.Option>
                   ))}
                 </Select>
                 {selected && taskCount === 0 && (

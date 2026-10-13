@@ -1,11 +1,11 @@
 import {
   CheckboxProperty,
   DateProperty,
-  MultiSelectOption,
+  MultiSelect,
   MultiSelectProperty,
   NumberProperty,
   PropertyBase,
-  SelectOption,
+  Select,
   SingleSelectProperty,
   TextProperty
 } from '@helpwave/hightide'
@@ -122,7 +122,7 @@ export const PropertyEntry = ({
         onEditComplete={singleSelectValue => onEditComplete({ ...value, singleSelectValue })}
       >
         {selectData?.options.map(option => (
-          <SelectOption key={option.id} value={option.id} label={option.name} />
+          <Select.Option key={option.id} value={option.id} label={option.name} />
         ))}
       </SingleSelectProperty>
     )
@@ -135,7 +135,7 @@ export const PropertyEntry = ({
         onEditComplete={multiSelectValue => onEditComplete({ ...value, multiSelectValue })}
       >
         {selectData?.options.map(option => (
-          <MultiSelectOption key={option.id} value={option.id} label={option.name} />
+          <MultiSelect.Option key={option.id} value={option.id} label={option.name} />
         ))}
       </MultiSelectProperty>
     )

@@ -18,6 +18,9 @@ import { FeedbackToast } from '@/components/FeedbackToast'
 import { InstallPrompt } from '@/components/pwa/InstallPrompt'
 import { registerServiceWorker, requestNotificationPermission } from '@/utils/pushNotifications'
 import { useEffect } from 'react'
+import { tasksTranslation } from '@/i18n/translations'
+import { hightideLocaleTranslation } from '@/i18n/hightideLocaleTranslations'
+import { supportedLocales } from '@/i18n/supportedLocales'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -28,6 +31,8 @@ const queryClient = new QueryClient({
 })
 
 const config = getConfig()
+
+const translations = [tasksTranslation, hightideLocaleTranslation]
 
 function MyApp({
   Component,
@@ -46,9 +51,11 @@ function MyApp({
   return (
     <HightideProvider
       locale={{
+        supportedLocales,
         timeZone: config.timezone,
         is24HourFormat: true,
       }}
+      translation={{ translation: translations }}
     >
       <QueryClientProvider client={queryClient}>
         <Head>
