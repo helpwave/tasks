@@ -33,6 +33,11 @@ services:
       POSTGRES_DB: "postgres"
       POSTGRES_USER: "postgres"
       POSTGRES_PASSWORD: "password"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
 
   redis:
     image: redis:8.4
@@ -75,9 +80,12 @@ services:
     volumes:
       - "./scaffold:/scaffold:ro"
     depends_on:
-      - postgres
-      - redis
-      - influxdb
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      influxdb:
+        condition: service_started
 
   web:
     image: ${WEB_IMAGE:-ghcr.io/helpwave/tasks-web:latest}
@@ -93,6 +101,7 @@ services:
 
   proxy:
     image: ${PROXY_IMAGE:-ghcr.io/helpwave/tasks-proxy:latest}
+    restart: on-failure
     environment:
       KEYCLOAK_HOST: keycloak:8080
       BACKEND_HOST: backend:80
