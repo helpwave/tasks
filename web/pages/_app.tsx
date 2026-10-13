@@ -20,7 +20,6 @@ import { registerServiceWorker, requestNotificationPermission } from '@/utils/pu
 import { useEffect } from 'react'
 import { tasksTranslation } from '@/i18n/translations'
 import { hightideLocaleTranslation } from '@/i18n/hightideLocaleTranslations'
-import { supportedLocales } from '@/i18n/supportedLocales'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -51,7 +50,6 @@ function MyApp({
   return (
     <HightideProvider
       locale={{
-        supportedLocales,
         timeZone: config.timezone,
         is24HourFormat: true,
       }}
